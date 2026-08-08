@@ -5561,14 +5561,22 @@
           buildLayerOrderSelectionActionState
         });
       }
+      if (!layerOrderApi) {
+        return false;
+      }
+      const buildZIndexMutationPlan = (elements, options = {}) => {
+        if (!styleApi || typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
+          return { canApply: false };
+        }
+        return styleApi.buildStudioStyleMutationPlan(elements, 'zIndex', '', options);
+      };
       const slide = getActiveSlide(doc);
       const canMutateDeck = () => !!slide;
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
       const syncStudioLayerOrderToolbarState = (
-        SlideNextStudioEditorLayerOrder
-        && typeof SlideNextStudioEditorLayerOrder.syncStudioLayerOrderToolbarState === 'function'
+        typeof layerOrderApi.syncStudioLayerOrderToolbarState === 'function'
       )
-        ? SlideNextStudioEditorLayerOrder.syncStudioLayerOrderToolbarState
+        ? layerOrderApi.syncStudioLayerOrderToolbarState
         : null;
       if (syncStudioLayerOrderToolbarState) {
         return syncStudioLayerOrderToolbarState({
@@ -5577,31 +5585,23 @@
           orderedElements,
           isLocked: isElementLocked,
           canMutateDeck,
-          buildZIndexMutationPlan(elements) {
-            return SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(elements, 'zIndex', '', {
-              isLocked: isElementLocked,
-              canMutateDeck
-            });
-          }
+          buildZIndexMutationPlan
         });
       }
+      if (typeof layerOrderApi.renderStudioLayerOrderToolbarState !== 'function') {
+        return false;
+      }
       const buildStudioLayerOrderToolbarState = (
-        SlideNextStudioEditorLayerOrder
-        && typeof SlideNextStudioEditorLayerOrder.buildStudioLayerOrderToolbarState === 'function'
+        typeof layerOrderApi.buildStudioLayerOrderToolbarState === 'function'
       )
-        ? SlideNextStudioEditorLayerOrder.buildStudioLayerOrderToolbarState
+        ? layerOrderApi.buildStudioLayerOrderToolbarState
         : null;
       const layerOrderActionState = buildStudioLayerOrderToolbarState
         ? buildStudioLayerOrderToolbarState(selectedElements, {
           orderedElements,
           isLocked: isElementLocked,
           canMutateDeck,
-          buildZIndexMutationPlan(elements) {
-            return SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(elements, 'zIndex', '', {
-              isLocked: isElementLocked,
-              canMutateDeck
-            });
-          }
+          buildZIndexMutationPlan
         })
         : buildLayerOrderSelectionActionState(selectedElements, {
           slide,
@@ -5615,14 +5615,14 @@
         if (controlStates && Object.prototype.hasOwnProperty.call(controlStates, 'elZIndex')) {
           zIndexCanApply = !!controlStates.elZIndex;
         } else {
-          const zIndexMutationPlan = SlideNextStudioEditorStyle.buildStudioStyleMutationPlan(selectedElements, 'zIndex', '', {
+          const zIndexMutationPlan = buildZIndexMutationPlan(selectedElements, {
             isLocked: isElementLocked,
             canMutateDeck
           });
           zIndexCanApply = !!zIndexMutationPlan.canApply;
         }
       }
-      return SlideNextStudioEditorLayerOrder.renderStudioLayerOrderToolbarState({
+      return layerOrderApi.renderStudioLayerOrderToolbarState({
         documentRef: document,
         actionState: layerOrderActionState,
         zIndexCanApply
