@@ -37,6 +37,26 @@ test('canonical deck baseline reader prefers live state and falls back to rebuil
   });
   assert.equal(fallbackReader(doc), rebuiltDeck);
 });
+
+test('canonical deck baseline reader validates live models before falling back', () => {
+  const rebuiltDeck = { slides: [{ id: 'rebuilt' }] };
+  let didRebuild = false;
+  const readBaseline = canonicalState.createStudioEditorCanonicalDeckBaselineReader({
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    isCanonicalDeck(value) {
+      return !!value && Array.isArray(value.slides);
+    },
+    buildCanonicalDeckBaseline() {
+      didRebuild = true;
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(readBaseline({ id: 'iframe-doc' }), rebuiltDeck);
+  assert.equal(didRebuild, true);
+});
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');

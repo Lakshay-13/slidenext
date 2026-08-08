@@ -76,12 +76,25 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+
+    function isValidLiveCanonicalDeck(value) {
+      if (!value) return false;
+      if (!isCanonicalDeck) return true;
+      try {
+        return isCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    }
 
     return function readCanonicalDeckBaseline(sourceDocument) {
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-          if (liveCanonicalDeck) return liveCanonicalDeck;
+          if (isValidLiveCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
         } catch (error) {
           // Fall through to the document rebuild path.
         }
