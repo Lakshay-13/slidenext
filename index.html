@@ -1693,6 +1693,10 @@
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            studioEditorSessionToken
+          ),
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),

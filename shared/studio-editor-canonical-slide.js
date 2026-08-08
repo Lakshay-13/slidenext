@@ -14,6 +14,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const buildBaseline = typeof options.buildBaseline === 'function'
       ? options.buildBaseline
       : null;
@@ -29,7 +32,8 @@
         ? buildBaseline({
             ...mutationOptions,
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            getCanonicalDeckBaseline
           })
         : null
     );
@@ -280,10 +284,26 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
 
-    if (!reorderCanonicalSlides || !buildCanonicalDeck) {
-      return null;
+    if (!reorderCanonicalSlides) return null;
+
+    if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getCanonicalDeckBaseline(options.sourceDocument);
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function'
+        || canonicalDeckApi.isCanonicalDeck(liveCanonicalDeck)) {
+        if (liveCanonicalDeck) return liveCanonicalDeck;
+      }
     }
+
+    if (!buildCanonicalDeck) return null;
 
     return buildCanonicalDeck(options.sourceDocument);
   }

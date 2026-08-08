@@ -36,6 +36,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
       ? options.captureSlideMutationState
       : null;
@@ -59,7 +62,8 @@
         && typeof canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders === 'function'
         ? canonicalSlideApi.createStudioCanonicalReorderSlideMutationBuilders({
             canonicalDeckApi,
-            buildCanonicalDeck
+            buildCanonicalDeck,
+            getCanonicalDeckBaseline
           })
         : null;
 
