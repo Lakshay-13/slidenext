@@ -124,8 +124,9 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
     setClipboard: () => {},
     getIframeDoc: () => sourceDocument,
     getActiveSlide: () => ({ id: 'slide-1' }),
-    buildCanonicalDeck: (doc) => {
+    buildCanonicalDeck: (doc, options) => {
       assert.equal(doc, sourceDocument);
+      assert.deepEqual(options, { preferLiveCanonicalDeck: false });
       return insertionCompleted ? liveCanonicalDeck : null;
     },
     insertClipboardPayload: () => {

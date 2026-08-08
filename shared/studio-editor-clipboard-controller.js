@@ -82,7 +82,9 @@
         ? context.doc
         : getIframeDoc();
       if (buildCanonicalDeck && sourceDocument) {
-        const liveCanonicalDeck = buildCanonicalDeck(sourceDocument);
+        const liveCanonicalDeck = buildCanonicalDeck(sourceDocument, {
+          preferLiveCanonicalDeck: false
+        });
         const insertedItems = context && Array.isArray(context.items) ? context.items : [];
         const insertedIds = insertedItems
           .map((item) => assignElementId(item))
