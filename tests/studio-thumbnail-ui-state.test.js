@@ -49,6 +49,21 @@ function createThumbCard() {
   };
 }
 
+test('updateActiveThumbnailCardState fails closed when the editor shell is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateActiveThumbnailCardState(activeSlideId) {',
+    '\n\n    function syncStudioChromeToActiveSlide'
+  );
+  const context = { document: {} };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateActiveThumbnailCardState('slide-1'), false);
+});
+
 test('setStudioThumbnailSlideCount updates the shared slide counter control', () => {
   const slideCountLabel = { textContent: '' };
   const documentRef = {
