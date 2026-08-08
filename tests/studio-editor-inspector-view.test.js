@@ -274,6 +274,30 @@ test('syncStudioInspectorTypographyControls prefers canonical opacity data', () 
   assert.equal(opacityLabel.textContent, '42%');
 });
 
+test('syncStudioInspectorTypographyControls prefers canonical font-size data', () => {
+  const fontSizeInput = { value: '' };
+  const fontSizeLabel = { textContent: '' };
+
+  assert.equal(inspectorView.syncStudioInspectorTypographyControls({
+    documentRef: {
+      getElementById(id) {
+        if (id === 'elFontSize') return fontSizeInput;
+        if (id === 'fontSizeVal') return fontSizeLabel;
+        return null;
+      }
+    },
+    primaryElement: { style: { fontSize: '12px' } },
+    canonicalNode: { style: 'font-size: 28px;' },
+    computedStyles: {
+      fontSize: '14px',
+      fontFamily: 'sans-serif',
+      color: '#fff'
+    }
+  }), true);
+  assert.equal(fontSizeInput.value, 28);
+  assert.equal(fontSizeLabel.textContent, '28px');
+});
+
 test('syncStudioInspectorBorderControls applies border values for shape-like selections', () => {
   const classList = createClassList();
   classList.add('editor-shape');

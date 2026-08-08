@@ -208,7 +208,13 @@
     const highlightAlignButton = typeof options.highlightAlignButton === 'function'
       ? options.highlightAlignButton
       : () => {};
-    const fSize = parseInt(computedStyles.fontSize) || 16;
+    const canonicalFontSize = parseInt(
+      readStudioInspectorCanonicalStyleValue(options.canonicalNode, 'font-size'),
+      10
+    );
+    const fSize = Number.isFinite(canonicalFontSize)
+      ? canonicalFontSize
+      : parseInt(computedStyles.fontSize, 10) || 16;
     const fontSizeInput = documentRef.getElementById('elFontSize');
     if (fontSizeInput) fontSizeInput.value = fSize;
     const fontSizeLabel = documentRef.getElementById('fontSizeVal');
