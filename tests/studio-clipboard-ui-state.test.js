@@ -235,6 +235,39 @@ test('buildClipboardSelectionMutationPlan fails closed when the shared clipboard
   });
 });
 
+test('buildClipboardPayload returns no payload when the shared clipboard module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildClipboardPayloadSource = extractFunctionSource(
+    fileContent,
+    'function buildClipboardPayload(elements = selectedElements, doc = getIframeDoc()) {',
+    '\n\n    function applyEditorClipboardInsertionWithTransaction'
+  );
+  const activeSlide = {};
+  const documentRef = {
+    defaultView: {
+      getComputedStyle() {
+        return {};
+      }
+    }
+  };
+  const context = {
+    selectedElements: [{}],
+    getIframeDoc() {
+      return documentRef;
+    },
+    getActiveSlide() {
+      return activeSlide;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildClipboardPayloadSource, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(
+    context.buildClipboardPayload(context.selectedElements, documentRef)
+  )), []);
+});
+
 test('finalizeClipboardActionResult refreshes clipboard controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);

@@ -6267,6 +6267,9 @@
 
     function buildClipboardPayload(elements = selectedElements, doc = getIframeDoc()) {
       const resolvedDoc = doc || getIframeDoc();
+      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
+        ? SlideNextStudioEditorClipboard
+        : null;
       const selection = Array.isArray(elements) ? elements : [];
       const slide = getActiveSlide(resolvedDoc);
       const getComputedStyle = resolvedDoc
@@ -6274,14 +6277,19 @@
         && typeof resolvedDoc.defaultView.getComputedStyle === 'function'
         ? resolvedDoc.defaultView.getComputedStyle.bind(resolvedDoc.defaultView)
         : null;
-      if (!resolvedDoc || !slide || selection.length === 0 || !getComputedStyle) return [];
+      if (!resolvedDoc || !slide || selection.length === 0 || !getComputedStyle
+        || !clipboardApi
+        || typeof clipboardApi.getStudioClipboardSelection !== 'function'
+        || typeof clipboardApi.buildStudioClipboardPayloadItems !== 'function') {
+        return [];
+      }
       const slideMetrics = getSlideMetrics(slide);
-      const orderedSelection = SlideNextStudioEditorClipboard.getStudioClipboardSelection(selection, {
+      const orderedSelection = clipboardApi.getStudioClipboardSelection(selection, {
         orderedElements: getNormalizedSlideLayerOrder(slide)
       });
       if (orderedSelection.length === 0) return [];
 
-      return SlideNextStudioEditorClipboard.buildStudioClipboardPayloadItems(orderedSelection, {
+      return clipboardApi.buildStudioClipboardPayloadItems(orderedSelection, {
         sanitizeElement: sanitizeDuplicatedSubtree,
         hoverableClassName: 'editor-hoverable',
         getComputedStyle,
