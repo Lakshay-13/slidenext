@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 test('layer order controller applies the planned order and forwards mutation callbacks', () => {
   const calls = [];
@@ -94,6 +95,7 @@ test('layer order controller blocks canonical-locked elements when the DOM is st
   let applied = false;
   const controller = layerOrderController.createStudioEditorLayerOrderController({
     canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => deck,
     layerOrderApi: {
       buildStudioLayerOrderMutationPlan(elements, action, options) {

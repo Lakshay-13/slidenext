@@ -17,6 +17,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
       : () => null;
@@ -75,6 +78,15 @@
       }
       const canonicalDeck = resolveCanonicalDeck(sourceDocument);
       if (!canonicalDeck) return isElementLocked;
+      if (canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalLockReader === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalLockReader(canonicalDeck, {
+          resolveCanonicalNode(element, deck) {
+            return canonicalDeckApi.findCanonicalNodeById(deck, assignElementId(element));
+          },
+          fallbackReader: isElementLocked
+        });
+      }
       return (element) => {
         let canonicalLockState = null;
         try {
