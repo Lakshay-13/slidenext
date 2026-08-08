@@ -1656,7 +1656,9 @@
             assignSlideId: assignEditorSlideId,
             decorateSlide: makeElementsHoverable
           }),
-          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          buildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc, {
+            preferLiveCanonicalDeck: false
+          }),
           getSlideId: (...args) => getEditorSlideId(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
