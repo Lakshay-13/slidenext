@@ -99,6 +99,38 @@ test('canonical block operations are immutable and preserve block order', () => 
   assert.equal(canonicalDeck.removeCanonicalBlock(source, 'missing'), null);
 });
 
+test('insertCanonicalBlockInstance clones block nodes with collision-free ids and offsets', () => {
+  const source = canonicalDeck.createCanonicalDeck({
+    blocks: [{
+      id: 'hero',
+      nodes: [{
+        id: 'title',
+        type: 'heading',
+        layout: { mode: 'absolute', x: 10, y: 20 },
+        children: [{ id: 'accent', type: 'shape' }]
+      }]
+    }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'hero-title' }] }]
+  });
+
+  const first = canonicalDeck.insertCanonicalBlockInstance(source, 'slide-1', 'hero', {
+    offsetX: 40,
+    offsetY: 50
+  });
+  const second = canonicalDeck.insertCanonicalBlockInstance(first, 'slide-1', 'hero');
+  const inserted = first.slides[0].nodes[1];
+  const insertedAgain = second.slides[0].nodes[2];
+
+  assert.equal(inserted.id, 'hero-title-2');
+  assert.equal(inserted.children[0].id, 'hero-accent');
+  assert.deepEqual([inserted.layout.x, inserted.layout.y], [50, 70]);
+  assert.notEqual(insertedAgain.id, inserted.id);
+  assert.deepEqual(source.slides[0].nodes.map((node) => node.id), ['hero-title']);
+  assert.equal(first.blocks[0].nodes[0].id, 'title');
+  assert.equal(canonicalDeck.insertCanonicalBlockInstance(source, 'missing', 'hero'), null);
+  assert.equal(canonicalDeck.insertCanonicalBlockInstance(source, 'slide-1', 'missing'), null);
+});
+
 test('createCanonicalDeck preserves optional slide sections without changing empty slide shape', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [

@@ -533,6 +533,87 @@
     });
   }
 
+  function collectCanonicalNodeIds(nodes = [], usedIds = new Set()) {
+    (Array.isArray(nodes) ? nodes : []).forEach((node) => {
+      if (!node || typeof node !== 'object') return;
+      if (typeof node.id === 'string' && node.id.trim()) {
+        usedIds.add(node.id);
+      }
+      collectCanonicalNodeIds(node.children, usedIds);
+    });
+    return usedIds;
+  }
+
+  function cloneCanonicalBlockNode(node, blockId, usedIds, path = [], options = {}) {
+    const sourceId = normalizeString(node && node.id).trim();
+    const fallbackId = `${blockId}-node-${path.join('-') || '1'}`;
+    const nextId = createUniqueCanonicalId(
+      `${blockId}-${sourceId || fallbackId}`,
+      fallbackId,
+      usedIds
+    );
+    const currentLayout = asPlainObject(node && node.layout);
+    const nextLayout = { ...currentLayout };
+    const offsetX = normalizeFiniteNumber(options.offsetX, 0);
+    const offsetY = normalizeFiniteNumber(options.offsetY, 0);
+    if (currentLayout.mode === 'absolute' && Number.isFinite(currentLayout.x)) {
+      nextLayout.x = currentLayout.x + offsetX;
+    }
+    if (currentLayout.mode === 'absolute' && Number.isFinite(currentLayout.y)) {
+      nextLayout.y = currentLayout.y + offsetY;
+    }
+
+    return createCanonicalNode({
+      ...node,
+      id: nextId,
+      layout: nextLayout,
+      children: (Array.isArray(node && node.children) ? node.children : [])
+        .map((child, childIndex) => cloneCanonicalBlockNode(
+          child,
+          blockId,
+          usedIds,
+          path.concat(childIndex + 1),
+          options
+        ))
+    }, path.length);
+  }
+
+  function insertCanonicalBlockInstance(deckLike, slideId, blockId, options = {}) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    const normalizedBlockId = normalizeString(blockId).trim();
+    const blocks = Array.isArray(deck.blocks) ? deck.blocks : [];
+    if (!isCanonicalDeck(deck) || !normalizedSlideId || !normalizedBlockId) {
+      return null;
+    }
+
+    const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
+    const block = blocks.find((candidate) => candidate && candidate.id === normalizedBlockId);
+    if (slideIndex < 0 || !block || !Array.isArray(block.nodes) || block.nodes.length === 0) {
+      return null;
+    }
+
+    const usedNodeIds = new Set();
+    deck.slides.forEach((slide) => collectCanonicalNodeIds(slide && slide.nodes, usedNodeIds));
+    const idPrefix = normalizeString(options.idPrefix, normalizedBlockId).trim() || normalizedBlockId;
+    const clonedNodes = block.nodes.map((node, nodeIndex) => cloneCanonicalBlockNode(
+      node,
+      idPrefix,
+      usedNodeIds,
+      [nodeIndex + 1],
+      options
+    ));
+
+    return createCanonicalDeck({
+      ...deck,
+      slides: deck.slides.map((slide, index) => index === slideIndex
+        ? { ...slide, nodes: [...slide.nodes, ...clonedNodes] }
+        : slide)
+    });
+  }
+
   function groupCanonicalNodes(deckLike, slideId, parentNodeId = '', nodeIds = [], groupNodeLike = {}) {
     if (!deckLike || typeof deckLike !== 'object' || !groupNodeLike || typeof groupNodeLike !== 'object') {
       return null;
@@ -1296,6 +1377,7 @@
     insertCanonicalBlock,
     removeCanonicalBlock,
     appendCanonicalNode,
+    insertCanonicalBlockInstance,
     groupCanonicalNodes,
     ungroupCanonicalNodes,
     removeCanonicalNodes,
