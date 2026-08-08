@@ -4684,29 +4684,16 @@
     }
 
     function resolveInlineTextEditTarget(node, slide) {
-      if (node && typeof node.closest === 'function' && node.closest('.editor-resize-handle')) {
+      const inlineEditApi = typeof SlideNextStudioEditorInlineEdit !== 'undefined'
+        ? SlideNextStudioEditorInlineEdit
+        : null;
+      if (!inlineEditApi || typeof inlineEditApi.resolveStudioInlineTextEditTarget !== 'function') {
         return null;
       }
-      const selected = node && typeof node.closest === 'function'
-        && node.closest('#editorSelectionOverlay')
-        ? getLiveSelectedElements(selectedElements, getIframeDoc())[0]
-        : null;
-      let current = selected || (node && node.nodeType === 1
-        ? node
-        : node && node.parentElement
-          ? node.parentElement
-          : null);
-      while (current && current !== slide) {
-        const tagName = typeof current.tagName === 'string'
-          ? current.tagName.toLowerCase()
-          : '';
-        if (EDITOR_INLINE_EDIT_TEXT_TAGS.has(tagName)
-          && (!slide || typeof slide.contains !== 'function' || slide.contains(current))) {
-          return current;
-        }
-        current = current.parentElement;
-      }
-      return null;
+      return inlineEditApi.resolveStudioInlineTextEditTarget(node, slide, {
+        selectedElements: getLiveSelectedElements(selectedElements, getIframeDoc()),
+        textTagNames: EDITOR_INLINE_EDIT_TEXT_TAGS
+      });
     }
 
     function refreshSelectionClasses() {

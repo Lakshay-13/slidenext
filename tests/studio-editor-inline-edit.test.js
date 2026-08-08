@@ -3,6 +3,58 @@ const assert = require('node:assert/strict');
 
 const inlineEdit = require('../shared/studio-editor-inline-edit.js');
 
+test('resolveStudioInlineTextEditTarget climbs to an editable text node on the active slide', () => {
+  const textElement = { tagName: 'P', parentElement: null };
+  const child = { nodeType: 1, tagName: 'SPAN', parentElement: textElement };
+  const slide = {
+    contains(element) {
+      return element === child || element === textElement;
+    }
+  };
+
+  assert.equal(
+    inlineEdit.resolveStudioInlineTextEditTarget(child, slide, { textTagNames: new Set(['p']) }),
+    textElement
+  );
+});
+
+test('resolveStudioInlineTextEditTarget uses the selected text node for overlay targets', () => {
+  const selectedTextElement = { tagName: 'H2', parentElement: null };
+  const overlay = {
+    closest(selector) {
+      return selector === '#editorSelectionOverlay' ? overlay : null;
+    },
+    nodeType: 1
+  };
+  const slide = {
+    contains(element) {
+      return element === selectedTextElement;
+    }
+  };
+
+  assert.equal(
+    inlineEdit.resolveStudioInlineTextEditTarget(overlay, slide, {
+      selectedElements: [selectedTextElement],
+      textTagNames: new Set(['h2'])
+    }),
+    selectedTextElement
+  );
+});
+
+test('resolveStudioInlineTextEditTarget ignores resize handles and non-text nodes', () => {
+  const resizeHandle = {
+    closest(selector) {
+      return selector === '.editor-resize-handle' ? resizeHandle : null;
+    },
+    nodeType: 1
+  };
+  const shape = { nodeType: 1, tagName: 'DIV', parentElement: null };
+  const slide = { contains: () => true };
+
+  assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(resizeHandle, slide), null);
+  assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(shape, slide), null);
+});
+
 function createElement(text = 'Before') {
   const attributes = {};
   const listeners = {};

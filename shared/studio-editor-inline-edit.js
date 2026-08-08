@@ -9,6 +9,41 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const EDITING_ATTRIBUTE = 'data-editor-inline-editing';
 
+  function resolveStudioInlineTextEditTarget(node, slide, options = {}) {
+    if (node && typeof node.closest === 'function' && node.closest('.editor-resize-handle')) {
+      return null;
+    }
+
+    const selectedElements = Array.isArray(options.selectedElements)
+      ? options.selectedElements
+      : [];
+    const selectionOverlaySelector = options.selectionOverlaySelector || '#editorSelectionOverlay';
+    const selected = node && typeof node.closest === 'function'
+      && node.closest(selectionOverlaySelector)
+      ? selectedElements[0]
+      : null;
+    const textTagNames = options.textTagNames instanceof Set
+      ? options.textTagNames
+      : new Set(['p', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'pre', 'code', 'blockquote']);
+
+    let current = selected || (node && node.nodeType === 1
+      ? node
+      : node && node.parentElement
+        ? node.parentElement
+        : null);
+    while (current && current !== slide) {
+      const tagName = typeof current.tagName === 'string'
+        ? current.tagName.toLowerCase()
+        : '';
+      if (textTagNames.has(tagName)
+        && (!slide || typeof slide.contains !== 'function' || slide.contains(current))) {
+        return current;
+      }
+      current = current.parentElement;
+    }
+    return null;
+  }
+
   function createStudioInlineTextEditController(options = {}) {
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
@@ -155,6 +190,7 @@
   }
 
   return {
+    resolveStudioInlineTextEditTarget,
     createStudioInlineTextEditController,
     attachStudioInlineTextEditHandlers
   };
