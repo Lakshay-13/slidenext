@@ -76,16 +76,21 @@
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
         ? deckImportApi.importElementToCanonicalNode
         : null;
-      const builders = canonicalInsertionApi
-        && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
-        ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            buildCanonicalDeckBaseline,
-            getCanonicalDeckBaseline,
-            importElementToCanonicalNode
-          })
-        : null;
+      let builders = null;
+      try {
+        builders = canonicalInsertionApi
+          && typeof canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders === 'function'
+          ? canonicalInsertionApi.createStudioCanonicalInsertionMutationBuilders({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
+              getCanonicalDeckBaseline,
+              importElementToCanonicalNode
+            })
+          : null;
+      } catch (err) {
+        return null;
+      }
       return builders && typeof builders.buildCanonicalInsertionSequence === 'function'
         ? builders.buildCanonicalInsertionSequence
         : null;
