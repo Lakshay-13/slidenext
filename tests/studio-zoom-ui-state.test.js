@@ -313,6 +313,50 @@ test('updateZoomActionState delegates toolbar rendering to the shared deck view'
   assert.equal(calls[0].getActiveSlide, context.getActiveSlide);
 });
 
+test('updateZoomActionState caches the shared zoom toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateZoomActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateZoomActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateWallpaperActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'active-doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioZoomActionState() {
+        return { canUseZoomControls: true };
+      },
+      syncStudioZoomToolbarActionState() {
+        throw new Error('direct zoom sync should not run');
+      },
+      createStudioZoomToolbarActionStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canUseZoomControls;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioZoomActionState(fileContent, context);
+  vm.runInContext(updateZoomActionStateSource, context);
+
+  assert.equal(context.updateZoomActionState(doc), true);
+  assert.equal(context.updateZoomActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
+
 test('zoom helpers no-op safely when zoom readiness is disabled and still tolerate a missing zoom select', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zoomInSource = extractFunctionSource(

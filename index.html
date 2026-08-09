@@ -11696,6 +11696,18 @@
       if (!deckView || typeof deckView.syncStudioZoomToolbarActionState !== 'function') {
         return false;
       }
+      if (typeof deckView.createStudioZoomToolbarActionStateSync === 'function') {
+        if (typeof updateZoomActionState.sync !== 'function') {
+          updateZoomActionState.sync = deckView.createStudioZoomToolbarActionStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => resolveCurrentStudioZoomActionState(sourceDoc),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateZoomActionState.sync === 'function') {
+          return updateZoomActionState.sync(doc);
+        }
+      }
       return deckView.syncStudioZoomToolbarActionState({
         documentRef: document,
         doc,

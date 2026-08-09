@@ -716,6 +716,52 @@ test('syncStudioZoomToolbarActionState resolves and renders zoom controls in one
   assert.deepEqual(Object.values(controls).map((control) => control.disabled), [false, false, false]);
 });
 
+test('createStudioZoomToolbarActionStateSync resolves zoom state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const controls = {
+    zoomOutBtn: { disabled: true },
+    zoomSelect: { disabled: true },
+    zoomInBtn: { disabled: true }
+  };
+  const calls = [];
+  const syncState = deckView.createStudioZoomToolbarActionStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canUseZoomControls: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(Object.values(controls).map((control) => control.disabled), [false, false, false]);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioZoomToolbarActionStateSync fails closed when zoom state resolution throws', () => {
+  const syncState = deckView.createStudioZoomToolbarActionStateSync({
+    getActionState() {
+      throw new Error('zoom state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('resolveStudioInsertionActionState derives slide insertion readiness from the active slide and slide container resolvers', () => {
   assert.deepEqual(
     deckView.resolveStudioInsertionActionState(null),
