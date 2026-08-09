@@ -69,6 +69,9 @@
     const defaultLoadVersionHistory = typeof options.loadVersionHistory === 'function'
       ? options.loadVersionHistory
       : loadStudioVersionHistory;
+    const defaultBeforeLoad = typeof options.beforeLoad === 'function'
+      ? options.beforeLoad
+      : () => {};
     const defaultReportLoadError = typeof options.reportLoadError === 'function'
       ? options.reportLoadError
       : () => {};
@@ -90,10 +93,14 @@
       const loadVersionHistory = typeof nextOptions.loadVersionHistory === 'function'
         ? nextOptions.loadVersionHistory
         : defaultLoadVersionHistory;
+      const beforeLoad = typeof nextOptions.beforeLoad === 'function'
+        ? nextOptions.beforeLoad
+        : defaultBeforeLoad;
       const reportLoadError = typeof nextOptions.reportLoadError === 'function'
         ? nextOptions.reportLoadError
         : defaultReportLoadError;
 
+      beforeLoad(requestedPresentationUrl, requestedSessionToken);
       try {
         await loadVersionHistory(
           requestedPresentationUrl,

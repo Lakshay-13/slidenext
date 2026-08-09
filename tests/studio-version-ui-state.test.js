@@ -2835,6 +2835,7 @@ test('loadVersions renders an error state when the shared version-history loader
     SlideNextStudioVersionHistory: {
       createStudioVersionHistoryLoader(options = {}) {
         return async () => {
+          options.beforeLoad('/presentations/onboarding-presentation/index.html', 18);
           options.reportLoadError(new Error('versions unavailable'));
         };
       },

@@ -12535,9 +12535,6 @@
     }
 
     async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
-      if (presentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
-        renderVersionHistoryLoadingState();
-      }
       const createStudioVersionHistoryLoader = (
         typeof SlideNextStudioVersionHistory !== 'undefined'
         && SlideNextStudioVersionHistory
@@ -12557,6 +12554,11 @@
           )
             ? SlideNextStudioVersionHistory.loadStudioVersionHistory
             : null,
+          beforeLoad: (requestedPresentationUrl) => {
+            if (requestedPresentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
+              renderVersionHistoryLoadingState();
+            }
+          },
           reportLoadError: (error) => {
             console.error('Failed to load version history:', error);
             renderVersionHistoryLoadError();
@@ -12565,6 +12567,9 @@
       }
 
       if (!presentationUrl) return;
+      if (typeof renderVersionHistoryLoadingState === 'function') {
+        renderVersionHistoryLoadingState();
+      }
       try {
         await SlideNextStudioVersionHistory.loadStudioVersionHistory(
           presentationUrl,

@@ -93,6 +93,30 @@ test('createStudioVersionHistoryLoader reuses load-option defaults and call-time
   ]);
 });
 
+test('createStudioVersionHistoryLoader runs the loading lifecycle callback before fetching', async () => {
+  const calls = [];
+  const loadVersionHistory = versionHistory.createStudioVersionHistoryLoader({
+    beforeLoad(presentationUrl, sessionToken) {
+      calls.push(['beforeLoad', presentationUrl, sessionToken]);
+    },
+    createLoadOptions() {
+      calls.push(['createLoadOptions']);
+      return {};
+    },
+    loadVersionHistory() {
+      calls.push(['loadVersionHistory']);
+    }
+  });
+
+  await loadVersionHistory('/presentations/demo/index.html', 4);
+
+  assert.deepEqual(calls, [
+    ['beforeLoad', '/presentations/demo/index.html', 4],
+    ['createLoadOptions'],
+    ['loadVersionHistory']
+  ]);
+});
+
 test('loadStudioVersionHistory commits fetched versions when the requested deck is still current', async () => {
   const fetchDeferred = createDeferred();
   const committedVersions = [];
