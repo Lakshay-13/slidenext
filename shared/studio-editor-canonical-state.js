@@ -124,6 +124,42 @@
     };
   }
 
+  function createStudioEditorCanonicalDeckResolver(options = {}) {
+    const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
+      ? options.getCanonicalDeck
+      : () => null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : isStudioEditorCanonicalDeckLike;
+    const readCanonicalDeckBaseline = createStudioEditorCanonicalDeckBaselineReader({
+      getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
+      buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+      isCanonicalDeck
+    });
+
+    function isValidCanonicalDeck(value) {
+      if (!value) return false;
+      try {
+        return isCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    return function resolveCanonicalDeck(sourceDocument) {
+      const liveCanonicalDeck = readCanonicalDeckBaseline(sourceDocument);
+      if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+      try {
+        const fallbackCanonicalDeck = getCanonicalDeck(sourceDocument);
+        return isValidCanonicalDeck(fallbackCanonicalDeck)
+          ? fallbackCanonicalDeck
+          : null;
+      } catch (error) {
+        return null;
+      }
+    };
+  }
+
   function createStudioEditorCanonicalNodeReader(canonicalDeck, options = {}) {
     const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
       ? options.resolveCanonicalNode
@@ -285,6 +321,7 @@
     isStudioEditorCanonicalDeckLike,
     createStudioEditorCanonicalState,
     createStudioEditorCanonicalDeckBaselineReader,
+    createStudioEditorCanonicalDeckResolver,
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalNodeReaderFromApi,
     createStudioEditorCanonicalVisibilityReaderForDeck,

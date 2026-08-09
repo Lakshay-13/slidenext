@@ -94,6 +94,45 @@ test('canonical deck baseline reader rejects malformed results without a custom 
   assert.equal(readBaseline({ id: 'iframe-doc' }), null);
   assert.deepEqual(calls, ['live', 'rebuild']);
 });
+
+test('canonical deck resolver prefers a valid live deck and safely falls back', () => {
+  const documentRef = { id: 'iframe-doc' };
+  const liveDeck = { slides: [{ id: 'live' }] };
+  const fallbackDeck = { slides: [{ id: 'fallback' }] };
+  let fallbackCalls = 0;
+  const resolveCanonicalDeck = canonicalState.createStudioEditorCanonicalDeckResolver({
+    getCanonicalDeckBaseline(sourceDocument) {
+      assert.equal(sourceDocument, documentRef);
+      return liveDeck;
+    },
+    getCanonicalDeck() {
+      fallbackCalls += 1;
+      return fallbackDeck;
+    }
+  });
+
+  assert.equal(resolveCanonicalDeck(documentRef), liveDeck);
+  assert.equal(fallbackCalls, 0);
+
+  const fallbackResolver = canonicalState.createStudioEditorCanonicalDeckResolver({
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    getCanonicalDeck(sourceDocument) {
+      assert.equal(sourceDocument, documentRef);
+      return fallbackDeck;
+    }
+  });
+  assert.equal(fallbackResolver(documentRef), fallbackDeck);
+
+  const throwingResolver = canonicalState.createStudioEditorCanonicalDeckResolver({
+    getCanonicalDeck() {
+      throw new Error('fallback unavailable');
+    }
+  });
+  assert.equal(throwingResolver(documentRef), null);
+});
+
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
