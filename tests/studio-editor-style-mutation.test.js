@@ -82,3 +82,27 @@ test('applyStudioStyleMutationWithTransaction delegates chart values to the char
   assert.equal(delegated.value, '10,20');
   assert.equal(delegated.options.transactionApi.id, 'transactions');
 });
+
+test('applyStudioStyleMutationWithTransaction delegates chart titles to the chart mutation adapter', () => {
+  const selection = [{ dataset: { editorId: 'chart-1' } }];
+  let receivedValue = null;
+  const result = styleMutation.applyStudioStyleMutationWithTransaction(
+    styleState,
+    selection,
+    'chartTitle',
+    'Updated trend',
+    {
+      chartApi: {
+        applyStudioChartTitleMutationWithTransaction(currentSelection, value) {
+          assert.equal(currentSelection, selection);
+          receivedValue = value;
+          return { didApply: true, displayValue: value, transaction: { id: 'tx-title' } };
+        }
+      }
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.id, 'tx-title');
+  assert.equal(receivedValue, 'Updated trend');
+});

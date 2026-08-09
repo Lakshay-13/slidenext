@@ -257,6 +257,43 @@ test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source
   assert.equal(result.slides[0].nodes[0].attributes['data-chart-values'], '10,20,15,30');
 });
 
+test('buildStudioCanonicalStyleMutation rebuilds chart titles from the live source document when available', () => {
+  const sourceDeck = createSourceDeck();
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        type: 'chart',
+        attributes: { 'data-chart-title': 'Updated trend' }
+      }]
+    }]
+  });
+  const sourceDocument = { id: 'editor-doc', documentElement: {} };
+  const title = { textContent: 'Updated trend' };
+  const chart = {
+    dataset: { editorId: 'node-1' },
+    textContent: 'Updated trend',
+    querySelector() {
+      return title;
+    }
+  };
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    buildCanonicalDeck: () => rebuiltDeck,
+    sourceDocument,
+    selection: [chart],
+    prop: 'chartTitle',
+    value: 'Updated trend',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result, rebuiltDeck);
+  assert.equal(result.slides[0].nodes[0].attributes['data-chart-title'], 'Updated trend');
+});
+
 test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
   const throwingCanonicalDeckApi = {
     ...canonicalDeck,

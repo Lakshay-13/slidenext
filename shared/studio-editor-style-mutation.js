@@ -20,8 +20,13 @@
       && typeof chartApi.applyStudioChartValuesMutationWithTransaction === 'function'
       ? chartApi.applyStudioChartValuesMutationWithTransaction
       : null;
+    const applyStudioChartTitleMutationWithTransaction = chartApi
+      && typeof chartApi.applyStudioChartTitleMutationWithTransaction === 'function'
+      ? chartApi.applyStudioChartTitleMutationWithTransaction
+      : null;
     if (!applyStudioStyleMutationWithTransaction
-      && !(prop === 'chartValues' && applyStudioChartValuesMutationWithTransaction)) {
+      && !((prop === 'chartValues' && applyStudioChartValuesMutationWithTransaction)
+        || (prop === 'chartTitle' && applyStudioChartTitleMutationWithTransaction))) {
       return { didApply: false, displayValue: `${value}`, transaction: null };
     }
 
@@ -39,8 +44,13 @@
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
-    if (prop === 'chartValues' && applyStudioChartValuesMutationWithTransaction) {
-      return applyStudioChartValuesMutationWithTransaction(selection, value, {
+    const chartMutation = prop === 'chartValues'
+      ? applyStudioChartValuesMutationWithTransaction
+      : prop === 'chartTitle'
+        ? applyStudioChartTitleMutationWithTransaction
+        : null;
+    if (chartMutation) {
+      return chartMutation(selection, value, {
         transactionApi,
         getElementId
       });

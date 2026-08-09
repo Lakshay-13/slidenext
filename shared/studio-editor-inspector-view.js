@@ -88,6 +88,17 @@
     }).filter(Boolean).join(',');
   }
 
+  function readStudioInspectorChartTitle(element) {
+    const metadata = readStudioInspectorAttribute(element, 'data-chart-title');
+    if (metadata) return metadata;
+    const titleElement = element && typeof element.querySelector === 'function'
+      ? element.querySelector('.editor-chart-title')
+      : null;
+    return titleElement && typeof titleElement.textContent === 'string'
+      ? titleElement.textContent
+      : '';
+  }
+
   function renderStudioInspectorSelectionSummary(options = {}) {
     const documentRef = options.documentRef;
     const selectionState = options.selectionState || {};
@@ -156,6 +167,8 @@
     if (chartGroup) chartGroup.classList.add('hidden');
     const chartValuesInput = documentRef.getElementById('elChartValues');
     if (chartValuesInput) chartValuesInput.value = '42,68,55,86';
+    const chartTitleInput = documentRef.getElementById('elChartTitle');
+    if (chartTitleInput) chartTitleInput.value = 'Quarterly trend';
     const imageFitInput = documentRef.getElementById('elImageFit');
     if (imageFitInput) {
       imageFitInput.value = 'fill';
@@ -181,6 +194,7 @@
     const defaults = [
       ['elTextContent', ''],
       ['elChartValues', '42,68,55,86'],
+      ['elChartTitle', 'Quarterly trend'],
       ['elImageSrc', ''],
       ['elFontSize', '16'],
       ['fontSizeVal', '16px', 'textContent'],
@@ -236,6 +250,7 @@
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
     const chartGroup = documentRef.getElementById('inspectorChartGroup');
     const chartValuesInput = documentRef.getElementById('elChartValues');
+    const chartTitleInput = documentRef.getElementById('elChartTitle');
     const imageSrcInput = documentRef.getElementById('elImageSrc');
     const imageFitInput = documentRef.getElementById('elImageFit');
     const imagePositionInput = documentRef.getElementById('elImagePosition');
@@ -252,6 +267,14 @@
         : '';
       if (chartValuesInput) {
         chartValuesInput.value = canonicalChartValues || readStudioInspectorChartValues(primaryElement);
+      }
+      const canonicalChartTitle = options.canonicalNode
+        && options.canonicalNode.attributes
+        && typeof options.canonicalNode.attributes['data-chart-title'] === 'string'
+        ? options.canonicalNode.attributes['data-chart-title']
+        : '';
+      if (chartTitleInput) {
+        chartTitleInput.value = canonicalChartTitle || readStudioInspectorChartTitle(primaryElement);
       }
     } else if (chartGroup) {
       chartGroup.classList.add('hidden');

@@ -309,6 +309,7 @@ test('syncStudioInspectorContentControls hides destructive text editing for stru
 test('syncStudioInspectorContentControls exposes canonical chart values for chart selections', () => {
   const chartGroup = createClassList(['hidden']);
   const chartValuesInput = { value: '' };
+  const chartTitleInput = { value: '' };
   const chart = {
     tagName: 'DIV',
     classList: {
@@ -326,19 +327,24 @@ test('syncStudioInspectorContentControls exposes canonical chart values for char
       getElementById(id) {
         return {
           inspectorChartGroup: { classList: chartGroup },
-          elChartValues: chartValuesInput
+          elChartValues: chartValuesInput,
+          elChartTitle: chartTitleInput
         }[id] || null;
       }
     },
     primaryElement: chart,
     isMulti: false,
     canonicalNode: {
-      attributes: { 'data-chart-values': '12,24,18,30' }
+      attributes: {
+        'data-chart-values': '12,24,18,30',
+        'data-chart-title': 'Updated trend'
+      }
     },
     computedStyles: {}
   }), true);
   assert.equal(chartGroup.contains('hidden'), false);
   assert.equal(chartValuesInput.value, '12,24,18,30');
+  assert.equal(chartTitleInput.value, 'Updated trend');
 });
 
 test('syncStudioInspectorContentControls prefers canonical image source data', () => {

@@ -28,9 +28,14 @@ function createChart(values = [42, 68, 55, 86]) {
     }
   }));
   const chartBody = { children: bars, classList: createClassList(['editor-chart-bars']) };
+  const title = {
+    textContent: 'Quarterly trend',
+    children: [],
+    classList: createClassList(['editor-chart-title'])
+  };
   const chart = {
     dataset: { editorId: 'chart-1', chartValues: values.join(',') },
-    children: [chartBody],
+    children: [title, chartBody],
     classList: createClassList(['editor-chart']),
     getAttribute(name) {
       return name === 'data-chart-values' ? this.dataset.chartValues : null;
@@ -42,13 +47,13 @@ function createChart(values = [42, 68, 55, 86]) {
   Object.defineProperty(chart, 'innerHTML', {
     configurable: true,
     get() {
-      return bars.map((bar) => `${bar.dataset.chartValue || ''}:${bar.style.height}`).join('|');
+      return `${title.textContent}|${bars.map((bar) => `${bar.dataset.chartValue || ''}:${bar.style.height}`).join('|')}`;
     },
     set(value) {
       this._innerHTML = value;
     }
   });
-  return { chart, bars };
+  return { chart, bars, title };
 }
 
 test('chart values mutation updates metadata, bar heights, and a reversible transaction', () => {
@@ -93,4 +98,34 @@ test('chart values reader falls back to bar metadata for legacy charts', () => {
   bars[1].setAttribute('data-chart-value', '24');
 
   assert.deepEqual(chartMutation.getStudioChartValues(chart), [12, 24]);
+});
+
+test('chart title mutation updates the existing title node and records markup history', () => {
+  const { chart, title } = createChart();
+  const result = chartMutation.applyStudioChartTitleMutationWithTransaction(
+    [chart],
+    '  Updated   trend  ',
+    {
+      transactionApi: transaction,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.displayValue, 'Updated trend');
+  assert.equal(title.textContent, 'Updated trend');
+  assert.deepEqual(result.transaction.operations.map((operation) => operation.type), ['markup']);
+  assert.equal(chartMutation.getStudioChartTitle(chart), 'Updated trend');
+});
+
+test('chart title mutation rejects non-chart selections without changing the title', () => {
+  const { chart, title } = createChart();
+  const nonChart = { classList: createClassList() };
+
+  assert.equal(
+    chartMutation.applyStudioChartTitleMutationWithTransaction([nonChart], 'Other').didApply,
+    false
+  );
+  assert.equal(title.textContent, 'Quarterly trend');
+  assert.equal(chartMutation.getStudioChartTitle(chart), 'Quarterly trend');
 });

@@ -11,6 +11,7 @@
   const STUDIO_STYLE_VERSION_LABELS = {
     text: 'Auto: Edited Text',
     chartValues: 'Auto: Edited Chart Data',
+    chartTitle: 'Auto: Edited Chart Title',
     family: 'Auto: Changed Font Family',
     weight: 'Auto: Changed Font Weight',
     align: 'Auto: Changed Alignment',

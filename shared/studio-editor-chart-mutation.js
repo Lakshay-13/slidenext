@@ -94,6 +94,56 @@
       : [];
   }
 
+  function collectStudioChartTitle(element) {
+    if (!element) return null;
+    if (element.classList
+      && typeof element.classList.contains === 'function'
+      && element.classList.contains('editor-chart-title')) {
+      return element;
+    }
+    if (element.children && typeof element.children.length === 'number') {
+      for (const child of Array.from(element.children)) {
+        const title = collectStudioChartTitle(child);
+        if (title) return title;
+      }
+    }
+    return null;
+  }
+
+  function getStudioChartTitleElement(element) {
+    if (element && typeof element.querySelector === 'function') {
+      return element.querySelector('.editor-chart-title') || null;
+    }
+    return collectStudioChartTitle(element);
+  }
+
+  function getStudioChartTitle(element) {
+    const titleElement = getStudioChartTitleElement(element);
+    return titleElement && typeof titleElement.textContent === 'string'
+      ? titleElement.textContent
+      : '';
+  }
+
+  function createChartMarkupTransaction(chart, beforeMarkup, afterMarkup, options) {
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    if (!transactionApi
+      || beforeMarkup === afterMarkup
+      || typeof transactionApi.createStudioMarkupTransaction !== 'function') {
+      return null;
+    }
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    return transactionApi.createStudioMarkupTransaction([{
+      element: chart,
+      elementId: getElementId(chart),
+      before: beforeMarkup,
+      after: afterMarkup
+    }], { getElementId });
+  }
+
   function createChartTransaction(chart, beforeValues, afterValues, beforeMarkup, afterMarkup, options) {
     const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
       ? options.transactionApi
@@ -111,15 +161,12 @@
           after: afterValues
         }], { getElementId })
       : null;
-    const markupTransaction = beforeMarkup !== afterMarkup
-      && typeof transactionApi.createStudioMarkupTransaction === 'function'
-      ? transactionApi.createStudioMarkupTransaction([{
-          element: chart,
-          elementId: getElementId(chart),
-          before: beforeMarkup,
-          after: afterMarkup
-        }], { getElementId })
-      : null;
+    const markupTransaction = createChartMarkupTransaction(
+      chart,
+      beforeMarkup,
+      afterMarkup,
+      options
+    );
     if (datasetTransaction && markupTransaction
       && typeof transactionApi.mergeStudioEditorTransactions === 'function') {
       return transactionApi.mergeStudioEditorTransactions(datasetTransaction, markupTransaction);
@@ -166,11 +213,37 @@
     };
   }
 
+  function applyStudioChartTitleMutationWithTransaction(elements = [], value, options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const charts = selection.filter(isStudioChartElement);
+    if (charts.length !== 1) {
+      return { didApply: false, displayValue: `${value}`, transaction: null };
+    }
+
+    const chart = charts[0];
+    const titleElement = getStudioChartTitleElement(chart);
+    if (!titleElement) {
+      return { didApply: false, displayValue: `${value}`, transaction: null };
+    }
+    const title = `${value ?? ''}`.replace(/\s+/g, ' ').trim().slice(0, 160);
+    const beforeMarkup = typeof chart.innerHTML === 'string' ? chart.innerHTML : '';
+    titleElement.textContent = title;
+    const afterMarkup = typeof chart.innerHTML === 'string' ? chart.innerHTML : '';
+    return {
+      didApply: true,
+      displayValue: title,
+      transaction: createChartMarkupTransaction(chart, beforeMarkup, afterMarkup, options)
+    };
+  }
+
   return {
     MAX_CHART_VALUES,
     isStudioChartElement,
     parseStudioChartValues,
     getStudioChartValues,
-    applyStudioChartValuesMutationWithTransaction
+    getStudioChartTitleElement,
+    getStudioChartTitle,
+    applyStudioChartValuesMutationWithTransaction,
+    applyStudioChartTitleMutationWithTransaction
   };
 });
