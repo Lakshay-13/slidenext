@@ -5200,11 +5200,14 @@
         : typeof getCommittedSelectedElementIds === 'function'
           ? getCommittedSelectedElementIds
           : () => [];
+      const resolveCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+        ? resolveEditorUiCanonicalDeck
+        : typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null;
       return createEditorSlideMutationRestoreStateCapturer({
         saveHistoryState,
-        buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
-          : null,
+        buildCanonicalDeck: resolveCanonicalDeck,
         getActiveSlideId,
         getSelectedElementIds: getCommittedSelectionIds
       })(iframeDoc);

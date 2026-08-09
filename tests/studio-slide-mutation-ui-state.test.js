@@ -340,6 +340,43 @@ test('captureSlideMutationRestoreState snapshots the active slide id and committ
   ]);
 });
 
+test('captureSlideMutationRestoreState prefers the live canonical deck before a slide mutation', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const context = {
+    resolveEditorUiCanonicalDeck(doc) {
+      calls.push(['resolver', doc]);
+      return canonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('pre-mutation capture should use live canonical state');
+    },
+    getActiveSlideId() {
+      return 'slide-3';
+    },
+    getCommittedSelectedEditorElementIds() {
+      return ['node-1'];
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureSlideMutationRestoreState(fileContent, context);
+
+  assert.deepEqual(context.captureSlideMutationRestoreState(iframeDoc), {
+    preservedActiveSlideId: 'slide-3',
+    preservedSelectionIds: ['node-1']
+  });
+  assert.deepEqual(calls, [
+    ['resolver', iframeDoc],
+    ['history', false, null, canonicalDeck]
+  ]);
+});
+
 test('captureSlideMutationRestoreState delegates the snapshot to the shared deck view module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { id: 'doc' };
