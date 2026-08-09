@@ -28,7 +28,19 @@ function setStudioPendingEditorTransaction(nextTransaction) {
 }
 function clearStudioPendingEditorTransaction() {
   pendingEditorTransaction = null;
+  pendingEditorCanonicalDeck = null;
   return pendingEditorTransaction;
+}
+function getStudioPendingEditorCanonicalDeck() {
+  return typeof pendingEditorCanonicalDeck !== 'undefined' ? pendingEditorCanonicalDeck : null;
+}
+function setStudioPendingEditorCanonicalDeck(nextCanonicalDeck) {
+  pendingEditorCanonicalDeck = nextCanonicalDeck;
+  return pendingEditorCanonicalDeck;
+}
+function clearStudioPendingEditorCanonicalDeck() {
+  pendingEditorCanonicalDeck = null;
+  return pendingEditorCanonicalDeck;
 }
 `;
 }
