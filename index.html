@@ -1363,6 +1363,7 @@
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-zoom-controller.js"></script>
+  <script src="/shared/studio-editor-zoom-runtime.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
@@ -3455,10 +3456,13 @@
       }
       return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
     }
-    const studioEditorZoomController = typeof SlideNextStudioEditorZoomController !== 'undefined'
-      && SlideNextStudioEditorZoomController
-      && typeof SlideNextStudioEditorZoomController.createStudioEditorZoomController === 'function'
-      ? SlideNextStudioEditorZoomController.createStudioEditorZoomController({
+    const studioEditorZoomRuntime = typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
+      && SlideNextStudioEditorZoomRuntime
+      && typeof SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime === 'function'
+      ? SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime({
+          controllerApi: typeof SlideNextStudioEditorZoomController !== 'undefined'
+            ? SlideNextStudioEditorZoomController
+            : null,
           zoomApi: typeof SlideNextStudioEditorZoom !== 'undefined'
             ? SlideNextStudioEditorZoom
             : null,
@@ -3470,6 +3474,9 @@
           initialZoomFactor: 1.0,
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
+      : null;
+    const studioEditorZoomController = studioEditorZoomRuntime
+      ? studioEditorZoomRuntime.zoomController
       : null;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
