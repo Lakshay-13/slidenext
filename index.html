@@ -4575,7 +4575,12 @@
         bindDeckNavigationSync,
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
-          const initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+          let initialPersistedDeckState = null;
+          try {
+            initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+          } catch (error) {
+            initialPersistedDeckState = null;
+          }
           if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
             saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
           } else {
