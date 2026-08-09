@@ -78,6 +78,36 @@ test('buildStudioCanonicalThemeBaseline prefers a valid live canonical deck', ()
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalThemeBaseline delegates baseline resolution to canonical state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  const getCanonicalDeckBaseline = () => sourceDeck;
+  const buildCanonicalDeckBaseline = () => sourceDeck;
+  let readerOptions = null;
+  let readerDocument = null;
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          readerDocument = documentRef;
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline,
+    buildCanonicalDeckBaseline,
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalThemeBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
@@ -133,6 +163,17 @@ test('buildStudioCanonicalThemeBaseline falls back when the live canonical deck 
 
   assert.equal(result, sourceDeck);
   assert.equal(didBuildFromDocument, true);
+});
+
+test('buildStudioCanonicalThemeBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('compatibility rebuild failed');
+    }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalThemeDeck applies token updates to a supplied baseline', () => {
