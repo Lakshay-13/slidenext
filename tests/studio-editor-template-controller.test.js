@@ -326,3 +326,28 @@ test('template controller fails closed when removing a template canonical mutati
   assert.equal(controller.removeTemplate('hero-template'), null);
   assert.deepEqual(calls, []);
 });
+
+test('template controller fails closed when inserting a template canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let didApply = false;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      insertCanonicalTemplateSlide() {
+        throw new Error('canonical template insertion failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    applyInsertion() {
+      didApply = true;
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.equal(didApply, false);
+});

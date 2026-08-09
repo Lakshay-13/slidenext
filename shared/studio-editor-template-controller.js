@@ -208,11 +208,16 @@
       if (!canonicalDeck || activeSlideIndex < 0) return false;
 
       const insertionIndex = activeSlideIndex + 1;
-      const nextCanonicalDeck = canonicalDeckApi.insertCanonicalTemplateSlide(
-        canonicalDeck,
-        templateId,
-        insertionIndex
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.insertCanonicalTemplateSlide(
+          canonicalDeck,
+          templateId,
+          insertionIndex
+        );
+      } catch (err) {
+        return false;
+      }
       const nextSlide = nextCanonicalDeck && nextCanonicalDeck.slides[insertionIndex];
       const documentRef = getDocument();
       const container = getSlideContainer(documentRef);
