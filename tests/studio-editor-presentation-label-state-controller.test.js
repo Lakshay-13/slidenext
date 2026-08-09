@@ -41,12 +41,14 @@ test('presentation label state controller normalizes non-string labels', () => {
   });
 });
 
-test('editor routes presentation title and category through the state controller', () => {
+test('editor routes presentation title and category through the shared composition adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /createStudioEditorPresentationLabelStateController/);
+  assert.match(source, /studio-editor-presentation-label-store\.js/);
+  assert.match(source, /studioEditorPresentationLabelStateStore/);
   assert.match(source, /getStudioPresentationTitle\(\)/);
   assert.match(source, /getStudioPresentationCategory\(\)/);
+  assert.doesNotMatch(source, /const studioEditorPresentationLabelStateController =/);
   assert.doesNotMatch(source, /let currentTitle = ''/);
   assert.doesNotMatch(source, /let currentCategory = ''/);
 });

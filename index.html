@@ -1416,6 +1416,7 @@
   <script src="/shared/studio-editor-slide-index-store.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-selection-store.js"></script>
+  <script src="/shared/studio-editor-presentation-label-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
@@ -1507,33 +1508,33 @@
         ? studioEditorPresentationMetadataStateController.setPresentationMetadata(nextMetadata)
         : null;
     }
-    const studioEditorPresentationLabelStateController = typeof SlideNextStudioEditorPresentationLabelStateController !== 'undefined'
-      && SlideNextStudioEditorPresentationLabelStateController
-      && typeof SlideNextStudioEditorPresentationLabelStateController.createStudioEditorPresentationLabelStateController === 'function'
-      ? SlideNextStudioEditorPresentationLabelStateController.createStudioEditorPresentationLabelStateController({})
+    const studioEditorPresentationLabelStateStore = typeof SlideNextStudioEditorPresentationLabelStateStore !== 'undefined'
+      && SlideNextStudioEditorPresentationLabelStateStore
+      && typeof SlideNextStudioEditorPresentationLabelStateStore.createStudioEditorPresentationLabelStateStore === 'function'
+      ? SlideNextStudioEditorPresentationLabelStateStore.createStudioEditorPresentationLabelStateStore({})
       : null;
     function getStudioPresentationTitle() {
-      return studioEditorPresentationLabelStateController
-        && typeof studioEditorPresentationLabelStateController.getTitle === 'function'
-        ? studioEditorPresentationLabelStateController.getTitle()
+      return studioEditorPresentationLabelStateStore
+        && typeof studioEditorPresentationLabelStateStore.getTitle === 'function'
+        ? studioEditorPresentationLabelStateStore.getTitle()
         : '';
     }
     function setStudioPresentationTitle(nextTitle) {
-      return studioEditorPresentationLabelStateController
-        && typeof studioEditorPresentationLabelStateController.setTitle === 'function'
-        ? studioEditorPresentationLabelStateController.setTitle(nextTitle)
+      return studioEditorPresentationLabelStateStore
+        && typeof studioEditorPresentationLabelStateStore.setTitle === 'function'
+        ? studioEditorPresentationLabelStateStore.setTitle(nextTitle)
         : false;
     }
     function getStudioPresentationCategory() {
-      return studioEditorPresentationLabelStateController
-        && typeof studioEditorPresentationLabelStateController.getCategory === 'function'
-        ? studioEditorPresentationLabelStateController.getCategory()
+      return studioEditorPresentationLabelStateStore
+        && typeof studioEditorPresentationLabelStateStore.getCategory === 'function'
+        ? studioEditorPresentationLabelStateStore.getCategory()
         : '';
     }
     function setStudioPresentationCategory(nextCategory) {
-      return studioEditorPresentationLabelStateController
-        && typeof studioEditorPresentationLabelStateController.setCategory === 'function'
-        ? studioEditorPresentationLabelStateController.setCategory(nextCategory)
+      return studioEditorPresentationLabelStateStore
+        && typeof studioEditorPresentationLabelStateStore.setCategory === 'function'
+        ? studioEditorPresentationLabelStateStore.setCategory(nextCategory)
         : false;
     }
     const studioEditorSlideIndexStore = typeof SlideNextStudioEditorSlideIndexStore !== 'undefined'
