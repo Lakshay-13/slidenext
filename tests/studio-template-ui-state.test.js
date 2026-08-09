@@ -131,6 +131,57 @@ test('shared template state sync updates template controls before rendering the 
   );
 });
 
+test('createStudioTemplateStateSync resolves template state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const calls = [];
+  const syncState = templateView.createStudioTemplateStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { templates: [], canUseTemplateActions: false };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return id === 'savedTemplatesList' ? list : null;
+        },
+        createElement() {
+          return { textContent: '' };
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+  assert.equal(list.children[0].textContent, 'No slide templates saved. Save the active slide as a template.');
+});
+
+test('createStudioTemplateStateSync fails closed when template state resolution throws', () => {
+  const syncState = templateView.createStudioTemplateStateSync({
+    getActionState() {
+      throw new Error('template state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('insertSavedTemplate delegates to the template controller and refreshes editor state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -192,4 +243,49 @@ test('removeSavedTemplate delegates removal and refreshes template state', () =>
   assert.equal(context.removeSavedTemplate('hero-template'), true);
   assert.equal(delegatedId, 'hero-template');
   assert.equal(refreshCalls, 1);
+});
+
+test('updateTemplateActionState caches the shared template state synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateTemplateActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateMasterSlideActionState'
+  );
+  const doc = { id: 'active-doc', activeSlide: {} };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorTemplateView: {
+      syncStudioTemplateState() {
+        throw new Error('direct template sync should not run');
+      },
+      createStudioTemplateStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canUseTemplateActions;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    buildEditorCanonicalDeck() {
+      return { templates: [{ id: 'hero' }] };
+    },
+    insertSavedTemplate() {},
+    removeSavedTemplate() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateTemplateActionState(doc), true);
+  assert.equal(context.updateTemplateActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });

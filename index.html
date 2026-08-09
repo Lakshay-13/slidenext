@@ -7727,6 +7727,29 @@
       if (!templateView || typeof templateView.syncStudioTemplateState !== 'function') {
         return false;
       }
+      if (typeof templateView.createStudioTemplateStateSync === 'function') {
+        if (typeof updateTemplateActionState.sync !== 'function') {
+          updateTemplateActionState.sync = templateView.createStudioTemplateStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => {
+              const canSave = !!getActiveSlide(sourceDoc);
+              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null;
+              return {
+                templates: canonicalDeck && canonicalDeck.templates,
+                canUseTemplateActions: canSave,
+                insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
+                removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
+              };
+            },
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateTemplateActionState.sync === 'function') {
+          return updateTemplateActionState.sync(doc);
+        }
+      }
       const canSave = !!getActiveSlide(doc);
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
