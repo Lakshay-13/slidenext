@@ -74,9 +74,35 @@
     return true;
   }
 
+  function createStudioThemeTokenPresetActionStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({ canUseThemeTokenControls: false });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorThemeTokenPresetActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return syncStudioThemeTokenPresetActionState({
+          documentRef: getDocumentRef(),
+          ...actionState
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   return {
     normalizePresetColor,
     renderStudioThemeTokenPresets,
-    syncStudioThemeTokenPresetActionState
+    syncStudioThemeTokenPresetActionState,
+    createStudioThemeTokenPresetActionStateSync
   };
 });

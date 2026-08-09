@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const themeView = require('../shared/studio-editor-theme-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -174,4 +175,88 @@ test('updateThemeTokenActionState delegates deck readiness to the shared theme v
   assert.deepEqual(calls[0], ['ready', iframeDoc]);
   assert.equal(calls[1].documentRef, context.document);
   assert.equal(calls[1].canUseThemeTokenControls, true);
+});
+
+test('createStudioThemeTokenPresetActionStateSync resolves theme readiness through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const buttons = [{ disabled: true }];
+  const calls = [];
+  const syncState = themeView.createStudioThemeTokenPresetActionStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canUseThemeTokenControls: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return id === 'themeTokenPresetsList'
+            ? { querySelectorAll: () => buttons }
+            : null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.equal(buttons[0].disabled, false);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioThemeTokenPresetActionStateSync fails closed when theme readiness resolution throws', () => {
+  const syncState = themeView.createStudioThemeTokenPresetActionStateSync({
+    getActionState() {
+      throw new Error('theme state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
+test('updateThemeTokenActionState caches the shared theme synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateThemeTokenActionState(doc = getIframeDoc()) {',
+    '\n\n    function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'active-doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorThemeView: {
+      syncStudioThemeTokenPresetActionState() {
+        throw new Error('direct theme sync should not run');
+      },
+      createStudioThemeTokenPresetActionStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canUseThemeTokenControls;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateThemeTokenActionState(doc), true);
+  assert.equal(context.updateThemeTokenActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });

@@ -11800,6 +11800,20 @@
         ? SlideNextStudioEditorThemeView
         : null;
       if (!themeView || typeof themeView.syncStudioThemeTokenPresetActionState !== 'function') return false;
+      if (typeof themeView.createStudioThemeTokenPresetActionStateSync === 'function') {
+        if (typeof updateThemeTokenActionState.sync !== 'function') {
+          updateThemeTokenActionState.sync = themeView.createStudioThemeTokenPresetActionStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => ({
+              canUseThemeTokenControls: !!resolveCurrentStudioDeckReadyActionState(sourceDoc).canUseDeckActions
+            }),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateThemeTokenActionState.sync === 'function') {
+          return updateThemeTokenActionState.sync(doc);
+        }
+      }
       const readyState = resolveCurrentStudioDeckReadyActionState(doc);
       return themeView.syncStudioThemeTokenPresetActionState({
         documentRef: document,
