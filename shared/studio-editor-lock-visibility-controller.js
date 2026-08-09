@@ -96,13 +96,17 @@
       }
     }
 
+    const createCanonicalDeckResolver = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckResolver
+      : null;
     const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
       : null;
-    const resolveCanonicalDeck = createCanonicalDeckBaselineReader
+    const resolveCanonicalDeck = createCanonicalDeckResolver
       ? (() => {
-          const sharedReader = createCanonicalDeckBaselineReader({
+          const sharedResolver = createCanonicalDeckResolver({
             getCanonicalDeckBaseline,
             isCanonicalDeck: canonicalDeckApi
               && typeof canonicalDeckApi.isCanonicalDeck === 'function'
@@ -110,8 +114,20 @@
               : null,
             buildCanonicalDeckBaseline
           });
-          return typeof sharedReader === 'function' ? sharedReader : () => null;
+          return typeof sharedResolver === 'function' ? sharedResolver : () => null;
         })()
+      : createCanonicalDeckBaselineReader
+        ? (() => {
+            const sharedReader = createCanonicalDeckBaselineReader({
+              getCanonicalDeckBaseline,
+              isCanonicalDeck: canonicalDeckApi
+                && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+                ? canonicalDeckApi.isCanonicalDeck
+                : null,
+              buildCanonicalDeckBaseline
+            });
+            return typeof sharedReader === 'function' ? sharedReader : () => null;
+          })()
       : (sourceDocument) => {
           if (getCanonicalDeckBaseline) {
             try {

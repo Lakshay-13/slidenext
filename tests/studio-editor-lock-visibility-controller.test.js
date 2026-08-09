@@ -268,6 +268,50 @@ test('lock and visibility readers delegate baseline resolution to canonical stat
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
 });
 
+test('lock and visibility readers use the shared canonical deck resolver', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  const documentRef = { id: 'doc' };
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let resolverOptions = null;
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        assert.equal(options.isLocked(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements, options) {
+        assert.equal(options.isHidden(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => deck;
+      },
+      createStudioEditorCanonicalVisibilityReaderForDeck() {
+        return () => true;
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    getSelectedElements: () => selected,
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => false,
+    isHidden: () => false
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
+});
+
 test('lock and visibility readers delegate adapter assembly to canonical state', () => {
   const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
   const documentRef = { id: 'doc' };
