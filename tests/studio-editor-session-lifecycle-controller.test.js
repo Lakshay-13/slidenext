@@ -7,6 +7,60 @@ const lifecycle = require('../shared/studio-editor-session-lifecycle-controller.
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
+test('session lifecycle controller prepares a launch session in a stable order', () => {
+  const calls = [];
+  const result = lifecycle.prepareStudioEditorLaunchSession({
+    presentationUrl: '/presentations/demo/index.html',
+    presentationTitle: 'Demo',
+    presentationCategory: '',
+    advanceSessionToken() { calls.push(['advance']); return 7; },
+    resetLiveCanonicalDeck() { calls.push(['reset-canonical']); },
+    buildPresentationMetadataSeed(url, title) {
+      calls.push(['metadata-seed', url, title]);
+      return { url, title };
+    },
+    updateSessionState(state) { calls.push(['session', state]); },
+    sessionResetController: {
+      reset() { calls.push(['session-reset']); return true; }
+    },
+    applyEditorSelectionState(state) { calls.push(['selection', state]); }
+  });
+
+  assert.deepEqual(result, { sessionToken: 7 });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'advance', 'reset-canonical', 'metadata-seed', 'session', 'session-reset', 'selection'
+  ]);
+  assert.equal(calls[3][1].presentationCategory, 'General');
+});
+
+test('session lifecycle controller falls back when launch controllers are unavailable', () => {
+  const calls = [];
+  const result = lifecycle.prepareStudioEditorLaunchSession({
+    presentationUrl: '/presentations/demo/index.html',
+    presentationTitle: 'Demo',
+    advanceSessionToken() { calls.push(['advance']); return 3; },
+    updateSessionState() { calls.push(['session']); },
+    persistenceApi: {
+      clearStudioPersistenceTimers() {
+        calls.push(['clear-timers']);
+        return { autoSaveDebounceTimer: null, autoVersionTimers: {} };
+      }
+    },
+    setAutoSaveDebounceTimer() { calls.push(['set-autosave']); },
+    setAutoVersionTimers() { calls.push(['set-autoversion']); },
+    applyPersistedDeckState() { calls.push(['persisted-reset']); },
+    clearHistoryStacks() { calls.push(['history-clear']); },
+    updateHistoryButtons() { calls.push(['history-buttons']); },
+    applyEditorSelectionState() { calls.push(['selection']); }
+  });
+
+  assert.deepEqual(result, { sessionToken: 3 });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'advance', 'session', 'clear-timers', 'set-autosave', 'set-autoversion',
+    'persisted-reset', 'history-clear', 'history-buttons', 'selection'
+  ]);
+});
+
 test('session lifecycle controller closes the editor in a stable order', () => {
   const calls = [];
   const editor = {
@@ -96,5 +150,6 @@ test('session lifecycle controller uses fallback resets and shell closure when c
 test('index routes close-editor lifecycle through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-session-lifecycle-controller\.js"/);
+  assert.match(source, /sessionLifecycleController\.prepareStudioEditorLaunchSession/);
   assert.match(source, /sessionLifecycleController\.closeStudioEditor/);
 });

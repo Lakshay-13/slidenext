@@ -7,6 +7,74 @@
     root.SlideNextStudioEditorSessionLifecycleController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function prepareStudioEditorLaunchSession(options = {}) {
+    if (typeof options.advanceSessionToken !== 'function'
+      || typeof options.updateSessionState !== 'function') {
+      return null;
+    }
+
+    const sessionToken = options.advanceSessionToken();
+    if (typeof options.resetLiveCanonicalDeck === 'function') {
+      options.resetLiveCanonicalDeck();
+    }
+    options.updateSessionState({
+      presentationUrl: options.presentationUrl,
+      presentationTitle: options.presentationTitle,
+      presentationCategory: options.presentationCategory || 'General',
+      slideIndex: 0,
+      presentationMetadata: typeof options.buildPresentationMetadataSeed === 'function'
+        ? options.buildPresentationMetadataSeed(options.presentationUrl, options.presentationTitle)
+        : null
+    });
+
+    const sessionResetController = options.sessionResetController || null;
+    const didResetSessionData = sessionResetController
+      && typeof sessionResetController.reset === 'function'
+      ? sessionResetController.reset()
+      : false;
+    if (!didResetSessionData) {
+      const persistenceApi = options.persistenceApi || null;
+      const clearedTimerState = persistenceApi
+        && typeof persistenceApi.clearStudioPersistenceTimers === 'function'
+        ? persistenceApi.clearStudioPersistenceTimers({
+            autoSaveDebounceTimer: typeof options.getAutoSaveDebounceTimer === 'function'
+              ? options.getAutoSaveDebounceTimer()
+              : null,
+            autoVersionTimers: typeof options.getAutoVersionTimers === 'function'
+              ? options.getAutoVersionTimers()
+              : {},
+            clearTimer: options.clearTimer
+          })
+        : {
+            autoSaveDebounceTimer: null,
+            autoVersionTimers: {}
+          };
+      if (typeof options.setAutoSaveDebounceTimer === 'function') {
+        options.setAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
+      }
+      if (typeof options.setAutoVersionTimers === 'function') {
+        options.setAutoVersionTimers(clearedTimerState.autoVersionTimers);
+      }
+      if (typeof options.applyPersistedDeckState === 'function') {
+        options.applyPersistedDeckState({
+          cleanHtml: '',
+          canonicalDeck: null,
+          playbackState: null
+        }, {
+          presentationUrl: '',
+          syncPresentationMetadata: false
+        });
+      }
+      if (typeof options.clearHistoryStacks === 'function') options.clearHistoryStacks();
+      if (typeof options.updateHistoryButtons === 'function') options.updateHistoryButtons();
+    }
+    if (typeof options.applyEditorSelectionState === 'function') {
+      options.applyEditorSelectionState({});
+    }
+
+    return { sessionToken };
+  }
+
   function closeStudioEditor(options = {}) {
     if (typeof options.advanceSessionToken === 'function') {
       options.advanceSessionToken();
@@ -115,6 +183,7 @@
   }
 
   return {
+    prepareStudioEditorLaunchSession,
     closeStudioEditor
   };
 });
