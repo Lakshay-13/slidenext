@@ -96,6 +96,29 @@ test('buildStudioCanonicalInsertionBaseline rejects invalid compatibility baseli
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalInsertionBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    appendCanonicalNode() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('createStudioCanonicalInsertionMutationBuilders preserves an explicit baseline', () => {
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
