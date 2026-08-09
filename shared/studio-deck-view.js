@@ -104,6 +104,24 @@
     };
   }
 
+  function createStudioDeckViewBuildViewOptionsResolver(options = {}) {
+    const buildViewOptions = typeof options.buildViewOptions === 'function'
+      ? options.buildViewOptions
+      : typeof options.createBuildOptions === 'function'
+        ? options.createBuildOptions
+        : () => ({});
+    const extendViewOptions = typeof options.extendViewOptions === 'function'
+      ? options.extendViewOptions
+      : (deckViewOptions) => deckViewOptions;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+
+    return function resolveViewOptions(sourceDoc = getDocument()) {
+      return extendViewOptions(buildViewOptions(sourceDoc), sourceDoc);
+    };
+  }
+
   function createStudioDeckViewHtmlOptions(options = {}) {
     const buildSharedHtml = typeof options.buildSharedHtml === 'function'
       ? options.buildSharedHtml
@@ -132,14 +150,19 @@
     const createBuildOptions = typeof options.createBuildOptions === 'function'
       ? options.createBuildOptions
       : () => ({});
+    const resolvedBuildViewOptions = createBuildViewOptionsResolver
+      ? createBuildViewOptionsResolver({
+          buildViewOptions,
+          extendViewOptions,
+          createBuildOptions,
+          getDocument: options.getDocument
+        })
+      : null;
 
     return {
       buildSharedHtml,
-      buildViewOptions: createBuildViewOptionsResolver
-        ? createBuildViewOptionsResolver({
-            buildViewOptions,
-            extendViewOptions
-          })
+      buildViewOptions: typeof resolvedBuildViewOptions === 'function'
+        ? resolvedBuildViewOptions
         : buildViewOptions
           ? extendViewOptions
             ? (sourceDoc) => extendViewOptions(buildViewOptions(sourceDoc), sourceDoc)
@@ -1127,6 +1150,7 @@
     createStudioCanonicalDeckResolver,
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
+    createStudioDeckViewBuildViewOptionsResolver,
     createStudioDeckViewHtmlOptions,
     createStudioDeckRenderOptions,
     createStudioDeckViewSharedOptions,

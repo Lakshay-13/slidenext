@@ -443,6 +443,7 @@ test('createEditorDeckViewBuildViewOptionsResolver decorates resolved deck view 
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckView: deckView,
     createEditorDeckViewBuildOptions(sourceDoc) {
       calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
       return baseDeckViewOptions;

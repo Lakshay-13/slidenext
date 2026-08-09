@@ -4,6 +4,33 @@ const assert = require('node:assert/strict');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+test('createStudioDeckViewBuildViewOptionsResolver uses the document and extension hooks', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const calls = [];
+  const resolveViewOptions = deckView.createStudioDeckViewBuildViewOptionsResolver({
+    createBuildOptions(sourceDoc) {
+      calls.push(['build', sourceDoc]);
+      return { activeSlideId: 'slide-1' };
+    },
+    extendViewOptions(viewOptions, sourceDoc) {
+      calls.push(['extend', viewOptions, sourceDoc]);
+      return { ...viewOptions, sourceDoc };
+    },
+    getDocument() {
+      return iframeDoc;
+    }
+  });
+
+  assert.deepEqual(resolveViewOptions(), {
+    activeSlideId: 'slide-1',
+    sourceDoc: iframeDoc
+  });
+  assert.deepEqual(calls, [
+    ['build', iframeDoc],
+    ['extend', { activeSlideId: 'slide-1' }, iframeDoc]
+  ]);
+});
+
 test('createStudioDeckViewHtmlOptions composes injected view and canonical html resolvers', () => {
   const buildViewOptions = () => ({ activeSlideId: 'slide-1' });
   const buildCanonicalHtml = () => '<html>canonical</html>';
