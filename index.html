@@ -1401,6 +1401,7 @@
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
+  <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -3097,6 +3098,18 @@
           updateHistoryButtons
         })
       : null;
+    const studioEditorSessionUiController = typeof SlideNextStudioEditorSessionUiController !== 'undefined'
+      && SlideNextStudioEditorSessionUiController
+      && typeof SlideNextStudioEditorSessionUiController.createStudioEditorSessionUiController === 'function'
+      ? SlideNextStudioEditorSessionUiController.createStudioEditorSessionUiController({
+          resetPresentationUiState: () => resetStudioPresentationUiState(),
+          resetSourceViewUiState: () => resetStudioSourceViewUiState(),
+          resetDeckUiState: (options = {}) => resetStudioDeckUiState(options),
+          resetVersionUiState: (options = {}) => resetStudioVersionUiState(options),
+          resetSaveButtonState: () => resetStudioSaveButtonState(),
+          updateDeckReadyToolbarActionState: () => updateDeckReadyToolbarActionState()
+        })
+      : null;
     const studioEditorPresentationMetadataController = typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
       && SlideNextStudioEditorPresentationMetadataController
       && typeof SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController === 'function'
@@ -4328,12 +4341,19 @@
       }
       
       setStudioAutoSaveStatus('loading');
-      resetStudioPresentationUiState();
-      resetStudioSourceViewUiState();
-      resetStudioDeckUiState({ isLoading: true });
-      resetStudioVersionUiState({ isLoading: true });
-      resetStudioSaveButtonState();
-      updateDeckReadyToolbarActionState();
+      const didResetEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
+        && studioEditorSessionUiController
+        && typeof studioEditorSessionUiController.reset === 'function'
+        ? studioEditorSessionUiController.reset({ isLoading: true })
+        : false;
+      if (!didResetEditorUiState) {
+        resetStudioPresentationUiState();
+        resetStudioSourceViewUiState();
+        resetStudioDeckUiState({ isLoading: true });
+        resetStudioVersionUiState({ isLoading: true });
+        resetStudioSaveButtonState();
+        updateDeckReadyToolbarActionState();
+      }
       
       // Configure load triggers BEFORE setting src
       iframe.onload = createCurrentStudioFrameLoadHandler({
@@ -4412,11 +4432,18 @@
         clearStudioHistoryStacks();
         updateHistoryButtons();
       }
-      resetStudioPresentationUiState();
-      resetStudioSourceViewUiState();
-      resetStudioVersionUiState();
-      resetStudioSaveButtonState();
-      updateDeckReadyToolbarActionState();
+      const didResetEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
+        && studioEditorSessionUiController
+        && typeof studioEditorSessionUiController.reset === 'function'
+        ? studioEditorSessionUiController.reset({ resetDeckUiState: false })
+        : false;
+      if (!didResetEditorUiState) {
+        resetStudioPresentationUiState();
+        resetStudioSourceViewUiState();
+        resetStudioVersionUiState();
+        resetStudioSaveButtonState();
+        updateDeckReadyToolbarActionState();
+      }
       deselectElement();
       
       iframe.onload = null;
