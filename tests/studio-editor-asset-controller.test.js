@@ -103,6 +103,21 @@ test('asset mutations require strict canonical baseline validation', () => {
   assert.equal(didUseFallback, true);
 });
 
+test('asset mutations reject malformed fallback state without a canonical validator', () => {
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: undefined
+  };
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => ({ invalid: true }),
+    saveHistoryState: () => {}
+  });
+
+  assert.equal(controller.addAsset({ id: 'invalid-asset', src: '/invalid.png' }), null);
+});
+
 test('removeAsset commits unused asset removal and rejects referenced assets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [
