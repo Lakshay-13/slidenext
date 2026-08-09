@@ -232,6 +232,66 @@ test('syncStudioAlignmentToolbarState builds and renders alignment controls in o
   assert.equal(buttons.distributeSelectionHorizontalBtn.disabled, true);
 });
 
+test('createStudioAlignmentToolbarStateSync resolves the computed alignment action state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const ids = [
+    'alignSelectionLeftBtn',
+    'alignSelectionCenterBtn',
+    'alignSelectionRightBtn',
+    'alignSelectionTopBtn',
+    'alignSelectionMiddleBtn',
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn'
+  ];
+  const buttons = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
+  const selection = [{ element: {} }, { element: {} }, { element: {} }];
+  const calls = [];
+  const syncToolbar = alignment.createStudioAlignmentToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return {
+        alignmentActionState: {
+          selection,
+          canAlign: true
+        }
+      };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return buttons[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [
+    false, false, false, false, false, false, false, false
+  ]);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioAlignmentToolbarStateSync fails closed when action-state resolution throws', () => {
+  const syncToolbar = alignment.createStudioAlignmentToolbarStateSync({
+    getActionState() {
+      throw new Error('alignment state unavailable');
+    }
+  });
+
+  assert.equal(syncToolbar(), false);
+});
+
 test('applyStudioAlignmentLayout applies positions and creates an optional position transaction', () => {
   const first = {
     dataset: { editorId: 'node-1' },

@@ -105,7 +105,10 @@ test('updateAlignmentActionState enables all positional controls only when align
   ];
   const controls = Object.fromEntries(ids.map((id) => [id, { disabled: true }]));
   const context = {
-    SlideNextStudioEditorAlignment: studioAlignment,
+    SlideNextStudioEditorAlignment: {
+      ...studioAlignment,
+      createStudioAlignmentToolbarStateSync: null
+    },
     buildMotionSelectionActionState() {
       return {
         slide: { id: 'slide-1' },
@@ -168,6 +171,53 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].items, layoutItems);
   assert.equal(calls[0].isLocked, context.isElementLocked);
   assert.equal(calls[0].canMutateDeck(), true);
+});
+
+test('updateAlignmentActionState caches the shared alignment toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAlignmentActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateStyleActionState'
+  );
+  const doc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    buildAlignmentActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return {
+        alignmentActionState: {
+          selection: [{}, {}],
+          canAlign: true
+        }
+      };
+    },
+    SlideNextStudioEditorAlignment: {
+      syncStudioAlignmentToolbarState() {
+        throw new Error('direct alignment sync should not run');
+      },
+      createStudioAlignmentToolbarStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).alignmentActionState.canAlign;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateAlignmentActionState(doc), true);
+  assert.equal(context.updateAlignmentActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'action-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
 
 test('alignment action state prefers canonical lock metadata when available', () => {

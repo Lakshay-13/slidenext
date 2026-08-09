@@ -61,6 +61,36 @@
     };
   }
 
+  function createStudioAlignmentToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({ alignmentActionState: {} });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorAlignmentToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        const alignmentActionState = actionState.alignmentActionState || actionState;
+        const selection = Array.isArray(alignmentActionState.selection)
+          ? alignmentActionState.selection
+          : [];
+        return renderStudioAlignmentToolbarState({
+          documentRef: getDocumentRef(),
+          canAlign: !!alignmentActionState.canAlign,
+          selectionCount: selection.length
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function renderStudioAlignmentToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -233,6 +263,7 @@
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
     createStudioAlignmentActionStateBuilder,
+    createStudioAlignmentToolbarStateSync,
     renderStudioAlignmentToolbarState,
     syncStudioAlignmentToolbarState,
     buildStudioAlignedLayout,

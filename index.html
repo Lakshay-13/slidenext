@@ -7105,6 +7105,18 @@
       if (!alignmentApi || typeof alignmentApi.syncStudioAlignmentToolbarState !== 'function') {
         return false;
       }
+      if (typeof alignmentApi.createStudioAlignmentToolbarStateSync === 'function') {
+        if (typeof updateAlignmentActionState.sync !== 'function') {
+          updateAlignmentActionState.sync = alignmentApi.createStudioAlignmentToolbarStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => buildAlignmentActionState(sourceDoc),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateAlignmentActionState.sync === 'function') {
+          return updateAlignmentActionState.sync(doc);
+        }
+      }
       const motionActionState = buildMotionSelectionActionState(doc);
       if (!Array.isArray(motionActionState.nudgeLayoutItems)) {
         return false;
