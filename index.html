@@ -2112,9 +2112,11 @@
             : null,
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(getIframeDoc(), { canonicalDeck }),
-          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-            ? buildEditorCanonicalDeck
-            : null,
+          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()

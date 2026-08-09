@@ -43,6 +43,38 @@ function loadExportPptx(fileContent, context) {
   vm.runInContext(source, context);
 }
 
+test('deck-view export wiring prefers the live canonical deck resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const runtimeEnd = fileContent.indexOf('const studioEditorExportController =', runtimeStart);
+  assert.notEqual(runtimeStart, -1);
+  assert.notEqual(runtimeEnd, -1);
+  const runtimeSource = fileContent.slice(runtimeStart, runtimeEnd);
+  const callbackStart = runtimeSource.indexOf('buildCanonicalDeck:');
+  const callbackEnd = runtimeSource.indexOf('\n          getCanonicalDeckBaseline', callbackStart);
+  assert.notEqual(callbackStart, -1);
+  assert.notEqual(callbackEnd, -1);
+  const callbackExpression = runtimeSource
+    .slice(callbackStart + 'buildCanonicalDeck:'.length, callbackEnd)
+    .trim()
+    .replace(/,$/, '');
+  const sourceDoc = { id: 'export-frame' };
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'live-slide' }] };
+  let receivedDoc = null;
+  const buildCanonicalDeck = vm.runInNewContext(`(${callbackExpression})`, {
+    resolveEditorUiCanonicalDeck(doc) {
+      receivedDoc = doc;
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('export should not rebuild the DOM when live canonical state exists');
+    }
+  });
+
+  assert.equal(buildCanonicalDeck(sourceDoc), liveCanonicalDeck);
+  assert.equal(receivedDoc, sourceDoc);
+});
+
 test('exportPptx posts the canonical deck and downloads the server response', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
