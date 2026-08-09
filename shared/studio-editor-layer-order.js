@@ -56,6 +56,50 @@
     };
   }
 
+  function createStudioLayerOrderActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getNormalizedSlideLayerOrder = typeof options.getNormalizedSlideLayerOrder === 'function'
+      ? options.getNormalizedSlideLayerOrder
+      : () => [];
+    const getLockedState = typeof options.getLockedState === 'function'
+      ? options.getLockedState
+      : () => () => false;
+
+    return function buildStudioEditorLayerOrderActionState(
+      elements = getSelectedElements(),
+      actionOptions = {}
+    ) {
+      const hasDocOverride = Object.prototype.hasOwnProperty.call(actionOptions, 'doc');
+      const resolvedDoc = hasDocOverride ? actionOptions.doc : getDocument();
+      const hasSlideOverride = Object.prototype.hasOwnProperty.call(actionOptions, 'slide');
+      const resolvedSlide = hasSlideOverride
+        ? actionOptions.slide
+        : getActiveSlide(resolvedDoc);
+      const orderedElements = Array.isArray(actionOptions.orderedElements)
+        ? actionOptions.orderedElements
+        : (resolvedSlide ? getNormalizedSlideLayerOrder(resolvedSlide) : []);
+      const canMutateDeck = typeof actionOptions.canMutateDeck === 'function'
+        ? actionOptions.canMutateDeck
+        : () => !!resolvedSlide;
+
+      return buildStudioLayerOrderActionState(elements, {
+        orderedElements,
+        isLocked: typeof actionOptions.isLocked === 'function'
+          ? actionOptions.isLocked
+          : getLockedState(resolvedDoc),
+        canMutateDeck
+      });
+    };
+  }
+
   function buildStudioLayerOrderToolbarState(targetElements = [], options = {}) {
     const actionState = buildStudioLayerOrderActionState(targetElements, options);
     const buildZIndexMutationPlan = typeof options.buildZIndexMutationPlan === 'function'
@@ -342,6 +386,7 @@
   return {
     getStudioLayerOrderSelection,
     buildStudioLayerOrderActionState,
+    createStudioLayerOrderActionStateBuilder,
     buildStudioLayerOrderToolbarState,
     renderStudioLayerOrderToolbarState,
     syncStudioLayerOrderZIndexInput,

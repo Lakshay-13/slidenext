@@ -82,6 +82,33 @@ test('buildStudioLayerOrderActionState disables locked, deck-not-ready, and no-o
   });
 });
 
+test('createStudioLayerOrderActionStateBuilder preserves explicit ordering and document overrides', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const first = { id: 'first', isConnected: true };
+  const second = { id: 'second', isConnected: true };
+  const orderedElements = [first, second];
+  const buildActionState = layerOrder.createStudioLayerOrderActionStateBuilder({
+    getDocument: () => ({ id: 'fallback-doc' }),
+    getSelectedElements: () => [first],
+    getActiveSlide: () => ({ id: 'fallback-slide' }),
+    getNormalizedSlideLayerOrder: () => [],
+    getLockedState: () => () => false
+  });
+
+  const result = buildActionState([first], {
+    doc,
+    slide,
+    orderedElements,
+    canMutateDeck: () => true
+  });
+
+  assert.deepEqual(result.selection, [first]);
+  assert.equal(result.canReorder, true);
+  assert.equal(result.canBringToFront, true);
+  assert.equal(result.canSendToBack, false);
+});
+
 test('buildStudioLayerOrderToolbarState derives layer arrangement button states from the action state', () => {
   const first = { id: 'first', isConnected: true, locked: false };
   const second = { id: 'second', isConnected: true, locked: false };

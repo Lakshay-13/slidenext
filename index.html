@@ -7098,6 +7098,24 @@
     }
 
     function buildLayerOrderSelectionActionState(elements = getStudioSelectedElements(), options = {}) {
+      const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+        ? SlideNextStudioEditorLayerOrder
+        : null;
+      if (layerOrderApi && typeof layerOrderApi.createStudioLayerOrderActionStateBuilder === 'function') {
+        if (typeof buildLayerOrderSelectionActionState.builder !== 'function') {
+          buildLayerOrderSelectionActionState.builder = layerOrderApi.createStudioLayerOrderActionStateBuilder({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getNormalizedSlideLayerOrder,
+            getLockedState: () => isElementLocked
+          });
+        }
+        if (typeof buildLayerOrderSelectionActionState.builder === 'function') {
+          return buildLayerOrderSelectionActionState.builder(elements, options);
+        }
+      }
+
       const hasDocOverride = Object.prototype.hasOwnProperty.call(options, 'doc');
       const resolvedDoc = hasDocOverride ? options.doc : getIframeDoc();
       const hasSlideOverride = Object.prototype.hasOwnProperty.call(options, 'slide');
