@@ -140,6 +140,44 @@ test('createStudioHistoryEntry makes canonical transaction entries model-first w
   });
 });
 
+test('captureStudioHistoryState isolates canonical and transaction history data', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Before' }] }]
+  };
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'property',
+      elementId: 'node-1',
+      property: 'textContent',
+      before: 'Before',
+      after: 'After'
+    }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    canonicalDeck,
+    transaction,
+    getActiveSlideId() {
+      return 'slide-1';
+    }
+  });
+
+  const capture = studioHistory.captureStudioHistoryState([], [], entry);
+  const storedEntry = capture.undoStack[0];
+
+  canonicalDeck.slides[0].nodes[0].text = 'After';
+  transaction.operations[0].after = 'Changed again';
+
+  assert.equal(storedEntry.canonicalDeck.slides[0].nodes[0].text, 'Before');
+  assert.equal(storedEntry.transaction.operations[0].after, 'After');
+  assert.notEqual(storedEntry.canonicalDeck, canonicalDeck);
+  assert.notEqual(storedEntry.transaction, transaction);
+});
+
 test('createStudioHistoryEntry can prefer canonical history without a transaction', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

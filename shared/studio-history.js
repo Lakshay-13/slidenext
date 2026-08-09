@@ -50,6 +50,15 @@
     }, []);
   }
 
+  function cloneStudioHistoryData(value) {
+    if (!value || typeof value !== 'object') return value;
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (err) {
+      return value;
+    }
+  }
+
   function resolveStudioHistoryFrameHtml(historyEntry, options = {}) {
     const html = historyEntry && typeof historyEntry.html === 'string' ? historyEntry.html : '';
     if (html) {
@@ -273,12 +282,12 @@
       activeSlideId: entry.activeSlideId || '',
       selectedElementIds: normalizeStudioHistoryIdList(entry.selectedElementIds),
       canonicalDeck: isValidStudioHistoryCanonicalDeck(candidateCanonicalDeck)
-        ? candidateCanonicalDeck
+        ? cloneStudioHistoryData(candidateCanonicalDeck)
         : null
     };
     const transaction = normalizeStudioHistoryTransaction(entry.transaction);
     if (transaction) {
-      normalizedEntry.transaction = transaction;
+      normalizedEntry.transaction = cloneStudioHistoryData(transaction);
     }
     return normalizedEntry;
   }
