@@ -126,7 +126,7 @@ test('transform controller thresholds are initialized before controller construc
 
 test('history controller wires the named fallback active-slide resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const controllerStart = fileContent.indexOf('const studioEditorHistoryController =');
+  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntime =');
   const controllerEnd = fileContent.indexOf('const studioEditorPersistenceController =', controllerStart);
   assert.notEqual(controllerStart, -1);
   assert.notEqual(controllerEnd, -1);

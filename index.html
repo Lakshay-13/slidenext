@@ -1470,6 +1470,7 @@
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-state.js"></script>
   <script src="/shared/studio-editor-history-controller.js"></script>
+  <script src="/shared/studio-editor-history-controller-runtime.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
@@ -3135,10 +3136,13 @@
     const studioEditorCanonicalBridge = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalBridge
       : null;
-    const studioEditorHistoryController = typeof SlideNextStudioEditorHistoryController !== 'undefined'
-      && SlideNextStudioEditorHistoryController
-      && typeof SlideNextStudioEditorHistoryController.createStudioEditorHistoryController === 'function'
-      ? SlideNextStudioEditorHistoryController.createStudioEditorHistoryController({
+    const studioEditorHistoryControllerRuntime = typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
+      && SlideNextStudioEditorHistoryControllerRuntime
+      && typeof SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime === 'function'
+      ? SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime({
+          controllerApi: typeof SlideNextStudioEditorHistoryController !== 'undefined'
+            ? SlideNextStudioEditorHistoryController
+            : null,
           documentRef: document,
           historyApi: typeof SlideNextStudioHistory !== 'undefined' ? SlideNextStudioHistory : null,
           historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
@@ -3245,6 +3249,9 @@
             setActiveSlide
           })
         })
+      : null;
+    const studioEditorHistoryController = studioEditorHistoryControllerRuntime
+      ? studioEditorHistoryControllerRuntime.historyController
       : null;
     const studioEditorPersistenceController = typeof SlideNextStudioEditorPersistenceController !== 'undefined'
       && SlideNextStudioEditorPersistenceController
