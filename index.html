@@ -1478,6 +1478,7 @@
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-session-lifecycle-controller.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-shell-controller.js"></script>
@@ -4972,6 +4973,41 @@
     }
 
     function closeStudioEditor() {
+      const sessionLifecycleController = typeof SlideNextStudioEditorSessionLifecycleController !== 'undefined'
+        ? SlideNextStudioEditorSessionLifecycleController
+        : null;
+      if (sessionLifecycleController
+        && typeof sessionLifecycleController.closeStudioEditor === 'function') {
+        return sessionLifecycleController.closeStudioEditor({
+          documentRef: document,
+          editor: document.getElementById('studioEditor'),
+          iframe: getStudioFrame(),
+          advanceSessionToken: advanceStudioEditorSessionToken,
+          resetLiveCanonicalDeck: resetEditorLiveCanonicalDeck,
+          teardownDeckActiveSlideSync,
+          updateSessionState: updateCurrentPresentationSessionState,
+          sessionResetController: studioEditorSessionResetController,
+          persistenceApi: SlideNextStudioEditorPersistence,
+          getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
+          setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
+          getAutoVersionTimers: getStudioAutoVersionTimers,
+          setAutoVersionTimers: setStudioAutoVersionTimers,
+          clearTimer: clearTimeout,
+          applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
+          clearHistoryStacks: clearStudioHistoryStacks,
+          updateHistoryButtons,
+          sessionUiController: studioEditorSessionUiController,
+          resetPresentationUiState: resetStudioPresentationUiState,
+          resetSourceViewUiState: resetStudioSourceViewUiState,
+          resetVersionUiState: resetStudioVersionUiState,
+          resetSaveButtonState,
+          updateDeckReadyToolbarActionState,
+          deselectElement,
+          shellController: studioEditorShellController,
+          resetDeckUiState: resetStudioDeckUiState,
+          loadPresentations
+        });
+      }
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
       advanceStudioEditorSessionToken();
