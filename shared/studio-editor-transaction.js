@@ -499,35 +499,58 @@
       };
     }
 
-    resolvedOperations.forEach(({ operation, element }) => {
+    const applyResolvedOperation = ({ operation, element }, direction) => {
       if (operation.type === 'property') {
-        element[operation.property] = nextDirection === 'undo' ? operation.before : operation.after;
-        return;
+        element[operation.property] = direction === 'undo' ? operation.before : operation.after;
+        return true;
       }
       if (operation.type === 'dataset') {
-        const value = nextDirection === 'undo' ? operation.before : operation.after;
+        const value = direction === 'undo' ? operation.before : operation.after;
         if (value) {
           element.dataset[operation.property] = value;
         } else {
           delete element.dataset[operation.property];
         }
-        return;
+        return true;
       }
       if (operation.type === 'visibility') {
-        const state = nextDirection === 'undo' ? operation.before : operation.after;
-        applyVisibilityState(element, state);
-        return;
+        const state = direction === 'undo' ? operation.before : operation.after;
+        return applyVisibilityState(element, state) !== false;
       }
       if (operation.type === 'markup') {
-        const markup = nextDirection === 'undo' ? operation.before : operation.after;
-        applyMarkupState(element, markup);
-        return;
+        const markup = direction === 'undo' ? operation.before : operation.after;
+        return applyMarkupState(element, markup) !== false;
       }
-      const patch = nextDirection === 'undo' ? operation.before : operation.after;
+      const patch = direction === 'undo' ? operation.before : operation.after;
       Object.keys(patch).forEach((property) => {
         element.style[property] = patch[property];
       });
-    });
+      return true;
+    };
+
+    const appliedOperations = [];
+    try {
+      resolvedOperations.forEach((resolvedOperation) => {
+        appliedOperations.push(resolvedOperation);
+        if (!applyResolvedOperation(resolvedOperation, nextDirection)) {
+          throw new Error('transaction operation rejected');
+        }
+      });
+    } catch (err) {
+      const rollbackDirection = nextDirection === 'undo' ? 'redo' : 'undo';
+      appliedOperations.reverse().forEach((resolvedOperation) => {
+        try {
+          applyResolvedOperation(resolvedOperation, rollbackDirection);
+        } catch (rollbackError) {
+          // Keep the transaction failure deterministic even if rollback cannot complete.
+        }
+      });
+      return {
+        didApply: false,
+        appliedCount: 0,
+        direction: nextDirection
+      };
+    }
 
     return {
       didApply: true,

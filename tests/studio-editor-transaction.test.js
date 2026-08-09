@@ -290,6 +290,41 @@ test('createStudioMarkupTransaction applies scoped container markup through its 
   ]);
 });
 
+test('applyStudioEditorTransaction rolls back earlier operations when an adapter rejects', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '10px' },
+    innerHTML: '<div>Before</div>'
+  };
+  const mixedTransaction = {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [
+      { type: 'style', elementId: 'node-1', before: { left: '10px' }, after: { left: '30px' } },
+      { type: 'markup', elementId: 'node-1', before: '<div>Before</div>', after: '<div>After</div>' }
+    ]
+  };
+  const appliedMarkup = [];
+
+  const result = transaction.applyStudioEditorTransaction(mixedTransaction, 'redo', {
+    getElementById: () => element,
+    applyMarkupState(target, markup) {
+      assert.equal(target, element);
+      appliedMarkup.push(markup);
+      return false;
+    }
+  });
+
+  assert.deepEqual(result, {
+    didApply: false,
+    appliedCount: 0,
+    direction: 'redo'
+  });
+  assert.equal(element.style.left, '10px');
+  assert.equal(element.innerHTML, '<div>Before</div>');
+  assert.deepEqual(appliedMarkup, ['<div>After</div>', '<div>Before</div>']);
+});
+
 test('createStudioMarkupTransactionCapture snapshots markup once and creates a transaction after mutation', () => {
   const element = {
     dataset: { editorId: 'parent-1' },
