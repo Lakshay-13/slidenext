@@ -449,6 +449,9 @@
         printWindow.focus();
       }
       try {
+        if (typeof printWindow.addEventListener === 'function') {
+          printWindow.addEventListener('afterprint', closePrintWindow, { once: true });
+        }
         printWindow.print();
         reportPrintSuccess();
       } catch (error) {

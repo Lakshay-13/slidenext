@@ -331,6 +331,8 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
   let printCalls = 0;
   let focusCalls = 0;
   let loadHandler = null;
+  let afterPrintHandler = null;
+  let closeCalls = 0;
   let printSuccessCalls = 0;
   const events = [];
   const printWindow = {
@@ -351,15 +353,22 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
       }
     },
     addEventListener(type, handler) {
-      assert.equal(type, 'load');
-      events.push('listen');
-      loadHandler = handler;
+      if (type === 'load') {
+        events.push('listen');
+        loadHandler = handler;
+      } else {
+        assert.equal(type, 'afterprint');
+        afterPrintHandler = handler;
+      }
     },
     focus() {
       focusCalls += 1;
     },
     print() {
       printCalls += 1;
+    },
+    close() {
+      closeCalls += 1;
     }
   };
 
@@ -386,6 +395,9 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
       assert.equal(printCalls, 1);
       assert.equal(focusCalls, 1);
       assert.equal(printSuccessCalls, 1);
+      assert.equal(typeof afterPrintHandler, 'function');
+      afterPrintHandler();
+      assert.equal(closeCalls, 1);
       resolve();
     });
   });
@@ -410,8 +422,11 @@ test('openStudioPdfPrintWindow clears zero-valued popup timeout handles', () => 
         close() {}
       },
       addEventListener(type, handler) {
-        assert.equal(type, 'load');
-        loadHandler = handler;
+        if (type === 'load') {
+          loadHandler = handler;
+        } else {
+          assert.equal(type, 'afterprint');
+        }
       },
       print() {}
     };
