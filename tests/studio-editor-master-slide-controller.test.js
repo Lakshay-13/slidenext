@@ -153,6 +153,32 @@ test('master slide controller fails closed when saving a master canonical mutati
   assert.deepEqual(calls, []);
 });
 
+test('master slide controller fails closed when assigning a master canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let replaceCount = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      updateCanonicalSlideMasterSlide() {
+        throw new Error('canonical master assignment failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSlides: () => [{
+      replaceWith() {
+        replaceCount += 1;
+      }
+    }]
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), false);
+  assert.equal(replaceCount, 0);
+});
+
 test('assignMasterSlide rerenders the active slide and commits the reference', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{
