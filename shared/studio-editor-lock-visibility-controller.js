@@ -142,6 +142,14 @@
       }
       const canonicalDeck = resolveCanonicalDeck(sourceDocument);
       if (!canonicalDeck) return fallbackReader;
+      if (typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+          property,
+          canonicalDeckApi,
+          getElementId,
+          fallbackReader
+        });
+      }
       if (property === 'locked'
         && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function') {
         return canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {

@@ -268,6 +268,49 @@ test('lock and visibility readers delegate baseline resolution to canonical stat
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
 });
 
+test('lock and visibility readers delegate adapter assembly to canonical state', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  const documentRef = { id: 'doc' };
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const assembled = [];
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        assert.equal(options.isLocked(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements, options) {
+        assert.equal(options.isHidden(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader() {
+        return () => deck;
+      },
+      createStudioEditorCanonicalVisibilityReaderForDeck(nextDeck, options) {
+        assembled.push([nextDeck, options]);
+        return () => true;
+      }
+    },
+    getSelectedElements: () => selected,
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => false,
+    isHidden: () => false
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(assembled.length, 2);
+  assert.equal(assembled[0][0], deck);
+  assert.equal(assembled[0][1].property, 'locked');
+  assert.equal(assembled[1][1].property, 'hidden');
+});
+
 test('lock and visibility readers fail closed when the shared baseline reader is unavailable', () => {
   const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
   let lockReads = 0;
