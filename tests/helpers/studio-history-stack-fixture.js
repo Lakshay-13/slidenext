@@ -1,4 +1,5 @@
 const sessionTokenFixture = require('./studio-session-token-fixture.js');
+const presentationMetadataFixture = require('./studio-presentation-metadata-fixture.js');
 
 function getHistoryStackFixtureSource() {
   return `
@@ -59,7 +60,7 @@ function extractHistoryStackAwareFunctionSource(fileContent, startMarker, endMar
   if (start === -1) return null;
   const end = fileContent.indexOf(endMarker, start);
   if (end === -1) return null;
-  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${getHistoryStackFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${getHistoryStackFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 module.exports = {

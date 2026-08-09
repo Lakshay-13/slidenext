@@ -1401,6 +1401,7 @@
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
+  <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
@@ -1442,7 +1443,6 @@
   <script>
     // Global Editor State
     let currentPresentationUrl = '';
-    let currentPresentationMetadata = null;
     const studioEditorSessionTokenStateController = typeof SlideNextStudioEditorSessionTokenStateController !== 'undefined'
       && SlideNextStudioEditorSessionTokenStateController
       && typeof SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController === 'function'
@@ -1459,6 +1459,23 @@
         && typeof studioEditorSessionTokenStateController.advanceSessionToken === 'function'
         ? studioEditorSessionTokenStateController.advanceSessionToken()
         : 0;
+    }
+    const studioEditorPresentationMetadataStateController = typeof SlideNextStudioEditorPresentationMetadataStateController !== 'undefined'
+      && SlideNextStudioEditorPresentationMetadataStateController
+      && typeof SlideNextStudioEditorPresentationMetadataStateController.createStudioEditorPresentationMetadataStateController === 'function'
+      ? SlideNextStudioEditorPresentationMetadataStateController.createStudioEditorPresentationMetadataStateController({})
+      : null;
+    function getStudioCurrentPresentationMetadata() {
+      return studioEditorPresentationMetadataStateController
+        && typeof studioEditorPresentationMetadataStateController.getPresentationMetadata === 'function'
+        ? studioEditorPresentationMetadataStateController.getPresentationMetadata()
+        : null;
+    }
+    function setStudioCurrentPresentationMetadata(nextMetadata) {
+      return studioEditorPresentationMetadataStateController
+        && typeof studioEditorPresentationMetadataStateController.setPresentationMetadata === 'function'
+        ? studioEditorPresentationMetadataStateController.setPresentationMetadata(nextMetadata)
+        : null;
     }
     const studioEditorPresentationLabelStateController = typeof SlideNextStudioEditorPresentationLabelStateController !== 'undefined'
       && SlideNextStudioEditorPresentationLabelStateController
@@ -2785,7 +2802,7 @@
               ? SlideNextCanonicalDeck.isCanonicalDeck(value)
               : !!(value && typeof value === 'object' && Array.isArray(value.slides))
           ),
-          getCurrentPresentationMetadata: () => currentPresentationMetadata,
+          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
           resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, getStudioEditorSessionToken()),
           resolveStoredCanonicalBaseline: resolveEditorStoredCanonicalBaseline,
@@ -3019,7 +3036,7 @@
             ? SlideNextStudioEditorPersistence
             : null,
           setCurrentPresentationMetadata: (value) => {
-            currentPresentationMetadata = value;
+            setStudioCurrentPresentationMetadata(value);
           },
           getCurrentPresentationUrl: () => currentPresentationUrl,
           resolveStoredCanonicalDeck: (metadata) => resolveEditorStoredCanonicalDeck(metadata),
@@ -4868,9 +4885,9 @@
         && typeof studioEditorPresentationMetadataController.apply === 'function') {
         return studioEditorPresentationMetadataController.apply(metadata, options);
       }
-      currentPresentationMetadata = metadata || null;
-      if (!options.syncPersistedCanonicalDeck || !currentPresentationMetadata) {
-        return currentPresentationMetadata;
+      const nextMetadata = setStudioCurrentPresentationMetadata(metadata);
+      if (!options.syncPersistedCanonicalDeck || !nextMetadata) {
+        return nextMetadata;
       }
 
       const syncStudioPresentationMetadataPersistedCanonicalDeck = (
@@ -4881,7 +4898,7 @@
         ? SlideNextStudioEditorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck
         : null;
       if (syncStudioPresentationMetadataPersistedCanonicalDeck) {
-        syncStudioPresentationMetadataPersistedCanonicalDeck(currentPresentationMetadata, {
+        syncStudioPresentationMetadataPersistedCanonicalDeck(nextMetadata, {
           presentationUrl: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
           resolveStoredCanonicalDeck: resolveEditorStoredCanonicalDeck,
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
@@ -4891,7 +4908,7 @@
           updateDeckReadyToolbarActionState
         });
       }
-      return currentPresentationMetadata;
+      return nextMetadata;
     }
 
     function resolveEditorStoredCanonicalDeck(metadata) {
@@ -4906,7 +4923,7 @@
     function resolveEditorStoredCanonicalBaseline(options = {}) {
       const nextPresentationMetadata = Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
         ? options.currentPresentationMetadata
-        : currentPresentationMetadata;
+        : getStudioCurrentPresentationMetadata();
       const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
         ? options.persistedCanonicalDeck
         : getStudioPersistedCanonicalDeck();
@@ -4970,7 +4987,7 @@
       applyStudioPresentationMetadataCanonicalDeckUpdate(
         canonicalDeck,
         {
-          currentPresentationMetadata,
+          currentPresentationMetadata: getStudioCurrentPresentationMetadata(),
           currentPresentationUrl,
           presentationUrl,
           presentationTitle,
@@ -8546,11 +8563,7 @@
             persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
               ? SlideNextStudioEditorPersistence
               : null,
-            getCurrentPresentationMetadata: () => (
-              typeof currentPresentationMetadata !== 'undefined'
-                ? currentPresentationMetadata
-                : null
-            ),
+            getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
             resolveMergedPresentationPersistenceOptions: (
               typeof SlideNextDeckLoader !== 'undefined'
               && SlideNextDeckLoader
@@ -8587,11 +8600,7 @@
         : null;
       if (createStudioMetadataPersistenceOptionsResolver) {
         return createStudioMetadataPersistenceOptionsResolver({
-          getCurrentPresentationMetadata: () => (
-            typeof currentPresentationMetadata !== 'undefined'
-              ? currentPresentationMetadata
-              : null
-          ),
+          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           resolveMergedPresentationPersistenceOptions: (
             typeof SlideNextDeckLoader !== 'undefined'
             && SlideNextDeckLoader
@@ -8638,9 +8647,7 @@
         return resolveStudioMetadataPersistenceOptions({
           currentPresentationMetadata: Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
             ? options.currentPresentationMetadata
-            : (typeof currentPresentationMetadata !== 'undefined'
-                ? currentPresentationMetadata
-                : null),
+            : getStudioCurrentPresentationMetadata(),
           persistenceOptions: options.persistenceOptions,
           resolveMergedPresentationPersistenceOptions: typeof options.resolveMergedPresentationPersistenceOptions === 'function'
             ? options.resolveMergedPresentationPersistenceOptions
