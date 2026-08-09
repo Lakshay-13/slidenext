@@ -330,6 +330,27 @@ test('buildStudioCanonicalAddSlideDeck imports and appends a new slide without m
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1']);
 });
 
+test('buildStudioCanonicalAddSlideDeck fails closed when canonical append throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    appendCanonicalSlide() {
+      throw new Error('canonical add-slide append failed');
+    }
+  };
+
+  const result = canonicalSlide.buildStudioCanonicalAddSlideDeck({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1' }]
+    }),
+    newSlide: { id: 'generated-slide' },
+    insertionIndex: 1,
+    getSlideId: (slide) => slide.id
+  });
+
+  assert.equal(result, null);
+});
+
 test('createStudioCanonicalAddSlideMutationBuilders shares canonical import wiring', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };

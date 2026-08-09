@@ -236,16 +236,20 @@
       return null;
     }
 
-    const canonicalSlide = importSlideToCanonicalSlide
-      ? importSlideToCanonicalSlide(newSlide, insertionIndex, {
-          getSlideId: () => newSlideId
-        })
-      : {
-          id: newSlideId,
-          title
-        };
-    if (!canonicalSlide) return null;
-    return appendCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide);
+    try {
+      const canonicalSlide = importSlideToCanonicalSlide
+        ? importSlideToCanonicalSlide(newSlide, insertionIndex, {
+            getSlideId: () => newSlideId
+          })
+        : {
+            id: newSlideId,
+            title
+          };
+      if (!canonicalSlide) return null;
+      return appendCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalAddSlideMutationBuilders(options = {}) {
