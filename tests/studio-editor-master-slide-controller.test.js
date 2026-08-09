@@ -106,6 +106,21 @@ test('master slide mutations require strict canonical baseline validation', () =
   assert.equal(didUseFallback, true);
 });
 
+test('master slide mutations reject malformed fallback state without a canonical validator', () => {
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: undefined
+  };
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => ({ invalid: true }),
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'invalid-master' }), null);
+});
+
 test('assignMasterSlide rerenders the active slide and commits the reference', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{
