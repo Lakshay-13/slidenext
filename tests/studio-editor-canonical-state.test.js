@@ -7,6 +7,13 @@ const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js'
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
+test('shared editor canonical-deck shape predicate accepts decks and rejects malformed values', () => {
+  assert.equal(canonicalState.isStudioEditorCanonicalDeckLike({ slides: [] }), true);
+  assert.equal(canonicalState.isStudioEditorCanonicalDeckLike({ slides: 'invalid' }), false);
+  assert.equal(canonicalState.isStudioEditorCanonicalDeckLike([]), false);
+  assert.equal(canonicalState.isStudioEditorCanonicalDeckLike(null), false);
+});
+
 test('canonical deck baseline reader prefers live state and falls back to rebuilds', () => {
   const doc = { id: 'iframe-doc' };
   const liveDeck = { slides: [{ id: 'live' }] };

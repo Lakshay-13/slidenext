@@ -156,6 +156,21 @@ test('canonical bridge rejects malformed decks without a custom validator', () =
   assert.equal(bridge.buildMutationCanonicalDeck({}), null);
 });
 
+test('canonical bridge uses the shared editor shape predicate when provided', () => {
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: {
+      isStudioEditorCanonicalDeckLike: () => false
+    },
+    state: {
+      set() {
+        throw new Error('invalid deck should not reach state');
+      }
+    }
+  });
+
+  assert.equal(bridge.setLiveCanonicalDeck({ slides: [] }), null);
+});
+
 test('canonical bridge fails closed when either builder throws or is unavailable', () => {
   const throwingBridge = canonicalBridge.createStudioEditorCanonicalBridge({
     canonicalDeckBuilder() {

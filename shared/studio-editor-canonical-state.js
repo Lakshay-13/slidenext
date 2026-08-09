@@ -11,10 +11,16 @@
     return !!value && typeof value === 'object';
   }
 
+  function isStudioEditorCanonicalDeckLike(value) {
+    return isObject(value)
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
   function createStudioEditorCanonicalState(options = {}) {
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
-      : (value) => isObject(value) && Array.isArray(value.slides);
+      : isStudioEditorCanonicalDeckLike;
     let canonicalDeck = null;
     let ownerDocument = null;
     let ownerSessionToken = null;
@@ -86,10 +92,7 @@
       : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
-      : (value) => !!value
-        && typeof value === 'object'
-        && !Array.isArray(value)
-        && Array.isArray(value.slides);
+      : isStudioEditorCanonicalDeckLike;
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
@@ -217,6 +220,7 @@
   }
 
   return {
+    isStudioEditorCanonicalDeckLike,
     createStudioEditorCanonicalState,
     createStudioEditorCanonicalDeckBaselineReader,
     createStudioEditorCanonicalNodeReader,

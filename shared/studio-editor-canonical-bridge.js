@@ -36,11 +36,15 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    const canonicalDeckLikeValidator = canonicalStateApi
+      && typeof canonicalStateApi.isStudioEditorCanonicalDeckLike === 'function'
+      ? canonicalStateApi.isStudioEditorCanonicalDeckLike
+      : isCanonicalDeckLike;
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = typeof isCanonicalDeck === 'function'
         ? isCanonicalDeck
-        : isCanonicalDeckLike;
+        : canonicalDeckLikeValidator;
       try {
         return validate(value) === true;
       } catch (err) {
