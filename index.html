@@ -1403,6 +1403,7 @@
   <script src="/shared/studio-editor-keyboard.js"></script>
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-transform-controller.js"></script>
+  <script src="/shared/studio-editor-transform-runtime.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
@@ -2976,10 +2977,13 @@
     const studioEditorGridSnapController = studioEditorGridSnapRuntime
       ? studioEditorGridSnapRuntime.gridSnapController
       : null;
-    const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
-      && SlideNextStudioEditorTransformController
-      && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
-      ? SlideNextStudioEditorTransformController.createStudioEditorTransformController({
+    const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
+      && SlideNextStudioEditorTransformRuntime
+      && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
+      ? SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime({
+          controllerApi: typeof SlideNextStudioEditorTransformController !== 'undefined'
+            ? SlideNextStudioEditorTransformController
+            : null,
           transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
             ? SlideNextStudioEditorTransform
             : null,
@@ -3067,6 +3071,9 @@
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
           snapDistancePx: SNAP_THRESHOLD_PX
         })
+      : null;
+    const studioEditorTransformController = studioEditorTransformRuntime
+      ? studioEditorTransformRuntime.transformController
       : null;
     const studioEditorCanonicalRuntime = typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
       && SlideNextStudioEditorCanonicalRuntime

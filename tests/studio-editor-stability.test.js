@@ -358,8 +358,8 @@ test('transform wiring prefers live canonical state and keeps a legacy baseline 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformController =',
-    'const studioEditorCanonicalState ='
+    'const studioEditorTransformRuntime =',
+    'const studioEditorTransformController ='
   );
 
   assert.match(
