@@ -128,6 +128,20 @@ test('canonical deck builder falls back when the studio DOM adapter throws', () 
   assert.equal(builder({ id: 'document' }), storedDeck);
 });
 
+test('canonical deck builder continues when stored baseline resolution throws', () => {
+  const rebuiltDeck = createDeck('rebuilt');
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    resolveStoredCanonicalBaseline() {
+      throw new Error('stored metadata is unavailable');
+    },
+    buildStudioCanonicalDeck() {
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), rebuiltDeck);
+});
+
 test('canonical deck builder falls back when the direct importer throws', () => {
   const storedDeck = createDeck('stored');
   const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({

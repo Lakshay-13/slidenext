@@ -82,13 +82,18 @@
       const presentationUrl = readPresentationUrl();
       const presentationTitle = readPresentationTitle();
       const persistedCanonicalDeck = readPersistedCanonicalDeck();
-      const storedCanonicalDeckCandidate = resolveStoredCanonicalBaseline({
-        currentPresentationMetadata: presentationMetadata,
-        persistedCanonicalDeck
-      });
-      const storedCanonicalDeck = isValidCanonicalDeck(storedCanonicalDeckCandidate)
-        ? storedCanonicalDeckCandidate
-        : null;
+      let storedCanonicalDeck = null;
+      try {
+        const storedCanonicalDeckCandidate = resolveStoredCanonicalBaseline({
+          currentPresentationMetadata: presentationMetadata,
+          persistedCanonicalDeck
+        });
+        storedCanonicalDeck = isValidCanonicalDeck(storedCanonicalDeckCandidate)
+          ? storedCanonicalDeckCandidate
+          : null;
+      } catch (error) {
+        // Keep DOM/import fallback available when stored state is unavailable.
+      }
       const canonicalDeckBaseline = isValidCanonicalDeck(buildOptions.canonicalDeckBaseline)
         ? buildOptions.canonicalDeckBaseline
         : storedCanonicalDeck;
