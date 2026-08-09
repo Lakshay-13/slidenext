@@ -22,7 +22,16 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return `
+function getStudioEditorClipboard() {
+  if (typeof studioEditorClipboardController !== 'undefined'
+    && studioEditorClipboardController
+    && typeof studioEditorClipboardController.getClipboard === 'function') {
+    return studioEditorClipboardController.getClipboard();
+  }
+  return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
+}
+${source}`;
 }
 
 function extractClipboardMutationPlanBuilderSource(fileContent) {

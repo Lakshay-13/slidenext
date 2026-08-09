@@ -1,6 +1,32 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('clipboard controller owns fallback clipboard state', () => {
+  const initialClipboard = { items: [{ id: 'initial' }], pasteCount: 0 };
+  const controller = clipboardController.createStudioEditorClipboardController({
+    initialClipboard
+  });
+  const nextClipboard = { items: [{ id: 'next' }], pasteCount: 1 };
+
+  assert.equal(controller.getClipboard(), initialClipboard);
+  assert.equal(controller.setClipboard(nextClipboard), nextClipboard);
+  assert.equal(controller.getClipboard(), nextClipboard);
+  assert.equal(controller.clearClipboard(), null);
+  assert.equal(controller.getClipboard(), null);
+});
+
+test('editor routes clipboard reads through the clipboard controller', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /clipboard: getStudioEditorClipboard\(\)/);
+  assert.match(source, /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(\), getStudioEditorClipboard\(\)/);
+  assert.doesNotMatch(source, /let editorClipboard = null/);
+});
 
 test('clipboard controller copies payload items and updates clipboard state', () => {
   const calls = [];

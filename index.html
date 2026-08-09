@@ -2360,10 +2360,6 @@
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
-          getClipboard: () => editorClipboard,
-          setClipboard: (nextClipboard) => {
-            editorClipboard = nextClipboard;
-          },
           buildClipboardSelectionMutationPlan: (...args) => buildClipboardSelectionMutationPlan(...args),
           finalizeClipboardActionResult: (...args) => finalizeClipboardActionResult(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
@@ -2944,6 +2940,13 @@
           triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
         })
       : null;
+    function getStudioEditorClipboard() {
+      if (studioEditorClipboardController
+        && typeof studioEditorClipboardController.getClipboard === 'function') {
+        return studioEditorClipboardController.getClipboard();
+      }
+      return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
+    }
     const studioEditorFrameInteractionStateController = typeof SlideNextStudioEditorFrameInteractionStateController !== 'undefined'
       && SlideNextStudioEditorFrameInteractionStateController
       && typeof SlideNextStudioEditorFrameInteractionStateController.createStudioEditorFrameInteractionStateController === 'function'
@@ -2967,7 +2970,6 @@
       : null;
     let renamingFilename = '';
     let renamingVersionContext = null;
-    let editorClipboard = null;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
@@ -6663,7 +6665,7 @@
       return clipboardApi.syncStudioClipboardToolbarState({
         documentRef: document,
         elements: getStudioSelectedElements(),
-        clipboard: editorClipboard,
+        clipboard: getStudioEditorClipboard(),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -6937,7 +6939,7 @@
         ? clipboardApi.buildStudioClipboardSelectionMutationPlan
         : null;
       if (buildStudioClipboardSelectionMutationPlan) {
-        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(), editorClipboard, {
+        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(), getStudioEditorClipboard(), {
           isLocked: readLockedState,
           canMutateDeck: () => !!getActiveSlide(resolvedDoc),
           buildPayloadItems(selection) {
@@ -6956,10 +6958,14 @@
           canBuildPayload: false
         };
       }
-      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(getStudioSelectedElements(), editorClipboard, {
-        isLocked: readLockedState,
-        canMutateDeck: () => !!getActiveSlide(resolvedDoc)
-      });
+      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(
+        getStudioSelectedElements(),
+        getStudioEditorClipboard(),
+        {
+          isLocked: readLockedState,
+          canMutateDeck: () => !!getActiveSlide(resolvedDoc)
+        }
+      );
       const payloadItems = (clipboardMutationPlan.canCopy || clipboardMutationPlan.canDuplicate)
         ? buildClipboardPayload(clipboardMutationPlan.selection, resolvedDoc)
         : [];

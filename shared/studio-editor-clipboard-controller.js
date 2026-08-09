@@ -19,8 +19,18 @@
       'SlideNextStudioEditorCanonicalInsertion'
     );
     const deckImportApi = resolveDependency('deckImportApi', 'SlideNextDeckImport');
-    const getClipboard = typeof options.getClipboard === 'function' ? options.getClipboard : () => null;
-    const setClipboard = typeof options.setClipboard === 'function' ? options.setClipboard : () => {};
+    let clipboard = Object.prototype.hasOwnProperty.call(options, 'initialClipboard')
+      ? options.initialClipboard
+      : null;
+    const getClipboard = typeof options.getClipboard === 'function'
+      ? options.getClipboard
+      : () => clipboard;
+    const setClipboard = typeof options.setClipboard === 'function'
+      ? options.setClipboard
+      : (nextClipboard) => {
+          clipboard = nextClipboard;
+          return clipboard;
+        };
     const buildClipboardSelectionMutationPlan = typeof options.buildClipboardSelectionMutationPlan === 'function'
       ? options.buildClipboardSelectionMutationPlan
       : null;
@@ -240,7 +250,16 @@
       ));
     }
 
-    return { copy, paste, duplicate };
+    return {
+      copy,
+      paste,
+      duplicate,
+      getClipboard,
+      setClipboard,
+      clearClipboard() {
+        return setClipboard(null);
+      }
+    };
   }
 
   return {
