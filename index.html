@@ -1399,6 +1399,7 @@
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
+  <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1438,7 +1439,6 @@
     let lastPersistedDeckHtml = '';
     let lastPersistedCanonicalDeck = null;
     let persistedDeckPlaybackState = null;
-    let pendingEditorTransaction = null;
     let studioEditorSessionToken = 0;
     const studioEditorSlideIndexController = typeof SlideNextStudioEditorSlideIndexController !== 'undefined'
       && SlideNextStudioEditorSlideIndexController
@@ -1521,6 +1521,29 @@
       return studioEditorHistoryStackController
         && typeof studioEditorHistoryStackController.clear === 'function'
         ? studioEditorHistoryStackController.clear()
+        : false;
+    }
+    const studioEditorHistoryPendingController = typeof SlideNextStudioEditorHistoryPendingController !== 'undefined'
+      && SlideNextStudioEditorHistoryPendingController
+      && typeof SlideNextStudioEditorHistoryPendingController.createStudioEditorHistoryPendingController === 'function'
+      ? SlideNextStudioEditorHistoryPendingController.createStudioEditorHistoryPendingController({})
+      : null;
+    function getStudioPendingEditorTransaction() {
+      return studioEditorHistoryPendingController
+        && typeof studioEditorHistoryPendingController.getPendingTransaction === 'function'
+        ? studioEditorHistoryPendingController.getPendingTransaction()
+        : null;
+    }
+    function setStudioPendingEditorTransaction(nextTransaction) {
+      return studioEditorHistoryPendingController
+        && typeof studioEditorHistoryPendingController.setPendingTransaction === 'function'
+        ? studioEditorHistoryPendingController.setPendingTransaction(nextTransaction)
+        : false;
+    }
+    function clearStudioPendingEditorTransaction() {
+      return studioEditorHistoryPendingController
+        && typeof studioEditorHistoryPendingController.clear === 'function'
+        ? studioEditorHistoryPendingController.clear()
         : false;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
@@ -2587,9 +2610,9 @@
           elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
             ? SlideNextStudioElementState
             : null,
-          getPendingTransaction: () => pendingEditorTransaction,
+          getPendingTransaction: getStudioPendingEditorTransaction,
           setPendingTransaction: (nextTransaction) => {
-            pendingEditorTransaction = nextTransaction;
+            setStudioPendingEditorTransaction(nextTransaction);
           },
           getPendingCanonicalDeck: () => pendingEditorCanonicalDeck,
           setPendingCanonicalDeck: (nextCanonicalDeck) => {
@@ -7741,9 +7764,9 @@
           )
             ? SlideNextStudioEditorTransaction
             : null,
-          getPendingTransaction: () => pendingEditorTransaction,
+          getPendingTransaction: getStudioPendingEditorTransaction,
           setPendingTransaction(nextTransaction) {
-            pendingEditorTransaction = nextTransaction;
+            setStudioPendingEditorTransaction(nextTransaction);
           },
           setPendingCanonicalDeck(nextCanonicalDeck) {
             pendingEditorCanonicalDeck = nextCanonicalDeck;
@@ -7853,9 +7876,7 @@
           getSelectedElementIds: getCommittedSelectedEditorElementIds,
           preferCanonicalDeck: true,
           getPendingTransaction: () => (
-            typeof pendingEditorTransaction !== 'undefined'
-              ? pendingEditorTransaction
-              : null
+            getStudioPendingEditorTransaction()
           )
         });
       }
@@ -7925,9 +7946,7 @@
           ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryCaptureStateAdapter
           : null;
         const clearPendingState = () => {
-          if (typeof pendingEditorTransaction !== 'undefined') {
-            pendingEditorTransaction = null;
-          }
+          clearStudioPendingEditorTransaction();
           if (typeof pendingEditorCanonicalDeck !== 'undefined') {
             pendingEditorCanonicalDeck = null;
           }
@@ -7992,8 +8011,7 @@
         && typeof studioEditorHistoryController.flushPending === 'function') {
         return studioEditorHistoryController.flushPending();
       }
-      const hasPendingTransaction = typeof pendingEditorTransaction !== 'undefined'
-        && pendingEditorTransaction !== null;
+      const hasPendingTransaction = getStudioPendingEditorTransaction() !== null;
       const hasPendingCanonicalDeck = typeof pendingEditorCanonicalDeck !== 'undefined'
         && pendingEditorCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;

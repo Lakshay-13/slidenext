@@ -19,6 +19,17 @@ function clearStudioHistoryStacks() {
   redoStack = [];
   return { undoStack, redoStack };
 }
+function getStudioPendingEditorTransaction() {
+  return typeof pendingEditorTransaction !== 'undefined' ? pendingEditorTransaction : null;
+}
+function setStudioPendingEditorTransaction(nextTransaction) {
+  pendingEditorTransaction = nextTransaction;
+  return pendingEditorTransaction;
+}
+function clearStudioPendingEditorTransaction() {
+  pendingEditorTransaction = null;
+  return pendingEditorTransaction;
+}
 `;
 }
 
