@@ -5,6 +5,7 @@ const reorderController = require('../shared/studio-editor-slide-reorder-control
 test('slide reorder controller assembles canonical and persistence dependencies', () => {
   const calls = [];
   const liveCanonicalDeck = { id: 'live-baseline' };
+  const legacyCanonicalDeck = { slides: [] };
   const canonicalBuilders = {
     buildCanonicalReorderSlideBaseline() {
       calls.push(['baseline']);
@@ -37,7 +38,8 @@ test('slide reorder controller assembles canonical and persistence dependencies'
     getIframeDoc: () => ({ id: 'doc' }),
     getSlides: () => [{ id: 'slide-1' }],
     getSlideId: (slide) => slide.id,
-    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeck: () => legacyCanonicalDeck,
+    buildCanonicalDeckBaseline: () => ({ id: 'baseline-fallback' }),
     captureSlideMutationState: () => ({ id: 'restore' }),
     applyReorder: () => ({ didApply: true }),
     generateThumbnails: () => calls.push(['thumbnails']),
@@ -48,7 +50,8 @@ test('slide reorder controller assembles canonical and persistence dependencies'
   assert.equal(controller.reorder(0, 1), true);
   assert.equal(calls[0][0], 'createBuilders');
   assert.equal(calls[0][1].canonicalDeckApi.id, 'canonical-api');
-  assert.equal(calls[0][1].buildCanonicalDeck({}).slides.length, 0);
+  assert.equal(calls[0][1].buildCanonicalDeck({}), legacyCanonicalDeck);
+  assert.equal(calls[0][1].buildCanonicalDeckBaseline({}).id, 'baseline-fallback');
   assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   assert.equal(calls[1][0], 'reorder');
   assert.equal(calls[1][1], 0);

@@ -547,6 +547,27 @@ test('buildStudioCanonicalReorderSlideBaseline builds from the source document',
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalReorderSlideBaseline prefers a dedicated baseline builder', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let builtBaselineFromDocument = null;
+  const result = canonicalSlide.buildStudioCanonicalReorderSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    buildCanonicalDeckBaseline(documentRef) {
+      builtBaselineFromDocument = documentRef;
+      return sourceDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('mutation builder must not be used for the baseline');
+    },
+    sourceDocument
+  });
+
+  assert.equal(builtBaselineFromDocument, sourceDocument);
+  assert.equal(result, sourceDeck);
+});
+
 test('buildStudioCanonicalReorderSlideBaseline prefers a valid live canonical deck', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;

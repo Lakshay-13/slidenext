@@ -2212,7 +2212,7 @@
           getIframeDoc: () => getIframeDoc(),
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()

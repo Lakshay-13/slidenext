@@ -17,6 +17,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : buildCanonicalDeck;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -37,6 +40,7 @@
             canonicalDeckApi,
             canonicalStateApi,
             buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
             getCanonicalDeckBaseline
           })
         : null
@@ -77,6 +81,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : buildCanonicalDeck;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -100,7 +107,7 @@
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
           : null,
-        buildCanonicalDeckBaseline: buildCanonicalDeck
+        buildCanonicalDeckBaseline
       });
       return typeof resolveCanonicalDeck === 'function'
         ? resolveCanonicalDeck(options.sourceDocument)
@@ -112,7 +119,7 @@
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
           : null,
-        buildCanonicalDeckBaseline: buildCanonicalDeck
+        buildCanonicalDeckBaseline
       });
       return typeof readCanonicalDeckBaseline === 'function'
         ? readCanonicalDeckBaseline(options.sourceDocument)
@@ -142,9 +149,9 @@
           // Fall through to the document rebuild path.
         }
       }
-      if (!buildCanonicalDeck) return null;
+      if (!buildCanonicalDeckBaseline) return null;
       try {
-        const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDocument);
+        const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
         return isValidCanonicalDeck(rebuiltCanonicalDeck) ? rebuiltCanonicalDeck : null;
       } catch (err) {
         return null;
