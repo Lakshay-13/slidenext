@@ -2440,7 +2440,6 @@
           canonicalGroupApi: typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
             ? SlideNextStudioEditorCanonicalGroup
             : null,
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
@@ -2457,7 +2456,6 @@
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
