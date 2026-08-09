@@ -363,3 +363,27 @@ test('persistence controller checks persisted HTML through the shared adapter', 
   assert.equal(controller.isPersistedDeckHtml('<html></html>'), true);
   assert.equal(controller.isPersistedDeckHtml('<html><body></body></html>'), false);
 });
+
+test('persistence controller checks persisted save requests through the shared adapter', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getPersistedDeckHtml: () => '<html></html>',
+    getPersistedCanonicalDeck: () => canonicalDeck
+  });
+  const saveRequest = {
+    htmlContent: '<html></html>',
+    canonicalDeck
+  };
+
+  assert.equal(controller.isPersistedSaveRequest(saveRequest), true);
+  assert.equal(controller.isPersistedSaveRequest({
+    htmlContent: '<html><body></body></html>',
+    canonicalDeck
+  }), false);
+});

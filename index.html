@@ -9972,6 +9972,14 @@
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.isPersistedSaveRequest === 'function') {
+        const result = studioEditorPersistenceController.isPersistedSaveRequest(saveRequestBody, cleanHtml);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistedSaveRequestCheckerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
