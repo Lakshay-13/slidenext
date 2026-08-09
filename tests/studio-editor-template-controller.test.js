@@ -134,6 +134,38 @@ test('template mutations reject malformed fallback state without a canonical val
   assert.equal(controller.saveActiveSlide({ id: 'invalid-template' }), null);
 });
 
+test('template controller fails closed when saving a template canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      saveCanonicalTemplateFromSlideId() {
+        throw new Error('canonical template save failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onTemplatesChanged() {
+      calls.push('templates');
+    }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'broken-template' }), null);
+  assert.deepEqual(calls, []);
+});
+
 test('template controller fails closed when the active slide or dependencies are unavailable', () => {
   const controller = templateController.createStudioEditorTemplateController({
     canonicalDeckApi: canonicalDeck,

@@ -139,11 +139,16 @@
         return null;
       }
 
-      const nextCanonicalDeck = canonicalDeckApi.saveCanonicalTemplateFromSlideId(
-        resolveCanonicalDeck(),
-        getActiveSlideId(),
-        templateLike
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.saveCanonicalTemplateFromSlideId(
+          resolveCanonicalDeck(),
+          getActiveSlideId(),
+          templateLike
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
 
       const template = nextCanonicalDeck.templates[nextCanonicalDeck.templates.length - 1] || null;
