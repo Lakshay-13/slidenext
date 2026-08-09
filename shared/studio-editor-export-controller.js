@@ -30,6 +30,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -50,6 +53,7 @@
         resolveReadyState,
         buildPreviewHtml,
         buildCanonicalDeck,
+        getCanonicalDeckBaseline,
         isCanonicalDeck,
         pdfExport,
         documentRef,
@@ -69,6 +73,7 @@
       return exportActions.createStudioPptxExportAction({
         resolveReadyState,
         buildCanonicalDeck,
+        getCanonicalDeckBaseline,
         isCanonicalDeck,
         pptxExport,
         documentRef,
