@@ -4027,6 +4027,16 @@
       doc = getIframeDoc(),
       buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
     ) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorCanonicalDeckResolverWithBuilder === 'function') {
+        return editorCanonicalViewStateApi.createStudioEditorCanonicalDeckResolverWithBuilder(doc, {
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          buildCanonicalDeck
+        });
+      }
       const createStudioCanonicalDeckResolver = (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView

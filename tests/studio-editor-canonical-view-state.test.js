@@ -420,3 +420,37 @@ test('editor deck view html options delegate to the shared deck view API', () =>
   assert.equal(calls[0].createBuildOptions, createBuildOptions);
   assert.equal(calls[0].marker, 'editor');
 });
+
+test('shared canonical resolver factory delegates the builder to deck view', () => {
+  const doc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const buildCanonicalDeck = (sourceDoc) => {
+    calls.push(['build', sourceDoc]);
+    return canonicalDeck;
+  };
+  const resolver = canonicalViewState.createStudioEditorCanonicalDeckResolverWithBuilder(doc, {
+    deckViewApi: {
+      createStudioCanonicalDeckResolver(nextDoc, options) {
+        calls.push(['create', nextDoc, options.buildCanonicalDeck]);
+        return (sourceDoc) => options.buildCanonicalDeck(sourceDoc);
+      }
+    },
+    buildCanonicalDeck
+  });
+
+  assert.equal(resolver(doc), canonicalDeck);
+  assert.deepEqual(calls, [
+    ['create', doc, buildCanonicalDeck],
+    ['build', doc]
+  ]);
+});
+
+test('shared canonical resolver factory fails closed without a deck view resolver', () => {
+  const resolver = canonicalViewState.createStudioEditorCanonicalDeckResolverWithBuilder(
+    { id: 'iframe-doc' },
+    { buildCanonicalDeck: () => ({ kind: 'slidenext.deck', slides: [] }) }
+  );
+
+  assert.equal(resolver(), null);
+});

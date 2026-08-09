@@ -3299,6 +3299,48 @@ test('buildEditorDeckSnapshot fails closed when the shared snapshot build-option
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('editor canonical resolver delegates to the shared view-state module before the inline fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
+    '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
+  );
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const buildCanonicalDeck = () => {
+    throw new Error('inline builder should not run');
+  };
+  const calls = [];
+  const deckViewApi = { marker: 'deck-view' };
+  const context = {
+    SlideNextStudioDeckView: deckViewApi,
+    SlideNextStudioEditorCanonicalViewState: {
+      createStudioEditorCanonicalDeckResolverWithBuilder(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return () => canonicalDeck;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const resolver = context.createEditorCanonicalDeckResolverWithBuilder(
+    iframeDoc,
+    buildCanonicalDeck
+  );
+
+  assert.equal(resolver(), canonicalDeck);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], iframeDoc);
+  assert.equal(calls[0][1].deckViewApi, deckViewApi);
+  assert.equal(calls[0][1].buildCanonicalDeck, buildCanonicalDeck);
+});
+
 test('buildEditorDeckSnapshot does not reconstruct local snapshot options when shared helpers are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
