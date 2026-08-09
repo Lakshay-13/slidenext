@@ -1407,6 +1407,7 @@
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
+  <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
@@ -3253,10 +3254,13 @@
     const studioEditorHistoryController = studioEditorHistoryControllerRuntime
       ? studioEditorHistoryControllerRuntime.historyController
       : null;
-    const studioEditorPersistenceController = typeof SlideNextStudioEditorPersistenceController !== 'undefined'
-      && SlideNextStudioEditorPersistenceController
-      && typeof SlideNextStudioEditorPersistenceController.createStudioEditorPersistenceController === 'function'
-      ? SlideNextStudioEditorPersistenceController.createStudioEditorPersistenceController({
+    const studioEditorPersistenceRuntime = typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
+      && SlideNextStudioEditorPersistenceRuntime
+      && typeof SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime === 'function'
+      ? SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime({
+          controllerApi: typeof SlideNextStudioEditorPersistenceController !== 'undefined'
+            ? SlideNextStudioEditorPersistenceController
+            : null,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
             : null,
@@ -3333,6 +3337,9 @@
             })
           )
         })
+      : null;
+    const studioEditorPersistenceController = studioEditorPersistenceRuntime
+      ? studioEditorPersistenceRuntime.persistenceController
       : null;
     const studioEditorSessionRuntime = typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
       && SlideNextStudioEditorSessionRuntime
