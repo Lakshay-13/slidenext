@@ -2227,6 +2227,16 @@
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController
       : null;
+    const studioEditorSourceHtmlBuilder = typeof SlideNextStudioEditorSourceController !== 'undefined'
+      && SlideNextStudioEditorSourceController
+      && typeof SlideNextStudioEditorSourceController.createStudioEditorSourceHtmlBuilder === 'function'
+      ? SlideNextStudioEditorSourceController.createStudioEditorSourceHtmlBuilder({
+          buildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
+          createDeckViewHtmlOptions: (options) => createEditorDeckViewHtmlOptions(options),
+          resolveBuildStudioSourceHtml: () => resolveStudioDeckViewMethod('buildStudioSourceHtml'),
+          resolveBuildDeckSourceHtml: () => resolveDeckHtmlMethod('buildDeckSourceHtml')
+        })
+      : null;
     const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
       && SlideNextStudioEditorNavigationRuntime
       && typeof SlideNextStudioEditorNavigationRuntime.createStudioEditorNavigationRuntime === 'function'
@@ -4452,6 +4462,9 @@
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
+      if (typeof studioEditorSourceHtmlBuilder !== 'undefined' && studioEditorSourceHtmlBuilder) {
+        return studioEditorSourceHtmlBuilder(doc, options);
+      }
       const buildStudioSourceHtml = typeof options.buildStudioSourceHtml === 'function'
         ? options.buildStudioSourceHtml
         : resolveStudioDeckViewMethod('buildStudioSourceHtml');

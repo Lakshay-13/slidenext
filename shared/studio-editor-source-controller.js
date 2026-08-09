@@ -7,6 +7,42 @@
     root.SlideNextStudioEditorSourceController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function resolveSourceBuilderOption(value, fallback = null) {
+    try {
+      const resolved = typeof value === 'function' ? value() : value;
+      return resolved === undefined || resolved === null ? fallback : resolved;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function createStudioEditorSourceHtmlBuilder(options = {}) {
+    const buildDeckViewHtml = typeof options.buildDeckViewHtml === 'function'
+      ? options.buildDeckViewHtml
+      : () => '';
+    const createDeckViewHtmlOptions = typeof options.createDeckViewHtmlOptions === 'function'
+      ? options.createDeckViewHtmlOptions
+      : () => null;
+
+    return function buildSourceHtml(doc, sourceOptions = {}) {
+      const normalizedSourceOptions = sourceOptions && typeof sourceOptions === 'object'
+        ? sourceOptions
+        : {};
+      const buildStudioSourceHtml = typeof normalizedSourceOptions.buildStudioSourceHtml === 'function'
+        ? normalizedSourceOptions.buildStudioSourceHtml
+        : resolveSourceBuilderOption(options.resolveBuildStudioSourceHtml);
+      const buildDeckSourceHtml = typeof normalizedSourceOptions.buildDeckSourceHtml === 'function'
+        ? normalizedSourceOptions.buildDeckSourceHtml
+        : resolveSourceBuilderOption(options.resolveBuildDeckSourceHtml);
+
+      return buildDeckViewHtml(doc, createDeckViewHtmlOptions({
+        buildSharedHtml: buildStudioSourceHtml,
+        buildViewOptions: normalizedSourceOptions.buildViewOptions,
+        buildCanonicalHtml: buildDeckSourceHtml
+      }));
+    };
+  }
+
   function createStudioEditorSourceController(options = {}) {
     const previewApi = options.previewApi
       || (root && root.SlideNextStudioPreview)
@@ -164,6 +200,7 @@
   }
 
   return {
+    createStudioEditorSourceHtmlBuilder,
     createStudioEditorSourceController
   };
 });

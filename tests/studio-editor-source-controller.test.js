@@ -2,6 +2,38 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const sourceController = require('../shared/studio-editor-source-controller.js');
 
+test('shared source html builder resolves defaults and preserves per-call overrides', () => {
+  const calls = [];
+  const doc = { id: 'editor-document' };
+  const builder = sourceController.createStudioEditorSourceHtmlBuilder({
+    buildDeckViewHtml(nextDoc, options) {
+      calls.push(['build', nextDoc, options]);
+      return '<html>source</html>';
+    },
+    createDeckViewHtmlOptions(options) {
+      calls.push(['options', options]);
+      return options;
+    },
+    resolveBuildStudioSourceHtml: () => 'shared-source-builder',
+    resolveBuildDeckSourceHtml: () => 'canonical-source-builder'
+  });
+  const customBuildStudioSourceHtml = () => 'custom-source-builder';
+  const customBuildDeckSourceHtml = () => 'custom-canonical-source-builder';
+  const buildViewOptions = () => ({ activeSlideId: 'slide-1' });
+
+  assert.equal(builder(doc, {
+    buildStudioSourceHtml: customBuildStudioSourceHtml,
+    buildDeckSourceHtml: customBuildDeckSourceHtml,
+    buildViewOptions
+  }), '<html>source</html>');
+  assert.equal(calls[0][0], 'options');
+  assert.equal(calls[0][1].buildSharedHtml, customBuildStudioSourceHtml);
+  assert.equal(calls[0][1].buildCanonicalHtml, customBuildDeckSourceHtml);
+  assert.equal(calls[0][1].buildViewOptions, buildViewOptions);
+  assert.equal(calls[1][0], 'build');
+  assert.equal(calls[1][1], doc);
+});
+
 function createController(overrides = {}) {
   const calls = [];
   const previewApi = {

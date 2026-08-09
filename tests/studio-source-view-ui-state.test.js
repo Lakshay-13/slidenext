@@ -521,6 +521,37 @@ test('buildEditorSourceDeckHtml forwards source deck view builders when local he
   ]);
 });
 
+test('buildEditorSourceDeckHtml delegates to the shared source builder before inline composition', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSourceHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function buildEditorSourceHtml(doc = getIframeDoc()) {'
+  );
+  const iframeDoc = { id: 'editor-doc' };
+  const calls = [];
+  const context = {
+    studioEditorSourceHtmlBuilder(nextDoc, options) {
+      calls.push([nextDoc, options]);
+      return '<html>shared-source</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSourceHtmlSource, context);
+
+  assert.equal(
+    context.buildEditorSourceDeckHtml(iframeDoc, { buildViewOptions: () => ({}) }),
+    '<html>shared-source</html>'
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], iframeDoc);
+  assert.equal(typeof calls[0][1].buildViewOptions, 'function');
+});
+
 test('buildEditorSourceDeckHtml prefers provided source deck html builder overrides when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
