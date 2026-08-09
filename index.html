@@ -1420,6 +1420,7 @@
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
   <script src="/shared/studio-editor-history-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1670,45 +1671,45 @@
         ? studioEditorHistoryStateController.setUndoDebounceTimer(nextTimer)
         : false;
     }
-    const studioEditorPersistedDeckStateController = typeof SlideNextStudioEditorPersistedDeckStateController !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckStateController
-      && typeof SlideNextStudioEditorPersistedDeckStateController.createStudioEditorPersistedDeckStateController === 'function'
-      ? SlideNextStudioEditorPersistedDeckStateController.createStudioEditorPersistedDeckStateController({})
+    const studioEditorPersistedDeckStateStore = typeof SlideNextStudioEditorPersistedDeckStateStore !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckStateStore
+      && typeof SlideNextStudioEditorPersistedDeckStateStore.createStudioEditorPersistedDeckStateStore === 'function'
+      ? SlideNextStudioEditorPersistedDeckStateStore.createStudioEditorPersistedDeckStateStore({})
       : null;
     function getStudioPersistedDeckHtml() {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.getDeckHtml === 'function'
-        ? studioEditorPersistedDeckStateController.getDeckHtml()
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.getDeckHtml === 'function'
+        ? studioEditorPersistedDeckStateStore.getDeckHtml()
         : '';
     }
     function getStudioPersistedCanonicalDeck() {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.getCanonicalDeck === 'function'
-        ? studioEditorPersistedDeckStateController.getCanonicalDeck()
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.getCanonicalDeck === 'function'
+        ? studioEditorPersistedDeckStateStore.getCanonicalDeck()
         : null;
     }
     function getStudioPersistedPlaybackState() {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.getPlaybackState === 'function'
-        ? studioEditorPersistedDeckStateController.getPlaybackState()
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.getPlaybackState === 'function'
+        ? studioEditorPersistedDeckStateStore.getPlaybackState()
         : null;
     }
     function setStudioPersistedDeckHtml(nextDeckHtml) {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.setDeckHtml === 'function'
-        ? studioEditorPersistedDeckStateController.setDeckHtml(nextDeckHtml)
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.setDeckHtml === 'function'
+        ? studioEditorPersistedDeckStateStore.setDeckHtml(nextDeckHtml)
         : false;
     }
     function setStudioPersistedCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.setCanonicalDeck === 'function'
-        ? studioEditorPersistedDeckStateController.setCanonicalDeck(nextCanonicalDeck)
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.setCanonicalDeck === 'function'
+        ? studioEditorPersistedDeckStateStore.setCanonicalDeck(nextCanonicalDeck)
         : false;
     }
     function setStudioPersistedPlaybackState(nextPlaybackState) {
-      return studioEditorPersistedDeckStateController
-        && typeof studioEditorPersistedDeckStateController.setPlaybackState === 'function'
-        ? studioEditorPersistedDeckStateController.setPlaybackState(nextPlaybackState)
+      return studioEditorPersistedDeckStateStore
+        && typeof studioEditorPersistedDeckStateStore.setPlaybackState === 'function'
+        ? studioEditorPersistedDeckStateStore.setPlaybackState(nextPlaybackState)
         : false;
     }
     const studioEditorAutoSaveTimerController = typeof SlideNextStudioEditorAutoSaveTimerController !== 'undefined'

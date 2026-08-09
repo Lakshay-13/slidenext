@@ -39,10 +39,11 @@ test('editor wiring routes persisted baselines through the shared controller', (
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-deck-state-controller\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorPersistedDeckStateController\(\{/);
-  assert.match(fileContent, /getPersistedDeckHtml: getStudioPersistedDeckHtml/);
-  assert.match(fileContent, /getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck/);
-  assert.match(fileContent, /getPersistedPlaybackState: getStudioPersistedPlaybackState/);
+  assert.match(fileContent, /studio-editor-persisted-deck-state-store\.js/);
+  assert.match(fileContent, /studioEditorPersistedDeckStateStore/);
+  assert.match(fileContent, /getStudioPersistedDeckHtml\(\)/);
+  assert.match(fileContent, /getStudioPersistedCanonicalDeck\(\)/);
+  assert.match(fileContent, /getStudioPersistedPlaybackState\(\)/);
   assert.doesNotMatch(fileContent, /let lastPersistedDeckHtml = ''/);
   assert.doesNotMatch(fileContent, /let lastPersistedCanonicalDeck = null/);
   assert.doesNotMatch(fileContent, /let persistedDeckPlaybackState = null/);
