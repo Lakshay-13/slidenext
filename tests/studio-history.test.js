@@ -1184,12 +1184,59 @@ test('createStudioHistoryStepRunner applies successful history steps and skips u
     ['getUndoStack'],
     ['getRedoStack'],
     ['stepHistory', ['undo-entry'], ['redo-entry']],
+    ['restoreHistoryEntry', restoreEntry],
     ['setUndoStack', ['undo-next']],
     ['setRedoStack', ['redo-next']],
-    ['restoreHistoryEntry', restoreEntry],
     ['updateHistoryButtons'],
     ['triggerAutoSave']
   ]);
+
+  const failedCalls = [];
+  let failedUndoStack = ['undo-entry'];
+  let failedRedoStack = ['redo-entry'];
+  const failedRunner = studioHistory.createStudioHistoryStepRunner({
+    stepHistory() {
+      return {
+        didUndo: true,
+        undoStack: ['undo-next'],
+        redoStack: ['redo-next'],
+        restoreEntry
+      };
+    },
+    didStepKey: 'didUndo',
+    getUndoStack() {
+      return failedUndoStack;
+    },
+    getRedoStack() {
+      return failedRedoStack;
+    },
+    setUndoStack() {
+      failedCalls.push('setUndoStack');
+    },
+    setRedoStack() {
+      failedCalls.push('setRedoStack');
+    },
+    restoreHistoryEntry() {
+      failedCalls.push('restoreHistoryEntry');
+      return false;
+    },
+    updateHistoryButtons() {
+      failedCalls.push('updateHistoryButtons');
+    },
+    triggerAutoSave() {
+      failedCalls.push('triggerAutoSave');
+    }
+  });
+
+  assert.deepEqual(failedRunner(), {
+    didUndo: false,
+    undoStack: failedUndoStack,
+    redoStack: failedRedoStack,
+    restoreEntry: null
+  });
+  assert.deepEqual(failedCalls, ['restoreHistoryEntry']);
+  assert.deepEqual(failedUndoStack, ['undo-entry']);
+  assert.deepEqual(failedRedoStack, ['redo-entry']);
 
   const skippedCalls = [];
   const skippedRunner = studioHistory.createStudioHistoryStepRunner({

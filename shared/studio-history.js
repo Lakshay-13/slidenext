@@ -471,13 +471,25 @@
         return nextHistoryState;
       }
 
+      const restoreFailed = () => ({
+        ...nextHistoryState,
+        [didStepKey]: false,
+        undoStack: getUndoStack(),
+        redoStack: getRedoStack(),
+        restoreEntry: null
+      });
+      let restoreResult;
+      try {
+        restoreResult = Object.prototype.hasOwnProperty.call(nextHistoryState, 'transaction')
+          ? restoreHistoryEntry(nextHistoryState.restoreEntry, nextHistoryState.transaction)
+          : restoreHistoryEntry(nextHistoryState.restoreEntry);
+      } catch (err) {
+        return restoreFailed();
+      }
+      if (restoreResult === false) return restoreFailed();
+
       setUndoStack(nextHistoryState.undoStack);
       setRedoStack(nextHistoryState.redoStack);
-      if (Object.prototype.hasOwnProperty.call(nextHistoryState, 'transaction')) {
-        restoreHistoryEntry(nextHistoryState.restoreEntry, nextHistoryState.transaction);
-      } else {
-        restoreHistoryEntry(nextHistoryState.restoreEntry);
-      }
       updateHistoryButtons();
       triggerAutoSave();
       return nextHistoryState;
