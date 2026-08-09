@@ -2914,6 +2914,41 @@ test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and li
   assert.equal(options.resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
 });
 
+test('createEditorCanonicalDeckViewStateOptions defaults to the live-first canonical resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckViewStateOptions(options = {}) {',
+    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+  );
+  const documentRef = { id: 'iframe-document' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    resolveEditorUiCanonicalDeck(doc) {
+      calls.push(['resolver', doc]);
+      return canonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('default view-state reads should use live canonical data');
+    },
+    resolveEditorLiveActiveSlideId() {
+      return 'slide-live';
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const options = context.createEditorCanonicalDeckViewStateOptions({});
+  assert.equal(options.buildCanonicalDeck(documentRef), canonicalDeck);
+  assert.deepEqual(calls, [['resolver', documentRef]]);
+});
+
 test('createEditorCanonicalDeckViewStateOptions delegates callback normalization to the shared deck view helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

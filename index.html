@@ -4045,13 +4045,18 @@
       const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
         ? SlideNextStudioEditorCanonicalViewState
         : null;
+      const fallbackBuildCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+        ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
+        : typeof buildEditorCanonicalDeck === 'function'
+          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+          : null;
       if (editorCanonicalViewStateApi
         && typeof editorCanonicalViewStateApi.createStudioEditorCanonicalDeckViewStateOptions === 'function') {
         return editorCanonicalViewStateApi.createStudioEditorCanonicalDeckViewStateOptions({
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
           buildCanonicalDeck: options.buildCanonicalDeck,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
-          fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          fallbackBuildCanonicalDeck,
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
         });
       }
@@ -4060,7 +4065,7 @@
         : null;
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
-        : (sourceDoc) => buildEditorCanonicalDeck(sourceDoc);
+        : fallbackBuildCanonicalDeck;
       const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
         ? options.resolveLiveActiveSlideId
         : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
