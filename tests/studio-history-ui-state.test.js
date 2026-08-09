@@ -9,15 +9,18 @@ const studioPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
 const historyState = require('../shared/studio-editor-history-state.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
+const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  const source = historyStackFixture.extractHistoryStackAwareFunctionSource(
+    fileContent,
+    startMarker,
+    endMarker
+  );
+  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
+  return source;
 }
 
 function installSlideIndexAccessor(context) {

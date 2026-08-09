@@ -1398,6 +1398,7 @@
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
+  <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1437,8 +1438,6 @@
     let lastPersistedDeckHtml = '';
     let lastPersistedCanonicalDeck = null;
     let persistedDeckPlaybackState = null;
-    let undoStack = [];
-    let redoStack = [];
     let pendingEditorTransaction = null;
     let studioEditorSessionToken = 0;
     const studioEditorSlideIndexController = typeof SlideNextStudioEditorSlideIndexController !== 'undefined'
@@ -1487,6 +1486,41 @@
       return studioEditorSelectionStateController
         && typeof studioEditorSelectionStateController.clear === 'function'
         ? studioEditorSelectionStateController.clear()
+        : false;
+    }
+    const studioEditorHistoryStackController = typeof SlideNextStudioEditorHistoryStackController !== 'undefined'
+      && SlideNextStudioEditorHistoryStackController
+      && typeof SlideNextStudioEditorHistoryStackController.createStudioEditorHistoryStackController === 'function'
+      ? SlideNextStudioEditorHistoryStackController.createStudioEditorHistoryStackController({})
+      : null;
+    function getStudioUndoStack() {
+      return studioEditorHistoryStackController
+        && typeof studioEditorHistoryStackController.getUndoStack === 'function'
+        ? studioEditorHistoryStackController.getUndoStack()
+        : [];
+    }
+    function getStudioRedoStack() {
+      return studioEditorHistoryStackController
+        && typeof studioEditorHistoryStackController.getRedoStack === 'function'
+        ? studioEditorHistoryStackController.getRedoStack()
+        : [];
+    }
+    function setStudioUndoStack(nextStack) {
+      return studioEditorHistoryStackController
+        && typeof studioEditorHistoryStackController.setUndoStack === 'function'
+        ? studioEditorHistoryStackController.setUndoStack(nextStack)
+        : false;
+    }
+    function setStudioRedoStack(nextStack) {
+      return studioEditorHistoryStackController
+        && typeof studioEditorHistoryStackController.setRedoStack === 'function'
+        ? studioEditorHistoryStackController.setRedoStack(nextStack)
+        : false;
+    }
+    function clearStudioHistoryStacks() {
+      return studioEditorHistoryStackController
+        && typeof studioEditorHistoryStackController.clear === 'function'
+        ? studioEditorHistoryStackController.clear()
         : false;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
@@ -2588,13 +2622,13 @@
           getActiveSlideId,
           getSelectedElementIds: getCommittedSelectedEditorElementIds,
           getHistoryStateOptions: getEditorHistoryStackOptions,
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack,
           setUndoStack: (nextUndoStack) => {
-            undoStack = nextUndoStack;
+            setStudioUndoStack(nextUndoStack);
           },
           setRedoStack: (nextRedoStack) => {
-            redoStack = nextRedoStack;
+            setStudioRedoStack(nextRedoStack);
           },
           updateHistoryButtons: () => updateHistoryButtons(),
           triggerAutoSave: () => triggerAutoSave(),
@@ -3856,8 +3890,7 @@
         syncPresentationMetadata: false
       });
       applyEditorSelectionState({});
-      undoStack = [];
-      redoStack = [];
+      clearStudioHistoryStacks();
       updateHistoryButtons();
       
       const editor = document.getElementById('studioEditor');
@@ -3956,8 +3989,7 @@
       resetStudioSaveButtonState();
       updateDeckReadyToolbarActionState();
       deselectElement();
-      undoStack = [];
-      redoStack = [];
+      clearStudioHistoryStacks();
       updateHistoryButtons();
       
       iframe.onload = null;
@@ -7904,8 +7936,8 @@
           clearPendingState();
           return {
             didCapture: false,
-            undoStack,
-            redoStack,
+            undoStack: getStudioUndoStack(),
+            redoStack: getStudioRedoStack(),
             historyEntry: null
           };
         }
@@ -7913,16 +7945,16 @@
           historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
           createHistoryEntry,
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack,
           getHistoryStateOptions: typeof getEditorHistoryStackOptions === 'function'
             ? getEditorHistoryStackOptions
             : null,
           setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
+            setStudioUndoStack(nextUndoStack);
           },
           setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
+            setStudioRedoStack(nextRedoStack);
           },
           updateHistoryButtons,
           clearPendingState
@@ -7931,8 +7963,8 @@
       if (typeof captureState.adapter !== 'function') {
         return {
           didCapture: false,
-          undoStack,
-          redoStack,
+          undoStack: getStudioUndoStack(),
+          redoStack: getStudioRedoStack(),
           historyEntry: null
         };
       }
@@ -7949,8 +7981,8 @@
         || typeof SlideNextStudioHistory.syncStudioHistoryButtons !== 'function') return false;
       return SlideNextStudioHistory.syncStudioHistoryButtons({
         documentRef: document,
-        undoStack,
-        redoStack
+        undoStack: getStudioUndoStack(),
+        redoStack: getStudioRedoStack()
       });
     }
 
@@ -7988,13 +8020,13 @@
         getEditorHistoryStepAdapter.adapter = createStudioEditorHistoryStepStateAdapter({
           historyStateApi: SlideNextStudioEditorHistoryState,
           historyApi: SlideNextStudioHistory,
-          getUndoStack: () => undoStack,
-          getRedoStack: () => redoStack,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack,
           setUndoStack(nextUndoStack) {
-            undoStack = nextUndoStack;
+            setStudioUndoStack(nextUndoStack);
           },
           setRedoStack(nextRedoStack) {
-            redoStack = nextRedoStack;
+            setStudioRedoStack(nextRedoStack);
           },
           restoreHistoryEntry: restoreFrameFromHistoryEntry,
           updateHistoryButtons,
@@ -8013,8 +8045,8 @@
         ? historyStepAdapter.undo()
         : {
             didUndo: false,
-            undoStack,
-            redoStack,
+            undoStack: getStudioUndoStack(),
+            redoStack: getStudioRedoStack(),
             restoreEntry: null
           };
     }
@@ -8025,8 +8057,8 @@
         ? historyStepAdapter.redo()
         : {
             didRedo: false,
-            undoStack,
-            redoStack,
+            undoStack: getStudioUndoStack(),
+            redoStack: getStudioRedoStack(),
             restoreEntry: null
           };
     }

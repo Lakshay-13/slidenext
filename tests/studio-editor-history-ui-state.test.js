@@ -3,15 +3,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  const source = historyStackFixture.extractHistoryStackAwareFunctionSource(
+    fileContent,
+    startMarker,
+    endMarker
+  );
+  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
+  return source;
 }
 
 test('createHistoryEntry delegates editor dependencies through the shared history adapter', () => {
