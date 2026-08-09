@@ -1439,6 +1439,7 @@
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-runtime.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
+  <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
@@ -1925,10 +1926,17 @@
         ? studioEditorSaveButtonStateStore.getState()
         : 'idle';
     }
-    const studioEditorVersionRenameStateStore = typeof SlideNextStudioEditorVersionRenameStateStore !== 'undefined'
-      && SlideNextStudioEditorVersionRenameStateStore
-      && typeof SlideNextStudioEditorVersionRenameStateStore.createStudioEditorVersionRenameStateStore === 'function'
-      ? SlideNextStudioEditorVersionRenameStateStore.createStudioEditorVersionRenameStateStore({})
+    const studioEditorVersionRenameStateRuntime = typeof SlideNextStudioEditorVersionRenameStateRuntime !== 'undefined'
+      && SlideNextStudioEditorVersionRenameStateRuntime
+      && typeof SlideNextStudioEditorVersionRenameStateRuntime.createStudioEditorVersionRenameStateRuntime === 'function'
+      ? SlideNextStudioEditorVersionRenameStateRuntime.createStudioEditorVersionRenameStateRuntime({
+          stateStore: typeof SlideNextStudioEditorVersionRenameStateStore !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameStateStore
+            : null
+        })
+      : null;
+    const studioEditorVersionRenameStateStore = studioEditorVersionRenameStateRuntime
+      ? studioEditorVersionRenameStateRuntime.versionRenameStateStore
       : null;
     function getStudioRenameVersionState() {
       if (studioEditorVersionRenameStateStore
