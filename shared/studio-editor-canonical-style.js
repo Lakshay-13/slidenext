@@ -13,6 +13,7 @@
     weight: { property: 'font-weight', domProperty: 'fontWeight' },
     italic: { property: 'font-style', domProperty: 'fontStyle' },
     underline: { property: 'text-decoration', domProperty: 'textDecoration' },
+    lineHeight: { property: 'line-height', domProperty: 'lineHeight' },
     color: { property: 'color', domProperty: 'color' },
     align: { property: 'text-align', domProperty: 'textAlign' },
     opacity: { property: 'opacity', domProperty: 'opacity' },

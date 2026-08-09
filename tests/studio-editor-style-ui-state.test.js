@@ -114,6 +114,7 @@ test('shared style view owns stable style toolbar control metadata', () => {
     ['elFontWeight', 'weight', '400'],
     ['elFontStyle', 'italic', 'normal'],
     ['elTextDecoration', 'underline', 'none'],
+    ['elLineHeight', 'lineHeight', '1.2'],
     ['alignLeftBtn', 'align', 'left'],
     ['alignCenterBtn', 'align', 'center'],
     ['alignRightBtn', 'align', 'right'],
@@ -400,7 +401,7 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
   });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].elements.length, 1);
-  assert.equal(calls[0].controlConfigs.length, 17);
+  assert.equal(calls[0].controlConfigs.length, 18);
   assert.equal(calls[0].hasCanMutateDeck, true);
   assert.equal(calls[0].canMutateDeck, true);
 });

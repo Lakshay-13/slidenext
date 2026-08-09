@@ -1130,6 +1130,19 @@
               </div>
             </div>
 
+            <div class="flex flex-col gap-2">
+              <label for="elLineHeight" class="text-[10px] font-mono text-zinc-500 uppercase">Line Height</label>
+              <select id="elLineHeight" onchange="applySelectedElementStyle('lineHeight', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <option value="1">Compact</option>
+                <option value="1.15">Tight</option>
+                <option value="1.2">Default</option>
+                <option value="1.3">Open</option>
+                <option value="1.5">Relaxed</option>
+                <option value="1.75">Loose</option>
+                <option value="2">Double</option>
+              </select>
+            </div>
+
             <!-- Alignment -->
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Alignment</label>

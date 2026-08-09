@@ -402,6 +402,24 @@
         : 'none';
     }
 
+    const canonicalLineHeight = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'line-height'
+    ).toLowerCase();
+    const lineHeightInput = documentRef.getElementById('elLineHeight');
+    if (lineHeightInput) {
+      const rawLineHeight = canonicalLineHeight || `${computedStyles.lineHeight || '1.2'}`.toLowerCase();
+      const lineHeightValue = rawLineHeight.endsWith('px')
+        ? Number.parseFloat(rawLineHeight) / Math.max(1, fSize)
+        : Number.parseFloat(rawLineHeight);
+      const lineHeightOptions = Array.from(lineHeightInput.options || []);
+      const closestOption = lineHeightOptions
+        .map((option) => ({ option, distance: Math.abs(Number(option.value) - lineHeightValue) }))
+        .filter((candidate) => Number.isFinite(candidate.distance))
+        .sort((first, second) => first.distance - second.distance)[0];
+      lineHeightInput.value = closestOption ? closestOption.option.value : '1.2';
+    }
+
     const canonicalTextColor = readStudioInspectorCanonicalStyleValue(
       options.canonicalNode,
       'color'

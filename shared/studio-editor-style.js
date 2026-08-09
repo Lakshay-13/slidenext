@@ -16,6 +16,7 @@
     weight: 'Auto: Changed Font Weight',
     italic: 'Auto: Changed Font Style',
     underline: 'Auto: Changed Text Decoration',
+    lineHeight: 'Auto: Changed Line Height',
     align: 'Auto: Changed Alignment',
     zIndex: 'Auto: Changed Z-Index',
     borderStyle: 'Auto: Changed Border Style',
@@ -34,6 +35,7 @@
     ['elFontWeight', 'weight', '400'],
     ['elFontStyle', 'italic', 'normal'],
     ['elTextDecoration', 'underline', 'none'],
+    ['elLineHeight', 'lineHeight', '1.2'],
     ['alignLeftBtn', 'align', 'left'],
     ['alignCenterBtn', 'align', 'center'],
     ['alignRightBtn', 'align', 'right'],
@@ -211,6 +213,15 @@
       return { styleValue, displayValue: styleValue };
     }
 
+    if (prop === 'lineHeight') {
+      const parsedValue = typeof value === 'number' ? value : Number.parseFloat(`${value}`);
+      const normalizedValue = Number.isFinite(parsedValue)
+        ? Math.max(0.8, Math.min(3, parsedValue))
+        : 1.2;
+      const styleValue = normalizedValue.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+      return { styleValue, displayValue: styleValue };
+    }
+
     if (prop === 'objectPosition') {
       const allowedPositions = new Set([
         'left top', 'center top', 'right top',
@@ -285,6 +296,9 @@
       } else if (prop === 'underline') {
         element.style.textDecoration = normalizedValue.styleValue;
         didApply = true;
+      } else if (prop === 'lineHeight') {
+        element.style.lineHeight = normalizedValue.styleValue;
+        didApply = true;
       } else if (prop === 'color') {
         element.style.color = normalizedValue.styleValue;
         didApply = true;
@@ -335,6 +349,7 @@
       weight: 'fontWeight',
       italic: 'fontStyle',
       underline: 'textDecoration',
+      lineHeight: 'lineHeight',
       color: 'color',
       align: 'textAlign',
       opacity: 'opacity',

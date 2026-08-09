@@ -280,10 +280,16 @@ test('applyStudioStyleMutation applies rich text style properties across the liv
     didApply: true,
     displayValue: 'underline'
   });
+  assert.deepEqual(styleState.applyStudioStyleMutation([first, second], 'lineHeight', '4'), {
+    didApply: true,
+    displayValue: '3'
+  });
   assert.equal(first.style.fontStyle, 'italic');
   assert.equal(second.style.fontStyle, 'italic');
   assert.equal(first.style.textDecoration, 'underline');
   assert.equal(second.style.textDecoration, 'underline');
+  assert.equal(first.style.lineHeight, '3');
+  assert.equal(second.style.lineHeight, '3');
 });
 
 test('applyStudioStyleMutation normalizes invalid numeric inspector values', () => {
