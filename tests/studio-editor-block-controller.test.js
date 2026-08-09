@@ -71,6 +71,37 @@ test('block mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('block controller delegates canonical deck resolution to shared state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Shared' }] }]
+  });
+  let resolverOptions = null;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => deck;
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('shared resolver should own baseline resolution');
+    },
+    getCanonicalDeck() {
+      throw new Error('shared resolver should own fallback resolution');
+    },
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  const result = controller.saveSelection({ id: 'shared-block', name: 'Shared Block' });
+
+  assert.equal(result.blocks[0].nodes[0].text, 'Shared');
+  assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('block mutations fall back when the live canonical baseline is invalid', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Fallback' }] }]

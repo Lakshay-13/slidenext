@@ -97,10 +97,25 @@
           }
         };
 
-    function resolveCanonicalDeck() {
-      const liveCanonicalDeck = readCanonicalDeckBaseline();
+    const sharedCanonicalDeckResolver = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckResolver({
+          getCanonicalDeck,
+          getCanonicalDeckBaseline,
+          isCanonicalDeck: canonicalDeckApi
+            && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+            ? canonicalDeckApi.isCanonicalDeck
+            : null
+        })
+      : null;
+
+    function resolveCanonicalDeck(sourceDocument) {
+      if (typeof sharedCanonicalDeckResolver === 'function') {
+        return sharedCanonicalDeckResolver(sourceDocument);
+      }
+      const liveCanonicalDeck = readCanonicalDeckBaseline(sourceDocument);
       if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
-      const fallbackCanonicalDeck = getCanonicalDeck();
+      const fallbackCanonicalDeck = getCanonicalDeck(sourceDocument);
       return isValidCanonicalDeck(fallbackCanonicalDeck)
         ? fallbackCanonicalDeck
         : null;
