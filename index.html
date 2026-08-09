@@ -1426,6 +1426,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
+  <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1734,39 +1735,39 @@
         ? studioEditorAutoSaveTimerStore.setTimer(nextTimer)
         : false;
     }
-    const studioEditorAutoVersionTimerController = typeof SlideNextStudioEditorAutoVersionTimerController !== 'undefined'
-      && SlideNextStudioEditorAutoVersionTimerController
-      && typeof SlideNextStudioEditorAutoVersionTimerController.createStudioEditorAutoVersionTimerController === 'function'
-      ? SlideNextStudioEditorAutoVersionTimerController.createStudioEditorAutoVersionTimerController({})
+    const studioEditorAutoVersionTimerStore = typeof SlideNextStudioEditorAutoVersionTimerStore !== 'undefined'
+      && SlideNextStudioEditorAutoVersionTimerStore
+      && typeof SlideNextStudioEditorAutoVersionTimerStore.createStudioEditorAutoVersionTimerStore === 'function'
+      ? SlideNextStudioEditorAutoVersionTimerStore.createStudioEditorAutoVersionTimerStore({})
       : null;
     function getStudioAutoVersionTimers() {
-      return studioEditorAutoVersionTimerController
-        && typeof studioEditorAutoVersionTimerController.getTimers === 'function'
-        ? studioEditorAutoVersionTimerController.getTimers()
+      return studioEditorAutoVersionTimerStore
+        && typeof studioEditorAutoVersionTimerStore.getTimers === 'function'
+        ? studioEditorAutoVersionTimerStore.getTimers()
         : {};
     }
     function setStudioAutoVersionTimers(nextTimers) {
-      return studioEditorAutoVersionTimerController
-        && typeof studioEditorAutoVersionTimerController.setTimers === 'function'
-        ? studioEditorAutoVersionTimerController.setTimers(nextTimers)
+      return studioEditorAutoVersionTimerStore
+        && typeof studioEditorAutoVersionTimerStore.setTimers === 'function'
+        ? studioEditorAutoVersionTimerStore.setTimers(nextTimers)
         : false;
     }
     function getStudioAutoVersionTimer(timerKey) {
-      return studioEditorAutoVersionTimerController
-        && typeof studioEditorAutoVersionTimerController.getTimer === 'function'
-        ? studioEditorAutoVersionTimerController.getTimer(timerKey)
+      return studioEditorAutoVersionTimerStore
+        && typeof studioEditorAutoVersionTimerStore.getTimer === 'function'
+        ? studioEditorAutoVersionTimerStore.getTimer(timerKey)
         : undefined;
     }
     function setStudioAutoVersionTimer(timerKey, timerId) {
-      return studioEditorAutoVersionTimerController
-        && typeof studioEditorAutoVersionTimerController.setTimer === 'function'
-        ? studioEditorAutoVersionTimerController.setTimer(timerKey, timerId)
+      return studioEditorAutoVersionTimerStore
+        && typeof studioEditorAutoVersionTimerStore.setTimer === 'function'
+        ? studioEditorAutoVersionTimerStore.setTimer(timerKey, timerId)
         : false;
     }
     function clearStudioAutoVersionTimer(timerKey) {
-      return studioEditorAutoVersionTimerController
-        && typeof studioEditorAutoVersionTimerController.clearTimer === 'function'
-        ? studioEditorAutoVersionTimerController.clearTimer(timerKey)
+      return studioEditorAutoVersionTimerStore
+        && typeof studioEditorAutoVersionTimerStore.clearTimer === 'function'
+        ? studioEditorAutoVersionTimerStore.clearTimer(timerKey)
         : undefined;
     }
     const studioEditorAutoVersionController = typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
