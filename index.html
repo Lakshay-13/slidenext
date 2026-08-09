@@ -10071,6 +10071,14 @@
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.handlePersistenceFailure === 'function') {
+        const result = studioEditorPersistenceController.handlePersistenceFailure(persistenceContext, options);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistenceFailureHandlerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

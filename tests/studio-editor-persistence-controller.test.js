@@ -224,3 +224,24 @@ test('persistence controller handles success through the shared handler adapter'
   assert.ok(result);
   assert.deepEqual(calls, ['success']);
 });
+
+test('persistence controller handles failure through the shared handler adapter', () => {
+  const calls = [];
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    createHandlerOptions: (options) => ({
+      ...options,
+      getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+      onFailure: () => calls.push('failure')
+    })
+  });
+
+  const result = controller.handlePersistenceFailure({
+    presentationUrl: '/presentations/demo/index.html',
+    error: 'save failed'
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, ['failure']);
+});

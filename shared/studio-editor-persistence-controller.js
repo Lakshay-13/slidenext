@@ -76,6 +76,7 @@
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
+    let persistenceFailureHandler = null;
     let persistenceSuccessHandler = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
@@ -242,6 +243,26 @@
       });
     }
 
+    function createPersistenceFailureHandler() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistenceFailureHandlerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistenceFailureHandlerAdapter({
+        persistenceApi,
+        createHandlerOptions
+      });
+    }
+
+    function handlePersistenceFailure(persistenceContext = {}, nextOptions = {}) {
+      if (typeof persistenceFailureHandler !== 'function') {
+        persistenceFailureHandler = createPersistenceFailureHandler();
+      }
+      return typeof persistenceFailureHandler === 'function'
+        ? persistenceFailureHandler(persistenceContext, nextOptions)
+        : null;
+    }
+
     function handlePersistenceSuccess(persistenceContext = {}, nextOptions = {}) {
       if (typeof persistenceSuccessHandler !== 'function') {
         persistenceSuccessHandler = createPersistenceSuccessHandler();
@@ -320,6 +341,7 @@
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,
       resolvePersistenceStateFromCapture,
+      handlePersistenceFailure,
       handlePersistenceSuccess,
       update,
       apply,
