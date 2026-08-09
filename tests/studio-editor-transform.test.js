@@ -1351,6 +1351,37 @@ test('materializeStudioTransformSession applies absolute positioning state only 
   });
 });
 
+test('materializeStudioTransformSession fails closed for normal-flow items', () => {
+  const element = {
+    style: { position: 'relative' },
+    classList: createClassList()
+  };
+  const session = {
+    materialized: false,
+    items: [{ element, isPrePositioned: false }]
+  };
+
+  assert.deepEqual(transformState.materializeStudioTransformSession(session), {
+    didMaterialize: false,
+    session
+  });
+  assert.equal(element.style.position, 'relative');
+  assert.equal(session.materialized, false);
+});
+
+test('buildStudioTransformCanonicalLayoutUpdates ignores normal-flow items', () => {
+  const element = {
+    dataset: { editorId: 'flow-node' },
+    style: { left: '120px', top: '80px' }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformCanonicalLayoutUpdates({
+    session: {
+      items: [{ element, isPrePositioned: false }]
+    }
+  }), []);
+});
+
 test('captureStudioTransformSessionPointer captures the active pointer when available', () => {
   let capturedPointerId = null;
   const session = {
@@ -1703,6 +1734,7 @@ test('buildStudioTransformSessionItem captures transform geometry and sizing loc
     parentOffsetTop: 30,
     lockWidth: true,
     lockHeight: true,
+    isPrePositioned: false,
     startStyle: {
       position: '',
       margin: '',
