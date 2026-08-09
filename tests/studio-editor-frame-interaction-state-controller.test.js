@@ -26,10 +26,11 @@ test('editor delegates transient frame interaction state to the controller', () 
   const indexHtml = fs.readFileSync('index.html', 'utf8');
 
   assert.match(indexHtml, /studio-editor-frame-interaction-state-controller\.js/);
-  assert.match(indexHtml, /createStudioEditorFrameInteractionStateController\(\{\}\)/);
+  assert.match(indexHtml, /studio-editor-frame-runtime\.js/);
+  assert.match(indexHtml, /SlideNextStudioEditorFrameRuntime\.createStudioEditorFrameRuntime\(/);
   assert.match(indexHtml, /getIsDraggingElement\(\)/);
   assert.match(indexHtml, /setIsDraggingElement\(nextValue\)/);
-  assert.match(indexHtml, /consumeClickSuppression\(\)/);
   assert.doesNotMatch(indexHtml, /let isDraggingElement = false/);
   assert.doesNotMatch(indexHtml, /let suppressNextFrameClick = false/);
+  assert.doesNotMatch(indexHtml, /createStudioEditorFrameInteractionStateController\(\{\}\)/);
 });

@@ -1435,6 +1435,7 @@
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
+  <script src="/shared/studio-editor-frame-runtime.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -3329,11 +3330,6 @@
       }
       return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
     }
-    const studioEditorFrameInteractionStateController = typeof SlideNextStudioEditorFrameInteractionStateController !== 'undefined'
-      && SlideNextStudioEditorFrameInteractionStateController
-      && typeof SlideNextStudioEditorFrameInteractionStateController.createStudioEditorFrameInteractionStateController === 'function'
-      ? SlideNextStudioEditorFrameInteractionStateController.createStudioEditorFrameInteractionStateController({})
-      : null;
     const studioEditorZoomController = typeof SlideNextStudioEditorZoomController !== 'undefined'
       && SlideNextStudioEditorZoomController
       && typeof SlideNextStudioEditorZoomController.createStudioEditorZoomController === 'function'
@@ -3383,27 +3379,25 @@
       ...EDITOR_INLINE_TEXT_TAGS
     ]);
     const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    const studioEditorTableNavigation = typeof SlideNextStudioEditorTableNavigation !== 'undefined'
-      ? SlideNextStudioEditorTableNavigation
-      : null;
-    const studioEditorFrameInteractions = typeof SlideNextStudioEditorFrameInteractions !== 'undefined'
-      && SlideNextStudioEditorFrameInteractions
-      && typeof SlideNextStudioEditorFrameInteractions.createStudioEditorFrameInteractions === 'function'
-      ? SlideNextStudioEditorFrameInteractions.createStudioEditorFrameInteractions({
+    const studioEditorFrameRuntime = typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
+      && SlideNextStudioEditorFrameRuntime
+      && typeof SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime === 'function'
+      ? SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime({
+          interactionStateApi: typeof SlideNextStudioEditorFrameInteractionStateController !== 'undefined'
+            ? SlideNextStudioEditorFrameInteractionStateController
+            : null,
+          frameInteractionsApi: typeof SlideNextStudioEditorFrameInteractions !== 'undefined'
+            ? SlideNextStudioEditorFrameInteractions
+            : null,
+          frameControllerApi: typeof SlideNextStudioEditorFrameController !== 'undefined'
+            ? SlideNextStudioEditorFrameController
+            : null,
           eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
             ? SlideNextStudioEditorEvents
             : null,
           inlineTextEditApi: typeof SlideNextStudioEditorInlineEdit !== 'undefined'
             ? SlideNextStudioEditorInlineEdit
             : null,
-          getIsDragging: () => studioEditorFrameInteractionStateController
-            && typeof studioEditorFrameInteractionStateController.getIsDraggingElement === 'function'
-            ? studioEditorFrameInteractionStateController.getIsDraggingElement()
-            : false,
-          consumeClickSuppression: () => studioEditorFrameInteractionStateController
-            && typeof studioEditorFrameInteractionStateController.consumeClickSuppression === 'function'
-            ? studioEditorFrameInteractionStateController.consumeClickSuppression()
-            : false,
           shouldIgnoreTarget: (target) => !!(
             target
             && (
@@ -3416,9 +3410,10 @@
           deselectElement,
           getActiveSlide,
           resolveTextElement: resolveInlineTextEditTarget,
-          resolveAdjacentTextElement: studioEditorTableNavigation
-            && typeof studioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
-            ? studioEditorTableNavigation.resolveStudioAdjacentTableCell
+          resolveAdjacentTextElement: typeof SlideNextStudioEditorTableNavigation !== 'undefined'
+            && SlideNextStudioEditorTableNavigation
+            && typeof SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
+            ? SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell
             : null,
           getCanonicalVisibilityReader: (property, doc) => {
             const fallbackReader = property === 'hidden' ? isElementHidden : isElementLocked;
@@ -3459,13 +3454,7 @@
           pasteClipboardElements,
           duplicateSelectedElements,
           nudgeSelectedElements,
-          navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
-        })
-      : null;
-    const studioEditorFrameController = typeof SlideNextStudioEditorFrameController !== 'undefined'
-      && SlideNextStudioEditorFrameController
-      && typeof SlideNextStudioEditorFrameController.createStudioEditorFrameController === 'function'
-      ? SlideNextStudioEditorFrameController.createStudioEditorFrameController({
+          navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null,
           getIframeDocument: getIframeDoc,
           resetLiveCanonicalDeck: () => {
             if (typeof resetEditorLiveCanonicalDeck === 'function') {
@@ -3477,7 +3466,6 @@
             ? SlideNextStudioEditorStyle
             : null,
           makeElementsHoverable,
-          frameInteractions: studioEditorFrameInteractions,
           frameBootstrapApi: typeof SlideNextStudioFrameBootstrap !== 'undefined'
             ? SlideNextStudioFrameBootstrap
             : null,
@@ -3502,6 +3490,15 @@
           setStudioAutoSaveStatus,
           syncInspectorForSelection
         })
+      : null;
+    const studioEditorFrameInteractionStateController = studioEditorFrameRuntime
+      ? studioEditorFrameRuntime.frameInteractionStateController
+      : null;
+    const studioEditorFrameInteractions = studioEditorFrameRuntime
+      ? studioEditorFrameRuntime.frameInteractions
+      : null;
+    const studioEditorFrameController = studioEditorFrameRuntime
+      ? studioEditorFrameRuntime.frameController
       : null;
     const studioEditorThemeController = typeof SlideNextStudioEditorThemeController !== 'undefined'
       && SlideNextStudioEditorThemeController
