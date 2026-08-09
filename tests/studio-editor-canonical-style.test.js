@@ -188,6 +188,40 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
   assert.equal(zIndexDeck.slides[0].nodes[0].layout.zIndex, 9);
 });
 
+test('buildStudioCanonicalStyleMutation rebuilds text edits from the live source document when available', () => {
+  const sourceDeck = createSourceDeck();
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        text: 'After',
+        html: '<p><strong>After</strong></p>'
+      }]
+    }]
+  });
+  const sourceDocument = { id: 'editor-doc', documentElement: {} };
+  let receivedDocument = null;
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    buildCanonicalDeck(documentRef) {
+      receivedDocument = documentRef;
+      return rebuiltDeck;
+    },
+    sourceDocument,
+    selection: [createElement()],
+    prop: 'text',
+    value: 'Fallback',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(receivedDocument, sourceDocument);
+  assert.equal(result, rebuiltDeck);
+  assert.equal(result.slides[0].nodes[0].html, '<p><strong>After</strong></p>');
+});
+
 test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
   const throwingCanonicalDeckApi = {
     ...canonicalDeck,

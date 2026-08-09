@@ -135,6 +135,24 @@
     }
 
     if (prop === 'text' && typeof canonicalDeckApi.updateCanonicalNodeText === 'function') {
+      const sourceDocument = options.sourceDocument;
+      const isDocumentLike = !!(sourceDocument
+        && (sourceDocument.documentElement
+          || typeof sourceDocument.querySelector === 'function'));
+      if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
+        const rebuiltCanonicalDeck = runCanonicalStyleMutation(
+          () => options.buildCanonicalDeck(sourceDocument)
+        );
+        const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
+          : (candidate) => !!candidate
+            && typeof candidate === 'object'
+            && !Array.isArray(candidate)
+            && Array.isArray(candidate.slides);
+        if (isValidCanonicalDeck(rebuiltCanonicalDeck)) {
+          return rebuiltCanonicalDeck;
+        }
+      }
       const element = selection[0];
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
         id: resolveElementId(element, getElementId),
@@ -247,6 +265,7 @@
         : buildCanonicalStyleBaseline(mutationOptions);
       return buildStudioCanonicalStyleMutation({
         ...mutationOptions,
+        buildCanonicalDeck,
         canonicalDeckApi,
         canonicalStateApi,
         buildCanonicalDeckBaseline,
