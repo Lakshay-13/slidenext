@@ -369,8 +369,8 @@ test('slide reorder wiring prefers live canonical state and keeps a legacy basel
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideReorderController =',
-    'const studioEditorSlideInsertionController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -391,8 +391,8 @@ test('slide insertion wiring prefers live canonical state and keeps a legacy bas
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideInsertionController =',
-    'const studioEditorSlideDeletionController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -413,8 +413,8 @@ test('slide deletion wiring prefers live canonical state and keeps a legacy base
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideDeletionController =',
-    'const studioEditorSlideDuplicationController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -435,7 +435,7 @@ test('slide duplication wiring prefers live canonical state and keeps a legacy b
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideDuplicationController =',
+    'const studioEditorSlideMutationRuntime =',
     'const studioEditorSlideMetadataController ='
   );
 

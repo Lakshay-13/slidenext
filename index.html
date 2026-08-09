@@ -1380,6 +1380,7 @@
   <script src="/shared/studio-editor-slide-duplication-controller.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
+  <script src="/shared/studio-editor-slide-mutation-runtime.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-table-navigation.js"></script>
@@ -2191,10 +2192,22 @@
     const studioEditorThumbnailController = studioEditorNavigationRuntime
       ? studioEditorNavigationRuntime.thumbnailController
       : null;
-    const studioEditorSlideReorderController = typeof SlideNextStudioEditorSlideReorderController !== 'undefined'
-      && SlideNextStudioEditorSlideReorderController
-      && typeof SlideNextStudioEditorSlideReorderController.createStudioEditorSlideReorderController === 'function'
-      ? SlideNextStudioEditorSlideReorderController.createStudioEditorSlideReorderController({
+    const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationRuntime !== 'undefined'
+      && SlideNextStudioEditorSlideMutationRuntime
+      && typeof SlideNextStudioEditorSlideMutationRuntime.createStudioEditorSlideMutationRuntime === 'function'
+      ? SlideNextStudioEditorSlideMutationRuntime.createStudioEditorSlideMutationRuntime({
+          reorderApi: typeof SlideNextStudioEditorSlideReorderController !== 'undefined'
+            ? SlideNextStudioEditorSlideReorderController
+            : null,
+          insertionApi: typeof SlideNextStudioEditorSlideInsertionController !== 'undefined'
+            ? SlideNextStudioEditorSlideInsertionController
+            : null,
+          deletionApi: typeof SlideNextStudioEditorSlideDeletionController !== 'undefined'
+            ? SlideNextStudioEditorSlideDeletionController
+            : null,
+          duplicationApi: typeof SlideNextStudioEditorSlideDuplicationController !== 'undefined'
+            ? SlideNextStudioEditorSlideDuplicationController
+            : null,
           slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
             ? SlideNextStudioEditorSlideCommands
             : null,
@@ -2204,7 +2217,10 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
-          getIframeDoc: () => getIframeDoc(),
+          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+            ? SlideNextDeckImport
+            : null,
+          getIframeDoc: (...args) => getIframeDoc(...args),
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
@@ -2214,111 +2230,37 @@
           ),
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
-          generateThumbnails: (...args) => generateThumbnails(...args),
-          restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
-          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
-        })
-      : null;
-    const studioEditorSlideInsertionController = typeof SlideNextStudioEditorSlideInsertionController !== 'undefined'
-      && SlideNextStudioEditorSlideInsertionController
-      && typeof SlideNextStudioEditorSlideInsertionController.createStudioEditorSlideInsertionController === 'function'
-      ? SlideNextStudioEditorSlideInsertionController.createStudioEditorSlideInsertionController({
-          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-            ? SlideNextStudioEditorSlideCommands
-            : null,
-          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-            ? SlideNextStudioEditorCanonicalSlide
-            : null,
-          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
-            ? SlideNextDeckImport
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          getIframeDoc: (...args) => getIframeDoc(...args),
           resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),
-          getSlides: (...args) => getSlides(...args),
           createBlankSlide: (doc) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, {
             ...getEditorDomOptions(),
             assignSlideId: assignEditorSlideId,
             decorateSlide: makeElementsHoverable
           }),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          getSlideId: (...args) => getEditorSlideId(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
-          generateThumbnails: (...args) => generateThumbnails(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
-          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
-        })
-      : null;
-    const studioEditorSlideDeletionController = typeof SlideNextStudioEditorSlideDeletionController !== 'undefined'
-      && SlideNextStudioEditorSlideDeletionController
-      && typeof SlideNextStudioEditorSlideDeletionController.createStudioEditorSlideDeletionController === 'function'
-      ? SlideNextStudioEditorSlideDeletionController.createStudioEditorSlideDeletionController({
-          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-            ? SlideNextStudioEditorSlideCommands
-            : null,
-          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-            ? SlideNextStudioEditorCanonicalSlide
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getSlides: (...args) => getSlides(...args),
           alert: typeof alert === 'function' ? alert : null,
-          captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
-          getSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
           applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
-          generateThumbnails: (...args) => generateThumbnails(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
-          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
-        })
-      : null;
-    const studioEditorSlideDuplicationController = typeof SlideNextStudioEditorSlideDuplicationController !== 'undefined'
-      && SlideNextStudioEditorSlideDuplicationController
-      && typeof SlideNextStudioEditorSlideDuplicationController.createStudioEditorSlideDuplicationController === 'function'
-      ? SlideNextStudioEditorSlideDuplicationController.createStudioEditorSlideDuplicationController({
-          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-            ? SlideNextStudioEditorSlideCommands
-            : null,
-          canonicalSlideApi: typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-            ? SlideNextStudioEditorCanonicalSlide
-            : null,
-          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
-            ? SlideNextDeckImport
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),
-          getSlides: (...args) => getSlides(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           sanitizeDuplicatedSubtree: (...args) => sanitizeDuplicatedSubtree(...args),
           assignSlideId: (...args) => assignEditorSlideId(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
-          setActiveSlide: (...args) => setActiveSlide(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
         })
+      : null;
+    const studioEditorSlideReorderController = studioEditorSlideMutationRuntime
+      ? studioEditorSlideMutationRuntime.slideReorderController
+      : null;
+    const studioEditorSlideInsertionController = studioEditorSlideMutationRuntime
+      ? studioEditorSlideMutationRuntime.slideInsertionController
+      : null;
+    const studioEditorSlideDeletionController = studioEditorSlideMutationRuntime
+      ? studioEditorSlideMutationRuntime.slideDeletionController
+      : null;
+    const studioEditorSlideDuplicationController = studioEditorSlideMutationRuntime
+      ? studioEditorSlideMutationRuntime.slideDuplicationController
       : null;
     const studioEditorSlideMetadataController = typeof SlideNextStudioEditorSlideMetadataController !== 'undefined'
       && SlideNextStudioEditorSlideMetadataController

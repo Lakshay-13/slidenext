@@ -1232,8 +1232,8 @@ test('slide reorder wiring uses a dedicated canonical baseline builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideReorderController =',
-    'const studioEditorSlideInsertionController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -1254,8 +1254,8 @@ test('slide insertion wiring uses a dedicated canonical baseline builder', () =>
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideInsertionController =',
-    'const studioEditorSlideDeletionController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -1276,8 +1276,8 @@ test('slide deletion wiring uses a dedicated canonical baseline builder', () => 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideDeletionController =',
-    'const studioEditorSlideDuplicationController ='
+    'const studioEditorSlideMutationRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
@@ -1298,7 +1298,7 @@ test('slide duplication wiring uses a dedicated canonical baseline builder', () 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideDuplicationController =',
+    'const studioEditorSlideMutationRuntime =',
     'const studioEditorSlideMetadataController ='
   );
 

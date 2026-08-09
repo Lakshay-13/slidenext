@@ -1,0 +1,98 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const mutationRuntime = require('../shared/studio-editor-slide-mutation-runtime.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('slide mutation runtime composes the four structural slide controllers', () => {
+  const calls = [];
+  const controllers = {
+    slideReorderController: { name: 'reorder' },
+    slideInsertionController: { name: 'insert' },
+    slideDeletionController: { name: 'delete' },
+    slideDuplicationController: { name: 'duplicate' }
+  };
+  const callbacks = {
+    slideCommandsApi: {},
+    canonicalSlideApi: {},
+    canonicalDeckApi: {},
+    deckImportApi: {},
+    getIframeDoc() {},
+    getSlides() {},
+    getSlideId() {},
+    buildCanonicalDeckBaseline() {},
+    getCanonicalDeckBaseline() {},
+    captureSlideMutationState() {},
+    applyReorder() {},
+    resolveInsertionActionState() {},
+    createBlankSlide() {},
+    saveHistoryState() {},
+    applyInsertion() {},
+    setActiveSlide() {},
+    alert() {},
+    applyDeletion() {},
+    restoreDeckViewAfterSlideMutation() {},
+    getActiveSlide() {},
+    sanitizeDuplicatedSubtree() {},
+    assignSlideId() {},
+    makeElementsHoverable() {},
+    generateThumbnails() {},
+    finalizeMutation() {}
+  };
+  const api = (name, factoryName, result) => ({
+    [factoryName](options) {
+      calls.push([name, options]);
+      return result;
+    }
+  });
+
+  const result = mutationRuntime.createStudioEditorSlideMutationRuntime({
+    reorderApi: api('reorder', 'createStudioEditorSlideReorderController', controllers.slideReorderController),
+    insertionApi: api('insert', 'createStudioEditorSlideInsertionController', controllers.slideInsertionController),
+    deletionApi: api('delete', 'createStudioEditorSlideDeletionController', controllers.slideDeletionController),
+    duplicationApi: api('duplicate', 'createStudioEditorSlideDuplicationController', controllers.slideDuplicationController),
+    ...callbacks
+  });
+
+  assert.deepEqual(result, controllers);
+  assert.equal(calls[0][1].canonicalDeckApi, callbacks.canonicalDeckApi);
+  assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
+  assert.equal(calls[1][1].createBlankSlide, callbacks.createBlankSlide);
+  assert.equal(calls[1][1].setActiveSlide, callbacks.setActiveSlide);
+  assert.equal(calls[2][1].applyDeletion, callbacks.applyDeletion);
+  assert.equal(calls[2][1].alert, callbacks.alert);
+  assert.equal(calls[3][1].sanitizeDuplicatedSubtree, callbacks.sanitizeDuplicatedSubtree);
+  assert.equal(calls[3][1].makeElementsHoverable, callbacks.makeElementsHoverable);
+});
+
+test('index wires structural slide mutations through the runtime module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-slide-mutation-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorSlideMutationRuntime\.createStudioEditorSlideMutationRuntime\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorSlideReorderController\.createStudioEditorSlideReorderController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorSlideInsertionController\.createStudioEditorSlideInsertionController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorSlideDeletionController\.createStudioEditorSlideDeletionController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorSlideDuplicationController\.createStudioEditorSlideDuplicationController\(/
+  );
+});
