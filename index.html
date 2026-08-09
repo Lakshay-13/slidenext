@@ -1321,6 +1321,7 @@
   <script src="/shared/canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-style.js"></script>
   <script src="/shared/studio-editor-canonical-theme.js"></script>
+  <script src="/shared/studio-editor-theme-preset-controller.js"></script>
   <script src="/shared/studio-editor-theme-view.js"></script>
   <script src="/shared/studio-editor-presets.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
@@ -9050,55 +9051,32 @@
     }
 
     function applyThemeTokenPreset(presetId) {
-      const preset = themeTokenPresetsData[presetId];
-      const readyState = resolveCurrentStudioDeckReadyActionState();
-      if (!preset || !preset.tokens || !readyState.canUseDeckActions) return false;
-
-      const iframeDoc = getIframeDoc();
-      const canonicalThemeApi = typeof SlideNextStudioEditorCanonicalTheme !== 'undefined'
-        ? SlideNextStudioEditorCanonicalTheme
+      const themePresetController = typeof SlideNextStudioEditorThemePresetController !== 'undefined'
+        ? SlideNextStudioEditorThemePresetController
         : null;
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      if (!iframeDoc
-        || !canonicalThemeApi
-        || typeof canonicalThemeApi.buildStudioCanonicalThemeBaseline !== 'function'
-        || typeof canonicalThemeApi.buildStudioCanonicalThemeDeck !== 'function'
-        || typeof canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates !== 'function'
-        || !canonicalDeckApi) {
+      if (!themePresetController
+        || typeof themePresetController.applyStudioThemeTokenPreset !== 'function') {
         return false;
       }
-
-      let canonicalDeckBeforeMutation = null;
-      let canonicalDeck = null;
-      try {
-        canonicalDeckBeforeMutation = canonicalThemeApi.buildStudioCanonicalThemeBaseline({
-          canonicalDeckApi,
-          sourceDocument: iframeDoc,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || iframeDoc,
-            getStudioEditorSessionToken()
-          ),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || iframeDoc)
-        });
-        canonicalDeck = canonicalThemeApi.buildStudioCanonicalThemeDeck(preset.tokens, {
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation
-        });
-      } catch (error) {
-        return false;
-      }
-      if (!canonicalDeck) return false;
-      if (!canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, preset.tokens)) return false;
-
-      const finalized = finalizeEditorDeckMutation(`Auto: Applied ${preset.name} Theme`, {
-        canonicalDeck,
-        refreshThumbnails: true
+      return themePresetController.applyStudioThemeTokenPreset({
+        presetId,
+        presetData: themeTokenPresetsData,
+        resolveReadyState: resolveCurrentStudioDeckReadyActionState,
+        getIframeDocument: getIframeDoc,
+        canonicalThemeApi: typeof SlideNextStudioEditorCanonicalTheme !== 'undefined'
+          ? SlideNextStudioEditorCanonicalTheme
+          : null,
+        canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+          ? SlideNextCanonicalDeck
+          : null,
+        getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+          sourceDoc || getIframeDoc(),
+          getStudioEditorSessionToken()
+        ),
+        buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || getIframeDoc()),
+        finalizeMutation: finalizeEditorDeckMutation,
+        updateActionState: updateThemeTokenActionState
       });
-      if (finalized === false) return false;
-      updateThemeTokenActionState(iframeDoc);
-      return true;
     }
 
     function setCustomGradientType(type) {

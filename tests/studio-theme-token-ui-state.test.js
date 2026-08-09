@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const themeView = require('../shared/studio-editor-theme-view.js');
+const themePresetController = require('../shared/studio-editor-theme-preset-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -21,22 +22,22 @@ function loadFunction(fileContent, startMarker, endMarker, context) {
   return context;
 }
 
-test('applyThemeTokenPreset mirrors and persists a ready deck theme preset', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+test('applyStudioThemeTokenPreset mirrors and persists a ready deck theme preset', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const canonicalDeck = { kind: 'slidenext.deck' };
   const calls = [];
-  const context = {
-    themeTokenPresetsData: {
+  const result = themePresetController.applyStudioThemeTokenPreset({
+    presetId: 'aurora',
+    presetData: {
       aurora: { name: 'Aurora Glass', tokens: { '--color-primary': '#5eead4' } }
     },
-    resolveCurrentStudioDeckReadyActionState() {
+    resolveReadyState() {
       return { canUseDeckActions: true };
     },
-    getIframeDoc() {
+    getIframeDocument() {
       return iframeDoc;
     },
-    SlideNextStudioEditorCanonicalTheme: {
+    canonicalThemeApi: {
       buildStudioCanonicalThemeBaseline(options) {
         calls.push(['baseline-helper', options]);
         return options.buildCanonicalDeckBaseline(options.sourceDocument);
@@ -50,64 +51,65 @@ test('applyThemeTokenPreset mirrors and persists a ready deck theme preset', () 
         return true;
       }
     },
-    SlideNextCanonicalDeck: {},
-    buildEditorCanonicalDeck(doc) {
+    canonicalDeckApi: {},
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeckBaseline(doc) {
       calls.push(['baseline', doc]);
       return { kind: 'slidenext.deck', theme: { tokens: {} } };
     },
-    finalizeEditorDeckMutation(versionLabel, options) {
+    finalizeMutation(versionLabel, options) {
       calls.push(['finalize', versionLabel, options]);
       return versionLabel;
     },
-    updateThemeTokenActionState(doc) {
+    updateActionState(doc) {
       calls.push(['sync', doc]);
     }
-  };
-  loadFunction(fileContent, 'function applyThemeTokenPreset(presetId) {', '\n\n    function setCustomGradientType', context);
+  });
 
-  assert.equal(context.applyThemeTokenPreset('aurora'), true);
+  assert.equal(result, true);
   assert.deepEqual(calls.map(([name]) => name), ['baseline-helper', 'baseline', 'build', 'apply', 'finalize', 'sync']);
   assert.equal(typeof calls[0][1].getCanonicalDeckBaseline, 'function');
   assert.equal(calls[4][1], 'Auto: Applied Aurora Glass Theme');
   assert.equal(calls[4][2].canonicalDeck, canonicalDeck);
 });
 
-test('applyThemeTokenPreset refuses unavailable decks without mutating state', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+test('applyStudioThemeTokenPreset refuses unavailable decks without mutating state', () => {
   let applyCalls = 0;
-  const context = {
-    themeTokenPresetsData: { aurora: { name: 'Aurora', tokens: { '--color-primary': 'red' } } },
-    resolveCurrentStudioDeckReadyActionState() {
+  const result = themePresetController.applyStudioThemeTokenPreset({
+    presetId: 'aurora',
+    presetData: { aurora: { name: 'Aurora', tokens: { '--color-primary': 'red' } } },
+    resolveReadyState() {
       return { canUseDeckActions: false };
     },
-    getIframeDoc() {
+    getIframeDocument() {
       throw new Error('iframe should not be requested');
     },
-    SlideNextStudioEditorCanonicalTheme: {
+    canonicalThemeApi: {
       applyStudioCanonicalThemeTokenUpdates() {
         applyCalls += 1;
         return true;
       }
     }
-  };
-  loadFunction(fileContent, 'function applyThemeTokenPreset(presetId) {', '\n\n    function setCustomGradientType', context);
+  });
 
-  assert.equal(context.applyThemeTokenPreset('aurora'), false);
+  assert.equal(result, false);
   assert.equal(applyCalls, 0);
 });
 
-test('applyThemeTokenPreset fails closed when canonical setup throws', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+test('applyStudioThemeTokenPreset fails closed when canonical setup throws', () => {
   let applyCalls = 0;
-  const context = {
-    themeTokenPresetsData: { aurora: { name: 'Aurora', tokens: { '--color-primary': 'red' } } },
-    resolveCurrentStudioDeckReadyActionState() {
+  const result = themePresetController.applyStudioThemeTokenPreset({
+    presetId: 'aurora',
+    presetData: { aurora: { name: 'Aurora', tokens: { '--color-primary': 'red' } } },
+    resolveReadyState() {
       return { canUseDeckActions: true };
     },
-    getIframeDoc() {
+    getIframeDocument() {
       return { id: 'iframe-doc' };
     },
-    SlideNextStudioEditorCanonicalTheme: {
+    canonicalThemeApi: {
       buildStudioCanonicalThemeBaseline() {
         throw new Error('canonical theme baseline unavailable');
       },
@@ -116,12 +118,17 @@ test('applyThemeTokenPreset fails closed when canonical setup throws', () => {
         return true;
       }
     },
-    SlideNextCanonicalDeck: {}
-  };
-  loadFunction(fileContent, 'function applyThemeTokenPreset(presetId) {', '\n\n    function setCustomGradientType', context);
+    canonicalDeckApi: {}
+  });
 
-  assert.equal(context.applyThemeTokenPreset('aurora'), false);
+  assert.equal(result, false);
   assert.equal(applyCalls, 0);
+});
+
+test('index routes theme-token mutations through the shared controller', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  assert.match(source, /src="\/shared\/studio-editor-theme-preset-controller\.js"/);
+  assert.match(source, /themePresetController\.applyStudioThemeTokenPreset/);
 });
 
 test('renderThemeTokenPresets forwards readiness to the shared theme view', () => {
