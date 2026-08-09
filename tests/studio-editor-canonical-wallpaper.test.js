@@ -87,6 +87,29 @@ test('buildStudioCanonicalWallpaperBaseline rejects invalid compatibility baseli
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalWallpaperBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    updateCanonicalSlideBackground() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalWallpaperBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = createSourceDeck();
   let didBuildFromDocument = false;
