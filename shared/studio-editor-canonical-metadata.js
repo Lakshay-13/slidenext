@@ -28,10 +28,27 @@
       || null;
 
     if (!updateCanonicalSlideMetadata) return null;
+    const createCanonicalDeckResolver = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckResolver
+      : null;
     const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
       : null;
+    if (createCanonicalDeckResolver) {
+      const resolveCanonicalDeck = createCanonicalDeckResolver({
+        getCanonicalDeck: () => null,
+        getCanonicalDeckBaseline,
+        isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          ? canonicalDeckApi.isCanonicalDeck
+          : null,
+        buildCanonicalDeckBaseline: buildCanonicalDeck
+      });
+      return typeof resolveCanonicalDeck === 'function'
+        ? resolveCanonicalDeck(options.sourceDocument)
+        : null;
+    }
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
         getCanonicalDeckBaseline,
