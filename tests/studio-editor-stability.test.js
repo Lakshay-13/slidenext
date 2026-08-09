@@ -211,6 +211,11 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
     'const studioEditorLayoutRuntime =',
     'const studioEditorLockVisibilityController ='
   );
+  const groupActionStateSource = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
 
   assert.match(
     controllerSource,
@@ -220,6 +225,8 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
   );
+  assert.match(groupActionStateSource, /getFreeformPositioned\(sourceDoc\)/);
+  assert.match(groupActionStateSource, /getEditorCanonicalFreeformReader\(/);
   assert.doesNotMatch(
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/

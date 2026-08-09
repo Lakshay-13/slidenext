@@ -162,12 +162,18 @@
     const getLockedState = typeof options.getLockedState === 'function'
       ? options.getLockedState
       : () => (typeof options.isLocked === 'function' ? options.isLocked : () => false);
+    const getFreeformPositioned = typeof options.getFreeformPositioned === 'function'
+      ? options.getFreeformPositioned
+      : null;
     const isFreeformPositioned = typeof options.isFreeformPositioned === 'function'
       ? options.isFreeformPositioned
       : () => true;
 
     return function buildStudioEditorGroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getDocument();
+      const documentFreeformPositioned = getFreeformPositioned
+        ? getFreeformPositioned(resolvedDoc)
+        : null;
       return buildStudioGroupSelectionActionState(getSelectedElements(), {
         doc: resolvedDoc,
         getActiveSlide,
@@ -177,7 +183,9 @@
         getClosestPositionedAncestor,
         getRectOnSlide,
         isLocked: getLockedState(resolvedDoc),
-        isFreeformPositioned
+        isFreeformPositioned: typeof documentFreeformPositioned === 'function'
+          ? documentFreeformPositioned
+          : isFreeformPositioned
       });
     };
   }

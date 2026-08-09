@@ -7300,7 +7300,14 @@
                 ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
                 : isElementLocked;
             },
-            isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+            getFreeformPositioned(sourceDoc) {
+              return typeof getEditorCanonicalFreeformReader === 'function'
+                ? getEditorCanonicalFreeformReader(
+                    sourceDoc,
+                    SlideNextStudioEditorTransform.isStudioFreeformPositioned
+                  )
+                : SlideNextStudioEditorTransform.isStudioFreeformPositioned;
+            }
           });
         }
         if (typeof buildGroupSelectionActionState.builder === 'function') {
@@ -7323,7 +7330,12 @@
           getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
           getRectOnSlide,
           isLocked: readLockedState,
-          isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
+            ? getEditorCanonicalFreeformReader(
+                resolvedDoc,
+                SlideNextStudioEditorTransform.isStudioFreeformPositioned
+              )
+            : SlideNextStudioEditorTransform.isStudioFreeformPositioned
         });
       }
       const slide = getActiveSlide(resolvedDoc);
@@ -7359,7 +7371,12 @@
       });
       const groupPlan = SlideNextStudioEditorGroup.buildStudioGroupPlan(layoutItems, {
         isLocked: readLockedState,
-        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
+          ? getEditorCanonicalFreeformReader(
+              resolvedDoc,
+              SlideNextStudioEditorTransform.isStudioFreeformPositioned
+            )
+          : SlideNextStudioEditorTransform.isStudioFreeformPositioned
       });
 
       return {
