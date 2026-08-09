@@ -53,6 +53,36 @@ test('master slide mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('master slide controller delegates canonical deck resolution to shared state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Shared' }]
+  });
+  let resolverOptions = null;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => deck;
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('shared resolver should own baseline resolution');
+    },
+    getCanonicalDeck() {
+      throw new Error('shared resolver should own fallback resolution');
+    },
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  const result = controller.saveActiveSlide({ id: 'shared-master', name: 'Shared Master' });
+
+  assert.equal(result.masterSlides[0].slide.title, 'Shared');
+  assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('master slide mutations fall back when the live canonical baseline is invalid', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Fallback' }]
