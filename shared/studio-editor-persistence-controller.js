@@ -44,6 +44,9 @@
     const createHandlerOptions = typeof options.createHandlerOptions === 'function'
       ? options.createHandlerOptions
       : null;
+    const createVersionHandlerOptions = typeof options.createVersionHandlerOptions === 'function'
+      ? options.createVersionHandlerOptions
+      : createHandlerOptions;
     const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
       ? options.setCurrentPresentationCanonicalDeck
       : () => {};
@@ -78,6 +81,7 @@
     let persistenceStateFromCaptureResolver = null;
     let persistenceFailureHandler = null;
     let persistenceSuccessHandler = null;
+    let versionPersistenceSuccessHandler = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -272,6 +276,26 @@
         : null;
     }
 
+    function createVersionPersistenceSuccessHandler() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorVersionPersistenceSuccessHandlerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorVersionPersistenceSuccessHandlerAdapter({
+        persistenceApi,
+        createHandlerOptions: createVersionHandlerOptions
+      });
+    }
+
+    function handleVersionPersistenceSuccess(persistenceContext = {}, nextOptions = {}) {
+      if (typeof versionPersistenceSuccessHandler !== 'function') {
+        versionPersistenceSuccessHandler = createVersionPersistenceSuccessHandler();
+      }
+      return typeof versionPersistenceSuccessHandler === 'function'
+        ? versionPersistenceSuccessHandler(persistenceContext, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -343,6 +367,7 @@
       resolvePersistenceStateFromCapture,
       handlePersistenceFailure,
       handlePersistenceSuccess,
+      handleVersionPersistenceSuccess,
       update,
       apply,
       resolveCanonicalDeckOverride,

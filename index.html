@@ -3053,6 +3053,10 @@
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           capturePersistableDeckState: (...args) => captureEditorPersistableDeckState(...args),
           createHandlerOptions: (...args) => createCurrentStudioPersistenceHandlerOptions(...args),
+          createVersionHandlerOptions: (nextOptions = {}) => createCurrentStudioSessionReaderOptions({
+            refreshVersionEntries: loadVersions,
+            ...nextOptions
+          }),
           setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
@@ -10187,6 +10191,14 @@
     }
 
     function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.handleVersionPersistenceSuccess === 'function') {
+        const result = studioEditorPersistenceController.handleVersionPersistenceSuccess(persistenceContext, options);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorVersionPersistenceSuccessHandlerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
