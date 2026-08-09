@@ -104,6 +104,17 @@
     return true;
   }
 
+  function setStudioVersionHistoryLoadingState(options = {}) {
+    const documentRef = options.documentRef;
+    const list = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('versionsList')
+      : null;
+    if (!list) return false;
+
+    list.innerHTML = '<span class="text-zinc-500 text-center py-2 text-[11px]" role="status" aria-live="polite">Loading versions...</span>';
+    return true;
+  }
+
   function renderStudioVersionsList(options = {}) {
     const documentRef = options.documentRef;
     const list = documentRef && typeof documentRef.getElementById === 'function'
@@ -167,6 +178,7 @@
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,
     setStudioVersionHistoryErrorState,
+    setStudioVersionHistoryLoadingState,
     renderStudioVersionsList,
     syncStudioVersionsList
   };

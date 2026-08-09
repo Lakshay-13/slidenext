@@ -82,6 +82,19 @@ test('version view renders a retryable history load error', () => {
   assert.match(list.innerHTML, /onclick="loadVersions\(\)"/);
 });
 
+test('version view renders a live loading state', () => {
+  const list = { innerHTML: '' };
+  assert.equal(versionView.setStudioVersionHistoryLoadingState({
+    documentRef: {
+      getElementById(id) {
+        return id === 'versionsList' ? list : null;
+      }
+    }
+  }), true);
+  assert.match(list.innerHTML, /Loading versions/);
+  assert.match(list.innerHTML, /role="status"/);
+});
+
 test('version view helpers safely skip missing chrome', () => {
   assert.equal(versionView.hideStudioVersionsDropdown(), false);
   assert.deepEqual(versionView.toggleStudioVersionsDropdown(), {

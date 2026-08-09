@@ -11312,6 +11312,16 @@
       });
     }
 
+    function renderVersionHistoryLoadingState() {
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.setStudioVersionHistoryLoadingState !== 'function') return false;
+      return versionView.setStudioVersionHistoryLoadingState({
+        documentRef: document
+      });
+    }
+
     // Fetch versions checklist
     function createCurrentStudioVersionHistoryLoadOptions(
       presentationUrl = getStudioCurrentPresentationUrl(),
@@ -11340,6 +11350,9 @@
     }
 
     async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
+      if (presentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
+        renderVersionHistoryLoadingState();
+      }
       const createStudioVersionHistoryLoader = (
         typeof SlideNextStudioVersionHistory !== 'undefined'
         && SlideNextStudioVersionHistory

@@ -2814,6 +2814,7 @@ test('loadVersions renders an error state when the shared version-history loader
   );
 
   const errorCalls = [];
+  const loadingStates = [];
   const renderedErrors = [];
   const context = {
     console: {
@@ -2825,6 +2826,9 @@ test('loadVersions renders an error state when the shared version-history loader
     createCurrentStudioVersionHistoryLoadOptions() {},
     renderVersionHistoryLoadError() {
       renderedErrors.push(true);
+    },
+    renderVersionHistoryLoadingState() {
+      loadingStates.push(true);
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 18,
@@ -2849,6 +2853,7 @@ test('loadVersions renders an error state when the shared version-history loader
 
   assert.equal(errorCalls.length, 1);
   assert.match(errorCalls[0][1].message, /versions unavailable/);
+  assert.deepEqual(loadingStates, [true]);
   assert.deepEqual(renderedErrors, [true]);
 });
 
