@@ -91,6 +91,7 @@
     let persistedDeckHtmlChecker = null;
     let persistedSaveRequestChecker = null;
     let reusablePersistedHtmlResolver = null;
+    let saveRequestBodyBuilder = null;
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
@@ -231,6 +232,26 @@
       }
       return typeof reusablePersistedHtmlResolver === 'function'
         ? reusablePersistedHtmlResolver(persistedDeckState, nextOptions)
+        : null;
+    }
+
+    function createSaveRequestBodyBuilder() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorSaveRequestBodyAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorSaveRequestBodyAdapter({
+        persistenceApi,
+        getPresentationUrl: getCurrentPresentationUrl
+      });
+    }
+
+    function buildSaveRequestBody(doc = null, cleanHtml = null, nextOptions = {}) {
+      if (typeof saveRequestBodyBuilder !== 'function') {
+        saveRequestBodyBuilder = createSaveRequestBodyBuilder();
+      }
+      return typeof saveRequestBodyBuilder === 'function'
+        ? saveRequestBodyBuilder(doc, cleanHtml, nextOptions)
         : null;
     }
 
@@ -523,6 +544,7 @@
       isPersistedDeckHtml,
       isPersistedSaveRequest,
       resolveReusablePersistedHtml,
+      buildSaveRequestBody,
       getPersistedActiveSlideId,
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,

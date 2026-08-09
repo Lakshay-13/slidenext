@@ -219,6 +219,56 @@ test('buildEditorSaveRequestBody creates the shared save adapter once', () => {
   assert.equal(calls[1][1], '<html>provided</html>');
 });
 
+test('buildEditorSaveRequestBody delegates to the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+  const doc = { label: 'iframe-doc' };
+  const captureSentinel = () => {};
+  const resolveSentinel = () => {};
+  const htmlSentinel = () => {};
+  let delegatedArgs = null;
+  const context = {
+    studioEditorPersistenceController: {
+      buildSaveRequestBody(nextDoc, nextCleanHtml, nextOptions) {
+        delegatedArgs = [nextDoc, nextCleanHtml, nextOptions];
+        return { delegated: true };
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    captureEditorPersistableDeckState() {
+      throw new Error('captureEditorPersistableDeckState should not run before controller delegation');
+    },
+    buildPersistableDeckHtml() {
+      throw new Error('buildPersistableDeckHtml should not run before controller delegation');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorSaveRequestBodySource, context);
+
+  assert.deepEqual(
+    context.buildEditorSaveRequestBody(doc, '<html>provided</html>', {
+      presentationUrl: '/presentations/custom/index.html',
+      isAutoSave: true,
+      capturePersistableDeckState: captureSentinel,
+      resolveCanonicalDeck: resolveSentinel,
+      buildPersistableDeckHtml: htmlSentinel
+    }),
+    { delegated: true }
+  );
+  assert.equal(delegatedArgs[0], doc);
+  assert.equal(delegatedArgs[1], '<html>provided</html>');
+  assert.equal(delegatedArgs[2].capturePersistableDeckState, captureSentinel);
+  assert.equal(delegatedArgs[2].resolveCanonicalDeck, resolveSentinel);
+  assert.equal(delegatedArgs[2].buildPersistableDeckHtml, htmlSentinel);
+});
+
 test('buildEditorSaveRequestBody falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(

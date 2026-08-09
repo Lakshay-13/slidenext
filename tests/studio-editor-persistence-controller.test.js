@@ -409,3 +409,49 @@ test('persistence controller resolves reusable persisted HTML through the shared
     '<html></html>'
   );
 });
+
+test('persistence controller builds save requests through the shared adapter', () => {
+  const doc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorSaveRequestBodyAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(typeof options.getPresentationUrl, 'function');
+        return (nextDoc, cleanHtml, nextOptions) => ({
+          doc: nextDoc,
+          cleanHtml,
+          canonicalDeck: nextOptions.resolveCanonicalDeck(canonicalDeck, nextDoc),
+          presentationUrl: nextOptions.presentationUrl || options.getPresentationUrl()
+        });
+      }
+    },
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html'
+  });
+
+  const resolveCanonicalDeck = (nextCanonicalDeck, nextDoc) => ({
+    source: nextDoc,
+    deck: nextCanonicalDeck
+  });
+
+  assert.deepEqual(controller.buildSaveRequestBody(doc, '<html></html>', {
+    presentationUrl: '/presentations/custom/index.html',
+    resolveCanonicalDeck
+  }), {
+    doc,
+    cleanHtml: '<html></html>',
+    canonicalDeck: {
+      source: doc,
+      deck: canonicalDeck
+    },
+    presentationUrl: '/presentations/custom/index.html'
+  });
+  controller.buildSaveRequestBody(doc, '<html>next</html>', { resolveCanonicalDeck });
+  assert.equal(adapterCreateCalls, 1);
+});
