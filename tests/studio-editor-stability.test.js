@@ -321,7 +321,7 @@ test('clipboard wiring rebuilds the canonical deck from the iframe DOM', () => {
   );
 });
 
-test('element insertion wiring rebuilds the canonical deck from the iframe DOM', () => {
+test('element insertion wiring prefers live canonical state and keeps a legacy baseline fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
@@ -331,15 +331,15 @@ test('element insertion wiring rebuilds the canonical deck from the iframe DOM',
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
-  );
-  assert.match(
-    controllerSource,
     /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
   assert.match(
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
+  assert.doesNotMatch(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
 });
 
