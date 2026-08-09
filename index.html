@@ -1298,6 +1298,7 @@
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
+  <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
@@ -2543,10 +2544,13 @@
     const studioEditorRemovalController = studioEditorRemovalRuntime
       ? studioEditorRemovalRuntime.removalController
       : null;
-    const studioEditorLayerOrderController = typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
-      && SlideNextStudioEditorLayerOrderController
-      && typeof SlideNextStudioEditorLayerOrderController.createStudioEditorLayerOrderController === 'function'
-      ? SlideNextStudioEditorLayerOrderController.createStudioEditorLayerOrderController({
+    const studioEditorLayerOrderRuntime = typeof SlideNextStudioEditorLayerOrderRuntime !== 'undefined'
+      && SlideNextStudioEditorLayerOrderRuntime
+      && typeof SlideNextStudioEditorLayerOrderRuntime.createStudioEditorLayerOrderRuntime === 'function'
+      ? SlideNextStudioEditorLayerOrderRuntime.createStudioEditorLayerOrderRuntime({
+          controllerApi: typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderController
+            : null,
           layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
             ? SlideNextStudioEditorLayerOrder
             : null,
@@ -2568,6 +2572,9 @@
           ),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
+      : null;
+    const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
+      ? studioEditorLayerOrderRuntime.layerOrderController
       : null;
     const studioEditorStyleController = typeof SlideNextStudioEditorStyleController !== 'undefined'
       && SlideNextStudioEditorStyleController
