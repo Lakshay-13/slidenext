@@ -22,7 +22,7 @@
     list.textContent = '';
     if (normalizedTemplates.length === 0) {
       const emptyState = documentRef.createElement('span');
-      emptyState.textContent = 'No slide templates saved';
+      emptyState.textContent = 'No slide templates saved. Save the active slide as a template.';
       list.appendChild(emptyState);
       return true;
     }

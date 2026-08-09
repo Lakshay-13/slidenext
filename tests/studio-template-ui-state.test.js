@@ -125,7 +125,10 @@ test('shared template state sync updates template controls before rendering the 
   }), true);
   assert.equal(controls.saveActiveSlideTemplateBtn.disabled, true);
   assert.equal(controls.templateNameInput.disabled, true);
-  assert.equal(list.children[0].textContent, 'No slide templates saved');
+  assert.equal(
+    list.children[0].textContent,
+    'No slide templates saved. Save the active slide as a template.'
+  );
 });
 
 test('insertSavedTemplate delegates to the template controller and refreshes editor state', () => {
