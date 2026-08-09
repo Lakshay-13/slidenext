@@ -154,7 +154,11 @@
     }
 
     if (typeof options.afterApply === 'function') {
-      options.afterApply(canonicalDeck, historyEntry);
+      try {
+        options.afterApply(canonicalDeck, historyEntry);
+      } catch (error) {
+        return fail('Source HTML could not be applied to the editor');
+      }
     }
     return {
       success: true,

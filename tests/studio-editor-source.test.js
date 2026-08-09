@@ -242,6 +242,39 @@ test('applyStudioEditorSource falls back when active-slide resolution throws', (
   assert.equal(restoredEntry.activeSlideId, 'slide-1');
 });
 
+test('applyStudioEditorSource reports post-apply callback failures without throwing', () => {
+  let restoreCalls = 0;
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    restoreHistoryEntry() {
+      restoreCalls += 1;
+    },
+    afterApply() {
+      throw new Error('persistence failed');
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not be applied to the editor'
+  });
+  assert.equal(restoreCalls, 1);
+});
+
 test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
   const sourceRoot = {
     innerHTML: '<section class="slide">Edited</section>',
