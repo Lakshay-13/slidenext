@@ -2929,7 +2929,9 @@
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
             : null,
-          getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(getIframeDoc())
+            : buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()
