@@ -1430,6 +1430,7 @@
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
+  <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
     <script src="/shared/deck-html.js"></script>
@@ -2014,6 +2015,30 @@
           },
           resolveSourcePath: getStudioCurrentPresentationUrl,
           resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx'
+        })
+      : null;
+    const studioEditorDeckSnapshotController = typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
+      && SlideNextStudioEditorDeckSnapshotController
+      && typeof SlideNextStudioEditorDeckSnapshotController.createStudioEditorDeckSnapshotController === 'function'
+      ? SlideNextStudioEditorDeckSnapshotController.createStudioEditorDeckSnapshotController({
+          snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
+            ? SlideNextStudioDeckSnapshot
+            : null,
+          getDocument: () => getIframeDoc(),
+          createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
+          resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
+          resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+            nextDoc,
+            canonicalDeck
+          ),
+          resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
+          buildDomSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshotFromDom(
+            sourceDoc,
+            buildOptions
+          ),
+          getActiveSlideId: getEditorSlideId,
+          getSlideById,
+          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
         })
       : null;
     const studioEditorPreviewController = typeof SlideNextStudioEditorPreviewController !== 'undefined'
@@ -5887,6 +5912,11 @@
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
+      if (typeof studioEditorDeckSnapshotController !== 'undefined'
+        && studioEditorDeckSnapshotController
+        && typeof studioEditorDeckSnapshotController.build === 'function') {
+        return studioEditorDeckSnapshotController.build(doc, options);
+      }
       const createStudioDeckSnapshotBuilder = (
         typeof SlideNextStudioDeckSnapshot !== 'undefined'
         && SlideNextStudioDeckSnapshot
