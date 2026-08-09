@@ -86,6 +86,68 @@ test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
   });
 });
 
+test('canonical bridge delegates baseline resolution to canonical state', () => {
+  const documentRef = { id: 'frame' };
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  const isCanonicalDeck = (value) => !!value
+    && value.kind === 'slidenext.deck'
+    && Array.isArray(value.slides);
+  let readerOptions = null;
+  let readerDocument = null;
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (sourceDocument) => {
+          readerDocument = sourceDocument;
+          return canonicalDeckBaseline;
+        };
+      }
+    },
+    isCanonicalDeck,
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return canonicalDeckBaseline;
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('custom reader should own baseline resolution');
+    }
+  });
+
+  bridge.buildCanonicalDeck(documentRef, { preferLiveCanonicalDeck: false });
+
+  assert.equal(readerDocument, documentRef);
+  assert.equal(readerOptions.isCanonicalDeck, isCanonicalDeck);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
+test('canonical bridge fails closed when the shared baseline reader is unavailable', () => {
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader() {
+        return null;
+      }
+    },
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    getCanonicalDeckBaseline() {
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  bridge.buildCanonicalDeck({}, { preferLiveCanonicalDeck: false });
+
+  assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('canonical bridge ignores an invalid live baseline when rebuilding', () => {
   let capturedOptions = null;
   const bridge = canonicalBridge.createStudioEditorCanonicalBridge({

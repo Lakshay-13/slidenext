@@ -51,12 +51,18 @@
         return false;
       }
     }
-    const readCanonicalDeckBaseline = canonicalStateApi
+    const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
-      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline,
-          isCanonicalDeck
-        })
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
+      : null;
+    const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader
+      ? (() => {
+          const sharedReader = createCanonicalDeckBaselineReader({
+            getCanonicalDeckBaseline,
+            isCanonicalDeck
+          });
+          return typeof sharedReader === 'function' ? sharedReader : () => null;
+        })()
       : (sourceDocument) => {
           if (!getCanonicalDeckBaseline) return null;
           try {
