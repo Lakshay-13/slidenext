@@ -1347,6 +1347,7 @@
   <script src="/shared/studio-editor-zoom-controller.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
+  <script src="/shared/studio-editor-grid-snap-controller.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
@@ -2279,6 +2280,15 @@
           onAssetsChanged: () => updateAssetLibraryState()
         })
       : null;
+    const GRID_SNAP_SIZE_PX = 20;
+    const studioEditorGridSnapController = typeof SlideNextStudioEditorGridSnapController !== 'undefined'
+      && SlideNextStudioEditorGridSnapController
+      && typeof SlideNextStudioEditorGridSnapController.createStudioEditorGridSnapController === 'function'
+      ? SlideNextStudioEditorGridSnapController.createStudioEditorGridSnapController({
+          documentRef: document,
+          gridSizePx: GRID_SNAP_SIZE_PX
+        })
+      : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
       && SlideNextStudioEditorTransformController
       && typeof SlideNextStudioEditorTransformController.createStudioEditorTransformController === 'function'
@@ -2350,7 +2360,10 @@
             studioEditorSessionToken
           ),
           assignElementId: (...args) => assignEditorElementId(...args),
-          getGridSizePx: () => isGridSnapEnabled ? GRID_SNAP_SIZE_PX : null,
+          getGridSizePx: () => studioEditorGridSnapController
+            && typeof studioEditorGridSnapController.getGridSizePx === 'function'
+            ? studioEditorGridSnapController.getGridSizePx()
+            : null,
           getIsDraggingElement: () => isDraggingElement,
           setIsDraggingElement: (nextValue) => {
             isDraggingElement = !!nextValue;
@@ -2691,8 +2704,6 @@
     let renamingVersionContext = null;
     let editorClipboard = null;
     let preserveSelectionOnNextActiveSlideSync = false;
-    let isGridSnapEnabled = false;
-    const GRID_SNAP_SIZE_PX = 20;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
@@ -2970,20 +2981,17 @@
     });
 
     function updateGridSnapActionState() {
-      const gridSnapView = typeof SlideNextStudioEditorGridSnapView !== 'undefined'
-        ? SlideNextStudioEditorGridSnapView
-        : null;
-      if (!gridSnapView || typeof gridSnapView.syncStudioGridSnapState !== 'function') return false;
-      return gridSnapView.syncStudioGridSnapState({
-        documentRef: document,
-        isEnabled: isGridSnapEnabled
-      });
+      return studioEditorGridSnapController
+        && typeof studioEditorGridSnapController.sync === 'function'
+        ? studioEditorGridSnapController.sync()
+        : false;
     }
 
     function toggleGridSnap() {
-      isGridSnapEnabled = !isGridSnapEnabled;
-      updateGridSnapActionState();
-      return isGridSnapEnabled;
+      return studioEditorGridSnapController
+        && typeof studioEditorGridSnapController.toggle === 'function'
+        ? studioEditorGridSnapController.toggle()
+        : false;
     }
 
     // Theme Toggle Functionality
