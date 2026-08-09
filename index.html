@@ -9913,6 +9913,14 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.isPersistedDeckHtml === 'function') {
+        const result = studioEditorPersistenceController.isPersistedDeckHtml(cleanHtml);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistedDeckHtmlCheckerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

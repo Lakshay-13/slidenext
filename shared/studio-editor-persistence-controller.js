@@ -88,6 +88,7 @@
     let stateApplier = null;
     let stateReader = null;
     let activeSlideIdReader = null;
+    let persistedDeckHtmlChecker = null;
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
@@ -165,6 +166,26 @@
       return stateReader
         && typeof stateReader.resolvePersistedDeckStateWithContent === 'function'
         ? stateReader.resolvePersistedDeckStateWithContent(persistedDeckState)
+        : null;
+    }
+
+    function createPersistedDeckHtmlChecker() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistedDeckHtmlCheckerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistedDeckHtmlCheckerAdapter({
+        persistenceApi,
+        readPersistedDeckState: read
+      });
+    }
+
+    function isPersistedDeckHtml(cleanHtml = '', nextOptions = {}) {
+      if (typeof persistedDeckHtmlChecker !== 'function') {
+        persistedDeckHtmlChecker = createPersistedDeckHtmlChecker();
+      }
+      return typeof persistedDeckHtmlChecker === 'function'
+        ? persistedDeckHtmlChecker(cleanHtml, nextOptions)
         : null;
     }
 
@@ -454,6 +475,7 @@
       read,
       resolveWithContent,
       resolvePersistedDeckStateWithContent,
+      isPersistedDeckHtml,
       getPersistedActiveSlideId,
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,

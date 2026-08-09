@@ -352,3 +352,14 @@ test('persistence controller builds session-aware handler options through the sh
   handlerOptions.setPersistedHtml('<html></html>');
   assert.deepEqual(persisted, [{ cleanHtml: '<html></html>' }]);
 });
+
+test('persistence controller checks persisted HTML through the shared adapter', () => {
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getPersistedDeckHtml: () => '<html></html>'
+  });
+
+  assert.equal(controller.isPersistedDeckHtml('<html></html>'), true);
+  assert.equal(controller.isPersistedDeckHtml('<html><body></body></html>'), false);
+});
