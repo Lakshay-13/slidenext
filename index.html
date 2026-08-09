@@ -1319,6 +1319,7 @@
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
+  <script src="/shared/studio-editor-lock-visibility-runtime.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-canonical-transform.js"></script>
@@ -2466,10 +2467,13 @@
     const studioEditorGroupController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.groupController
       : null;
-    const studioEditorLockVisibilityController = typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
-      && SlideNextStudioEditorLockVisibilityController
-      && typeof SlideNextStudioEditorLockVisibilityController.createStudioEditorLockVisibilityController === 'function'
-      ? SlideNextStudioEditorLockVisibilityController.createStudioEditorLockVisibilityController({
+    const studioEditorLockVisibilityRuntime = typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
+      && SlideNextStudioEditorLockVisibilityRuntime
+      && typeof SlideNextStudioEditorLockVisibilityRuntime.createStudioEditorLockVisibilityRuntime === 'function'
+      ? SlideNextStudioEditorLockVisibilityRuntime.createStudioEditorLockVisibilityRuntime({
+          controllerApi: typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
+            ? SlideNextStudioEditorLockVisibilityController
+            : null,
           lockStateApi: typeof SlideNextStudioEditorLockState !== 'undefined'
             ? SlideNextStudioEditorLockState
             : null,
@@ -2504,6 +2508,9 @@
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args)
         })
+      : null;
+    const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
+      ? studioEditorLockVisibilityRuntime.lockVisibilityController
       : null;
     const studioEditorRemovalController = typeof SlideNextStudioEditorRemovalController !== 'undefined'
       && SlideNextStudioEditorRemovalController
