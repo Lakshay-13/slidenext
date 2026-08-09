@@ -122,10 +122,13 @@ test('syncInspectorForSelection resolves the canonical node for the selected ele
     selectedElements: [selectedElement],
     rgbToHex() {},
     highlightAlignButton() {},
-    buildEditorCanonicalDeck() {
+    resolveEditorUiCanonicalDeck() {
       return {
         slides: [{ nodes: [{ id: 'node-1', layout: { zIndex: 7 } }] }]
       };
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('inspector reads should use live canonical state');
     },
     getIframeDoc() {
       return { id: 'iframe-document' };

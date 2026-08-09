@@ -6592,9 +6592,11 @@
           documentRef: typeof document !== 'undefined' ? document : null,
           getSelectedElements: () => getStudioSelectedElements(),
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
-          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-            ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
-            : null,
+          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)
+              : null,
           resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
             ? (element, canonicalDeck) => resolveEditorCanonicalNodeForElement(element, canonicalDeck)
             : null,
