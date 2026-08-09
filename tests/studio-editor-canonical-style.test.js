@@ -261,6 +261,23 @@ test('buildStudioCanonicalStyleMutationWithBaseline falls back when the live bas
   assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
 });
 
+test('buildStudioCanonicalStyleMutationWithBaseline can use only a valid live baseline', () => {
+  const liveDeck = createSourceDeck();
+  const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => liveDeck,
+    sourceDocument: { id: 'editor-doc' },
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
+  assert.equal(liveDeck.slides[0].nodes[0].style, 'color: #000000;');
+});
+
 test('createStudioCanonicalStyleMutationBuilders reuses an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   let buildCount = 0;
