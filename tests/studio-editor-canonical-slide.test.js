@@ -76,6 +76,29 @@ test('buildStudioCanonicalDuplicateSlideBaseline rejects invalid compatibility b
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalDuplicateSlideBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    insertCanonicalSlide() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalDuplicateSlideDeck imports and inserts a duplicate without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1' }, { id: 'slide-3' }]
