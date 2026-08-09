@@ -112,3 +112,39 @@ test('history controller forwards canonical state to history entry builders', ()
   assert.deepEqual(controller.createEntry({ id: 'document' }), { id: 'entry' });
   assert.equal(capturedOptions.canonicalStateApi, canonicalStateApi);
 });
+
+test('history controller caches the shared history button synchronizer', () => {
+  let factoryCalls = 0;
+  const syncCalls = [];
+  const documentRef = { id: 'editor-shell' };
+  const historyApi = {
+    syncStudioHistoryButtons() {
+      throw new Error('legacy history button sync should not run');
+    },
+    createStudioHistoryButtonStateSync(options) {
+      factoryCalls += 1;
+      return () => {
+        syncCalls.push({
+          documentRef: options.getDocument(),
+          undoStack: options.getUndoStack(),
+          redoStack: options.getRedoStack()
+        });
+        return true;
+      };
+    }
+  };
+  const controller = historyController.createStudioEditorHistoryController({
+    documentRef,
+    historyApi,
+    getUndoStack: () => ['undo-entry'],
+    getRedoStack: () => ['redo-entry']
+  });
+
+  assert.equal(controller.updateButtons(), true);
+  assert.equal(controller.updateButtons(), true);
+  assert.equal(factoryCalls, 1);
+  assert.deepEqual(syncCalls, [
+    { documentRef, undoStack: ['undo-entry'], redoStack: ['redo-entry'] },
+    { documentRef, undoStack: ['undo-entry'], redoStack: ['redo-entry'] }
+  ]);
+});

@@ -113,6 +113,7 @@
     let captureAdapter = null;
     let stepAdapter = null;
     let restoreHandler = null;
+    let historyButtonSync = null;
 
     function buildSaveAdapter() {
       if (!historyStateApi
@@ -242,6 +243,17 @@
 
     function updateButtons() {
       if (!historyApi || typeof historyApi.syncStudioHistoryButtons !== 'function') return false;
+      if (!historyButtonSync
+        && typeof historyApi.createStudioHistoryButtonStateSync === 'function') {
+        historyButtonSync = historyApi.createStudioHistoryButtonStateSync({
+          getDocument: () => documentRef,
+          getUndoStack,
+          getRedoStack
+        });
+      }
+      if (typeof historyButtonSync === 'function') {
+        return historyButtonSync();
+      }
       return historyApi.syncStudioHistoryButtons({
         documentRef,
         undoStack: getUndoStack(),

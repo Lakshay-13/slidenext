@@ -617,6 +617,33 @@
     })();
   }
 
+  function createStudioHistoryButtonStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => options.documentRef || null;
+    const getUndoStack = typeof options.getUndoStack === 'function'
+      ? options.getUndoStack
+      : () => options.undoStack || [];
+    const getRedoStack = typeof options.getRedoStack === 'function'
+      ? options.getRedoStack
+      : () => options.redoStack || [];
+    const syncButtons = typeof options.syncButtons === 'function'
+      ? options.syncButtons
+      : syncStudioHistoryButtons;
+
+    return function syncStudioEditorHistoryButtons(doc = null) {
+      try {
+        return syncButtons({
+          documentRef: doc || getDocument(),
+          undoStack: getUndoStack(),
+          redoStack: getRedoStack()
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function scheduleStudioHistoryCapture(currentTimer, debounce, captureFn, options = {}) {
     const clearScheduledCapture = typeof options.clearScheduledCapture === 'function'
       ? options.clearScheduledCapture
@@ -933,6 +960,7 @@
     getStudioHistoryButtonState,
     createStudioHistoryButtonUpdater,
     syncStudioHistoryButtons,
+    createStudioHistoryButtonStateSync,
     scheduleStudioHistoryCapture,
     createStudioHistorySaveHandler,
     restoreStudioHistoryTransaction,

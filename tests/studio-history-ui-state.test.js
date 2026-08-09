@@ -123,6 +123,51 @@ test('updateHistoryButtons delegates editor control rendering to shared history 
   assert.deepEqual(delegatedArgs.redoStack, ['entry-2']);
 });
 
+test('updateHistoryButtons caches the shared history button synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateHistoryButtonsSource = extractFunctionSource(
+    fileContent,
+    'function updateHistoryButtons() {',
+    '\n\n    function editorUndo() {'
+  );
+  const calls = [];
+  const documentRef = { id: 'editor-shell' };
+  const context = {
+    SlideNextStudioHistory: {
+      syncStudioHistoryButtons() {
+        throw new Error('legacy history button sync should not run');
+      },
+      createStudioHistoryButtonStateSync(options) {
+        calls.push(['factory', options]);
+        return () => {
+          calls.push(['sync', options.getDocument(), options.getUndoStack(), options.getRedoStack()]);
+          return true;
+        };
+      }
+    },
+    document: documentRef,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    getStudioUndoStack() {
+      return ['undo-entry'];
+    },
+    getStudioRedoStack() {
+      return ['redo-entry'];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateHistoryButtonsSource, context);
+
+  assert.equal(context.updateHistoryButtons(), true);
+  assert.equal(context.updateHistoryButtons(), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync'), [
+    ['sync', documentRef, ['undo-entry'], ['redo-entry']],
+    ['sync', documentRef, ['undo-entry'], ['redo-entry']]
+  ]);
+});
+
 test('getEditorHistoryStepAdapter delegates factory wiring through shared history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedOptions = null;

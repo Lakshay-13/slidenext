@@ -1169,6 +1169,51 @@ test('syncStudioHistoryButtons resolves editor controls from the document', () =
   assert.equal(buttons.studioRedoBtn.disabled, false);
 });
 
+test('createStudioHistoryButtonStateSync resolves document and stacks through callbacks', () => {
+  const documentRef = { id: 'editor-document' };
+  const calls = [];
+  const syncButtons = studioHistory.createStudioHistoryButtonStateSync({
+    getDocument() {
+      calls.push('document');
+      return documentRef;
+    },
+    getUndoStack() {
+      calls.push('undo-stack');
+      return ['undo-entry'];
+    },
+    getRedoStack() {
+      calls.push('redo-stack');
+      return ['redo-entry'];
+    },
+    syncButtons(options) {
+      calls.push(options);
+      return { undoDisabled: false, redoDisabled: false };
+    }
+  });
+
+  assert.deepEqual(syncButtons(), { undoDisabled: false, redoDisabled: false });
+  assert.deepEqual(calls, [
+    'document',
+    'undo-stack',
+    'redo-stack',
+    {
+      documentRef,
+      undoStack: ['undo-entry'],
+      redoStack: ['redo-entry']
+    }
+  ]);
+});
+
+test('createStudioHistoryButtonStateSync fails closed when a callback throws', () => {
+  const syncButtons = studioHistory.createStudioHistoryButtonStateSync({
+    getUndoStack() {
+      throw new Error('history state unavailable');
+    }
+  });
+
+  assert.equal(syncButtons(), false);
+});
+
 test('createStudioHistoryStepRunner applies successful history steps and skips unsuccessful ones', () => {
   const calls = [];
   let undoStack = ['undo-entry'];

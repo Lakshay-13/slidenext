@@ -9225,6 +9225,17 @@
       }
       if (!SlideNextStudioHistory
         || typeof SlideNextStudioHistory.syncStudioHistoryButtons !== 'function') return false;
+      if (typeof updateHistoryButtons.sync !== 'function'
+        && typeof SlideNextStudioHistory.createStudioHistoryButtonStateSync === 'function') {
+        updateHistoryButtons.sync = SlideNextStudioHistory.createStudioHistoryButtonStateSync({
+          getDocument: () => document,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack
+        });
+      }
+      if (typeof updateHistoryButtons.sync === 'function') {
+        return updateHistoryButtons.sync();
+      }
       return SlideNextStudioHistory.syncStudioHistoryButtons({
         documentRef: document,
         undoStack: getStudioUndoStack(),
