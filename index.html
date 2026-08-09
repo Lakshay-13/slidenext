@@ -1423,6 +1423,7 @@
   <script src="/shared/studio-editor-selection-store.js"></script>
   <script src="/shared/studio-editor-presentation-label-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
+  <script src="/shared/studio-editor-state-runtime.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1504,10 +1505,26 @@
         ? studioEditorCanonicalSessionStateController.advanceSessionToken()
         : 0;
     }
-    const studioEditorPresentationMetadataStateStore = typeof SlideNextStudioEditorPresentationMetadataStateStore !== 'undefined'
-      && SlideNextStudioEditorPresentationMetadataStateStore
-      && typeof SlideNextStudioEditorPresentationMetadataStateStore.createStudioEditorPresentationMetadataStateStore === 'function'
-      ? SlideNextStudioEditorPresentationMetadataStateStore.createStudioEditorPresentationMetadataStateStore({})
+    const studioEditorStateRuntime = typeof SlideNextStudioEditorStateRuntime !== 'undefined'
+      && SlideNextStudioEditorStateRuntime
+      && typeof SlideNextStudioEditorStateRuntime.createStudioEditorStateRuntime === 'function'
+      ? SlideNextStudioEditorStateRuntime.createStudioEditorStateRuntime({
+          presentationMetadataApi: typeof SlideNextStudioEditorPresentationMetadataStateStore !== 'undefined'
+            ? SlideNextStudioEditorPresentationMetadataStateStore
+            : null,
+          presentationLabelApi: typeof SlideNextStudioEditorPresentationLabelStateStore !== 'undefined'
+            ? SlideNextStudioEditorPresentationLabelStateStore
+            : null,
+          slideIndexApi: typeof SlideNextStudioEditorSlideIndexStore !== 'undefined'
+            ? SlideNextStudioEditorSlideIndexStore
+            : null,
+          selectionApi: typeof SlideNextStudioEditorSelectionStateStore !== 'undefined'
+            ? SlideNextStudioEditorSelectionStateStore
+            : null
+        })
+      : null;
+    const studioEditorPresentationMetadataStateStore = studioEditorStateRuntime
+      ? studioEditorStateRuntime.presentationMetadataStateStore
       : null;
     function getStudioCurrentPresentationMetadata() {
       return studioEditorPresentationMetadataStateStore
@@ -1521,10 +1538,8 @@
         ? studioEditorPresentationMetadataStateStore.setPresentationMetadata(nextMetadata)
         : null;
     }
-    const studioEditorPresentationLabelStateStore = typeof SlideNextStudioEditorPresentationLabelStateStore !== 'undefined'
-      && SlideNextStudioEditorPresentationLabelStateStore
-      && typeof SlideNextStudioEditorPresentationLabelStateStore.createStudioEditorPresentationLabelStateStore === 'function'
-      ? SlideNextStudioEditorPresentationLabelStateStore.createStudioEditorPresentationLabelStateStore({})
+    const studioEditorPresentationLabelStateStore = studioEditorStateRuntime
+      ? studioEditorStateRuntime.presentationLabelStateStore
       : null;
     function getStudioPresentationTitle() {
       return studioEditorPresentationLabelStateStore
@@ -1550,12 +1565,8 @@
         ? studioEditorPresentationLabelStateStore.setCategory(nextCategory)
         : false;
     }
-    const studioEditorSlideIndexStore = typeof SlideNextStudioEditorSlideIndexStore !== 'undefined'
-      && SlideNextStudioEditorSlideIndexStore
-      && typeof SlideNextStudioEditorSlideIndexStore.createStudioEditorSlideIndexStore === 'function'
-      ? SlideNextStudioEditorSlideIndexStore.createStudioEditorSlideIndexStore({
-          initialSlideIndex: 0
-        })
+    const studioEditorSlideIndexStore = studioEditorStateRuntime
+      ? studioEditorStateRuntime.slideIndexStore
       : null;
     function getStudioCurrentSlideIndex() {
       return studioEditorSlideIndexStore
@@ -1569,10 +1580,8 @@
         ? studioEditorSlideIndexStore.setSlideIndex(nextValue)
         : false;
     }
-    const studioEditorSelectionStateStore = typeof SlideNextStudioEditorSelectionStateStore !== 'undefined'
-      && SlideNextStudioEditorSelectionStateStore
-      && typeof SlideNextStudioEditorSelectionStateStore.createStudioEditorSelectionStateStore === 'function'
-      ? SlideNextStudioEditorSelectionStateStore.createStudioEditorSelectionStateStore({})
+    const studioEditorSelectionStateStore = studioEditorStateRuntime
+      ? studioEditorStateRuntime.selectionStateStore
       : null;
     function getStudioSelectedElements() {
       return studioEditorSelectionStateStore
