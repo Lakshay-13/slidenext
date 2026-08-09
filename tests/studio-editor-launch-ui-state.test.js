@@ -20,6 +20,42 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(historyAwareSource, null, `Missing function markers: ${startMarker}`);
+  const presentationLabelFixtureSource = `
+function getStudioPresentationTitle() {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.getTitle === 'function') {
+    return studioEditorPresentationLabelStateController.getTitle();
+  }
+  return typeof currentTitle !== 'undefined' ? currentTitle : '';
+}
+function setStudioPresentationTitle(nextTitle) {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.setTitle === 'function') {
+    return studioEditorPresentationLabelStateController.setTitle(nextTitle);
+  }
+  currentTitle = typeof nextTitle === 'string' ? nextTitle : '';
+  return currentTitle;
+}
+function getStudioPresentationCategory() {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.getCategory === 'function') {
+    return studioEditorPresentationLabelStateController.getCategory();
+  }
+  return typeof currentCategory !== 'undefined' ? currentCategory : '';
+}
+function setStudioPresentationCategory(nextCategory) {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.setCategory === 'function') {
+    return studioEditorPresentationLabelStateController.setCategory(nextCategory);
+  }
+  currentCategory = typeof nextCategory === 'string' ? nextCategory : '';
+  return currentCategory;
+}
+`;
   const autoVersionTimerFixtureSource = `
 function getStudioAutoVersionTimers() {
   if (typeof studioEditorAutoVersionTimerController !== 'undefined'
@@ -56,7 +92,7 @@ function clearStudioAutoVersionTimer(timerKey) {
   return timerId;
 }
 `;
-  return `${autoSaveTimerFixture.getAutoSaveTimerFixtureSource()}\n${autoVersionTimerFixtureSource}\n${historyAwareSource}`;
+  return `${autoSaveTimerFixture.getAutoSaveTimerFixtureSource()}\n${presentationLabelFixtureSource}\n${autoVersionTimerFixtureSource}\n${historyAwareSource}`;
 }
 
 function installSlideIndexAccessor(context) {
@@ -96,7 +132,7 @@ function loadCreateCurrentStudioFrameLoadHandler(fileContent, context) {
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
   vm.runInContext(helperSource, context);

@@ -19,7 +19,16 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return `
+function getStudioPresentationTitle() {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.getTitle === 'function') {
+    return studioEditorPresentationLabelStateController.getTitle();
+  }
+  return typeof currentTitle !== 'undefined' ? currentTitle : '';
+}
+${source}`;
 }
 
 function createEditorDeckViewSharedOptionsForTest(context, doc) {
@@ -77,7 +86,7 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -136,7 +145,7 @@ test('setCurrentPresentationCanonicalDeck fails closed when the deck context upd
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -176,7 +185,7 @@ test('setCurrentPresentationCanonicalDeck ignores malformed deck-like metadata u
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -217,7 +226,7 @@ test('setCurrentPresentationCanonicalDeck ignores updates for inactive presentat
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -273,7 +282,7 @@ test('setCurrentPresentationCanonicalDeck delegates metadata application through
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 

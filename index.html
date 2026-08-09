@@ -1399,6 +1399,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
@@ -1441,9 +1442,36 @@
     // Global Editor State
     let currentPresentationUrl = '';
     let currentPresentationMetadata = null;
-    let currentTitle = '';
-    let currentCategory = '';
     let studioEditorSessionToken = 0;
+    const studioEditorPresentationLabelStateController = typeof SlideNextStudioEditorPresentationLabelStateController !== 'undefined'
+      && SlideNextStudioEditorPresentationLabelStateController
+      && typeof SlideNextStudioEditorPresentationLabelStateController.createStudioEditorPresentationLabelStateController === 'function'
+      ? SlideNextStudioEditorPresentationLabelStateController.createStudioEditorPresentationLabelStateController({})
+      : null;
+    function getStudioPresentationTitle() {
+      return studioEditorPresentationLabelStateController
+        && typeof studioEditorPresentationLabelStateController.getTitle === 'function'
+        ? studioEditorPresentationLabelStateController.getTitle()
+        : '';
+    }
+    function setStudioPresentationTitle(nextTitle) {
+      return studioEditorPresentationLabelStateController
+        && typeof studioEditorPresentationLabelStateController.setTitle === 'function'
+        ? studioEditorPresentationLabelStateController.setTitle(nextTitle)
+        : false;
+    }
+    function getStudioPresentationCategory() {
+      return studioEditorPresentationLabelStateController
+        && typeof studioEditorPresentationLabelStateController.getCategory === 'function'
+        ? studioEditorPresentationLabelStateController.getCategory()
+        : '';
+    }
+    function setStudioPresentationCategory(nextCategory) {
+      return studioEditorPresentationLabelStateController
+        && typeof studioEditorPresentationLabelStateController.setCategory === 'function'
+        ? studioEditorPresentationLabelStateController.setCategory(nextCategory)
+        : false;
+    }
     const studioEditorSlideIndexController = typeof SlideNextStudioEditorSlideIndexController !== 'undefined'
       && SlideNextStudioEditorSlideIndexController
       && typeof SlideNextStudioEditorSlideIndexController.createStudioEditorSlideIndexController === 'function'
@@ -1866,7 +1894,7 @@
             return statusHandler ? statusHandler(...args) : undefined;
           },
           resolveSourcePath: () => currentPresentationUrl,
-          resolveFilename: () => (currentTitle || 'slidenext-presentation') + '.pptx'
+          resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx'
         })
       : null;
     const studioEditorPreviewController = typeof SlideNextStudioEditorPreviewController !== 'undefined'
@@ -2746,7 +2774,7 @@
           resolveStoredCanonicalBaseline: resolveEditorStoredCanonicalBaseline,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
           getPresentationUrl: () => currentPresentationUrl,
-          getPresentationTitle: () => currentTitle,
+          getPresentationTitle: getStudioPresentationTitle,
           buildStudioCanonicalDeck: (
             typeof SlideNextStudioDeckContext !== 'undefined'
             && SlideNextStudioDeckContext
@@ -2953,10 +2981,10 @@
             currentPresentationUrl = value;
           },
           setPresentationTitle: (value) => {
-            currentTitle = value;
+            setStudioPresentationTitle(value);
           },
           setPresentationCategory: (value) => {
-            currentCategory = value;
+            setStudioPresentationCategory(value);
           },
           setSlideIndex: (value) => {
             setStudioCurrentSlideIndex(value);
@@ -4011,10 +4039,10 @@
         currentPresentationUrl = sessionStateUpdate.presentationUrl;
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationTitle')) {
-        currentTitle = sessionStateUpdate.presentationTitle;
+        setStudioPresentationTitle(sessionStateUpdate.presentationTitle);
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationCategory')) {
-        currentCategory = sessionStateUpdate.presentationCategory;
+        setStudioPresentationCategory(sessionStateUpdate.presentationCategory);
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'slideIndex')) {
         setStudioCurrentSlideIndex(sessionStateUpdate.slideIndex);
@@ -4132,11 +4160,11 @@
       
       const studioCategoryLabel = document.getElementById('studioCategoryLabel');
       if (studioCategoryLabel) {
-        studioCategoryLabel.textContent = currentCategory;
+        studioCategoryLabel.textContent = getStudioPresentationCategory();
       }
       const studioTitleLabel = document.getElementById('studioTitleLabel');
       if (studioTitleLabel) {
-        studioTitleLabel.textContent = currentTitle;
+        studioTitleLabel.textContent = getStudioPresentationTitle();
       }
       
       setStudioAutoSaveStatus('loading');
@@ -4779,7 +4807,7 @@
       });
     }
 
-    function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+    function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {
       const buildStudioPresentationMetadataSeed = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed === 'function'
         ? SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed
@@ -4802,7 +4830,7 @@
 
     async function loadCurrentPresentationMetadata(
       presentationUrl = currentPresentationUrl,
-      presentationTitle = currentTitle,
+      presentationTitle = getStudioPresentationTitle(),
       sessionToken = studioEditorSessionToken
     ) {
       const loadStudioPresentationMetadata = SlideNextStudioDeckContext
@@ -4916,7 +4944,7 @@
       return applyCurrentStudioPersistedDeckState.adapter(nextState, options);
     }
 
-    function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = currentTitle) {
+    function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {
       const applyStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate === 'function'
         ? SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate
@@ -10828,8 +10856,8 @@
       if (createStudioVersionActionContextBuilder) {
         return createStudioVersionActionContextBuilder({
           getPresentationUrl: () => currentPresentationUrl,
-          getPresentationTitle: () => currentTitle,
-          getPresentationCategory: () => currentCategory,
+          getPresentationTitle: getStudioPresentationTitle,
+          getPresentationCategory: getStudioPresentationCategory,
           getSessionToken: () => studioEditorSessionToken,
           createVersionActionContext: (
             typeof SlideNextStudioVersionActions !== 'undefined'
@@ -10843,8 +10871,8 @@
 
       return SlideNextStudioVersionActions.createStudioVersionActionContext(
         currentPresentationUrl,
-        currentTitle,
-        currentCategory,
+        getStudioPresentationTitle(),
+        getStudioPresentationCategory(),
         {
           sessionToken: studioEditorSessionToken
         }

@@ -18,6 +18,22 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return `
+function getStudioPresentationTitle() {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.getTitle === 'function') {
+    return studioEditorPresentationLabelStateController.getTitle();
+  }
+  return typeof currentTitle !== 'undefined' ? currentTitle : '';
+}
+function getStudioPresentationCategory() {
+  if (typeof studioEditorPresentationLabelStateController !== 'undefined'
+    && studioEditorPresentationLabelStateController
+    && typeof studioEditorPresentationLabelStateController.getCategory === 'function') {
+    return studioEditorPresentationLabelStateController.getCategory();
+  }
+  return typeof currentCategory !== 'undefined' ? currentCategory : '';
+}
 function getStudioRenameVersionState() {
   if (typeof studioEditorVersionRenameStateController !== 'undefined'
     && studioEditorVersionRenameStateController
