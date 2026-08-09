@@ -7624,6 +7624,61 @@
       if (!assetView || typeof assetView.syncStudioAssetState !== 'function') {
         return false;
       }
+      if (typeof assetView.createStudioAssetStateSync === 'function') {
+        if (typeof updateAssetLibraryState.sync !== 'function') {
+          updateAssetLibraryState.sync = assetView.createStudioAssetStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => {
+              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null;
+              const selectedElements = getStudioSelectedElements();
+              const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
+                ? selectedElements[0]
+                : null;
+              const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
+                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+                : isElementLocked;
+              return {
+                assets: canonicalDeck && canonicalDeck.assets,
+                selectedElement: candidate,
+                isElementLocked: readLockedState,
+                applyAsset: typeof applyAssetToSelectedImage === 'function'
+                  ? applyAssetToSelectedImage
+                  : null,
+                insertAsset: typeof insertAssetToActiveSlide === 'function'
+                  ? insertAssetToActiveSlide
+                  : null,
+                removeAsset: typeof removeAssetFromLibrary === 'function'
+                  ? removeAssetFromLibrary
+                  : null,
+                resolvePreviewSource: (source) => {
+                  if (typeof source !== 'string' || !source.trim()) return '';
+                  const baseUri = typeof document.baseURI === 'string' && document.baseURI
+                    ? document.baseURI
+                    : typeof window !== 'undefined' && typeof window.location?.href === 'string'
+                      ? window.location.href
+                      : '';
+                  if (!baseUri) return source;
+                  try {
+                    const presentationUri = typeof getStudioCurrentPresentationUrl === 'function'
+                      && getStudioCurrentPresentationUrl()
+                      ? new URL(getStudioCurrentPresentationUrl(), baseUri).href
+                      : baseUri;
+                    return new URL(source, presentationUri).href;
+                  } catch (error) {
+                    return source;
+                  }
+                }
+              };
+            },
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateAssetLibraryState.sync === 'function') {
+          return updateAssetLibraryState.sync(doc);
+        }
+      }
       const selectedElements = getStudioSelectedElements();
       const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
         ? selectedElements[0]

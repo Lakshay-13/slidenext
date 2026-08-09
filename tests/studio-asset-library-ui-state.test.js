@@ -180,6 +180,57 @@ test('shared asset state sync derives image eligibility before rendering the lib
   assert.equal(list.children[0].children[1].disabled, true);
 });
 
+test('createStudioAssetStateSync resolves asset state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const calls = [];
+  const syncState = assetView.createStudioAssetStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { assets: [] };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return id === 'savedAssetsList' ? list : null;
+        },
+        createElement() {
+          return { textContent: '' };
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+  assert.equal(list.children[0].textContent, 'No assets saved. Add an asset above to reuse it.');
+});
+
+test('createStudioAssetStateSync fails closed when asset state resolution throws', () => {
+  const syncState = assetView.createStudioAssetStateSync({
+    getActionState() {
+      throw new Error('asset state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -346,6 +397,52 @@ test('asset library state resolves relative previews against the current present
     receivedOptions.resolvePreviewSource('assets/hero.png'),
     'http://localhost:3000/presentations/demo/assets/hero.png'
   );
+});
+
+test('updateAssetLibraryState caches the shared asset state synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAssetLibraryState(doc = getIframeDoc()) {',
+    '\n\n    function updateTemplateActionState'
+  );
+  const doc = { id: 'active-doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorAssetView: {
+      syncStudioAssetState() {
+        throw new Error('direct asset sync should not run');
+      },
+      createStudioAssetStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).assets.length === 1;
+        };
+      }
+    },
+    document: { baseURI: 'http://localhost:3000/index.html' },
+    getIframeDoc() {
+      return doc;
+    },
+    buildEditorCanonicalDeck() {
+      return { assets: [{ id: 'hero' }] };
+    },
+    getStudioSelectedElements() {
+      return [];
+    },
+    isElementLocked() {
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateAssetLibraryState(doc), true);
+  assert.equal(context.updateAssetLibraryState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
 
 test('asset library state prefers canonical lock metadata when available', () => {
