@@ -50,23 +50,23 @@ function attachEditorPreviewController(context) {
 
 test('preview controller wiring supplies the canonical snapshot resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('const studioEditorPreviewController =');
-  const end = fileContent.indexOf('const studioEditorSourceController =', start);
+  const start = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const end = fileContent.indexOf('const studioEditorExportController =', start);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
 
   const controllerSource = fileContent.slice(start, end);
   assert.match(
     controllerSource,
-    /buildPreviewHtml: \(canonicalDeck\) => buildEditorPreviewHtml\(/,
+    /previewBuildHtml: \(canonicalDeck\) => buildEditorPreviewHtml\(/,
   );
   assert.match(
     controllerSource,
-    /buildCanonicalDeck: \(\) => buildEditorCanonicalDeck\(getIframeDoc\(\)\)/,
+    /previewBuildCanonicalDeck: \(\) => buildEditorCanonicalDeck\(getIframeDoc\(\)\)/,
   );
   assert.match(
     controllerSource,
-    /isCanonicalDeck: \(value\) => getEditorCanonicalDeckValidator\(\)\(value\)/,
+    /previewIsCanonicalDeck: \(value\) => getEditorCanonicalDeckValidator\(\)\(value\)/,
   );
 });
 

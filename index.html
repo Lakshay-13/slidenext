@@ -1462,6 +1462,7 @@
   <script src="/shared/studio-editor-source-controller.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
+  <script src="/shared/studio-editor-deck-view-runtime.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-version-view.js"></script>
@@ -1985,10 +1986,22 @@
       return true;
     }
 
-    const studioEditorExportController = typeof SlideNextStudioEditorExportController !== 'undefined'
-      && SlideNextStudioEditorExportController
-      && typeof SlideNextStudioEditorExportController.createStudioEditorExportController === 'function'
-      ? SlideNextStudioEditorExportController.createStudioEditorExportController({
+    const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
+      && SlideNextStudioEditorDeckViewRuntime
+      && typeof SlideNextStudioEditorDeckViewRuntime.createStudioEditorDeckViewRuntime === 'function'
+      ? SlideNextStudioEditorDeckViewRuntime.createStudioEditorDeckViewRuntime({
+          exportApi: typeof SlideNextStudioEditorExportController !== 'undefined'
+            ? SlideNextStudioEditorExportController
+            : null,
+          snapshotControllerApi: typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
+            ? SlideNextStudioEditorDeckSnapshotController
+            : null,
+          previewControllerApi: typeof SlideNextStudioEditorPreviewController !== 'undefined'
+            ? SlideNextStudioEditorPreviewController
+            : null,
+          sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
+            ? SlideNextStudioEditorSourceController
+            : null,
           exportActions: typeof SlideNextStudioEditorExportActions !== 'undefined'
             ? SlideNextStudioEditorExportActions
             : null,
@@ -2020,13 +2033,7 @@
             return statusHandler ? statusHandler(...args) : undefined;
           },
           resolveSourcePath: getStudioCurrentPresentationUrl,
-          resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx'
-        })
-      : null;
-    const studioEditorDeckSnapshotController = typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
-      && SlideNextStudioEditorDeckSnapshotController
-      && typeof SlideNextStudioEditorDeckSnapshotController.createStudioEditorDeckSnapshotController === 'function'
-      ? SlideNextStudioEditorDeckSnapshotController.createStudioEditorDeckSnapshotController({
+          resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx',
           snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
             ? SlideNextStudioDeckSnapshot
             : null,
@@ -2046,43 +2053,24 @@
           getSlideId: getEditorSlideId,
           getSlideEditableElements,
           getNormalizedSlideLayerOrder,
-          buildElementSnapshot: buildEditorElementSnapshot
-        })
-      : null;
-    const studioEditorPreviewController = typeof SlideNextStudioEditorPreviewController !== 'undefined'
-      && SlideNextStudioEditorPreviewController
-      && typeof SlideNextStudioEditorPreviewController.createStudioEditorPreviewController === 'function'
-      ? SlideNextStudioEditorPreviewController.createStudioEditorPreviewController({
+          buildElementSnapshot: buildEditorElementSnapshot,
           previewApi: typeof SlideNextStudioPreview !== 'undefined'
             ? SlideNextStudioPreview
             : null,
-          documentRef: document,
-          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           resolvePresentationUrl: getStudioCurrentPresentationUrl,
           resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
-          buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(
+          previewBuildHtml: (canonicalDeck) => buildEditorPreviewHtml(
             getIframeDoc(),
             canonicalDeck ? { canonicalDeck } : {}
           ),
-          buildCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
-          isCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value)
-        })
-      : null;
-    const studioEditorSourceController = typeof SlideNextStudioEditorSourceController !== 'undefined'
-      && SlideNextStudioEditorSourceController
-      && typeof SlideNextStudioEditorSourceController.createStudioEditorSourceController === 'function'
-      ? SlideNextStudioEditorSourceController.createStudioEditorSourceController({
-          previewApi: typeof SlideNextStudioPreview !== 'undefined'
-            ? SlideNextStudioPreview
-            : null,
+          previewBuildCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          previewIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           sourceApi: typeof SlideNextStudioEditorSource !== 'undefined'
             ? SlideNextStudioEditorSource
             : null,
-          documentRef: document,
-          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           resolveSourceHtml: () => buildEditorSourceHtml(),
-          buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+          sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+          sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
@@ -2092,7 +2080,7 @@
             canonicalDeck
           ),
           resolveHistoryOptions: () => getEditorHistoryOptions(),
-          isCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
+          sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           beforeApply: captureEditorSourceHistoryBaseline,
           restoreHistoryEntry: (historyEntry) => {
             restoreFrameFromHistoryEntry(historyEntry);
@@ -2103,6 +2091,19 @@
             triggerAutoSave();
           }
         })
+      : null;
+
+    const studioEditorExportController = studioEditorDeckViewRuntime
+      ? studioEditorDeckViewRuntime.exportController
+      : null;
+    const studioEditorDeckSnapshotController = studioEditorDeckViewRuntime
+      ? studioEditorDeckViewRuntime.deckSnapshotController
+      : null;
+    const studioEditorPreviewController = studioEditorDeckViewRuntime
+      ? studioEditorDeckViewRuntime.previewController
+      : null;
+    const studioEditorSourceController = studioEditorDeckViewRuntime
+      ? studioEditorDeckViewRuntime.sourceController
       : null;
     const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
       && SlideNextStudioEditorNavigationRuntime
