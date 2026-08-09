@@ -76,7 +76,7 @@
       });
     }
 
-    const canonicalStateOptions = deckView
+    const rawCanonicalStateOptions = deckView
       && typeof deckView.createStudioDeckViewCanonicalStateOptions === 'function'
       ? deckView.createStudioDeckViewCanonicalStateOptions({
           buildCanonicalDeck: options.buildCanonicalDeck,
@@ -90,6 +90,20 @@
             ? options.resolveLiveActiveSlideId
             : () => ''
         };
+    const canonicalStateOptions = {
+      buildCanonicalDeck: rawCanonicalStateOptions
+        && typeof rawCanonicalStateOptions.buildCanonicalDeck === 'function'
+        ? rawCanonicalStateOptions.buildCanonicalDeck
+        : typeof options.buildCanonicalDeck === 'function'
+          ? options.buildCanonicalDeck
+          : () => null,
+      resolveLiveActiveSlideId: rawCanonicalStateOptions
+        && typeof rawCanonicalStateOptions.resolveLiveActiveSlideId === 'function'
+        ? rawCanonicalStateOptions.resolveLiveActiveSlideId
+        : typeof options.resolveLiveActiveSlideId === 'function'
+          ? options.resolveLiveActiveSlideId
+          : () => ''
+    };
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : createStudioDeckSnapshotCanonicalDeckResolver(doc, {
