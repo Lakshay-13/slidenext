@@ -9,6 +9,13 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const EDITING_ATTRIBUTE = 'data-editor-inline-editing';
 
+  function hasStudioInlineElementChildren(element) {
+    return !!(element
+      && element.children
+      && Number.isFinite(element.children.length)
+      && element.children.length > 0);
+  }
+
   function resolveStudioInlineTextEditTarget(node, slide, options = {}) {
     if (node && typeof node.closest === 'function' && node.closest('.editor-resize-handle')) {
       return null;
@@ -36,6 +43,7 @@
         ? current.tagName.toLowerCase()
         : '';
       if (textTagNames.has(tagName)
+        && !hasStudioInlineElementChildren(current)
         && (!slide || typeof slide.contains !== 'function' || slide.contains(current))) {
         return current;
       }

@@ -55,6 +55,49 @@ test('resolveStudioInlineTextEditTarget ignores resize handles and non-text node
   assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(shape, slide), null);
 });
 
+test('resolveStudioInlineTextEditTarget skips text ancestors with child markup', () => {
+  const slide = { contains: () => true };
+  const paragraph = {
+    tagName: 'P',
+    children: { length: 1 },
+    parentElement: slide
+  };
+  const preformatted = {
+    tagName: 'PRE',
+    children: { length: 1 },
+    parentElement: slide
+  };
+
+  assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(paragraph, slide), null);
+  assert.equal(inlineEdit.resolveStudioInlineTextEditTarget(preformatted, slide), null);
+});
+
+test('resolveStudioInlineTextEditTarget keeps leaf inline markup editable', () => {
+  const paragraph = {
+    tagName: 'P',
+    children: { length: 1 },
+    parentElement: null
+  };
+  const strong = {
+    nodeType: 1,
+    tagName: 'STRONG',
+    children: { length: 0 },
+    parentElement: paragraph
+  };
+  const slide = {
+    contains(element) {
+      return element === paragraph || element === strong;
+    }
+  };
+
+  assert.equal(
+    inlineEdit.resolveStudioInlineTextEditTarget(strong, slide, {
+      textTagNames: new Set(['p', 'strong'])
+    }),
+    strong
+  );
+});
+
 test('resolveStudioInlineTextEditTarget supports table cell text when enabled', () => {
   for (const tagName of ['td', 'th']) {
     const cell = { tagName: tagName.toUpperCase(), parentElement: null };
