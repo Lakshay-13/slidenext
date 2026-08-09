@@ -11,11 +11,13 @@ test('createStudioEditorDeckMutationFinalizer reuses configured mutation depende
       return options.versionLabel;
     }
   };
-  const buildCanonicalDeck = () => ({ kind: 'slidenext.deck', slides: [] });
+  const buildCanonicalDeck = () => ({ kind: 'slidenext.deck', slides: [{ id: 'legacy' }] });
+  const buildCanonicalDeckBaseline = () => ({ kind: 'slidenext.deck', slides: [{ id: 'baseline' }] });
   const isCanonicalDeck = () => true;
   const finalizer = deckMutation.createStudioEditorDeckMutationFinalizer({
     mutationApi,
     buildCanonicalDeck,
+    buildCanonicalDeckBaseline,
     isCanonicalDeck,
     syncSelectionOverlay() {},
     generateThumbnails() {},
@@ -28,7 +30,7 @@ test('createStudioEditorDeckMutationFinalizer reuses configured mutation depende
   assert.equal(finalizer('Auto: Move', { transaction: { id: 'tx' } }), 'Auto: Move');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].mutationApi, undefined);
-  assert.equal(calls[0].buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(calls[0].buildCanonicalDeck, buildCanonicalDeckBaseline);
   assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
   assert.deepEqual(calls[0].mutationOptions, { transaction: { id: 'tx' } });
 });

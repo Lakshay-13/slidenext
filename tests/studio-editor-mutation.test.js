@@ -170,6 +170,32 @@ test('createStudioMutationFinalizer resolves a canonical deck only when the muta
   ]);
 });
 
+test('createStudioMutationFinalizer prefers a dedicated canonical baseline builder', () => {
+  const calls = [];
+  const legacyDeck = { kind: 'slidenext.deck', slides: [{ id: 'legacy' }] };
+  const baselineDeck = { kind: 'slidenext.deck', slides: [{ id: 'baseline' }] };
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    buildCanonicalDeck() {
+      calls.push('legacy');
+      return legacyDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      calls.push('baseline');
+      return baselineDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    }
+  });
+
+  finalizeMutation('Auto: Styled Element', { transaction: { id: 'tx-baseline' } });
+
+  assert.deepEqual(calls, [
+    'baseline',
+    ['history', false, { id: 'tx-baseline' }, baselineDeck]
+  ]);
+});
+
 test('createStudioMutationFinalizer preserves mutation persistence when canonical rebuild fails', () => {
   const calls = [];
   const finalizeMutation = mutation.createStudioMutationFinalizer({

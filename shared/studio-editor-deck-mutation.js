@@ -14,6 +14,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : buildCanonicalDeck;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -39,7 +42,7 @@
     return function finalizeConfiguredStudioEditorDeckMutation(versionLabel, mutationOptions = {}) {
       return finalizeStudioEditorDeckMutation(versionLabel, mutationOptions, {
         mutationApi,
-        buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         isCanonicalDeck,
         syncSelectionOverlay,
         generateThumbnails,
@@ -58,6 +61,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : buildCanonicalDeck;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -83,7 +89,7 @@
       return mutationApi.finalizeStudioMutation({
         versionLabel,
         mutationOptions,
-        ...(buildCanonicalDeck ? { buildCanonicalDeck } : {}),
+        ...(buildCanonicalDeckBaseline ? { buildCanonicalDeck: buildCanonicalDeckBaseline } : {}),
         ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         syncSelectionOverlay,
         generateThumbnails,
@@ -95,10 +101,10 @@
     }
 
     const resolvedMutationOptions = Object.prototype.hasOwnProperty.call(mutationOptions, 'canonicalDeck')
-      || !buildCanonicalDeck
+      || !buildCanonicalDeckBaseline
       ? mutationOptions
       : (() => {
-          const canonicalDeck = buildCanonicalDeck(undefined);
+          const canonicalDeck = buildCanonicalDeckBaseline(undefined);
           return canonicalDeck
             ? { ...mutationOptions, canonicalDeck }
             : mutationOptions;

@@ -39,13 +39,18 @@
       const { canonicalDeck, ...optionsWithoutCanonicalDeck } = sourceOptions;
       return optionsWithoutCanonicalDeck;
     }
-    if (typeof options.buildCanonicalDeck !== 'function') {
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
+    if (!buildCanonicalDeckBaseline) {
       return sourceOptions;
     }
 
     let canonicalDeck = null;
     try {
-      canonicalDeck = options.buildCanonicalDeck();
+      canonicalDeck = buildCanonicalDeckBaseline();
     } catch (err) {
       // Do not interrupt mutation persistence when a legacy deck cannot import.
       canonicalDeck = null;
@@ -77,13 +82,16 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : buildCanonicalDeck;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
 
     return function finalizeStudioMutation(versionLabel, mutationOptions = {}) {
       const resolvedMutationOptions = resolveStudioMutationOptions(mutationOptions, {
-        buildCanonicalDeck,
+        buildCanonicalDeckBaseline,
         isCanonicalDeck
       });
       if (resolvedMutationOptions.syncSelectionOverlay) {

@@ -475,7 +475,7 @@ test('slide metadata wiring prefers live canonical state and keeps a legacy base
   );
 });
 
-test('deck mutation finalizer wiring uses the DOM mutation canonical builder', () => {
+test('deck mutation finalizer wiring prefers live canonical state and keeps a legacy baseline fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
@@ -484,6 +484,14 @@ test('deck mutation finalizer wiring uses the DOM mutation canonical builder', (
   );
 
   assert.match(
+    controllerSource,
+    /buildCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
+  assert.match(
+    controllerSource,
+    /buildEditorCanonicalDeck\(sourceDoc \|\| getIframeDoc\(\)\)/
+  );
+  assert.doesNotMatch(
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );

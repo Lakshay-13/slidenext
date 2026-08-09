@@ -3320,7 +3320,10 @@
           mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
             ? SlideNextStudioEditorMutation
             : null,
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            getStudioEditorSessionToken()
+          ) || buildEditorCanonicalDeck(sourceDoc || getIframeDoc()),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
           generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
@@ -7444,8 +7447,11 @@
         mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
           ? SlideNextStudioEditorMutation
           : null,
-        buildCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc)
+        buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'
+          ? (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ) || buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
           : null,
         isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
           ? getEditorCanonicalDeckValidator()
