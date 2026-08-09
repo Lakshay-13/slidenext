@@ -183,6 +183,7 @@
           }
         },
         buildEditorDeckSnapshot,
+        buildEditorCanonicalDeck,
         resolveStudioActiveSlideIndex,
         saveHistoryState,
         syncStudioActiveSlideView,

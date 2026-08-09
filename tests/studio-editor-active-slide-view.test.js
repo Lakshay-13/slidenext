@@ -7,6 +7,10 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
   let currentSlideIndex = 0;
   let preserveSelectionRequest = true;
   const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: [{ id: 'slide-3', nodes: [] }]
+  };
 
   const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
     captureHistory: true,
@@ -23,6 +27,10 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
     },
     getActiveSlide() {
       return { id: 'slide-3' };
+    },
+    buildEditorCanonicalDeck(doc) {
+      calls.push(['canonical', doc]);
+      return canonicalDeck;
     },
     syncCustomGradientControls() {
       calls.push(['gradient']);
@@ -44,8 +52,8 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
       currentSlideIndex = nextState.slideIndex;
       calls.push(['session', currentSlideIndex]);
     },
-    saveHistoryState(debounce) {
-      calls.push(['history', debounce]);
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
     }
   });
 
@@ -61,9 +69,11 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
     'actions',
     'selection',
     'clear-preserve',
+    'canonical',
     'history'
   ]);
-  assert.deepEqual(calls.at(-1), ['history', false]);
+  assert.deepEqual(calls.at(-2), ['canonical', { label: 'iframe-doc' }]);
+  assert.deepEqual(calls.at(-1), ['history', false, null, canonicalDeck]);
 });
 
 test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exists', () => {

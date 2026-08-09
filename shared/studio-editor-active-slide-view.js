@@ -38,6 +38,9 @@
     const buildEditorDeckSnapshot = typeof options.buildEditorDeckSnapshot === 'function'
       ? options.buildEditorDeckSnapshot
       : () => ({ slides: [] });
+    const buildEditorCanonicalDeck = typeof options.buildEditorCanonicalDeck === 'function'
+      ? options.buildEditorCanonicalDeck
+      : null;
     const resolveActiveSlideIndex = typeof options.resolveStudioActiveSlideIndex === 'function'
       ? options.resolveStudioActiveSlideIndex
       : (deckSnapshot, fallbackIndex) => fallbackIndex;
@@ -53,6 +56,22 @@
     const syncSlideSectionControl = typeof options.syncSlideSectionControl === 'function'
       ? options.syncSlideSectionControl
       : () => {};
+
+    const captureSlideNavigationHistory = (sourceDoc) => {
+      if (buildEditorCanonicalDeck) {
+        let canonicalDeck = null;
+        try {
+          canonicalDeck = buildEditorCanonicalDeck(sourceDoc);
+        } catch (err) {
+          canonicalDeck = null;
+        }
+        if (canonicalDeck) {
+          saveHistoryState(false, null, canonicalDeck);
+          return;
+        }
+      }
+      saveHistoryState(false);
+    };
 
     const syncToDeckSnapshotFallback = (deckSnapshot) => {
       const slideCount = Array.isArray(deckSnapshot && deckSnapshot.slides)
@@ -82,7 +101,7 @@
       syncSelectionChrome(preserveSelection);
       clearPreserveSelectionRequest();
       if (options.captureHistory && activeSlideSnapshot && previousIndex !== getCurrentSlideIndex()) {
-        saveHistoryState(false);
+        captureSlideNavigationHistory(doc);
       }
       return !!activeSlideSnapshot;
     };
@@ -139,7 +158,7 @@
     syncSelectionChrome(preserveSelection);
     clearPreserveSelectionRequest();
     if (options.captureHistory && previousIndex !== getCurrentSlideIndex()) {
-      saveHistoryState(false);
+      captureSlideNavigationHistory(doc);
     }
     return true;
   }
