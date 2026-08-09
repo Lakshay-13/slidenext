@@ -652,7 +652,8 @@ test('createEditorPreviewDeckViewHtmlOptions bundles preview deck view resolvers
     __createEditorPreviewFallbackHtmlTransformer(options) {
       previewFallbackHtmlTransformerArgs = options;
       return previewFallbackHtmlTransformer;
-    }
+    },
+    studioEditorPreviewController: editorPreviewController.createStudioEditorPreviewController({})
   };
 
   vm.createContext(context);

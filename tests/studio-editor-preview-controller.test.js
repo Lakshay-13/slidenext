@@ -66,3 +66,35 @@ test('fails closed when the current presentation has no url or shared preview ap
   assert.equal(noUrlController.launch(), false);
   assert.equal(noApiController.launch(), false);
 });
+
+test('composes preview deck-view options through injected shared helpers', () => {
+  const deckViewOptions = { buildViewOptions() {} };
+  const fallbackTransformer = () => '<html>fallback</html>';
+  let delegatedOptions = null;
+  const controller = previewController.createStudioEditorPreviewController({});
+
+  const result = controller.createStudioEditorPreviewDeckViewHtmlOptions({
+    createDeckViewHtmlOptions(options) {
+      delegatedOptions = options;
+      return deckViewOptions;
+    },
+    createFallbackHtmlTransformer(options) {
+      assert.equal(options.presentationUrl, '/presentations/demo/index.html');
+      return fallbackTransformer;
+    },
+    buildStudioPreviewHtml: () => '<html>shared</html>',
+    buildDeckPreviewHtml: () => '<html>canonical</html>',
+    injectBaseHrefIntoHtml() {},
+    buildPresentationBaseHref() {},
+    presentationUrl: '/presentations/demo/index.html'
+  });
+
+  assert.equal(result, deckViewOptions);
+  assert.equal(delegatedOptions.buildSharedHtml(), '<html>shared</html>');
+  assert.equal(delegatedOptions.buildCanonicalHtml(), '<html>canonical</html>');
+  assert.deepEqual(
+    delegatedOptions.mapCanonicalHtmlArgs('deck', { renderOptions: {} }),
+    ['deck', '/presentations/demo/index.html', { renderOptions: {} }]
+  );
+  assert.equal(delegatedOptions.transformFallbackHtml(), '<html>fallback</html>');
+});

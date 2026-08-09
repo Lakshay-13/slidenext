@@ -49,6 +49,51 @@
       };
     }
 
+    function createStudioEditorPreviewDeckViewHtmlOptions(viewOptions = {}) {
+      const createDeckViewHtmlOptions = typeof viewOptions.createDeckViewHtmlOptions === 'function'
+        ? viewOptions.createDeckViewHtmlOptions
+        : null;
+      if (!createDeckViewHtmlOptions) return null;
+
+      const presentationUrl = typeof viewOptions.presentationUrl === 'string'
+        ? viewOptions.presentationUrl
+        : '';
+      const buildStudioPreviewHtml = typeof viewOptions.buildStudioPreviewHtml === 'function'
+        ? viewOptions.buildStudioPreviewHtml
+        : null;
+      const buildDeckPreviewHtml = typeof viewOptions.buildDeckPreviewHtml === 'function'
+        ? viewOptions.buildDeckPreviewHtml
+        : null;
+      const injectBaseHrefIntoHtml = typeof viewOptions.injectBaseHrefIntoHtml === 'function'
+        ? viewOptions.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof viewOptions.buildPresentationBaseHref === 'function'
+        ? viewOptions.buildPresentationBaseHref
+        : null;
+      const createFallbackHtmlTransformer = typeof viewOptions.createFallbackHtmlTransformer === 'function'
+        ? viewOptions.createFallbackHtmlTransformer
+        : createStudioEditorPreviewFallbackHtmlTransformer;
+
+      return createDeckViewHtmlOptions({
+        buildSharedHtml: buildStudioPreviewHtml,
+        extendViewOptions: (deckViewOptions) => ({
+          ...deckViewOptions,
+          presentationUrl
+        }),
+        buildCanonicalHtml: buildDeckPreviewHtml,
+        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
+          canonicalDeck,
+          presentationUrl,
+          deckHtmlOptions
+        ],
+        transformFallbackHtml: createFallbackHtmlTransformer({
+          injectBaseHrefIntoHtml,
+          buildPresentationBaseHref,
+          presentationUrl
+        })
+      });
+    }
+
     function launch() {
       const readyState = resolveReadyState();
       if (!readyState || !readyState.canLaunchPreview) return false;
@@ -68,7 +113,8 @@
     return {
       launch,
       launchPreview: launch,
-      createStudioEditorPreviewFallbackHtmlTransformer
+      createStudioEditorPreviewFallbackHtmlTransformer,
+      createStudioEditorPreviewDeckViewHtmlOptions
     };
   }
 

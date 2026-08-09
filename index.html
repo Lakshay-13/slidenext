@@ -3390,42 +3390,19 @@
     }
 
     function createEditorPreviewDeckViewHtmlOptions(options = {}) {
-      const presentationUrl = typeof options.presentationUrl === 'string'
-        ? options.presentationUrl
-        : '';
-      const buildStudioPreviewHtml = typeof options.buildStudioPreviewHtml === 'function'
-        ? options.buildStudioPreviewHtml
+      return typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.createStudioEditorPreviewDeckViewHtmlOptions === 'function'
+        ? studioEditorPreviewController.createStudioEditorPreviewDeckViewHtmlOptions({
+            ...options,
+            createDeckViewHtmlOptions: typeof createEditorDeckViewHtmlOptions === 'function'
+              ? createEditorDeckViewHtmlOptions
+              : null,
+            createFallbackHtmlTransformer: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
+              ? createEditorPreviewFallbackHtmlTransformer
+              : null
+          })
         : null;
-      const buildDeckPreviewHtml = typeof options.buildDeckPreviewHtml === 'function'
-        ? options.buildDeckPreviewHtml
-        : null;
-      const injectBaseHrefIntoHtml = typeof options.injectBaseHrefIntoHtml === 'function'
-        ? options.injectBaseHrefIntoHtml
-        : null;
-      const buildPresentationBaseHref = typeof options.buildPresentationBaseHref === 'function'
-        ? options.buildPresentationBaseHref
-        : null;
-
-      return createEditorDeckViewHtmlOptions({
-        buildSharedHtml: buildStudioPreviewHtml,
-        extendViewOptions: (deckViewOptions) => ({
-          ...deckViewOptions,
-          presentationUrl
-        }),
-        buildCanonicalHtml: buildDeckPreviewHtml,
-        mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [
-          canonicalDeck,
-          presentationUrl,
-          deckHtmlOptions
-        ],
-        transformFallbackHtml: typeof createEditorPreviewFallbackHtmlTransformer === 'function'
-          ? createEditorPreviewFallbackHtmlTransformer({
-              injectBaseHrefIntoHtml,
-              buildPresentationBaseHref,
-              presentationUrl
-            })
-          : null
-      });
     }
 
     function buildEditorSourceDeckHtml(doc = getIframeDoc(), options = {}) {
