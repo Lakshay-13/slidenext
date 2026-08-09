@@ -275,6 +275,9 @@ test('template controller inserts a rendered template after the active slide thr
   assert.equal(container.children.length, 1);
   assert.equal(container.children[0].prepared, true);
   assert.equal(calls[0][0], 'history');
+  assert.equal(calls[0][1], false);
+  assert.equal(calls[0][2], null);
+  assert.equal(calls[0][3], sourceDeck);
   assert.deepEqual(calls.slice(1, 3), [['thumbnails'], ['active', 1]]);
   assert.equal(calls[3][0], 'finalize');
   assert.equal(calls[3][1], 'Auto: Inserted Template "Hero Template"');

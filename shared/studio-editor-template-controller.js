@@ -253,7 +253,7 @@
         }
       }
 
-      if (saveHistoryState) saveHistoryState(false);
+      if (saveHistoryState) saveHistoryState(false, null, canonicalDeck);
       const mutation = applyInsertion(container, slideElement, {
         beforeNode: slides[insertionIndex] || null,
         ...(getElementId ? { getElementId } : {})
