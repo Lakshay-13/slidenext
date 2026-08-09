@@ -115,6 +115,51 @@
     });
   }
 
+  function createStudioClipboardToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getClipboard = typeof options.getClipboard === 'function'
+      ? options.getClipboard
+      : () => null;
+    const getLockedState = typeof options.getLockedState === 'function'
+      ? options.getLockedState
+      : () => () => false;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : (resolvedDoc) => {
+          const elements = getSelectedElements(resolvedDoc);
+          const clipboard = getClipboard(resolvedDoc);
+          const isLocked = getLockedState(resolvedDoc);
+          return buildStudioClipboardToolbarState(elements, clipboard, {
+            isLocked,
+            canMutateDeck: () => !!getActiveSlide(resolvedDoc)
+          });
+        };
+
+    return function syncStudioEditorClipboardToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return renderStudioClipboardToolbarState({
+          documentRef: getDocumentRef(),
+          actionState
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function finalizeStudioClipboardActionResult(result, options = {}) {
     const updateClipboardActionState = typeof options.updateClipboardActionState === 'function'
       ? options.updateClipboardActionState
@@ -421,6 +466,7 @@
     buildStudioClipboardToolbarState,
     renderStudioClipboardToolbarState,
     syncStudioClipboardToolbarState,
+    createStudioClipboardToolbarStateSync,
     finalizeStudioClipboardActionResult,
     buildStudioClipboardSelectionMutationPlan,
     buildStudioClipboardMutationPlan,

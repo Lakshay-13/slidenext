@@ -1066,6 +1066,60 @@ test('updateClipboardActionState delegates toolbar state assembly to the shared 
   assert.equal(calls[0].canMutateDeck(), true);
 });
 
+test('updateClipboardActionState caches the shared clipboard toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateClipboardActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateClipboardActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+  const doc = { id: 'doc' };
+  const calls = [];
+  const syncCalls = [];
+  const context = {
+    selectedElements: [{ id: 'selected' }],
+    editorClipboard: { items: [{ id: 'clipboard-item' }], pasteCount: 0 },
+    isElementLocked() {
+      return false;
+    },
+    updateBlockActionState() {},
+    SlideNextStudioEditorClipboard: {
+      syncStudioClipboardToolbarState() {
+        throw new Error('direct clipboard sync should not run');
+      },
+      createStudioClipboardToolbarStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          syncCalls.push(currentDoc);
+          return options.getActiveSlide(currentDoc) === currentDoc.activeSlide;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getStudioSelectedElements() {
+      return this.selectedElements;
+    },
+    getStudioEditorClipboard() {
+      return this.editorClipboard;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide || null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateClipboardActionStateSource, context);
+
+  const activeDoc = { id: 'active-doc', activeSlide: {} };
+  assert.equal(context.updateClipboardActionState(activeDoc), true);
+  assert.equal(context.updateClipboardActionState(activeDoc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(syncCalls, [activeDoc, activeDoc]);
+});
+
 test('updateClipboardActionState prefers canonical lock metadata when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(

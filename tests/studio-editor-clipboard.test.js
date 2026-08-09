@@ -241,6 +241,70 @@ test('syncStudioClipboardToolbarState builds and renders clipboard controls in o
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false]);
 });
 
+test('createStudioClipboardToolbarStateSync resolves clipboard state through callbacks', () => {
+  const doc = { id: 'iframe-doc', activeSlide: {} };
+  const controls = {
+    copySelectionBtn: { disabled: true },
+    pasteClipboardBtn: { disabled: true },
+    slidePasteClipboardBtn: { disabled: true }
+  };
+  const selectedElements = [{ id: 'selected', isConnected: true }];
+  const clipboard = { items: [{ id: 'clipboard-item' }], pasteCount: 0 };
+  const calls = [];
+  const syncToolbar = clipboardState.createStudioClipboardToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getSelectedElements(currentDoc) {
+      calls.push(['selection', currentDoc]);
+      return selectedElements;
+    },
+    getClipboard(currentDoc) {
+      calls.push(['clipboard', currentDoc]);
+      return clipboard;
+    },
+    getLockedState(currentDoc) {
+      calls.push(['locked-state', currentDoc]);
+      return () => false;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return currentDoc.activeSlide;
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.deepEqual(Object.values(controls).map((button) => button.disabled), [false, false, false]);
+  assert.deepEqual(calls, [
+    'document',
+    ['selection', doc],
+    ['clipboard', doc],
+    ['locked-state', doc],
+    ['active-slide', doc],
+    ['active-slide', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioClipboardToolbarStateSync fails closed when clipboard state resolution throws', () => {
+  const syncToolbar = clipboardState.createStudioClipboardToolbarStateSync({
+    getSelectedElements() {
+      throw new Error('clipboard state unavailable');
+    }
+  });
+
+  assert.equal(syncToolbar(), false);
+});
+
 test('finalizeStudioClipboardActionResult refreshes clipboard state and preserves the result', () => {
   const calls = [];
 
