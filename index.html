@@ -7922,15 +7922,31 @@
       if (!masterSlideView || typeof masterSlideView.syncStudioMasterSlideState !== 'function') {
         return false;
       }
+      const resolveCanonicalDeck = (sourceDoc) => {
+        let liveCanonicalDeck = null;
+        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
+          try {
+            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
+              sourceDoc,
+              typeof getStudioEditorSessionToken === 'function'
+                ? getStudioEditorSessionToken()
+                : null
+            );
+          } catch (error) {
+            liveCanonicalDeck = null;
+          }
+        }
+        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck(sourceDoc)
+          : null);
+      };
       if (typeof masterSlideView.createStudioMasterSlideStateSync === 'function') {
         if (typeof updateMasterSlideActionState.sync !== 'function') {
           updateMasterSlideActionState.sync = masterSlideView.createStudioMasterSlideStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
               const canUse = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck(sourceDoc)
-                : null;
+              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
               const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(sourceDoc) : '';
               const activeSlide = canonicalDeck
                 && Array.isArray(canonicalDeck.slides)
@@ -7952,9 +7968,7 @@
         }
       }
       const canUse = !!getActiveSlide(doc);
-      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
-        : null;
+      const canonicalDeck = resolveCanonicalDeck(doc);
       const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(doc) : '';
       const activeSlide = canonicalDeck
         && Array.isArray(canonicalDeck.slides)

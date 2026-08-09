@@ -343,3 +343,59 @@ test('updateMasterSlideActionState caches the shared master state synchronizer w
   assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
+
+test('master-slide state prefers the live canonical deck before rebuilding from the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateMasterSlideActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateBlockActionState'
+  );
+  const doc = { id: 'live-doc', activeSlide: {} };
+  const liveCanonicalDeck = {
+    slides: [{ id: 'slide-1', masterSlideId: 'live-master' }],
+    masterSlides: [{ id: 'live-master' }]
+  };
+  let receivedOptions = null;
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioEditorMasterSlideView: {
+      syncStudioMasterSlideState(options) {
+        receivedOptions = options;
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getStudioEditorSessionToken() {
+      return 31;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 31);
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when the live deck is available');
+    },
+    applySavedMasterSlide() {},
+    removeSavedMasterSlide() {},
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateMasterSlideActionState(doc), true);
+  assert.equal(receivedOptions.masterSlides, liveCanonicalDeck.masterSlides);
+  assert.equal(receivedOptions.activeMasterSlideId, 'live-master');
+  assert.equal(buildCalls, 0);
+});
