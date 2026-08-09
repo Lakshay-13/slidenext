@@ -1428,6 +1428,7 @@
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
+  <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1867,15 +1868,15 @@
         ? studioEditorSaveButtonStateStore.getState()
         : 'idle';
     }
-    const studioEditorVersionRenameStateController = typeof SlideNextStudioEditorVersionRenameStateController !== 'undefined'
-      && SlideNextStudioEditorVersionRenameStateController
-      && typeof SlideNextStudioEditorVersionRenameStateController.createStudioEditorVersionRenameStateController === 'function'
-      ? SlideNextStudioEditorVersionRenameStateController.createStudioEditorVersionRenameStateController({})
+    const studioEditorVersionRenameStateStore = typeof SlideNextStudioEditorVersionRenameStateStore !== 'undefined'
+      && SlideNextStudioEditorVersionRenameStateStore
+      && typeof SlideNextStudioEditorVersionRenameStateStore.createStudioEditorVersionRenameStateStore === 'function'
+      ? SlideNextStudioEditorVersionRenameStateStore.createStudioEditorVersionRenameStateStore({})
       : null;
     function getStudioRenameVersionState() {
-      if (studioEditorVersionRenameStateController
-        && typeof studioEditorVersionRenameStateController.getState === 'function') {
-        return studioEditorVersionRenameStateController.getState();
+      if (studioEditorVersionRenameStateStore
+        && typeof studioEditorVersionRenameStateStore.getState === 'function') {
+        return studioEditorVersionRenameStateStore.getState();
       }
       return {
         filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
@@ -1883,9 +1884,9 @@
       };
     }
     function setStudioRenameVersionState(nextState = {}) {
-      if (studioEditorVersionRenameStateController
-        && typeof studioEditorVersionRenameStateController.setState === 'function') {
-        return studioEditorVersionRenameStateController.setState(nextState);
+      if (studioEditorVersionRenameStateStore
+        && typeof studioEditorVersionRenameStateStore.setState === 'function') {
+        return studioEditorVersionRenameStateStore.setState(nextState);
       }
       if (typeof renamingFilename !== 'undefined') {
         renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
@@ -1898,9 +1899,9 @@
       return getStudioRenameVersionState();
     }
     function clearStudioRenameVersionState() {
-      if (studioEditorVersionRenameStateController
-        && typeof studioEditorVersionRenameStateController.clear === 'function') {
-        return studioEditorVersionRenameStateController.clear();
+      if (studioEditorVersionRenameStateStore
+        && typeof studioEditorVersionRenameStateStore.clear === 'function') {
+        return studioEditorVersionRenameStateStore.clear();
       }
       return setStudioRenameVersionState();
     }

@@ -33,9 +33,11 @@ test('version rename state controller owns filename and context state', () => {
 test('editor routes version rename state through the controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /createStudioEditorVersionRenameStateController/);
+  assert.match(source, /studio-editor-version-rename-state-store\.js/);
+  assert.match(source, /studioEditorVersionRenameStateStore/);
   assert.match(source, /setStudioRenameVersionState\(/);
   assert.match(source, /getStudioRenameVersionState\(\)/);
+  assert.doesNotMatch(source, /const studioEditorVersionRenameStateController =/);
   assert.doesNotMatch(source, /let renamingFilename = ''/);
   assert.doesNotMatch(source, /let renamingVersionContext = null/);
 });
