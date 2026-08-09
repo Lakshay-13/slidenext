@@ -76,9 +76,87 @@
     return syncStudioInspectorSelection(options);
   }
 
+  function createStudioInspectorSelectionSynchronizer(options = {}) {
+    const liveSelectionApi = options.liveSelectionApi
+      && typeof options.liveSelectionApi.buildStudioLiveSelectionState === 'function'
+      ? options.liveSelectionApi
+      : null;
+    const inspectorApi = options.inspectorApi
+      && typeof options.inspectorApi.syncStudioInspectorForSelection === 'function'
+      ? options.inspectorApi
+      : { syncStudioInspectorForSelection };
+    const inspectorView = options.inspectorView || null;
+    const documentRef = options.documentRef || null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getCurrentDocument = typeof options.getCurrentDocument === 'function'
+      ? options.getCurrentDocument
+      : () => null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : null;
+
+    return function syncStudioInspectorSelectionFromEditor() {
+      if (!liveSelectionApi) return false;
+
+      let liveSelectionState;
+      try {
+        liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(getSelectedElements());
+      } catch (error) {
+        return false;
+      }
+      if (!inspectorView) return false;
+
+      const primaryElement = liveSelectionState && liveSelectionState.primaryElement;
+      const primaryElementId = primaryElement && primaryElement.dataset
+        ? primaryElement.dataset.editorId
+        : '';
+      let canonicalDeck = null;
+      if (primaryElementId && buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(getCurrentDocument());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      let canonicalNode = null;
+      if (resolveCanonicalNode) {
+        try {
+          canonicalNode = resolveCanonicalNode(primaryElement, canonicalDeck);
+        } catch (error) {
+          canonicalNode = null;
+        }
+      }
+
+      return inspectorApi.syncStudioInspectorForSelection({
+        documentRef,
+        selectionState: liveSelectionState,
+        inspectorView,
+        canonicalNode,
+        rgbToHex: options.rgbToHex,
+        highlightAlignButton: options.highlightAlignButton,
+        updateAssetLibraryState: options.updateAssetLibraryState,
+        updateClipboardActionState: options.updateClipboardActionState,
+        updateRemovalActionState: options.updateRemovalActionState,
+        updateLockActionState: options.updateLockActionState,
+        updateVisibilityActionState: options.updateVisibilityActionState,
+        updateMotionActionState: options.updateMotionActionState,
+        updateAlignmentActionState: options.updateAlignmentActionState,
+        updateGroupActionState: options.updateGroupActionState,
+        updateStyleActionState: options.updateStyleActionState,
+        updateLayerOrderActionState: options.updateLayerOrderActionState
+      });
+    };
+  }
+
   return {
     syncStudioInspectorActionStates,
     syncStudioInspectorSelection,
-    syncStudioInspectorForSelection
+    syncStudioInspectorForSelection,
+    createStudioInspectorSelectionSynchronizer
   };
 });

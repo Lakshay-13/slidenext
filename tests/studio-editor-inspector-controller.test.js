@@ -100,3 +100,60 @@ test('syncStudioInspectorForSelection refreshes action state before rendering se
   }), true);
   assert.deepEqual(calls, ['asset', 'actions', 'selection']);
 });
+
+test('createStudioInspectorSelectionSynchronizer assembles live and canonical selection state', () => {
+  const selectedElement = { dataset: { editorId: 'node-1' } };
+  const documentRef = { id: 'editor-document' };
+  const canonicalDeck = { slides: [{ id: 'slide-1' }] };
+  const canonicalNode = { id: 'node-1' };
+  const calls = [];
+  const sync = inspectorController.createStudioInspectorSelectionSynchronizer({
+    liveSelectionApi: {
+      buildStudioLiveSelectionState(elements) {
+        assert.deepEqual(elements, [selectedElement]);
+        return {
+          hasSelection: true,
+          count: 1,
+          primaryElement: selectedElement,
+          selection: elements
+        };
+      }
+    },
+    inspectorView: {},
+    documentRef,
+    getSelectedElements: () => [selectedElement],
+    getCurrentDocument: () => ({ id: 'iframe-document' }),
+    buildCanonicalDeck: (doc) => {
+      calls.push(['build', doc]);
+      return canonicalDeck;
+    },
+    resolveCanonicalNode: (element, deck) => {
+      calls.push(['resolve', element, deck]);
+      return canonicalNode;
+    },
+    inspectorApi: {
+      syncStudioInspectorForSelection(options) {
+        calls.push(['sync', options]);
+        return true;
+      }
+    },
+    updateAssetLibraryState: () => calls.push(['asset'])
+  });
+
+  assert.equal(sync(), true);
+  assert.deepEqual(calls.map(([name]) => name), ['build', 'resolve', 'sync']);
+  assert.equal(calls[1][1], selectedElement);
+  assert.equal(calls[1][2], canonicalDeck);
+  assert.equal(calls[2][1].documentRef, documentRef);
+  assert.equal(calls[2][1].canonicalNode, canonicalNode);
+  assert.equal(calls[2][1].updateAssetLibraryState instanceof Function, true);
+});
+
+test('createStudioInspectorSelectionSynchronizer fails closed without live selection state', () => {
+  const sync = inspectorController.createStudioInspectorSelectionSynchronizer({
+    liveSelectionApi: null,
+    inspectorView: {}
+  });
+
+  assert.equal(sync(), false);
+});
