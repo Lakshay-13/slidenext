@@ -27,7 +27,25 @@
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
 
-    function isValidCanonicalDeck(value) {
+    if (!updateCanonicalNodeVisibility) return null;
+    const createCanonicalDeckBaselineReader = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
+      : null;
+    if (createCanonicalDeckBaselineReader) {
+      const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getCanonicalDeckBaseline,
+        isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          ? canonicalDeckApi.isCanonicalDeck
+          : null,
+        buildCanonicalDeckBaseline: buildCanonicalDeck
+      });
+      return typeof readCanonicalDeckBaseline === 'function'
+        ? readCanonicalDeckBaseline(options.sourceDocument)
+        : null;
+    }
+
+    const isValidCanonicalDeck = (value) => {
       if (!value) return false;
       const validate = typeof canonicalDeckApi.isCanonicalDeck === 'function'
         ? canonicalDeckApi.isCanonicalDeck
@@ -40,39 +58,24 @@
       } catch (err) {
         return false;
       }
-    }
-
-    if (!updateCanonicalNodeVisibility) return null;
-    const readCanonicalDeckBaseline = canonicalStateApi
-      && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
-      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline,
-          isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
-            ? canonicalDeckApi.isCanonicalDeck
-            : null,
-          buildCanonicalDeckBaseline: buildCanonicalDeck
-        })
-      : (sourceDocument) => {
-          if (getCanonicalDeckBaseline) {
-            try {
-              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (isValidCanonicalDeck(liveCanonicalDeck)) {
-                return liveCanonicalDeck;
-              }
-            } catch (err) {
-              // Fall through to the document rebuild path.
-            }
-          }
-          if (!buildCanonicalDeck) return null;
-          try {
-            const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDocument);
-            return isValidCanonicalDeck(rebuiltCanonicalDeck)
-              ? rebuiltCanonicalDeck
-              : null;
-          } catch (err) {
-            return null;
-          }
-        };
+    };
+    const readCanonicalDeckBaseline = (sourceDocument) => {
+      if (getCanonicalDeckBaseline) {
+        try {
+          const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+        } catch (err) {
+          // Fall through to the document rebuild path.
+        }
+      }
+      if (!buildCanonicalDeck) return null;
+      try {
+        const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDocument);
+        return isValidCanonicalDeck(rebuiltCanonicalDeck) ? rebuiltCanonicalDeck : null;
+      } catch (err) {
+        return null;
+      }
+    };
 
     return readCanonicalDeckBaseline(options.sourceDocument);
   }

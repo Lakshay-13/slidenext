@@ -54,6 +54,36 @@ test('buildStudioCanonicalVisibilityBaseline prefers a valid live canonical deck
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalVisibilityBaseline delegates baseline resolution to canonical state', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  const getCanonicalDeckBaseline = () => sourceDeck;
+  const buildCanonicalDeckBaseline = () => sourceDeck;
+  let readerOptions = null;
+  let readerDocument = null;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          readerDocument = documentRef;
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline,
+    buildCanonicalDeckBaseline,
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalVisibilityBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
@@ -90,6 +120,17 @@ test('buildStudioCanonicalVisibilityBaseline uses structural validation without 
     }),
     validDeck
   );
+});
+
+test('buildStudioCanonicalVisibilityBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('compatibility rebuild failed');
+    }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches without mutating the source', () => {
