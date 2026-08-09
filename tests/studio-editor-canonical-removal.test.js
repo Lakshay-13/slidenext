@@ -145,6 +145,28 @@ test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating th
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2', 'after']);
 });
 
+test('buildStudioCanonicalRemovalDeck fails closed when the canonical removal throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    removeCanonicalNodes() {
+      throw new Error('canonical removal failed');
+    }
+  };
+
+  const result = canonicalRemoval.buildStudioCanonicalRemovalDeck(
+    [{ dataset: { editorId: 'node-1' } }],
+    {
+      canonicalDeckApi: throwingCanonicalDeckApi,
+      canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+        slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }] }]
+      }),
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalRemovalDeck fails closed without a model or selection', () => {
   assert.equal(canonicalRemoval.buildStudioCanonicalRemovalDeck([], {
     canonicalDeckApi: canonicalDeck,

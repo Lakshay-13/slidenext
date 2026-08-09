@@ -101,7 +101,11 @@
     }
 
     const nodeIds = sourceSelection.map(getElementId).filter(Boolean);
-    return removeCanonicalNodes(canonicalDeckBeforeMutation, nodeIds);
+    try {
+      return removeCanonicalNodes(canonicalDeckBeforeMutation, nodeIds);
+    } catch (err) {
+      return null;
+    }
   }
 
   function buildStudioCanonicalRemovalMutation(selection, options = {}) {
