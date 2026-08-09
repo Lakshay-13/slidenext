@@ -264,23 +264,27 @@
       return null;
     }
 
-    const canonicalGroupChanges = groupTargets.map((target) => {
-      const restoredGroup = restoredGroups.find((entry) => entry && entry.group === target.group);
-      if (!restoredGroup || !Array.isArray(restoredGroup.restoredElements)) return null;
-      const children = restoredGroup.restoredElements.map((element) => importElementToCanonicalNode(element, {
-        getNodeId: getElementId
-      }));
-      if (children.some((child) => !child)) return null;
-      return {
-        groupId: target.groupId,
-        parentNodeId: target.parentNodeId,
-        children
-      };
-    });
-    if (canonicalGroupChanges.some((change) => !change)) return null;
+    try {
+      const canonicalGroupChanges = groupTargets.map((target) => {
+        const restoredGroup = restoredGroups.find((entry) => entry && entry.group === target.group);
+        if (!restoredGroup || !Array.isArray(restoredGroup.restoredElements)) return null;
+        const children = restoredGroup.restoredElements.map((element) => importElementToCanonicalNode(element, {
+          getNodeId: getElementId
+        }));
+        if (children.some((child) => !child)) return null;
+        return {
+          groupId: target.groupId,
+          parentNodeId: target.parentNodeId,
+          children
+        };
+      });
+      if (canonicalGroupChanges.some((change) => !change)) return null;
 
-    const slideId = groupTargets[0] && groupTargets[0].slideId;
-    return ungroupCanonicalNodes(canonicalDeckBeforeMutation, slideId, canonicalGroupChanges);
+      const slideId = groupTargets[0] && groupTargets[0].slideId;
+      return ungroupCanonicalNodes(canonicalDeckBeforeMutation, slideId, canonicalGroupChanges);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalUngroupMutationBuilders(options = {}) {

@@ -268,6 +268,34 @@ test('buildStudioCanonicalUngroupDeck restores imported children without mutatin
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['group-1']);
 });
 
+test('buildStudioCanonicalUngroupDeck fails closed when the canonical ungroup mutation throws', () => {
+  const group = { dataset: { editorId: 'group-1' } };
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    ungroupCanonicalNodes() {
+      throw new Error('canonical ungroup mutation failed');
+    }
+  };
+
+  const result = canonicalGroup.buildStudioCanonicalUngroupDeck({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1', nodes: [{ id: 'group-1' }] }]
+    }),
+    groupTargets: [{ group, groupId: 'group-1', parentNodeId: '', slideId: 'slide-1' }],
+    restoredGroups: [{
+      group,
+      restoredElements: [{ dataset: { editorId: 'child-1' } }]
+    }],
+    importElementToCanonicalNode() {
+      return { id: 'child-1' };
+    },
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalUngroupBaseline builds from the source document', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
