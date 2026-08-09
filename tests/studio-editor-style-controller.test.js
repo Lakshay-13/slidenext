@@ -6,6 +6,7 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
+  const buildCanonicalDeck = () => ({ id: 'live' });
   const buildCanonicalDeckBaseline = () => ({ id: 'baseline' });
   const element = { dataset: { editorId: 'node-1' } };
   const controller = styleController.createStudioEditorStyleController({
@@ -37,6 +38,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
     getIframeDoc: () => ({ id: 'doc' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
     assignElementId: () => 'node-1',
+    buildCanonicalDeck,
     buildCanonicalDeckBaseline,
     applyStyleMutation: (...args) => {
       calls.push(['apply', ...args]);
@@ -49,6 +51,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.equal(calls[0][0], 'plan');
   assert.equal(calls[0][2], 'size');
   assert.equal(calls[1][0], 'builders');
+  assert.equal(calls[1][1].buildCanonicalDeck, buildCanonicalDeck);
   assert.equal(calls[1][1].buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
   assert.equal(calls[2][0], 'baseline');
   assert.equal(calls[3][0], 'apply');

@@ -34,6 +34,7 @@
           documentRef: options.documentRef || (root && root.document) || null,
           highlightAlignButton: options.highlightAlignButton,
           assignElementId: options.assignElementId,
+          buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyStyleMutation: options.applyStyleMutation,

@@ -29,6 +29,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
     documentRef: {},
     highlightAlignButton: () => {},
     assignElementId: () => '',
+    buildCanonicalDeck: () => ({}),
     buildCanonicalDeckBaseline: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyStyleMutation: () => ({}),
@@ -44,6 +45,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
   assert.equal(calls[0].chartApi, options.chartApi);
   assert.equal(calls[0].getSelectedElements, options.getSelectedElements);
   assert.equal(calls[0].documentRef, options.documentRef);
+  assert.equal(calls[0].buildCanonicalDeck, options.buildCanonicalDeck);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].applyStyleMutation, options.applyStyleMutation);
 });
