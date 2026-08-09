@@ -1467,6 +1467,7 @@
   <script src="/shared/presentation-creation-controller.js"></script>
   <script src="/shared/presentation-library-view.js"></script>
   <script src="/shared/presentation-dashboard-controller.js"></script>
+  <script src="/shared/presentation-dashboard-runtime.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
@@ -2082,33 +2083,35 @@
       && Number.isFinite(editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX)
       ? editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX
       : 280;
-    const presentationDashboardController = typeof SlideNextPresentationDashboardController !== 'undefined'
-      && SlideNextPresentationDashboardController
-      && typeof SlideNextPresentationDashboardController.createPresentationDashboardController === 'function'
-      ? SlideNextPresentationDashboardController.createPresentationDashboardController({
+    const presentationDashboardRuntime = typeof SlideNextPresentationDashboardRuntime !== 'undefined'
+      && SlideNextPresentationDashboardRuntime
+      && typeof SlideNextPresentationDashboardRuntime.createPresentationDashboardRuntime === 'function'
+      ? SlideNextPresentationDashboardRuntime.createPresentationDashboardRuntime({
           documentRef: document,
+          dashboardControllerApi: typeof SlideNextPresentationDashboardController !== 'undefined'
+            ? SlideNextPresentationDashboardController
+            : null,
+          creationControllerApi: typeof SlideNextPresentationCreationController !== 'undefined'
+            ? SlideNextPresentationCreationController
+            : null,
           presentationLibrary: typeof SlideNextPresentationLibrary !== 'undefined'
             ? SlideNextPresentationLibrary
             : null,
           presentationLibraryView: typeof SlideNextPresentationLibraryView !== 'undefined'
             ? SlideNextPresentationLibraryView
-            : null
-        })
-      : null;
-    const presentationCreationController = typeof SlideNextPresentationCreationController !== 'undefined'
-      && SlideNextPresentationCreationController
-      && typeof SlideNextPresentationCreationController.createPresentationController === 'function'
-      ? SlideNextPresentationCreationController.createPresentationController({
-          documentRef: document,
+            : null,
           presentationCreationView: typeof SlideNextPresentationCreationView !== 'undefined'
             ? SlideNextPresentationCreationView
-            : null,
-          presentationLibrary: typeof SlideNextPresentationLibrary !== 'undefined'
-            ? SlideNextPresentationLibrary
             : null,
           loadPresentations: () => loadPresentations(),
           launchStudioEditor: (...args) => launchStudioEditor(...args)
         })
+      : null;
+    const presentationDashboardController = presentationDashboardRuntime
+      ? presentationDashboardRuntime.dashboardController
+      : null;
+    const presentationCreationController = presentationDashboardRuntime
+      ? presentationDashboardRuntime.creationController
       : null;
     function captureEditorSourceHistoryBaseline() {
       let canonicalDeck = null;
