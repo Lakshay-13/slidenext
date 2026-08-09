@@ -237,6 +237,47 @@
     });
   }
 
+  function createStudioEditorCanonicalVisibilityReaderResolver(options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
+      ? options.canonicalDeckApi
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : null;
+
+    return function resolveStudioEditorCanonicalVisibilityReader(
+      property,
+      doc = null,
+      fallbackReader = () => false
+    ) {
+      const fallback = typeof fallbackReader === 'function' ? fallbackReader : () => false;
+      let canonicalDeck = null;
+      if (buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (!canonicalDeck) return fallback;
+
+      return createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+        property,
+        canonicalDeckApi,
+        getElementId,
+        resolveCanonicalNode,
+        fallbackReader: fallback
+      });
+    };
+  }
+
   function createStudioEditorCanonicalVisibilityReader(canonicalDeck, options = {}) {
     const property = typeof options.property === 'string' ? options.property : '';
     const readCanonicalNode = createStudioEditorCanonicalNodeReader(canonicalDeck, options);
@@ -325,6 +366,7 @@
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalNodeReaderFromApi,
     createStudioEditorCanonicalVisibilityReaderForDeck,
+    createStudioEditorCanonicalVisibilityReaderResolver,
     createStudioEditorCanonicalLockReader,
     createStudioEditorCanonicalLockReaderFromApi,
     createStudioEditorCanonicalVisibilityReader,

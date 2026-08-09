@@ -398,6 +398,41 @@ test('canonical visibility reader assembly selects shared lock and property adap
   );
 });
 
+test('canonical visibility reader resolver builds once and prefers canonical state', () => {
+  const documentRef = { id: 'iframe-doc' };
+  const canonicalDeck = createDeck('active');
+  const element = { dataset: { editorId: 'node-1' }, domHidden: false };
+  let buildCalls = 0;
+  const readerResolver = canonicalState.createStudioEditorCanonicalVisibilityReaderResolver({
+    buildCanonicalDeck(sourceDocument) {
+      buildCalls += 1;
+      assert.equal(sourceDocument, documentRef);
+      return canonicalDeck;
+    },
+    resolveCanonicalNode(target) {
+      return target === element ? { visibility: { hidden: true } } : null;
+    },
+    fallbackReader: (target) => target.domHidden
+  });
+
+  const readHidden = readerResolver('hidden', documentRef, (target) => target.domHidden);
+
+  assert.equal(readHidden(element), true);
+  assert.equal(readHidden({ dataset: { editorId: 'missing' }, domHidden: true }), true);
+  assert.equal(buildCalls, 1);
+});
+
+test('canonical visibility reader resolver returns the fallback when model construction fails', () => {
+  const fallbackReader = () => true;
+  const readerResolver = canonicalState.createStudioEditorCanonicalVisibilityReaderResolver({
+    buildCanonicalDeck() {
+      throw new Error('canonical build failed');
+    }
+  });
+
+  assert.equal(readerResolver('hidden', { id: 'iframe-doc' }, fallbackReader), fallbackReader);
+});
+
 test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(
