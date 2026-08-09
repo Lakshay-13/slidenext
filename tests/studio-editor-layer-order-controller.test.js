@@ -175,3 +175,39 @@ test('layer order controller rejects invalid compatibility baselines', () => {
   assert.equal(controller.reorder('front', [first]), false);
   assert.equal(rebuildCalls, 1);
 });
+
+test('layer order controller rejects malformed baselines without a canonical validator', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const slide = { contains: () => true };
+  let rebuildCalls = 0;
+  let fallbackLockReads = 0;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      isCanonicalDeck: undefined
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => {
+      rebuildCalls += 1;
+      return { invalid: true };
+    },
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(_elements, _action, options) {
+        assert.equal(options.isLocked(first), false);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getNormalizedSlideLayerOrder: () => [first],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => {
+      fallbackLockReads += 1;
+      return false;
+    }
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(rebuildCalls, 1);
+  assert.equal(fallbackLockReads, 1);
+});
