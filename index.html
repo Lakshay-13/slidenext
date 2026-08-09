@@ -1433,6 +1433,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-runtime.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
+  <script src="/shared/studio-editor-autosave-timer-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
@@ -1753,10 +1754,17 @@
         ? studioEditorPersistedDeckStateStore.setPlaybackState(nextPlaybackState)
         : false;
     }
-    const studioEditorAutoSaveTimerStore = typeof SlideNextStudioEditorAutoSaveTimerStore !== 'undefined'
-      && SlideNextStudioEditorAutoSaveTimerStore
-      && typeof SlideNextStudioEditorAutoSaveTimerStore.createStudioEditorAutoSaveTimerStore === 'function'
-      ? SlideNextStudioEditorAutoSaveTimerStore.createStudioEditorAutoSaveTimerStore({})
+    const studioEditorAutoSaveTimerRuntime = typeof SlideNextStudioEditorAutoSaveTimerRuntime !== 'undefined'
+      && SlideNextStudioEditorAutoSaveTimerRuntime
+      && typeof SlideNextStudioEditorAutoSaveTimerRuntime.createStudioEditorAutoSaveTimerRuntime === 'function'
+      ? SlideNextStudioEditorAutoSaveTimerRuntime.createStudioEditorAutoSaveTimerRuntime({
+          stateStore: typeof SlideNextStudioEditorAutoSaveTimerStore !== 'undefined'
+            ? SlideNextStudioEditorAutoSaveTimerStore
+            : null
+        })
+      : null;
+    const studioEditorAutoSaveTimerStore = studioEditorAutoSaveTimerRuntime
+      ? studioEditorAutoSaveTimerRuntime.autoSaveTimerStore
       : null;
     function getStudioAutoSaveDebounceTimer() {
       return studioEditorAutoSaveTimerStore
