@@ -7720,6 +7720,36 @@
       if (!blockView || typeof blockView.syncStudioBlockState !== 'function') {
         return false;
       }
+      if (typeof blockView.createStudioBlockStateSync === 'function') {
+        if (typeof updateBlockActionState.sync !== 'function') {
+          updateBlockActionState.sync = blockView.createStudioBlockStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => {
+              const hasLockedSelection = typeof selectionHasLockedElements === 'function'
+                ? selectionHasLockedElements(getStudioSelectedElements())
+                : typeof isElementLocked === 'function'
+                  ? getStudioSelectedElements().some((element) => isElementLocked(element))
+                  : false;
+              const canSave = !!getActiveSlide(sourceDoc)
+                && getStudioSelectedElements().length > 0
+                && !hasLockedSelection;
+              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null;
+              return {
+                blocks: canonicalDeck && canonicalDeck.blocks,
+                canUseBlockActions: canSave,
+                insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
+                removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null
+              };
+            },
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateBlockActionState.sync === 'function') {
+          return updateBlockActionState.sync(doc);
+        }
+      }
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
         ? selectionHasLockedElements(getStudioSelectedElements())
         : typeof isElementLocked === 'function'

@@ -69,8 +69,34 @@
     });
   }
 
+  function createStudioBlockStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({});
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorBlockState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return syncStudioBlockState({
+          ...actionState,
+          documentRef: getDocumentRef()
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   return {
     renderStudioBlockLibrary,
-    syncStudioBlockState
+    syncStudioBlockState,
+    createStudioBlockStateSync
   };
 });
