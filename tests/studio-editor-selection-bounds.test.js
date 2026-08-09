@@ -87,6 +87,71 @@ test('buildStudioSelectionBounds falls back for invalid minimum sizes', () => {
   });
 });
 
+test('createStudioSelectionBoundsResolver assembles editor geometry and hidden state', () => {
+  const documentRef = { id: 'iframe-document' };
+  const slide = { id: 'slide-1' };
+  const hiddenElement = {
+    hidden: true,
+    getBoundingClientRect() {
+      return { left: 100, top: 100, right: 200, bottom: 200 };
+    }
+  };
+  const visibleElement = {
+    hidden: false,
+    getBoundingClientRect() {
+      return { left: 10, top: 20, right: 70, bottom: 80 };
+    }
+  };
+  const calls = [];
+  const resolveBounds = selectionBounds.createStudioSelectionBoundsResolver({
+    getCurrentDocument: () => documentRef,
+    getActiveSlide: (doc) => {
+      calls.push(['slide', doc]);
+      return slide;
+    },
+    getSelectedElements: () => [hiddenElement, visibleElement],
+    getSlideMetrics: (currentSlide) => {
+      calls.push(['metrics', currentSlide]);
+      return { id: 'metrics-1' };
+    },
+    getRectOnSlide: (rect, metrics) => {
+      calls.push(['rect', rect, metrics]);
+      return rect;
+    },
+    getHiddenStateReader: (doc) => {
+      calls.push(['hidden', doc]);
+      return (element) => element.hidden;
+    },
+    getMinSizePx: () => 24
+  });
+
+  assert.deepEqual(resolveBounds(), {
+    left: 10,
+    top: 20,
+    right: 70,
+    bottom: 80,
+    width: 60,
+    height: 60
+  });
+  assert.deepEqual(calls.map(([name]) => name), [
+    'slide',
+    'metrics',
+    'hidden',
+    'rect'
+  ]);
+  assert.equal(calls[0][1], documentRef);
+  assert.equal(calls[1][1], slide);
+});
+
+test('createStudioSelectionBoundsResolver returns null without an active slide', () => {
+  const resolveBounds = selectionBounds.createStudioSelectionBoundsResolver({
+    getActiveSlide: () => null,
+    getSelectedElements: () => [{ id: 'element-1' }]
+  });
+
+  assert.equal(resolveBounds(), null);
+});
+
 test('getStudioMarqueeSelection normalizes reverse drags and returns overlapping live elements', () => {
   const elements = [
     { id: 1, isConnected: false, hidden: false, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },

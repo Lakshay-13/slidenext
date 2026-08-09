@@ -6357,14 +6357,27 @@
     }
 
     function getSelectionBounds(elements = getStudioSelectedElements(), slideMetrics = null) {
-      const slide = getActiveSlide();
-      if (!slide) return null;
-      const metrics = slideMetrics || getSlideMetrics(slide);
-      return SlideNextStudioEditorSelectionBounds.buildStudioSelectionBounds(elements, {
-        minSizePx: MIN_ELEMENT_SIZE_PX,
-        isHidden: getEditorCanonicalVisibilityReader('hidden'),
-        getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), metrics)
-      });
+      const selectionBoundsApi = typeof SlideNextStudioEditorSelectionBounds !== 'undefined'
+        ? SlideNextStudioEditorSelectionBounds
+        : null;
+      if (!selectionBoundsApi
+        || typeof selectionBoundsApi.createStudioSelectionBoundsResolver !== 'function') {
+        return null;
+      }
+      if (typeof getSelectionBounds.resolver !== 'function') {
+        getSelectionBounds.resolver = selectionBoundsApi.createStudioSelectionBoundsResolver({
+          getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
+          getActiveSlide: typeof getActiveSlide === 'function' ? (doc) => getActiveSlide(doc) : null,
+          getSelectedElements: () => getStudioSelectedElements(),
+          getSlideMetrics: (slide) => getSlideMetrics(slide),
+          getRectOnSlide: (rect, metrics) => getRectOnSlide(rect, metrics),
+          getHiddenStateReader: (doc) => getEditorCanonicalVisibilityReader('hidden', doc),
+          getMinSizePx: () => MIN_ELEMENT_SIZE_PX
+        });
+      }
+      return typeof getSelectionBounds.resolver === 'function'
+        ? getSelectionBounds.resolver(elements, slideMetrics)
+        : null;
     }
 
     function syncSelectionOverlay() {

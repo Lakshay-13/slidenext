@@ -100,9 +100,54 @@
     };
   }
 
+  function createStudioSelectionBoundsResolver(options = {}) {
+    const getCurrentDocument = typeof options.getCurrentDocument === 'function'
+      ? options.getCurrentDocument
+      : () => null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : (rect) => rect;
+    const getHiddenStateReader = typeof options.getHiddenStateReader === 'function'
+      ? options.getHiddenStateReader
+      : () => null;
+    const getMinSizePx = typeof options.getMinSizePx === 'function'
+      ? options.getMinSizePx
+      : () => options.minSizePx;
+
+    return function resolveStudioSelectionBounds(
+      elements = getSelectedElements(),
+      slideMetrics = null
+    ) {
+      const documentRef = getCurrentDocument();
+      const slide = getActiveSlide(documentRef);
+      if (!slide) return null;
+
+      const metrics = slideMetrics || getSlideMetrics(slide);
+      const isHidden = getHiddenStateReader(documentRef);
+      return buildStudioSelectionBounds(elements, {
+        minSizePx: getMinSizePx(),
+        isHidden,
+        getElementBounds: (element) => {
+          if (!element || typeof element.getBoundingClientRect !== 'function') return null;
+          return getRectOnSlide(element.getBoundingClientRect(), metrics);
+        }
+      });
+    };
+  }
+
   return {
     getStudioBoundableSelection,
     getStudioMarqueeSelection,
-    buildStudioSelectionBounds
+    buildStudioSelectionBounds,
+    createStudioSelectionBoundsResolver
   };
 });
