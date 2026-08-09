@@ -268,3 +268,26 @@ test('canonical bridge fails closed when either builder throws or is unavailable
   assert.equal(emptyBridge.setLiveCanonicalDeck(null), null);
   assert.equal(emptyBridge.resolveLiveCanonicalDeck(), null);
 });
+
+test('canonical bridge fails closed when live state adapters throw', () => {
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    state: {
+      reset() {
+        throw new Error('reset failed');
+      },
+      set() {
+        throw new Error('set failed');
+      },
+      resolve() {
+        throw new Error('resolve failed');
+      }
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(bridge.resetLiveCanonicalDeck(), null);
+    assert.equal(bridge.setLiveCanonicalDeck({ slides: [] }), null);
+    assert.equal(bridge.setLiveCanonicalDeck(null), null);
+    assert.equal(bridge.resolveLiveCanonicalDeck(), null);
+  });
+});

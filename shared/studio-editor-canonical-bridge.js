@@ -75,27 +75,40 @@
 
     function resetLiveCanonicalDeck() {
       if (!state || typeof state.reset !== 'function') return null;
-      return state.reset();
+      try {
+        return state.reset();
+      } catch (error) {
+        return null;
+      }
     }
 
     function setLiveCanonicalDeck(canonicalDeck, documentRef = null, sessionToken = null) {
       if (!state) return null;
       if (canonicalDeck === null || typeof canonicalDeck === 'undefined') {
-        return typeof state.reset === 'function' ? state.reset() : null;
+        return resetLiveCanonicalDeck();
       }
       if (typeof state.set !== 'function' || !isValidCanonicalDeck(canonicalDeck)) return null;
-      return state.set(canonicalDeck, {
-        documentRef,
-        sessionToken
-      });
+      try {
+        return state.set(canonicalDeck, {
+          documentRef,
+          sessionToken
+        });
+      } catch (error) {
+        return null;
+      }
     }
 
     function resolveLiveCanonicalDeck(documentRef = null, sessionToken = null) {
       if (!state || typeof state.resolve !== 'function') return null;
-      const canonicalDeck = state.resolve({
-        documentRef,
-        sessionToken
-      });
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = state.resolve({
+          documentRef,
+          sessionToken
+        });
+      } catch (error) {
+        return null;
+      }
       return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
     }
 
