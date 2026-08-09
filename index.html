@@ -1410,6 +1410,7 @@
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-shell-controller.js"></script>
+  <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -3123,37 +3124,37 @@
           )
         })
       : null;
-    const studioEditorSessionStateController = typeof SlideNextStudioEditorSession !== 'undefined'
-      && SlideNextStudioEditorSession
-      && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController === 'function'
-      ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController({
-          sessionApi: SlideNextStudioEditorSession,
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          getSessionToken: getStudioEditorSessionToken,
-          setPresentationUrl: (value) => {
-            setStudioCurrentPresentationUrl(value);
-          },
-          setPresentationTitle: (value) => {
-            setStudioPresentationTitle(value);
-          },
-          setPresentationCategory: (value) => {
-            setStudioPresentationCategory(value);
-          },
-          setSlideIndex: (value) => {
-            setStudioCurrentSlideIndex(value);
-          },
-          setPresentationMetadata: (value) => {
-            applyCurrentPresentationMetadata(value);
-          }
-      })
-      : null;
-    const studioEditorSessionResetController = typeof SlideNextStudioEditorSessionResetController !== 'undefined'
-      && SlideNextStudioEditorSessionResetController
-      && typeof SlideNextStudioEditorSessionResetController.createStudioEditorSessionResetController === 'function'
-      ? SlideNextStudioEditorSessionResetController.createStudioEditorSessionResetController({
+    const studioEditorSessionRuntime = typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
+      && SlideNextStudioEditorSessionRuntime
+      && typeof SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime === 'function'
+      ? SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime({
+          sessionApi: typeof SlideNextStudioEditorSession !== 'undefined'
+            ? SlideNextStudioEditorSession
+            : null,
+          sessionResetApi: typeof SlideNextStudioEditorSessionResetController !== 'undefined'
+            ? SlideNextStudioEditorSessionResetController
+            : null,
+          sessionUiApi: typeof SlideNextStudioEditorSessionUiController !== 'undefined'
+            ? SlideNextStudioEditorSessionUiController
+            : null,
+          shellApi: typeof SlideNextStudioEditorShellController !== 'undefined'
+            ? SlideNextStudioEditorShellController
+            : null,
+          presentationMetadataApi: typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
+            ? SlideNextStudioEditorPresentationMetadataController
+            : null,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
             : null,
+          deckContextApi: SlideNextStudioDeckContext,
+          documentRef: document,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken,
+          setPresentationUrl: (value) => setStudioCurrentPresentationUrl(value),
+          setPresentationTitle: (value) => setStudioPresentationTitle(value),
+          setPresentationCategory: (value) => setStudioPresentationCategory(value),
+          setSlideIndex: (value) => setStudioCurrentSlideIndex(value),
+          setPresentationMetadata: (value) => applyCurrentPresentationMetadata(value),
           getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
           setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
           getAutoVersionTimers: getStudioAutoVersionTimers,
@@ -3161,55 +3162,42 @@
           clearTimer: clearTimeout,
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
           clearHistoryStacks: clearStudioHistoryStacks,
-          updateHistoryButtons
-        })
-      : null;
-    const studioEditorSessionUiController = typeof SlideNextStudioEditorSessionUiController !== 'undefined'
-      && SlideNextStudioEditorSessionUiController
-      && typeof SlideNextStudioEditorSessionUiController.createStudioEditorSessionUiController === 'function'
-      ? SlideNextStudioEditorSessionUiController.createStudioEditorSessionUiController({
+          updateHistoryButtons,
           resetPresentationUiState: () => resetStudioPresentationUiState(),
           resetSourceViewUiState: () => resetStudioSourceViewUiState(),
           resetDeckUiState: (options = {}) => resetStudioDeckUiState(options),
           resetVersionUiState: (options = {}) => resetStudioVersionUiState(options),
           resetSaveButtonState: () => resetStudioSaveButtonState(),
-          updateDeckReadyToolbarActionState: () => updateDeckReadyToolbarActionState()
-        })
-      : null;
-    const studioEditorShellController = typeof SlideNextStudioEditorShellController !== 'undefined'
-      && SlideNextStudioEditorShellController
-      && typeof SlideNextStudioEditorShellController.createStudioEditorShellController === 'function'
-      ? SlideNextStudioEditorShellController.createStudioEditorShellController({
-          documentRef: document
-        })
-      : null;
-    const studioEditorPresentationMetadataController = typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
-      && SlideNextStudioEditorPresentationMetadataController
-      && typeof SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController === 'function'
-      ? SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          setCurrentPresentationMetadata: (value) => {
-            setStudioCurrentPresentationMetadata(value);
-          },
-          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          updateDeckReadyToolbarActionState: () => updateDeckReadyToolbarActionState(),
+          setCurrentPresentationMetadata: (value) => setStudioCurrentPresentationMetadata(value),
           getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
           applyPresentationMetadata: applyCurrentPresentationMetadata,
-          deckContextApi: SlideNextStudioDeckContext,
           loadPresentationMetadata: SlideNextStudioDeckContext
             && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
             ? (...args) => SlideNextStudioDeckContext.loadStudioPresentationMetadata(...args)
             : null,
           resolveLoadOptions: (sessionToken) => createCurrentStudioPresentationMetadataLoadOptions(sessionToken),
           resolveStoredCanonicalDeck: (metadata) => resolveEditorStoredCanonicalDeck(metadata),
-          applyPersistedDeckState: (...args) => applyCurrentStudioPersistedDeckState(...args),
           getIframeDoc,
           generateThumbnails,
-          syncStudioChromeToActiveSlide,
-          updateDeckReadyToolbarActionState
+          syncStudioChromeToActiveSlide
         })
+      : null;
+    const studioEditorSessionStateController = studioEditorSessionRuntime
+      ? studioEditorSessionRuntime.sessionStateController
+      : null;
+    const studioEditorSessionResetController = studioEditorSessionRuntime
+      ? studioEditorSessionRuntime.sessionResetController
+      : null;
+    const studioEditorSessionUiController = studioEditorSessionRuntime
+      ? studioEditorSessionRuntime.sessionUiController
+      : null;
+    const studioEditorShellController = studioEditorSessionRuntime
+      ? studioEditorSessionRuntime.shellController
+      : null;
+    const studioEditorPresentationMetadataController = studioEditorSessionRuntime
+      ? studioEditorSessionRuntime.presentationMetadataController
       : null;
     const studioEditorDeckMutationFinalizer = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
       && SlideNextStudioEditorDeckMutation
