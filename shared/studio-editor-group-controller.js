@@ -133,11 +133,17 @@
       const selectedSet = new Set(groupActionState.selection);
       const orderedSelection = getNormalizedSlideLayerOrder(slide)
         .filter((element) => selectedSet.has(element));
+      let canonicalGroupBuilders;
+      try {
+        canonicalGroupBuilders = createCanonicalGroupBuilders();
+      } catch (error) {
+        return false;
+      }
       const {
         importElementToCanonicalNode,
         buildCanonicalGroupDeck,
         buildCanonicalGroupBaseline
-      } = createCanonicalGroupBuilders();
+      } = canonicalGroupBuilders;
       let canonicalDeckBeforeGrouping = null;
       let canonicalSlideId = '';
       let canonicalParentId = '';

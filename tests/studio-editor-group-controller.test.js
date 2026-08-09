@@ -147,3 +147,39 @@ test('group controller refreshes state and fails closed when actions are unavail
   assert.equal(controller.ungroup(), false);
   assert.deepEqual(calls, ['update', 'update']);
 });
+
+test('group controller fails closed when canonical builder construction throws', () => {
+  let groupCalls = 0;
+  const slide = { id: 'slide-1' };
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 0, top: 100, right: 100, bottom: 200 };
+    }
+  };
+  const controller = groupController.createStudioEditorGroupController({
+    canonicalGroupApi: {
+      createStudioCanonicalGroupMutationBuilders() {
+        throw new Error('canonical group builders unavailable');
+      }
+    },
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent,
+      selection: [{ id: 'first' }, { id: 'second' }],
+      groupPlan: { bounds: { left: 10, top: 20 }, nextItems: [] }
+    }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: (currentSlide) => currentSlide === slide
+      ? [{ id: 'first' }, { id: 'second' }]
+      : [],
+    applyGroupMutation: () => {
+      groupCalls += 1;
+      return { didApply: true, group: null, transaction: null };
+    }
+  });
+
+  assert.equal(controller.group(), false);
+  assert.equal(groupCalls, 0);
+});
