@@ -1454,6 +1454,8 @@
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
+    const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
+    const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
     const studioEditorPresentationUrlStateController = typeof SlideNextStudioEditorPresentationUrlStateController !== 'undefined'
       && SlideNextStudioEditorPresentationUrlStateController
       && typeof SlideNextStudioEditorPresentationUrlStateController.createStudioEditorPresentationUrlStateController === 'function'
@@ -3272,7 +3274,7 @@
           setAutoVersionTimers: setStudioAutoVersionTimers,
           clearTimer: clearTimeout,
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
-          clearHistoryStacks,
+          clearHistoryStacks: clearStudioHistoryStacks,
           updateHistoryButtons
         })
       : null;
@@ -3383,8 +3385,6 @@
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
-    const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
-    const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
     const EDITOR_SELECTABLE_SELECTOR = [
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'p', 'li', 'img', 'pre', 'code', 'button', 'a',
