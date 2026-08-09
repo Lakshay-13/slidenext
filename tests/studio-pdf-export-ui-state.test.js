@@ -136,6 +136,44 @@ test('exportPdf keeps the button disabled until the async print flow completes',
   assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-exported']);
 });
 
+test('exportPdf surfaces canonical PDF preflight warnings after print completes', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const statusCalls = [];
+  const context = {
+    SlideNextStudioPdfExport: {
+      preflightStudioPdfExport() {
+        return { canExport: true, warnings: ['PDF node image-1 references missing asset "hero"'] };
+      },
+      openStudioPdfPrintWindow(options) {
+        options.onPrint();
+        return true;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [{ id: 'slide-1' }] };
+    },
+    buildEditorPreviewHtml() {
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    setStudioAutoSaveStatusWithWarningCount(...args) {
+      statusCalls.push(args);
+    },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    }
+  };
+
+  loadExportPdfAction(fileContent, context);
+
+  assert.equal(context.exportPdf(), true);
+  assert.deepEqual(statusCalls.map((args) => args[0]), [
+    'exporting-pdf',
+    'pdf-exported-with-warnings'
+  ]);
+  assert.equal(statusCalls[1][1], 1);
+  assert.deepEqual(statusCalls[1][2], ['PDF node image-1 references missing asset "hero"']);
+});
+
 test('exportPdf forwards canonical layout dimensions when the shared resolver is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];

@@ -24,8 +24,10 @@
     const warnings = Array.isArray(options.warnings)
       ? options.warnings.filter(warning => typeof warning === 'string' && warning.trim())
       : [];
-    statusEl.title = options.state === 'exported-with-warnings' && warnings.length > 0
-      ? `PPTX warnings:\n${warnings.map(warning => `- ${warning}`).join('\n')}${options.warningsTruncated === true ? '\n- Additional warnings not shown' : ''}`
+    const isPptxWarningState = options.state === 'exported-with-warnings';
+    const isPdfWarningState = options.state === 'pdf-exported-with-warnings';
+    statusEl.title = (isPptxWarningState || isPdfWarningState) && warnings.length > 0
+      ? `${isPdfWarningState ? 'PDF' : 'PPTX'} warnings:\n${warnings.map(warning => `- ${warning}`).join('\n')}${options.warningsTruncated === true ? '\n- Additional warnings not shown' : ''}`
       : '';
     if (state === 'loading') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
@@ -53,6 +55,9 @@
       statusEl.innerHTML = `<span class="text-rose-400">PDF Export Failed</span>`;
     } else if (state === 'pdf-exported') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> PDF Export Ready</span>`;
+    } else if (state === 'pdf-exported-with-warnings') {
+      const warningSuffix = warningCount > 0 ? ` (${warningCount})` : '';
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> PDF Export Ready with warnings${warningSuffix}</span>`;
     } else {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Saved to disk</span>`;
     }

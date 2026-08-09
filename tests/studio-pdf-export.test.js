@@ -141,6 +141,33 @@ test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejec
   );
 });
 
+test('preflightStudioPdfExport reports missing canonical asset references without blocking the print path', () => {
+  const report = pdfExport.preflightStudioPdfExport({
+    assets: [{ id: 'hero', src: '/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { assetId: 'missing-background' } },
+      nodes: [{
+        id: 'image-1',
+        assetId: 'missing-image',
+        children: [{
+          id: 'nested-image',
+          attributes: { 'data-asset-id': 'missing-nested' }
+        }]
+      }]
+    }]
+  });
+
+  assert.equal(report.canExport, true);
+  assert.equal(report.slideCount, 1);
+  assert.deepEqual(report.missingAssets.map((asset) => asset.id), [
+    'missing-background',
+    'missing-image',
+    'missing-nested'
+  ]);
+  assert.equal(report.warnings.length, 3);
+});
+
 test('validateStudioPdfSlideCount fails closed when the print document has the wrong number of slides', () => {
   assert.equal(
     pdfExport.validateStudioPdfSlideCount({

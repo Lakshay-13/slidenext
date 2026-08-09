@@ -42,6 +42,92 @@
     };
   }
 
+  function preflightStudioPdfExport(canonicalDeck) {
+    const slides = canonicalDeck && Array.isArray(canonicalDeck.slides)
+      ? canonicalDeck.slides
+      : [];
+    const assets = canonicalDeck && Array.isArray(canonicalDeck.assets)
+      ? canonicalDeck.assets
+      : [];
+    const assetById = new Map(
+      assets
+        .filter((asset) => asset && typeof asset.id === 'string' && asset.id.trim())
+        .map((asset) => [asset.id.trim(), asset])
+    );
+    const missingAssets = [];
+    const seenReferences = new Set();
+
+    const addAssetReference = (assetId, owner = {}) => {
+      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+      if (!normalizedAssetId) return;
+      const ownerType = owner.type || 'node';
+      const ownerId = owner.id || 'unknown';
+      const referenceKey = `${ownerType}:${ownerId}:${normalizedAssetId}`;
+      if (seenReferences.has(referenceKey)) return;
+      seenReferences.add(referenceKey);
+
+      const asset = assetById.get(normalizedAssetId);
+      if (!asset || typeof asset.src !== 'string' || !asset.src.trim()) {
+        missingAssets.push({
+          id: normalizedAssetId,
+          ownerType,
+          ownerId
+        });
+      }
+    };
+
+    const visitNode = (node, slideId) => {
+      if (!node || typeof node !== 'object') return;
+      const nodeId = typeof node.id === 'string' && node.id.trim() ? node.id.trim() : 'unknown';
+      addAssetReference(node.assetId, { type: 'node', id: nodeId });
+      addAssetReference(node.backgroundAssetId, { type: 'node-background', id: nodeId });
+      const attributes = node.attributes && typeof node.attributes === 'object'
+        ? node.attributes
+        : {};
+      addAssetReference(attributes['data-asset-id'] || attributes['data-asset'], {
+        type: 'node',
+        id: nodeId
+      });
+      addAssetReference(
+        attributes['data-background-asset-id'] || attributes['data-background-asset'],
+        { type: 'node-background', id: nodeId }
+      );
+      (Array.isArray(node.children) ? node.children : []).forEach((child) => {
+        visitNode(child, slideId);
+      });
+    };
+
+    slides.forEach((slide, index) => {
+      if (!slide || typeof slide !== 'object') return;
+      const slideId = typeof slide.id === 'string' && slide.id.trim()
+        ? slide.id.trim()
+        : `slide-${index + 1}`;
+      const background = slide.layout
+        && slide.layout.background
+        && typeof slide.layout.background === 'object'
+        ? slide.layout.background
+        : {};
+      addAssetReference(background.assetId, { type: 'slide-background', id: slideId });
+      (Array.isArray(slide.nodes) ? slide.nodes : []).forEach((node) => {
+        visitNode(node, slideId);
+      });
+    });
+
+    const warnings = missingAssets.map((reference) => {
+      const ownerLabel = reference.ownerType === 'slide-background'
+        ? `slide ${reference.ownerId}`
+        : `${reference.ownerType} ${reference.ownerId}`;
+      return `PDF ${ownerLabel} references missing asset "${reference.id}"`;
+    });
+
+    return {
+      canExport: slides.length > 0,
+      slideCount: slides.length,
+      warnings,
+      missingAssets
+    };
+  }
+
   function buildStudioPdfPrintStyles(options = {}) {
     const pageWidth = normalizeDimension(options.pageWidth, DEFAULT_PAGE_WIDTH);
     const pageHeight = normalizeDimension(options.pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -579,6 +665,7 @@
     DEFAULT_AFTER_PRINT_TIMEOUT_MS,
     normalizeDimension,
     resolveStudioPdfPageDimensions,
+    preflightStudioPdfExport,
     buildStudioPdfPrintStyles,
     escapeStudioPdfAttribute,
     buildStudioPdfPrintHtml,

@@ -24,6 +24,7 @@ test('setStudioAutoSaveStatus renders loading, export, failure, and saved states
     ['exporting-pdf', 'Exporting PDF'],
     ['pdf-export-failed', 'PDF Export Failed'],
     ['pdf-exported', 'PDF Export Ready'],
+    ['pdf-exported-with-warnings', 'PDF Export Ready with warnings'],
     ['saved', 'Saved to disk']
   ]) {
     assert.equal(statusView.setStudioAutoSaveStatus({ documentRef, state }), true);
@@ -69,6 +70,25 @@ test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', ()
   assert.match(statusEl.innerHTML, /PPTX Exported with warnings \(3\)/);
   assert.match(statusEl.title, /Node image-1 references a missing image asset/);
   assert.match(statusEl.title, /Additional warnings not shown/);
+});
+
+test('setStudioAutoSaveStatus surfaces PDF preflight warnings separately from PPTX warnings', () => {
+  const statusEl = { innerHTML: '', title: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({
+    documentRef,
+    state: 'pdf-exported-with-warnings',
+    warningCount: 1,
+    warnings: ['PDF node image-1 references missing asset "hero"']
+  }), true);
+  assert.match(statusEl.innerHTML, /PDF Export Ready with warnings \(1\)/);
+  assert.match(statusEl.title, /PDF warnings/);
+  assert.match(statusEl.title, /missing asset/);
 });
 
 test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progress', () => {
