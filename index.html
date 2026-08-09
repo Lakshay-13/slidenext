@@ -1435,6 +1435,7 @@
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-autosave-timer-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
+  <script src="/shared/studio-editor-auto-version-timer-runtime.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
@@ -1778,10 +1779,17 @@
         ? studioEditorAutoSaveTimerStore.setTimer(nextTimer)
         : false;
     }
-    const studioEditorAutoVersionTimerStore = typeof SlideNextStudioEditorAutoVersionTimerStore !== 'undefined'
-      && SlideNextStudioEditorAutoVersionTimerStore
-      && typeof SlideNextStudioEditorAutoVersionTimerStore.createStudioEditorAutoVersionTimerStore === 'function'
-      ? SlideNextStudioEditorAutoVersionTimerStore.createStudioEditorAutoVersionTimerStore({})
+    const studioEditorAutoVersionTimerRuntime = typeof SlideNextStudioEditorAutoVersionTimerRuntime !== 'undefined'
+      && SlideNextStudioEditorAutoVersionTimerRuntime
+      && typeof SlideNextStudioEditorAutoVersionTimerRuntime.createStudioEditorAutoVersionTimerRuntime === 'function'
+      ? SlideNextStudioEditorAutoVersionTimerRuntime.createStudioEditorAutoVersionTimerRuntime({
+          stateStore: typeof SlideNextStudioEditorAutoVersionTimerStore !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionTimerStore
+            : null
+        })
+      : null;
+    const studioEditorAutoVersionTimerStore = studioEditorAutoVersionTimerRuntime
+      ? studioEditorAutoVersionTimerRuntime.autoVersionTimerStore
       : null;
     function getStudioAutoVersionTimers() {
       return studioEditorAutoVersionTimerStore
