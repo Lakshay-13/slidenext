@@ -153,8 +153,8 @@ test('nudge wiring prefers live canonical state and keeps a legacy baseline fall
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorNudgeController =',
-    'const studioEditorAlignmentController ='
+    'const studioEditorLayoutRuntime =',
+    'const studioEditorLockVisibilityController ='
   );
 
   assert.match(
@@ -175,8 +175,8 @@ test('alignment wiring prefers live canonical state and keeps a legacy baseline 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorAlignmentController =',
-    'const studioEditorGroupController ='
+    'const studioEditorLayoutRuntime =',
+    'const studioEditorLockVisibilityController ='
   );
 
   assert.match(
@@ -197,7 +197,7 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorGroupController =',
+    'const studioEditorLayoutRuntime =',
     'const studioEditorLockVisibilityController ='
   );
 

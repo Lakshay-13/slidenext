@@ -1346,6 +1346,7 @@
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
+  <script src="/shared/studio-editor-layout-runtime.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
@@ -2315,36 +2316,23 @@
           reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
         })
       : null;
-    const studioEditorNudgeController = typeof SlideNextStudioEditorNudgeController !== 'undefined'
-      && SlideNextStudioEditorNudgeController
-      && typeof SlideNextStudioEditorNudgeController.createStudioEditorNudgeController === 'function'
-      ? SlideNextStudioEditorNudgeController.createStudioEditorNudgeController({
-          nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
+    const studioEditorLayoutRuntime = typeof SlideNextStudioEditorLayoutRuntime !== 'undefined'
+      && SlideNextStudioEditorLayoutRuntime
+      && typeof SlideNextStudioEditorLayoutRuntime.createStudioEditorLayoutRuntime === 'function'
+      ? SlideNextStudioEditorLayoutRuntime.createStudioEditorLayoutRuntime({
+          nudgeApi: typeof SlideNextStudioEditorNudgeController !== 'undefined'
+            ? SlideNextStudioEditorNudgeController
+            : null,
+          alignmentApi: typeof SlideNextStudioEditorAlignmentController !== 'undefined'
+            ? SlideNextStudioEditorAlignmentController
+            : null,
+          groupApi: typeof SlideNextStudioEditorGroupController !== 'undefined'
+            ? SlideNextStudioEditorGroupController
+            : null,
+          nudgeEngineApi: typeof SlideNextStudioEditorNudge !== 'undefined'
             ? SlideNextStudioEditorNudge
             : null,
-          canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-            ? SlideNextStudioEditorCanonicalLayout
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          buildMotionSelectionActionState: () => buildMotionSelectionActionState(),
-          updateMotionActionState: (...args) => updateMotionActionState(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
-          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
-        })
-      : null;
-    const studioEditorAlignmentController = typeof SlideNextStudioEditorAlignmentController !== 'undefined'
-      && SlideNextStudioEditorAlignmentController
-      && typeof SlideNextStudioEditorAlignmentController.createStudioEditorAlignmentController === 'function'
-      ? SlideNextStudioEditorAlignmentController.createStudioEditorAlignmentController({
-          alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
+          alignmentEngineApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
             ? SlideNextStudioEditorAlignment
             : null,
           canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
@@ -2353,37 +2341,16 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
-          buildAlignmentActionState: (...args) => buildAlignmentActionState(...args),
-          updateAlignmentActionState: (...args) => updateAlignmentActionState(...args),
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
-          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
-        })
-      : null;
-    const studioEditorGroupController = typeof SlideNextStudioEditorGroupController !== 'undefined'
-      && SlideNextStudioEditorGroupController
-      && typeof SlideNextStudioEditorGroupController.createStudioEditorGroupController === 'function'
-      ? SlideNextStudioEditorGroupController.createStudioEditorGroupController({
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
           canonicalGroupApi: typeof SlideNextStudioEditorCanonicalGroup !== 'undefined'
             ? SlideNextStudioEditorCanonicalGroup
             : null,
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
+          buildMotionSelectionActionState: () => buildMotionSelectionActionState(),
+          updateMotionActionState: (...args) => updateMotionActionState(...args),
+          buildAlignmentActionState: (...args) => buildAlignmentActionState(...args),
+          updateAlignmentActionState: (...args) => updateAlignmentActionState(...args),
           buildGroupSelectionActionState: (...args) => buildGroupSelectionActionState(...args),
           buildUngroupSelectionActionState: (...args) => buildUngroupSelectionActionState(...args),
           updateGroupActionState: (...args) => updateGroupActionState(...args),
@@ -2398,12 +2365,22 @@
             getStudioEditorSessionToken()
           ),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
+          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
           applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
           prepareGroup: (...args) => makeElementsHoverable(...args)
         })
+      : null;
+    const studioEditorNudgeController = studioEditorLayoutRuntime
+      ? studioEditorLayoutRuntime.nudgeController
+      : null;
+    const studioEditorAlignmentController = studioEditorLayoutRuntime
+      ? studioEditorLayoutRuntime.alignmentController
+      : null;
+    const studioEditorGroupController = studioEditorLayoutRuntime
+      ? studioEditorLayoutRuntime.groupController
       : null;
     const studioEditorLockVisibilityController = typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
       && SlideNextStudioEditorLockVisibilityController
