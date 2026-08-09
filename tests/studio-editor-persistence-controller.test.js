@@ -328,3 +328,27 @@ test('persistence controller runs current actions through the shared adapter', (
   );
   assert.deepEqual(calls, ['current']);
 });
+
+test('persistence controller builds session-aware handler options through the shared adapter', () => {
+  const persisted = [];
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    getCurrentSessionToken: () => 4,
+    createSessionReaderOptions: (options) => ({
+      getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+      getCurrentSessionToken: () => 4,
+      ...options
+    }),
+    applyPersistedDeckState: (nextState) => persisted.push(nextState)
+  });
+
+  const handlerOptions = controller.createPersistenceHandlerOptions({
+    onSuccess: 'success-sentinel'
+  });
+
+  assert.equal(handlerOptions.onSuccess, 'success-sentinel');
+  handlerOptions.setPersistedHtml('<html></html>');
+  assert.deepEqual(persisted, [{ cleanHtml: '<html></html>' }]);
+});

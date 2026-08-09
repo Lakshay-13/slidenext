@@ -53,6 +53,12 @@
     const createVersionHandlerOptions = typeof options.createVersionHandlerOptions === 'function'
       ? options.createVersionHandlerOptions
       : createHandlerOptions;
+    const createSessionReaderOptions = typeof options.createSessionReaderOptions === 'function'
+      ? options.createSessionReaderOptions
+      : null;
+    const applyPersistedDeckState = typeof options.applyPersistedDeckState === 'function'
+      ? options.applyPersistedDeckState
+      : null;
     const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
       ? options.setCurrentPresentationCanonicalDeck
       : () => {};
@@ -90,6 +96,7 @@
     let versionPersistenceSuccessHandler = null;
     let persistenceTaskStaleChecker = null;
     let persistenceActionCurrentRunner = null;
+    let persistenceHandlerOptionsBuilder = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -244,6 +251,36 @@
         : null;
     }
 
+    function createPersistenceHandlerOptionsBuilder() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistenceHandlerOptionsAdapter !== 'function'
+        || typeof createSessionReaderOptions !== 'function'
+        || typeof applyPersistedDeckState !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistenceHandlerOptionsAdapter({
+        persistenceApi,
+        getPresentationUrl: getCurrentPresentationUrl,
+        createSessionReaderOptions,
+        applyPersistedDeckState
+      });
+    }
+
+    function createPersistenceHandlerOptions(nextOptions = {}) {
+      if (typeof persistenceHandlerOptionsBuilder !== 'function') {
+        persistenceHandlerOptionsBuilder = createPersistenceHandlerOptionsBuilder();
+      }
+      if (typeof persistenceHandlerOptionsBuilder === 'function') {
+        const result = persistenceHandlerOptionsBuilder(nextOptions);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
+      return typeof createHandlerOptions === 'function'
+        ? createHandlerOptions(nextOptions)
+        : nextOptions;
+    }
+
     function createPersistenceSuccessHandler() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistenceSuccessHandlerAdapter !== 'function') {
@@ -251,7 +288,7 @@
       }
       return persistenceStateApi.createStudioEditorPersistenceSuccessHandlerAdapter({
         persistenceApi,
-        createHandlerOptions
+        createHandlerOptions: createPersistenceHandlerOptions
       });
     }
 
@@ -262,7 +299,7 @@
       }
       return persistenceStateApi.createStudioEditorPersistenceFailureHandlerAdapter({
         persistenceApi,
-        createHandlerOptions
+        createHandlerOptions: createPersistenceHandlerOptions
       });
     }
 
@@ -426,6 +463,7 @@
       handleVersionPersistenceSuccess,
       isPersistenceTaskStale,
       runPersistenceActionIfCurrent,
+      createPersistenceHandlerOptions,
       update,
       apply,
       resolveCanonicalDeckOverride,
