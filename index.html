@@ -1952,6 +1952,21 @@
           launchStudioEditor: (...args) => launchStudioEditor(...args)
         })
       : null;
+    function captureEditorSourceHistoryBaseline() {
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      if (canonicalDeck) {
+        saveHistoryState(false, null, canonicalDeck);
+      } else {
+        saveHistoryState(false);
+      }
+      return true;
+    }
+
     const studioEditorExportController = typeof SlideNextStudioEditorExportController !== 'undefined'
       && SlideNextStudioEditorExportController
       && typeof SlideNextStudioEditorExportController.createStudioEditorExportController === 'function'
@@ -2025,10 +2040,7 @@
           ),
           resolveHistoryOptions: () => getEditorHistoryOptions(),
           isCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
-          beforeApply: () => {
-            saveHistoryState(false);
-            return true;
-          },
+          beforeApply: captureEditorSourceHistoryBaseline,
           restoreHistoryEntry: (historyEntry) => {
             restoreFrameFromHistoryEntry(historyEntry);
             return true;

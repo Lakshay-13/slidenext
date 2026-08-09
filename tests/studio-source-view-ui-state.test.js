@@ -160,6 +160,65 @@ test('applyEditorSourceHtml wires canonical source editing through the shared pi
   assert.equal(delegatedSourceHtml, '<html>edited</html>');
 });
 
+test('source history capture prefers the current canonical deck before source replacement', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorSourceHistoryBaseline() {',
+    '\n\n    const studioEditorExportController'
+  );
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      return { id: 'current-frame' };
+    },
+    buildEditorCanonicalDeck(doc) {
+      calls.push(['build', doc]);
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureSource, context);
+
+  assert.equal(context.captureEditorSourceHistoryBaseline(), true);
+  assert.deepEqual(calls, [
+    ['build', { id: 'current-frame' }],
+    ['history', false, null, canonicalDeck]
+  ]);
+});
+
+test('source history capture keeps the legacy fallback when canonical rebuilding fails', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const captureSource = extractFunctionSource(
+    fileContent,
+    'function captureEditorSourceHistoryBaseline() {',
+    '\n\n    const studioEditorExportController'
+  );
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      return { id: 'current-frame' };
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('canonical rebuild failed');
+    },
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(captureSource, context);
+
+  assert.equal(context.captureEditorSourceHistoryBaseline(), true);
+  assert.deepEqual(calls, [[false]]);
+});
+
 test('applySourceViewModal delegates source application to the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySourceViewModalSource = extractFunctionSource(
