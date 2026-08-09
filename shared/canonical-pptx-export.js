@@ -1301,6 +1301,7 @@
       }
       const nodeBackgroundValue = style['background-image'] || style.background || '';
       const hasGradientBackground = /gradient\(/i.test(nodeBackgroundValue);
+      const gradientFallbackColor = resolveCssGradientFallbackColor(nodeBackgroundValue);
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
       const chartData = type === 'chart' ? getCanonicalChartData(node, themeTokens) : null;
@@ -1379,7 +1380,9 @@
           });
           diagnostics.warnings.push(
             hasGradientBackground
-              ? `Node ${nodeId} uses unsupported background gradients; using the first stop color fallback`
+              ? gradientFallbackColor
+                ? `Node ${nodeId} uses unsupported background gradients; using the first stop color fallback`
+                : `Node ${nodeId} uses unsupported background gradients; no solid fallback is available`
               : `Node ${nodeId} background image is not an exportable image URL`
           );
         } else {
@@ -1496,6 +1499,7 @@
         themeTokens
       );
       const hasGradientBackground = background.style && /gradient\(/i.test(background.style);
+      const gradientFallbackColor = resolveSlideBackgroundColor(background, themeTokens);
       if (background.style
         && !hasGradientBackground
         && !resolveSlideBackgroundColor(background, themeTokens)
@@ -1512,7 +1516,9 @@
           properties: ['background']
         });
         diagnostics.warnings.push(
-          `Slide ${slide.id || 'unknown'} uses unsupported CSS background gradients; using the first stop color fallback`
+          gradientFallbackColor
+            ? `Slide ${slide.id || 'unknown'} uses unsupported CSS background gradients; using the first stop color fallback`
+            : `Slide ${slide.id || 'unknown'} uses unsupported CSS background gradients; no solid fallback is available`
         );
       }
       if (background.image && !backgroundImageSource) {

@@ -1939,7 +1939,10 @@ test('preflightCanonicalPptxExport reports unsupported non-solid slide backgroun
     id: 'slide-1',
     properties: ['background']
   }]);
-  assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background gradients/);
+  assert.match(
+    report.diagnostics.warnings.join('\n'),
+    /Slide slide-1 uses unsupported CSS background gradients; no solid fallback is available/
+  );
 });
 
 test('preflightCanonicalPptxExport accepts focal positioning for sized slide backgrounds', () => {
