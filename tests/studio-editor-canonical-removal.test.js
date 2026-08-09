@@ -230,6 +230,27 @@ test('buildStudioCanonicalRemovalMutation centralizes baseline and node removal'
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
 });
 
+test('buildStudioCanonicalRemovalMutation can use only a valid live baseline', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1' }, { id: 'after' }]
+    }]
+  });
+  const result = canonicalRemoval.buildStudioCanonicalRemovalMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    {
+      canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
+      getCanonicalDeckBaseline: () => liveDeck,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['after']);
+  assert.deepEqual(liveDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'after']);
+});
+
 test('buildStudioCanonicalRemovalMutation falls back when the live baseline is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }, { id: 'after' }] }]
