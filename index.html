@@ -1411,6 +1411,7 @@
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-controller.js"></script>
+  <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
@@ -2576,10 +2577,13 @@
     const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
       ? studioEditorLayerOrderRuntime.layerOrderController
       : null;
-    const studioEditorStyleController = typeof SlideNextStudioEditorStyleController !== 'undefined'
-      && SlideNextStudioEditorStyleController
-      && typeof SlideNextStudioEditorStyleController.createStudioEditorStyleController === 'function'
-      ? SlideNextStudioEditorStyleController.createStudioEditorStyleController({
+    const studioEditorStyleRuntime = typeof SlideNextStudioEditorStyleRuntime !== 'undefined'
+      && SlideNextStudioEditorStyleRuntime
+      && typeof SlideNextStudioEditorStyleRuntime.createStudioEditorStyleRuntime === 'function'
+      ? SlideNextStudioEditorStyleRuntime.createStudioEditorStyleRuntime({
+          controllerApi: typeof SlideNextStudioEditorStyleController !== 'undefined'
+            ? SlideNextStudioEditorStyleController
+            : null,
           styleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
             ? SlideNextStudioEditorStyle
             : null,
@@ -2605,6 +2609,9 @@
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
+      : null;
+    const studioEditorStyleController = studioEditorStyleRuntime
+      ? studioEditorStyleRuntime.styleController
       : null;
     const studioEditorClipboardController = typeof SlideNextStudioEditorClipboardController !== 'undefined'
       && SlideNextStudioEditorClipboardController
