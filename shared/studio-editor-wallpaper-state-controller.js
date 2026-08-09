@@ -14,10 +14,12 @@
     let customGradientType = typeof options.initialCustomGradientType === 'string'
       ? options.initialCustomGradientType
       : 'linear';
+    let pendingCustomWallpaperVersion = !!options.initialPendingCustomWallpaperVersion;
 
     function reset() {
       wallpaperTab = 'solid';
       customGradientType = 'linear';
+      pendingCustomWallpaperVersion = false;
       return {
         wallpaperTab,
         customGradientType
@@ -34,6 +36,15 @@
       setCustomGradientType: (nextValue) => {
         customGradientType = nextValue;
         return customGradientType;
+      },
+      getPendingCustomWallpaperVersion: () => pendingCustomWallpaperVersion,
+      setPendingCustomWallpaperVersion: (nextValue) => {
+        pendingCustomWallpaperVersion = !!nextValue;
+        return pendingCustomWallpaperVersion;
+      },
+      clearPendingCustomWallpaperVersion: () => {
+        pendingCustomWallpaperVersion = false;
+        return pendingCustomWallpaperVersion;
       },
       reset
     };

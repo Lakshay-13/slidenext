@@ -18,7 +18,21 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return `
+function getStudioPendingCustomWallpaperVersion() {
+  return typeof hasPendingCustomWallpaperVersion !== 'undefined'
+    ? !!hasPendingCustomWallpaperVersion
+    : false;
+}
+function setStudioPendingCustomWallpaperVersion(nextValue) {
+  hasPendingCustomWallpaperVersion = !!nextValue;
+  return hasPendingCustomWallpaperVersion;
+}
+function clearStudioPendingCustomWallpaperVersion() {
+  hasPendingCustomWallpaperVersion = false;
+  return hasPendingCustomWallpaperVersion;
+}
+${fileContent.slice(start, end)}`;
 }
 
 function installWallpaperStateAccessors(context) {

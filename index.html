@@ -1669,6 +1669,24 @@
         ? studioEditorWallpaperStateController.reset()
         : false;
     }
+    function getStudioPendingCustomWallpaperVersion() {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.getPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateController.getPendingCustomWallpaperVersion()
+        : false;
+    }
+    function setStudioPendingCustomWallpaperVersion(nextValue) {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.setPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateController.setPendingCustomWallpaperVersion(nextValue)
+        : false;
+    }
+    function clearStudioPendingCustomWallpaperVersion() {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.clearPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateController.clearPendingCustomWallpaperVersion()
+        : false;
+    }
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
       : null;
@@ -2925,7 +2943,6 @@
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
       : null;
-    let hasPendingCustomWallpaperVersion = false;
     let currentStudioSaveButtonState = 'idle';
     let renamingFilename = '';
     let renamingVersionContext = null;
@@ -7507,8 +7524,8 @@
     }
 
     function flushPendingWallpaperVersion() {
-      if (!hasPendingCustomWallpaperVersion) return false;
-      hasPendingCustomWallpaperVersion = false;
+      if (!getStudioPendingCustomWallpaperVersion()) return false;
+      clearStudioPendingCustomWallpaperVersion();
       triggerAutoVersion('Auto: Changed Background');
       return true;
     }
@@ -7604,7 +7621,7 @@
         getSlideId: () => activeSlideId
       });
       if (!mutation.didChange) return false;
-      hasPendingCustomWallpaperVersion = !!isCustomInput;
+      setStudioPendingCustomWallpaperVersion(!!isCustomInput);
       const versionLabel = isCustomInput ? '' : 'Auto: Changed Background';
       if (mutation.canonicalDeck) {
         finalizeWallpaperMutation(versionLabel, mutation.transaction, mutation.canonicalDeck);
@@ -10257,7 +10274,7 @@
         documentRef: document,
         isLoading: !!options.isLoading,
         resetLocalState() {
-          hasPendingCustomWallpaperVersion = false;
+          clearStudioPendingCustomWallpaperVersion();
           resetStudioWallpaperState();
         }
       });
