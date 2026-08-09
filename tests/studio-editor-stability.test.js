@@ -146,6 +146,24 @@ test('history controller wires the named fallback active-slide resolver', () => 
   );
 });
 
+test('history restore wiring supplies a canonical rebuild fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntime =');
+  const controllerEnd = fileContent.indexOf('const studioEditorPersistenceController =', controllerStart);
+  assert.notEqual(controllerStart, -1);
+  assert.notEqual(controllerEnd, -1);
+
+  const controllerSource = fileContent.slice(controllerStart, controllerEnd);
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => \(\s*typeof buildEditorCanonicalDeck === 'function'/
+  );
+  assert.match(
+    controllerSource,
+    /isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'/
+  );
+});
+
 test('DOM mutation canonical builder bypasses live canonical state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

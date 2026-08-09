@@ -7,6 +7,23 @@
     root.SlideNextStudioEditorHistoryRestore = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
+  function isValidCanonicalDeck(value, validator) {
+    if (!value) return false;
+    const validate = typeof validator === 'function' ? validator : isCanonicalDeckLike;
+    try {
+      return validate(value) === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function createStudioEditorHistoryRestoreHandler(options = {}) {
     const historyApi = options.historyApi && typeof options.historyApi === 'object'
       ? options.historyApi
@@ -56,6 +73,12 @@
     const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
       ? options.setCurrentPresentationCanonicalDeck
       : () => {};
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const applyEditorSelectionState = typeof options.applyEditorSelectionState === 'function'
       ? options.applyEditorSelectionState
       : () => {};
@@ -82,20 +105,34 @@
       : () => {};
 
     function syncRestoredCanonicalState(historyEntry, iframeDoc) {
+      let restoredCanonicalDeck = historyEntry && isValidCanonicalDeck(
+        historyEntry.canonicalDeck,
+        isCanonicalDeck
+      )
+        ? historyEntry.canonicalDeck
+        : null;
+      if (!restoredCanonicalDeck && buildCanonicalDeck) {
+        try {
+          const rebuiltCanonicalDeck = buildCanonicalDeck(iframeDoc);
+          if (isValidCanonicalDeck(rebuiltCanonicalDeck, isCanonicalDeck)) {
+            restoredCanonicalDeck = rebuiltCanonicalDeck;
+          }
+        } catch (error) {
+          // Preserve legacy restore behavior when canonical rebuilding fails.
+        }
+      }
       let restoredPlaybackState = null;
       try {
-        restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
+        restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, restoredCanonicalDeck);
       } catch (error) {
         restoredPlaybackState = null;
       }
       applyPersistedDeckState({ playbackState: restoredPlaybackState });
       if (setEditorLiveCanonicalDeck) {
-        setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, getSessionToken());
+        setEditorLiveCanonicalDeck(restoredCanonicalDeck, iframeDoc, getSessionToken());
       }
       setCurrentPresentationCanonicalDeck(
-        Object.prototype.hasOwnProperty.call(historyEntry, 'canonicalDeck')
-          ? historyEntry.canonicalDeck
-          : null
+        restoredCanonicalDeck
       );
     }
 

@@ -31,3 +31,47 @@ test('createStudioEditorHistoryRestoreStateAdapter delegates restore handler con
 test('createStudioEditorHistoryRestoreStateAdapter fails closed without a shared handler', () => {
   assert.equal(historyRestore.createStudioEditorHistoryRestoreStateAdapter(), null);
 });
+
+test('history restore rebuilds canonical state when the entry has no canonical deck', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const rebuiltCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry() {}
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    buildCanonicalDeck(doc) {
+      calls.push(['buildCanonicalDeck', doc]);
+      return rebuiltCanonicalDeck;
+    },
+    capturePersistedDeckPlaybackState(doc, canonicalDeck) {
+      calls.push(['capturePersistedDeckPlaybackState', doc, canonicalDeck]);
+      return { activeSlideIds: ['slide-1'] };
+    },
+    applyPersistedDeckState(state) {
+      calls.push(['applyPersistedDeckState', state]);
+    },
+    setEditorLiveCanonicalDeck(canonicalDeck, doc) {
+      calls.push(['setEditorLiveCanonicalDeck', canonicalDeck, doc]);
+    },
+    setCurrentPresentationCanonicalDeck(canonicalDeck) {
+      calls.push(['setCurrentPresentationCanonicalDeck', canonicalDeck]);
+    }
+  });
+
+  restoreHandler({ canonicalDeck: null });
+
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', iframeDoc],
+    ['capturePersistedDeckPlaybackState', iframeDoc, rebuiltCanonicalDeck],
+    ['applyPersistedDeckState', { playbackState: { activeSlideIds: ['slide-1'] } }],
+    ['setEditorLiveCanonicalDeck', rebuiltCanonicalDeck, iframeDoc],
+    ['setCurrentPresentationCanonicalDeck', rebuiltCanonicalDeck]
+  ]);
+});

@@ -3338,6 +3338,14 @@
             setEditorLiveCanonicalDeck,
             getSessionToken: getStudioEditorSessionToken,
             setCurrentPresentationCanonicalDeck,
+            buildCanonicalDeck: (sourceDoc) => (
+              typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
+                : null
+            ),
+            isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+              ? getEditorCanonicalDeckValidator()
+              : null,
             applyEditorSelectionState,
             buildDeckViewOptions: (nextHistoryEntry) => createEditorDeckViewBuildOptions(null, {
               activeSlideId: nextHistoryEntry.activeSlideId,
