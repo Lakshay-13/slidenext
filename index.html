@@ -1314,6 +1314,7 @@
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-removal-controller.js"></script>
+  <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -2512,10 +2513,13 @@
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
       ? studioEditorLockVisibilityRuntime.lockVisibilityController
       : null;
-    const studioEditorRemovalController = typeof SlideNextStudioEditorRemovalController !== 'undefined'
-      && SlideNextStudioEditorRemovalController
-      && typeof SlideNextStudioEditorRemovalController.createStudioEditorRemovalController === 'function'
-      ? SlideNextStudioEditorRemovalController.createStudioEditorRemovalController({
+    const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalRuntime !== 'undefined'
+      && SlideNextStudioEditorRemovalRuntime
+      && typeof SlideNextStudioEditorRemovalRuntime.createStudioEditorRemovalRuntime === 'function'
+      ? SlideNextStudioEditorRemovalRuntime.createStudioEditorRemovalRuntime({
+          controllerApi: typeof SlideNextStudioEditorRemovalController !== 'undefined'
+            ? SlideNextStudioEditorRemovalController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
@@ -2535,6 +2539,9 @@
           deselectElement: (...args) => deselectElement(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
+      : null;
+    const studioEditorRemovalController = studioEditorRemovalRuntime
+      ? studioEditorRemovalRuntime.removalController
       : null;
     const studioEditorLayerOrderController = typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
       && SlideNextStudioEditorLayerOrderController
