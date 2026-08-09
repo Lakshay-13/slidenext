@@ -3803,6 +3803,42 @@ test('sanitizeEditorReusablePersistedHtml delegates through the editor persisten
   assert.equal(delegatedArgs.DOMParser, context.DOMParser);
 });
 
+test('sanitizeEditorReusablePersistedHtml delegates to the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
+    fileContent,
+    'function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  const buildPersistableDeckHtml = () => '<html>built</html>';
+  const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
+  const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
+  let delegatedArgs = null;
+  const context = {
+    studioEditorPersistenceController: {
+      sanitizeReusablePersistedHtml(persistedHtml, options) {
+        delegatedArgs = { persistedHtml, options };
+        return '<html>controller-sanitized</html>';
+      }
+    },
+    DOMParser: class DOMParser {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
+
+  assert.equal(context.sanitizeEditorReusablePersistedHtml('<html>persisted</html>', {
+    buildPersistableDeckHtml,
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  }), '<html>controller-sanitized</html>');
+  assert.equal(delegatedArgs.persistedHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.options.buildPersistableDeckHtml, buildPersistableDeckHtml);
+  assert.equal(delegatedArgs.options.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedArgs.options.getDeckSanitizerOptions, getDeckSanitizerOptions);
+  assert.equal(delegatedArgs.options.DOMParser, context.DOMParser);
+});
+
 test('sanitizeEditorReusablePersistedHtml creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(

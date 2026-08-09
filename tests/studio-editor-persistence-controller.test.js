@@ -455,3 +455,27 @@ test('persistence controller builds save requests through the shared adapter', (
   controller.buildSaveRequestBody(doc, '<html>next</html>', { resolveCanonicalDeck });
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller sanitizes reusable persisted HTML through the shared adapter', () => {
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorReusablePersistedHtmlSanitizerAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, persistence);
+        return (persistedHtml, nextOptions) => `${persistedHtml}:${nextOptions.id}`;
+      }
+    }
+  });
+
+  assert.equal(
+    controller.sanitizeReusablePersistedHtml('<html>one</html>', { id: 1 }),
+    '<html>one</html>:1'
+  );
+  assert.equal(
+    controller.sanitizeReusablePersistedHtml('<html>two</html>', { id: 2 }),
+    '<html>two</html>:2'
+  );
+  assert.equal(adapterCreateCalls, 1);
+});
