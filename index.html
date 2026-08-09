@@ -5541,6 +5541,14 @@
         return null;
       }
       if (canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalNodeReaderFromApi === 'function') {
+        const readCanonicalNode = canonicalStateApi.createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId: (target) => target && target.dataset && target.dataset.editorId
+        });
+        return readCanonicalNode(element);
+      }
+      if (canonicalStateApi
         && typeof canonicalStateApi.createStudioEditorCanonicalNodeReader === 'function') {
         const readCanonicalNode = canonicalStateApi.createStudioEditorCanonicalNodeReader(canonicalDeck, {
           resolveCanonicalNode(target, deck) {

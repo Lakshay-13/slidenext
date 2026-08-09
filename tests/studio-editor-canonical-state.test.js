@@ -180,6 +180,32 @@ test('canonical node reader resolves safely and fails closed on lookup errors', 
   assert.equal(throwingReader(element), null);
 });
 
+test('canonical node reader adapter resolves through the supplied deck API and fails closed', () => {
+  const canonicalDeck = createDeck('active');
+  const element = { dataset: { editorId: 'node-1' } };
+  const canonicalDeckApi = {
+    findCanonicalNodeById(deck, elementId) {
+      assert.equal(deck, canonicalDeck);
+      return elementId === 'node-1' ? { id: 'node-1' } : null;
+    }
+  };
+  const reader = canonicalState.createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+    canonicalDeckApi
+  });
+
+  assert.deepEqual(reader(element), { id: 'node-1' });
+  assert.equal(reader({ dataset: { editorId: 'missing' } }), null);
+
+  const throwingReader = canonicalState.createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+    canonicalDeckApi: {
+      findCanonicalNodeById() {
+        throw new Error('lookup failed');
+      }
+    }
+  });
+  assert.equal(throwingReader(element), null);
+});
+
 test('editor canonical node resolver prefers the shared safe reader', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
