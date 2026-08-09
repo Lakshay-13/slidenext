@@ -110,7 +110,11 @@
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
       : buildStudioCanonicalWallpaperBaseline(options);
-    return updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background);
+    try {
+      return updateCanonicalSlideBackground(canonicalDeckBeforeMutation, slideIds, background);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalWallpaperMutationBuilders(options = {}) {

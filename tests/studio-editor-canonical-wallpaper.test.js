@@ -32,6 +32,26 @@ test('buildStudioCanonicalWallpaperDeck updates backgrounds for the affected sli
   assert.equal(sourceDeck.slides[1].layout.background.style, '#ffffff');
 });
 
+test('buildStudioCanonicalWallpaperDeck fails closed when the canonical background mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalSlideBackground() {
+      throw new Error('canonical background mutation failed');
+    }
+  };
+
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperDeck(
+    [{ id: 'slide-1' }],
+    'black',
+    {
+      canonicalDeckApi: throwingCanonicalDeckApi,
+      canonicalDeckBeforeMutation: createSourceDeck()
+    }
+  );
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalWallpaperBaseline builds from the source document', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
