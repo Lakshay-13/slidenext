@@ -32,7 +32,7 @@
         : 'border-white/5 bg-zinc-950/40 hover:bg-zinc-900/60 text-zinc-300 hover:text-white';
 
       return `
-          <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}">
+          <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}" style="content-visibility: auto; contain-intrinsic-size: 32px;">
             <button onclick="selectLayerElementByRef(event)" ${canRunLayerActions ? '' : 'disabled'} class="flex-1 text-left flex items-center gap-2 truncate pr-1 disabled:opacity-60 disabled:cursor-not-allowed" style="min-width: 0;">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${layer.typeIcon}</span>
               <span class="truncate" style="font-size: 10px;">${layer.displayName}</span>
