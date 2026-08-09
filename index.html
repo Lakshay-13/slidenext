@@ -3149,10 +3149,25 @@
         ? options.resolveLiveActiveSlideId
         : (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc);
       if (deckViewApi && typeof deckViewApi.createStudioDeckViewCanonicalStateOptions === 'function') {
-        return deckViewApi.createStudioDeckViewCanonicalStateOptions({
+        const sharedOptions = deckViewApi.createStudioDeckViewCanonicalStateOptions({
           buildCanonicalDeck,
           resolveLiveActiveSlideId
         });
+        if (sharedOptions
+          && typeof sharedOptions.buildCanonicalDeck === 'function'
+          && typeof sharedOptions.resolveLiveActiveSlideId === 'function') {
+          return sharedOptions;
+        }
+        return {
+          buildCanonicalDeck: sharedOptions
+            && typeof sharedOptions.buildCanonicalDeck === 'function'
+            ? sharedOptions.buildCanonicalDeck
+            : buildCanonicalDeck,
+          resolveLiveActiveSlideId: sharedOptions
+            && typeof sharedOptions.resolveLiveActiveSlideId === 'function'
+            ? sharedOptions.resolveLiveActiveSlideId
+            : resolveLiveActiveSlideId
+        };
       }
       return { buildCanonicalDeck, resolveLiveActiveSlideId };
     }

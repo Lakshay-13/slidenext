@@ -2946,6 +2946,41 @@ test('createEditorCanonicalDeckViewStateOptions delegates callback normalization
   assert.equal(calls[0].resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
 });
 
+test('createEditorCanonicalDeckViewStateOptions falls back when shared normalization is incomplete', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckViewStateOptions(options = {}) {',
+    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+  );
+  const customBuildCanonicalDeck = () => ({ slides: [] });
+  const customResolveLiveActiveSlideId = () => 'slide-live';
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioDeckViewCanonicalStateOptions() {
+        return {};
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('editor canonical fallback should not run');
+    },
+    resolveEditorLiveActiveSlideId() {
+      throw new Error('editor active-slide fallback should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  const options = context.createEditorCanonicalDeckViewStateOptions({
+    buildCanonicalDeck: customBuildCanonicalDeck,
+    resolveLiveActiveSlideId: customResolveLiveActiveSlideId
+  });
+
+  assert.equal(options.buildCanonicalDeck, customBuildCanonicalDeck);
+  assert.equal(options.resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
+});
+
 test('buildEditorDeckSnapshot fails closed when only the legacy snapshot builder is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
