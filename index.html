@@ -1345,6 +1345,7 @@
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
+  <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
@@ -2877,12 +2878,18 @@
     const studioEditorTemplateController = studioEditorTemplateRuntime
       ? studioEditorTemplateRuntime.templateController
       : null;
-    const studioEditorMasterSlideController = typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
-      && SlideNextStudioEditorMasterSlideController
-      && typeof SlideNextStudioEditorMasterSlideController.createStudioEditorMasterSlideController === 'function'
-      ? SlideNextStudioEditorMasterSlideController.createStudioEditorMasterSlideController({
+    const studioEditorMasterSlideRuntime = typeof SlideNextStudioEditorMasterSlideRuntime !== 'undefined'
+      && SlideNextStudioEditorMasterSlideRuntime
+      && typeof SlideNextStudioEditorMasterSlideRuntime.createStudioEditorMasterSlideRuntime === 'function'
+      ? SlideNextStudioEditorMasterSlideRuntime.createStudioEditorMasterSlideRuntime({
+          controllerApi: typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
+            ? SlideNextStudioEditorMasterSlideController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
             : null,
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
@@ -2904,6 +2911,9 @@
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
           onMasterSlidesChanged: () => updateMasterSlideActionState()
         })
+      : null;
+    const studioEditorMasterSlideController = studioEditorMasterSlideRuntime
+      ? studioEditorMasterSlideRuntime.masterSlideController
       : null;
     const studioEditorAssetController = typeof SlideNextStudioEditorAssetController !== 'undefined'
       && SlideNextStudioEditorAssetController
