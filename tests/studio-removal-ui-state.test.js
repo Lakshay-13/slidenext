@@ -334,6 +334,48 @@ test('updateRemovalActionState delegates toolbar state assembly to the shared re
   assert.equal(calls[0].canMutateDeck(), true);
 });
 
+test('updateRemovalActionState caches the shared removal toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateRemovalActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateRemovalActionState(doc = getIframeDoc()) {',
+    '\n\n    function finalizeRemovalActionResult(result, doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    buildRemovalSelectionActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canRemove: true };
+    },
+    SlideNextStudioEditorRemoval: {
+      syncStudioRemovalToolbarState() {
+        throw new Error('direct removal sync should not run');
+      },
+      createStudioRemovalToolbarStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canRemove;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateRemovalActionStateSource, context);
+
+  assert.equal(context.updateRemovalActionState(doc), true);
+  assert.equal(context.updateRemovalActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'action-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
+
 test('finalizeRemovalActionResult refreshes removal controls and preserves the action result', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = { label: 'iframe-doc' };

@@ -167,6 +167,48 @@ test('syncStudioRemovalToolbarState builds and renders deletion controls in one 
   assert.equal(removeSelectionBtn.disabled, false);
 });
 
+test('createStudioRemovalToolbarStateSync resolves the removal action state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const removeSelectionBtn = { disabled: true };
+  const calls = [];
+  const syncToolbar = removal.createStudioRemovalToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canRemove: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return id === 'removeSelectionBtn' ? removeSelectionBtn : null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.equal(removeSelectionBtn.disabled, false);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioRemovalToolbarStateSync fails closed when action-state resolution throws', () => {
+  const syncToolbar = removal.createStudioRemovalToolbarStateSync({
+    getActionState() {
+      throw new Error('removal state unavailable');
+    }
+  });
+
+  assert.equal(syncToolbar(), false);
+});
+
 test('finalizeStudioRemovalActionResult refreshes removal state and preserves the result', () => {
   const doc = { id: 'doc' };
   const calls = [];

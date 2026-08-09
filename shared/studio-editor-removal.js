@@ -93,6 +93,31 @@
     });
   }
 
+  function createStudioRemovalToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({ canRemove: false });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorRemovalToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return renderStudioRemovalToolbarState({
+          documentRef: getDocumentRef(),
+          actionState
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function finalizeStudioRemovalActionResult(result, options = {}) {
     const updateRemovalActionState = typeof options.updateRemovalActionState === 'function'
       ? options.updateRemovalActionState
@@ -155,6 +180,7 @@
     buildStudioRemovalToolbarState,
     renderStudioRemovalToolbarState,
     syncStudioRemovalToolbarState,
+    createStudioRemovalToolbarStateSync,
     finalizeStudioRemovalActionResult,
     removeStudioElements
   };
