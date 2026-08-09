@@ -133,6 +133,46 @@ test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pendin
   });
 });
 
+test('createStudioEditorHistoryEntryBuilder delegates baseline resolution to canonical state', () => {
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  let readerOptions = null;
+  let readerDocument = null;
+  let capturedOptions = null;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        options.buildCanonicalDeck('history-doc');
+        return null;
+      }
+    },
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (sourceDocument) => {
+          readerDocument = sourceDocument;
+          return canonicalDeckBaseline;
+        };
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('custom reader should own baseline resolution');
+    },
+    buildCanonicalDeck(_doc, options) {
+      capturedOptions = options;
+      return canonicalDeckBaseline;
+    }
+  });
+
+  assert.equal(builder({ id: 'history-doc' }), null);
+  assert.equal(readerDocument, 'history-doc');
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(readerOptions.isCanonicalDeck, null);
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
 test('createStudioEditorHistoryEntryBuilder ignores an invalid live baseline', () => {
   let capturedOptions = null;
   const historyApi = {
@@ -147,6 +187,30 @@ test('createStudioEditorHistoryEntryBuilder ignores an invalid live baseline', (
     isCanonicalDeck(value) {
       return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
     },
+    getCanonicalDeckBaseline() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck(_sourceDoc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  builder({ id: 'history-doc' });
+
+  assert.deepEqual(capturedOptions, { preferLiveCanonicalDeck: false });
+});
+
+test('createStudioEditorHistoryEntryBuilder rejects malformed baselines without a custom validator', () => {
+  let capturedOptions = null;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        options.buildCanonicalDeck('history-doc');
+        return null;
+      }
+    },
+    canonicalStateApi: {},
     getCanonicalDeckBaseline() {
       return { invalid: true };
     },

@@ -106,20 +106,37 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
-    const readCanonicalDeckBaseline = canonicalStateApi
+    const isValidCanonicalDeck = (value) => {
+      if (!value) return false;
+      const validate = isCanonicalDeck
+        || ((candidate) => !!candidate
+          && typeof candidate === 'object'
+          && !Array.isArray(candidate)
+          && Array.isArray(candidate.slides));
+      try {
+        return validate(value) === true;
+      } catch (error) {
+        return false;
+      }
+    };
+    const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
-      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline,
-          isCanonicalDeck
-        })
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
+      : null;
+    const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader
+      ? (() => {
+          const sharedReader = createCanonicalDeckBaselineReader({
+            getCanonicalDeckBaseline,
+            isCanonicalDeck
+          });
+          return typeof sharedReader === 'function' ? sharedReader : () => null;
+        })()
       : (sourceDocument) => {
           if (!getCanonicalDeckBaseline) return null;
           try {
             const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-            if (!liveCanonicalDeck) return null;
-            if (isCanonicalDeck && isCanonicalDeck(liveCanonicalDeck) !== true) return null;
-            return liveCanonicalDeck;
-          } catch (err) {
+            return isValidCanonicalDeck(liveCanonicalDeck) ? liveCanonicalDeck : null;
+          } catch (error) {
             return null;
           }
         };
