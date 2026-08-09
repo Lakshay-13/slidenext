@@ -5649,6 +5649,19 @@
       const resolveCanonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
         ? resolveEditorCanonicalNodeForElement
         : null;
+      const createVisibilityReaderForDeck = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck
+        : null;
+      if (canonicalDeck && createVisibilityReaderForDeck) {
+        return createVisibilityReaderForDeck(canonicalDeck, {
+          property,
+          canonicalDeckApi,
+          getElementId,
+          resolveCanonicalNode,
+          fallbackReader: fallback
+        });
+      }
       if (canonicalDeck
         && canonicalDeckApi
         && property === 'locked'

@@ -321,6 +321,41 @@ test('canonical visibility reader adapter resolves properties through the suppli
   assert.equal(reader({ dataset: { editorId: 'missing' }, domHidden: true }), true);
 });
 
+test('canonical visibility reader assembly selects shared lock and property adapters', () => {
+  const canonicalDeck = createDeck('active');
+  const elements = {
+    locked: { dataset: { editorId: 'locked' }, domLocked: false },
+    hidden: { dataset: { editorId: 'hidden' }, domHidden: false }
+  };
+  const canonicalDeckApi = {
+    findCanonicalNodeById(_deck, elementId) {
+      if (elementId === 'locked') return { visibility: { locked: true } };
+      if (elementId === 'hidden') return { visibility: { hidden: true } };
+      return null;
+    }
+  };
+
+  const readLocked = canonicalState.createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+    property: 'locked',
+    canonicalDeckApi,
+    fallbackReader: (element) => element.domLocked
+  });
+  const readHidden = canonicalState.createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+    property: 'hidden',
+    canonicalDeckApi,
+    fallbackReader: (element) => element.domHidden
+  });
+
+  assert.equal(readLocked(elements.locked), true);
+  assert.equal(readHidden(elements.hidden), true);
+  assert.equal(
+    canonicalState.createStudioEditorCanonicalVisibilityReaderForDeck(null, {
+      fallbackReader: () => true
+    })({}),
+    true
+  );
+});
+
 test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(
