@@ -1060,6 +1060,24 @@ test('buildStudioDeckHtml falls back and can transform fallback html when the ca
   ]);
 });
 
+test('buildStudioDeckHtml falls back when canonical deck building throws', () => {
+  let fallbackCalls = 0;
+  assert.equal(
+    deckView.buildStudioDeckHtml({ id: 'legacy-doc' }, {
+      buildCanonicalDeck() {
+        throw new Error('legacy import failed');
+      },
+      buildFallbackHtml(doc) {
+        assert.deepEqual(doc, { id: 'legacy-doc' });
+        fallbackCalls += 1;
+        return '<html>legacy fallback</html>';
+      }
+    }),
+    '<html>legacy fallback</html>'
+  );
+  assert.equal(fallbackCalls, 1);
+});
+
 test('buildStudioDeckViewHtml prefers the provided shared html builder when available', () => {
   const calls = [];
 

@@ -481,9 +481,14 @@
     const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
       ? options.deckHtmlOptions
       : doc;
-    const canonicalDeck = typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck(doc)
-      : null;
+    let canonicalDeck = null;
+    if (typeof options.buildCanonicalDeck === 'function') {
+      try {
+        canonicalDeck = options.buildCanonicalDeck(doc);
+      } catch (error) {
+        canonicalDeck = null;
+      }
+    }
     if (isCanonicalDeckLike(canonicalDeck) && typeof options.buildCanonicalHtml === 'function') {
       return options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
     }
