@@ -21,6 +21,26 @@ test('buildStudioCanonicalMetadataDeck applies a slide metadata patch to a suppl
   assert.equal(sourceDeck.slides[0].notes, 'Before');
 });
 
+test('buildStudioCanonicalMetadataDeck fails closed when the canonical metadata mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalSlideMetadata() {
+      throw new Error('canonical metadata mutation failed');
+    }
+  };
+
+  const result = metadata.buildStudioCanonicalMetadataDeck({ id: 'slide-1' }, {
+    notes: 'After'
+  }, {
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1', notes: 'Before' }]
+    })
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalMetadataBaseline prefers a valid live canonical deck', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', notes: 'Live' }]

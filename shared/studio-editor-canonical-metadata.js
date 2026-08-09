@@ -102,7 +102,11 @@
     if (!updateCanonicalSlideMetadata || !canonicalDeckBeforeMutation || !normalizedSlideId) {
       return null;
     }
-    return updateCanonicalSlideMetadata(canonicalDeckBeforeMutation, normalizedSlideId, metadata);
+    try {
+      return updateCanonicalSlideMetadata(canonicalDeckBeforeMutation, normalizedSlideId, metadata);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalMetadataMutationBuilders(options = {}) {
