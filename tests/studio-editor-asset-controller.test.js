@@ -54,6 +54,34 @@ test('asset mutations prefer a valid live canonical baseline', () => {
   assert.equal(didBuildFromDocument, false);
 });
 
+test('asset controller delegates canonical deck resolution to shared state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let resolverOptions = null;
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => deck;
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('shared resolver should own baseline resolution');
+    },
+    getCanonicalDeck() {
+      throw new Error('shared resolver should own fallback resolution');
+    },
+    saveHistoryState: () => {}
+  });
+
+  const result = controller.addAsset({ id: 'shared-asset', src: '/shared.png' });
+
+  assert.equal(result.assets[0].id, 'shared-asset');
+  assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('asset mutations fall back when the live canonical baseline is invalid', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
