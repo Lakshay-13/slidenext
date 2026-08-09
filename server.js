@@ -184,10 +184,30 @@ function resolveProvidedCanonicalDeck(canonicalDeck) {
   return presentationMetadata.resolvePresentationCanonicalDeck({ canonicalDeck });
 }
 
+async function resolveExportCanonicalDeck(canonicalDeck, sourcePath = '') {
+  const providedDeck = resolveProvidedCanonicalDeck(canonicalDeck);
+  if (providedDeck || (canonicalDeck !== undefined && canonicalDeck !== null)) {
+    return providedDeck;
+  }
+
+  const metadataPath = presentationMetadata.derivePresentationMetadataPath(sourcePath);
+  if (!metadataPath) return null;
+
+  const metadataFile = path.resolve(workspaceDir, metadataPath.replace(/^[/\\]+/, ''));
+  if (!isPathWithin(workspaceDir, metadataFile)) return null;
+
+  try {
+    const metadata = JSON.parse(await fs.readFile(metadataFile, 'utf8'));
+    return presentationMetadata.resolvePresentationCanonicalDeck(metadata);
+  } catch (err) {
+    return null;
+  }
+}
+
 // Export any canonical deck without writing generated files into the workspace.
 app.post('/api/export/pptx', async (req, res) => {
   const { canonicalDeck, filename, sourcePath } = req.body || {};
-  const resolvedCanonicalDeck = resolveProvidedCanonicalDeck(canonicalDeck);
+  const resolvedCanonicalDeck = await resolveExportCanonicalDeck(canonicalDeck, sourcePath);
   if (!resolvedCanonicalDeck) {
     return res.status(400).json({ error: 'Invalid canonicalDeck' });
   }
