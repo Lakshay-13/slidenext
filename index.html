@@ -1339,6 +1339,7 @@
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-view.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
+  <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
@@ -2787,12 +2788,18 @@
     const studioEditorElementInsertionController = studioEditorElementInsertionRuntime
       ? studioEditorElementInsertionRuntime.elementInsertionController
       : null;
-    const studioEditorBlockController = typeof SlideNextStudioEditorBlockController !== 'undefined'
-      && SlideNextStudioEditorBlockController
-      && typeof SlideNextStudioEditorBlockController.createStudioEditorBlockController === 'function'
-      ? SlideNextStudioEditorBlockController.createStudioEditorBlockController({
+    const studioEditorBlockRuntime = typeof SlideNextStudioEditorBlockRuntime !== 'undefined'
+      && SlideNextStudioEditorBlockRuntime
+      && typeof SlideNextStudioEditorBlockRuntime.createStudioEditorBlockRuntime === 'function'
+      ? SlideNextStudioEditorBlockRuntime.createStudioEditorBlockRuntime({
+          controllerApi: typeof SlideNextStudioEditorBlockController !== 'undefined'
+            ? SlideNextStudioEditorBlockController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
@@ -2823,6 +2830,9 @@
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           onBlocksChanged: () => updateBlockActionState()
         })
+      : null;
+    const studioEditorBlockController = studioEditorBlockRuntime
+      ? studioEditorBlockRuntime.blockController
       : null;
     const studioEditorTemplateController = typeof SlideNextStudioEditorTemplateController !== 'undefined'
       && SlideNextStudioEditorTemplateController
