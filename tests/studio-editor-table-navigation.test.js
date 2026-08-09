@@ -48,3 +48,19 @@ test('resolveStudioAdjacentTableCell fails closed at table boundaries and for no
     null
   );
 });
+
+test('resolveStudioAdjacentTableCell accepts a nested text target', () => {
+  const nestedText = {
+    tagName: 'STRONG',
+    closest(selector) {
+      if (selector === 'td, th') return secondCell;
+      if (selector === 'table') return table;
+      return null;
+    }
+  };
+
+  assert.equal(
+    tableNavigation.resolveStudioAdjacentTableCell(nestedText, { slide, direction: 1 }),
+    thirdCell
+  );
+});

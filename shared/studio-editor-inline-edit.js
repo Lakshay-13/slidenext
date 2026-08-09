@@ -16,6 +16,27 @@
       && element.children.length > 0);
   }
 
+  function findStudioInlineTextDescendant(element, slide, textTagNames) {
+    if (!element || !hasStudioInlineElementChildren(element)
+      || typeof element.querySelectorAll !== 'function') {
+      return null;
+    }
+    let descendants = [];
+    try {
+      descendants = Array.from(element.querySelectorAll('*'));
+    } catch (error) {
+      return null;
+    }
+    return descendants.find((candidate) => {
+      const tagName = typeof candidate.tagName === 'string'
+        ? candidate.tagName.toLowerCase()
+        : '';
+      return textTagNames.has(tagName)
+        && !hasStudioInlineElementChildren(candidate)
+        && (!slide || typeof slide.contains !== 'function' || slide.contains(candidate));
+    }) || null;
+  }
+
   function resolveStudioInlineTextEditTarget(node, slide, options = {}) {
     if (node && typeof node.closest === 'function' && node.closest('.editor-resize-handle')) {
       return null;
@@ -42,6 +63,10 @@
       const tagName = typeof current.tagName === 'string'
         ? current.tagName.toLowerCase()
         : '';
+      if ((tagName === 'td' || tagName === 'th') && hasStudioInlineElementChildren(current)) {
+        const descendant = findStudioInlineTextDescendant(current, slide, textTagNames);
+        if (descendant) return descendant;
+      }
       if (textTagNames.has(tagName)
         && !hasStudioInlineElementChildren(current)
         && (!slide || typeof slide.contains !== 'function' || slide.contains(current))) {
@@ -166,15 +191,22 @@
         handleKeydown: (keyboardEvent) => {
           if (!keyboardEvent) return;
           if (keyboardEvent.key === 'Tab' && resolveAdjacentTextElement) {
+            const activeSlide = getActiveSlide();
             const adjacentElement = resolveAdjacentTextElement(currentSession.element, {
               direction: keyboardEvent.shiftKey ? -1 : 1,
-              slide: getActiveSlide()
+              slide: activeSlide
             });
-            if (adjacentElement && adjacentElement !== currentSession.element && canEdit(adjacentElement)) {
+            const resolvedNextTextElement = adjacentElement && typeof resolveTextElement === 'function'
+              ? resolveTextElement(adjacentElement, activeSlide)
+              : null;
+            const nextTextElement = resolvedNextTextElement && resolvedNextTextElement !== currentSession.element
+              ? resolvedNextTextElement
+              : adjacentElement;
+            if (nextTextElement && nextTextElement !== currentSession.element && canEdit(nextTextElement)) {
               if (typeof keyboardEvent.preventDefault === 'function') keyboardEvent.preventDefault();
               endEditing(true);
               schedule(() => {
-                startEditing(adjacentElement);
+                startEditing(nextTextElement);
               });
               return;
             }

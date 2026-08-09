@@ -117,6 +117,37 @@ test('resolveStudioInlineTextEditTarget supports table cell text when enabled', 
   }
 });
 
+test('resolveStudioInlineTextEditTarget keeps nested table markup safe during cell navigation', () => {
+  const leaf = {
+    nodeType: 1,
+    tagName: 'STRONG',
+    children: { length: 0 },
+    parentElement: null
+  };
+  const cell = {
+    nodeType: 1,
+    tagName: 'TD',
+    children: { length: 1 },
+    parentElement: null,
+    querySelectorAll(selector) {
+      return selector === '*' ? [leaf] : [];
+    }
+  };
+  leaf.parentElement = cell;
+  const slide = {
+    contains(element) {
+      return element === cell || element === leaf;
+    }
+  };
+
+  assert.equal(
+    inlineEdit.resolveStudioInlineTextEditTarget(cell, slide, {
+      textTagNames: new Set(['td', 'strong'])
+    }),
+    leaf
+  );
+});
+
 function createElement(text = 'Before') {
   const attributes = {};
   const listeners = {};
@@ -229,6 +260,32 @@ test('inline text editing commits and navigates to an adjacent cell on Tab', () 
   assert.equal(secondCell.contentEditable, 'true');
   assert.equal(calls[1][0], 'commit');
   assert.equal(calls[1][1].text, 'Edited first');
+});
+
+test('inline text editing resolves the adjacent cell to its safe text target', () => {
+  const firstCell = createElement('First');
+  const secondCell = createElement('Second');
+  const secondText = createElement('Second');
+  const controller = inlineEdit.createStudioInlineTextEditController({
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    resolveTextElement: (element) => element === secondCell ? secondText : element,
+    resolveAdjacentTextElement: () => secondCell,
+    canEdit: () => true,
+    schedule: (callback) => callback(),
+    onCommit: (change) => {
+      change.element.textContent = change.text;
+    }
+  });
+
+  assert.equal(controller.startEditing(firstCell), true);
+  firstCell.textContent = 'Edited first';
+  firstCell.dispatch('keydown', {
+    key: 'Tab',
+    preventDefault() {}
+  });
+
+  assert.equal(secondCell.contentEditable, 'inherit');
+  assert.equal(secondText.contentEditable, 'true');
 });
 
 test('inline text editing cancels with Escape and refuses locked elements', () => {
