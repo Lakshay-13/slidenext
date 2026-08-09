@@ -159,11 +159,23 @@
       const selectedImage = getSelectedImage();
       if (!selectedImage) return false;
       const canonicalDeck = resolveCanonicalDeck();
+      const hasCanonicalVisibilityReader = canonicalDeck
+        && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
+        && canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck === 'function';
       const hasCanonicalLockReader = canonicalDeck
         && typeof canonicalDeckApi.findCanonicalNodeById === 'function'
         && canonicalStateApi
         && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function';
-      if (hasCanonicalLockReader) {
+      if (hasCanonicalVisibilityReader) {
+        const readLockedState = canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+          property: 'locked',
+          canonicalDeckApi,
+          getElementId,
+          fallbackReader: isElementLocked
+        });
+        if (readLockedState(selectedImage)) return false;
+      } else if (hasCanonicalLockReader) {
         const readLockedState = canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
           canonicalDeckApi,
           getElementId,

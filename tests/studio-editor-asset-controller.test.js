@@ -331,6 +331,49 @@ test('applyAsset prefers canonical lock metadata over stale DOM state', () => {
   assert.equal(unlockedController.applyAsset('hero'), false);
 });
 
+test('applyAsset delegates locked visibility assembly to canonical state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', src: '/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'image-1', type: 'image', visibility: { locked: true } }]
+    }]
+  });
+  const selectedImage = { dataset: { editorId: 'image-1' } };
+  let readerDeck = null;
+  let readerOptions = null;
+  let mutationCalls = 0;
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalNodeAsset() {
+      mutationCalls += 1;
+      return deck;
+    }
+  };
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi,
+    canonicalStateApi: {
+      createStudioEditorCanonicalVisibilityReaderForDeck(value, options) {
+        readerDeck = value;
+        readerOptions = options;
+        return () => true;
+      }
+    },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.applyAsset('hero'), false);
+  assert.equal(readerDeck, deck);
+  assert.equal(readerOptions.property, 'locked');
+  assert.equal(readerOptions.canonicalDeckApi, canonicalDeckApi);
+  assert.equal(readerOptions.getElementId(selectedImage), 'image-1');
+  assert.equal(readerOptions.fallbackReader(selectedImage), false);
+  assert.equal(mutationCalls, 0);
+});
+
 test('applyAsset keeps canonical lock fallback behavior without the shared lock reader', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'hero', src: '/hero.png' }],
