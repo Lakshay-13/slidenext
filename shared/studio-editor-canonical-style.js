@@ -11,6 +11,8 @@
     size: { property: 'font-size', domProperty: 'fontSize' },
     family: { property: 'font-family', domProperty: 'fontFamily' },
     weight: { property: 'font-weight', domProperty: 'fontWeight' },
+    italic: { property: 'font-style', domProperty: 'fontStyle' },
+    underline: { property: 'text-decoration', domProperty: 'textDecoration' },
     color: { property: 'color', domProperty: 'color' },
     align: { property: 'text-align', domProperty: 'textAlign' },
     opacity: { property: 'opacity', domProperty: 'opacity' },

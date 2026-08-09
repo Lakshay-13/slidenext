@@ -1113,6 +1113,23 @@
               </select>
             </div>
 
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex flex-col gap-2">
+                <label for="elFontStyle" class="text-[10px] font-mono text-zinc-500 uppercase">Style</label>
+                <select id="elFontStyle" onchange="applySelectedElementStyle('italic', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                  <option value="normal">Regular</option>
+                  <option value="italic">Italic</option>
+                </select>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label for="elTextDecoration" class="text-[10px] font-mono text-zinc-500 uppercase">Decoration</label>
+                <select id="elTextDecoration" onchange="applySelectedElementStyle('underline', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                  <option value="none">None</option>
+                  <option value="underline">Underline</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Alignment -->
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Alignment</label>

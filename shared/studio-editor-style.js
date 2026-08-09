@@ -14,6 +14,8 @@
     chartTitle: 'Auto: Edited Chart Title',
     family: 'Auto: Changed Font Family',
     weight: 'Auto: Changed Font Weight',
+    italic: 'Auto: Changed Font Style',
+    underline: 'Auto: Changed Text Decoration',
     align: 'Auto: Changed Alignment',
     zIndex: 'Auto: Changed Z-Index',
     borderStyle: 'Auto: Changed Border Style',
@@ -30,6 +32,8 @@
     ['elFontSize', 'size', '16'],
     ['elFontFamily', 'family', "'Geist', sans-serif"],
     ['elFontWeight', 'weight', '400'],
+    ['elFontStyle', 'italic', 'normal'],
+    ['elTextDecoration', 'underline', 'none'],
     ['alignLeftBtn', 'align', 'left'],
     ['alignCenterBtn', 'align', 'center'],
     ['alignRightBtn', 'align', 'right'],
@@ -197,6 +201,16 @@
       };
     }
 
+    if (prop === 'italic') {
+      const styleValue = `${value}`.trim().toLowerCase() === 'italic' ? 'italic' : 'normal';
+      return { styleValue, displayValue: styleValue };
+    }
+
+    if (prop === 'underline') {
+      const styleValue = `${value}`.trim().toLowerCase() === 'underline' ? 'underline' : 'none';
+      return { styleValue, displayValue: styleValue };
+    }
+
     if (prop === 'objectPosition') {
       const allowedPositions = new Set([
         'left top', 'center top', 'right top',
@@ -265,6 +279,12 @@
       } else if (prop === 'weight') {
         element.style.fontWeight = normalizedValue.styleValue;
         didApply = true;
+      } else if (prop === 'italic') {
+        element.style.fontStyle = normalizedValue.styleValue;
+        didApply = true;
+      } else if (prop === 'underline') {
+        element.style.textDecoration = normalizedValue.styleValue;
+        didApply = true;
       } else if (prop === 'color') {
         element.style.color = normalizedValue.styleValue;
         didApply = true;
@@ -313,6 +333,8 @@
       size: 'fontSize',
       family: 'fontFamily',
       weight: 'fontWeight',
+      italic: 'fontStyle',
+      underline: 'textDecoration',
       color: 'color',
       align: 'textAlign',
       opacity: 'opacity',

@@ -268,6 +268,24 @@ test('applyStudioStyleMutation applies shared style properties across the live s
   assert.equal(second.style.opacity, '1');
 });
 
+test('applyStudioStyleMutation applies rich text style properties across the live selection', () => {
+  const first = createElement('p');
+  const second = createElement('p');
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([first, second], 'italic', 'italic'), {
+    didApply: true,
+    displayValue: 'italic'
+  });
+  assert.deepEqual(styleState.applyStudioStyleMutation([first, second], 'underline', 'underline'), {
+    didApply: true,
+    displayValue: 'underline'
+  });
+  assert.equal(first.style.fontStyle, 'italic');
+  assert.equal(second.style.fontStyle, 'italic');
+  assert.equal(first.style.textDecoration, 'underline');
+  assert.equal(second.style.textDecoration, 'underline');
+});
+
 test('applyStudioStyleMutation normalizes invalid numeric inspector values', () => {
   const element = createElement();
 

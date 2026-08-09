@@ -378,6 +378,30 @@
     if (fontWeightInput) {
       fontWeightInput.value = canonicalFontWeight || computedStyles.fontWeight;
     }
+
+    const canonicalFontStyle = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'font-style'
+    ).toLowerCase();
+    const fontStyleInput = documentRef.getElementById('elFontStyle');
+    if (fontStyleInput) {
+      const fontStyle = canonicalFontStyle || `${computedStyles.fontStyle || 'normal'}`.toLowerCase();
+      fontStyleInput.value = fontStyle === 'italic' ? 'italic' : 'normal';
+    }
+
+    const canonicalTextDecoration = readStudioInspectorCanonicalStyleValue(
+      options.canonicalNode,
+      'text-decoration'
+    ).toLowerCase();
+    const textDecorationInput = documentRef.getElementById('elTextDecoration');
+    if (textDecorationInput) {
+      const textDecoration = canonicalTextDecoration
+        || `${computedStyles.textDecorationLine || computedStyles.textDecoration || 'none'}`.toLowerCase();
+      textDecorationInput.value = textDecoration.split(/\s+/).includes('underline')
+        ? 'underline'
+        : 'none';
+    }
+
     const canonicalTextColor = readStudioInspectorCanonicalStyleValue(
       options.canonicalNode,
       'color'
