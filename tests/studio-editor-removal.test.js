@@ -57,6 +57,42 @@ test('buildStudioRemovalActionState derives delete availability from live unlock
   });
 });
 
+test('createStudioRemovalActionStateBuilder resolves selection and slide readiness through shared callbacks', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide-1' };
+  const selection = [{ id: 'node-1', isConnected: true }];
+  const calls = [];
+  const buildActionState = removal.createStudioRemovalActionStateBuilder({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getSelectedElements() {
+      calls.push('selection');
+      return selection;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return slide;
+    },
+    getLockedState(currentDoc) {
+      calls.push(['locked-state', currentDoc]);
+      return () => false;
+    }
+  });
+
+  const result = buildActionState();
+
+  assert.deepEqual(result.selection, selection);
+  assert.equal(result.canRemove, true);
+  assert.deepEqual(calls, [
+    'document',
+    'selection',
+    ['locked-state', doc],
+    ['active-slide', doc]
+  ]);
+});
+
 test('buildStudioRemovalToolbarState derives delete button state from the removal action state', () => {
   assert.deepEqual(removal.buildStudioRemovalToolbarState([
     { id: 1, isConnected: true, locked: false }

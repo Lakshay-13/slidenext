@@ -34,6 +34,29 @@
     };
   }
 
+  function createStudioRemovalActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getLockedState = typeof options.getLockedState === 'function'
+      ? options.getLockedState
+      : () => () => false;
+
+    return function buildStudioEditorRemovalActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      return buildStudioRemovalActionState(getSelectedElements(), {
+        isLocked: getLockedState(resolvedDoc),
+        canMutateDeck: () => !!getActiveSlide(resolvedDoc)
+      });
+    };
+  }
+
   function buildStudioRemovalToolbarState(elements = [], options = {}) {
     const actionState = buildStudioRemovalActionState(elements, options);
 
@@ -128,6 +151,7 @@
   return {
     getStudioRemovableSelection,
     buildStudioRemovalActionState,
+    createStudioRemovalActionStateBuilder,
     buildStudioRemovalToolbarState,
     renderStudioRemovalToolbarState,
     syncStudioRemovalToolbarState,

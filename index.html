@@ -6692,6 +6692,29 @@
     }
 
     function buildRemovalSelectionActionState(doc = null) {
+      const removalApi = typeof SlideNextStudioEditorRemoval !== 'undefined'
+        ? SlideNextStudioEditorRemoval
+        : null;
+      if (removalApi && typeof removalApi.createStudioRemovalActionStateBuilder === 'function') {
+        if (typeof buildRemovalSelectionActionState.builder !== 'function') {
+          buildRemovalSelectionActionState.builder = removalApi.createStudioRemovalActionStateBuilder({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getLockedState(sourceDoc) {
+              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
+                && typeof buildEditorCanonicalDeck === 'function';
+              return canReadCanonicalState
+                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+                : isElementLocked;
+            }
+          });
+        }
+        if (typeof buildRemovalSelectionActionState.builder === 'function') {
+          return buildRemovalSelectionActionState.builder(doc);
+        }
+      }
+
       const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
         && typeof buildEditorCanonicalDeck === 'function';
       const resolvedDoc = canReadCanonicalState ? (doc || getIframeDoc()) : doc;
