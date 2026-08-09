@@ -33,6 +33,34 @@
     };
   }
 
+  function createStudioAlignmentActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const buildMotionActionState = typeof options.buildMotionActionState === 'function'
+      ? options.buildMotionActionState
+      : () => ({ });
+    const getLockedState = typeof options.getLockedState === 'function'
+      ? options.getLockedState
+      : () => () => false;
+
+    return function buildStudioEditorAlignmentActionState(doc = null) {
+      const motionActionState = buildMotionActionState(doc);
+      const resolvedDoc = doc || getDocument();
+      const alignmentActionState = buildStudioAlignmentActionState(
+        motionActionState.nudgeLayoutItems,
+        {
+          isLocked: getLockedState(resolvedDoc),
+          canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
+        }
+      );
+      return {
+        ...motionActionState,
+        alignmentActionState
+      };
+    };
+  }
+
   function renderStudioAlignmentToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -204,6 +232,7 @@
   return {
     getStudioAlignmentSelection,
     buildStudioAlignmentActionState,
+    createStudioAlignmentActionStateBuilder,
     renderStudioAlignmentToolbarState,
     syncStudioAlignmentToolbarState,
     buildStudioAlignedLayout,

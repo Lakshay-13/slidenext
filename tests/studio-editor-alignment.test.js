@@ -46,6 +46,42 @@ test('getStudioAlignmentSelection filters locked items and requires two unlocked
   }).canAlign, false);
 });
 
+test('createStudioAlignmentActionStateBuilder composes motion state with call-time lock resolution', () => {
+  const doc = { id: 'doc' };
+  const layoutItems = [{ element: { id: 'first' } }, { element: { id: 'second' } }];
+  const motionActionState = {
+    doc,
+    slide: { id: 'slide-1' },
+    canNudge: true,
+    nudgeLayoutItems: layoutItems
+  };
+  const calls = [];
+  const buildActionState = alignment.createStudioAlignmentActionStateBuilder({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    buildMotionActionState(currentDoc) {
+      calls.push(['motion', currentDoc]);
+      return motionActionState;
+    },
+    getLockedState(currentDoc) {
+      calls.push(['locked-state', currentDoc]);
+      return () => false;
+    }
+  });
+
+  const result = buildActionState();
+
+  assert.equal(result.alignmentActionState.canAlign, true);
+  assert.deepEqual(result.alignmentActionState.selection, layoutItems);
+  assert.deepEqual(calls, [
+    ['motion', null],
+    'document',
+    ['locked-state', doc]
+  ]);
+});
+
 test('buildStudioAlignedLayout aligns horizontal edges and preserves parent-relative positions', () => {
   assert.deepEqual(alignment.buildStudioAlignedLayout(buildItems(), 'right'), {
     didChange: true,
