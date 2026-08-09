@@ -86,7 +86,7 @@ test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata up
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -145,7 +145,7 @@ test('setCurrentPresentationCanonicalDeck fails closed when the deck context upd
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -185,7 +185,7 @@ test('setCurrentPresentationCanonicalDeck ignores malformed deck-like metadata u
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -226,7 +226,7 @@ test('setCurrentPresentationCanonicalDeck ignores updates for inactive presentat
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -282,7 +282,7 @@ test('setCurrentPresentationCanonicalDeck delegates metadata application through
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setCurrentPresentationCanonicalDeckSource = extractFunctionSource(
     fileContent,
-    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    function buildEditorCanonicalDeck(doc = getIframeDoc()) {'
   );
 
@@ -353,7 +353,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
 
@@ -487,7 +487,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
 
@@ -600,7 +600,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   );
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
 
@@ -738,7 +738,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
 
@@ -838,7 +838,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {',
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
 

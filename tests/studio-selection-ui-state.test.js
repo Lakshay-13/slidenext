@@ -8,6 +8,7 @@ const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const presentationMetadataFixture = require('./helpers/studio-presentation-metadata-fixture.js');
+const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -16,7 +17,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return `${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 function installSelectionAccessors(context) {

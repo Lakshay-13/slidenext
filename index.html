@@ -1402,6 +1402,7 @@
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
+  <script src="/shared/studio-editor-presentation-url-state-controller.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
@@ -1442,7 +1443,23 @@
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
-    let currentPresentationUrl = '';
+    const studioEditorPresentationUrlStateController = typeof SlideNextStudioEditorPresentationUrlStateController !== 'undefined'
+      && SlideNextStudioEditorPresentationUrlStateController
+      && typeof SlideNextStudioEditorPresentationUrlStateController.createStudioEditorPresentationUrlStateController === 'function'
+      ? SlideNextStudioEditorPresentationUrlStateController.createStudioEditorPresentationUrlStateController({})
+      : null;
+    function getStudioCurrentPresentationUrl() {
+      return studioEditorPresentationUrlStateController
+        && typeof studioEditorPresentationUrlStateController.getPresentationUrl === 'function'
+        ? studioEditorPresentationUrlStateController.getPresentationUrl()
+        : '';
+    }
+    function setStudioCurrentPresentationUrl(nextUrl) {
+      return studioEditorPresentationUrlStateController
+        && typeof studioEditorPresentationUrlStateController.setPresentationUrl === 'function'
+        ? studioEditorPresentationUrlStateController.setPresentationUrl(nextUrl)
+        : '';
+    }
     const studioEditorSessionTokenStateController = typeof SlideNextStudioEditorSessionTokenStateController !== 'undefined'
       && SlideNextStudioEditorSessionTokenStateController
       && typeof SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController === 'function'
@@ -1927,7 +1944,7 @@
                 : null;
             return statusHandler ? statusHandler(...args) : undefined;
           },
-          resolveSourcePath: () => currentPresentationUrl,
+          resolveSourcePath: getStudioCurrentPresentationUrl,
           resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx'
         })
       : null;
@@ -1940,7 +1957,7 @@
             : null,
           documentRef: document,
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
-          resolvePresentationUrl: () => currentPresentationUrl,
+          resolvePresentationUrl: getStudioCurrentPresentationUrl,
           resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
           buildPreviewHtml: () => buildEditorPreviewHtml()
         })
@@ -2807,7 +2824,7 @@
           resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, getStudioEditorSessionToken()),
           resolveStoredCanonicalBaseline: resolveEditorStoredCanonicalBaseline,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getPresentationTitle: getStudioPresentationTitle,
           buildStudioCanonicalDeck: (
             typeof SlideNextStudioDeckContext !== 'undefined'
@@ -2996,7 +3013,7 @@
           setPersistedPlaybackState(playbackState) {
             setStudioPersistedPlaybackState(playbackState);
           },
-          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
@@ -3009,10 +3026,10 @@
       && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController === 'function'
       ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController({
           sessionApi: SlideNextStudioEditorSession,
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
           setPresentationUrl: (value) => {
-            currentPresentationUrl = value;
+            setStudioCurrentPresentationUrl(value);
           },
           setPresentationTitle: (value) => {
             setStudioPresentationTitle(value);
@@ -3038,7 +3055,7 @@
           setCurrentPresentationMetadata: (value) => {
             setStudioCurrentPresentationMetadata(value);
           },
-          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           resolveStoredCanonicalDeck: (metadata) => resolveEditorStoredCanonicalDeck(metadata),
           applyPersistedDeckState: (...args) => applyCurrentStudioPersistedDeckState(...args),
           getIframeDoc,
@@ -3240,7 +3257,7 @@
             : null,
           getDocumentRef: () => document,
           getDocument: getIframeDoc,
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
           resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
             persistedDeckState
@@ -3755,7 +3772,7 @@
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
       const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
       const buildPresentationBaseHref = resolveDeckHtmlMethod('buildPresentationBaseHref');
-      const presentationUrl = currentPresentationUrl || '';
+      const presentationUrl = getStudioCurrentPresentationUrl() || '';
 
       return buildEditorDeckViewHtml(doc, createEditorPreviewDeckViewHtmlOptions({
         buildStudioPreviewHtml,
@@ -3920,7 +3937,7 @@
         if (typeof createCurrentStudioSessionStateReaders.adapter !== 'function') {
           createCurrentStudioSessionStateReaders.adapter = createStudioEditorSessionStateReadersAdapter({
             sessionApi: SlideNextStudioEditorSession,
-            getCurrentPresentationUrl: () => currentPresentationUrl,
+            getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
             getCurrentSessionToken: getStudioEditorSessionToken
           });
         }
@@ -3941,13 +3958,13 @@
         : null;
       if (createStudioSessionStateReaders) {
         return createStudioSessionStateReaders({
-          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           getCurrentSessionToken: getStudioEditorSessionToken
         });
       }
 
       return {
-        getCurrentPresentationUrl: () => currentPresentationUrl,
+        getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
         getCurrentSessionToken: getStudioEditorSessionToken
       };
     }
@@ -4016,7 +4033,7 @@
         if (typeof captureCurrentStudioSessionState.adapter !== 'function') {
           captureCurrentStudioSessionState.adapter = createStudioEditorSessionSnapshotAdapter({
             sessionApi: SlideNextStudioEditorSession,
-            getPresentationUrl: () => currentPresentationUrl,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
             getSessionToken: getStudioEditorSessionToken
           });
         }
@@ -4036,13 +4053,13 @@
         : null;
       if (createStudioSessionSnapshot) {
         return createStudioSessionSnapshot({
-          presentationUrl: currentPresentationUrl,
+          presentationUrl: getStudioCurrentPresentationUrl(),
           sessionToken: getStudioEditorSessionToken()
         });
       }
 
       return {
-        presentationUrl: currentPresentationUrl,
+        presentationUrl: getStudioCurrentPresentationUrl(),
         sessionToken: getStudioEditorSessionToken()
       };
     }
@@ -4070,7 +4087,7 @@
         ? updateCurrentPresentationSessionState.adapter(nextState)
         : SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
-        currentPresentationUrl = sessionStateUpdate.presentationUrl;
+        setStudioCurrentPresentationUrl(sessionStateUpdate.presentationUrl);
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationTitle')) {
         setStudioPresentationTitle(sessionStateUpdate.presentationTitle);
@@ -4340,13 +4357,13 @@
           applyCurrentStudioPersistenceSuccess(
             SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
               initialPersistedDeckState,
-              currentPresentationUrl,
+              getStudioCurrentPresentationUrl(),
               {
                 sessionToken: getStudioEditorSessionToken()
               }
             ),
             {
-              presentationUrl: currentPresentationUrl
+              presentationUrl: getStudioCurrentPresentationUrl()
             }
           );
           if (typeof setEditorLiveCanonicalDeck === 'function') {
@@ -4841,7 +4858,7 @@
       });
     }
 
-    function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {
+    function buildCurrentPresentationMetadataSeed(presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {
       const buildStudioPresentationMetadataSeed = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed === 'function'
         ? SlideNextStudioDeckContext.buildStudioPresentationMetadataSeed
@@ -4863,7 +4880,7 @@
     }
 
     async function loadCurrentPresentationMetadata(
-      presentationUrl = currentPresentationUrl,
+      presentationUrl = getStudioCurrentPresentationUrl(),
       presentationTitle = getStudioPresentationTitle(),
       sessionToken = getStudioEditorSessionToken()
     ) {
@@ -4899,7 +4916,7 @@
         : null;
       if (syncStudioPresentationMetadataPersistedCanonicalDeck) {
         syncStudioPresentationMetadataPersistedCanonicalDeck(nextMetadata, {
-          presentationUrl: typeof currentPresentationUrl === 'string' ? currentPresentationUrl : '',
+          presentationUrl: typeof getStudioCurrentPresentationUrl() === 'string' ? getStudioCurrentPresentationUrl() : '',
           resolveStoredCanonicalDeck: resolveEditorStoredCanonicalDeck,
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
           getIframeDoc,
@@ -4966,10 +4983,10 @@
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
             : null,
-          currentPresentationUrl: typeof currentPresentationUrl === 'string'
-            ? currentPresentationUrl
+          currentPresentationUrl: typeof getStudioCurrentPresentationUrl() === 'string'
+            ? getStudioCurrentPresentationUrl()
             : '',
-          getCurrentPresentationUrl: () => currentPresentationUrl,
+          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           updatePersistedDeckState: updateEditorPersistedDeckState,
           setCurrentPresentationCanonicalDeck
         });
@@ -4978,7 +4995,7 @@
       return applyCurrentStudioPersistedDeckState.adapter(nextState, options);
     }
 
-    function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {
+    function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {
       const applyStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate === 'function'
         ? SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate
@@ -4988,7 +5005,7 @@
         canonicalDeck,
         {
           currentPresentationMetadata: getStudioCurrentPresentationMetadata(),
-          currentPresentationUrl,
+          currentPresentationUrl: getStudioCurrentPresentationUrl(),
           presentationUrl,
           presentationTitle,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
@@ -6845,8 +6862,8 @@
               : '';
           if (!baseUri) return source;
           try {
-            const presentationUri = currentPresentationUrl
-              ? new URL(currentPresentationUrl, baseUri).href
+            const presentationUri = getStudioCurrentPresentationUrl()
+              ? new URL(getStudioCurrentPresentationUrl(), baseUri).href
               : baseUri;
             return new URL(source, presentationUri).href;
           } catch (error) {
@@ -9497,7 +9514,7 @@
     function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {
       const presentationUrl = Object.prototype.hasOwnProperty.call(options, 'presentationUrl')
         ? options.presentationUrl
-        : currentPresentationUrl;
+        : getStudioCurrentPresentationUrl();
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
@@ -9514,7 +9531,7 @@
             persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
               ? SlideNextStudioEditorPersistence
               : null,
-            getPresentationUrl: () => currentPresentationUrl
+            getPresentationUrl: getStudioCurrentPresentationUrl
           });
         }
         const saveRequestOptions = {
@@ -9555,7 +9572,7 @@
         : null;
       if (createStudioSaveRequestBodyBuilder) {
         return createStudioSaveRequestBodyBuilder({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           resolveSaveRequestDeckState: (
             typeof SlideNextStudioEditorPersistence !== 'undefined'
             && SlideNextStudioEditorPersistence
@@ -9766,7 +9783,7 @@
             persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
               ? SlideNextStudioEditorPersistence
               : null,
-            getPresentationUrl: () => currentPresentationUrl,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
             createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
             applyPersistedDeckState: applyCurrentStudioPersistedDeckState
           });
@@ -9787,7 +9804,7 @@
         : null;
       if (createStudioPersistenceHandlerOptionsBuilder) {
         return createStudioPersistenceHandlerOptionsBuilder({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState
         })(options);
@@ -9795,7 +9812,7 @@
 
       const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
         ? options.presentationUrl
-        : currentPresentationUrl;
+        : getStudioCurrentPresentationUrl();
       return createCurrentStudioSessionReaderOptions({
         setPersistedHtml: (nextHtml) => {
           applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
@@ -10025,7 +10042,7 @@
     }
 
     function isCurrentStudioPersistenceTaskStale(
-      presentationUrl = currentPresentationUrl,
+      presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
       const createStudioEditorPersistenceTaskStaleCheckerAdapter = (
@@ -10041,7 +10058,7 @@
             persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
               ? SlideNextStudioEditorPersistence
               : null,
-            getPresentationUrl: () => currentPresentationUrl,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
             getSessionToken: getStudioEditorSessionToken
           });
         }
@@ -10061,7 +10078,7 @@
         : null;
       if (createStudioPersistenceTaskStaleChecker) {
         return createStudioPersistenceTaskStaleChecker({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
           isPersistenceTaskStale: (
             typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -10074,7 +10091,7 @@
       }
 
       return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
-        currentPresentationUrl,
+        currentPresentationUrl: getStudioCurrentPresentationUrl(),
         currentSessionToken: getStudioEditorSessionToken(),
         sessionToken
       });
@@ -10097,7 +10114,7 @@
             persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
               ? SlideNextStudioEditorPersistence
               : null,
-            getPresentationUrl: () => currentPresentationUrl,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
             capturePersistableDeckState: captureEditorPersistableDeckState
           });
         }
@@ -10117,7 +10134,7 @@
         : null;
       if (createStudioPersistenceStateFromDocumentCaptureResolver) {
         return createStudioPersistenceStateFromDocumentCaptureResolver({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           capturePersistableDeckState: captureEditorPersistableDeckState,
           resolvePersistenceStateFromDocumentCapture: (
             typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -10136,7 +10153,7 @@
         doc,
         typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
           ? nextOptions.presentationUrl
-          : currentPresentationUrl,
+          : getStudioCurrentPresentationUrl(),
         {
           capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
             ? nextOptions.capturePersistableDeckState
@@ -10149,7 +10166,7 @@
       );
     }
 
-    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {
+    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {
       const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
         versionLabel,
         cleanHtml,
@@ -10174,7 +10191,7 @@
     async function executeCurrentStudioVersionCheckpointSaveWithFailure(
       versionLabel,
       versionCheckpointPersistenceState,
-      presentationUrl = currentPresentationUrl,
+      presentationUrl = getStudioCurrentPresentationUrl(),
       options = {}
     ) {
       const onSuccess = typeof options.onSuccess === 'function'
@@ -10630,7 +10647,7 @@
 
     function resolveCurrentStudioVersionCheckpointPersistenceState(
       doc = getIframeDoc(),
-      presentationUrl = currentPresentationUrl,
+      presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
       return resolveCurrentStudioPersistenceStateFromCapture(doc, {
@@ -10721,7 +10738,7 @@
       }
     }
 
-    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {
+    async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
       if (isCurrentStudioPersistenceTaskStale(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
       const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
@@ -10773,8 +10790,8 @@
           documentRef: document
         });
         if (!toggleResult || !toggleResult.didToggle) return false;
-        if (toggleResult.shouldOpen && currentPresentationUrl) {
-          loadVersions(currentPresentationUrl, getStudioEditorSessionToken());
+        if (toggleResult.shouldOpen && getStudioCurrentPresentationUrl()) {
+          loadVersions(getStudioCurrentPresentationUrl(), getStudioEditorSessionToken());
         }
         return true;
       }
@@ -10783,8 +10800,8 @@
       if (!menu) return false;
       const shouldOpen = menu.classList.contains('hidden');
       menu.classList.toggle('hidden');
-      if (shouldOpen && currentPresentationUrl) {
-        loadVersions(currentPresentationUrl, getStudioEditorSessionToken());
+      if (shouldOpen && getStudioCurrentPresentationUrl()) {
+        loadVersions(getStudioCurrentPresentationUrl(), getStudioEditorSessionToken());
       }
       return true;
     }
@@ -10806,7 +10823,7 @@
 
     // Fetch versions checklist
     function createCurrentStudioVersionHistoryLoadOptions(
-      presentationUrl = currentPresentationUrl,
+      presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
       const createStudioVersionHistoryLoadOptionsBuilder = (
@@ -10831,7 +10848,7 @@
       });
     }
 
-    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {
+    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
       const createStudioVersionHistoryLoader = (
         typeof SlideNextStudioVersionHistory !== 'undefined'
         && SlideNextStudioVersionHistory
@@ -10841,7 +10858,7 @@
         : null;
       if (createStudioVersionHistoryLoader) {
         return createStudioVersionHistoryLoader({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
           createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
           loadVersionHistory: (
@@ -10879,7 +10896,7 @@
         : null;
       if (createStudioVersionActionContextBuilder) {
         return createStudioVersionActionContextBuilder({
-          getPresentationUrl: () => currentPresentationUrl,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
           getPresentationTitle: getStudioPresentationTitle,
           getPresentationCategory: getStudioPresentationCategory,
           getSessionToken: getStudioEditorSessionToken,
@@ -10894,7 +10911,7 @@
       }
 
       return SlideNextStudioVersionActions.createStudioVersionActionContext(
-        currentPresentationUrl,
+        getStudioCurrentPresentationUrl(),
         getStudioPresentationTitle(),
         getStudioPresentationCategory(),
         {

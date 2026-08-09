@@ -9,6 +9,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
+const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -17,7 +18,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {

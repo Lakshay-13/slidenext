@@ -10,6 +10,7 @@ const versionActions = require('../shared/studio-version-actions.js');
 const versionHistory = require('../shared/studio-version-history.js');
 const versionView = require('../shared/studio-version-view.js');
 const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
+const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -71,6 +72,7 @@ function clearStudioRenameVersionState() {
   return setStudioRenameVersionState();
 }
 ${sessionTokenFixture.getStudioSessionTokenFixtureSource()}
+${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}
 ${fileContent.slice(start, end)}`;
 }
 
@@ -2549,7 +2551,7 @@ test('createCurrentStudioVersionHistoryLoadOptions merges live session readers w
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionHistoryLoadOptions(',
-    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {'
+    '\n\n    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {'
   );
 
   let readerCallCount = 0;
@@ -2613,7 +2615,7 @@ test('createCurrentStudioVersionHistoryLoadOptions reuses the shared version-his
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionHistoryLoadOptions(',
-    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {'
+    '\n\n    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {'
   );
 
   let delegatedArgs = null;
@@ -2657,11 +2659,11 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionHistoryLoadOptions(',
-    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {'
+    '\n\n    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {'
   );
   const loadVersionsSource = extractFunctionSource(
     fileContent,
-    'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
+    'async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // Rollback backup version'
   );
 
@@ -2744,11 +2746,11 @@ test('loadVersions reuses the shared version-history loader when available', asy
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionHistoryLoadOptions(',
-    '\n\n    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {'
+    '\n\n    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {'
   );
   const loadVersionsSource = extractFunctionSource(
     fileContent,
-    'async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
+    'async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // Rollback backup version'
   );
 

@@ -1042,7 +1042,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
   );
 
   const doc = { label: 'iframe-doc' };
@@ -1108,7 +1108,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture delegates through the edit
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
   );
 
   const doc = { label: 'iframe-doc' };
@@ -1153,7 +1153,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture
   const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = currentPresentationUrl, options = {}) {'
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
   );
   const calls = [];
   let adapterCreateCalls = 0;

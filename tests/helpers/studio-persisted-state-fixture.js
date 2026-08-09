@@ -1,5 +1,6 @@
 const sessionTokenFixture = require('./studio-session-token-fixture.js');
 const presentationMetadataFixture = require('./studio-presentation-metadata-fixture.js');
+const presentationUrlFixture = require('./studio-presentation-url-fixture.js');
 
 function normalizePersistedStateMarker(marker) {
   return marker
@@ -49,7 +50,7 @@ function extractPersistedStateAwareFunctionSource(fileContent, startMarker, endM
   if (start === -1) return null;
   const end = fileContent.indexOf(normalizedEndMarker, start);
   if (end === -1) return null;
-  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${getPersistedStateFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${getPersistedStateFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 module.exports = {

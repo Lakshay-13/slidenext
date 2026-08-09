@@ -132,7 +132,7 @@ function loadCreateCurrentStudioFrameLoadHandler(fileContent, context) {
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function buildCurrentPresentationMetadataSeed(presentationUrl = currentPresentationUrl, presentationTitle = getStudioPresentationTitle()) {',
+    'function buildCurrentPresentationMetadataSeed(presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
   vm.runInContext(helperSource, context);

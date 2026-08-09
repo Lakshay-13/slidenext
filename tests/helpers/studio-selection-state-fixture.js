@@ -1,3 +1,5 @@
+const presentationUrlFixture = require('./studio-presentation-url-fixture.js');
+
 function normalizeSelectionMarker(marker) {
   return marker
     .replace(/elements = selectedElements/g, 'elements = getStudioSelectedElements()')
@@ -35,7 +37,7 @@ function extractSelectionAwareFunctionSource(fileContent, startMarker, endMarker
   if (start === -1) return null;
   const end = fileContent.indexOf(normalizedEndMarker, start);
   if (end === -1) return null;
-  return `${getSelectionStateFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${getSelectionStateFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 module.exports = {

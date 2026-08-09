@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const preview = require('../shared/studio-preview.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
+const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -15,7 +16,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return `${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 function createEditorDeckViewSharedOptionsForTest(context, doc) {
