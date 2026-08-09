@@ -66,7 +66,7 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   ]);
 });
 
-test('finalizeEditorDeckMutation supplies the canonical deck builder to shared mutation finalization', () => {
+test('finalizeEditorDeckMutation supplies the live canonical baseline builder to shared mutation finalization', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
@@ -76,7 +76,7 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   let capturedMutationOptions = null;
   let capturedBuildCanonicalDeck = null;
-  let buildCanonicalDeckOptions = null;
+  const baselineCalls = [];
   const context = {
     SlideNextStudioEditorDeckMutation: deckMutation,
     SlideNextStudioEditorMutation: {
@@ -86,9 +86,19 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
         return options.versionLabel;
       }
     },
-    buildEditorMutationCanonicalDeck(_sourceDoc) {
-      buildCanonicalDeckOptions = { preferLiveCanonicalDeck: false };
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      baselineCalls.push(['live', sourceDoc, sessionToken]);
+      return null;
+    },
+    buildEditorCanonicalDeck(sourceDoc) {
+      baselineCalls.push(['fallback', sourceDoc]);
       return canonicalDeck;
+    },
+    getIframeDoc() {
+      return { id: 'doc' };
+    },
+    getStudioEditorSessionToken() {
+      return 'session-1';
     },
     syncSelectionOverlay() {},
     generateThumbnails() {},
@@ -106,5 +116,8 @@ test('finalizeEditorDeckMutation supplies the canonical deck builder to shared m
   }), 'Auto: Styled Element');
   assert.equal(capturedMutationOptions.canonicalDeck, undefined);
   assert.equal(capturedBuildCanonicalDeck(), canonicalDeck);
-  assert.equal(buildCanonicalDeckOptions.preferLiveCanonicalDeck, false);
+  assert.deepEqual(baselineCalls, [
+    ['live', { id: 'doc' }, 'session-1'],
+    ['fallback', { id: 'doc' }]
+  ]);
 });
