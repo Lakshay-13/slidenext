@@ -462,6 +462,33 @@
     });
   }
 
+  function createStudioWallpaperToolbarActionStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : (doc) => resolveStudioWallpaperActionState(doc, {
+          getActiveSlide: options.getActiveSlide
+        });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorWallpaperToolbarActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return renderStudioWallpaperToolbarActionState({
+          documentRef: getDocumentRef(),
+          ...actionState
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function resolveStudioLiveActiveSlide(doc, options = {}) {
     const querySelector = typeof options.querySelector === 'function'
       ? options.querySelector
@@ -1274,6 +1301,7 @@
     resolveStudioWallpaperActionState,
     renderStudioWallpaperToolbarActionState,
     syncStudioWallpaperToolbarActionState,
+    createStudioWallpaperToolbarActionStateSync,
     resolveStudioLiveActiveSlide,
     resolveStudioLiveActiveSlideId,
     resolveStudioFallbackActiveSlideId,

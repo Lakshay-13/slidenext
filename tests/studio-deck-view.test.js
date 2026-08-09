@@ -956,6 +956,52 @@ test('syncStudioWallpaperToolbarActionState resolves and renders wallpaper contr
   assert.deepEqual(controls.wallpaperGradientsList.buttons.map((button) => button.disabled), [false]);
 });
 
+test('createStudioWallpaperToolbarActionStateSync resolves wallpaper state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const controls = {
+    wpTabSolid: { disabled: true },
+    wallpaperCustomColor: { disabled: true },
+    applyWallpaperToAllSlidesBtn: { disabled: true }
+  };
+  const calls = [];
+  const syncState = deckView.createStudioWallpaperToolbarActionStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canUseWallpaperControls: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(Object.values(controls).map((control) => control.disabled), [false, false, false]);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioWallpaperToolbarActionStateSync fails closed when wallpaper state resolution throws', () => {
+  const syncState = deckView.createStudioWallpaperToolbarActionStateSync({
+    getActionState() {
+      throw new Error('wallpaper state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('resolveStudioLiveActiveSlide returns the active slide node when present and null otherwise', () => {
   const activeSlide = { label: 'slide-active' };
   const doc = {

@@ -266,6 +266,53 @@ test('updateWallpaperActionState enables wallpaper controls only when the iframe
   });
 });
 
+test('updateWallpaperActionState caches the shared wallpaper toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateWallpaperActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateWallpaperActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateThemeTokenActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'active-doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioWallpaperActionState() {
+        return {
+          activeSlide: {},
+          canUseWallpaperControls: true
+        };
+      },
+      syncStudioWallpaperToolbarActionState() {
+        throw new Error('direct wallpaper sync should not run');
+      },
+      createStudioWallpaperToolbarActionStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canUseWallpaperControls;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+  vm.runInContext(updateWallpaperActionStateSource, context);
+
+  assert.equal(context.updateWallpaperActionState(doc), true);
+  assert.equal(context.updateWallpaperActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
+
 test('updateWallpaperActionState delegates toolbar rendering to the shared deck view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateWallpaperActionStateSource = extractFunctionSource(

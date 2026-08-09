@@ -11772,6 +11772,20 @@
         if (typeof updateThemeTokenActionState === 'function') updateThemeTokenActionState(doc);
         return false;
       }
+      if (typeof deckView.createStudioWallpaperToolbarActionStateSync === 'function') {
+        if (typeof updateWallpaperActionState.sync !== 'function') {
+          updateWallpaperActionState.sync = deckView.createStudioWallpaperToolbarActionStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => resolveCurrentStudioWallpaperActionState(sourceDoc),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateWallpaperActionState.sync === 'function') {
+          const didSync = updateWallpaperActionState.sync(doc);
+          if (typeof updateThemeTokenActionState === 'function') updateThemeTokenActionState(doc);
+          return didSync;
+        }
+      }
       const didSync = deckView.syncStudioWallpaperToolbarActionState({
         documentRef: document,
         doc,
