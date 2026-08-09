@@ -31,6 +31,28 @@ test('createStudioDeckViewBuildViewOptionsResolver uses the document and extensi
   ]);
 });
 
+test('createStudioDeckViewCanonicalHtmlResolver maps canonical html arguments', () => {
+  const calls = [];
+  const resolveCanonicalHtml = deckView.createStudioDeckViewCanonicalHtmlResolver({
+    buildCanonicalHtml(...args) {
+      calls.push(args);
+      return '<html>canonical</html>';
+    },
+    mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions) {
+      return [canonicalDeck, '/presentations/demo/index.html', deckHtmlOptions];
+    }
+  });
+  const deckHtmlOptions = { renderOptions: { activeSlideId: 'slide-1' } };
+  const canonicalDeck = { slides: [] };
+
+  assert.equal(resolveCanonicalHtml(canonicalDeck, deckHtmlOptions), '<html>canonical</html>');
+  assert.deepEqual(calls, [[
+    canonicalDeck,
+    '/presentations/demo/index.html',
+    deckHtmlOptions
+  ]]);
+});
+
 test('createStudioDeckViewHtmlOptions composes injected view and canonical html resolvers', () => {
   const buildViewOptions = () => ({ activeSlideId: 'slide-1' });
   const buildCanonicalHtml = () => '<html>canonical</html>';

@@ -496,7 +496,9 @@ test('createEditorDeckViewCanonicalHtmlResolver remaps canonical html arguments 
     }
   };
   const calls = [];
-  const context = {};
+  const context = {
+    SlideNextStudioDeckView: deckView
+  };
 
   vm.createContext(context);
   vm.runInContext(createEditorDeckViewCanonicalHtmlResolverSource, context);

@@ -122,6 +122,21 @@
     };
   }
 
+  function createStudioDeckViewCanonicalHtmlResolver(options = {}) {
+    const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
+      ? options.buildCanonicalHtml
+      : null;
+    const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
+      ? options.mapCanonicalHtmlArgs
+      : (canonicalDeck, deckHtmlOptions) => [canonicalDeck, deckHtmlOptions];
+
+    return buildCanonicalHtml
+      ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(
+          ...mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+        )
+      : null;
+  }
+
   function createStudioDeckViewHtmlOptions(options = {}) {
     const buildSharedHtml = typeof options.buildSharedHtml === 'function'
       ? options.buildSharedHtml
@@ -158,6 +173,12 @@
           getDocument: options.getDocument
         })
       : null;
+    const resolvedCanonicalHtml = createCanonicalHtmlResolver
+      ? createCanonicalHtmlResolver({
+          buildCanonicalHtml,
+          mapCanonicalHtmlArgs
+        })
+      : null;
 
     return {
       buildSharedHtml,
@@ -170,11 +191,8 @@
           : extendViewOptions
             ? (sourceDoc) => extendViewOptions(createBuildOptions(sourceDoc), sourceDoc)
             : (sourceDoc) => createBuildOptions(sourceDoc),
-      buildCanonicalHtml: createCanonicalHtmlResolver
-        ? createCanonicalHtmlResolver({
-            buildCanonicalHtml,
-            mapCanonicalHtmlArgs
-          })
+      buildCanonicalHtml: typeof resolvedCanonicalHtml === 'function'
+        ? resolvedCanonicalHtml
         : buildCanonicalHtml
           ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...(
               typeof mapCanonicalHtmlArgs === 'function'
@@ -1151,6 +1169,7 @@
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
     createStudioDeckViewBuildViewOptionsResolver,
+    createStudioDeckViewCanonicalHtmlResolver,
     createStudioDeckViewHtmlOptions,
     createStudioDeckRenderOptions,
     createStudioDeckViewSharedOptions,

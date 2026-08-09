@@ -3308,15 +3308,13 @@
     }
 
     function createEditorDeckViewCanonicalHtmlResolver(options = {}) {
-      const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
-        ? options.buildCanonicalHtml
+      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
+        ? SlideNextStudioDeckView
         : null;
-      const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
-        ? options.mapCanonicalHtmlArgs
-        : (canonicalDeck, deckHtmlOptions) => [canonicalDeck, deckHtmlOptions];
-      return buildCanonicalHtml
-        ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions))
-        : null;
+      if (!deckViewApi || typeof deckViewApi.createStudioDeckViewCanonicalHtmlResolver !== 'function') {
+        return null;
+      }
+      return deckViewApi.createStudioDeckViewCanonicalHtmlResolver(options);
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
