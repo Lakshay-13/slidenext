@@ -290,6 +290,38 @@ test('block controller fails closed when inserting a block canonical mutation th
   assert.equal(appendCount, 0);
 });
 
+test('block controller fails closed when rendering an inserted block node throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{ id: 'hero', nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }] }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let appendCount = 0;
+  const activeSlide = {
+    appendChild() {
+      appendCount += 1;
+    }
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalNode() {
+        throw new Error('block node rendering failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => ({
+      createElement() {
+        return {};
+      }
+    }),
+    getActiveSlide: () => activeSlide,
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  assert.equal(controller.insertBlock('hero'), false);
+  assert.equal(appendCount, 0);
+});
+
 test('block controller renders and inserts canonical block nodes through a markup transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [{

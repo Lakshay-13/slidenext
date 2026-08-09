@@ -186,22 +186,26 @@
     }
 
     function renderCanonicalNodeElement(documentRef, node) {
-      if (!documentRef
-        || typeof documentRef.createElement !== 'function'
-        || !renderApi
-        || typeof renderApi.renderCanonicalNode !== 'function') {
+      try {
+        if (!documentRef
+          || typeof documentRef.createElement !== 'function'
+          || !renderApi
+          || typeof renderApi.renderCanonicalNode !== 'function') {
+          return null;
+        }
+        const html = renderApi.renderCanonicalNode(node, { preferNodeSourceHtml: true });
+        if (typeof html !== 'string' || !html.trim()) return null;
+        const template = documentRef.createElement('template');
+        if (!template) return null;
+        template.innerHTML = html;
+        const element = template.content && template.content.firstElementChild;
+        if (!element) return null;
+        assignRenderedNodeIds(element, node);
+        if (prepareElement) prepareElement(element);
+        return element;
+      } catch (err) {
         return null;
       }
-      const html = renderApi.renderCanonicalNode(node, { preferNodeSourceHtml: true });
-      if (typeof html !== 'string' || !html.trim()) return null;
-      const template = documentRef.createElement('template');
-      if (!template) return null;
-      template.innerHTML = html;
-      const element = template.content && template.content.firstElementChild;
-      if (!element) return null;
-      assignRenderedNodeIds(element, node);
-      if (prepareElement) prepareElement(element);
-      return element;
     }
 
     function insertBlock(blockId, insertionOptions = {}) {
