@@ -141,8 +141,9 @@
         });
         if (canonicalDeckFromSequence) return canonicalDeckFromSequence;
       }
-      if (buildCanonicalDeck && sourceDocument) {
-        const liveCanonicalDeck = buildCanonicalDeck(sourceDocument, {
+      const fallbackCanonicalDeckBuilder = buildCanonicalDeckBaseline || buildCanonicalDeck;
+      if (fallbackCanonicalDeckBuilder && sourceDocument) {
+        const liveCanonicalDeck = fallbackCanonicalDeckBuilder(sourceDocument, {
           preferLiveCanonicalDeck: false
         });
         const insertedIds = insertedItems

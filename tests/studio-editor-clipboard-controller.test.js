@@ -242,12 +242,14 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
     setClipboard: () => {},
     getIframeDoc: () => sourceDocument,
     getActiveSlide: () => ({ id: 'slide-1' }),
-    buildCanonicalDeck: (doc, options) => {
+    buildCanonicalDeck: () => {
+      throw new Error('The mutation-specific builder should not run');
+    },
+    buildCanonicalDeckBaseline: (doc, options) => {
       assert.equal(doc, sourceDocument);
       assert.deepEqual(options, { preferLiveCanonicalDeck: false });
       return insertionCompleted ? liveCanonicalDeck : null;
     },
-    buildCanonicalDeckBaseline: () => ({ slides: [] }),
     insertClipboardPayload: () => {
       insertionCompleted = true;
       return [{ id: 'pasted-flow-node' }];
@@ -355,7 +357,7 @@ test('clipboard controller falls back when live canonical validation throws', ()
     getIframeDoc: () => ({ id: 'editor-document' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
     getCanonicalDeckBaseline: () => ({ invalid: true }),
-    buildCanonicalDeck(_document, options) {
+    buildCanonicalDeckBaseline(_document, options) {
       buildCalls += 1;
       assert.deepEqual(options, { preferLiveCanonicalDeck: false });
       return fallbackCanonicalDeck;
@@ -409,7 +411,10 @@ test('clipboard controller rejects malformed live baselines without a canonical 
     getActiveSlide: () => ({ id: 'slide-1' }),
     getEditorSlideId: (slide) => slide.id,
     getCanonicalDeckBaseline: () => ({ invalid: true }),
-    buildCanonicalDeck: () => fallbackCanonicalDeck,
+    buildCanonicalDeckBaseline: (_document, options) => {
+      assert.deepEqual(options, { preferLiveCanonicalDeck: false });
+      return fallbackCanonicalDeck;
+    },
     insertClipboardPayload: () => [{ dataset: { editorId: 'pasted' } }],
     finalizeInsertedElements: (_items, _label, _transaction, canonicalDeck) => {
       finalizedCanonicalDeck = canonicalDeck;
