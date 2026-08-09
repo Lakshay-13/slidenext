@@ -42,6 +42,36 @@ test('buildStudioCanonicalDuplicateSlideBaseline prefers a valid live canonical 
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalDuplicateSlideBaseline delegates baseline resolution to canonical state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  const getCanonicalDeckBaseline = () => sourceDeck;
+  const buildCanonicalDeck = () => sourceDeck;
+  let readerOptions = null;
+  let readerDocument = null;
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          readerDocument = documentRef;
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline,
+    buildCanonicalDeck,
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeck);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalDuplicateSlideBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
@@ -97,6 +127,17 @@ test('buildStudioCanonicalDuplicateSlideBaseline uses structural validation with
     }),
     validDeck
   );
+});
+
+test('buildStudioCanonicalDuplicateSlideBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeck() {
+      throw new Error('compatibility rebuild failed');
+    }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalDuplicateSlideDeck imports and inserts a duplicate without mutating the source', () => {
