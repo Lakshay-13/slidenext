@@ -60,6 +60,29 @@ test('buildStudioCanonicalRemovalBaseline rejects invalid compatibility baseline
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalRemovalBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    removeCanonicalNodes() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating the source', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
