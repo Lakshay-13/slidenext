@@ -294,7 +294,11 @@
     const slideId = typeof options.slideId === 'string' ? options.slideId : '';
 
     if (!removeCanonicalSlide || !canonicalDeckBeforeMutation || !slideId) return null;
-    return removeCanonicalSlide(canonicalDeckBeforeMutation, slideId);
+    try {
+      return removeCanonicalSlide(canonicalDeckBeforeMutation, slideId);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalDeleteSlideMutationBuilders(options = {}) {
