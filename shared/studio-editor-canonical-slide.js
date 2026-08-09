@@ -342,7 +342,11 @@
       || sourceSlideId === targetSlideId) {
       return null;
     }
-    return reorderCanonicalSlides(canonicalDeckBeforeMutation, sourceSlideId, targetSlideId);
+    try {
+      return reorderCanonicalSlides(canonicalDeckBeforeMutation, sourceSlideId, targetSlideId);
+    } catch (error) {
+      return null;
+    }
   }
 
   function createStudioCanonicalReorderSlideMutationBuilders(options = {}) {

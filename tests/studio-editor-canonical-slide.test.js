@@ -586,6 +586,26 @@ test('buildStudioCanonicalReorderSlideDeck moves the requested slide without mut
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-2', 'slide-3']);
 });
 
+test('buildStudioCanonicalReorderSlideDeck fails closed when the canonical API throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    reorderCanonicalSlides() {
+      throw new Error('reorder failed');
+    }
+  };
+
+  const result = canonicalSlide.buildStudioCanonicalReorderSlideDeck({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
+    }),
+    sourceSlide: { id: 'slide-1' },
+    targetSlide: { id: 'slide-2' }
+  });
+
+  assert.equal(result, null);
+});
+
 test('createStudioCanonicalReorderSlideMutationBuilders shares canonical API wiring', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
