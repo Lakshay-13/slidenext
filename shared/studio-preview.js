@@ -327,6 +327,131 @@
     return true;
   }
 
+  function normalizeSourceViewMode(mode) {
+    return `${mode}`.trim().toLowerCase() === 'css' ? 'css' : 'html';
+  }
+
+  function getSourceViewMode(modalEl) {
+    if (!modalEl) return 'html';
+    if (modalEl.dataset && typeof modalEl.dataset.sourceMode === 'string') {
+      return normalizeSourceViewMode(modalEl.dataset.sourceMode);
+    }
+    if (typeof modalEl.getAttribute === 'function') {
+      return normalizeSourceViewMode(modalEl.getAttribute('data-source-mode') || 'html');
+    }
+    return 'html';
+  }
+
+  function setSourceViewMode(modalEl, mode) {
+    if (!modalEl) return 'html';
+    const normalizedMode = normalizeSourceViewMode(mode);
+    if (modalEl.dataset) modalEl.dataset.sourceMode = normalizedMode;
+    if (typeof modalEl.setAttribute === 'function') {
+      modalEl.setAttribute('data-source-mode', normalizedMode);
+    }
+    return normalizedMode;
+  }
+
+  function resolveSourceViewElements(documentRef, options = {}) {
+    return {
+      modalEl: options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal'),
+      contentEl: options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent'),
+      textareaEl: options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent'),
+      htmlTabEl: options.htmlTabEl || resolvePreviewDocumentElement(documentRef, 'sourceViewHtmlTab'),
+      cssTabEl: options.cssTabEl || resolvePreviewDocumentElement(documentRef, 'sourceViewCssTab'),
+      modeLabelEl: options.modeLabelEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModeLabel')
+    };
+  }
+
+  function syncSourceViewModeUi(options = {}) {
+    const mode = normalizeSourceViewMode(options.mode);
+    const activeClassName = options.activeClassName || 'bg-white/10';
+    const inactiveClassName = options.inactiveClassName || 'text-zinc-500';
+    const htmlTabEl = options.htmlTabEl;
+    const cssTabEl = options.cssTabEl;
+    [[htmlTabEl, mode === 'html'], [cssTabEl, mode === 'css']].forEach(([tab, isActive]) => {
+      if (!tab) return;
+      if (tab.classList) {
+        if (isActive) {
+          tab.classList.add(activeClassName);
+          tab.classList.remove(inactiveClassName);
+        } else {
+          tab.classList.remove(activeClassName);
+          tab.classList.add(inactiveClassName);
+        }
+      }
+      if (typeof tab.setAttribute === 'function') {
+        tab.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      }
+    });
+    if (options.modeLabelEl) {
+      options.modeLabelEl.textContent = mode === 'css' ? 'CSS' : 'HTML';
+    }
+    if (options.textareaEl && typeof options.textareaEl.setAttribute === 'function') {
+      options.textareaEl.setAttribute('aria-label', `${mode.toUpperCase()} source editor`);
+    }
+    return true;
+  }
+
+  function getSourceViewBuffers(modalEl) {
+    if (!modalEl) return {};
+    if (!modalEl.__slideNextSourceBuffers || typeof modalEl.__slideNextSourceBuffers !== 'object') {
+      modalEl.__slideNextSourceBuffers = {};
+    }
+    return modalEl.__slideNextSourceBuffers;
+  }
+
+  function resolveSourceViewBuffer(options = {}, mode) {
+    const normalizedMode = normalizeSourceViewMode(mode);
+    if (normalizedMode === 'css' && typeof options.resolveSourceCss === 'function') {
+      return options.resolveSourceCss();
+    }
+    if (normalizedMode === 'html' && typeof options.resolveSourceHtml === 'function') {
+      return options.resolveSourceHtml();
+    }
+    return normalizedMode === 'css' ? options.sourceCss : options.sourceHtml;
+  }
+
+  function renderSourceViewMode(options = {}) {
+    const modalEl = options.modalEl;
+    const textareaEl = options.textareaEl;
+    if (!modalEl || !textareaEl) return false;
+    const mode = getSourceViewMode(modalEl);
+    const buffers = getSourceViewBuffers(modalEl);
+    if (!Object.prototype.hasOwnProperty.call(buffers, mode)) {
+      const resolvedBuffer = resolveSourceViewBuffer(options, mode);
+      buffers[mode] = typeof resolvedBuffer === 'string'
+        ? resolvedBuffer
+        : (mode === 'html' ? (options.emptySourceHtml || '<!DOCTYPE html>\n<!-- No source available -->') : '');
+    }
+    textareaEl.value = buffers[mode];
+    textareaEl.readOnly = options.editable !== true;
+    textareaEl.scrollTop = 0;
+    syncSourceViewModeUi({
+      ...options,
+      mode,
+      textareaEl
+    });
+    return true;
+  }
+
+  function setStudioSourceViewMode(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const elements = resolveSourceViewElements(documentRef, options);
+    if (!elements.modalEl || !elements.textareaEl) return false;
+    const currentMode = getSourceViewMode(elements.modalEl);
+    const buffers = getSourceViewBuffers(elements.modalEl);
+    buffers[currentMode] = typeof elements.textareaEl.value === 'string'
+      ? elements.textareaEl.value
+      : '';
+    const nextMode = setSourceViewMode(elements.modalEl, options.mode);
+    return renderSourceViewMode({
+      ...options,
+      ...elements,
+      mode: nextMode
+    });
+  }
+
   function openSourceViewModal(options = {}) {
     const {
       modalEl,
@@ -334,18 +459,23 @@
       textareaEl,
       errorEl,
       sourceHtml,
+      sourceCss,
       editable = false,
-      emptySourceHtml = '<!DOCTYPE html>\n<!-- No source available -->'
+      emptySourceHtml = '<!DOCTYPE html>\n<!-- No source available -->',
+      sourceMode = 'html'
     } = options;
 
     if (!modalEl || !contentEl) return;
 
     clearSourceViewError(errorEl);
-    if (textareaEl) {
-      textareaEl.value = sourceHtml || emptySourceHtml;
-      textareaEl.readOnly = editable !== true;
-      textareaEl.scrollTop = 0;
+    if (modalEl) {
+      modalEl.__slideNextSourceBuffers = {
+        html: typeof sourceHtml === 'string' && sourceHtml ? sourceHtml : emptySourceHtml,
+        css: typeof sourceCss === 'string' ? sourceCss : ''
+      };
+      setSourceViewMode(modalEl, sourceMode);
     }
+    renderSourceViewMode({ ...options, modalEl, contentEl, textareaEl, editable });
 
     if (modalVisibility && typeof modalVisibility.cancelStudioModalHide === 'function') {
       modalVisibility.cancelStudioModalHide(modalEl);
@@ -380,9 +510,8 @@
       return false;
     }
 
-    const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal');
-    const contentEl = options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent');
-    const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    const sourceViewElements = resolveSourceViewElements(documentRef, options);
+    const { modalEl, contentEl, textareaEl } = sourceViewElements;
     const errorEl = options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError');
     if (!modalEl || !contentEl || !textareaEl) {
       return false;
@@ -391,15 +520,24 @@
     const sourceHtml = typeof options.resolveSourceHtml === 'function'
       ? options.resolveSourceHtml()
       : options.sourceHtml;
+    const sourceCss = typeof options.resolveSourceCss === 'function'
+      ? options.resolveSourceCss()
+      : options.sourceCss;
     openSourceViewModal({
       ...options,
-      modalEl,
-      contentEl,
-      textareaEl,
+      ...sourceViewElements,
       errorEl,
-      sourceHtml
+      sourceHtml,
+      sourceCss
     });
     return true;
+  }
+
+  function getSourceViewApplyMode(options = {}) {
+    const documentRef = resolvePreviewDocument(options);
+    const elements = resolveSourceViewElements(documentRef, options);
+    const mode = getSourceViewMode(elements.modalEl);
+    return { ...elements, mode };
   }
 
   function closeSourceViewModal(options = {}) {
@@ -435,19 +573,25 @@
 
   function applySourceViewModal(options = {}) {
     const documentRef = resolvePreviewDocument(options);
-    const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    const applyMode = getSourceViewApplyMode(options);
+    const textareaEl = applyMode.textareaEl;
     const errorEl = options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError');
-    if (!textareaEl || typeof options.onApplySourceHtml !== 'function') {
+    const applyCallback = applyMode.mode === 'css'
+      ? options.onApplySourceCss
+      : options.onApplySourceHtml;
+    if (!textareaEl || typeof applyCallback !== 'function') {
       renderSourceViewError(errorEl, 'Source editor is unavailable');
       return false;
     }
 
     const sourceHtml = typeof textareaEl.value === 'string' ? textareaEl.value : '';
-    const result = options.onApplySourceHtml(sourceHtml);
+    const buffers = getSourceViewBuffers(applyMode.modalEl);
+    buffers[applyMode.mode] = sourceHtml;
+    const result = applyCallback(sourceHtml);
     if (result === false || (result && result.success === false)) {
       const message = result && typeof result.error === 'string' && result.error.trim()
         ? result.error.trim()
-        : 'Source HTML could not be applied';
+        : applyMode.mode === 'css' ? 'Source CSS could not be applied' : 'Source HTML could not be applied';
       renderSourceViewError(errorEl, message);
       return false;
     }
@@ -486,6 +630,10 @@
     } = options;
 
     clearSourceViewError(errorEl);
+    if (modalEl) {
+      modalEl.__slideNextSourceBuffers = {};
+      setSourceViewMode(modalEl, 'html');
+    }
     if (textareaEl) {
       textareaEl.value = '';
       textareaEl.scrollTop = 0;
@@ -506,12 +654,13 @@
 
   function resetStudioSourceViewUiState(options = {}) {
     const documentRef = resolvePreviewDocument(options);
+    const elements = resolveSourceViewElements(documentRef, options);
     resetSourceViewModal({
-      modalEl: options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal'),
-      contentEl: options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent'),
-      textareaEl: options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent'),
+      ...options,
+      ...elements,
       errorEl: options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError')
     });
+    syncSourceViewModeUi({ ...elements, mode: 'html' });
   }
 
   return {
@@ -531,6 +680,7 @@
     toggleStudioPresentationFullscreen,
     openSourceViewModal,
     openStudioSourceView,
+    setStudioSourceViewMode,
     closeSourceViewModal,
     closeStudioSourceView,
     applySourceViewModal,

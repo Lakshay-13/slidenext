@@ -538,6 +538,102 @@ test('openStudioSourceView resolves source modal chrome from the document', asyn
   assert.equal(contentEl.classList.contains('scale-100'), true);
 });
 
+test('source view preserves HTML and CSS buffers while switching modes', async () => {
+  const attributes = {};
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0']),
+    setAttribute(name, value) { attributes[name] = value; },
+    getAttribute(name) { return attributes[name] || null; }
+  };
+  const contentEl = { classList: createClassList(['scale-95']) };
+  const textareaEl = { value: '', scrollTop: 0, setAttribute() {} };
+  const htmlTabEl = { classList: createClassList(), setAttribute() {} };
+  const cssTabEl = { classList: createClassList(), setAttribute() {} };
+  const modeLabelEl = { textContent: '' };
+  const documentStub = {
+    getElementById(id) {
+      return {
+        openSourceViewBtn: { disabled: false },
+        sourceViewModal: modalEl,
+        sourceViewModalContent: contentEl,
+        sourceViewContent: textareaEl,
+        sourceViewHtmlTab: htmlTabEl,
+        sourceViewCssTab: cssTabEl,
+        sourceViewModeLabel: modeLabelEl
+      }[id] || null;
+    }
+  };
+
+  assert.equal(preview.openStudioSourceView({
+    document: documentStub,
+    sourceHtml: '<html>source</html>',
+    sourceCss: '.slide { color: red; }',
+    editable: true
+  }), true);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(textareaEl.value, '<html>source</html>');
+  assert.equal(modeLabelEl.textContent, 'HTML');
+
+  assert.equal(preview.setStudioSourceViewMode({
+    document: documentStub,
+    mode: 'css',
+    editable: true,
+    resolveSourceHtml: () => '<html>source</html>',
+    resolveSourceCss: () => '.slide { color: red; }'
+  }), true);
+  assert.equal(textareaEl.value, '.slide { color: red; }');
+  textareaEl.value = '.slide { color: blue; }';
+
+  assert.equal(preview.setStudioSourceViewMode({
+    document: documentStub,
+    mode: 'html',
+    editable: true,
+    resolveSourceHtml: () => '<html>source</html>',
+    resolveSourceCss: () => '.slide { color: red; }'
+  }), true);
+  assert.equal(textareaEl.value, '<html>source</html>');
+  assert.equal(modeLabelEl.textContent, 'HTML');
+
+  assert.equal(preview.setStudioSourceViewMode({
+    document: documentStub,
+    mode: 'css',
+    editable: true,
+    resolveSourceCss: () => '.slide { color: red; }'
+  }), true);
+  assert.equal(textareaEl.value, '.slide { color: blue; }');
+});
+
+test('applyStudioSourceView dispatches CSS mode to the CSS callback', () => {
+  const attributes = { 'data-source-mode': 'css' };
+  const modalEl = {
+    classList: createClassList(['opacity-100']),
+    getAttribute(name) { return attributes[name] || null; },
+    setAttribute(name, value) { attributes[name] = value; }
+  };
+  const contentEl = { classList: createClassList(['scale-100']) };
+  const textareaEl = { value: '.slide { color: blue; }' };
+  const documentStub = {
+    getElementById(id) {
+      return {
+        sourceViewModal: modalEl,
+        sourceViewModalContent: contentEl,
+        sourceViewContent: textareaEl
+      }[id] || null;
+    }
+  };
+  let appliedCss = '';
+
+  assert.equal(preview.applyStudioSourceView({
+    canOpenSourceView: true,
+    document: documentStub,
+    onApplySourceCss(css) {
+      appliedCss = css;
+      return { success: true };
+    }
+  }), true);
+  assert.equal(appliedCss, textareaEl.value);
+});
+
 test('applyStudioSourceView forwards edited source and closes only after a successful apply', async () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };

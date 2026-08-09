@@ -59,6 +59,12 @@
     const resolveSourceHtml = typeof options.resolveSourceHtml === 'function'
       ? options.resolveSourceHtml
       : () => '';
+    const resolveSourceCss = typeof options.resolveSourceCss === 'function'
+      ? options.resolveSourceCss
+      : () => '';
+    const applySourceCss = typeof options.applySourceCss === 'function'
+      ? options.applySourceCss
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -89,6 +95,7 @@
     const afterApply = typeof options.afterApply === 'function'
       ? options.afterApply
       : null;
+    let sourceMode = 'html';
 
     function canUseDeckActions() {
       const actionState = resolveReadyState();
@@ -105,8 +112,27 @@
         canOpenSourceView: true,
         document: documentRef,
         editable: true,
-        resolveSourceHtml
+        resolveSourceHtml,
+        resolveSourceCss,
+        sourceMode
       });
+    }
+
+    function setMode(mode = 'html') {
+      const normalizedMode = `${mode}`.trim().toLowerCase() === 'css' ? 'css' : 'html';
+      if (!previewApi || typeof previewApi.setStudioSourceViewMode !== 'function') {
+        return false;
+      }
+      const didSetMode = previewApi.setStudioSourceViewMode({
+        canOpenSourceView: true,
+        document: documentRef,
+        mode: normalizedMode,
+        editable: true,
+        resolveSourceHtml,
+        resolveSourceCss
+      });
+      if (didSetMode) sourceMode = normalizedMode;
+      return didSetMode;
     }
 
     function applySourceHtml(sourceHtml = '') {
@@ -161,7 +187,8 @@
       return previewApi.applyStudioSourceView({
         canOpenSourceView: true,
         document: documentRef,
-        onApplySourceHtml: applySourceHtml
+        onApplySourceHtml: applySourceHtml,
+        onApplySourceCss: applySourceCss
       });
     }
 
@@ -178,6 +205,7 @@
         return false;
       }
       previewApi.resetStudioSourceViewUiState({ document: documentRef });
+      sourceMode = 'html';
       return true;
     }
 
@@ -191,6 +219,7 @@
 
     return {
       open,
+      setMode,
       applySourceHtml,
       apply,
       close,

@@ -599,18 +599,23 @@
     </div>
   </div>
 
-  <!-- HTML Source View Modal -->
+  <!-- HTML/CSS Source View Modal -->
   <div id="sourceViewModal" class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
     <div class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl w-[min(1100px,92vw)] h-[min(760px,82vh)] p-5 flex flex-col gap-4 transform scale-95 transition-transform duration-200" id="sourceViewModalContent">
       <div class="flex items-start justify-between gap-4">
           <div class="flex items-start gap-3">
           <span class="material-symbols-outlined text-[#7028d0] text-2xl">code</span>
           <div class="flex flex-col gap-1">
-            <h3 class="text-base font-bold text-white">HTML Source Editor</h3>
-            <p class="text-xs text-zinc-400 leading-relaxed">Edit the source, then Apply to rebuild the deck through the canonical model and history pipeline.</p>
+            <h3 class="text-base font-bold text-white">HTML/CSS Source Editor</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">Edit HTML or theme CSS, then Apply through the canonical model and history pipeline.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1 rounded-lg border border-white/10 bg-black/30 p-1" role="group" aria-label="Source mode">
+            <button id="sourceViewHtmlTab" type="button" onclick="setSourceViewMode('html')" aria-pressed="true" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white">HTML</button>
+            <button id="sourceViewCssTab" type="button" onclick="setSourceViewMode('css')" aria-pressed="false" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">CSS</button>
+          </div>
+          <span id="sourceViewModeLabel" class="sr-only">HTML</span>
           <button id="applySourceViewBtn" onclick="applySourceViewModal()" class="px-3 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all">Apply</button>
           <button onclick="closeSourceViewModal()" class="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Close</button>
         </div>
@@ -1535,6 +1540,7 @@
   <script src="/shared/studio-pdf-export.js"></script>
   <script src="/shared/studio-pptx-export.js"></script>
   <script src="/shared/studio-editor-source.js"></script>
+  <script src="/shared/studio-editor-source-mode.js"></script>
   <script src="/shared/studio-editor-source-controller.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
@@ -2208,6 +2214,8 @@
             ? SlideNextStudioEditorSource
             : null,
           resolveSourceHtml: () => buildEditorSourceHtml(),
+          resolveSourceCss: () => resolveEditorSourceCss(),
+          applySourceCss: (sourceCss) => applyEditorSourceCss(sourceCss),
           sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
@@ -4513,6 +4521,43 @@
       return buildEditorSourceDeckHtml(doc);
     }
 
+    function resolveEditorSourceCss() {
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+          ? resolveEditorUiCanonicalDeck(getIframeDoc())
+          : buildEditorCanonicalDeck(getIframeDoc());
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      const canonicalCss = canonicalDeck
+        && canonicalDeck.theme
+        && typeof canonicalDeck.theme.customCss === 'string'
+        ? canonicalDeck.theme.customCss
+        : '';
+      if (canonicalCss.trim()) return canonicalCss;
+
+      const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+        ? SlideNextStudioEditorSourceMode
+        : null;
+      return sourceModeApi && typeof sourceModeApi.extractStudioSourceCss === 'function'
+        ? sourceModeApi.extractStudioSourceCss(buildEditorSourceHtml())
+        : '';
+    }
+
+    function applyEditorSourceCss(sourceCss = '') {
+      const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+        ? SlideNextStudioEditorSourceMode
+        : null;
+      if (!sourceModeApi || typeof sourceModeApi.replaceStudioSourceCss !== 'function') {
+        return { success: false, error: 'Source CSS editor is unavailable' };
+      }
+      return applyEditorSourceHtml(sourceModeApi.replaceStudioSourceCss(
+        buildEditorSourceHtml(),
+        sourceCss
+      ));
+    }
+
     function launchPresentationHtml(html, startSlideIdx) {
       SlideNextStudioPreview.launchPresentationHtml({
         document,
@@ -4524,6 +4569,12 @@
     function openSourceViewModal() {
       return studioEditorSourceController
         ? studioEditorSourceController.open()
+        : false;
+    }
+
+    function setSourceViewMode(mode = 'html') {
+      return studioEditorSourceController
+        ? studioEditorSourceController.setMode(mode)
         : false;
     }
 

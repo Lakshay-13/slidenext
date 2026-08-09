@@ -79,6 +79,8 @@
           documentRef: options.documentRef,
           resolveReadyState: options.resolveReadyState,
           resolveSourceHtml: options.resolveSourceHtml,
+          resolveSourceCss: options.resolveSourceCss,
+          applySourceCss: options.applySourceCss,
           buildCanonicalDeck: options.sourceBuildCanonicalDeck,
           getCanonicalDeckBaseline: options.sourceGetCanonicalDeckBaseline,
           getCurrentDocument: options.getCurrentDocument,

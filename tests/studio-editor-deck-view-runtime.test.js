@@ -51,6 +51,8 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     previewIsCanonicalDeck() {},
     sourceApi: {},
     resolveSourceHtml() {},
+    resolveSourceCss() {},
+    applySourceCss() {},
     sourceBuildCanonicalDeck() {},
     sourceGetCanonicalDeckBaseline() {},
     getCurrentDocument() {},
@@ -84,6 +86,8 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
   assert.equal(calls[2][1].buildPreviewHtml, callbacks.previewBuildHtml);
   assert.equal(calls[2][1].isCanonicalDeck, callbacks.previewIsCanonicalDeck);
   assert.equal(calls[3][1].buildCanonicalDeck, callbacks.sourceBuildCanonicalDeck);
+  assert.equal(calls[3][1].resolveSourceCss, callbacks.resolveSourceCss);
+  assert.equal(calls[3][1].applySourceCss, callbacks.applySourceCss);
   assert.equal(calls[3][1].afterApply, callbacks.afterApply);
 });
 

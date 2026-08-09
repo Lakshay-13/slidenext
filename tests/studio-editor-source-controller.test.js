@@ -46,6 +46,10 @@ function createController(overrides = {}) {
       options.onApplySourceHtml('<html><body><section class="slide">Edited</section></body></html>');
       return true;
     },
+    setStudioSourceViewMode(options) {
+      calls.push(['mode', options]);
+      return true;
+    },
     closeStudioSourceView(options) {
       calls.push(['close', options]);
     },
@@ -69,6 +73,7 @@ function createController(overrides = {}) {
     documentRef,
     resolveReadyState: () => ({ canUseDeckActions: true }),
     resolveSourceHtml: () => '<html>source</html>',
+    resolveSourceCss: () => '.slide { color: red; }',
     buildCanonicalDeck: (document) => ({ slides: [{ id: document.id }] }),
     getCurrentDocument: () => ({ id: 'live-frame' }),
     resolveActiveSlideId: () => 'slide-1',
@@ -104,9 +109,21 @@ test('source controller delegates modal operations and source application', () =
   assert.equal(calls[0][1].document.id, 'editor-document');
   assert.equal(calls[0][1].editable, true);
   assert.equal(calls[0][1].resolveSourceHtml(), '<html>source</html>');
+  assert.equal(calls[0][1].resolveSourceCss(), '.slide { color: red; }');
   assert.equal(calls[1][1].document.id, 'editor-document');
   assert.equal(calls[2][2].buildCanonicalDeck({ id: 'parsed' }).slides[0].id, 'parsed');
   assert.equal(calls[2][2].getCurrentDocument().id, 'live-frame');
+});
+
+test('source controller delegates source mode switching and tracks the active mode', () => {
+  const { calls, controller } = createController();
+
+  assert.equal(controller.setMode('css'), true);
+  assert.equal(calls[0][0], 'mode');
+  assert.equal(calls[0][1].mode, 'css');
+  assert.equal(calls[0][1].resolveSourceCss(), '.slide { color: red; }');
+  assert.equal(controller.setMode('html'), true);
+  assert.equal(calls[1][1].mode, 'html');
 });
 
 test('source controller blocks modal operations when deck actions are unavailable', () => {
