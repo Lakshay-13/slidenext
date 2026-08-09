@@ -1411,6 +1411,7 @@
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-url-state-controller.js"></script>
+  <script src="/shared/studio-editor-session-state.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
@@ -1456,38 +1457,33 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
-    const studioEditorPresentationUrlStateController = typeof SlideNextStudioEditorPresentationUrlStateController !== 'undefined'
-      && SlideNextStudioEditorPresentationUrlStateController
-      && typeof SlideNextStudioEditorPresentationUrlStateController.createStudioEditorPresentationUrlStateController === 'function'
-      ? SlideNextStudioEditorPresentationUrlStateController.createStudioEditorPresentationUrlStateController({})
+    const studioEditorSessionStateController = typeof SlideNextStudioEditorSessionState !== 'undefined'
+      && SlideNextStudioEditorSessionState
+      && typeof SlideNextStudioEditorSessionState.createStudioEditorSessionStateController === 'function'
+      ? SlideNextStudioEditorSessionState.createStudioEditorSessionStateController({})
       : null;
     function getStudioCurrentPresentationUrl() {
-      return studioEditorPresentationUrlStateController
-        && typeof studioEditorPresentationUrlStateController.getPresentationUrl === 'function'
-        ? studioEditorPresentationUrlStateController.getPresentationUrl()
+      return studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.getPresentationUrl === 'function'
+        ? studioEditorSessionStateController.getPresentationUrl()
         : '';
     }
     function setStudioCurrentPresentationUrl(nextUrl) {
-      return studioEditorPresentationUrlStateController
-        && typeof studioEditorPresentationUrlStateController.setPresentationUrl === 'function'
-        ? studioEditorPresentationUrlStateController.setPresentationUrl(nextUrl)
+      return studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.setPresentationUrl === 'function'
+        ? studioEditorSessionStateController.setPresentationUrl(nextUrl)
         : '';
     }
-    const studioEditorSessionTokenStateController = typeof SlideNextStudioEditorSessionTokenStateController !== 'undefined'
-      && SlideNextStudioEditorSessionTokenStateController
-      && typeof SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController === 'function'
-      ? SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController({})
-      : null;
     function getStudioEditorSessionToken() {
-      return studioEditorSessionTokenStateController
-        && typeof studioEditorSessionTokenStateController.getSessionToken === 'function'
-        ? studioEditorSessionTokenStateController.getSessionToken()
+      return studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.getSessionToken === 'function'
+        ? studioEditorSessionStateController.getSessionToken()
         : 0;
     }
     function advanceStudioEditorSessionToken() {
-      return studioEditorSessionTokenStateController
-        && typeof studioEditorSessionTokenStateController.advanceSessionToken === 'function'
-        ? studioEditorSessionTokenStateController.advanceSessionToken()
+      return studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.advanceSessionToken === 'function'
+        ? studioEditorSessionStateController.advanceSessionToken()
         : 0;
     }
     const studioEditorPresentationMetadataStateController = typeof SlideNextStudioEditorPresentationMetadataStateController !== 'undefined'
