@@ -394,7 +394,12 @@
       : captureStudioHistoryState;
 
     return function captureHistoryStateAction() {
-      const historyEntry = createHistoryEntry();
+      let historyEntry = null;
+      try {
+        historyEntry = createHistoryEntry();
+      } catch (err) {
+        historyEntry = null;
+      }
       const currentUndoStack = getUndoStack();
       const currentRedoStack = getRedoStack();
       if (!historyEntry) {

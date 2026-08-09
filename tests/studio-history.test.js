@@ -674,6 +674,50 @@ test('createStudioHistoryStateCapturer updates history stacks only when a new en
   ]);
 });
 
+test('createStudioHistoryStateCapturer keeps history stable when entry creation fails', () => {
+  const calls = [];
+  const undoStack = ['undo-entry'];
+  const redoStack = ['redo-entry'];
+  const capturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      calls.push('createHistoryEntry');
+      throw new Error('history entry failed');
+    },
+    getUndoStack() {
+      calls.push('getUndoStack');
+      return undoStack;
+    },
+    getRedoStack() {
+      calls.push('getRedoStack');
+      return redoStack;
+    },
+    afterCapture() {
+      calls.push('afterCapture');
+    },
+    updateHistoryButtons() {
+      calls.push('updateHistoryButtons');
+    }
+  });
+
+  assert.doesNotThrow(() => capturer());
+  assert.deepEqual(capturer(), {
+    undoStack,
+    redoStack,
+    historyEntry: null,
+    didCapture: false
+  });
+  assert.deepEqual(calls, [
+    'createHistoryEntry',
+    'getUndoStack',
+    'getRedoStack',
+    'afterCapture',
+    'createHistoryEntry',
+    'getUndoStack',
+    'getRedoStack',
+    'afterCapture'
+  ]);
+});
+
 test('createStudioHistorySaveHandler merges transactions and schedules history capture', () => {
   const transactionCalls = [];
   const transactionApi = {
