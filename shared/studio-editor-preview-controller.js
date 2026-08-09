@@ -27,6 +27,28 @@
       ? options.buildPreviewHtml
       : () => '';
 
+    function createStudioEditorPreviewFallbackHtmlTransformer(transformOptions = {}) {
+      const injectBaseHrefIntoHtml = typeof transformOptions.injectBaseHrefIntoHtml === 'function'
+        ? transformOptions.injectBaseHrefIntoHtml
+        : null;
+      const buildPresentationBaseHref = typeof transformOptions.buildPresentationBaseHref === 'function'
+        ? transformOptions.buildPresentationBaseHref
+        : null;
+      const presentationUrl = typeof transformOptions.presentationUrl === 'string'
+        ? transformOptions.presentationUrl
+        : '';
+
+      return function transformFallbackHtml(fallbackHtml, deckHtmlOptions = {}) {
+        if (!fallbackHtml || !injectBaseHrefIntoHtml || !buildPresentationBaseHref) {
+          return fallbackHtml;
+        }
+        return injectBaseHrefIntoHtml(
+          fallbackHtml,
+          buildPresentationBaseHref(presentationUrl, deckHtmlOptions)
+        );
+      };
+    }
+
     function launch() {
       const readyState = resolveReadyState();
       if (!readyState || !readyState.canLaunchPreview) return false;
@@ -45,7 +67,8 @@
 
     return {
       launch,
-      launchPreview: launch
+      launchPreview: launch,
+      createStudioEditorPreviewFallbackHtmlTransformer
     };
   }
 

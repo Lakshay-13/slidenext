@@ -342,6 +342,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
     lastPersistedDeckHtml: '<html>persisted-preview</html>'
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 
@@ -406,6 +407,7 @@ test('buildEditorPreviewHtml fails closed when the shared deck html helper is un
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 
@@ -587,7 +589,9 @@ test('createEditorPreviewFallbackHtmlTransformer injects a preview base href whe
   const deckHtmlOptions = {
     currentLocationHref: 'http://localhost:3000/'
   };
-  const context = {};
+  const context = {
+    studioEditorPreviewController: editorPreviewController.createStudioEditorPreviewController({})
+  };
 
   vm.createContext(context);
   vm.runInContext(createEditorPreviewFallbackHtmlTransformerSource, context);
@@ -723,6 +727,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view html builder when the p
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 
@@ -797,6 +802,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
   vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
@@ -918,6 +924,7 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 
@@ -998,6 +1005,7 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 
@@ -1070,6 +1078,7 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
     }
   };
 
+  context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);
 

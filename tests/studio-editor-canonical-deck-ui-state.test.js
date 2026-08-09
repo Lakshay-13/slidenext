@@ -9,6 +9,7 @@ const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js'
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -2822,6 +2823,7 @@ test('buildEditorPreviewHtml forwards preview deck view builders when local help
       return null;
     },
     currentPresentationUrl: '/presentations/demo/index.html',
+    studioEditorPreviewController: editorPreviewController.createStudioEditorPreviewController({}),
     getIframeDoc() {
       return iframeDoc;
     }
