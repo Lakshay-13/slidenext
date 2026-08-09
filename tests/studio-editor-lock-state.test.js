@@ -184,6 +184,56 @@ test('syncStudioLockToolbarState builds and renders lock controls in one shared 
   assert.equal(label.textContent, 'Unlock Selected');
 });
 
+test('createStudioLockToolbarStateSync resolves live selection and slide readiness through callbacks', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const selectedElements = [{ id: 'node-1', isConnected: true }];
+  const nodes = {
+    toggleLockSelectionBtn: { disabled: true },
+    toggleLockSelectionIcon: { textContent: '' },
+    toggleLockSelectionLabel: { textContent: '' }
+  };
+  const calls = [];
+  const syncToolbar = lockState.createStudioLockToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getSelectedElements() {
+      calls.push('selection');
+      return selectedElements;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return slide;
+    },
+    getLockedState(currentDoc) {
+      calls.push(['locked-state', currentDoc]);
+      return () => false;
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return nodes[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.equal(nodes.toggleLockSelectionBtn.disabled, false);
+  assert.equal(nodes.toggleLockSelectionIcon.textContent, 'lock');
+  assert.equal(nodes.toggleLockSelectionLabel.textContent, 'Lock Selected');
+  assert.deepEqual(calls, [
+    'document',
+    'document-ref',
+    'selection',
+    ['locked-state', doc],
+    ['active-slide', doc]
+  ]);
+});
+
 test('applyStudioLockMutation applies live lock changes and creates an optional dataset transaction', () => {
   const element = {
     isConnected: true,
