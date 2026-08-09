@@ -1078,6 +1078,27 @@ test('buildStudioDeckHtml falls back when canonical deck building throws', () =>
   assert.equal(fallbackCalls, 1);
 });
 
+test('buildStudioDeckHtml falls back when canonical rendering throws', () => {
+  assert.equal(
+    deckView.buildStudioDeckHtml({ id: 'legacy-doc' }, {
+      buildCanonicalDeck() {
+        return {
+          kind: 'slidenext.deck',
+          schemaVersion: 1,
+          slides: [{ id: 'slide-1', nodes: [] }]
+        };
+      },
+      buildCanonicalHtml() {
+        throw new Error('unsupported canonical node');
+      },
+      buildFallbackHtml() {
+        return '<html>legacy renderer fallback</html>';
+      }
+    }),
+    '<html>legacy renderer fallback</html>'
+  );
+});
+
 test('buildStudioDeckViewHtml prefers the provided shared html builder when available', () => {
   const calls = [];
 

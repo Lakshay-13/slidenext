@@ -490,7 +490,11 @@
       }
     }
     if (isCanonicalDeckLike(canonicalDeck) && typeof options.buildCanonicalHtml === 'function') {
-      return options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
+      try {
+        return options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions);
+      } catch (error) {
+        // Keep legacy HTML available when canonical rendering cannot represent a node.
+      }
     }
 
     const fallbackHtml = typeof options.buildFallbackHtml === 'function'
