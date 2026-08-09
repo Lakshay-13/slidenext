@@ -1304,6 +1304,7 @@
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-element-insertion-controller.js"></script>
+  <script src="/shared/studio-editor-element-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -2747,10 +2748,13 @@
     const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
       ? studioEditorClipboardSelectionRuntime.selectionController
       : null;
-    const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
-      && SlideNextStudioEditorElementInsertionController
-      && typeof SlideNextStudioEditorElementInsertionController.createStudioEditorElementInsertionController === 'function'
-      ? SlideNextStudioEditorElementInsertionController.createStudioEditorElementInsertionController({
+    const studioEditorElementInsertionRuntime = typeof SlideNextStudioEditorElementInsertionRuntime !== 'undefined'
+      && SlideNextStudioEditorElementInsertionRuntime
+      && typeof SlideNextStudioEditorElementInsertionRuntime.createStudioEditorElementInsertionRuntime === 'function'
+      ? SlideNextStudioEditorElementInsertionRuntime.createStudioEditorElementInsertionRuntime({
+          controllerApi: typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
+            ? SlideNextStudioEditorElementInsertionController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
@@ -2779,6 +2783,9 @@
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           updateInsertionActionState: (...args) => updateInsertionActionState(...args)
         })
+      : null;
+    const studioEditorElementInsertionController = studioEditorElementInsertionRuntime
+      ? studioEditorElementInsertionRuntime.elementInsertionController
       : null;
     const studioEditorBlockController = typeof SlideNextStudioEditorBlockController !== 'undefined'
       && SlideNextStudioEditorBlockController
