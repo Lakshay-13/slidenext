@@ -207,6 +207,23 @@ test('buildStudioCanonicalVisibilityMutation centralizes baseline and patch appl
   assert.equal(sourceDeck.slides[0].nodes[0].visibility.hidden, false);
 });
 
+test('buildStudioCanonicalVisibilityMutation can use only a valid live baseline', () => {
+  const liveDeck = createSourceDeck();
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityMutation(
+    [{ dataset: { editorId: 'node-1' } }],
+    { hidden: true },
+    {
+      canonicalDeckApi: canonicalDeck,
+      canonicalStateApi: canonicalState,
+      getCanonicalDeckBaseline: () => liveDeck,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result.slides[0].nodes[0].visibility.hidden, true);
+  assert.equal(liveDeck.slides[0].nodes[0].visibility.hidden, false);
+});
+
 test('buildStudioCanonicalVisibilityMutation falls back when the live baseline is invalid', () => {
   const sourceDeck = createSourceDeck();
   let didBuildFromDocument = false;
