@@ -1429,9 +1429,10 @@
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
-  <script src="/shared/deck-html.js"></script>
-  <script src="/shared/studio-deck-view.js"></script>
-  <script src="/shared/studio-editor-navigation-controller.js"></script>
+    <script src="/shared/deck-html.js"></script>
+    <script src="/shared/studio-deck-view.js"></script>
+    <script src="/shared/studio-editor-canonical-view-state.js"></script>
+    <script src="/shared/studio-editor-navigation-controller.js"></script>
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
@@ -3755,6 +3756,19 @@
     }
 
     function createEditorCanonicalDeckViewStateOptions(options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorCanonicalDeckViewStateOptions === 'function') {
+        return editorCanonicalViewStateApi.createStudioEditorCanonicalDeckViewStateOptions({
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
+          fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+        });
+      }
       const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
@@ -3789,6 +3803,19 @@
     }
 
     function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.resolveStudioEditorCanonicalDeckViewState === 'function') {
+        return editorCanonicalViewStateApi.resolveStudioEditorCanonicalDeckViewState(doc, {
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
+          fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+        });
+      }
       const resolveStudioCanonicalDeckViewState = (
         typeof SlideNextStudioDeckView !== 'undefined'
         && SlideNextStudioDeckView
