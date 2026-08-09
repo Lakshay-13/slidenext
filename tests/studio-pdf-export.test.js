@@ -168,6 +168,40 @@ test('preflightStudioPdfExport reports missing canonical asset references withou
   assert.equal(report.warnings.length, 3);
 });
 
+test('preflightStudioPdfExport reports positioned nodes outside the canonical slide canvas', () => {
+  const report = pdfExport.preflightStudioPdfExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'panel',
+        layout: { mode: 'absolute', x: 900, y: 0, width: 200, height: 100 },
+        children: [{
+          id: 'child',
+          layout: { mode: 'absolute', x: 150, y: 0, width: 100, height: 40 }
+        }]
+      }, {
+        id: 'flow-node',
+        layout: { mode: 'flow', x: 990, y: 490, width: 100, height: 20 }
+      }]
+    }]
+  });
+
+  assert.equal(report.canExport, true);
+  assert.deepEqual(report.overflowNodes.map((node) => ({
+    id: node.id,
+    x: node.x,
+    y: node.y
+  })), [
+    { id: 'panel', x: 900, y: 0 },
+    { id: 'child', x: 1050, y: 0 }
+  ]);
+  assert.deepEqual(report.warnings, [
+    'PDF node panel on slide slide-1 extends beyond the slide canvas',
+    'PDF node child on slide slide-1 extends beyond the slide canvas'
+  ]);
+});
+
 test('validateStudioPdfSlideCount fails closed when the print document has the wrong number of slides', () => {
   assert.equal(
     pdfExport.validateStudioPdfSlideCount({

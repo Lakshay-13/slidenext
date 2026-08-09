@@ -42,6 +42,36 @@
     };
   }
 
+  function getStudioPdfCanvasSize(canonicalDeck) {
+    const size = canonicalDeck
+      && canonicalDeck.layout
+      && canonicalDeck.layout.size
+      && typeof canonicalDeck.layout.size === 'object'
+      ? canonicalDeck.layout.size
+      : null;
+    const width = size && Number.isFinite(size.width) ? size.width : null;
+    const height = size && Number.isFinite(size.height) ? size.height : null;
+    return width > 0 && height > 0 ? { width, height } : null;
+  }
+
+  function getStudioPdfPositionedNodeBounds(node, origin = { x: 0, y: 0 }) {
+    const layout = node && node.layout && typeof node.layout === 'object'
+      ? node.layout
+      : null;
+    if (!layout || !['absolute', 'fixed'].includes(layout.mode)) return null;
+    const x = Number.isFinite(layout.x) ? layout.x : null;
+    const y = Number.isFinite(layout.y) ? layout.y : null;
+    const width = Number.isFinite(layout.width) ? layout.width : null;
+    const height = Number.isFinite(layout.height) ? layout.height : null;
+    if (x === null || y === null || !(width > 0) || !(height > 0)) return null;
+    return {
+      x: origin.x + x,
+      y: origin.y + y,
+      width,
+      height
+    };
+  }
+
   function preflightStudioPdfExport(canonicalDeck) {
     const slides = canonicalDeck && Array.isArray(canonicalDeck.slides)
       ? canonicalDeck.slides
@@ -55,6 +85,8 @@
         .map((asset) => [asset.id.trim(), asset])
     );
     const missingAssets = [];
+    const overflowNodes = [];
+    const canvasSize = getStudioPdfCanvasSize(canonicalDeck);
     const seenReferences = new Set();
 
     const addAssetReference = (assetId, owner = {}) => {
@@ -76,9 +108,21 @@
       }
     };
 
-    const visitNode = (node, slideId) => {
+    const visitNode = (node, slideId, origin = { x: 0, y: 0 }) => {
       if (!node || typeof node !== 'object') return;
       const nodeId = typeof node.id === 'string' && node.id.trim() ? node.id.trim() : 'unknown';
+      const bounds = getStudioPdfPositionedNodeBounds(node, origin);
+      if (canvasSize && bounds
+        && (bounds.x < 0
+          || bounds.y < 0
+          || bounds.x + bounds.width > canvasSize.width
+          || bounds.y + bounds.height > canvasSize.height)) {
+        overflowNodes.push({
+          id: nodeId,
+          slideId,
+          ...bounds
+        });
+      }
       addAssetReference(node.assetId, { type: 'node', id: nodeId });
       addAssetReference(node.backgroundAssetId, { type: 'node-background', id: nodeId });
       const attributes = node.attributes && typeof node.attributes === 'object'
@@ -93,7 +137,7 @@
         { type: 'node-background', id: nodeId }
       );
       (Array.isArray(node.children) ? node.children : []).forEach((child) => {
-        visitNode(child, slideId);
+        visitNode(child, slideId, bounds || origin);
       });
     };
 
@@ -113,18 +157,24 @@
       });
     });
 
-    const warnings = missingAssets.map((reference) => {
-      const ownerLabel = reference.ownerType === 'slide-background'
-        ? `slide ${reference.ownerId}`
-        : `${reference.ownerType} ${reference.ownerId}`;
-      return `PDF ${ownerLabel} references missing asset "${reference.id}"`;
-    });
+    const warnings = [
+      ...missingAssets.map((reference) => {
+        const ownerLabel = reference.ownerType === 'slide-background'
+          ? `slide ${reference.ownerId}`
+          : `${reference.ownerType} ${reference.ownerId}`;
+        return `PDF ${ownerLabel} references missing asset "${reference.id}"`;
+      }),
+      ...overflowNodes.map((node) => (
+        `PDF node ${node.id} on slide ${node.slideId} extends beyond the slide canvas`
+      ))
+    ];
 
     return {
       canExport: slides.length > 0,
       slideCount: slides.length,
       warnings,
-      missingAssets
+      missingAssets,
+      overflowNodes
     };
   }
 
