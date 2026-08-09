@@ -238,6 +238,24 @@
       : '';
   }
 
+  function createStudioEditorDeckViewBuildViewOptionsResolver(options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi
+      || typeof deckViewApi.createStudioDeckViewBuildViewOptionsResolver !== 'function') {
+      return null;
+    }
+    return deckViewApi.createStudioDeckViewBuildViewOptionsResolver(options);
+  }
+
+  function createStudioEditorDeckViewCanonicalHtmlResolver(options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi
+      || typeof deckViewApi.createStudioDeckViewCanonicalHtmlResolver !== 'function') {
+      return null;
+    }
+    return deckViewApi.createStudioDeckViewCanonicalHtmlResolver(options);
+  }
+
   return {
     createStudioEditorCanonicalDeckViewStateOptions,
     resolveStudioEditorCanonicalDeckViewState,
@@ -247,6 +265,8 @@
     createStudioEditorDeckRenderOptions,
     createStudioEditorDeckViewBuildOptions,
     buildStudioEditorDeckHtml,
-    buildStudioEditorDeckViewHtml
+    buildStudioEditorDeckViewHtml,
+    createStudioEditorDeckViewBuildViewOptionsResolver,
+    createStudioEditorDeckViewCanonicalHtmlResolver
   };
 });

@@ -313,3 +313,41 @@ test('editor deck view html composes canonical and fallback options without the 
   assert.deepEqual(calls[1][1], { id: 'deck' });
   assert.deepEqual(calls[1][2], { mode: 'render' });
 });
+
+test('editor deck view resolver factories delegate to shared deck view APIs', () => {
+  const calls = [];
+  const buildOptions = { createBuildOptions: () => ({}) };
+  const canonicalOptions = { mapCanonicalHtmlArgs: () => [] };
+  const deckViewApi = {
+    createStudioDeckViewBuildViewOptionsResolver(options) {
+      calls.push(['build', options]);
+      return 'build-resolver';
+    },
+    createStudioDeckViewCanonicalHtmlResolver(options) {
+      calls.push(['canonical', options]);
+      return 'canonical-resolver';
+    }
+  };
+
+  assert.equal(
+    canonicalViewState.createStudioEditorDeckViewBuildViewOptionsResolver({
+      ...buildOptions,
+      deckViewApi
+    }),
+    'build-resolver'
+  );
+  assert.equal(
+    canonicalViewState.createStudioEditorDeckViewCanonicalHtmlResolver({
+      ...canonicalOptions,
+      deckViewApi
+    }),
+    'canonical-resolver'
+  );
+  assert.equal(calls[0][1].createBuildOptions, buildOptions.createBuildOptions);
+  assert.equal(calls[1][1].mapCanonicalHtmlArgs, canonicalOptions.mapCanonicalHtmlArgs);
+});
+
+test('editor deck view resolver factories fail closed without the shared APIs', () => {
+  assert.equal(canonicalViewState.createStudioEditorDeckViewBuildViewOptionsResolver(), null);
+  assert.equal(canonicalViewState.createStudioEditorDeckViewCanonicalHtmlResolver(), null);
+});

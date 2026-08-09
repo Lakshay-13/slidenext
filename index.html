@@ -4039,6 +4039,20 @@
     }
 
     function createEditorDeckViewBuildViewOptionsResolver(options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorDeckViewBuildViewOptionsResolver === 'function') {
+        return editorCanonicalViewStateApi.createStudioEditorDeckViewBuildViewOptionsResolver({
+          ...options,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          createBuildOptions: typeof createEditorDeckViewBuildOptions === 'function'
+            ? createEditorDeckViewBuildOptions
+            : null,
+          getDocument: () => getIframeDoc()
+        });
+      }
       const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
@@ -4055,6 +4069,16 @@
     }
 
     function createEditorDeckViewCanonicalHtmlResolver(options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorDeckViewCanonicalHtmlResolver === 'function') {
+        return editorCanonicalViewStateApi.createStudioEditorDeckViewCanonicalHtmlResolver({
+          ...options,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null
+        });
+      }
       const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
         ? SlideNextStudioDeckView
         : null;
