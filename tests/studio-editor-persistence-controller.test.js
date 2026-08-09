@@ -274,3 +274,25 @@ test('persistence controller handles version success through the shared handler 
     ['refresh', '/presentations/demo/index.html', 4]
   ]);
 });
+
+test('persistence controller resolves stale task state through the shared adapter', () => {
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    getCurrentSessionToken: () => 4
+  });
+
+  assert.equal(
+    controller.isPersistenceTaskStale('/presentations/demo/index.html', 4),
+    false
+  );
+  assert.equal(
+    controller.isPersistenceTaskStale('/presentations/other/index.html', 4),
+    true
+  );
+  assert.equal(
+    controller.isPersistenceTaskStale('/presentations/demo/index.html', 5),
+    true
+  );
+});

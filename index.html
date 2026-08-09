@@ -3051,6 +3051,7 @@
             setStudioPersistedPlaybackState(playbackState);
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          getCurrentSessionToken: getStudioEditorSessionToken,
           capturePersistableDeckState: (...args) => captureEditorPersistableDeckState(...args),
           createHandlerOptions: (...args) => createCurrentStudioPersistenceHandlerOptions(...args),
           createVersionHandlerOptions: (nextOptions = {}) => createCurrentStudioSessionReaderOptions({
@@ -10312,6 +10313,14 @@
       presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.isPersistenceTaskStale === 'function') {
+        const result = studioEditorPersistenceController.isPersistenceTaskStale(presentationUrl, sessionToken);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistenceTaskStaleCheckerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

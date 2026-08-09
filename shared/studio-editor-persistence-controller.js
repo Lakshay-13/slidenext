@@ -41,6 +41,12 @@
     const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
       ? options.getCurrentPresentationUrl
       : () => currentPresentationUrl;
+    const currentSessionToken = Number.isInteger(options.currentSessionToken)
+      ? options.currentSessionToken
+      : null;
+    const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
+      ? options.getCurrentSessionToken
+      : () => currentSessionToken;
     const createHandlerOptions = typeof options.createHandlerOptions === 'function'
       ? options.createHandlerOptions
       : null;
@@ -82,6 +88,7 @@
     let persistenceFailureHandler = null;
     let persistenceSuccessHandler = null;
     let versionPersistenceSuccessHandler = null;
+    let persistenceTaskStaleChecker = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -296,6 +303,31 @@
         : null;
     }
 
+    function createPersistenceTaskStaleChecker() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistenceTaskStaleCheckerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistenceTaskStaleCheckerAdapter({
+        persistenceApi,
+        getPresentationUrl: getCurrentPresentationUrl,
+        getSessionToken: getCurrentSessionToken
+      });
+    }
+
+    function isPersistenceTaskStale(
+      presentationUrl = getCurrentPresentationUrl(),
+      sessionToken = getCurrentSessionToken(),
+      nextOptions = {}
+    ) {
+      if (typeof persistenceTaskStaleChecker !== 'function') {
+        persistenceTaskStaleChecker = createPersistenceTaskStaleChecker();
+      }
+      return typeof persistenceTaskStaleChecker === 'function'
+        ? persistenceTaskStaleChecker(presentationUrl, sessionToken, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -368,6 +400,7 @@
       handlePersistenceFailure,
       handlePersistenceSuccess,
       handleVersionPersistenceSuccess,
+      isPersistenceTaskStale,
       update,
       apply,
       resolveCanonicalDeckOverride,
