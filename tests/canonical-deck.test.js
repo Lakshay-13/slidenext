@@ -39,6 +39,19 @@ test('createCanonicalDeck normalizes the legacy freeform layout alias to absolut
   assert.equal(deck.slides[0].nodes[0].layout.mode, 'absolute');
 });
 
+test('canonical deck validation fails closed for unsupported schema versions', () => {
+  const unsupportedDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 2,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+
+  assert.equal(canonicalDeck.isCanonicalDeck(unsupportedDeck), false);
+  const normalizedDeck = canonicalDeck.createCanonicalDeck(unsupportedDeck);
+  assert.equal(normalizedDeck.schemaVersion, canonicalDeck.DECK_SCHEMA_VERSION);
+  assert.equal(canonicalDeck.isCanonicalDeck(normalizedDeck), true);
+});
+
 test('createCanonicalNode preserves an explicit asset reference without requiring one', () => {
   const node = canonicalDeck.createCanonicalNode({
     id: 'image-1',

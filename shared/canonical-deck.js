@@ -367,7 +367,7 @@
 
     return {
       kind: DECK_KIND,
-      schemaVersion: Number.isInteger(deck.schemaVersion) ? deck.schemaVersion : DECK_SCHEMA_VERSION,
+      schemaVersion: DECK_SCHEMA_VERSION,
       metadata: {
         id: normalizeString(metadata.id),
         title: normalizeString(metadata.title),
@@ -598,7 +598,7 @@
     return !!value
       && typeof value === 'object'
       && value.kind === DECK_KIND
-      && Number.isInteger(value.schemaVersion)
+      && value.schemaVersion === DECK_SCHEMA_VERSION
       && Array.isArray(value.slides)
       && hasUniqueCanonicalIds(value);
   }
