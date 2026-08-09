@@ -179,7 +179,11 @@ test('flushPendingEditorHistory captures pending canonical edits before stepping
   vm.runInContext(flushPendingEditorHistorySource, context);
 
   assert.equal(context.flushPendingEditorHistory(), true);
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[false]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[
+    false,
+    { id: 'pending-transaction' },
+    { kind: 'slidenext.deck', slides: [] }
+  ]]);
   context.pendingEditorTransaction = null;
   context.pendingEditorCanonicalDeck = null;
   assert.equal(context.flushPendingEditorHistory(), false);

@@ -32,12 +32,16 @@ test('history controller preserves optional canonical deck arguments and reuses 
 
 test('history controller flushes pending state through the shared save adapter', () => {
   let pendingTransaction = { id: 'pending' };
+  let pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const initialPendingTransaction = pendingTransaction;
+  const initialPendingCanonicalDeck = pendingCanonicalDeck;
   const saves = [];
   const historyApi = {
     createStudioHistorySaveHandler() {
       return (...args) => {
         saves.push(args);
         pendingTransaction = null;
+        pendingCanonicalDeck = null;
         return { didCapture: true };
       };
     }
@@ -46,11 +50,11 @@ test('history controller flushes pending state through the shared save adapter',
     historyApi,
     historyStateApi: historyState,
     getPendingTransaction: () => pendingTransaction,
-    getPendingCanonicalDeck: () => null
+    getPendingCanonicalDeck: () => pendingCanonicalDeck
   });
 
   assert.equal(controller.flushPending(), true);
-  assert.deepEqual(saves, [[false, null]]);
+  assert.deepEqual(saves, [[false, initialPendingTransaction, initialPendingCanonicalDeck]]);
   assert.equal(controller.flushPending(), false);
 });
 

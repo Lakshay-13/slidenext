@@ -8301,7 +8301,13 @@
       const hasPendingTransaction = getStudioPendingEditorTransaction() !== null;
       const hasPendingCanonicalDeck = getStudioPendingEditorCanonicalDeck() !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
-      saveHistoryState(false);
+      const pendingTransaction = getStudioPendingEditorTransaction();
+      const pendingCanonicalDeck = getStudioPendingEditorCanonicalDeck();
+      if (pendingCanonicalDeck !== null) {
+        saveHistoryState(false, pendingTransaction, pendingCanonicalDeck);
+      } else {
+        saveHistoryState(false, pendingTransaction);
+      }
       return true;
     }
 

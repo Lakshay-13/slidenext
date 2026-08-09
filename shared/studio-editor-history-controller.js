@@ -255,7 +255,11 @@
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
-      save(false);
+      if (hasPendingCanonicalDeck) {
+        save(false, hasPendingTransaction ? pendingTransaction : null, pendingCanonicalDeck);
+      } else {
+        save(false, pendingTransaction);
+      }
       return true;
     }
 
