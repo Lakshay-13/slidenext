@@ -8664,6 +8664,14 @@
     }
 
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolveReusablePersistedHtml === 'function') {
+        const result = studioEditorPersistenceController.resolveReusablePersistedHtml(persistedDeckState, options);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorReusablePersistedHtmlAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

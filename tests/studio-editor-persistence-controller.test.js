@@ -387,3 +387,25 @@ test('persistence controller checks persisted save requests through the shared a
     canonicalDeck
   }), false);
 });
+
+test('persistence controller resolves reusable persisted HTML through the shared adapter', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState
+  });
+
+  assert.equal(
+    controller.resolveReusablePersistedHtml({
+      cleanHtml: '<html></html>',
+      canonicalDeck
+    }, {
+      canonicalDeck
+    }),
+    '<html></html>'
+  );
+});
