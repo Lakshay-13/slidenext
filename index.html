@@ -7377,19 +7377,25 @@
         return false;
       }
 
-      const canonicalDeckBeforeMutation = canonicalThemeApi.buildStudioCanonicalThemeBaseline({
-        canonicalDeckApi,
-        sourceDocument: iframeDoc,
-        getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-          sourceDoc || iframeDoc,
-          studioEditorSessionToken
-        ),
-        buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || iframeDoc)
-      });
-      const canonicalDeck = canonicalThemeApi.buildStudioCanonicalThemeDeck(preset.tokens, {
-        canonicalDeckApi,
-        canonicalDeckBeforeMutation
-      });
+      let canonicalDeckBeforeMutation = null;
+      let canonicalDeck = null;
+      try {
+        canonicalDeckBeforeMutation = canonicalThemeApi.buildStudioCanonicalThemeBaseline({
+          canonicalDeckApi,
+          sourceDocument: iframeDoc,
+          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+            sourceDoc || iframeDoc,
+            studioEditorSessionToken
+          ),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || iframeDoc)
+        });
+        canonicalDeck = canonicalThemeApi.buildStudioCanonicalThemeDeck(preset.tokens, {
+          canonicalDeckApi,
+          canonicalDeckBeforeMutation
+        });
+      } catch (error) {
+        return false;
+      }
       if (!canonicalDeck) return false;
       if (!canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, preset.tokens)) return false;
 

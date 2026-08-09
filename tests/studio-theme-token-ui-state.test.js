@@ -95,6 +95,34 @@ test('applyThemeTokenPreset refuses unavailable decks without mutating state', (
   assert.equal(applyCalls, 0);
 });
 
+test('applyThemeTokenPreset fails closed when canonical setup throws', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let applyCalls = 0;
+  const context = {
+    themeTokenPresetsData: { aurora: { name: 'Aurora', tokens: { '--color-primary': 'red' } } },
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    SlideNextStudioEditorCanonicalTheme: {
+      buildStudioCanonicalThemeBaseline() {
+        throw new Error('canonical theme baseline unavailable');
+      },
+      applyStudioCanonicalThemeTokenUpdates() {
+        applyCalls += 1;
+        return true;
+      }
+    },
+    SlideNextCanonicalDeck: {}
+  };
+  loadFunction(fileContent, 'function applyThemeTokenPreset(presetId) {', '\n\n    function setCustomGradientType', context);
+
+  assert.equal(context.applyThemeTokenPreset('aurora'), false);
+  assert.equal(applyCalls, 0);
+});
+
 test('renderThemeTokenPresets forwards readiness to the shared theme view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
