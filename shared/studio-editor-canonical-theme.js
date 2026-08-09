@@ -67,9 +67,14 @@
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
-      if (typeof canonicalDeckApi.isCanonicalDeck !== 'function') return true;
+      const validate = typeof canonicalDeckApi.isCanonicalDeck === 'function'
+        ? canonicalDeckApi.isCanonicalDeck
+        : (candidate) => !!candidate
+          && typeof candidate === 'object'
+          && !Array.isArray(candidate)
+          && Array.isArray(candidate.slides);
       try {
-        return canonicalDeckApi.isCanonicalDeck(value) === true;
+        return validate(value) === true;
       } catch (err) {
         return false;
       }
