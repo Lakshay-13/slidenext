@@ -237,10 +237,15 @@
         && Array.isArray(currentDeck.masterSlides)
         ? currentDeck.masterSlides.find((candidate) => candidate && candidate.id === normalizedMasterSlideId)
         : null;
-      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalMasterSlide(
-        currentDeck,
-        normalizedMasterSlideId
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.removeCanonicalMasterSlide(
+          currentDeck,
+          normalizedMasterSlideId
+        );
+      } catch (err) {
+        return false;
+      }
       if (!nextCanonicalDeck) return false;
 
       const activeSlideId = getActiveSlideId();

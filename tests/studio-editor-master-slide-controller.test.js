@@ -179,6 +179,32 @@ test('master slide controller fails closed when assigning a master canonical mut
   assert.equal(replaceCount, 0);
 });
 
+test('master slide controller fails closed when removing a master canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base' }],
+    slides: [{ id: 'slide-1', masterSlideId: 'master-1' }]
+  });
+  let replaceCount = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      removeCanonicalMasterSlide() {
+        throw new Error('canonical master removal failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSlides: () => [{
+      replaceWith() {
+        replaceCount += 1;
+      }
+    }]
+  });
+
+  assert.equal(controller.removeMasterSlide('master-1'), false);
+  assert.equal(replaceCount, 0);
+});
+
 test('assignMasterSlide rerenders the active slide and commits the reference', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{
