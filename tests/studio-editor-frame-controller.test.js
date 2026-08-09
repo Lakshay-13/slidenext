@@ -88,3 +88,62 @@ test('frame controller stops before touching iframe state when no document is av
   assert.equal(controller.init(), false);
   assert.deepEqual(calls, ['reset', 'get']);
 });
+
+test('frame controller captures the canonical initial history baseline through injected persistence APIs', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const persistedDeckState = {
+    cleanHtml: '<html></html>',
+    canonicalDeck,
+    playbackState: { activeSlideIds: ['slide-1'] }
+  };
+  const calls = [];
+  let bootstrapOptions = null;
+  const persistenceApi = {
+    createStudioPersistedDeckStateActionContext(state, presentationUrl, options) {
+      calls.push(['createContext', state, presentationUrl, options]);
+      return { state, presentationUrl, sessionToken: options.sessionToken };
+    }
+  };
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    capturePersistableDeckState(doc) {
+      calls.push(['capture', doc]);
+      return persistedDeckState;
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    persistenceApi,
+    applyPersistenceSuccess(context, options) {
+      calls.push(['applySuccess', context, options]);
+    },
+    getPresentationUrl: () => '/presentations/demo/index.html',
+    getSessionToken: () => 9,
+    setLiveCanonicalDeck(...args) {
+      calls.push(['setLiveCanonicalDeck', ...args]);
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap(doc, options) {
+        bootstrapOptions = options;
+        options.captureInitialHistoryState(doc);
+      }
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.equal(typeof bootstrapOptions.captureInitialHistoryState, 'function');
+  assert.deepEqual(calls, [
+    ['capture', iframeDoc],
+    ['saveHistoryState', false, null, canonicalDeck],
+    ['createContext', persistedDeckState, '/presentations/demo/index.html', { sessionToken: 9 }],
+    ['applySuccess', {
+      state: persistedDeckState,
+      presentationUrl: '/presentations/demo/index.html',
+      sessionToken: 9
+    }, {
+      presentationUrl: '/presentations/demo/index.html'
+    }],
+    ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, 9]
+  ]);
+});

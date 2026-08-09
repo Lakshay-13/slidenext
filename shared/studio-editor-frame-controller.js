@@ -41,9 +41,28 @@
     const observeDeckActiveSlideState = typeof options.observeDeckActiveSlideState === 'function'
       ? options.observeDeckActiveSlideState
       : () => {};
-    const captureInitialHistoryState = typeof options.captureInitialHistoryState === 'function'
+    const captureInitialHistoryStateOverride = typeof options.captureInitialHistoryState === 'function'
       ? options.captureInitialHistoryState
-      : () => {};
+      : null;
+    const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
+      ? options.capturePersistableDeckState
+      : null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : null;
+    const persistenceApi = options.persistenceApi || null;
+    const applyPersistenceSuccess = typeof options.applyPersistenceSuccess === 'function'
+      ? options.applyPersistenceSuccess
+      : null;
+    const getPresentationUrl = typeof options.getPresentationUrl === 'function'
+      ? options.getPresentationUrl
+      : () => '';
+    const getSessionToken = typeof options.getSessionToken === 'function'
+      ? options.getSessionToken
+      : () => null;
+    const setLiveCanonicalDeck = typeof options.setLiveCanonicalDeck === 'function'
+      ? options.setLiveCanonicalDeck
+      : null;
     const updateDeckReadyToolbarActionState = typeof options.updateDeckReadyToolbarActionState === 'function'
       ? options.updateDeckReadyToolbarActionState
       : () => {};
@@ -53,6 +72,46 @@
     const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
       ? options.syncInspectorForSelection
       : () => {};
+
+    function captureInitialHistoryState(iframeDoc) {
+      if (captureInitialHistoryStateOverride) {
+        return captureInitialHistoryStateOverride(iframeDoc);
+      }
+      if (!capturePersistableDeckState) return undefined;
+
+      const initialPersistedDeckState = capturePersistableDeckState(iframeDoc);
+      if (saveHistoryState) {
+        if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
+          saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+        } else {
+          saveHistoryState(false);
+        }
+      }
+      if (applyPersistenceSuccess
+        && persistenceApi
+        && typeof persistenceApi.createStudioPersistedDeckStateActionContext === 'function') {
+        applyPersistenceSuccess(
+          persistenceApi.createStudioPersistedDeckStateActionContext(
+            initialPersistedDeckState,
+            getPresentationUrl(),
+            {
+              sessionToken: getSessionToken()
+            }
+          ),
+          {
+            presentationUrl: getPresentationUrl()
+          }
+        );
+      }
+      if (setLiveCanonicalDeck) {
+        setLiveCanonicalDeck(
+          initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
+          iframeDoc,
+          getSessionToken()
+        );
+      }
+      return initialPersistedDeckState;
+    }
 
     function init() {
       resetLiveCanonicalDeck();

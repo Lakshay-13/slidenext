@@ -3261,33 +3261,17 @@
           setActiveSlide,
           bindDeckNavigationSync,
           observeDeckActiveSlideState,
-          captureInitialHistoryState: (iframeDoc) => {
-            const initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
-            if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
-              saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
-            } else {
-              saveHistoryState(false);
-            }
-            applyCurrentStudioPersistenceSuccess(
-              SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
-                initialPersistedDeckState,
-                getStudioCurrentPresentationUrl(),
-                {
-                  sessionToken: getStudioEditorSessionToken()
-                }
-              ),
-              {
-                presentationUrl: getStudioCurrentPresentationUrl()
-              }
-            );
-            if (typeof setEditorLiveCanonicalDeck === 'function') {
-              setEditorLiveCanonicalDeck(
-                initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
-                iframeDoc,
-                getStudioEditorSessionToken()
-              );
-            }
-          },
+          capturePersistableDeckState: captureEditorPersistableDeckState,
+          saveHistoryState,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken,
+          setLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
+            ? setEditorLiveCanonicalDeck
+            : null,
           updateDeckReadyToolbarActionState,
           setStudioAutoSaveStatus,
           syncInspectorForSelection
