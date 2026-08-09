@@ -543,3 +543,31 @@ test('persistence controller resolves metadata persistence options through the s
   controller.resolveMetadataPersistenceOptions();
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller captures persistable deck build state through the shared adapter', () => {
+  const doc = { label: 'iframe-doc' };
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorPersistableDeckBuildStateCapturerAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, persistence);
+        return (nextDoc, nextOptions) => ({
+          doc: nextDoc,
+          buildPersistableDeckHtml: nextOptions.buildPersistableDeckHtml
+        });
+      }
+    }
+  });
+  const buildPersistableDeckHtml = () => '<html></html>';
+
+  assert.deepEqual(controller.capturePersistableDeckBuildState(doc, {
+    buildPersistableDeckHtml
+  }), {
+    doc,
+    buildPersistableDeckHtml
+  });
+  controller.capturePersistableDeckBuildState(doc, { buildPersistableDeckHtml });
+  assert.equal(adapterCreateCalls, 1);
+});

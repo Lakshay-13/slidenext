@@ -9321,6 +9321,17 @@
       const nextBuildOptions = buildOptions && typeof buildOptions === 'object'
         ? buildOptions
         : {};
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.capturePersistableDeckBuildState === 'function') {
+        const capturedState = studioEditorPersistenceController.capturePersistableDeckBuildState(doc, {
+          ...nextBuildOptions,
+          buildPersistableDeckHtml
+        });
+        if (capturedState !== null && typeof capturedState !== 'undefined') {
+          return capturedState;
+        }
+      }
       const createStudioEditorPersistableDeckBuildStateCapturerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
