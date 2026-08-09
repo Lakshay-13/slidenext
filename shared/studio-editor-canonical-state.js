@@ -192,6 +192,26 @@
     });
   }
 
+  function createStudioEditorCanonicalNodeResolver(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
+      ? options.canonicalDeckApi
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+
+    return function resolveStudioEditorCanonicalNode(element, canonicalDeck = null) {
+      if (!canonicalDeckApi || !element || !canonicalDeck || !getElementId(element)) {
+        return null;
+      }
+      return createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+        canonicalDeckApi,
+        getElementId
+      })(element);
+    };
+  }
+
   function createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, options = {}) {
     const property = typeof options.property === 'string' ? options.property : '';
     const fallbackReader = typeof options.fallbackReader === 'function'
@@ -365,6 +385,7 @@
     createStudioEditorCanonicalDeckResolver,
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalNodeReaderFromApi,
+    createStudioEditorCanonicalNodeResolver,
     createStudioEditorCanonicalVisibilityReaderForDeck,
     createStudioEditorCanonicalVisibilityReaderResolver,
     createStudioEditorCanonicalLockReader,
