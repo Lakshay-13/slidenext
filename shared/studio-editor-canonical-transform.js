@@ -107,7 +107,11 @@
     });
     if (!Array.isArray(layoutUpdates) || layoutUpdates.length === 0) return null;
 
-    return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, layoutUpdates);
+    try {
+      return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, layoutUpdates);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalTransformMutationBuilders(options = {}) {

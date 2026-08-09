@@ -173,6 +173,27 @@ test('buildStudioCanonicalTransformDeck applies canonical layout updates to the 
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, 10);
 });
 
+test('buildStudioCanonicalTransformDeck fails closed when the canonical layout mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalNodeLayout() {
+      throw new Error('canonical transform mutation failed');
+    }
+  };
+
+  const result = canonicalTransform.buildStudioCanonicalTransformDeck({}, {
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1', nodes: [{ id: 'node-1' }] }]
+    }),
+    buildCanonicalLayoutUpdates() {
+      return [{ id: 'node-1', layout: { x: 80 } }];
+    }
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalTransformDeck fails closed when an adapter dependency is missing', () => {
   assert.equal(canonicalTransform.buildStudioCanonicalTransformDeck({}, {}), null);
 });
