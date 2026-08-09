@@ -29,6 +29,43 @@ function runSourceWithCanonicalUi(source, context) {
   vm.runInContext(`${canonicalUiSource}\n${resolverSource}\n${source}`, context);
 }
 
+test('template runtime wiring prefers the live canonical deck resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runtimeStart = fileContent.indexOf('const studioEditorTemplateRuntime =');
+  const runtimeEnd = fileContent.indexOf('const studioEditorTemplateController =', runtimeStart);
+  assert.notEqual(runtimeStart, -1);
+  assert.notEqual(runtimeEnd, -1);
+
+  const runtimeSource = fileContent.slice(runtimeStart, runtimeEnd);
+  const callbackStart = runtimeSource.indexOf('getCanonicalDeck:');
+  const callbackEnd = runtimeSource.indexOf('\n          getCanonicalDeckBaseline', callbackStart);
+  assert.notEqual(callbackStart, -1);
+  assert.notEqual(callbackEnd, -1);
+
+  const callbackExpression = runtimeSource
+    .slice(callbackStart + 'getCanonicalDeck:'.length, callbackEnd)
+    .trim()
+    .replace(/,$/, '');
+  const sourceDoc = { id: 'template-runtime-doc' };
+  const liveCanonicalDeck = { templates: [{ id: 'live-template' }] };
+  let receivedDoc = null;
+  const getCanonicalDeck = vm.runInNewContext(`(${callbackExpression})`, {
+    getIframeDoc() {
+      return sourceDoc;
+    },
+    resolveEditorUiCanonicalDeck(doc) {
+      receivedDoc = doc;
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('DOM rebuild should not run when live template runtime state is available');
+    }
+  });
+
+  assert.equal(getCanonicalDeck(), liveCanonicalDeck);
+  assert.equal(receivedDoc, sourceDoc);
+});
+
 test('saveActiveSlideAsTemplate delegates the name and refreshes template state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
