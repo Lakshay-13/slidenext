@@ -3075,6 +3075,11 @@
             setStudioCurrentPresentationMetadata(value);
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          loadPresentationMetadata: SlideNextStudioDeckContext
+            && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
+            ? (...args) => SlideNextStudioDeckContext.loadStudioPresentationMetadata(...args)
+            : null,
+          resolveLoadOptions: (sessionToken) => createCurrentStudioPresentationMetadataLoadOptions(sessionToken),
           resolveStoredCanonicalDeck: (metadata) => resolveEditorStoredCanonicalDeck(metadata),
           applyPersistedDeckState: (...args) => applyCurrentStudioPersistedDeckState(...args),
           getIframeDoc,
@@ -4967,6 +4972,15 @@
       presentationTitle = getStudioPresentationTitle(),
       sessionToken = getStudioEditorSessionToken()
     ) {
+      if (typeof studioEditorPresentationMetadataController !== 'undefined'
+        && studioEditorPresentationMetadataController
+        && typeof studioEditorPresentationMetadataController.load === 'function') {
+        return studioEditorPresentationMetadataController.load(
+          presentationUrl,
+          presentationTitle,
+          sessionToken
+        );
+      }
       const loadStudioPresentationMetadata = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
         ? SlideNextStudioDeckContext.loadStudioPresentationMetadata

@@ -69,3 +69,29 @@ test('presentation metadata controller keeps updates local when synchronization 
   assert.equal(controller.apply(metadata), metadata);
   assert.equal(syncCalls, 0);
 });
+
+test('presentation metadata controller delegates loading with session-aware options', async () => {
+  const calls = [];
+  const controller = metadataController.createStudioEditorPresentationMetadataController({
+    loadPresentationMetadata(url, title, options) {
+      calls.push([url, title, options]);
+      return Promise.resolve({ id: 'deck-1' });
+    },
+    resolveLoadOptions(sessionToken) {
+      return { sessionToken, marker: 'live-session' };
+    }
+  });
+
+  const result = await controller.load(
+    '/presentations/deck/index.html',
+    'Deck',
+    12
+  );
+
+  assert.deepEqual(calls, [[
+    '/presentations/deck/index.html',
+    'Deck',
+    { sessionToken: 12, marker: 'live-session' }
+  ]]);
+  assert.deepEqual(result, { id: 'deck-1' });
+});

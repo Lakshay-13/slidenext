@@ -35,6 +35,12 @@
     const updateDeckReadyToolbarActionState = typeof options.updateDeckReadyToolbarActionState === 'function'
       ? options.updateDeckReadyToolbarActionState
       : () => {};
+    const loadPresentationMetadata = typeof options.loadPresentationMetadata === 'function'
+      ? options.loadPresentationMetadata
+      : null;
+    const resolveLoadOptions = typeof options.resolveLoadOptions === 'function'
+      ? options.resolveLoadOptions
+      : () => ({});
 
     function apply(metadata, applyOptions = {}) {
       const nextMetadata = metadata || null;
@@ -62,7 +68,17 @@
       return nextMetadata;
     }
 
-    return { apply };
+    function load(presentationUrl = getCurrentPresentationUrl(), presentationTitle = '', sessionToken = null) {
+      if (!loadPresentationMetadata) return null;
+      const loadOptions = resolveLoadOptions(sessionToken);
+      return loadPresentationMetadata(
+        presentationUrl,
+        presentationTitle,
+        loadOptions && typeof loadOptions === 'object' ? loadOptions : {}
+      );
+    }
+
+    return { apply, load };
   }
 
   return {
