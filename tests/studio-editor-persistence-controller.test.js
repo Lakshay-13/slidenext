@@ -296,3 +296,35 @@ test('persistence controller resolves stale task state through the shared adapte
     true
   );
 });
+
+test('persistence controller runs current actions through the shared adapter', () => {
+  const calls = [];
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    getCurrentSessionToken: () => 4
+  });
+
+  assert.equal(
+    controller.runPersistenceActionIfCurrent(
+      {
+        presentationUrl: '/presentations/demo/index.html',
+        sessionToken: 4
+      },
+      () => calls.push('current')
+    ),
+    true
+  );
+  assert.equal(
+    controller.runPersistenceActionIfCurrent(
+      {
+        presentationUrl: '/presentations/demo/index.html',
+        sessionToken: 5
+      },
+      () => calls.push('stale')
+    ),
+    false
+  );
+  assert.deepEqual(calls, ['current']);
+});

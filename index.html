@@ -10259,6 +10259,14 @@
     }
 
     function runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.runPersistenceActionIfCurrent === 'function') {
+        const result = studioEditorPersistenceController.runPersistenceActionIfCurrent(persistenceContext, action);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistenceActionCurrentRunnerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

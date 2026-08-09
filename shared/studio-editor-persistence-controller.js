@@ -89,6 +89,7 @@
     let persistenceSuccessHandler = null;
     let versionPersistenceSuccessHandler = null;
     let persistenceTaskStaleChecker = null;
+    let persistenceActionCurrentRunner = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -328,6 +329,29 @@
         : null;
     }
 
+    function createPersistenceActionCurrentRunner() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistenceActionCurrentRunnerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistenceActionCurrentRunnerAdapter({
+        persistenceApi,
+        readCurrentSessionState: () => ({
+          getCurrentPresentationUrl,
+          getCurrentSessionToken
+        })
+      });
+    }
+
+    function runPersistenceActionIfCurrent(persistenceContext = {}, action = null, nextOptions = {}) {
+      if (typeof persistenceActionCurrentRunner !== 'function') {
+        persistenceActionCurrentRunner = createPersistenceActionCurrentRunner();
+      }
+      return typeof persistenceActionCurrentRunner === 'function'
+        ? persistenceActionCurrentRunner(persistenceContext, action, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -401,6 +425,7 @@
       handlePersistenceSuccess,
       handleVersionPersistenceSuccess,
       isPersistenceTaskStale,
+      runPersistenceActionIfCurrent,
       update,
       apply,
       resolveCanonicalDeckOverride,
