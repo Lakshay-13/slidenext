@@ -36,6 +36,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -61,11 +64,18 @@
         return failPdfExport();
       }
 
-      if (!buildCanonicalDeck) return failPdfExport();
-
       let canonicalDeck = null;
       try {
-        canonicalDeck = buildCanonicalDeck();
+        if (getCanonicalDeckBaseline) {
+          try {
+            canonicalDeck = getCanonicalDeckBaseline();
+          } catch (error) {
+            canonicalDeck = null;
+          }
+        }
+        if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck) && buildCanonicalDeck) {
+          canonicalDeck = buildCanonicalDeck();
+        }
       } catch (error) {
         canonicalDeck = null;
       }
@@ -137,6 +147,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -160,7 +173,17 @@
 
       let canonicalDeck;
       try {
-        canonicalDeck = buildCanonicalDeck ? buildCanonicalDeck() : null;
+        canonicalDeck = null;
+        if (getCanonicalDeckBaseline) {
+          try {
+            canonicalDeck = getCanonicalDeckBaseline();
+          } catch (error) {
+            canonicalDeck = null;
+          }
+        }
+        if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck) && buildCanonicalDeck) {
+          canonicalDeck = buildCanonicalDeck();
+        }
       } catch (error) {
         setStatus('export-failed');
         return false;

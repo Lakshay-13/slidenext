@@ -76,6 +76,51 @@ test('PDF export builds preview html from the validated canonical snapshot', () 
   assert.equal(previewDeck, canonicalDeck);
 });
 
+test('PDF and PPTX exports prefer a valid live canonical baseline before rebuilding', async () => {
+  const liveDeck = { slides: [{ id: 'live-slide' }] };
+  const rebuiltDeck = { slides: [{ id: 'rebuilt-slide' }] };
+  let buildCalls = 0;
+  let previewDeck = null;
+  let pptxDeck = null;
+  const pdfExport = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getCanonicalDeckBaseline: () => liveDeck,
+    buildCanonicalDeck: () => {
+      buildCalls += 1;
+      return rebuiltDeck;
+    },
+    buildPreviewHtml: (canonicalDeck) => {
+      previewDeck = canonicalDeck;
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        return true;
+      }
+    }
+  });
+  const pptxExport = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getCanonicalDeckBaseline: () => liveDeck,
+    buildCanonicalDeck: () => {
+      buildCalls += 1;
+      return rebuiltDeck;
+    },
+    pptxExport: {
+      async exportStudioPptx({ canonicalDeck }) {
+        pptxDeck = canonicalDeck;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(pdfExport(), true);
+  assert.equal(await pptxExport(), true);
+  assert.equal(previewDeck, liveDeck);
+  assert.equal(pptxDeck, liveDeck);
+  assert.equal(buildCalls, 0);
+});
+
 test('PPTX export rejects malformed canonical decks before invoking exporter', async () => {
   let exportCalls = 0;
   const statuses = [];
