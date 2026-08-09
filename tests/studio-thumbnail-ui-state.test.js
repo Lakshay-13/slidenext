@@ -105,6 +105,8 @@ test('syncStudioThumbnailList derives the slide-delete affordance from snapshot 
   }), true);
   assert.equal(thumbnailsList.children.length, 2);
   assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
+  assert.equal(thumbnailsList.children[0].style.contentVisibility, 'auto');
+  assert.equal(thumbnailsList.children[0].style.containIntrinsicSize, '72px');
 });
 
 test('renderStudioThumbnailList groups slides by section and labels unsectioned slides', () => {

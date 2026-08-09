@@ -73,6 +73,10 @@
       thumbCard.className = `glass-card p-3 border ${canMutateSlides ? 'cursor-pointer' : 'cursor-default'} relative group flex items-start gap-3 select-none transition-all ${
         isActive ? 'border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]' : 'border-white/5 bg-[#0a0a0a]/40 hover:border-white/20'
       }`;
+      if (thumbCard.style) {
+        thumbCard.style.contentVisibility = 'auto';
+        thumbCard.style.containIntrinsicSize = '72px';
+      }
       thumbCard.draggable = canMutateSlides;
       thumbCard.dataset.index = slide.index;
       thumbCard.dataset.slideId = slide.id;
