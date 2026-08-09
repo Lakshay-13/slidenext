@@ -12,6 +12,7 @@
       ? options.initialSelectedElements
       : [];
     let selectedElement = options.initialSelectedElement || null;
+    let preserveSelectionOnNextActiveSlideSync = !!options.initialPreserveSelectionOnNextActiveSlideSync;
 
     function getState() {
       return {
@@ -40,6 +41,11 @@
       getState,
       getSelectedElements: () => selectedElements,
       getSelectedElement: () => selectedElement,
+      getPreserveSelectionOnNextActiveSlideSync: () => preserveSelectionOnNextActiveSlideSync,
+      setPreserveSelectionOnNextActiveSlideSync: (nextValue) => {
+        preserveSelectionOnNextActiveSlideSync = !!nextValue;
+        return preserveSelectionOnNextActiveSlideSync;
+      },
       setState,
       clear
     };

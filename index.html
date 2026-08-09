@@ -1490,6 +1490,18 @@
         ? studioEditorSelectionStateController.clear()
         : false;
     }
+    function getStudioPreserveSelectionOnNextActiveSlideSync() {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.getPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorSelectionStateController.getPreserveSelectionOnNextActiveSlideSync()
+        : false;
+    }
+    function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.setPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorSelectionStateController.setPreserveSelectionOnNextActiveSlideSync(nextValue)
+        : false;
+    }
     const studioEditorHistoryStackController = typeof SlideNextStudioEditorHistoryStackController !== 'undefined'
       && SlideNextStudioEditorHistoryStackController
       && typeof SlideNextStudioEditorHistoryStackController.createStudioEditorHistoryStackController === 'function'
@@ -1874,10 +1886,8 @@
             : null,
           documentRef: document,
           getCurrentSlideIndex: getStudioCurrentSlideIndex,
-          getPreserveSelection: () => preserveSelectionOnNextActiveSlideSync,
-          setPreserveSelection: (nextValue) => {
-            preserveSelectionOnNextActiveSlideSync = !!nextValue;
-          },
+          getPreserveSelection: getStudioPreserveSelectionOnNextActiveSlideSync,
+          setPreserveSelection: setStudioPreserveSelectionOnNextActiveSlideSync,
           updateCurrentPresentationSessionState: (...args) => updateCurrentPresentationSessionState(...args),
           updateActiveThumbnailCardState: (...args) => updateActiveThumbnailCardState(...args),
           updateInsertionActionState: (...args) => updateInsertionActionState(...args),
@@ -2958,7 +2968,6 @@
     let renamingFilename = '';
     let renamingVersionContext = null;
     let editorClipboard = null;
-    let preserveSelectionOnNextActiveSlideSync = false;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
@@ -5536,7 +5545,7 @@
         syncInspectorForSelection,
         updateLayersList,
         preserveSelection: () => {
-          preserveSelectionOnNextActiveSlideSync = true;
+          setStudioPreserveSelectionOnNextActiveSlideSync(true);
         }
       }).restored;
     }

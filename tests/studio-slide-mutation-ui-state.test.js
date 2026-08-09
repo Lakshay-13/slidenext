@@ -25,7 +25,12 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return `
+function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
+  preserveSelectionOnNextActiveSlideSync = !!nextValue;
+  return preserveSelectionOnNextActiveSlideSync;
+}
+${fileContent.slice(start, end)}`;
 }
 
 function loadFinalizeSlideMutationPersistence(fileContent, context) {

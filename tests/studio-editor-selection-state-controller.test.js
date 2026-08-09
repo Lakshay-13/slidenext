@@ -11,7 +11,8 @@ test('selection state controller owns the current selection without changing ele
   const secondElement = { id: 'node-2' };
   const controller = selectionStateController.createStudioEditorSelectionStateController({
     initialSelectedElements: [firstElement],
-    initialSelectedElement: firstElement
+    initialSelectedElement: firstElement,
+    initialPreserveSelectionOnNextActiveSlideSync: true
   });
 
   assert.deepEqual(controller.getState(), {
@@ -26,6 +27,8 @@ test('selection state controller owns the current selection without changing ele
   });
   assert.equal(controller.getSelectedElements()[0], secondElement);
   assert.equal(controller.getSelectedElement(), secondElement);
+  assert.equal(controller.getPreserveSelectionOnNextActiveSlideSync(), true);
+  assert.equal(controller.setPreserveSelectionOnNextActiveSlideSync(false), false);
   assert.deepEqual(controller.clear(), {
     selectedElements: [],
     selectedElement: null
@@ -41,6 +44,9 @@ test('editor wiring routes selection state through the shared controller', () =>
   );
   assert.match(fileContent, /createStudioEditorSelectionStateController\(\{/);
   assert.match(fileContent, /getSelectedElements: getStudioSelectedElements/);
+  assert.match(fileContent, /getPreserveSelection: getStudioPreserveSelectionOnNextActiveSlideSync/);
+  assert.match(fileContent, /setStudioPreserveSelectionOnNextActiveSlideSync\(true\)/);
   assert.doesNotMatch(fileContent, /let selectedElement = null/);
   assert.doesNotMatch(fileContent, /let selectedElements = \[\]/);
+  assert.doesNotMatch(fileContent, /let preserveSelectionOnNextActiveSlideSync = false/);
 });
