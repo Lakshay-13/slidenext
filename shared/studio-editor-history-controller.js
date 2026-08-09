@@ -64,6 +64,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : () => null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -186,6 +189,7 @@
               getDocument,
               getPendingCanonicalDeck,
               buildCanonicalDeck,
+              buildMutationCanonicalDeck,
               getCanonicalDeckBaseline,
               isCanonicalDeck,
               getHistoryOptions,

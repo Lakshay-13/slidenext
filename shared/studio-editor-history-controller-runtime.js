@@ -48,6 +48,7 @@
           setTimer: options.setTimer,
           getDocument: options.getDocument,
           buildCanonicalDeck: options.buildCanonicalDeck,
+          buildMutationCanonicalDeck: options.buildMutationCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           getHistoryOptions: options.getHistoryOptions,
           buildPersistableDeckHtml: options.buildPersistableDeckHtml,

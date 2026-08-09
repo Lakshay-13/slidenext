@@ -97,6 +97,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : () => null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -164,9 +167,20 @@
         return null;
       }
       const pendingCanonicalDeck = getPendingCanonicalDeck();
+      const pendingTransaction = getPendingTransaction();
       const historyCanonicalDeckBuilder = isValidCanonicalDeck(pendingCanonicalDeck)
         ? () => pendingCanonicalDeck
           : (sourceDoc) => {
+            if (pendingTransaction && buildMutationCanonicalDeck) {
+              try {
+                const mutationCanonicalDeck = buildMutationCanonicalDeck(sourceDoc);
+                if (isValidCanonicalDeck(mutationCanonicalDeck)) {
+                  return mutationCanonicalDeck;
+                }
+              } catch (error) {
+                // Preserve the live baseline and legacy rebuild fallbacks.
+              }
+            }
             const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
             if (canonicalDeckBaseline) {
               return canonicalDeckBaseline;
@@ -185,7 +199,7 @@
         getActiveSlideId,
         getSelectedElementIds,
         isCanonicalDeck,
-        transaction: getPendingTransaction(),
+        transaction: pendingTransaction,
         preferCanonicalDeck: options.preferCanonicalDeck === true
       });
     };

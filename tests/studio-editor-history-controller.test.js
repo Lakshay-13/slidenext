@@ -96,6 +96,7 @@ test('history controller forwards history steps and restore entries', () => {
 
 test('history controller forwards canonical state to history entry builders', () => {
   const canonicalStateApi = { id: 'canonical-state-api' };
+  const buildMutationCanonicalDeck = () => null;
   let capturedOptions = null;
   const historyStateApi = {
     createStudioEditorHistoryEntryAdapter(options) {
@@ -106,11 +107,13 @@ test('history controller forwards canonical state to history entry builders', ()
   const controller = historyController.createStudioEditorHistoryController({
     historyApi: {},
     historyStateApi,
-    canonicalStateApi
+    canonicalStateApi,
+    buildMutationCanonicalDeck
   });
 
   assert.deepEqual(controller.createEntry({ id: 'document' }), { id: 'entry' });
   assert.equal(capturedOptions.canonicalStateApi, canonicalStateApi);
+  assert.equal(capturedOptions.buildMutationCanonicalDeck, buildMutationCanonicalDeck);
 });
 
 test('history controller caches the shared history button synchronizer', () => {

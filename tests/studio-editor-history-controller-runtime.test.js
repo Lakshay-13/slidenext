@@ -34,6 +34,7 @@ test('history controller runtime preserves the full controller dependency bundle
     setTimer: () => {},
     getDocument: () => null,
     buildCanonicalDeck: () => null,
+    buildMutationCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     getHistoryOptions: () => ({}),
     buildPersistableDeckHtml: () => '',
@@ -61,6 +62,7 @@ test('history controller runtime preserves the full controller dependency bundle
   assert.equal(calls[0].restoreApi, options.restoreApi);
   assert.equal(calls[0].getPendingTransaction, options.getPendingTransaction);
   assert.equal(calls[0].setLiveCanonicalDeck, options.setLiveCanonicalDeck);
+  assert.equal(calls[0].buildMutationCanonicalDeck, options.buildMutationCanonicalDeck);
   assert.equal(calls[0].resolveFallbackActiveSlideId, options.resolveFallbackActiveSlideId);
   assert.equal(calls[0].restoreHandlerOptions, options.restoreHandlerOptions);
 });
