@@ -20,6 +20,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installSlideIndexAccessor(context) {
+  context.getStudioCurrentSlideIndex = () => context.currentSlideIndex;
+}
+
 function createEditorDeckViewSharedOptionsForTest(context, doc) {
   return deckView.createStudioDeckViewSharedOptions(doc, {
     currentSlideIndex: context.currentSlideIndex,
@@ -1556,6 +1560,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
       callLog.push(['updateEditorPersistedDeckState', nextState]);
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
@@ -1704,6 +1709,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
       callLog.push(['updateEditorPersistedDeckState', nextState]);
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
@@ -1794,6 +1800,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
       callLog.push(['updateEditorPersistedDeckState', nextState]);
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
@@ -1883,6 +1890,7 @@ test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions wit
     syncSelectionOverlay() {},
     updateEditorPersistedDeckState() {}
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);

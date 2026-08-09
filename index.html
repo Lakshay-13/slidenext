@@ -1396,6 +1396,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1432,7 +1433,6 @@
     let currentPresentationMetadata = null;
     let currentTitle = '';
     let currentCategory = '';
-    let currentSlideIndex = 0;
     let selectedElement = null;
     let selectedElements = [];
     let lastPersistedDeckHtml = '';
@@ -1442,6 +1442,25 @@
     let redoStack = [];
     let pendingEditorTransaction = null;
     let studioEditorSessionToken = 0;
+    const studioEditorSlideIndexController = typeof SlideNextStudioEditorSlideIndexController !== 'undefined'
+      && SlideNextStudioEditorSlideIndexController
+      && typeof SlideNextStudioEditorSlideIndexController.createStudioEditorSlideIndexController === 'function'
+      ? SlideNextStudioEditorSlideIndexController.createStudioEditorSlideIndexController({
+          initialSlideIndex: 0
+        })
+      : null;
+    function getStudioCurrentSlideIndex() {
+      return studioEditorSlideIndexController
+        && typeof studioEditorSlideIndexController.getSlideIndex === 'function'
+        ? studioEditorSlideIndexController.getSlideIndex()
+        : 0;
+    }
+    function setStudioCurrentSlideIndex(nextValue) {
+      return studioEditorSlideIndexController
+        && typeof studioEditorSlideIndexController.setSlideIndex === 'function'
+        ? studioEditorSlideIndexController.setSlideIndex(nextValue)
+        : false;
+    }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
       && SlideNextStudioEditorWallpaperStateController
       && typeof SlideNextStudioEditorWallpaperStateController.createStudioEditorWallpaperStateController === 'function'
@@ -1624,7 +1643,7 @@
           getDocument: () => getIframeDoc(),
           getWindow: () => getIframeWindow(),
           getSlides: (doc) => getSlides(doc),
-          getCurrentSlideIndex: () => currentSlideIndex,
+          getCurrentSlideIndex: getStudioCurrentSlideIndex,
           syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args)
         })
       : null;
@@ -1651,7 +1670,7 @@
             ? SlideNextStudioDeckSnapshot
             : null,
           documentRef: document,
-          getCurrentSlideIndex: () => currentSlideIndex,
+          getCurrentSlideIndex: getStudioCurrentSlideIndex,
           getPreserveSelection: () => preserveSelectionOnNextActiveSlideSync,
           setPreserveSelection: (nextValue) => {
             preserveSelectionOnNextActiveSlideSync = !!nextValue;
@@ -2558,7 +2577,7 @@
               ? SlideNextStudioElementState
               : null,
             getIframeDoc,
-            getCurrentSlideIndex: () => currentSlideIndex,
+            getCurrentSlideIndex: getStudioCurrentSlideIndex,
             resolveElementById: (editorId, iframeDoc) => {
               if (editorId === 'slides-container') {
                 return iframeDoc && iframeDoc.getElementById('slidesContainer');
@@ -2651,7 +2670,7 @@
             currentCategory = value;
           },
           setSlideIndex: (value) => {
-            currentSlideIndex = value;
+            setStudioCurrentSlideIndex(value);
           },
           setPresentationMetadata: (value) => {
             applyCurrentPresentationMetadata(value);
@@ -3703,7 +3722,7 @@
         currentCategory = sessionStateUpdate.presentationCategory;
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'slideIndex')) {
-        currentSlideIndex = sessionStateUpdate.slideIndex;
+        setStudioCurrentSlideIndex(sessionStateUpdate.slideIndex);
       }
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationMetadata')) {
         applyCurrentPresentationMetadata(sessionStateUpdate.presentationMetadata);
@@ -4724,7 +4743,7 @@
         : null;
       if (createStudioDeckViewSharedOptions) {
         return createStudioDeckViewSharedOptions(doc, {
-          currentSlideIndex,
+          currentSlideIndex: getStudioCurrentSlideIndex(),
           getPersistedActiveSlideId,
           buildCanonicalDeck,
           resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
@@ -5015,7 +5034,7 @@
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {
       return SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(
         buildEditorDeckSnapshot(doc),
-        currentSlideIndex
+        getStudioCurrentSlideIndex()
       );
     }
 
@@ -8007,7 +8026,7 @@
             ? SlideNextStudioElementState
             : null,
           getIframeDoc,
-          getCurrentSlideIndex: () => currentSlideIndex,
+          getCurrentSlideIndex: getStudioCurrentSlideIndex,
           resolveElementById: (editorId, iframeDoc) => {
             if (editorId === 'slides-container') {
               return iframeDoc && iframeDoc.getElementById('slidesContainer');

@@ -19,6 +19,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installSlideIndexAccessor(context) {
+  context.getStudioCurrentSlideIndex = () => context.currentSlideIndex;
+}
+
 function createEditorDeckViewSharedOptionsForTest(context, doc) {
   return deckView.createStudioDeckViewSharedOptions(doc, {
     currentSlideIndex: context.currentSlideIndex,
@@ -5073,6 +5077,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
       slideCounterText: '1 / 5'
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
@@ -5928,6 +5933,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
       activeSlideIds: ['slide-2']
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
@@ -6361,6 +6367,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
       activeSlideIds: ['slide-current']
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);

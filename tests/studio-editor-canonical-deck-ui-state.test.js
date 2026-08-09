@@ -22,6 +22,10 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installSlideIndexAccessor(context) {
+  context.getStudioCurrentSlideIndex = () => context.currentSlideIndex;
+}
+
 function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
   const resolveEditorStoredCanonicalDeckSource = extractFunctionSource(
     fileContent,
@@ -116,6 +120,7 @@ function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) 
 }
 
 function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
+  installSlideIndexAccessor(context);
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,
@@ -958,6 +963,7 @@ test('createEditorDeckViewSharedOptions reuses the shared deck canonical overrid
       return 'slide-live';
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);
@@ -1061,6 +1067,7 @@ test('createEditorDeckViewSharedOptions delegates shared option composition thro
       return canonicalDeck;
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);

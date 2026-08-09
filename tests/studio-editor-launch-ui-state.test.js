@@ -19,6 +19,13 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installSlideIndexAccessor(context) {
+  context.setStudioCurrentSlideIndex = (nextValue) => {
+    context.currentSlideIndex = nextValue;
+    return nextValue;
+  };
+}
+
 function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -879,6 +886,7 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
       context.currentPresentationMetadata = nextMetadata;
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(updateCurrentPresentationSessionStateSource, context);
@@ -933,6 +941,7 @@ test('updateCurrentPresentationSessionState delegates normalization through the 
       context.currentPresentationMetadata = nextMetadata;
     }
   };
+  installSlideIndexAccessor(context);
 
   vm.createContext(context);
   vm.runInContext(updateCurrentPresentationSessionStateSource, context);
