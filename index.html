@@ -1402,6 +1402,7 @@
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
+  <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -2569,13 +2570,18 @@
             && typeof studioEditorGridSnapController.getGridSizePx === 'function'
             ? studioEditorGridSnapController.getGridSizePx()
             : null,
-          getIsDraggingElement: () => isDraggingElement,
-          setIsDraggingElement: (nextValue) => {
-            isDraggingElement = !!nextValue;
-          },
-          setSuppressNextFrameClick: (nextValue) => {
-            suppressNextFrameClick = !!nextValue;
-          },
+          getIsDraggingElement: () => studioEditorFrameInteractionStateController
+            && typeof studioEditorFrameInteractionStateController.getIsDraggingElement === 'function'
+            ? studioEditorFrameInteractionStateController.getIsDraggingElement()
+            : false,
+          setIsDraggingElement: (nextValue) => studioEditorFrameInteractionStateController
+            && typeof studioEditorFrameInteractionStateController.setIsDraggingElement === 'function'
+            ? studioEditorFrameInteractionStateController.setIsDraggingElement(nextValue)
+            : false,
+          setSuppressNextFrameClick: (nextValue) => studioEditorFrameInteractionStateController
+            && typeof studioEditorFrameInteractionStateController.setSuppressNextFrameClick === 'function'
+            ? studioEditorFrameInteractionStateController.setSuppressNextFrameClick(nextValue)
+            : false,
           dragStartThresholdPx: DRAG_START_THRESHOLD_PX,
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
@@ -2880,8 +2886,11 @@
           triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
         })
       : null;
-    let isDraggingElement = false;
-    let suppressNextFrameClick = false;
+    const studioEditorFrameInteractionStateController = typeof SlideNextStudioEditorFrameInteractionStateController !== 'undefined'
+      && SlideNextStudioEditorFrameInteractionStateController
+      && typeof SlideNextStudioEditorFrameInteractionStateController.createStudioEditorFrameInteractionStateController === 'function'
+      ? SlideNextStudioEditorFrameInteractionStateController.createStudioEditorFrameInteractionStateController({})
+      : null;
     const studioEditorZoomController = typeof SlideNextStudioEditorZoomController !== 'undefined'
       && SlideNextStudioEditorZoomController
       && typeof SlideNextStudioEditorZoomController.createStudioEditorZoomController === 'function'
@@ -2952,12 +2961,14 @@
           inlineTextEditApi: typeof SlideNextStudioEditorInlineEdit !== 'undefined'
             ? SlideNextStudioEditorInlineEdit
             : null,
-          getIsDragging: () => isDraggingElement,
-          consumeClickSuppression: () => {
-            const shouldSuppress = suppressNextFrameClick;
-            suppressNextFrameClick = false;
-            return shouldSuppress;
-          },
+          getIsDragging: () => studioEditorFrameInteractionStateController
+            && typeof studioEditorFrameInteractionStateController.getIsDraggingElement === 'function'
+            ? studioEditorFrameInteractionStateController.getIsDraggingElement()
+            : false,
+          consumeClickSuppression: () => studioEditorFrameInteractionStateController
+            && typeof studioEditorFrameInteractionStateController.consumeClickSuppression === 'function'
+            ? studioEditorFrameInteractionStateController.consumeClickSuppression()
+            : false,
           shouldIgnoreTarget: (target) => !!(
             target
             && (
