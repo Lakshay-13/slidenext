@@ -173,11 +173,16 @@
         || typeof canonicalDeckApi.saveCanonicalMasterSlideFromSlideId !== 'function') {
         return null;
       }
-      const nextCanonicalDeck = canonicalDeckApi.saveCanonicalMasterSlideFromSlideId(
-        resolveCanonicalDeck(),
-        getActiveSlideId(),
-        masterLike
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.saveCanonicalMasterSlideFromSlideId(
+          resolveCanonicalDeck(),
+          getActiveSlideId(),
+          masterLike
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
 
       const master = nextCanonicalDeck.masterSlides[nextCanonicalDeck.masterSlides.length - 1] || null;

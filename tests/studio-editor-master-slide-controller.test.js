@@ -121,6 +121,38 @@ test('master slide mutations reject malformed fallback state without a canonical
   assert.equal(controller.saveActiveSlide({ id: 'invalid-master' }), null);
 });
 
+test('master slide controller fails closed when saving a master canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const calls = [];
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      saveCanonicalMasterSlideFromSlideId() {
+        throw new Error('canonical master save failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onMasterSlidesChanged() {
+      calls.push('masters');
+    }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'broken-master' }), null);
+  assert.deepEqual(calls, []);
+});
+
 test('assignMasterSlide rerenders the active slide and commits the reference', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{
