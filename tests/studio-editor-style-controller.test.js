@@ -100,6 +100,36 @@ test('style controller preserves transaction finalization when canonical style c
   assert.equal(Object.prototype.hasOwnProperty.call(calls[0][1], 'canonicalDeck'), false);
 });
 
+test('style controller fails closed before DOM mutation when canonical builder construction throws', () => {
+  let styleCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        return {
+          canApply: true,
+          selection,
+          versionLabel: 'Auto: Styled Element'
+        };
+      }
+    },
+    canonicalStyleApi: {
+      createStudioCanonicalStyleMutationBuilders() {
+        throw new Error('canonical style builders unavailable');
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: () => {
+      styleCalls += 1;
+      return { didApply: true, displayValue: '32', transaction: null };
+    }
+  });
+
+  assert.equal(controller.apply('size', '32'), false);
+  assert.equal(styleCalls, 0);
+});
+
 test('style controller refreshes inspector and fails closed for unavailable edits', () => {
   let syncCalls = 0;
   const controller = styleController.createStudioEditorStyleController({

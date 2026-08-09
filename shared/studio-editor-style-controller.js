@@ -199,22 +199,28 @@
       if (!styleMutationPlan || !styleMutationPlan.canApply) {
         return finalizeStyleActionResult(false);
       }
-      const canonicalStyleBuilders = canonicalStyleApi
-        && typeof canonicalStyleApi.createStudioCanonicalStyleMutationBuilders === 'function'
-        ? canonicalStyleApi.createStudioCanonicalStyleMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            buildCanonicalDeckBaseline,
-            getCanonicalDeckBaseline
-          })
-        : null;
-      const buildCanonicalStyleBaseline = canonicalStyleBuilders
-        && typeof canonicalStyleBuilders.buildCanonicalStyleBaseline === 'function'
-        ? canonicalStyleBuilders.buildCanonicalStyleBaseline
-        : null;
-      const canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
-        ? buildCanonicalStyleBaseline({ sourceDocument: doc })
-        : null;
+      let canonicalStyleBuilders = null;
+      let canonicalDeckBeforeMutation = null;
+      try {
+        canonicalStyleBuilders = canonicalStyleApi
+          && typeof canonicalStyleApi.createStudioCanonicalStyleMutationBuilders === 'function'
+          ? canonicalStyleApi.createStudioCanonicalStyleMutationBuilders({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
+              getCanonicalDeckBaseline
+            })
+          : null;
+        const buildCanonicalStyleBaseline = canonicalStyleBuilders
+          && typeof canonicalStyleBuilders.buildCanonicalStyleBaseline === 'function'
+          ? canonicalStyleBuilders.buildCanonicalStyleBaseline
+          : null;
+        canonicalDeckBeforeMutation = buildCanonicalStyleBaseline
+          ? buildCanonicalStyleBaseline({ sourceDocument: doc })
+          : null;
+      } catch (error) {
+        return finalizeStyleActionResult(false);
+      }
       const getStyleElementId = (element) => assignElementId(element);
       const styleMutationResult = applyStyleMutation(
         styleApi,
