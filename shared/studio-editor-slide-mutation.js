@@ -64,6 +64,9 @@
     const getCommittedSelectedElementIds = typeof options.getSelectedElementIds === 'function'
       ? options.getSelectedElementIds
       : () => [];
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
     const createRestoreStateCapturer = mutationApi
       && typeof mutationApi.createStudioSlideMutationRestoreStateCapturer === 'function'
       ? mutationApi.createStudioSlideMutationRestoreStateCapturer
@@ -87,13 +90,26 @@
       return (iframeDoc) => captureStudioDeckViewBeforeSlideMutation({
         doc: iframeDoc,
         saveHistoryState,
+        buildCanonicalDeck,
         getActiveSlideId,
         getCommittedSelectedElementIds
       });
     }
 
     return (iframeDoc) => {
-      saveHistoryState();
+      let canonicalDeck = null;
+      if (buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(iframeDoc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (canonicalDeck) {
+        saveHistoryState(false, null, canonicalDeck);
+      } else {
+        saveHistoryState();
+      }
       return {
         preservedActiveSlideId: getActiveSlideId(iframeDoc),
         preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)

@@ -80,6 +80,61 @@ test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide
   assert.deepEqual(calls, ['history', ['active', doc], ['selection', doc]]);
 });
 
+test('createStudioEditorSlideMutationRestoreStateCapturer uses a canonical baseline without shared adapters', () => {
+  const doc = { id: 'doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    buildCanonicalDeck(nextDoc) {
+      calls.push(['build', nextDoc]);
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    getActiveSlideId() {
+      return 'slide-2';
+    },
+    getSelectedElementIds() {
+      return ['node-1'];
+    }
+  });
+
+  assert.deepEqual(capture(doc), {
+    preservedActiveSlideId: 'slide-2',
+    preservedSelectionIds: ['node-1']
+  });
+  assert.deepEqual(calls, [
+    ['build', doc],
+    ['history', false, null, canonicalDeck]
+  ]);
+});
+
+test('createStudioEditorSlideMutationRestoreStateCapturer passes canonical capture options to deck view fallback', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  let delegatedOptions = null;
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    deckViewApi: {
+      captureStudioDeckViewBeforeSlideMutation(options) {
+        delegatedOptions = options;
+        return { preservedActiveSlideId: 'slide-1', preservedSelectionIds: [] };
+      }
+    },
+    buildCanonicalDeck() {
+      return canonicalDeck;
+    },
+    saveHistoryState() {},
+    getActiveSlideId() {},
+    getSelectedElementIds() {}
+  });
+
+  assert.deepEqual(capture({ id: 'doc' }), {
+    preservedActiveSlideId: 'slide-1',
+    preservedSelectionIds: []
+  });
+  assert.equal(delegatedOptions.buildCanonicalDeck(), canonicalDeck);
+});
+
 test('restoreStudioEditorDeckViewAfterSlideMutation forwards slide restore options', () => {
   const calls = [];
   const doc = { id: 'doc' };
