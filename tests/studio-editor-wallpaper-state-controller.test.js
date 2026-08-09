@@ -34,11 +34,13 @@ test('editor wiring routes wallpaper state through the shared controller', () =>
     fileContent,
     /<script src="\/shared\/studio-editor-wallpaper-state-controller\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorWallpaperStateController\(\)/);
+  assert.match(fileContent, /studio-editor-wallpaper-state-store\.js/);
+  assert.match(fileContent, /studioEditorWallpaperStateStore/);
   assert.match(fileContent, /getWallpaperTab: getStudioWallpaperTab/);
   assert.match(fileContent, /getPendingCustomWallpaperVersion\(\)/);
   assert.match(fileContent, /setStudioPendingCustomWallpaperVersion\(!!isCustomInput\)/);
   assert.match(fileContent, /clearStudioPendingCustomWallpaperVersion\(\)/);
+  assert.doesNotMatch(fileContent, /const studioEditorWallpaperStateController =/);
   assert.doesNotMatch(fileContent, /let wallpaperTab = 'solid'/);
   assert.doesNotMatch(fileContent, /let customGradientType = 'linear'/);
   assert.doesNotMatch(fileContent, /wallpaperTab = tab/);
