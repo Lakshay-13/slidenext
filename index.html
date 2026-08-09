@@ -3886,6 +3886,26 @@
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorDeckViewBuildOptions === 'function') {
+        return editorCanonicalViewStateApi.createStudioEditorDeckViewBuildOptions(doc, {
+          buildOptions,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
+          fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc),
+          buildFallbackHtml: (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
+            canonicalDeck
+          }),
+          buildRenderOptions: (sourceDoc, canonicalDeck, renderOptions = {}) => buildEditorDeckRenderOptions(
+            sourceDoc,
+            canonicalDeck,
+            renderOptions
+          )
+        });
+      }
       const activeSlideId = typeof buildOptions.activeSlideId === 'string' && buildOptions.activeSlideId.trim()
         ? buildOptions.activeSlideId
         : '';

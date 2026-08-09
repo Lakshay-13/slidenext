@@ -160,3 +160,82 @@ test('editor render options delegate active-slide and shared options to deck vie
     currentSlideIndex: 1
   });
 });
+
+test('editor deck view build options delegate canonical and fallback builders to deck view', () => {
+  const doc = { id: 'editor-doc' };
+  const calls = [];
+  const buildCanonicalDeck = () => ({ slides: [] });
+  const resolveLiveActiveSlideId = () => 'slide-live';
+  const result = canonicalViewState.createStudioEditorDeckViewBuildOptions(doc, {
+    buildOptions: {
+      activeSlideId: 'slide-explicit',
+      buildCanonicalDeck,
+      resolveLiveActiveSlideId
+    },
+    deckViewApi: {
+      createStudioDeckViewBuildOptions(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return { delegated: true, options };
+      }
+    },
+    buildFallbackHtml() {
+      return '<html>fallback</html>';
+    },
+    buildRenderOptions() {
+      return { activeSlideId: 'slide-explicit' };
+    }
+  });
+
+  assert.equal(result.delegated, true);
+  assert.equal(calls[0][0], doc);
+  assert.equal(calls[0][1].activeSlideId, 'slide-explicit');
+  assert.equal(calls[0][1].buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(calls[0][1].resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+});
+
+test('editor deck view build options compose the fallback view without the shared builder', () => {
+  const doc = { id: 'editor-doc' };
+  const canonicalDeck = { slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const result = canonicalViewState.createStudioEditorDeckViewBuildOptions(doc, {
+    buildOptions: { activeSlideId: 'slide-explicit' },
+    deckViewApi: {
+      resolveStudioCanonicalDeckViewState() {
+        return {
+          resolveCanonicalDeck(sourceDoc) {
+            calls.push(['resolve', sourceDoc]);
+            return canonicalDeck;
+          },
+          liveActiveSlideId: 'slide-live',
+          resolvedCanonicalDeck: null
+        };
+      }
+    },
+    fallbackBuildCanonicalDeck() {
+      return canonicalDeck;
+    },
+    fallbackResolveLiveActiveSlideId() {
+      return 'slide-live';
+    },
+    buildFallbackHtml(sourceDoc, nextCanonicalDeck) {
+      calls.push(['fallback', sourceDoc, nextCanonicalDeck]);
+      return '<html>fallback</html>';
+    },
+    buildRenderOptions(sourceDoc, nextCanonicalDeck, options) {
+      calls.push(['render', sourceDoc, nextCanonicalDeck, options]);
+      return { activeSlideId: options.activeSlideId };
+    }
+  });
+
+  assert.equal(result.buildCanonicalDeck(doc), canonicalDeck);
+  assert.equal(result.buildFallbackHtml(doc), '<html>fallback</html>');
+  assert.deepEqual(result.deckHtmlOptions, {
+    renderOptions: { activeSlideId: 'slide-explicit' }
+  });
+  assert.deepEqual(calls, [
+    ['render', doc, null, { activeSlideId: 'slide-explicit' }],
+    ['resolve', doc],
+    ['resolve', doc],
+    ['fallback', doc, canonicalDeck]
+  ]);
+});
