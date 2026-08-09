@@ -70,13 +70,19 @@
             getCanonicalDeckBaseline
           })
         : null;
-      const canonicalDeck = canonicalLayoutBuilder
-        ? canonicalLayoutBuilder({
+      let canonicalDeck = null;
+      if (canonicalLayoutBuilder) {
+        try {
+          canonicalDeck = canonicalLayoutBuilder({
             sourceDocument: doc,
             nextItems: nudgeResult.nextItems,
             getElementId: getNudgeElementId
-          })
-        : null;
+          });
+        } catch (err) {
+          // Do not apply a DOM-only movement when the canonical sidecar fails.
+          return false;
+        }
+      }
       const applyStudioNudgedLayout = nudgeApi
         && typeof nudgeApi.applyStudioNudgedLayout === 'function'
         ? nudgeApi.applyStudioNudgedLayout
