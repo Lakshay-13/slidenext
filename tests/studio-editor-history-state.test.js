@@ -103,11 +103,10 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
 
 test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pending canonical state is absent', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
-  let capturedOptions = null;
+  let buildCalls = 0;
   const historyApi = {
     buildStudioHistoryEntry(_doc, options) {
-      options.buildCanonicalDeck('history-doc');
-      return { canonicalDeck: canonicalDeckBaseline };
+      return { canonicalDeck: options.buildCanonicalDeck('history-doc') };
     }
   };
   const builder = historyState.createStudioEditorHistoryEntryBuilder({
@@ -117,30 +116,26 @@ test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pendin
       assert.equal(sourceDoc, 'history-doc');
       return canonicalDeckBaseline;
     },
-    buildCanonicalDeck(_doc, options) {
-      capturedOptions = options;
-      return canonicalDeckBaseline;
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return { kind: 'slidenext.deck', slides: [{ id: 'rebuilt' }] };
     }
   });
 
-  builder('history-doc');
+  assert.deepEqual(builder('history-doc'), { canonicalDeck: canonicalDeckBaseline });
 
-  assert.deepEqual(capturedOptions, {
-    preferLiveCanonicalDeck: false,
-    canonicalDeckBaseline
-  });
+  assert.equal(buildCalls, 0);
 });
 
 test('createStudioEditorHistoryEntryBuilder delegates baseline resolution to canonical state', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
   let readerOptions = null;
   let readerDocument = null;
-  let capturedOptions = null;
+  let buildCalls = 0;
   const builder = historyState.createStudioEditorHistoryEntryBuilder({
     historyApi: {
       buildStudioHistoryEntry(_doc, options) {
-        options.buildCanonicalDeck('history-doc');
-        return null;
+        return { canonicalDeck: options.buildCanonicalDeck('history-doc') };
       }
     },
     canonicalStateApi: {
@@ -155,20 +150,17 @@ test('createStudioEditorHistoryEntryBuilder delegates baseline resolution to can
     getCanonicalDeckBaseline() {
       throw new Error('custom reader should own baseline resolution');
     },
-    buildCanonicalDeck(_doc, options) {
-      capturedOptions = options;
+    buildCanonicalDeck() {
+      buildCalls += 1;
       return canonicalDeckBaseline;
     }
   });
 
-  assert.equal(builder({ id: 'history-doc' }), null);
+  assert.deepEqual(builder({ id: 'history-doc' }), { canonicalDeck: canonicalDeckBaseline });
   assert.equal(readerDocument, 'history-doc');
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(readerOptions.isCanonicalDeck, null);
-  assert.deepEqual(capturedOptions, {
-    preferLiveCanonicalDeck: false,
-    canonicalDeckBaseline
-  });
+  assert.equal(buildCalls, 0);
 });
 
 test('createStudioEditorHistoryEntryBuilder ignores an invalid live baseline', () => {

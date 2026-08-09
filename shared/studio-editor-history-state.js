@@ -167,13 +167,13 @@
       const historyCanonicalDeckBuilder = isValidCanonicalDeck(pendingCanonicalDeck)
         ? () => pendingCanonicalDeck
           : (sourceDoc) => {
+            const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
+            if (canonicalDeckBaseline) {
+              return canonicalDeckBaseline;
+            }
             const buildOptions = {
               preferLiveCanonicalDeck: false
             };
-            const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
-            if (canonicalDeckBaseline) {
-              buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
-            }
             return buildCanonicalDeck(sourceDoc, buildOptions);
           };
       return historyApi.buildStudioHistoryEntry(doc, {
