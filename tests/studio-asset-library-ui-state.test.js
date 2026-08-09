@@ -445,6 +445,53 @@ test('updateAssetLibraryState caches the shared asset state synchronizer when av
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
 
+test('asset library state prefers the live canonical deck before rebuilding from the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateAssetLibraryState(doc = getIframeDoc()) {',
+    '\n\n    function updateTemplateActionState'
+  );
+  const doc = { id: 'live-doc' };
+  const liveCanonicalDeck = { assets: [{ id: 'live-asset' }] };
+  let receivedOptions = null;
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioEditorAssetView: {
+      syncStudioAssetState(options) {
+        receivedOptions = options;
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getStudioEditorSessionToken() {
+      return 17;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 17);
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when the live deck is available');
+    },
+    isElementLocked() {
+      return false;
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateAssetLibraryState(doc), true);
+  assert.equal(receivedOptions.assets, liveCanonicalDeck.assets);
+  assert.equal(buildCalls, 0);
+});
+
 test('asset library state prefers canonical lock metadata when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(

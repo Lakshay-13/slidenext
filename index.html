@@ -7738,9 +7738,25 @@
     }
 
     function updateAssetLibraryState(doc = getIframeDoc()) {
-      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
-        : null;
+      const resolveCanonicalDeck = (sourceDoc) => {
+        let liveCanonicalDeck = null;
+        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
+          try {
+            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
+              sourceDoc,
+              typeof getStudioEditorSessionToken === 'function'
+                ? getStudioEditorSessionToken()
+                : null
+            );
+          } catch (error) {
+            liveCanonicalDeck = null;
+          }
+        }
+        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck(sourceDoc)
+          : null);
+      };
+      const canonicalDeck = resolveCanonicalDeck(doc);
       const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
         ? SlideNextStudioEditorAssetView
         : null;
@@ -7752,9 +7768,7 @@
           updateAssetLibraryState.sync = assetView.createStudioAssetStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
-              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck(sourceDoc)
-                : null;
+              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
               const selectedElements = getStudioSelectedElements();
               const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
                 ? selectedElements[0]
