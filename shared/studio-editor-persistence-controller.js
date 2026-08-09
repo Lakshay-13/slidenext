@@ -41,6 +41,9 @@
     const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
       ? options.getCurrentPresentationUrl
       : () => currentPresentationUrl;
+    const createHandlerOptions = typeof options.createHandlerOptions === 'function'
+      ? options.createHandlerOptions
+      : null;
     const setCurrentPresentationCanonicalDeck = typeof options.setCurrentPresentationCanonicalDeck === 'function'
       ? options.setCurrentPresentationCanonicalDeck
       : () => {};
@@ -73,6 +76,7 @@
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
+    let persistenceSuccessHandler = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -227,6 +231,26 @@
         : null;
     }
 
+    function createPersistenceSuccessHandler() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistenceSuccessHandlerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistenceSuccessHandlerAdapter({
+        persistenceApi,
+        createHandlerOptions
+      });
+    }
+
+    function handlePersistenceSuccess(persistenceContext = {}, nextOptions = {}) {
+      if (typeof persistenceSuccessHandler !== 'function') {
+        persistenceSuccessHandler = createPersistenceSuccessHandler();
+      }
+      return typeof persistenceSuccessHandler === 'function'
+        ? persistenceSuccessHandler(persistenceContext, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -296,6 +320,7 @@
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,
       resolvePersistenceStateFromCapture,
+      handlePersistenceSuccess,
       update,
       apply,
       resolveCanonicalDeckOverride,

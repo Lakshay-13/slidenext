@@ -201,3 +201,26 @@ test('persistence controller resolves persistence state from document capture', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0][2], '/presentations/demo/index.html');
 });
+
+test('persistence controller handles success through the shared handler adapter', () => {
+  const calls = [];
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    createHandlerOptions: (options) => ({
+      ...options,
+      getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+      onSuccess: () => calls.push('success')
+    })
+  });
+
+  const result = controller.handlePersistenceSuccess({
+    presentationUrl: '/presentations/demo/index.html',
+    data: { success: true },
+    cleanHtml: '<html></html>'
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['success']);
+});

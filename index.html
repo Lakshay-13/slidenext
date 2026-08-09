@@ -3052,6 +3052,7 @@
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           capturePersistableDeckState: (...args) => captureEditorPersistableDeckState(...args),
+          createHandlerOptions: (...args) => createCurrentStudioPersistenceHandlerOptions(...args),
           setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
@@ -10120,6 +10121,14 @@
     }
 
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.handlePersistenceSuccess === 'function') {
+        const result = studioEditorPersistenceController.handlePersistenceSuccess(persistenceContext, options);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorPersistenceSuccessHandlerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
