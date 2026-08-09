@@ -157,3 +157,22 @@ test('persistence controller captures playback state through the shared adapter'
     activeSlideIds: ['slide-2']
   });
 });
+
+test('persistence controller captures persistable deck state through supplied callbacks', () => {
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({ slides: [] });
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState
+  });
+
+  assert.deepEqual(controller.capturePersistableDeckState({ id: 'iframe-doc' }, {
+    canonicalDeck,
+    captureBuildState: () => ({ cleanHtml: '<html></html>' }),
+    buildCanonicalDeck: () => canonicalDeck,
+    resolvePlaybackState: () => ({ activeSlideIds: ['slide-1'] })
+  }), {
+    cleanHtml: '<html></html>',
+    canonicalDeck,
+    playbackState: { activeSlideIds: ['slide-1'] }
+  });
+});

@@ -71,6 +71,7 @@
     let stateReader = null;
     let activeSlideIdReader = null;
     let playbackStateCapturer = null;
+    let persistableDeckStateCapturer = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -185,6 +186,25 @@
         : null;
     }
 
+    function createPersistableDeckStateCapturer() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistableDeckStateCapturerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistableDeckStateCapturerAdapter({
+        persistenceApi
+      });
+    }
+
+    function capturePersistableDeckState(doc = null, nextOptions = {}) {
+      if (typeof persistableDeckStateCapturer !== 'function') {
+        persistableDeckStateCapturer = createPersistableDeckStateCapturer();
+      }
+      return typeof persistableDeckStateCapturer === 'function'
+        ? persistableDeckStateCapturer(doc, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -252,6 +272,7 @@
       resolvePersistedDeckStateWithContent,
       getPersistedActiveSlideId,
       capturePersistedDeckPlaybackState,
+      capturePersistableDeckState,
       update,
       apply,
       resolveCanonicalDeckOverride,
