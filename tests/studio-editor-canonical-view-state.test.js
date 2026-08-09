@@ -90,6 +90,46 @@ test('canonical view state resolver fails closed to the live slide callback with
   assert.equal(result.resolveCanonicalDeck(), null);
 });
 
+test('editor deck view shared options delegate canonical and playback callbacks', () => {
+  const doc = { id: 'editor-doc' };
+  const buildCanonicalDeck = () => ({ slides: [] });
+  const resolveLiveActiveSlideId = () => 'slide-live';
+  const getPersistedActiveSlideId = () => 'slide-persisted';
+  const resolveCanonicalDeckOverride = () => ({ slides: [] });
+  const isCanonicalDeck = () => true;
+  const calls = [];
+  const deckViewApi = {
+    createStudioDeckViewSharedOptions(nextDoc, options) {
+      calls.push([nextDoc, options]);
+      return { currentSlideIndex: options.currentSlideIndex };
+    }
+  };
+
+  const result = canonicalViewState.createStudioEditorDeckViewSharedOptions(doc, {
+    deckViewApi,
+    currentSlideIndex: 3,
+    getPersistedActiveSlideId,
+    buildCanonicalDeck,
+    resolveCanonicalDeckOverride,
+    resolveLiveActiveSlideId,
+    isCanonicalDeck
+  });
+
+  assert.deepEqual(result, { currentSlideIndex: 3 });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], doc);
+  assert.equal(calls[0][1].currentSlideIndex, 3);
+  assert.equal(calls[0][1].getPersistedActiveSlideId, getPersistedActiveSlideId);
+  assert.equal(calls[0][1].buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(calls[0][1].resolveCanonicalDeckOverride, resolveCanonicalDeckOverride);
+  assert.equal(calls[0][1].resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+  assert.equal(calls[0][1].isCanonicalDeck, isCanonicalDeck);
+});
+
+test('editor deck view shared options fail closed without the shared API', () => {
+  assert.deepEqual(canonicalViewState.createStudioEditorDeckViewSharedOptions(), {});
+});
+
 test('editor fallback slide resolution passes canonical and shared editor state to deck view', () => {
   const doc = { id: 'editor-doc' };
   const canonicalDeck = { slides: [] };

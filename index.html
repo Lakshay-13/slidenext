@@ -5513,6 +5513,26 @@
     }
 
     function createEditorDeckViewSharedOptions(doc = getIframeDoc()) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.createStudioEditorDeckViewSharedOptions === 'function') {
+        const isCanonicalDeck = getEditorCanonicalDeckValidator();
+        const {
+          buildCanonicalDeck,
+          resolveLiveActiveSlideId
+        } = createEditorCanonicalDeckViewStateOptions();
+        return editorCanonicalViewStateApi.createStudioEditorDeckViewSharedOptions(doc, {
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          currentSlideIndex: getStudioCurrentSlideIndex(),
+          getPersistedActiveSlideId,
+          buildCanonicalDeck,
+          resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
+          resolveLiveActiveSlideId,
+          isCanonicalDeck
+        });
+      }
       const isCanonicalDeck = getEditorCanonicalDeckValidator();
       const {
         buildCanonicalDeck,
