@@ -7,15 +7,18 @@ const vm = require('node:vm');
 const deckPersistence = require('../shared/deck-persistence.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  const source = persistedStateFixture.extractPersistedStateAwareFunctionSource(
+    fileContent,
+    startMarker,
+    endMarker
+  );
+  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
+  return source;
 }
 
 function loadResolveEditorStoredCanonicalDeck(fileContent, context) {

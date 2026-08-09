@@ -134,12 +134,12 @@ test('canonical deck resolver prefers a valid live deck and safely falls back', 
 });
 
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
-const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
+const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const source = selectionFixture.extractSelectionAwareFunctionSource(
+  const source = persistedStateFixture.extractPersistedStateAwareFunctionSource(
     fileContent,
     startMarker,
     endMarker
