@@ -73,6 +73,15 @@ function getWallpaperStates(controls) {
 }
 
 function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  const canonicalUiResolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {',
@@ -81,7 +90,7 @@ function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
   if (typeof context.SlideNextStudioDeckView === 'undefined') {
     context.SlideNextStudioDeckView = deckView;
   }
-  vm.runInContext(helperSource, context);
+  vm.runInContext(`${canonicalUiSource}\n${canonicalUiResolverSource}\n${helperSource}`, context);
 }
 
 test('resolveCurrentStudioWallpaperActionState reports wallpaper readiness from the live active slide state', () => {
@@ -199,6 +208,53 @@ test('resolveCurrentStudioWallpaperActionState attaches the canonical active sli
     canUseWallpaperControls: true,
     canonicalActiveSlide
   });
+});
+
+test('resolveCurrentStudioWallpaperActionState prefers the live canonical deck before rebuilding the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const doc = {
+    activeSlide: { dataset: { slideId: 'slide-1' } }
+  };
+  const liveCanonicalActiveSlide = {
+    id: 'slide-1',
+    layout: { background: { style: 'background: #445566;' } }
+  };
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioDeckView: deckView,
+    getActiveSlide(sourceDoc) {
+      return sourceDoc && sourceDoc.activeSlide ? sourceDoc.activeSlide : null;
+    },
+    getEditorSlideId(slide) {
+      return slide && slide.dataset ? slide.dataset.slideId : '';
+    },
+    getStudioEditorSessionToken() {
+      return 43;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 43);
+      return { slides: [liveCanonicalActiveSlide] };
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when live wallpaper metadata is available');
+    },
+    getIframeDoc() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioWallpaperActionState(fileContent, context);
+
+  const result = context.resolveCurrentStudioWallpaperActionState(doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    activeSlide: doc.activeSlide,
+    canUseWallpaperControls: true,
+    canonicalActiveSlide: liveCanonicalActiveSlide
+  });
+  assert.equal(buildCalls, 0);
 });
 
 test('updateWallpaperActionState enables wallpaper controls only when the iframe has a live active slide', () => {

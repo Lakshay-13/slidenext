@@ -11890,7 +11890,8 @@
       const activeSlide = actionState && actionState.activeSlide;
       if (!activeSlide
         || typeof getEditorSlideId !== 'function'
-        || typeof buildEditorCanonicalDeck !== 'function') {
+        || (typeof resolveEditorUiCanonicalDeck !== 'function'
+          && typeof buildEditorCanonicalDeck !== 'function')) {
         return actionState;
       }
 
@@ -11898,7 +11899,9 @@
       if (!activeSlideId) return actionState;
 
       try {
-        const canonicalDeck = buildEditorCanonicalDeck(doc);
+        const canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+          ? resolveEditorUiCanonicalDeck(doc)
+          : buildEditorCanonicalDeck(doc);
         const canonicalActiveSlide = canonicalDeck
           && Array.isArray(canonicalDeck.slides)
           ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
