@@ -43,6 +43,22 @@ test('canonical bridge delegates live state with document and session ownership'
   ]);
 });
 
+test('canonical bridge clears stale live state when history publishes no canonical deck', () => {
+  const state = createState();
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({ state });
+  const deck = { kind: 'slidenext.deck', slides: [] };
+  const documentRef = {};
+
+  assert.equal(bridge.setLiveCanonicalDeck(deck, documentRef, 3), deck);
+  assert.equal(bridge.setLiveCanonicalDeck(null, documentRef, 3), null);
+  assert.equal(bridge.resolveLiveCanonicalDeck(documentRef, 3), null);
+  assert.deepEqual(state.calls, [
+    ['set', deck, { documentRef, sessionToken: 3 }],
+    ['reset'],
+    ['resolve', { documentRef, sessionToken: 3 }]
+  ]);
+});
+
 test('canonical bridge uses the document getter and normalizes build options', () => {
   const documentRef = { id: 'frame' };
   const calls = [];
