@@ -289,3 +289,52 @@ test('updateTemplateActionState caches the shared template state synchronizer wh
   assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
+
+test('template state prefers the live canonical deck before rebuilding from the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateTemplateActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateMasterSlideActionState'
+  );
+  const doc = { id: 'live-doc', activeSlide: {} };
+  const liveCanonicalDeck = { templates: [{ id: 'live-template' }] };
+  let receivedOptions = null;
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioEditorTemplateView: {
+      syncStudioTemplateState(options) {
+        receivedOptions = options;
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    getStudioEditorSessionToken() {
+      return 23;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 23);
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when the live deck is available');
+    },
+    insertSavedTemplate() {},
+    removeSavedTemplate() {},
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateTemplateActionState(doc), true);
+  assert.equal(receivedOptions.templates, liveCanonicalDeck.templates);
+  assert.equal(buildCalls, 0);
+});

@@ -7864,15 +7864,31 @@
       if (!templateView || typeof templateView.syncStudioTemplateState !== 'function') {
         return false;
       }
+      const resolveCanonicalDeck = (sourceDoc) => {
+        let liveCanonicalDeck = null;
+        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
+          try {
+            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
+              sourceDoc,
+              typeof getStudioEditorSessionToken === 'function'
+                ? getStudioEditorSessionToken()
+                : null
+            );
+          } catch (error) {
+            liveCanonicalDeck = null;
+          }
+        }
+        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck(sourceDoc)
+          : null);
+      };
       if (typeof templateView.createStudioTemplateStateSync === 'function') {
         if (typeof updateTemplateActionState.sync !== 'function') {
           updateTemplateActionState.sync = templateView.createStudioTemplateStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
               const canSave = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck(sourceDoc)
-                : null;
+              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
               return {
                 templates: canonicalDeck && canonicalDeck.templates,
                 canUseTemplateActions: canSave,
@@ -7888,9 +7904,7 @@
         }
       }
       const canSave = !!getActiveSlide(doc);
-      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
-        : null;
+      const canonicalDeck = resolveCanonicalDeck(doc);
       templateView.syncStudioTemplateState({
         documentRef: document,
         templates: canonicalDeck && canonicalDeck.templates,
