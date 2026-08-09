@@ -1449,8 +1449,9 @@
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
-    <script src="/shared/studio-editor-navigation-controller.js"></script>
+  <script src="/shared/studio-editor-navigation-controller.js"></script>
   <script src="/shared/studio-editor-navigation-sync.js"></script>
+  <script src="/shared/studio-editor-navigation-runtime.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-editor-preview-controller.js"></script>
@@ -2102,24 +2103,25 @@
           }
         })
       : null;
-    const studioEditorNavigationController = typeof SlideNextStudioEditorNavigationController !== 'undefined'
-      && SlideNextStudioEditorNavigationController
-      && typeof SlideNextStudioEditorNavigationController.createStudioEditorNavigationController === 'function'
-      ? SlideNextStudioEditorNavigationController.createStudioEditorNavigationController({
+    const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
+      && SlideNextStudioEditorNavigationRuntime
+      && typeof SlideNextStudioEditorNavigationRuntime.createStudioEditorNavigationRuntime === 'function'
+      ? SlideNextStudioEditorNavigationRuntime.createStudioEditorNavigationRuntime({
+          navigationApi: typeof SlideNextStudioEditorNavigationController !== 'undefined'
+            ? SlideNextStudioEditorNavigationController
+            : null,
+          activeSlideApi: typeof SlideNextStudioEditorActiveSlideController !== 'undefined'
+            ? SlideNextStudioEditorActiveSlideController
+            : null,
+          navigationSyncApi: typeof SlideNextStudioEditorNavigationSync !== 'undefined'
+            ? SlideNextStudioEditorNavigationSync
+            : null,
+          thumbnailApi: typeof SlideNextStudioEditorThumbnailController !== 'undefined'
+            ? SlideNextStudioEditorThumbnailController
+            : null,
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
             ? SlideNextStudioDeckView
             : null,
-          getDocument: () => getIframeDoc(),
-          getWindow: () => getIframeWindow(),
-          getSlides: (doc) => getSlides(doc),
-          getCurrentSlideIndex: getStudioCurrentSlideIndex,
-          syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args)
-        })
-      : null;
-    const studioEditorActiveSlideController = typeof SlideNextStudioEditorActiveSlideController !== 'undefined'
-      && SlideNextStudioEditorActiveSlideController
-      && typeof SlideNextStudioEditorActiveSlideController.createStudioEditorActiveSlideController === 'function'
-      ? SlideNextStudioEditorActiveSlideController.createStudioEditorActiveSlideController({
           activeSlideView: typeof SlideNextStudioEditorActiveSlideView !== 'undefined'
             ? SlideNextStudioEditorActiveSlideView
             : null,
@@ -2132,14 +2134,15 @@
           notesView: typeof SlideNextStudioEditorNotes !== 'undefined'
             ? SlideNextStudioEditorNotes
             : null,
-          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-            ? SlideNextStudioDeckView
-            : null,
           deckSnapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
             ? SlideNextStudioDeckSnapshot
             : null,
           documentRef: document,
+          getDocument: () => getIframeDoc(),
+          getWindow: () => getIframeWindow(),
+          getSlides: (doc) => getSlides(doc),
           getCurrentSlideIndex: getStudioCurrentSlideIndex,
+          syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args),
           getPreserveSelection: getStudioPreserveSelectionOnNextActiveSlideSync,
           setPreserveSelection: setStudioPreserveSelectionOnNextActiveSlideSync,
           updateCurrentPresentationSessionState: (...args) => updateCurrentPresentationSessionState(...args),
@@ -2152,7 +2155,6 @@
           buildEditorDeckSnapshot: (sourceDoc) => buildEditorDeckSnapshot(sourceDoc),
           buildEditorCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           saveHistoryState: (...args) => saveHistoryState(...args),
-          getSlides: (...args) => getSlides(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
           updateIframeNavigationUI: (...args) => updateIframeNavigationUI(...args),
@@ -2161,33 +2163,10 @@
           rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null,
           getWallpaperTab: getStudioWallpaperTab,
           setWallpaperTab: setStudioWallpaperTab,
-          setCustomGradientType: setStudioCustomGradientType
-        })
-      : null;
-    const studioEditorNavigationSync = typeof SlideNextStudioEditorNavigationSync !== 'undefined'
-      && SlideNextStudioEditorNavigationSync
-      && typeof SlideNextStudioEditorNavigationSync.createStudioEditorNavigationSync === 'function'
-      ? SlideNextStudioEditorNavigationSync.createStudioEditorNavigationSync({
-          activeSlideController: studioEditorActiveSlideController,
-          navigationController: studioEditorNavigationController,
-          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-            ? SlideNextStudioDeckView
-            : null,
-          getDocument: () => getIframeDoc(),
+          setCustomGradientType: setStudioCustomGradientType,
           updateTemplateActionState: (...args) => updateTemplateActionState(...args),
           updateMasterSlideActionState: (...args) => updateMasterSlideActionState(...args),
-          updateAssetLibraryState: (...args) => updateAssetLibraryState(...args)
-        })
-      : null;
-    const studioEditorThumbnailController = typeof SlideNextStudioEditorThumbnailController !== 'undefined'
-      && SlideNextStudioEditorThumbnailController
-      && typeof SlideNextStudioEditorThumbnailController.createStudioEditorThumbnailController === 'function'
-      ? SlideNextStudioEditorThumbnailController.createStudioEditorThumbnailController({
-          thumbnailView: typeof SlideNextStudioEditorThumbnailView !== 'undefined'
-            ? SlideNextStudioEditorThumbnailView
-            : null,
-          documentRef: document,
-          getDocument: () => getIframeDoc(),
+          updateAssetLibraryState: (...args) => updateAssetLibraryState(...args),
           buildDeckSnapshot: (doc) => buildEditorDeckSnapshot(doc),
           getActiveSlideIndex: (iframeDoc) => getStudioActiveSlideIndex(iframeDoc),
           onSelectSlide: (slideId) => {
@@ -2197,6 +2176,18 @@
             reorderSlidesById(sourceSlideId, targetSlideId);
           }
         })
+      : null;
+    const studioEditorNavigationController = studioEditorNavigationRuntime
+      ? studioEditorNavigationRuntime.navigationController
+      : null;
+    const studioEditorActiveSlideController = studioEditorNavigationRuntime
+      ? studioEditorNavigationRuntime.activeSlideController
+      : null;
+    const studioEditorNavigationSync = studioEditorNavigationRuntime
+      ? studioEditorNavigationRuntime.navigationSync
+      : null;
+    const studioEditorThumbnailController = studioEditorNavigationRuntime
+      ? studioEditorNavigationRuntime.thumbnailController
       : null;
     const studioEditorSlideReorderController = typeof SlideNextStudioEditorSlideReorderController !== 'undefined'
       && SlideNextStudioEditorSlideReorderController
