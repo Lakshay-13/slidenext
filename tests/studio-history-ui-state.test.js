@@ -1633,6 +1633,46 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.deepEqual(callLog[21], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
 
+test('history restore preserves canonical state when playback capture fails', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry() {}
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    capturePersistedDeckPlaybackState() {
+      throw new Error('playback capture failed');
+    },
+    applyPersistedDeckState(state) {
+      calls.push(['applyPersistedDeckState', state]);
+    },
+    setEditorLiveCanonicalDeck(deck, doc) {
+      calls.push(['setEditorLiveCanonicalDeck', deck, doc]);
+    },
+    setCurrentPresentationCanonicalDeck(deck) {
+      calls.push(['setCurrentPresentationCanonicalDeck', deck]);
+    }
+  });
+
+  assert.doesNotThrow(() => restoreHandler({ canonicalDeck }));
+  assert.deepEqual(calls, [
+    ['applyPersistedDeckState', { playbackState: null }],
+    ['setEditorLiveCanonicalDeck', canonicalDeck, iframeDoc],
+    ['setCurrentPresentationCanonicalDeck', canonicalDeck]
+  ]);
+});
+
 test('restoreFrameFromHistoryEntry clears stale persisted playback state when the restored frame has no playback markers', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const persistedDeckStateHelperSource = extractFunctionSource(

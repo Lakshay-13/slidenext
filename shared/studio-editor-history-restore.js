@@ -82,7 +82,12 @@
       : () => {};
 
     function syncRestoredCanonicalState(historyEntry, iframeDoc) {
-      const restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
+      let restoredPlaybackState = null;
+      try {
+        restoredPlaybackState = capturePersistedDeckPlaybackState(iframeDoc, historyEntry.canonicalDeck);
+      } catch (error) {
+        restoredPlaybackState = null;
+      }
       applyPersistedDeckState({ playbackState: restoredPlaybackState });
       if (setEditorLiveCanonicalDeck) {
         setEditorLiveCanonicalDeck(historyEntry.canonicalDeck, iframeDoc, getSessionToken());
