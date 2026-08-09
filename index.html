@@ -1402,6 +1402,7 @@
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
+  <script src="/shared/studio-editor-shell-controller.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -3110,6 +3111,13 @@
           updateDeckReadyToolbarActionState: () => updateDeckReadyToolbarActionState()
         })
       : null;
+    const studioEditorShellController = typeof SlideNextStudioEditorShellController !== 'undefined'
+      && SlideNextStudioEditorShellController
+      && typeof SlideNextStudioEditorShellController.createStudioEditorShellController === 'function'
+      ? SlideNextStudioEditorShellController.createStudioEditorShellController({
+          documentRef: document
+        })
+      : null;
     const studioEditorPresentationMetadataController = typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
       && SlideNextStudioEditorPresentationMetadataController
       && typeof SlideNextStudioEditorPresentationMetadataController.createStudioEditorPresentationMetadataController === 'function'
@@ -4379,14 +4387,20 @@
         }
       });
       
-      editor.classList.remove('hidden');
-      void editor.offsetWidth;
-      
-      iframe.src = url;
-      editor.classList.add('active');
-      editor.style.opacity = '1';
-      editor.style.pointerEvents = 'auto';
-      document.body.style.overflow = 'hidden';
+      const didOpenEditorShell = typeof studioEditorShellController !== 'undefined'
+        && studioEditorShellController
+        && typeof studioEditorShellController.open === 'function'
+        ? studioEditorShellController.open(editor, iframe, url)
+        : false;
+      if (!didOpenEditorShell) {
+        editor.classList.remove('hidden');
+        void editor.offsetWidth;
+        iframe.src = url;
+        editor.classList.add('active');
+        editor.style.opacity = '1';
+        editor.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'hidden';
+      }
       void loadCurrentPresentationMetadata(url, title, editorSessionToken);
       
       // Fetch backups list
@@ -4446,19 +4460,25 @@
       }
       deselectElement();
       
-      iframe.onload = null;
-      iframe.src = '';
+      const didCloseEditorShell = typeof studioEditorShellController !== 'undefined'
+        && studioEditorShellController
+        && typeof studioEditorShellController.close === 'function'
+        ? studioEditorShellController.close(editor, iframe)
+        : false;
+      if (!didCloseEditorShell) {
+        iframe.onload = null;
+        iframe.src = '';
+        editor.classList.remove('active');
+        editor.style.opacity = '0';
+        editor.style.pointerEvents = 'none';
+        document.body.style.overflow = '';
+        setTimeout(() => {
+          if (!editor.classList.contains('active')) {
+            editor.classList.add('hidden');
+          }
+        }, 300);
+      }
       resetStudioDeckUiState();
-      editor.classList.remove('active');
-      editor.style.opacity = '0';
-      editor.style.pointerEvents = 'none';
-      document.body.style.overflow = '';
-      
-      setTimeout(() => {
-        if (!editor.classList.contains('active')) {
-          editor.classList.add('hidden');
-        }
-      }, 300);
       
       // Refresh dashboard list
       loadPresentations();
