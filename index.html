@@ -1367,6 +1367,7 @@
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-controller.js"></script>
+  <script src="/shared/studio-editor-grid-snap-runtime.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-controller.js"></script>
@@ -2958,13 +2959,22 @@
       ? studioEditorAssetRuntime.assetController
       : null;
     const GRID_SNAP_SIZE_PX = 20;
-    const studioEditorGridSnapController = typeof SlideNextStudioEditorGridSnapController !== 'undefined'
-      && SlideNextStudioEditorGridSnapController
-      && typeof SlideNextStudioEditorGridSnapController.createStudioEditorGridSnapController === 'function'
-      ? SlideNextStudioEditorGridSnapController.createStudioEditorGridSnapController({
+    const studioEditorGridSnapRuntime = typeof SlideNextStudioEditorGridSnapRuntime !== 'undefined'
+      && SlideNextStudioEditorGridSnapRuntime
+      && typeof SlideNextStudioEditorGridSnapRuntime.createStudioEditorGridSnapRuntime === 'function'
+      ? SlideNextStudioEditorGridSnapRuntime.createStudioEditorGridSnapRuntime({
+          controllerApi: typeof SlideNextStudioEditorGridSnapController !== 'undefined'
+            ? SlideNextStudioEditorGridSnapController
+            : null,
+          gridSnapView: typeof SlideNextStudioEditorGridSnapView !== 'undefined'
+            ? SlideNextStudioEditorGridSnapView
+            : null,
           documentRef: document,
           gridSizePx: GRID_SNAP_SIZE_PX
         })
+      : null;
+    const studioEditorGridSnapController = studioEditorGridSnapRuntime
+      ? studioEditorGridSnapRuntime.gridSnapController
       : null;
     const studioEditorTransformController = typeof SlideNextStudioEditorTransformController !== 'undefined'
       && SlideNextStudioEditorTransformController
