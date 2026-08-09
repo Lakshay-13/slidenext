@@ -1157,3 +1157,34 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
   assert.equal(context.buildEditorPreviewHtml(), 'slide-2');
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
+
+test('buildEditorPreviewHtml delegates to the shared preview builder before inline composition', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPreviewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPreviewHtml(doc = getIframeDoc()) {',
+    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+  );
+  const iframeDoc = { id: 'editor-doc' };
+  const calls = [];
+  const context = {
+    studioEditorPreviewHtmlBuilder(nextDoc, options) {
+      calls.push([nextDoc, options]);
+      return '<html>shared-preview</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPreviewHtmlSource, context);
+
+  assert.equal(
+    context.buildEditorPreviewHtml(iframeDoc, { canonicalDeck: { slides: [] } }),
+    '<html>shared-preview</html>'
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], iframeDoc);
+  assert.equal(calls[0][1].canonicalDeck.slides.length, 0);
+});

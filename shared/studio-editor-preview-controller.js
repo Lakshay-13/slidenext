@@ -7,6 +7,38 @@
     root.SlideNextStudioEditorPreviewController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function resolveBuilderOption(value, fallback = null) {
+    try {
+      const resolved = typeof value === 'function' ? value() : value;
+      return resolved === undefined || resolved === null ? fallback : resolved;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function createStudioEditorPreviewHtmlBuilder(options = {}) {
+    const buildDeckViewHtml = typeof options.buildDeckViewHtml === 'function'
+      ? options.buildDeckViewHtml
+      : () => '';
+    const createDeckViewHtmlOptions = typeof options.createDeckViewHtmlOptions === 'function'
+      ? options.createDeckViewHtmlOptions
+      : () => null;
+
+    return function buildPreviewHtml(doc, viewOptions = {}) {
+      const normalizedViewOptions = viewOptions && typeof viewOptions === 'object'
+        ? viewOptions
+        : {};
+      return buildDeckViewHtml(doc, createDeckViewHtmlOptions({
+        ...normalizedViewOptions,
+        buildStudioPreviewHtml: resolveBuilderOption(options.resolveBuildStudioPreviewHtml),
+        buildDeckPreviewHtml: resolveBuilderOption(options.resolveBuildDeckPreviewHtml),
+        injectBaseHrefIntoHtml: resolveBuilderOption(options.resolveInjectBaseHrefIntoHtml),
+        buildPresentationBaseHref: resolveBuilderOption(options.resolveBuildPresentationBaseHref),
+        presentationUrl: resolveBuilderOption(options.resolvePresentationUrl, '')
+      }));
+    };
+  }
+
   function createStudioEditorPreviewController(options = {}) {
     const previewApi = options.previewApi
       || (root && root.SlideNextStudioPreview)
@@ -139,6 +171,7 @@
   }
 
   return {
+    createStudioEditorPreviewHtmlBuilder,
     createStudioEditorPreviewController
   };
 });

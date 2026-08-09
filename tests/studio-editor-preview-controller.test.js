@@ -3,6 +3,36 @@ const assert = require('node:assert/strict');
 
 const previewController = require('../shared/studio-editor-preview-controller.js');
 
+test('shared preview html builder resolves current preview dependencies at build time', () => {
+  const calls = [];
+  const doc = { id: 'editor-document' };
+  const result = previewController.createStudioEditorPreviewHtmlBuilder({
+    buildDeckViewHtml(nextDoc, options) {
+      calls.push(['build', nextDoc, options]);
+      return '<html>preview</html>';
+    },
+    createDeckViewHtmlOptions(options) {
+      calls.push(['options', options]);
+      return options;
+    },
+    resolveBuildStudioPreviewHtml: () => 'shared-builder',
+    resolveBuildDeckPreviewHtml: () => 'canonical-builder',
+    resolveInjectBaseHrefIntoHtml: () => 'inject-base',
+    resolveBuildPresentationBaseHref: () => 'build-base',
+    resolvePresentationUrl: () => '/presentations/demo/index.html'
+  });
+
+  assert.equal(result(doc, { canonicalDeck: { slides: [] } }), '<html>preview</html>');
+  assert.equal(calls[0][0], 'options');
+  assert.equal(calls[0][1].buildStudioPreviewHtml, 'shared-builder');
+  assert.equal(calls[0][1].buildDeckPreviewHtml, 'canonical-builder');
+  assert.equal(calls[0][1].injectBaseHrefIntoHtml, 'inject-base');
+  assert.equal(calls[0][1].buildPresentationBaseHref, 'build-base');
+  assert.equal(calls[0][1].presentationUrl, '/presentations/demo/index.html');
+  assert.equal(calls[1][0], 'build');
+  assert.equal(calls[1][1], doc);
+});
+
 test('launches the shared preview with the live editor session state', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };

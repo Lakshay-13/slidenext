@@ -2211,6 +2211,19 @@
     const studioEditorPreviewController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.previewController
       : null;
+    const studioEditorPreviewHtmlBuilder = typeof SlideNextStudioEditorPreviewController !== 'undefined'
+      && SlideNextStudioEditorPreviewController
+      && typeof SlideNextStudioEditorPreviewController.createStudioEditorPreviewHtmlBuilder === 'function'
+      ? SlideNextStudioEditorPreviewController.createStudioEditorPreviewHtmlBuilder({
+          buildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
+          createDeckViewHtmlOptions: (options) => createEditorPreviewDeckViewHtmlOptions(options),
+          resolveBuildStudioPreviewHtml: () => resolveStudioDeckViewMethod('buildStudioPreviewHtml'),
+          resolveBuildDeckPreviewHtml: () => resolveDeckHtmlMethod('buildDeckPreviewHtml'),
+          resolveInjectBaseHrefIntoHtml: () => resolveDeckHtmlMethod('injectBaseHrefIntoHtml'),
+          resolveBuildPresentationBaseHref: () => resolveDeckHtmlMethod('buildPresentationBaseHref'),
+          resolvePresentationUrl: getStudioCurrentPresentationUrl
+        })
+      : null;
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController
       : null;
@@ -4355,6 +4368,9 @@
       const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
+      if (typeof studioEditorPreviewHtmlBuilder !== 'undefined' && studioEditorPreviewHtmlBuilder) {
+        return studioEditorPreviewHtmlBuilder(doc, options);
+      }
       const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
       const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
