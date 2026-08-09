@@ -84,6 +84,42 @@ test('openStudioPdfPrintWindow rejects a known empty deck before opening a popup
   assert.equal(openCalls, 0);
 });
 
+test('openStudioPdfPrintWindow reports a write failure only once when a late load arrives', () => {
+  let loadHandler = null;
+  const errors = [];
+  const printWindow = {
+    document: {
+      open() {},
+      write() {
+        throw new Error('write failed');
+      },
+      close() {},
+      querySelectorAll() {
+        return [];
+      }
+    },
+    addEventListener(type, handler) {
+      if (type === 'load') loadHandler = handler;
+    },
+    close() {}
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><body><div class="slide">A</div></body></html>',
+    slideCount: 1,
+    openWindow() {
+      return printWindow;
+    },
+    onError(error) {
+      errors.push(error);
+    }
+  }), false);
+
+  loadHandler();
+  assert.equal(errors.length, 1);
+  assert.match(errors[0].message, /write failed/);
+});
+
 test('resolveStudioPdfPageDimensions maps valid canonical layout sizes and rejects unsafe values', () => {
   assert.deepEqual(
     pdfExport.resolveStudioPdfPageDimensions({

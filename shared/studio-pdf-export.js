@@ -434,6 +434,7 @@
 
     let didPrint = false;
     let didReportPrintSuccess = false;
+    let didReportPrintFailure = false;
     let didLoad = false;
     let loadTimeoutId = null;
     let fallbackLoadTimeoutId = null;
@@ -473,6 +474,8 @@
       closePrintWindow();
     };
     const reportPrintFailure = (error) => {
+      if (didReportPrintFailure || didReportPrintSuccess) return;
+      didReportPrintFailure = true;
       clearLoadTimeout();
       clearAfterPrintTimeout();
       closePrintWindow();
