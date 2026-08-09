@@ -104,6 +104,65 @@
     };
   }
 
+  function createStudioDeckViewHtmlOptions(options = {}) {
+    const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+      ? options.buildSharedHtml
+      : null;
+    const buildViewOptions = typeof options.buildViewOptions === 'function'
+      ? options.buildViewOptions
+      : null;
+    const extendViewOptions = typeof options.extendViewOptions === 'function'
+      ? options.extendViewOptions
+      : null;
+    const buildCanonicalHtml = typeof options.buildCanonicalHtml === 'function'
+      ? options.buildCanonicalHtml
+      : null;
+    const mapCanonicalHtmlArgs = typeof options.mapCanonicalHtmlArgs === 'function'
+      ? options.mapCanonicalHtmlArgs
+      : null;
+    const transformFallbackHtml = typeof options.transformFallbackHtml === 'function'
+      ? options.transformFallbackHtml
+      : null;
+    const createBuildViewOptionsResolver = typeof options.createBuildViewOptionsResolver === 'function'
+      ? options.createBuildViewOptionsResolver
+      : null;
+    const createCanonicalHtmlResolver = typeof options.createCanonicalHtmlResolver === 'function'
+      ? options.createCanonicalHtmlResolver
+      : null;
+    const createBuildOptions = typeof options.createBuildOptions === 'function'
+      ? options.createBuildOptions
+      : () => ({});
+
+    return {
+      buildSharedHtml,
+      buildViewOptions: createBuildViewOptionsResolver
+        ? createBuildViewOptionsResolver({
+            buildViewOptions,
+            extendViewOptions
+          })
+        : buildViewOptions
+          ? extendViewOptions
+            ? (sourceDoc) => extendViewOptions(buildViewOptions(sourceDoc), sourceDoc)
+            : buildViewOptions
+          : extendViewOptions
+            ? (sourceDoc) => extendViewOptions(createBuildOptions(sourceDoc), sourceDoc)
+            : (sourceDoc) => createBuildOptions(sourceDoc),
+      buildCanonicalHtml: createCanonicalHtmlResolver
+        ? createCanonicalHtmlResolver({
+            buildCanonicalHtml,
+            mapCanonicalHtmlArgs
+          })
+        : buildCanonicalHtml
+          ? (canonicalDeck, deckHtmlOptions) => buildCanonicalHtml(...(
+              typeof mapCanonicalHtmlArgs === 'function'
+                ? mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions)
+                : [canonicalDeck, deckHtmlOptions]
+            ))
+          : null,
+      transformFallbackHtml
+    };
+  }
+
   function createStudioDeckRenderOptions(doc, canonicalDeck = null, options = {}) {
     const explicitActiveSlideId = typeof options.activeSlideId === 'string' && options.activeSlideId.trim()
       ? options.activeSlideId
@@ -1068,6 +1127,7 @@
     createStudioCanonicalDeckResolver,
     resolveStudioCanonicalDeckViewState,
     createStudioDeckViewBuildOptions,
+    createStudioDeckViewHtmlOptions,
     createStudioDeckRenderOptions,
     createStudioDeckViewSharedOptions,
     resolveStudioZoomActionState,

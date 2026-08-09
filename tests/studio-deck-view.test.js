@@ -4,6 +4,31 @@ const assert = require('node:assert/strict');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+test('createStudioDeckViewHtmlOptions composes injected view and canonical html resolvers', () => {
+  const buildViewOptions = () => ({ activeSlideId: 'slide-1' });
+  const buildCanonicalHtml = () => '<html>canonical</html>';
+  const options = deckView.createStudioDeckViewHtmlOptions({
+    buildSharedHtml: () => '<html>shared</html>',
+    buildViewOptions,
+    extendViewOptions(viewOptions, sourceDoc) {
+      return { ...viewOptions, sourceDoc };
+    },
+    buildCanonicalHtml,
+    mapCanonicalHtmlArgs(canonicalDeck, deckHtmlOptions) {
+      return [canonicalDeck, deckHtmlOptions];
+    },
+    transformFallbackHtml: (html) => html
+  });
+
+  assert.equal(options.buildSharedHtml(), '<html>shared</html>');
+  assert.deepEqual(options.buildViewOptions({ id: 'doc' }), {
+    activeSlideId: 'slide-1',
+    sourceDoc: { id: 'doc' }
+  });
+  assert.equal(options.buildCanonicalHtml('deck', { renderOptions: {} }), '<html>canonical</html>');
+  assert.equal(options.transformFallbackHtml('<html>fallback</html>'), '<html>fallback</html>');
+});
+
 test('scheduleStudioDeckActiveSlideSync cancels a timer handle of zero', () => {
   const clearedTimers = [];
   const scheduled = [];

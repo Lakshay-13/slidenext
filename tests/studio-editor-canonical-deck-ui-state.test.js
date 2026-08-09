@@ -2689,7 +2689,9 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
     canonicalHtmlCalls.push(args);
     return '<html>canonical</html>';
   };
-  const context = {};
+  const context = {
+    SlideNextStudioDeckView: deckView
+  };
 
   vm.createContext(context);
   vm.runInContext(createEditorDeckViewHtmlOptionsSource, context);
@@ -2729,6 +2731,7 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   };
   const calls = [];
   const context = {
+    SlideNextStudioDeckView: deckView,
     createEditorDeckViewBuildOptions(sourceDoc) {
       calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
       return baseDeckViewOptions;

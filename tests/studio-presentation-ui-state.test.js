@@ -297,6 +297,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
@@ -380,6 +381,7 @@ test('buildEditorPreviewHtml fails closed when the shared deck html helper is un
   };
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState
@@ -540,6 +542,7 @@ test('createEditorDeckViewHtmlOptions bundles shared deck view html resolvers wh
   const mapCanonicalHtmlArgs = function mapCanonicalHtmlArgs() {};
   const transformFallbackHtml = function transformFallbackHtml() {};
   const context = {
+    SlideNextStudioDeckView: deckView,
     __createEditorDeckViewBuildViewOptionsResolver(options) {
       buildViewOptionsResolverArgs = options;
       return buildViewOptionsResolver;
@@ -706,6 +709,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view html builder when the p
   };
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       buildStudioDeckHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>preview-from-deck-view-html</html>';
@@ -769,6 +773,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view helper for editor deck-
   };
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       buildStudioDeckViewHtml(doc, options) {
         calls.push({ doc, options });
         return '<html>preview-from-shared-deck-view-helper</html>';
@@ -882,6 +887,7 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
   const calls = [];
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
@@ -960,6 +966,7 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,
@@ -1040,6 +1047,7 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     SlideNextStudioDeckView: {
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
       createStudioDeckRenderOptions: deckView.createStudioDeckRenderOptions,
       resolveStudioCanonicalDeckViewState: deckView.resolveStudioCanonicalDeckViewState,

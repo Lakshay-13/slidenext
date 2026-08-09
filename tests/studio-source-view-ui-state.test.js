@@ -34,6 +34,16 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
   });
 }
 
+function attachDeckViewHtmlOptions(context) {
+  if (context && context.SlideNextStudioDeckView) {
+    context.SlideNextStudioDeckView = {
+      ...context.SlideNextStudioDeckView,
+      createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions
+    };
+  }
+  return context;
+}
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
@@ -242,6 +252,7 @@ test('buildEditorSourceHtml falls back to the persisted html baseline when the e
     lastPersistedDeckHtml: '<html>persisted-baseline</html>'
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
@@ -308,6 +319,7 @@ test('buildEditorSourceHtml fails closed when the shared deck html helper is una
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
@@ -364,6 +376,7 @@ test('buildEditorSourceHtml reuses the shared deck-view html builder when the so
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
@@ -417,6 +430,7 @@ test('buildEditorSourceDeckHtml forwards source deck view builders when local he
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
   vm.runInContext('buildEditorDeckViewHtml = __buildEditorDeckViewHtml;', context);
@@ -492,6 +506,7 @@ test('buildEditorSourceDeckHtml prefers provided source deck html builder overri
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
   vm.runInContext('buildEditorDeckViewHtml = __buildEditorDeckViewHtml;', context);
@@ -575,6 +590,7 @@ test('buildEditorSourceHtml prefers the live active slide when the editor frame 
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
@@ -655,6 +671,7 @@ test('buildEditorSourceHtml reuses the resolved live canonical deck when source 
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
@@ -727,6 +744,7 @@ test('buildEditorSourceHtml falls back to the current session slide when live ac
     }
   };
 
+  attachDeckViewHtmlOptions(context);
   vm.createContext(context);
   vm.runInContext(buildEditorSourceHtmlSource, context);
 
