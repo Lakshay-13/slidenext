@@ -17,6 +17,9 @@
           styleApi: options.styleApi
             || (root && root.SlideNextStudioEditorStyle)
             || null,
+          chartApi: options.chartApi
+            || (root && root.SlideNextStudioEditorChartMutation)
+            || null,
           canonicalStyleApi: options.canonicalStyleApi
             || (root && root.SlideNextStudioEditorCanonicalStyle)
             || null,

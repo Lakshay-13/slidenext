@@ -206,6 +206,9 @@ function trainEpoch(model, data) {
       [42, 68, 55, 86].forEach((height, index) => {
         const bar = documentRef.createElement('div');
         bar.className = 'editor-chart-bar';
+        if (typeof bar.setAttribute === 'function') {
+          bar.setAttribute('data-chart-value', height);
+        }
         bar.style.height = `${height}%`;
         bar.style.flex = '1';
         bar.style.borderRadius = '6px 6px 0 0';

@@ -306,6 +306,41 @@ test('syncStudioInspectorContentControls hides destructive text editing for stru
   assert.equal(textGroup.contains('hidden'), true);
 });
 
+test('syncStudioInspectorContentControls exposes canonical chart values for chart selections', () => {
+  const chartGroup = createClassList(['hidden']);
+  const chartValuesInput = { value: '' };
+  const chart = {
+    tagName: 'DIV',
+    classList: {
+      contains(className) {
+        return className === 'editor-chart';
+      }
+    },
+    dataset: { chartValues: '42,68,55,86' },
+    textContent: 'Quarterly trend',
+    innerText: 'Quarterly trend'
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return {
+          inspectorChartGroup: { classList: chartGroup },
+          elChartValues: chartValuesInput
+        }[id] || null;
+      }
+    },
+    primaryElement: chart,
+    isMulti: false,
+    canonicalNode: {
+      attributes: { 'data-chart-values': '12,24,18,30' }
+    },
+    computedStyles: {}
+  }), true);
+  assert.equal(chartGroup.contains('hidden'), false);
+  assert.equal(chartValuesInput.value, '12,24,18,30');
+});
+
 test('syncStudioInspectorContentControls prefers canonical image source data', () => {
   const imageSrcInput = { value: '' };
 

@@ -11,6 +11,9 @@
     const styleApi = options.styleApi
       || (root && root.SlideNextStudioEditorStyle)
       || null;
+    const chartApi = options.chartApi
+      || (root && root.SlideNextStudioEditorChartMutation)
+      || null;
     const canonicalStyleApi = options.canonicalStyleApi
       || (root && root.SlideNextStudioEditorCanonicalStyle)
       || null;
@@ -261,7 +264,10 @@
           styleMutationPlan.selection,
           prop,
           value,
-          { getElementId: getStyleElementId }
+          {
+            getElementId: getStyleElementId,
+            chartApi
+          }
         );
       } catch (error) {
         return finalizeStyleActionResult(false);

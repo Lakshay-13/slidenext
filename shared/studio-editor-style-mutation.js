@@ -13,7 +13,15 @@
       && typeof resolvedStyleApi.applyStudioStyleMutationWithTransaction === 'function'
       ? resolvedStyleApi.applyStudioStyleMutationWithTransaction
       : null;
-    if (!applyStudioStyleMutationWithTransaction) {
+    const chartApi = options.chartApi && typeof options.chartApi === 'object'
+      ? options.chartApi
+      : null;
+    const applyStudioChartValuesMutationWithTransaction = chartApi
+      && typeof chartApi.applyStudioChartValuesMutationWithTransaction === 'function'
+      ? chartApi.applyStudioChartValuesMutationWithTransaction
+      : null;
+    if (!applyStudioStyleMutationWithTransaction
+      && !(prop === 'chartValues' && applyStudioChartValuesMutationWithTransaction)) {
       return { didApply: false, displayValue: `${value}`, transaction: null };
     }
 
@@ -31,6 +39,12 @@
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
+    if (prop === 'chartValues' && applyStudioChartValuesMutationWithTransaction) {
+      return applyStudioChartValuesMutationWithTransaction(selection, value, {
+        transactionApi,
+        getElementId
+      });
+    }
     const applyStudioStyleMutation = resolvedStyleApi
       && typeof resolvedStyleApi.applyStudioStyleMutation === 'function'
       ? resolvedStyleApi.applyStudioStyleMutation

@@ -52,3 +52,33 @@ test('applyStudioStyleMutationWithTransaction preserves the unsupported-style fa
     { didApply: false, displayValue: '#fff', transaction: null }
   );
 });
+
+test('applyStudioStyleMutationWithTransaction delegates chart values to the chart mutation adapter', () => {
+  const selection = [{ dataset: { editorId: 'chart-1' } }];
+  let delegated = null;
+  const result = styleMutation.applyStudioStyleMutationWithTransaction(
+    styleState,
+    selection,
+    'chartValues',
+    '10,20',
+    {
+      chartApi: {
+        applyStudioChartValuesMutationWithTransaction(currentSelection, value, options) {
+          delegated = { currentSelection, value, options };
+          return { didApply: true, displayValue: value, transaction: { id: 'tx-chart' } };
+        }
+      },
+      transactionApi: { id: 'transactions' },
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.deepEqual(result, {
+    didApply: true,
+    displayValue: '10,20',
+    transaction: { id: 'tx-chart' }
+  });
+  assert.equal(delegated.currentSelection, selection);
+  assert.equal(delegated.value, '10,20');
+  assert.equal(delegated.options.transactionApi.id, 'transactions');
+});

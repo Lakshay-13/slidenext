@@ -57,6 +57,10 @@ test('createStudioInsertedElement creates the existing text, image, and shape de
   assert.equal(chart.children[0].tagName, 'SPAN');
   assert.equal(chart.children[0].className, 'editor-chart-title');
   assert.equal(chart.children[1].children.length, 4);
+  assert.deepEqual(
+    chart.children[1].children.map((bar) => bar.attributes['data-chart-value']),
+    ['42', '68', '55', '86']
+  );
 });
 
 test('createStudioInsertedElement creates the existing table and code defaults', () => {

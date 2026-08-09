@@ -18,6 +18,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
   const options = {
     controllerApi,
     styleApi: {},
+    chartApi: {},
     canonicalStyleApi: {},
     canonicalDeckApi: {},
     getSelectedElements: () => [],
@@ -40,6 +41,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
   );
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalStyleApi, options.canonicalStyleApi);
+  assert.equal(calls[0].chartApi, options.chartApi);
   assert.equal(calls[0].getSelectedElements, options.getSelectedElements);
   assert.equal(calls[0].documentRef, options.documentRef);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);

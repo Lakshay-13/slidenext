@@ -10,6 +10,7 @@
   const DEFAULT_STUDIO_EDITOR_STYLE_ID = 'editor-style-tag';
   const STUDIO_STYLE_VERSION_LABELS = {
     text: 'Auto: Edited Text',
+    chartValues: 'Auto: Edited Chart Data',
     family: 'Auto: Changed Font Family',
     weight: 'Auto: Changed Font Weight',
     align: 'Auto: Changed Alignment',

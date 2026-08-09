@@ -1044,6 +1044,13 @@
             <textarea id="elTextContent" oninput="applySelectedElementStyle('text', this.value)" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
           </div>
 
+          <!-- Structured chart data editor -->
+          <div class="flex flex-col gap-2 hidden" id="inspectorChartGroup">
+            <label class="text-[10px] font-mono text-zinc-500 uppercase">Chart Values</label>
+            <input id="elChartValues" type="text" onchange="applySelectedElementStyle('chartValues', this.value)" placeholder="42, 68, 55, 86" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <span class="text-[9px] text-zinc-500 font-mono">Comma-separated values; one value per bar.</span>
+          </div>
+
           <!-- Image Source editor (Only displays for images) -->
           <div class="flex flex-col gap-2 hidden" id="inspectorImageGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Image Asset URL</label>
@@ -1422,6 +1429,7 @@
   <script src="/shared/presentation-library-view.js"></script>
   <script src="/shared/presentation-dashboard-controller.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
+  <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-style-runtime.js"></script>
@@ -2623,6 +2631,9 @@
           isElementLocked: (...args) => isElementLocked(...args),
           syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
           documentRef: typeof document !== 'undefined' ? document : null,
+          chartApi: typeof SlideNextStudioEditorChartMutation !== 'undefined'
+            ? SlideNextStudioEditorChartMutation
+            : null,
           highlightAlignButton: (...args) => highlightAlignButton(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
@@ -7616,6 +7627,9 @@
       return applyMutation(styleApi, selection, prop, value, {
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
+          : null,
+        chartApi: typeof SlideNextStudioEditorChartMutation !== 'undefined'
+          ? SlideNextStudioEditorChartMutation
           : null,
         getElementId,
         applyStudioStyleMutation: styleApi

@@ -222,6 +222,41 @@ test('buildStudioCanonicalStyleMutation rebuilds text edits from the live source
   assert.equal(result.slides[0].nodes[0].html, '<p><strong>After</strong></p>');
 });
 
+test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source document when available', () => {
+  const sourceDeck = createSourceDeck();
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        type: 'chart',
+        attributes: { 'data-chart-values': '10,20,15,30' }
+      }]
+    }]
+  });
+  const sourceDocument = { id: 'editor-doc', documentElement: {} };
+  const chart = {
+    dataset: { editorId: 'node-1', chartValues: '10,20,15,30' },
+    getAttribute(name) {
+      return name === 'data-chart-values' ? this.dataset.chartValues : null;
+    }
+  };
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    buildCanonicalDeck: () => rebuiltDeck,
+    sourceDocument,
+    selection: [chart],
+    prop: 'chartValues',
+    value: '10,20,15,30',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result, rebuiltDeck);
+  assert.equal(result.slides[0].nodes[0].attributes['data-chart-values'], '10,20,15,30');
+});
+
 test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
   const throwingCanonicalDeckApi = {
     ...canonicalDeck,

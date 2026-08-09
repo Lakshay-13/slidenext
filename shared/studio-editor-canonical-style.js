@@ -162,6 +162,40 @@
       }]));
     }
 
+    if (prop === 'chartValues' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
+      const sourceDocument = options.sourceDocument;
+      const isDocumentLike = !!(sourceDocument
+        && (sourceDocument.documentElement
+          || typeof sourceDocument.querySelector === 'function'));
+      if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
+        const rebuiltCanonicalDeck = runCanonicalStyleMutation(
+          () => options.buildCanonicalDeck(sourceDocument)
+        );
+        const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
+          : (candidate) => !!candidate
+            && typeof candidate === 'object'
+            && !Array.isArray(candidate)
+            && Array.isArray(candidate.slides);
+        if (isValidCanonicalDeck(rebuiltCanonicalDeck)) {
+          return rebuiltCanonicalDeck;
+        }
+      }
+      const element = selection[0];
+      const chartValues = element && typeof element.getAttribute === 'function'
+        ? element.getAttribute('data-chart-values') || `${value}`
+        : element && element.dataset && typeof element.dataset.chartValues === 'string'
+          ? element.dataset.chartValues
+          : `${value}`;
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(
+        canonicalDeckBeforeMutation,
+        [{
+          id: resolveElementId(element, getElementId),
+          attributes: { 'data-chart-values': chartValues }
+        }]
+      ));
+    }
+
     if (prop === 'src' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
       const element = selection[0];
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{

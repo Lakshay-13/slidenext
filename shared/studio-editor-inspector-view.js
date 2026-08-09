@@ -36,6 +36,58 @@
     return classNames.length > 0;
   }
 
+  function isStudioInspectorChartElement(element) {
+    return !!(element
+      && element.classList
+      && typeof element.classList.contains === 'function'
+      && element.classList.contains('editor-chart'));
+  }
+
+  function readStudioInspectorAttribute(element, name) {
+    if (!element || typeof name !== 'string') return '';
+    if (typeof element.getAttribute === 'function') {
+      const value = element.getAttribute(name);
+      if (typeof value === 'string' && value) return value;
+    }
+    const dataName = name.replace(/^data-/, '').replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+    return element.dataset && typeof element.dataset[dataName] === 'string'
+      ? element.dataset[dataName]
+      : '';
+  }
+
+  function getStudioInspectorChartBars(element, bars = []) {
+    if (!element) return bars;
+    if (typeof element.querySelectorAll === 'function') {
+      return Array.from(element.querySelectorAll('.editor-chart-bar'));
+    }
+    if (element.children && typeof element.children.length === 'number') {
+      Array.from(element.children).forEach((child) => {
+        if (child.classList
+          && typeof child.classList.contains === 'function'
+          && child.classList.contains('editor-chart-bar')) {
+          bars.push(child);
+        }
+        getStudioInspectorChartBars(child, bars);
+      });
+    }
+    return bars;
+  }
+
+  function readStudioInspectorChartValues(element) {
+    const metadata = readStudioInspectorAttribute(element, 'data-chart-values');
+    if (metadata) return metadata;
+    return getStudioInspectorChartBars(element).map((bar) => {
+      const rawValue = readStudioInspectorAttribute(bar, 'data-chart-value')
+        || readStudioInspectorAttribute(bar, 'data-value');
+      if (rawValue) return rawValue;
+      const height = bar && bar.style && typeof bar.style.height === 'string'
+        ? bar.style.height
+        : '';
+      const match = height.match(/^\s*(\d+(?:\.\d+)?)%?\s*$/);
+      return match ? match[1] : '';
+    }).filter(Boolean).join(',');
+  }
+
   function renderStudioInspectorSelectionSummary(options = {}) {
     const documentRef = options.documentRef;
     const selectionState = options.selectionState || {};
@@ -100,6 +152,10 @@
     if (textContentGroup) textContentGroup.classList.remove('hidden');
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
     if (imageGroup) imageGroup.classList.add('hidden');
+    const chartGroup = documentRef.getElementById('inspectorChartGroup');
+    if (chartGroup) chartGroup.classList.add('hidden');
+    const chartValuesInput = documentRef.getElementById('elChartValues');
+    if (chartValuesInput) chartValuesInput.value = '42,68,55,86';
     const imageFitInput = documentRef.getElementById('elImageFit');
     if (imageFitInput) {
       imageFitInput.value = 'fill';
@@ -124,6 +180,7 @@
 
     const defaults = [
       ['elTextContent', ''],
+      ['elChartValues', '42,68,55,86'],
       ['elImageSrc', ''],
       ['elFontSize', '16'],
       ['fontSizeVal', '16px', 'textContent'],
@@ -177,12 +234,28 @@
     }
 
     const imageGroup = documentRef.getElementById('inspectorImageGroup');
+    const chartGroup = documentRef.getElementById('inspectorChartGroup');
+    const chartValuesInput = documentRef.getElementById('elChartValues');
     const imageSrcInput = documentRef.getElementById('elImageSrc');
     const imageFitInput = documentRef.getElementById('elImageFit');
     const imagePositionInput = documentRef.getElementById('elImagePosition');
     const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
     const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
+    const isChart = !isMulti && isStudioInspectorChartElement(primaryElement);
     const isStructured = !isMulti && isStudioInspectorStructuredElement(primaryElement);
+    if (isChart) {
+      if (chartGroup) chartGroup.classList.remove('hidden');
+      const canonicalChartValues = options.canonicalNode
+        && options.canonicalNode.attributes
+        && typeof options.canonicalNode.attributes['data-chart-values'] === 'string'
+        ? options.canonicalNode.attributes['data-chart-values']
+        : '';
+      if (chartValuesInput) {
+        chartValuesInput.value = canonicalChartValues || readStudioInspectorChartValues(primaryElement);
+      }
+    } else if (chartGroup) {
+      chartGroup.classList.add('hidden');
+    }
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
       const canonicalImageSrc = options.canonicalNode
