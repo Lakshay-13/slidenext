@@ -93,6 +93,7 @@
     let reusablePersistedHtmlResolver = null;
     let saveRequestBodyBuilder = null;
     let reusablePersistedHtmlSanitizer = null;
+    let persistableDeckSanitizerOptionsBuilder = null;
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
@@ -272,6 +273,25 @@
       }
       return typeof reusablePersistedHtmlSanitizer === 'function'
         ? reusablePersistedHtmlSanitizer(persistedHtml, nextOptions)
+        : null;
+    }
+
+    function createPersistableDeckSanitizerOptionsBuilder() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistableDeckSanitizerOptionsAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistableDeckSanitizerOptionsAdapter({
+        persistenceApi
+      });
+    }
+
+    function buildPersistableDeckSanitizerOptions(playbackState = null, nextOptions = {}) {
+      if (typeof persistableDeckSanitizerOptionsBuilder !== 'function') {
+        persistableDeckSanitizerOptionsBuilder = createPersistableDeckSanitizerOptionsBuilder();
+      }
+      return typeof persistableDeckSanitizerOptionsBuilder === 'function'
+        ? persistableDeckSanitizerOptionsBuilder(playbackState, nextOptions)
         : null;
     }
 
@@ -566,6 +586,7 @@
       resolveReusablePersistedHtml,
       buildSaveRequestBody,
       sanitizeReusablePersistedHtml,
+      buildPersistableDeckSanitizerOptions,
       getPersistedActiveSlideId,
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,

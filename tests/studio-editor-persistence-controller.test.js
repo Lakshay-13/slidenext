@@ -479,3 +479,38 @@ test('persistence controller sanitizes reusable persisted HTML through the share
   );
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller builds persistable deck sanitizer options through the shared adapter', () => {
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorPersistableDeckSanitizerOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, persistence);
+        return (playbackState, nextOptions) => ({
+          playbackState,
+          metadata: nextOptions.resolveMetadataPersistenceOptions(),
+          sanitizer: nextOptions.getDeckSanitizerOptions()
+        });
+      }
+    }
+  });
+  const playbackState = { activeSlideIds: ['slide-2'] };
+  const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
+  const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
+
+  assert.deepEqual(controller.buildPersistableDeckSanitizerOptions(playbackState, {
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  }), {
+    playbackState,
+    metadata: { emptyContainerIds: ['pixelMatrix'] },
+    sanitizer: { chromeNodeIds: ['editorSelectionOverlay'] }
+  });
+  controller.buildPersistableDeckSanitizerOptions(null, {
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  });
+  assert.equal(adapterCreateCalls, 1);
+});

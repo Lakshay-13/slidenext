@@ -3653,6 +3653,38 @@ test('buildEditorPersistableDeckSanitizerOptions reuses the shared sanitizer-opt
   assert.equal(delegatedArgs.getDeckSanitizerOptions, context.getEditorDeckSanitizerOptions);
 });
 
+test('buildEditorPersistableDeckSanitizerOptions delegates to the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
+    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
+  );
+  const playbackState = { activeSlideIds: ['slide-2'] };
+  const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
+  const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
+  let delegatedArgs = null;
+  const context = {
+    studioEditorPersistenceController: {
+      buildPersistableDeckSanitizerOptions(nextPlaybackState, options) {
+        delegatedArgs = { nextPlaybackState, options };
+        return { delegated: true };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+
+  assert.deepEqual(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
+    resolveMetadataPersistenceOptions,
+    getDeckSanitizerOptions
+  }), { delegated: true });
+  assert.equal(delegatedArgs.nextPlaybackState, playbackState);
+  assert.equal(delegatedArgs.options.resolveMetadataPersistenceOptions, resolveMetadataPersistenceOptions);
+  assert.equal(delegatedArgs.options.getDeckSanitizerOptions, getDeckSanitizerOptions);
+});
+
 test('buildEditorPersistableDeckSanitizerOptions delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
