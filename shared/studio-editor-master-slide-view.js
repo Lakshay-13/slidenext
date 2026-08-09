@@ -91,8 +91,34 @@
     });
   }
 
+  function createStudioMasterSlideStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({});
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorMasterSlideState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return syncStudioMasterSlideState({
+          ...actionState,
+          documentRef: getDocumentRef()
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   return {
     renderStudioMasterSlideLibrary,
-    syncStudioMasterSlideState
+    syncStudioMasterSlideState,
+    createStudioMasterSlideStateSync
   };
 });

@@ -123,6 +123,75 @@ test('shared master-slide state sync updates controls before rendering the libra
   );
 });
 
+test('createStudioMasterSlideStateSync resolves master state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const select = {
+    children: [],
+    textContent: '',
+    value: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const calls = [];
+  const syncState = masterSlideView.createStudioMasterSlideStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { masterSlides: [], canUseMasterActions: false };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          if (id === 'masterSlideSelect') return select;
+          if (id === 'savedMasterSlidesList') return list;
+          return { disabled: false };
+        },
+        createElement() {
+          return {
+            textContent: '',
+            appendChild(child) {
+              this.children ||= [];
+              this.children.push(child);
+            },
+            addEventListener() {},
+            setAttribute() {}
+          };
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+  assert.equal(select.value, '');
+});
+
+test('createStudioMasterSlideStateSync fails closed when master state resolution throws', () => {
+  const syncState = masterSlideView.createStudioMasterSlideStateSync({
+    getActionState() {
+      throw new Error('master state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('master layout actions delegate save, apply, and removal to the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -222,4 +291,55 @@ test('updateMasterSlideActionState reflects the active slide reference', () => {
     masterSlides: [{ id: 'brand', name: 'Brand' }],
     activeMasterSlideId: 'brand'
   });
+});
+
+test('updateMasterSlideActionState caches the shared master state synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateMasterSlideActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateBlockActionState'
+  );
+  const doc = { id: 'active-doc', activeSlide: {} };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorMasterSlideView: {
+      syncStudioMasterSlideState() {
+        throw new Error('direct master sync should not run');
+      },
+      createStudioMasterSlideStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canUseMasterActions;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    buildEditorCanonicalDeck() {
+      return {
+        slides: [{ id: 'slide-1', masterSlideId: 'brand' }],
+        masterSlides: [{ id: 'brand' }]
+      };
+    },
+    applySavedMasterSlide() {},
+    removeSavedMasterSlide() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateMasterSlideActionState(doc), true);
+  assert.equal(context.updateMasterSlideActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });

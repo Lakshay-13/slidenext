@@ -7771,6 +7771,35 @@
       if (!masterSlideView || typeof masterSlideView.syncStudioMasterSlideState !== 'function') {
         return false;
       }
+      if (typeof masterSlideView.createStudioMasterSlideStateSync === 'function') {
+        if (typeof updateMasterSlideActionState.sync !== 'function') {
+          updateMasterSlideActionState.sync = masterSlideView.createStudioMasterSlideStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => {
+              const canUse = !!getActiveSlide(sourceDoc);
+              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null;
+              const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(sourceDoc) : '';
+              const activeSlide = canonicalDeck
+                && Array.isArray(canonicalDeck.slides)
+                ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
+                : null;
+              return {
+                masterSlides: canonicalDeck && canonicalDeck.masterSlides,
+                activeMasterSlideId: activeSlide && activeSlide.masterSlideId,
+                canUseMasterActions: canUse,
+                applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
+                removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null
+              };
+            },
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateMasterSlideActionState.sync === 'function') {
+          return updateMasterSlideActionState.sync(doc);
+        }
+      }
       const canUse = !!getActiveSlide(doc);
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
