@@ -1418,6 +1418,7 @@
   <script src="/shared/studio-editor-grid-snap-runtime.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
+  <script src="/shared/studio-editor-wallpaper-controller.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-controller.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
   <script src="/shared/studio-editor-notes-actions.js"></script>
@@ -9015,6 +9016,27 @@
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
+      const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'
+        ? SlideNextStudioEditorWallpaperController
+        : null;
+      if (wallpaperController
+        && typeof wallpaperController.applyStudioPresetWallpaper === 'function') {
+        return wallpaperController.applyStudioPresetWallpaper({
+          background: val,
+          isCustomInput,
+          resolveActionState: resolveCurrentStudioWallpaperActionState,
+          getIframeDocument: getIframeDoc,
+          wallpaperView: typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          applyMutation: applyEditorWallpaperMutationWithTransaction,
+          getSlideId: (slide) => typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(slide)
+            : '',
+          setPendingCustomWallpaperVersion,
+          finalizeMutation: finalizeWallpaperMutation
+        });
+      }
       const iframeDoc = getIframeDoc();
       const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
       if (!actionState.canUseWallpaperControls) return false;
