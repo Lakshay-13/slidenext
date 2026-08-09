@@ -87,6 +87,52 @@ test('buildStudioStyleToolbarState derives inspector control enablement from sha
   );
 });
 
+test('createStudioStyleToolbarStateSync resolves live selection and slide readiness through callbacks', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const selectedElements = [{ id: 'node-1', isConnected: true }];
+  const controls = {};
+  const documentRef = {
+    getElementById(id) {
+      controls[id] ||= { disabled: true };
+      return controls[id];
+    }
+  };
+  const calls = [];
+  const syncToolbar = styleState.createStudioStyleToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getSelectedElements() {
+      calls.push('selection');
+      return selectedElements;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return slide;
+    },
+    getLockedState(currentDoc) {
+      calls.push(['locked-state', currentDoc]);
+      return () => false;
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return documentRef;
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.equal(Object.values(controls).every((control) => control.disabled === false), true);
+  assert.deepEqual(calls.slice(0, 4), [
+    'document',
+    'document-ref',
+    'selection',
+    ['locked-state', doc]
+  ]);
+  assert.equal(calls.filter((call) => Array.isArray(call) && call[0] === 'active-slide').length > 0, true);
+});
+
 test('renderStudioStyleToolbarState applies control availability to inspector inputs', () => {
   const controls = {
     elFontSize: { disabled: false },

@@ -7084,6 +7084,26 @@
       if (!styleApi || typeof styleApi.syncStudioStyleToolbarState !== 'function') {
         return false;
       }
+      if (typeof styleApi.createStudioStyleToolbarStateSync === 'function') {
+        if (typeof updateStyleActionState.sync !== 'function') {
+          updateStyleActionState.sync = styleApi.createStudioStyleToolbarStateSync({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getLockedState(sourceDoc) {
+              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
+                && typeof buildEditorCanonicalDeck === 'function';
+              return canReadCanonicalState
+                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+                : isElementLocked;
+            },
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateStyleActionState.sync === 'function') {
+          return updateStyleActionState.sync(doc);
+        }
+      }
       const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
         && typeof buildEditorCanonicalDeck === 'function'
         ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
