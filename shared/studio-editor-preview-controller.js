@@ -58,6 +58,9 @@
       const presentationUrl = typeof viewOptions.presentationUrl === 'string'
         ? viewOptions.presentationUrl
         : '';
+      const canonicalDeck = viewOptions.canonicalDeck && typeof viewOptions.canonicalDeck === 'object'
+        ? viewOptions.canonicalDeck
+        : null;
       const buildStudioPreviewHtml = typeof viewOptions.buildStudioPreviewHtml === 'function'
         ? viewOptions.buildStudioPreviewHtml
         : null;
@@ -78,7 +81,8 @@
         buildSharedHtml: buildStudioPreviewHtml,
         extendViewOptions: (deckViewOptions) => ({
           ...deckViewOptions,
-          presentationUrl
+          presentationUrl,
+          ...(canonicalDeck ? { canonicalDeck } : {})
         }),
         buildCanonicalHtml: buildDeckPreviewHtml,
         mapCanonicalHtmlArgs: (canonicalDeck, deckHtmlOptions) => [

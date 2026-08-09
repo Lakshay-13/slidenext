@@ -55,6 +55,27 @@ test('PDF export forwards resource progress through the existing status callback
   ]);
 });
 
+test('PDF export builds preview html from the validated canonical snapshot', () => {
+  const canonicalDeck = { slides: [{ id: 'slide-1' }] };
+  let previewDeck = null;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml(nextCanonicalDeck) {
+      previewDeck = nextCanonicalDeck;
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    buildCanonicalDeck: () => canonicalDeck,
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        return true;
+      }
+    }
+  });
+
+  assert.equal(exportPdf(), true);
+  assert.equal(previewDeck, canonicalDeck);
+});
+
 test('PPTX export rejects malformed canonical decks before invoking exporter', async () => {
   let exportCalls = 0;
   const statuses = [];

@@ -1215,6 +1215,31 @@ test('buildStudioDeckHtml prefers the canonical builder when the canonical deck 
   );
 });
 
+test('buildStudioDeckHtml uses an explicit canonical snapshot without rebuilding from the document', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+
+  assert.equal(
+    deckView.buildStudioDeckHtml(
+      { label: 'doc' },
+      {
+        canonicalDeck,
+        buildCanonicalDeck() {
+          throw new Error('explicit canonical snapshot should skip document rebuild');
+        },
+        buildCanonicalHtml(nextCanonicalDeck) {
+          assert.equal(nextCanonicalDeck, canonicalDeck);
+          return '<html>snapshot</html>';
+        }
+      }
+    ),
+    '<html>snapshot</html>'
+  );
+});
+
 test('buildStudioDeckHtml falls back and can transform fallback html when the canonical deck is unavailable', () => {
   const calls = [];
 

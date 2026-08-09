@@ -61,14 +61,6 @@
         return failPdfExport();
       }
 
-      let html = '';
-      try {
-        html = buildPreviewHtml();
-      } catch (error) {
-        return failPdfExport();
-      }
-      if (!html) return failPdfExport();
-
       if (!buildCanonicalDeck) return failPdfExport();
 
       let canonicalDeck = null;
@@ -82,6 +74,14 @@
         || canonicalDeck.slides.length === 0) {
         return failPdfExport();
       }
+
+      let html = '';
+      try {
+        html = buildPreviewHtml(canonicalDeck);
+      } catch (error) {
+        return failPdfExport();
+      }
+      if (!html) return failPdfExport();
 
       const exportButton = documentRef && typeof documentRef.getElementById === 'function'
         ? documentRef.getElementById('exportPdfBtn')

@@ -184,7 +184,7 @@ test('exportPdf forwards canonical layout dimensions when the shared resolver is
   assert.equal(canonicalDeckBuilds, 1);
 });
 
-test('exportPdf skips preview generation when deck actions are unavailable or preview html is empty', () => {
+test('exportPdf skips preview generation when deck actions are unavailable or canonical deck is empty', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let buildCalls = 0;
   const context = {
@@ -209,7 +209,7 @@ test('exportPdf skips preview generation when deck actions are unavailable or pr
 
   context.resolveCurrentStudioDeckReadyActionState = () => ({ canUseDeckActions: true });
   assert.equal(context.exportPdf(), false);
-  assert.equal(buildCalls, 1);
+  assert.equal(buildCalls, 0);
 });
 
 test('exportPdf fails closed for an empty canonical deck without opening a popup', () => {

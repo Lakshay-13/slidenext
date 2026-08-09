@@ -1991,7 +1991,7 @@
             ? SlideNextStudioEditorExportActions
             : null,
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
-          buildPreviewHtml: () => buildEditorPreviewHtml(),
+          buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(getIframeDoc(), { canonicalDeck }),
           buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
             ? buildEditorCanonicalDeck
             : null,
@@ -4194,6 +4194,9 @@
     }
 
     function buildEditorPreviewHtml(doc = getIframeDoc()) {
+      const options = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
+        ? arguments[1]
+        : {};
       const buildStudioPreviewHtml = resolveStudioDeckViewMethod('buildStudioPreviewHtml');
       const buildDeckPreviewHtml = resolveDeckHtmlMethod('buildDeckPreviewHtml');
       const injectBaseHrefIntoHtml = resolveDeckHtmlMethod('injectBaseHrefIntoHtml');
@@ -4201,6 +4204,7 @@
       const presentationUrl = getStudioCurrentPresentationUrl() || '';
 
       return buildEditorDeckViewHtml(doc, createEditorPreviewDeckViewHtmlOptions({
+        ...options,
         buildStudioPreviewHtml,
         buildDeckPreviewHtml,
         injectBaseHrefIntoHtml,

@@ -563,8 +563,10 @@
     const deckHtmlOptions = options.deckHtmlOptions && typeof options.deckHtmlOptions === 'object'
       ? options.deckHtmlOptions
       : doc;
-    let canonicalDeck = null;
-    if (typeof options.buildCanonicalDeck === 'function') {
+    let canonicalDeck = isCanonicalDeckLike(options.canonicalDeck)
+      ? options.canonicalDeck
+      : null;
+    if (!canonicalDeck && typeof options.buildCanonicalDeck === 'function') {
       try {
         canonicalDeck = options.buildCanonicalDeck(doc);
       } catch (error) {

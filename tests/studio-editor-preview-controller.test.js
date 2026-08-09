@@ -70,6 +70,7 @@ test('fails closed when the current presentation has no url or shared preview ap
 test('composes preview deck-view options through injected shared helpers', () => {
   const deckViewOptions = { buildViewOptions() {} };
   const fallbackTransformer = () => '<html>fallback</html>';
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   let delegatedOptions = null;
   const controller = previewController.createStudioEditorPreviewController({});
 
@@ -86,12 +87,21 @@ test('composes preview deck-view options through injected shared helpers', () =>
     buildDeckPreviewHtml: () => '<html>canonical</html>',
     injectBaseHrefIntoHtml() {},
     buildPresentationBaseHref() {},
+    canonicalDeck,
     presentationUrl: '/presentations/demo/index.html'
   });
 
   assert.equal(result, deckViewOptions);
   assert.equal(delegatedOptions.buildSharedHtml(), '<html>shared</html>');
   assert.equal(delegatedOptions.buildCanonicalHtml(), '<html>canonical</html>');
+  assert.deepEqual(
+    delegatedOptions.extendViewOptions({ activeSlideId: 'slide-1' }),
+    {
+      activeSlideId: 'slide-1',
+      presentationUrl: '/presentations/demo/index.html',
+      canonicalDeck
+    }
+  );
   assert.deepEqual(
     delegatedOptions.mapCanonicalHtmlArgs('deck', { renderOptions: {} }),
     ['deck', '/presentations/demo/index.html', { renderOptions: {} }]
