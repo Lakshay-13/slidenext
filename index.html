@@ -1306,6 +1306,7 @@
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
+  <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
@@ -2589,6 +2590,37 @@
           ),
           insertClipboardPayload: (...args) => insertClipboardPayload(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
+        })
+      : null;
+    const studioEditorClipboardPayloadController = typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
+      && SlideNextStudioEditorClipboardPayloadController
+      && typeof SlideNextStudioEditorClipboardPayloadController.createStudioEditorClipboardPayloadController === 'function'
+      ? SlideNextStudioEditorClipboardPayloadController.createStudioEditorClipboardPayloadController({
+          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+            ? SlideNextStudioEditorClipboard
+            : null,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+            ? SlideNextStudioEditorTransform
+            : null,
+          getIframeDoc: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
+          getSlideMetrics: (slide) => getSlideMetrics(slide),
+          getNormalizedSlideLayerOrder: (slide) => getNormalizedSlideLayerOrder(slide),
+          sanitizeElement: (element) => sanitizeDuplicatedSubtree(element),
+          getRectOnSlide: (...args) => getRectOnSlide(...args),
+          getClosestPositionedAncestor: typeof SlideNextStudioEditorDom !== 'undefined'
+            && SlideNextStudioEditorDom
+            && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
+            ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
+            : null,
+          buildPositionedLayoutItem: typeof SlideNextStudioEditorTransform !== 'undefined'
+            && SlideNextStudioEditorTransform
+            && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem === 'function'
+            ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(...args)
+            : null
         })
       : null;
     const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
@@ -7389,6 +7421,11 @@
     }
 
     function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
+      if (typeof studioEditorClipboardPayloadController !== 'undefined'
+        && studioEditorClipboardPayloadController
+        && typeof studioEditorClipboardPayloadController.buildPayload === 'function') {
+        return studioEditorClipboardPayloadController.buildPayload(elements, doc);
+      }
       const resolvedDoc = doc || getIframeDoc();
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
