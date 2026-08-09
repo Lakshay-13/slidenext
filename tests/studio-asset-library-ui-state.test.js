@@ -109,6 +109,30 @@ test('shared asset view renders previews only for image sources', () => {
   assert.equal(list.children[2].children[0].children[0].tagName, 'span');
 });
 
+test('shared asset view explains how to populate an empty library', () => {
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement() {
+      return { textContent: '' };
+    }
+  };
+
+  assert.equal(assetView.renderStudioAssetLibrary({ documentRef, assets: [] }), true);
+  assert.equal(
+    list.children[0].textContent,
+    'No assets saved. Add an asset above to reuse it.'
+  );
+});
+
 test('shared asset state sync derives image eligibility before rendering the library', () => {
   const list = {
     children: [],

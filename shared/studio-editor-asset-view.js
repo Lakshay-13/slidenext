@@ -27,7 +27,7 @@
     list.textContent = '';
     if (normalizedAssets.length === 0) {
       const emptyState = documentRef.createElement('span');
-      emptyState.textContent = 'No assets saved';
+      emptyState.textContent = 'No assets saved. Add an asset above to reuse it.';
       list.appendChild(emptyState);
       return true;
     }
