@@ -8677,9 +8677,6 @@
         canonicalDeckApi,
         canonicalWallpaperApi,
         sourceDocument,
-        buildCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || sourceDocument)
-          : null,
         buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'
           ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || sourceDocument)
           : null,
