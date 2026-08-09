@@ -8658,7 +8658,13 @@
       }
       const targetId = target && target.dataset && target.dataset.editorId;
       let canonicalDeck = null;
-      if (targetId && typeof buildEditorCanonicalDeck === 'function') {
+      if (targetId && typeof resolveEditorUiCanonicalDeck === 'function') {
+        try {
+          canonicalDeck = resolveEditorUiCanonicalDeck(getIframeDoc());
+        } catch (err) {
+          canonicalDeck = null;
+        }
+      } else if (targetId && typeof buildEditorCanonicalDeck === 'function') {
         try {
           canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
         } catch (err) {

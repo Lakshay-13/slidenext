@@ -37,6 +37,15 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
 }
 
 function loadSyncLayerOrderZIndexInput(fileContent, context) {
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  const canonicalUiResolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
   const canonicalNodeResolverSource = extractFunctionSource(
     fileContent,
     'function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {',
@@ -47,7 +56,10 @@ function loadSyncLayerOrderZIndexInput(fileContent, context) {
     'function syncLayerOrderZIndexInput(target) {',
     '\n\n    function refreshLayerOrderUi(options = {}) {'
   );
-  vm.runInContext(`${canonicalNodeResolverSource}\n${syncSource}`, context);
+  vm.runInContext(
+    `${canonicalUiSource}\n${canonicalUiResolverSource}\n${canonicalNodeResolverSource}\n${syncSource}`,
+    context
+  );
 }
 
 function loadRefreshLayerOrderUi(fileContent, context) {
@@ -468,6 +480,48 @@ test('syncLayerOrderZIndexInput resolves the canonical node for the selected tar
     style: { zIndex: '12' }
   }), zIndexInput);
   assert.equal(zIndexInput.value, '7');
+});
+
+test('syncLayerOrderZIndexInput prefers the live canonical deck before rebuilding the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const zIndexInput = { value: '' };
+  const liveCanonicalTarget = { id: 'node-1', layout: { zIndex: 19 } };
+  const doc = { id: 'live-doc' };
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioEditorLayerOrder: layerOrder,
+    SlideNextCanonicalDeck: canonicalDeck,
+    document: {
+      getElementById(id) {
+        return id === 'elZIndex' ? zIndexInput : null;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getStudioEditorSessionToken() {
+      return 41;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 41);
+      return { slides: [{ nodes: [liveCanonicalTarget] }] };
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when live layer metadata is available');
+    }
+  };
+
+  vm.createContext(context);
+  loadSyncLayerOrderZIndexInput(fileContent, context);
+
+  assert.equal(context.syncLayerOrderZIndexInput({
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '12' }
+  }), zIndexInput);
+  assert.equal(zIndexInput.value, '19');
+  assert.equal(buildCalls, 0);
 });
 
 test('refreshLayerOrderUi refreshes layer state and optionally the layer list', () => {
