@@ -1437,6 +1437,7 @@
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-runtime.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
+  <script src="/shared/studio-editor-save-button-state-runtime.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
@@ -1906,10 +1907,17 @@
         ? studioEditorWallpaperStateStore.clearPendingCustomWallpaperVersion()
         : false;
     }
-    const studioEditorSaveButtonStateStore = typeof SlideNextStudioEditorSaveButtonStateStore !== 'undefined'
-      && SlideNextStudioEditorSaveButtonStateStore
-      && typeof SlideNextStudioEditorSaveButtonStateStore.createStudioEditorSaveButtonStateStore === 'function'
-      ? SlideNextStudioEditorSaveButtonStateStore.createStudioEditorSaveButtonStateStore({})
+    const studioEditorSaveButtonStateRuntime = typeof SlideNextStudioEditorSaveButtonStateRuntime !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateRuntime
+      && typeof SlideNextStudioEditorSaveButtonStateRuntime.createStudioEditorSaveButtonStateRuntime === 'function'
+      ? SlideNextStudioEditorSaveButtonStateRuntime.createStudioEditorSaveButtonStateRuntime({
+          stateStore: typeof SlideNextStudioEditorSaveButtonStateStore !== 'undefined'
+            ? SlideNextStudioEditorSaveButtonStateStore
+            : null
+        })
+      : null;
+    const studioEditorSaveButtonStateStore = studioEditorSaveButtonStateRuntime
+      ? studioEditorSaveButtonStateRuntime.saveButtonStateStore
       : null;
     function getStudioSaveButtonState() {
       return studioEditorSaveButtonStateStore
