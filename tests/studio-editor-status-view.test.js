@@ -35,6 +35,22 @@ test('setStudioAutoSaveStatus safely skips missing status chrome', () => {
   assert.equal(statusView.setStudioAutoSaveStatus({ documentRef: { getElementById() { return null; } } }), false);
 });
 
+test('setStudioAutoSaveStatus renders PDF resource progress', () => {
+  const statusEl = { innerHTML: '', title: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({
+    documentRef,
+    state: 'exporting-pdf',
+    progressPercent: 42
+  }), true);
+  assert.match(statusEl.innerHTML, /Exporting PDF 42%/);
+});
+
 test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', () => {
   const statusEl = { innerHTML: '' };
   const documentRef = {

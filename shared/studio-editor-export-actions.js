@@ -106,6 +106,9 @@
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
           slideCount: canonicalDeck.slides.length,
+          onProgress: (progress) => {
+            setStatus('exporting-pdf', progress);
+          },
           ...pageDimensions,
           onPrint: () => {
             setStatus('pdf-exported');

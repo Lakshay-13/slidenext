@@ -166,7 +166,24 @@
   }
 
   function waitForStudioPdfPrintResources(documentRef, options = {}) {
-    if (!documentRef) return Promise.resolve();
+    const reportProgress = (completed, total) => {
+      if (typeof options.onProgress !== 'function') return;
+      const percent = total === 0 ? 100 : Math.round((completed / total) * 100);
+      try {
+        options.onProgress({
+          phase: 'resources',
+          completed,
+          total,
+          percent
+        });
+      } catch (error) {
+        // Progress reporting must not interrupt an otherwise valid export.
+      }
+    };
+    if (!documentRef) {
+      reportProgress(0, 0);
+      return Promise.resolve();
+    }
 
     const timeoutMs = Number.isFinite(options.timeoutMs)
       ? Math.max(0, options.timeoutMs)
@@ -344,7 +361,25 @@
       });
     }
 
-    return Promise.all(waits);
+    const total = waits.length;
+    let completed = 0;
+    let didFail = false;
+    reportProgress(0, total);
+    if (total === 0) return Promise.resolve();
+
+    return Promise.all(waits.map((wait) => Promise.resolve(wait).then(
+      (value) => {
+        if (!didFail) {
+          completed += 1;
+          reportProgress(completed, total);
+        }
+        return value;
+      },
+      (error) => {
+        didFail = true;
+        throw error;
+      }
+    )));
   }
 
   function openStudioPdfPrintWindow(options = {}) {

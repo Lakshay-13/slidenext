@@ -154,6 +154,43 @@ test('waitForStudioPdfPrintResources rejects when fonts fail to load', async () 
   );
 });
 
+test('waitForStudioPdfPrintResources reports resource progress', async () => {
+  let resolveFonts;
+  const imageHandlers = {};
+  const progress = [];
+  const waiting = pdfExport.waitForStudioPdfPrintResources({
+    fonts: { ready: new Promise(resolve => { resolveFonts = resolve; }) },
+    images: [{
+      complete: false,
+      addEventListener(type, handler) {
+        imageHandlers[type] = handler;
+      }
+    }]
+  }, {
+    onProgress(nextProgress) {
+      progress.push(nextProgress);
+    }
+  });
+
+  assert.deepEqual(progress, [{
+    phase: 'resources',
+    completed: 0,
+    total: 2,
+    percent: 0
+  }]);
+  resolveFonts();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(progress.at(-1).completed, 1);
+  imageHandlers.load();
+  await waiting;
+  assert.deepEqual(progress.at(-1), {
+    phase: 'resources',
+    completed: 2,
+    total: 2,
+    percent: 100
+  });
+});
+
 test('waitForStudioPdfPrintResources waits for external stylesheet links', async () => {
   const handlers = {};
   const stylesheet = {

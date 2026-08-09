@@ -29,6 +29,32 @@ test('PDF export rejects malformed canonical decks before opening print flow', (
   assert.deepEqual(statuses, ['pdf-export-failed']);
 });
 
+test('PDF export forwards resource progress through the existing status callback', () => {
+  const statuses = [];
+  let printOptions = null;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      openStudioPdfPrintWindow(options) {
+        printOptions = options;
+        return true;
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(exportPdf(), true);
+  printOptions.onProgress({ phase: 'resources', completed: 1, total: 2, percent: 50 });
+  printOptions.onPrint();
+  assert.deepEqual(statuses, [
+    ['exporting-pdf'],
+    ['exporting-pdf', { phase: 'resources', completed: 1, total: 2, percent: 50 }],
+    ['pdf-exported']
+  ]);
+});
+
 test('PPTX export rejects malformed canonical decks before invoking exporter', async () => {
   let exportCalls = 0;
   const statuses = [];

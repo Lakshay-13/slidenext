@@ -15,6 +15,9 @@
     if (!statusEl) return false;
 
     const state = options.state;
+    const progressPercent = Number.isFinite(options.progressPercent)
+      ? Math.max(0, Math.min(100, Math.round(options.progressPercent)))
+      : null;
     const warningCount = Number.isInteger(options.warningCount) && options.warningCount > 0
       ? options.warningCount
       : 0;
@@ -44,7 +47,8 @@
       const warningSuffix = warningCount > 0 ? ` (${warningCount})` : '';
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> PPTX Exported with warnings${warningSuffix}</span>`;
     } else if (state === 'exporting-pdf') {
-      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PDF...</span>`;
+      const progressSuffix = progressPercent === null ? '' : ` ${progressPercent}%`;
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PDF${progressSuffix}...</span>`;
     } else if (state === 'pdf-export-failed') {
       statusEl.innerHTML = `<span class="text-rose-400">PDF Export Failed</span>`;
     } else if (state === 'pdf-exported') {

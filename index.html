@@ -11080,9 +11080,13 @@
         ? SlideNextStudioEditorStatusView
         : null;
       if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
+      const progress = arguments.length > 1 ? arguments[1] : null;
       return statusView.setStudioAutoSaveStatus({
         documentRef: document,
-        state
+        state,
+        progressPercent: progress && typeof progress === 'object'
+          ? progress.percent
+          : null
       });
     }
 
@@ -11091,12 +11095,16 @@
         ? SlideNextStudioEditorStatusView
         : null;
       if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
+      const progress = warningCount && typeof warningCount === 'object'
+        ? warningCount
+        : null;
       return statusView.setStudioAutoSaveStatus({
         documentRef: document,
         state,
-        warningCount,
-        warnings,
-        warningsTruncated
+        warningCount: progress ? 0 : warningCount,
+        warnings: progress ? [] : warnings,
+        warningsTruncated: progress ? false : warningsTruncated,
+        progressPercent: progress ? progress.percent : null
       });
     }
 
