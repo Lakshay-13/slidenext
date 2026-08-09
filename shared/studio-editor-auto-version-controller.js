@@ -69,7 +69,90 @@
     return { trigger };
   }
 
+  function createStudioEditorAutoVersionExecutor(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const isTaskStale = typeof options.isTaskStale === 'function'
+      ? options.isTaskStale
+      : () => false;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const resolvePersistenceState = typeof options.resolvePersistenceState === 'function'
+      ? options.resolvePersistenceState
+      : () => null;
+    const isPersistedState = typeof options.isPersistedState === 'function'
+      ? options.isPersistedState
+      : () => false;
+    const buildSaveRequestBody = typeof options.buildSaveRequestBody === 'function'
+      ? options.buildSaveRequestBody
+      : () => ({});
+    const saveCheckpoint = typeof options.saveCheckpoint === 'function'
+      ? options.saveCheckpoint
+      : null;
+    const logger = options.logger && typeof options.logger.error === 'function'
+      ? options.logger
+      : null;
+
+    async function execute(
+      label,
+      presentationUrl = '',
+      sessionToken = null
+    ) {
+      if (isTaskStale(presentationUrl, sessionToken)) return;
+
+      const iframeDoc = getDocument();
+      const persistenceState = resolvePersistenceState(
+        iframeDoc,
+        presentationUrl,
+        sessionToken
+      );
+      if (!persistenceState) return;
+
+      if (persistenceApi
+        && typeof persistenceApi.isStudioVersionCheckpointSavePersisted === 'function'
+        && persistenceApi.isStudioVersionCheckpointSavePersisted(
+          label,
+          persistenceState,
+          presentationUrl,
+          {
+            isPersistedState,
+            buildSaveRequestBody
+          }
+        )) {
+        return false;
+      }
+
+      if (!saveCheckpoint) return;
+      try {
+        await saveCheckpoint(
+          label,
+          persistenceState,
+          presentationUrl,
+          {
+            onSuccess: () => {
+              if (logger && typeof logger.log === 'function') {
+                logger.log(`Auto-created version checkpoint: ${label}`);
+              }
+            },
+            onFailure: (data = {}) => {
+              if (logger) {
+                logger.error(`Failed to auto-create version backup: ${data.error}`);
+              }
+            }
+          }
+        );
+      } catch (error) {
+        if (logger) logger.error('Failed to auto-create version backup:', error);
+      }
+    }
+
+    return { execute };
+  }
+
   return {
-    createStudioEditorAutoVersionController
+    createStudioEditorAutoVersionController,
+    createStudioEditorAutoVersionExecutor
   };
 });

@@ -1782,6 +1782,22 @@
           execute: executeSaveAutoVersion
         })
       : null;
+    const studioEditorAutoVersionExecutor = typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
+      && SlideNextStudioEditorAutoVersionController
+      && typeof SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionExecutor === 'function'
+      ? SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionExecutor({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          isTaskStale: isCurrentStudioPersistenceTaskStale,
+          getDocument: getIframeDoc,
+          resolvePersistenceState: resolveCurrentStudioVersionCheckpointPersistenceState,
+          isPersistedState: isCurrentDeckStatePersisted,
+          buildSaveRequestBody: buildEditorSaveRequestBody,
+          saveCheckpoint: executeCurrentStudioVersionCheckpointSaveWithFailure,
+          logger: typeof console !== 'undefined' ? console : null
+        })
+      : null;
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
       && SlideNextStudioEditorWallpaperStateController
       && typeof SlideNextStudioEditorWallpaperStateController.createStudioEditorWallpaperStateController === 'function'
@@ -10847,6 +10863,11 @@
     }
 
     async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
+      if (typeof studioEditorAutoVersionExecutor !== 'undefined'
+        && studioEditorAutoVersionExecutor
+        && typeof studioEditorAutoVersionExecutor.execute === 'function') {
+        return studioEditorAutoVersionExecutor.execute(label, presentationUrl, sessionToken);
+      }
       if (isCurrentStudioPersistenceTaskStale(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
       const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
