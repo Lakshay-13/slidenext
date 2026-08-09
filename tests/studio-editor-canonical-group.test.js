@@ -71,6 +71,51 @@ test('buildStudioCanonicalGroupBaseline builds from the source document', () => 
   assert.equal(result, sourceDeck);
 });
 
+test('group and ungroup baselines delegate to the shared canonical-state reader', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let readerCalls = 0;
+  const canonicalStateApi = {
+    createStudioEditorCanonicalDeckBaselineReader(options) {
+      readerCalls += 1;
+      assert.equal(typeof options.getCanonicalDeckBaseline, 'function');
+      assert.equal(options.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+      assert.equal(typeof options.buildCanonicalDeckBaseline, 'function');
+      return (documentRef) => {
+        assert.equal(documentRef, sourceDocument);
+        return sourceDeck;
+      };
+    }
+  };
+
+  const groupBaseline = canonicalGroup.buildStudioCanonicalGroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi,
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeckBaseline() {
+      return null;
+    },
+    sourceDocument
+  });
+  const ungroupBaseline = canonicalGroup.buildStudioCanonicalUngroupBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi,
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeckBaseline() {
+      return null;
+    },
+    sourceDocument
+  });
+
+  assert.equal(groupBaseline, sourceDeck);
+  assert.equal(ungroupBaseline, sourceDeck);
+  assert.equal(readerCalls, 2);
+});
+
 test('buildStudioCanonicalGroupBaseline prefers a valid live canonical deck', () => {
   const liveDeck = createSourceDeck();
   let didBuildFromDocument = false;
@@ -125,6 +170,19 @@ test('buildStudioCanonicalGroupBaseline uses structural validation without a can
     }),
     validDeck
   );
+});
+
+test('group and ungroup baselines fail closed when a compatibility rebuild throws', () => {
+  const options = {
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('legacy baseline failed');
+    },
+    sourceDocument: { id: 'editor-doc' }
+  };
+
+  assert.equal(canonicalGroup.buildStudioCanonicalGroupBaseline(options), null);
+  assert.equal(canonicalGroup.buildStudioCanonicalUngroupBaseline(options), null);
 });
 
 test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline', () => {
