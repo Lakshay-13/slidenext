@@ -103,6 +103,75 @@ test('style controller blocks canonical-locked elements even when the DOM is sta
   assert.equal(receivedLockState, true);
 });
 
+test('style controller delegates canonical lock baseline resolution to canonical state', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const documentRef = { id: 'doc' };
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let readerOptions = null;
+  let readerDocument = null;
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (sourceDocument) => {
+          readerDocument = sourceDocument;
+          return deck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('custom reader should own baseline resolution');
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(readerDocument, documentRef);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(receivedLockState, true);
+});
+
+test('style controller fails closed when the shared baseline reader is unavailable', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader() {
+        return null;
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => true
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
+});
+
 test('style controller rebuilds the canonical lock baseline when live state is invalid', () => {
   const element = { dataset: { editorId: 'node-1' } };
   const rebuiltDeck = canonicalDeck.createCanonicalDeck({
