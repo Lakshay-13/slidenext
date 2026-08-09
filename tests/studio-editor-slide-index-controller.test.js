@@ -23,8 +23,10 @@ test('editor wiring routes active slide index consumers through the shared contr
     fileContent,
     /<script src="\/shared\/studio-editor-slide-index-controller\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorSlideIndexController\(\{/);
+  assert.match(fileContent, /studio-editor-slide-index-store\.js/);
+  assert.match(fileContent, /studioEditorSlideIndexStore/);
   assert.match(fileContent, /getCurrentSlideIndex: getStudioCurrentSlideIndex/);
+  assert.doesNotMatch(fileContent, /const studioEditorSlideIndexController =/);
   assert.doesNotMatch(fileContent, /let currentSlideIndex = 0/);
   assert.doesNotMatch(fileContent, /currentSlideIndex = sessionStateUpdate\.slideIndex/);
 });
