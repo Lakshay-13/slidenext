@@ -91,3 +91,31 @@ test('applyStudioWallpaperSlidesMutationWithTransaction fails closed without sli
     { didChange: false, transaction: null }
   );
 });
+
+test('applyStudioWallpaperSlidesMutationWithTransaction fails closed when canonical setup throws', () => {
+  let applyCalls = 0;
+  const sourceSlide = {
+    dataset: { slideId: 'slide-1' },
+    style: { background: 'white' }
+  };
+
+  const result = wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction(
+    [sourceSlide],
+    'black',
+    {
+      canonicalWallpaperApi: {
+        createStudioCanonicalWallpaperMutationBuilders() {
+          throw new Error('canonical wallpaper builders unavailable');
+        }
+      },
+      applyStudioWallpaperToSlides: () => {
+        applyCalls += 1;
+        return { didChange: true, transaction: null };
+      }
+    }
+  );
+
+  assert.deepEqual(result, { didChange: false, transaction: null });
+  assert.equal(applyCalls, 0);
+  assert.equal(sourceSlide.style.background, 'white');
+});

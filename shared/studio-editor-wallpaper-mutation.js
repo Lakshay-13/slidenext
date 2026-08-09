@@ -41,33 +41,44 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
-    const canonicalWallpaperBuilders = canonicalWallpaperApi
-      && typeof canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders === 'function'
-      ? canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders({
-          canonicalDeckApi,
-          buildCanonicalDeck,
-          buildCanonicalDeckBaseline,
-          getCanonicalDeckBaseline
-        })
-      : null;
-    const buildCanonicalWallpaperDeck = canonicalWallpaperBuilders
-      && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperDeck === 'function'
-      ? canonicalWallpaperBuilders.buildCanonicalWallpaperDeck
-      : null;
-    const canonicalDeckBeforeMutation = canonicalWallpaperBuilders
-      && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline === 'function'
-      ? canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline({
-          sourceDocument: options.sourceDocument
-        })
-      : null;
-    const canonicalDeck = buildCanonicalWallpaperDeck
-      ? buildCanonicalWallpaperDeck(sourceSlides, background, {
-          ...(canonicalDeckBeforeMutation
-            ? { canonicalDeckBeforeMutation }
-            : {}),
-          getSlideId
-        })
-      : null;
+    let canonicalWallpaperBuilders = null;
+    let buildCanonicalWallpaperDeck = null;
+    let canonicalDeckBeforeMutation = null;
+    let canonicalDeck = null;
+    try {
+      canonicalWallpaperBuilders = canonicalWallpaperApi
+        && typeof canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders === 'function'
+        ? canonicalWallpaperApi.createStudioCanonicalWallpaperMutationBuilders({
+            canonicalDeckApi,
+            buildCanonicalDeck,
+            buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline
+          })
+        : null;
+      buildCanonicalWallpaperDeck = canonicalWallpaperBuilders
+        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperDeck === 'function'
+        ? canonicalWallpaperBuilders.buildCanonicalWallpaperDeck
+        : null;
+      canonicalDeckBeforeMutation = canonicalWallpaperBuilders
+        && typeof canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline === 'function'
+        ? canonicalWallpaperBuilders.buildCanonicalWallpaperBaseline({
+            sourceDocument: options.sourceDocument
+          })
+        : null;
+      canonicalDeck = buildCanonicalWallpaperDeck
+        ? buildCanonicalWallpaperDeck(sourceSlides, background, {
+            ...(canonicalDeckBeforeMutation
+              ? { canonicalDeckBeforeMutation }
+              : {}),
+            getSlideId
+          })
+        : null;
+    } catch (error) {
+      return {
+        didChange: false,
+        transaction: null
+      };
+    }
 
     if (!applyStudioWallpaperToSlides) {
       return {
