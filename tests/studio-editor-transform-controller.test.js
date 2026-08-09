@@ -97,6 +97,36 @@ test('transform controller forwards the live canonical baseline reader', () => {
   assert.equal(builderOptions.getCanonicalDeckBaseline(), liveCanonicalDeck);
 });
 
+test('transform controller continues setup when canonical baseline capture throws', () => {
+  const calls = [];
+  const controller = transformController.createStudioEditorTransformController({
+    canonicalTransformApi: {
+      createStudioCanonicalTransformMutationBuilders() {
+        throw new Error('canonical transform builders unavailable');
+      }
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions(options) {
+        options.onSessionStart({ id: 'start-bounds' });
+        calls.push('transform-options');
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions() {
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        calls.push('attached');
+        return true;
+      }
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.setup({ body: {} }), true));
+  assert.deepEqual(calls, ['transform-options', 'attached']);
+});
+
 test('transform controller fails closed when no transform factory is available', () => {
   const controller = transformController.createStudioEditorTransformController({});
   assert.equal(controller.setup({ body: {} }), false);

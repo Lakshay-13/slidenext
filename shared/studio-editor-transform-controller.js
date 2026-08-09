@@ -173,10 +173,14 @@
     function setup(doc) {
       let canonicalDeckBeforeTransform = null;
       const captureCanonicalTransformBaseline = () => {
-        const builders = getCanonicalTransformBuilders();
-        return builders && typeof builders.buildCanonicalTransformBaseline === 'function'
-          ? builders.buildCanonicalTransformBaseline({ sourceDocument: doc })
-          : null;
+        try {
+          const builders = getCanonicalTransformBuilders();
+          return builders && typeof builders.buildCanonicalTransformBaseline === 'function'
+            ? builders.buildCanonicalTransformBaseline({ sourceDocument: doc })
+            : null;
+        } catch (error) {
+          return null;
+        }
       };
       const buildTransformTransaction = (finalizeResult) => {
         if (!transformApi || typeof transformApi.buildStudioTransformStyleTransaction !== 'function') {
