@@ -953,6 +953,30 @@ test('createCanonicalPptxExport preserves solid legacy slide backgrounds from st
   assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
 });
 
+test('createCanonicalPptxExport flattens CSS gradients to deterministic first-stop fallbacks', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      id: 'gradient-slide',
+      layout: {
+        background: {
+          style: 'background: linear-gradient(135deg, #123456 0%, #abcdef 100%);'
+        }
+      },
+      nodes: [{
+        id: 'gradient-shape',
+        type: 'shape',
+        style: 'background-image: radial-gradient(circle, rgb(17, 34, 51), #ffffff);',
+        layout: { x: 50, y: 50, width: 200, height: 100 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
+  assert.equal(result.pptx.slides[0].calls[0].options.fill.color, '112233');
+  assert.match(result.diagnostics.warnings.join('\n'), /gradient-slide uses unsupported CSS background gradients/);
+  assert.match(result.diagnostics.warnings.join('\n'), /gradient-shape uses unsupported background gradients/);
+});
+
 test('createCanonicalPptxExport renders canonical slide background images before nodes', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
@@ -1915,7 +1939,7 @@ test('preflightCanonicalPptxExport reports unsupported non-solid slide backgroun
     id: 'slide-1',
     properties: ['background']
   }]);
-  assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background styling/);
+  assert.match(report.diagnostics.warnings.join('\n'), /Slide slide-1 uses unsupported CSS background gradients/);
 });
 
 test('preflightCanonicalPptxExport accepts focal positioning for sized slide backgrounds', () => {

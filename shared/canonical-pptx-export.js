@@ -92,6 +92,16 @@
       .join('').toUpperCase();
   }
 
+  function resolveCssGradientFallbackColor(value) {
+    if (typeof value !== 'string' || !/gradient\(/i.test(value)) return '';
+    const colorCandidates = value.match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi) || [];
+    for (const candidate of colorCandidates) {
+      const color = normalizeHexColor(candidate);
+      if (color) return color;
+    }
+    return '';
+  }
+
   function resolvePptxFillColor(value) {
     if (typeof value !== 'string' || !value.trim()) return null;
     const input = value.trim();
@@ -111,7 +121,9 @@
     }
 
     const color = normalizeHexColor(input);
-    return color ? { color } : null;
+    if (color) return { color };
+    const gradientFallbackColor = resolveCssGradientFallbackColor(input);
+    return gradientFallbackColor ? { color: gradientFallbackColor } : null;
   }
 
   function resolvePptxTransparency(value) {
@@ -1015,7 +1027,8 @@
     const styleColor = normalizeHexColor(backgroundStyle);
     if (styleColor) return styleColor;
     const parsedStyle = parseStyle(backgroundStyle);
-    return normalizeHexColor(parsedStyle['background-color'] || parsedStyle.background);
+    const parsedColor = normalizeHexColor(parsedStyle['background-color'] || parsedStyle.background);
+    return parsedColor || resolveCssGradientFallbackColor(backgroundStyle);
   }
 
   function resolvePptxTextAlignment(value) {
@@ -1090,7 +1103,9 @@
 
   function shapeOptions(node, bounds, themeTokens = {}) {
     const style = nodeStyle(node, themeTokens);
-    const fill = resolvePptxFillColor(style['background-color'] || style.background) || { color: 'FFFFFF' };
+    const fill = resolvePptxFillColor(
+      style['background-color'] || style.background || style['background-image']
+    ) || { color: 'FFFFFF' };
     const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
     const borderStyle = typeof style['border-style'] === 'string'
@@ -1285,6 +1300,7 @@
         );
       }
       const nodeBackgroundValue = style['background-image'] || style.background || '';
+      const hasGradientBackground = /gradient\(/i.test(nodeBackgroundValue);
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
       const chartData = type === 'chart' ? getCanonicalChartData(node, themeTokens) : null;
@@ -1357,8 +1373,15 @@
 
       if (nodeBackgroundValue && /(?:url\(|gradient\()/i.test(nodeBackgroundValue)) {
         if (!nodeBackgroundSource) {
-          diagnostics.unsupportedStyles.push({ id: nodeId, properties: ['background-image'] });
-          diagnostics.warnings.push(`Node ${nodeId} background image is not an exportable image URL`);
+          diagnostics.unsupportedStyles.push({
+            id: nodeId,
+            properties: [hasGradientBackground ? 'background' : 'background-image']
+          });
+          diagnostics.warnings.push(
+            hasGradientBackground
+              ? `Node ${nodeId} uses unsupported background gradients; using the first stop color fallback`
+              : `Node ${nodeId} background image is not an exportable image URL`
+          );
         } else {
           const unsupportedBackgroundEffects = getUnsupportedPptxBackgroundImageEffects(nodeBackgroundValue);
           if (unsupportedBackgroundEffects.length > 0) {
@@ -1472,12 +1495,25 @@
         backgroundImageAsset.asset,
         themeTokens
       );
-      if (background.style && !resolveSlideBackgroundColor(background, themeTokens) && !supportsBackgroundStyle) {
+      const hasGradientBackground = background.style && /gradient\(/i.test(background.style);
+      if (background.style
+        && !hasGradientBackground
+        && !resolveSlideBackgroundColor(background, themeTokens)
+        && !supportsBackgroundStyle) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
           properties: ['background']
         });
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported CSS background styling`);
+      }
+      if (background.style && /gradient\(/i.test(background.style)) {
+        diagnostics.unsupportedStyles.push({
+          id: slide.id || 'unknown',
+          properties: ['background']
+        });
+        diagnostics.warnings.push(
+          `Slide ${slide.id || 'unknown'} uses unsupported CSS background gradients; using the first stop color fallback`
+        );
       }
       if (background.image && !backgroundImageSource) {
         diagnostics.unsupportedStyles.push({
@@ -1539,7 +1575,7 @@
     const style = nodeStyle(node, themeTokens);
     const transparency = nodeTransparency(node, themeTokens);
     const nodeBackgroundFill = mergePptxTransparency(
-      resolvePptxFillColor(style['background-color'] || style.background),
+      resolvePptxFillColor(style['background-color'] || style.background || style['background-image']),
       transparency
     );
     const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, context.deck, context.options);
