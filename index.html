@@ -1399,6 +1399,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -3044,6 +3045,23 @@
           setPresentationMetadata: (value) => {
             applyCurrentPresentationMetadata(value);
           }
+      })
+      : null;
+    const studioEditorSessionResetController = typeof SlideNextStudioEditorSessionResetController !== 'undefined'
+      && SlideNextStudioEditorSessionResetController
+      && typeof SlideNextStudioEditorSessionResetController.createStudioEditorSessionResetController === 'function'
+      ? SlideNextStudioEditorSessionResetController.createStudioEditorSessionResetController({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
+          setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
+          getAutoVersionTimers: getStudioAutoVersionTimers,
+          setAutoVersionTimers: setStudioAutoVersionTimers,
+          clearTimer: clearTimeout,
+          applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
+          clearHistoryStacks,
+          updateHistoryButtons
         })
       : null;
     const studioEditorPresentationMetadataController = typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
@@ -4227,24 +4245,31 @@
         slideIndex: 0,
         presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
       });
-      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-        autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-        autoVersionTimers: getStudioAutoVersionTimers(),
-        clearTimer: clearTimeout
-      });
-      setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-      setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
-      applyCurrentStudioPersistedDeckState({
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
-      }, {
-        presentationUrl: '',
-        syncPresentationMetadata: false
-      });
+      const didResetSessionData = typeof studioEditorSessionResetController !== 'undefined'
+        && studioEditorSessionResetController
+        && typeof studioEditorSessionResetController.reset === 'function'
+        ? studioEditorSessionResetController.reset()
+        : false;
+      if (!didResetSessionData) {
+        const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
+          autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
+          autoVersionTimers: getStudioAutoVersionTimers(),
+          clearTimer: clearTimeout
+        });
+        setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
+        setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
+        applyCurrentStudioPersistedDeckState({
+          cleanHtml: '',
+          canonicalDeck: null,
+          playbackState: null
+        }, {
+          presentationUrl: '',
+          syncPresentationMetadata: false
+        });
+        clearStudioHistoryStacks();
+        updateHistoryButtons();
+      }
       applyEditorSelectionState({});
-      clearStudioHistoryStacks();
-      updateHistoryButtons();
       
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
@@ -4321,29 +4346,36 @@
         slideIndex: 0,
         presentationMetadata: null
       });
-      const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-        autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-        autoVersionTimers: getStudioAutoVersionTimers(),
-        clearTimer: clearTimeout
-      });
-      setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-      setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
-      applyCurrentStudioPersistedDeckState({
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
-      }, {
-        presentationUrl: '',
-        syncPresentationMetadata: false
-      });
+      const didResetSessionData = typeof studioEditorSessionResetController !== 'undefined'
+        && studioEditorSessionResetController
+        && typeof studioEditorSessionResetController.reset === 'function'
+        ? studioEditorSessionResetController.reset()
+        : false;
+      if (!didResetSessionData) {
+        const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
+          autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
+          autoVersionTimers: getStudioAutoVersionTimers(),
+          clearTimer: clearTimeout
+        });
+        setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
+        setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
+        applyCurrentStudioPersistedDeckState({
+          cleanHtml: '',
+          canonicalDeck: null,
+          playbackState: null
+        }, {
+          presentationUrl: '',
+          syncPresentationMetadata: false
+        });
+        clearStudioHistoryStacks();
+        updateHistoryButtons();
+      }
       resetStudioPresentationUiState();
       resetStudioSourceViewUiState();
       resetStudioVersionUiState();
       resetStudioSaveButtonState();
       updateDeckReadyToolbarActionState();
       deselectElement();
-      clearStudioHistoryStacks();
-      updateHistoryButtons();
       
       iframe.onload = null;
       iframe.src = '';
