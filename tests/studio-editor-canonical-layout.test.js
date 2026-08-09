@@ -342,6 +342,28 @@ test('createStudioCanonicalLayoutMutationBuilder falls back when the live baseli
   assert.equal(fallbackBuildCount, 1);
 });
 
+test('createStudioCanonicalLayoutMutationBuilder can use only a valid live baseline', () => {
+  const liveDeck = createSourceDeck();
+  const buildCanonicalLayoutMutation = canonicalLayout.createStudioCanonicalLayoutMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getCanonicalDeckBaseline: () => liveDeck
+  });
+
+  const result = buildCanonicalLayoutMutation({
+    sourceDocument: { id: 'editor-doc' },
+    nextItems: [{
+      element: { dataset: { editorId: 'node-1' } },
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+  assert.equal(result.slides[0].nodes[0].layout.y, 60);
+  assert.equal(liveDeck.slides[0].nodes[0].layout.x, null);
+});
+
 test('createStudioCanonicalLayerOrderMutationBuilder reuses an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   let buildCount = 0;

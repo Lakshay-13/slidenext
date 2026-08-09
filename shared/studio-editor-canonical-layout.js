@@ -141,7 +141,10 @@
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
-    if (!canonicalDeckApi || (!buildCanonicalDeck && !buildCanonicalDeckBaseline)) return null;
+    if (!canonicalDeckApi
+      || (!getCanonicalDeckBaseline && !buildCanonicalDeck && !buildCanonicalDeckBaseline)) {
+      return null;
+    }
 
     const layoutUpdates = nextItems.map((item) => {
       const nodeId = getElementId(item && item.element);
