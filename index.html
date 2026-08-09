@@ -1388,6 +1388,7 @@
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
+  <script src="/shared/studio-editor-auto-version-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-creation-view.js"></script>
@@ -1765,6 +1766,22 @@
         ? studioEditorAutoVersionTimerController.clearTimer(timerKey)
         : undefined;
     }
+    const studioEditorAutoVersionController = typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
+      && SlideNextStudioEditorAutoVersionController
+      && typeof SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionController === 'function'
+      ? SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionController({
+          versionActions: typeof SlideNextStudioVersionActions !== 'undefined'
+            ? SlideNextStudioVersionActions
+            : null,
+          captureSessionState: captureCurrentStudioSessionState,
+          getTimer: getStudioAutoVersionTimer,
+          clearScheduledTimer: clearTimeout,
+          setTimer: setStudioAutoVersionTimer,
+          clearStoredTimer: clearStudioAutoVersionTimer,
+          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+          execute: executeSaveAutoVersion
+        })
+      : null;
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
       && SlideNextStudioEditorWallpaperStateController
       && typeof SlideNextStudioEditorWallpaperStateController.createStudioEditorWallpaperStateController === 'function'
@@ -10824,21 +10841,9 @@
 
     // Automatically save a labeled checkpoint version in the background
     async function triggerAutoVersion(label) {
-      // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
-      // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
-      const { presentationUrl: scheduledPresentationUrl, sessionToken: scheduledSessionToken } = captureCurrentStudioSessionState();
-      
-      if (SlideNextStudioVersionActions.shouldDebounceStudioAutoVersion(label)) {
-        const timerKey = SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_TIMER_KEY;
-        clearTimeout(getStudioAutoVersionTimer(timerKey));
-        setStudioAutoVersionTimer(timerKey, setTimeout(() => {
-          clearStudioAutoVersionTimer(timerKey);
-          executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
-        }, SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_DEBOUNCE_MS));
-      } else {
-        // Execute immediately
-        executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
-      }
+      if (!studioEditorAutoVersionController
+        || typeof studioEditorAutoVersionController.trigger !== 'function') return;
+      return studioEditorAutoVersionController.trigger(label);
     }
 
     async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
