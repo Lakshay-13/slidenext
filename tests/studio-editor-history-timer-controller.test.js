@@ -25,7 +25,7 @@ test('editor wiring routes the undo debounce timer through the shared controller
     fileContent,
     /<script src="\/shared\/studio-editor-history-timer-controller\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorHistoryTimerController\(\{/);
-  assert.match(fileContent, /getTimer: getStudioUndoDebounceTimer/);
+  assert.match(fileContent, /studio-editor-history-store\.js/);
+  assert.match(fileContent, /getUndoDebounceTimer\(\)/);
   assert.doesNotMatch(fileContent, /let undoDebounceTimer = null/);
 });

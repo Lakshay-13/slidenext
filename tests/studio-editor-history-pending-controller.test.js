@@ -33,9 +33,9 @@ test('editor wiring routes pending history transactions through the shared contr
     fileContent,
     /<script src="\/shared\/studio-editor-history-pending-controller\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorHistoryPendingController\(\{/);
-  assert.match(fileContent, /getPendingTransaction: getStudioPendingEditorTransaction/);
-  assert.match(fileContent, /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck/);
+  assert.match(fileContent, /studio-editor-history-store\.js/);
+  assert.match(fileContent, /getPendingEditorTransaction\(\)/);
+  assert.match(fileContent, /getPendingEditorCanonicalDeck\(\)/);
   assert.doesNotMatch(fileContent, /let pendingEditorTransaction = null/);
   assert.doesNotMatch(fileContent, /let pendingEditorCanonicalDeck = null/);
 });

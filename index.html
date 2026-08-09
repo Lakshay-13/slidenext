@@ -1418,6 +1418,7 @@
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
+  <script src="/shared/studio-editor-history-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
@@ -1592,91 +1593,81 @@
         ? studioEditorSelectionStateController.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
-    const studioEditorHistoryStackController = typeof SlideNextStudioEditorHistoryStackController !== 'undefined'
-      && SlideNextStudioEditorHistoryStackController
-      && typeof SlideNextStudioEditorHistoryStackController.createStudioEditorHistoryStackController === 'function'
-      ? SlideNextStudioEditorHistoryStackController.createStudioEditorHistoryStackController({})
+    const studioEditorHistoryStateController = typeof SlideNextStudioEditorHistoryStore !== 'undefined'
+      && SlideNextStudioEditorHistoryStore
+      && typeof SlideNextStudioEditorHistoryStore.createStudioEditorHistoryStateController === 'function'
+      ? SlideNextStudioEditorHistoryStore.createStudioEditorHistoryStateController({})
       : null;
     function getStudioUndoStack() {
-      return studioEditorHistoryStackController
-        && typeof studioEditorHistoryStackController.getUndoStack === 'function'
-        ? studioEditorHistoryStackController.getUndoStack()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.getUndoStack === 'function'
+        ? studioEditorHistoryStateController.getUndoStack()
         : [];
     }
     function getStudioRedoStack() {
-      return studioEditorHistoryStackController
-        && typeof studioEditorHistoryStackController.getRedoStack === 'function'
-        ? studioEditorHistoryStackController.getRedoStack()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.getRedoStack === 'function'
+        ? studioEditorHistoryStateController.getRedoStack()
         : [];
     }
     function setStudioUndoStack(nextStack) {
-      return studioEditorHistoryStackController
-        && typeof studioEditorHistoryStackController.setUndoStack === 'function'
-        ? studioEditorHistoryStackController.setUndoStack(nextStack)
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.setUndoStack === 'function'
+        ? studioEditorHistoryStateController.setUndoStack(nextStack)
         : false;
     }
     function setStudioRedoStack(nextStack) {
-      return studioEditorHistoryStackController
-        && typeof studioEditorHistoryStackController.setRedoStack === 'function'
-        ? studioEditorHistoryStackController.setRedoStack(nextStack)
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.setRedoStack === 'function'
+        ? studioEditorHistoryStateController.setRedoStack(nextStack)
         : false;
     }
     function clearStudioHistoryStacks() {
-      return studioEditorHistoryStackController
-        && typeof studioEditorHistoryStackController.clear === 'function'
-        ? studioEditorHistoryStackController.clear()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.clearHistoryStacks === 'function'
+        ? studioEditorHistoryStateController.clearHistoryStacks()
         : false;
     }
-    const studioEditorHistoryPendingController = typeof SlideNextStudioEditorHistoryPendingController !== 'undefined'
-      && SlideNextStudioEditorHistoryPendingController
-      && typeof SlideNextStudioEditorHistoryPendingController.createStudioEditorHistoryPendingController === 'function'
-      ? SlideNextStudioEditorHistoryPendingController.createStudioEditorHistoryPendingController({})
-      : null;
     function getStudioPendingEditorTransaction() {
-      return studioEditorHistoryPendingController
-        && typeof studioEditorHistoryPendingController.getPendingTransaction === 'function'
-        ? studioEditorHistoryPendingController.getPendingTransaction()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.getPendingEditorTransaction === 'function'
+        ? studioEditorHistoryStateController.getPendingEditorTransaction()
         : null;
     }
     function setStudioPendingEditorTransaction(nextTransaction) {
-      return studioEditorHistoryPendingController
-        && typeof studioEditorHistoryPendingController.setPendingTransaction === 'function'
-        ? studioEditorHistoryPendingController.setPendingTransaction(nextTransaction)
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.setPendingEditorTransaction === 'function'
+        ? studioEditorHistoryStateController.setPendingEditorTransaction(nextTransaction)
         : false;
     }
     function clearStudioPendingEditorTransaction() {
-      return studioEditorHistoryPendingController
-        && typeof studioEditorHistoryPendingController.clear === 'function'
-        ? studioEditorHistoryPendingController.clear()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.clearPendingEditorTransaction === 'function'
+        ? studioEditorHistoryStateController.clearPendingEditorTransaction()
         : false;
     }
     function getStudioPendingEditorCanonicalDeck() {
-      return studioEditorHistoryPendingController
-        && typeof studioEditorHistoryPendingController.getPendingCanonicalDeck === 'function'
-        ? studioEditorHistoryPendingController.getPendingCanonicalDeck()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.getPendingEditorCanonicalDeck === 'function'
+        ? studioEditorHistoryStateController.getPendingEditorCanonicalDeck()
         : null;
     }
     function setStudioPendingEditorCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorHistoryPendingController
-        && typeof studioEditorHistoryPendingController.setPendingCanonicalDeck === 'function'
-        ? studioEditorHistoryPendingController.setPendingCanonicalDeck(nextCanonicalDeck)
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.setPendingEditorCanonicalDeck === 'function'
+        ? studioEditorHistoryStateController.setPendingEditorCanonicalDeck(nextCanonicalDeck)
         : false;
     }
-    const studioEditorHistoryTimerController = typeof SlideNextStudioEditorHistoryTimerController !== 'undefined'
-      && SlideNextStudioEditorHistoryTimerController
-      && typeof SlideNextStudioEditorHistoryTimerController.createStudioEditorHistoryTimerController === 'function'
-      ? SlideNextStudioEditorHistoryTimerController.createStudioEditorHistoryTimerController({})
-      : null;
     function getStudioUndoDebounceTimer() {
-      return studioEditorHistoryTimerController
-        && typeof studioEditorHistoryTimerController.getTimer === 'function'
-        ? studioEditorHistoryTimerController.getTimer()
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.getUndoDebounceTimer === 'function'
+        ? studioEditorHistoryStateController.getUndoDebounceTimer()
         : null;
     }
     function setStudioUndoDebounceTimer(nextTimer) {
-      return studioEditorHistoryTimerController
-        && typeof studioEditorHistoryTimerController.setTimer === 'function'
-        ? studioEditorHistoryTimerController.setTimer(nextTimer)
+      return studioEditorHistoryStateController
+        && typeof studioEditorHistoryStateController.setUndoDebounceTimer === 'function'
+        ? studioEditorHistoryStateController.setUndoDebounceTimer(nextTimer)
         : false;
     }
     const studioEditorPersistedDeckStateController = typeof SlideNextStudioEditorPersistedDeckStateController !== 'undefined'
