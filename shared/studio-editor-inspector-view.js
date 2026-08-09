@@ -21,6 +21,21 @@
     return declaration ? declaration.slice(declaration.indexOf(':') + 1).trim() : '';
   }
 
+  function isStudioInspectorStructuredElement(element) {
+    if (!element) return false;
+    const tagName = typeof element.tagName === 'string'
+      ? element.tagName.toLowerCase()
+      : '';
+    if (['table', 'pre', 'code', 'svg', 'video', 'audio', 'iframe'].includes(tagName)) {
+      return true;
+    }
+    const classNames = element.classList && typeof element.classList.contains === 'function'
+      ? ['editor-chart', 'editor-embed-placeholder', 'editor-shape']
+        .filter(className => element.classList.contains(className))
+      : [];
+    return classNames.length > 0;
+  }
+
   function renderStudioInspectorSelectionSummary(options = {}) {
     const documentRef = options.documentRef;
     const selectionState = options.selectionState || {};
@@ -167,6 +182,7 @@
     const imagePositionInput = documentRef.getElementById('elImagePosition');
     const textContentGroup = documentRef.getElementById('inspectorTextContentGroup');
     const isImage = !isMulti && primaryElement.tagName.toLowerCase() === 'img';
+    const isStructured = !isMulti && isStudioInspectorStructuredElement(primaryElement);
     if (isImage) {
       if (imageGroup) imageGroup.classList.remove('hidden');
       const canonicalImageSrc = options.canonicalNode
@@ -216,7 +232,7 @@
       if (imageGroup) imageGroup.classList.add('hidden');
       if (imageFitInput) imageFitInput.disabled = true;
       if (imagePositionInput) imagePositionInput.disabled = true;
-      if (textContentGroup) textContentGroup.classList.toggle('hidden', isMulti);
+      if (textContentGroup) textContentGroup.classList.toggle('hidden', isMulti || isStructured);
     }
     return true;
   }

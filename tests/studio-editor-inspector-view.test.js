@@ -14,6 +14,12 @@ function createClassList() {
     },
     contains(value) {
       return values.has(value);
+    },
+    toggle(value, force) {
+      const shouldContain = typeof force === 'boolean' ? force : !values.has(value);
+      if (shouldContain) values.add(value);
+      else values.delete(value);
+      return shouldContain;
     }
   };
 }
@@ -265,6 +271,39 @@ test('syncStudioInspectorContentControls prefers canonical text data', () => {
     computedStyles: {}
   }), true);
   assert.equal(textInput.value, 'Canonical title');
+});
+
+test('syncStudioInspectorContentControls hides destructive text editing for structured elements', () => {
+  const textGroup = createClassList();
+  const nodes = {
+    elTextContent: { value: '' },
+    inspectorImageGroup: { classList: createClassList() },
+    elImageFit: { value: '', disabled: true },
+    elImagePosition: { value: '', disabled: true },
+    inspectorTextContentGroup: { classList: textGroup }
+  };
+  const chart = {
+    tagName: 'DIV',
+    classList: {
+      contains(className) {
+        return className === 'editor-chart';
+      }
+    },
+    textContent: 'Quarterly trend',
+    innerText: 'Quarterly trend'
+  };
+
+  assert.equal(inspectorView.syncStudioInspectorContentControls({
+    documentRef: {
+      getElementById(id) {
+        return nodes[id] || null;
+      }
+    },
+    primaryElement: chart,
+    isMulti: false,
+    computedStyles: {}
+  }), true);
+  assert.equal(textGroup.contains('hidden'), true);
 });
 
 test('syncStudioInspectorContentControls prefers canonical image source data', () => {
