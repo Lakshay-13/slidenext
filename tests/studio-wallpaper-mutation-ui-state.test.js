@@ -21,6 +21,14 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installWallpaperStateAccessors(context) {
+  context.setStudioCustomGradientType = (nextValue) => {
+    context.customGradientType = nextValue;
+    return nextValue;
+  };
+  context.getStudioCustomGradientType = () => context.customGradientType;
+}
+
 function loadFinalizeWallpaperMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -1065,6 +1073,7 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
       };
     }
   };
+  installWallpaperStateAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(setCustomGradientTypeSource, context);
@@ -1108,6 +1117,7 @@ test('setCustomGradientType delegates chrome synchronization to the shared wallp
       return { canUseWallpaperControls: true };
     }
   };
+  installWallpaperStateAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(setCustomGradientTypeSource, context);

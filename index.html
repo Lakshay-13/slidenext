@@ -1350,6 +1350,7 @@
   <script src="/shared/studio-editor-grid-snap-controller.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
+  <script src="/shared/studio-editor-wallpaper-state-controller.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
   <script src="/shared/studio-editor-notes-actions.js"></script>
   <script src="/shared/studio-editor-slide-metadata.js"></script>
@@ -1440,8 +1441,42 @@
     let undoStack = [];
     let redoStack = [];
     let pendingEditorTransaction = null;
-    let wallpaperTab = 'solid';
     let studioEditorSessionToken = 0;
+    const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
+      && SlideNextStudioEditorWallpaperStateController
+      && typeof SlideNextStudioEditorWallpaperStateController.createStudioEditorWallpaperStateController === 'function'
+      ? SlideNextStudioEditorWallpaperStateController.createStudioEditorWallpaperStateController()
+      : null;
+    function getStudioWallpaperTab() {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.getWallpaperTab === 'function'
+        ? studioEditorWallpaperStateController.getWallpaperTab()
+        : 'solid';
+    }
+    function setStudioWallpaperTab(nextValue) {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.setWallpaperTab === 'function'
+        ? studioEditorWallpaperStateController.setWallpaperTab(nextValue)
+        : false;
+    }
+    function setStudioCustomGradientType(nextValue) {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.setCustomGradientType === 'function'
+        ? studioEditorWallpaperStateController.setCustomGradientType(nextValue)
+        : false;
+    }
+    function getStudioCustomGradientType() {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.getCustomGradientType === 'function'
+        ? studioEditorWallpaperStateController.getCustomGradientType()
+        : 'linear';
+    }
+    function resetStudioWallpaperState() {
+      return studioEditorWallpaperStateController
+        && typeof studioEditorWallpaperStateController.reset === 'function'
+        ? studioEditorWallpaperStateController.reset()
+        : false;
+    }
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
       : null;
@@ -1638,13 +1673,9 @@
           pruneEditorChromeNodes: (...args) => pruneEditorChromeNodes(...args),
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           rgbToHex: typeof rgbToHex === 'function' ? rgbToHex : null,
-          getWallpaperTab: () => wallpaperTab,
-          setWallpaperTab: (nextValue) => {
-            wallpaperTab = nextValue;
-          },
-          setCustomGradientType: (nextValue) => {
-            customGradientType = nextValue;
-          }
+          getWallpaperTab: getStudioWallpaperTab,
+          setWallpaperTab: setStudioWallpaperTab,
+          setCustomGradientType: setStudioCustomGradientType
         })
       : null;
     const studioEditorNavigationSync = typeof SlideNextStudioEditorNavigationSync !== 'undefined'
@@ -2693,7 +2724,6 @@
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
       : null;
-    let customGradientType = 'linear';
     let hasPendingCustomWallpaperVersion = false;
     let currentStudioSaveButtonState = 'idle';
     let renamingFilename = '';
@@ -7217,7 +7247,7 @@
         documentRef: document,
         tab
       });
-      if (didApply) wallpaperTab = tab;
+      if (didApply) setStudioWallpaperTab(tab);
       return didApply;
     }
 
@@ -7453,11 +7483,11 @@
         })) {
           return false;
         }
-        customGradientType = type;
+        setStudioCustomGradientType(type);
         return applyCustomGradient();
       }
 
-      customGradientType = type;
+      setStudioCustomGradientType(type);
       
       if (type === 'linear') {
         if (linearBtn) {
@@ -7517,7 +7547,7 @@
       const angle = angleInput.value;
       
       let gradientVal = '';
-      if (customGradientType === 'linear') {
+      if (getStudioCustomGradientType() === 'linear') {
         gradientVal = `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`;
       } else {
         gradientVal = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
@@ -10043,8 +10073,7 @@
         isLoading: !!options.isLoading,
         resetLocalState() {
           hasPendingCustomWallpaperVersion = false;
-          wallpaperTab = 'solid';
-          customGradientType = 'linear';
+          resetStudioWallpaperState();
         }
       });
     }

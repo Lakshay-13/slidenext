@@ -16,6 +16,18 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installWallpaperStateAccessors(context) {
+  context.setStudioWallpaperTab = (nextValue) => {
+    context.wallpaperTab = nextValue;
+    return nextValue;
+  };
+  context.setStudioCustomGradientType = (nextValue) => {
+    context.customGradientType = nextValue;
+    return nextValue;
+  };
+  context.getStudioCustomGradientType = () => context.customGradientType;
+}
+
 function createControls() {
   return {
     wpTabSolid: { disabled: true },
@@ -337,6 +349,7 @@ test('setWallpaperTab returns false without mutating chrome when wallpaper readi
       }
     }
   };
+  installWallpaperStateAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(setWallpaperTabSource, context);
@@ -381,6 +394,7 @@ test('setWallpaperTab keeps disabled-aware idle classes on inactive wallpaper ta
       }
     }
   };
+  installWallpaperStateAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(setWallpaperTabSource, context);
@@ -472,6 +486,7 @@ test('wallpaper mutation helpers no-op when wallpaper readiness or required cont
       alertCalls += 1;
     }
   };
+  installWallpaperStateAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(
