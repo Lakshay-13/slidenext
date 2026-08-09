@@ -208,12 +208,14 @@ test('canonical deck builder can rebuild from a document or return the stored mo
   const storedDeck = createDeck('stored');
   const importedDeck = createDeck('imported');
   const documentRef = {};
+  let capturedOptions = null;
   const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
     getCurrentPresentationMetadata: () => ({ id: 'demo' }),
     getPersistedCanonicalDeck: () => storedDeck,
     resolveStoredCanonicalBaseline: () => storedDeck,
     buildCanonicalDeckFromDocument(doc, options) {
       assert.equal(doc, documentRef);
+      capturedOptions = options;
       assert.equal(options.sourcePath, '/presentations/demo/index.html');
       return importedDeck;
     },
@@ -222,7 +224,28 @@ test('canonical deck builder can rebuild from a document or return the stored mo
   });
 
   assert.equal(builder(documentRef, { preferLiveCanonicalDeck: false }), importedDeck);
+  assert.equal(capturedOptions.canonicalDeckBaseline, storedDeck);
   assert.equal(builder(null), storedDeck);
+});
+
+test('canonical deck builder prefers an explicit rebuild baseline over the persisted model', () => {
+  const storedDeck = createDeck('stored');
+  const explicitBaseline = createDeck('explicit');
+  let capturedOptions = null;
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    resolveStoredCanonicalBaseline: () => storedDeck,
+    buildCanonicalDeckFromDocument(_doc, options) {
+      capturedOptions = options;
+      return createDeck('imported');
+    }
+  });
+
+  builder({}, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline: explicitBaseline
+  });
+
+  assert.equal(capturedOptions.canonicalDeckBaseline, explicitBaseline);
 });
 
 test('canonical deck builder forwards the DOM rebuild baseline to the shared deck context', () => {

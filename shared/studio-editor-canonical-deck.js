@@ -81,18 +81,29 @@
       const presentationMetadata = readCurrentPresentationMetadata();
       const presentationUrl = readPresentationUrl();
       const presentationTitle = readPresentationTitle();
+      const persistedCanonicalDeck = readPersistedCanonicalDeck();
+      const storedCanonicalDeckCandidate = resolveStoredCanonicalBaseline({
+        currentPresentationMetadata: presentationMetadata,
+        persistedCanonicalDeck
+      });
+      const storedCanonicalDeck = isValidCanonicalDeck(storedCanonicalDeckCandidate)
+        ? storedCanonicalDeckCandidate
+        : null;
+      const canonicalDeckBaseline = isValidCanonicalDeck(buildOptions.canonicalDeckBaseline)
+        ? buildOptions.canonicalDeckBaseline
+        : storedCanonicalDeck;
       if (buildStudioCanonicalDeck) {
         try {
           const studioCanonicalDeck = buildStudioCanonicalDeck(doc, {
             currentPresentationMetadata: presentationMetadata,
             fallbackStoredPresentationMetadata: {
-              canonicalDeck: readPersistedCanonicalDeck()
+              canonicalDeck: persistedCanonicalDeck
             },
             buildPresentationMetadataSeed,
             presentationUrl,
             presentationTitle,
             preferStoredCanonicalDeck: false,
-            canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
+            canonicalDeckBaseline,
             getSlideId: options.getSlideId,
             getNodeId: options.getNodeId
           });
@@ -104,13 +115,6 @@
         }
       }
 
-      const storedCanonicalDeckCandidate = resolveStoredCanonicalBaseline({
-        currentPresentationMetadata: presentationMetadata,
-        persistedCanonicalDeck: readPersistedCanonicalDeck()
-      });
-      const storedCanonicalDeck = isValidCanonicalDeck(storedCanonicalDeckCandidate)
-        ? storedCanonicalDeckCandidate
-        : null;
       if (!doc && storedCanonicalDeck) {
         return storedCanonicalDeck;
       }
@@ -120,9 +124,9 @@
 
       try {
         const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
-          presentationMetadata: presentationMetadata || buildPresentationMetadataSeed(presentationUrl, presentationTitle),
-          sourcePath: presentationUrl,
-          canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
+        presentationMetadata: presentationMetadata || buildPresentationMetadataSeed(presentationUrl, presentationTitle),
+        sourcePath: presentationUrl,
+          canonicalDeckBaseline,
           getSlideId: options.getSlideId,
           getNodeId: options.getNodeId
         });
