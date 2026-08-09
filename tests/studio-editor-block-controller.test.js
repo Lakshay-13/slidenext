@@ -230,6 +230,38 @@ test('block controller removes a saved block and finalizes persistence hooks', (
   assert.deepEqual(calls[3][1], ['stats']);
 });
 
+test('block controller fails closed when removing a block canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{ id: 'hero', name: 'Hero' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const calls = [];
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      removeCanonicalBlock() {
+        throw new Error('canonical block removal failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onBlocksChanged() {
+      calls.push('blocks');
+    }
+  });
+
+  assert.equal(controller.removeBlock('hero'), null);
+  assert.deepEqual(calls, []);
+});
+
 test('block controller renders and inserts canonical block nodes through a markup transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [{

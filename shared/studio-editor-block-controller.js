@@ -152,10 +152,15 @@
         && Array.isArray(canonicalDeck.blocks)
         ? canonicalDeck.blocks.find((candidate) => candidate && candidate.id === normalizedBlockId)
         : null;
-      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalBlock(
-        canonicalDeck,
-        normalizedBlockId
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.removeCanonicalBlock(
+          canonicalDeck,
+          normalizedBlockId
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
 
       if (saveHistoryState) {
