@@ -1363,6 +1363,7 @@
   <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-slide-metadata-controller.js"></script>
   <script src="/shared/studio-editor-slide-routing-controller.js"></script>
+  <script src="/shared/studio-editor-slide-routing-runtime.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-active-slide-controller.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
@@ -2373,10 +2374,13 @@
           syncChrome: (...args) => syncStudioChromeToActiveSlide(...args)
         })
       : null;
-    const studioEditorSlideRoutingController = typeof SlideNextStudioEditorSlideRoutingController !== 'undefined'
-      && SlideNextStudioEditorSlideRoutingController
-      && typeof SlideNextStudioEditorSlideRoutingController.createStudioEditorSlideRoutingController === 'function'
-      ? SlideNextStudioEditorSlideRoutingController.createStudioEditorSlideRoutingController({
+    const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingRuntime !== 'undefined'
+      && SlideNextStudioEditorSlideRoutingRuntime
+      && typeof SlideNextStudioEditorSlideRoutingRuntime.createStudioEditorSlideRoutingRuntime === 'function'
+      ? SlideNextStudioEditorSlideRoutingRuntime.createStudioEditorSlideRoutingRuntime({
+          routingApi: typeof SlideNextStudioEditorSlideRoutingController !== 'undefined'
+            ? SlideNextStudioEditorSlideRoutingController
+            : null,
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
             ? SlideNextStudioDeckView
             : null,
@@ -2385,6 +2389,9 @@
           deleteSlideByIndex: (index) => deleteSlideNode(index),
           reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
         })
+      : null;
+    const studioEditorSlideRoutingController = studioEditorSlideRoutingRuntime
+      ? studioEditorSlideRoutingRuntime.slideRoutingController
       : null;
     const studioEditorLayoutRuntime = typeof SlideNextStudioEditorLayoutRuntime !== 'undefined'
       && SlideNextStudioEditorLayoutRuntime
