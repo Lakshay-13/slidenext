@@ -109,7 +109,7 @@
     }
 
     const markup = items.map(presentation => `
-        <div class="glass-card p-6 flex flex-col justify-between h-full relative group">
+        <div class="glass-card p-6 flex flex-col justify-between h-full relative group" style="content-visibility: auto; contain-intrinsic-size: 240px;">
           <div class="flex items-start justify-between mb-4">
             <div class="w-12 h-12 rounded-xl bg-[#7028d0]/10 border border-[#7028d0]/20 flex items-center justify-center text-[#7028d0] group-hover:scale-110 transition-transform">
               <span class="material-symbols-outlined text-[28px]">${escapeHtml(presentation.icon || 'presentation_play')}</span>

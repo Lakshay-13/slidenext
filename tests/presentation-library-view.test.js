@@ -105,6 +105,8 @@ test('renderPresentationLibraryGrid renders presentation actions and empty state
   assert.match(markup, /Onboarding/);
   assert.match(markup, /launchPresentation\(&quot;presentations\/onboarding\/index.html&quot;\)/);
   assert.match(markup, /launchStudioEditor\(&quot;presentations\/onboarding\/index.html&quot;/);
+  assert.match(markup, /content-visibility: auto/);
+  assert.match(markup, /contain-intrinsic-size: 240px/);
 
   const emptyContainer = { innerHTML: '' };
   const emptyMarkup = presentationLibraryView.renderPresentationLibraryGrid({
