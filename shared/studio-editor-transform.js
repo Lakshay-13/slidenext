@@ -1090,9 +1090,15 @@
       onSessionEnd(finalizeResult, completionPlan);
       if (!completionPlan || !completionPlan.shouldPersist) return;
       const transaction = buildTransaction(finalizeResult);
-      const canonicalDeck = buildCanonicalDeck
-        ? buildCanonicalDeck(finalizeResult)
-        : null;
+      let canonicalDeck = null;
+      if (buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(finalizeResult);
+        } catch (err) {
+          // Preserve the move through transaction history when the sidecar fails.
+          canonicalDeck = null;
+        }
+      }
       if (canonicalDeck) {
         saveHistoryState(false, transaction, canonicalDeck);
       } else {

@@ -180,6 +180,38 @@ test('createStudioTransformSessionFinalizer forwards an optional canonical deck 
   assert.deepEqual(calls, [[false, { type: 'style' }, canonicalDeck]]);
 });
 
+test('createStudioTransformSessionFinalizer preserves transaction history when canonical sidecar construction throws', () => {
+  const calls = [];
+  const transaction = { type: 'style' };
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction() {
+      return transaction;
+    },
+    buildCanonicalDeck() {
+      throw new Error('canonical transform unavailable');
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.doesNotThrow(() => finalizeSession({ id: 'move' }, {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  }));
+  assert.deepEqual(calls, [
+    ['history', false, transaction],
+    'save',
+    ['version', 'Auto: Moved Element']
+  ]);
+});
+
 test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {
   const documentListeners = new Map();
   const bodyListeners = new Map();
