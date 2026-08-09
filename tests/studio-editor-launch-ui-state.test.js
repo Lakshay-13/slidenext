@@ -20,7 +20,43 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(historyAwareSource, null, `Missing function markers: ${startMarker}`);
-  return `${autoSaveTimerFixture.getAutoSaveTimerFixtureSource()}\n${historyAwareSource}`;
+  const autoVersionTimerFixtureSource = `
+function getStudioAutoVersionTimers() {
+  if (typeof studioEditorAutoVersionTimerController !== 'undefined'
+    && studioEditorAutoVersionTimerController
+    && typeof studioEditorAutoVersionTimerController.getTimers === 'function') {
+    return studioEditorAutoVersionTimerController.getTimers();
+  }
+  return typeof autoVersionTimers !== 'undefined' ? autoVersionTimers : {};
+}
+function setStudioAutoVersionTimers(nextTimers) {
+  if (typeof studioEditorAutoVersionTimerController !== 'undefined'
+    && studioEditorAutoVersionTimerController
+    && typeof studioEditorAutoVersionTimerController.setTimers === 'function') {
+    return studioEditorAutoVersionTimerController.setTimers(nextTimers);
+  }
+  autoVersionTimers = nextTimers && typeof nextTimers === 'object' ? nextTimers : {};
+  return autoVersionTimers;
+}
+function getStudioAutoVersionTimer(timerKey) {
+  const timers = getStudioAutoVersionTimers();
+  return typeof timerKey === 'string' ? timers[timerKey] : undefined;
+}
+function setStudioAutoVersionTimer(timerKey, timerId) {
+  const timers = getStudioAutoVersionTimers();
+  if (typeof timerKey !== 'string' || !timerKey) return false;
+  timers[timerKey] = timerId;
+  return timerId;
+}
+function clearStudioAutoVersionTimer(timerKey) {
+  const timers = getStudioAutoVersionTimers();
+  if (typeof timerKey !== 'string' || !timerKey) return undefined;
+  const timerId = timers[timerKey];
+  delete timers[timerKey];
+  return timerId;
+}
+`;
+  return `${autoSaveTimerFixture.getAutoSaveTimerFixtureSource()}\n${autoVersionTimerFixtureSource}\n${historyAwareSource}`;
 }
 
 function installSlideIndexAccessor(context) {

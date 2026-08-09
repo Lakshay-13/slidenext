@@ -1387,6 +1387,7 @@
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
+  <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-creation-view.js"></script>
@@ -1647,6 +1648,41 @@
         && typeof studioEditorAutoSaveTimerController.setTimer === 'function'
         ? studioEditorAutoSaveTimerController.setTimer(nextTimer)
         : false;
+    }
+    const studioEditorAutoVersionTimerController = typeof SlideNextStudioEditorAutoVersionTimerController !== 'undefined'
+      && SlideNextStudioEditorAutoVersionTimerController
+      && typeof SlideNextStudioEditorAutoVersionTimerController.createStudioEditorAutoVersionTimerController === 'function'
+      ? SlideNextStudioEditorAutoVersionTimerController.createStudioEditorAutoVersionTimerController({})
+      : null;
+    function getStudioAutoVersionTimers() {
+      return studioEditorAutoVersionTimerController
+        && typeof studioEditorAutoVersionTimerController.getTimers === 'function'
+        ? studioEditorAutoVersionTimerController.getTimers()
+        : {};
+    }
+    function setStudioAutoVersionTimers(nextTimers) {
+      return studioEditorAutoVersionTimerController
+        && typeof studioEditorAutoVersionTimerController.setTimers === 'function'
+        ? studioEditorAutoVersionTimerController.setTimers(nextTimers)
+        : false;
+    }
+    function getStudioAutoVersionTimer(timerKey) {
+      return studioEditorAutoVersionTimerController
+        && typeof studioEditorAutoVersionTimerController.getTimer === 'function'
+        ? studioEditorAutoVersionTimerController.getTimer(timerKey)
+        : undefined;
+    }
+    function setStudioAutoVersionTimer(timerKey, timerId) {
+      return studioEditorAutoVersionTimerController
+        && typeof studioEditorAutoVersionTimerController.setTimer === 'function'
+        ? studioEditorAutoVersionTimerController.setTimer(timerKey, timerId)
+        : false;
+    }
+    function clearStudioAutoVersionTimer(timerKey) {
+      return studioEditorAutoVersionTimerController
+        && typeof studioEditorAutoVersionTimerController.clearTimer === 'function'
+        ? studioEditorAutoVersionTimerController.clearTimer(timerKey)
+        : undefined;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
       && SlideNextStudioEditorWallpaperStateController
@@ -4072,11 +4108,11 @@
       });
       const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
         autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-        autoVersionTimers,
+        autoVersionTimers: getStudioAutoVersionTimers(),
         clearTimer: clearTimeout
       });
       setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-      autoVersionTimers = clearedTimerState.autoVersionTimers;
+      setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
         canonicalDeck: null,
@@ -4166,11 +4202,11 @@
       });
       const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
         autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-        autoVersionTimers,
+        autoVersionTimers: getStudioAutoVersionTimers(),
         clearTimer: clearTimeout
       });
       setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-      autoVersionTimers = clearedTimerState.autoVersionTimers;
+      setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
         canonicalDeck: null,
@@ -10615,8 +10651,6 @@
     }
 
     // Automatically save a labeled checkpoint version in the background
-    let autoVersionTimers = {};
-
     async function triggerAutoVersion(label) {
       // Frequent operations (e.g. dragging, typing) get debounced on 10s delay.
       // Structural operations (e.g. Adding/Deleting Slide, Adding/Deleting Element) save immediately.
@@ -10624,11 +10658,11 @@
       
       if (SlideNextStudioVersionActions.shouldDebounceStudioAutoVersion(label)) {
         const timerKey = SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_TIMER_KEY;
-        clearTimeout(autoVersionTimers[timerKey]);
-        autoVersionTimers[timerKey] = setTimeout(() => {
-          delete autoVersionTimers[timerKey];
+        clearTimeout(getStudioAutoVersionTimer(timerKey));
+        setStudioAutoVersionTimer(timerKey, setTimeout(() => {
+          clearStudioAutoVersionTimer(timerKey);
           executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
-        }, SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_DEBOUNCE_MS);
+        }, SlideNextStudioVersionActions.STUDIO_AUTO_VERSION_DEBOUNCE_MS));
       } else {
         // Execute immediately
         executeSaveAutoVersion(label, scheduledPresentationUrl, scheduledSessionToken);
