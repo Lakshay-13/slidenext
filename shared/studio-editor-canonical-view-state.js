@@ -201,6 +201,43 @@
     };
   }
 
+  function buildStudioEditorDeckHtml(doc, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    return deckViewApi && typeof deckViewApi.buildStudioDeckHtml === 'function'
+      ? deckViewApi.buildStudioDeckHtml(doc, options)
+      : '';
+  }
+
+  function buildStudioEditorDeckViewHtml(doc, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (deckViewApi && typeof deckViewApi.buildStudioDeckViewHtml === 'function') {
+      return deckViewApi.buildStudioDeckViewHtml(doc, options);
+    }
+
+    const buildSharedHtml = typeof options.buildSharedHtml === 'function'
+      ? options.buildSharedHtml
+      : null;
+    const deckViewOptions = typeof options.buildViewOptions === 'function'
+      ? options.buildViewOptions(doc)
+      : {};
+    if (buildSharedHtml) {
+      return buildSharedHtml(doc, deckViewOptions);
+    }
+
+    const buildDeckHtml = typeof options.buildDeckHtml === 'function'
+      ? options.buildDeckHtml
+      : null;
+    return buildDeckHtml
+      ? buildDeckHtml(doc, {
+          ...deckViewOptions,
+          buildCanonicalHtml: typeof options.buildCanonicalHtml === 'function'
+            ? (canonicalDeck, deckHtmlOptions) => options.buildCanonicalHtml(canonicalDeck, deckHtmlOptions)
+            : null,
+          transformFallbackHtml: options.transformFallbackHtml
+        })
+      : '';
+  }
+
   return {
     createStudioEditorCanonicalDeckViewStateOptions,
     resolveStudioEditorCanonicalDeckViewState,
@@ -208,6 +245,8 @@
     resolveStudioEditorLiveActiveSlide,
     resolveStudioEditorLiveActiveSlideId,
     createStudioEditorDeckRenderOptions,
-    createStudioEditorDeckViewBuildOptions
+    createStudioEditorDeckViewBuildOptions,
+    buildStudioEditorDeckHtml,
+    buildStudioEditorDeckViewHtml
   };
 });

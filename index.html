@@ -3986,6 +3986,16 @@
     }
 
     function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.buildStudioEditorDeckHtml === 'function') {
+        return editorCanonicalViewStateApi.buildStudioEditorDeckHtml(doc, {
+          ...options,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null
+        });
+      }
       const buildStudioDeckHtml = resolveStudioDeckViewMethod('buildStudioDeckHtml');
       return buildStudioDeckHtml
         ? buildStudioDeckHtml(doc, options)
@@ -3993,6 +4003,17 @@
     }
 
     function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {
+      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalViewState
+        : null;
+      if (editorCanonicalViewStateApi
+        && typeof editorCanonicalViewStateApi.buildStudioEditorDeckViewHtml === 'function') {
+        return editorCanonicalViewStateApi.buildStudioEditorDeckViewHtml(doc, {
+          ...options,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          buildDeckHtml: (sourceDoc, buildOptions) => buildEditorDeckHtml(sourceDoc, buildOptions)
+        });
+      }
       const buildStudioDeckViewHtml = resolveStudioDeckViewMethod('buildStudioDeckViewHtml');
       if (buildStudioDeckViewHtml) {
         return buildStudioDeckViewHtml(doc, options);

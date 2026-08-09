@@ -239,3 +239,77 @@ test('editor deck view build options compose the fallback view without the share
     ['fallback', doc, canonicalDeck]
   ]);
 });
+
+test('editor deck html delegates to the shared deck view API and fails closed when unavailable', () => {
+  const doc = { id: 'editor-doc' };
+  const options = { deckViewApi: {
+    buildStudioDeckHtml(nextDoc, nextOptions) {
+      assert.equal(nextDoc, doc);
+      assert.equal(nextOptions.marker, 'test');
+      return '<html>canonical</html>';
+    }
+  }, marker: 'test' };
+
+  assert.equal(canonicalViewState.buildStudioEditorDeckHtml(doc, options), '<html>canonical</html>');
+  assert.equal(canonicalViewState.buildStudioEditorDeckHtml(doc), '');
+});
+
+test('editor deck view html delegates to the shared builder before fallback composition', () => {
+  const doc = { id: 'editor-doc' };
+  const delegated = canonicalViewState.buildStudioEditorDeckViewHtml(doc, {
+    deckViewApi: {
+      buildStudioDeckViewHtml(nextDoc, nextOptions) {
+        assert.equal(nextDoc, doc);
+        assert.equal(nextOptions.marker, 'test');
+        return '<html>delegated</html>';
+      }
+    },
+    marker: 'test'
+  });
+  const fallback = canonicalViewState.buildStudioEditorDeckViewHtml(doc, {
+    buildViewOptions(nextDoc) {
+      assert.equal(nextDoc, doc);
+      return { marker: 'fallback' };
+    },
+    buildSharedHtml(nextDoc, options) {
+      assert.equal(nextDoc, doc);
+      assert.deepEqual(options, { marker: 'fallback' });
+      return '<html>shared</html>';
+    }
+  });
+
+  assert.equal(delegated, '<html>delegated</html>');
+  assert.equal(fallback, '<html>shared</html>');
+});
+
+test('editor deck view html composes canonical and fallback options without the shared builder', () => {
+  const doc = { id: 'editor-doc' };
+  const calls = [];
+  const result = canonicalViewState.buildStudioEditorDeckViewHtml(doc, {
+    buildViewOptions() {
+      return { marker: 'view' };
+    },
+    buildCanonicalHtml(canonicalDeck, options) {
+      calls.push(['canonical', canonicalDeck, options]);
+      return '<html>canonical</html>';
+    },
+    transformFallbackHtml: 'transform',
+    buildDeckHtml(nextDoc, options) {
+      calls.push(['deck', nextDoc, options]);
+      assert.equal(options.marker, 'view');
+      assert.equal(options.transformFallbackHtml, 'transform');
+      assert.equal(options.buildCanonicalHtml({ id: 'deck' }, { mode: 'render' }), '<html>canonical</html>');
+      return '<html>deck</html>';
+    }
+  });
+
+  assert.equal(result, '<html>deck</html>');
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0][0], 'deck');
+  assert.equal(calls[0][1], doc);
+  assert.equal(calls[0][2].marker, 'view');
+  assert.equal(calls[0][2].transformFallbackHtml, 'transform');
+  assert.equal(calls[1][0], 'canonical');
+  assert.deepEqual(calls[1][1], { id: 'deck' });
+  assert.deepEqual(calls[1][2], { mode: 'render' });
+});
