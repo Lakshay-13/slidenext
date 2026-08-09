@@ -699,11 +699,19 @@ app.post('/api/versions/delete', async (req, res) => {
   }
 });
 
-// Listen on all network interfaces inside Docker
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`====================================================`);
-  console.log(` SlideNext backend server running locally`);
-  console.log(` URL: http://localhost:${PORT}`);
-  console.log(` Workspace root: ${workspaceDir}`);
-  console.log(`====================================================`);
-});
+if (require.main === module) {
+  // Listen on all network interfaces inside Docker.
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`====================================================`);
+    console.log(` SlideNext backend server running locally`);
+    console.log(` URL: http://localhost:${PORT}`);
+    console.log(` Workspace root: ${workspaceDir}`);
+    console.log(`====================================================`);
+  });
+}
+
+module.exports = {
+  app,
+  PORT,
+  workspaceDir
+};
