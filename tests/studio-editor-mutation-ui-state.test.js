@@ -66,7 +66,7 @@ test('finalizeEditorDeckMutation delegates to the shared mutation finalizer', ()
   ]);
 });
 
-test('finalizeEditorDeckMutation supplies the live canonical baseline builder to shared mutation finalization', () => {
+test('finalizeEditorDeckMutation supplies the mutation canonical builder to shared mutation finalization', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
     fileContent,
@@ -76,7 +76,7 @@ test('finalizeEditorDeckMutation supplies the live canonical baseline builder to
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   let capturedMutationOptions = null;
   let capturedBuildCanonicalDeck = null;
-  const baselineCalls = [];
+  const mutationBuilderCalls = [];
   const context = {
     SlideNextStudioEditorDeckMutation: deckMutation,
     SlideNextStudioEditorMutation: {
@@ -86,12 +86,8 @@ test('finalizeEditorDeckMutation supplies the live canonical baseline builder to
         return options.versionLabel;
       }
     },
-    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
-      baselineCalls.push(['live', sourceDoc, sessionToken]);
-      return null;
-    },
-    buildEditorCanonicalDeck(sourceDoc) {
-      baselineCalls.push(['fallback', sourceDoc]);
+    buildEditorMutationCanonicalDeck(sourceDoc) {
+      mutationBuilderCalls.push(sourceDoc);
       return canonicalDeck;
     },
     getIframeDoc() {
@@ -116,8 +112,5 @@ test('finalizeEditorDeckMutation supplies the live canonical baseline builder to
   }), 'Auto: Styled Element');
   assert.equal(capturedMutationOptions.canonicalDeck, undefined);
   assert.equal(capturedBuildCanonicalDeck(), canonicalDeck);
-  assert.deepEqual(baselineCalls, [
-    ['live', { id: 'doc' }, 'session-1'],
-    ['fallback', { id: 'doc' }]
-  ]);
+  assert.deepEqual(mutationBuilderCalls, [{ id: 'doc' }]);
 });
