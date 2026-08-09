@@ -1426,6 +1426,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
+  <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
@@ -3632,10 +3633,13 @@
     const studioEditorFrameController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameController
       : null;
-    const studioEditorThemeController = typeof SlideNextStudioEditorThemeController !== 'undefined'
-      && SlideNextStudioEditorThemeController
-      && typeof SlideNextStudioEditorThemeController.createStudioEditorThemeController === 'function'
-      ? SlideNextStudioEditorThemeController.createStudioEditorThemeController({
+    const studioEditorThemeRuntime = typeof SlideNextStudioEditorThemeRuntime !== 'undefined'
+      && SlideNextStudioEditorThemeRuntime
+      && typeof SlideNextStudioEditorThemeRuntime.createStudioEditorThemeRuntime === 'function'
+      ? SlideNextStudioEditorThemeRuntime.createStudioEditorThemeRuntime({
+          controllerApi: typeof SlideNextStudioEditorThemeController !== 'undefined'
+            ? SlideNextStudioEditorThemeController
+            : null,
           themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
             ? SlideNextStudioThemeView
             : null,
@@ -3644,6 +3648,9 @@
           getIframeDocument: getIframeDoc,
           resolveDarkMode: () => document.documentElement.classList.contains('dark')
         })
+      : null;
+    const studioEditorThemeController = studioEditorThemeRuntime
+      ? studioEditorThemeRuntime.themeController
       : null;
     const studioEditorDeckReadyController = typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
       && SlideNextStudioEditorDeckReadyController
