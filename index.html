@@ -1474,33 +1474,33 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
-    const studioEditorSessionStateController = typeof SlideNextStudioEditorSessionState !== 'undefined'
+    const studioEditorCanonicalSessionStateController = typeof SlideNextStudioEditorSessionState !== 'undefined'
       && SlideNextStudioEditorSessionState
       && typeof SlideNextStudioEditorSessionState.createStudioEditorSessionStateController === 'function'
       ? SlideNextStudioEditorSessionState.createStudioEditorSessionStateController({})
       : null;
     function getStudioCurrentPresentationUrl() {
-      return studioEditorSessionStateController
-        && typeof studioEditorSessionStateController.getPresentationUrl === 'function'
-        ? studioEditorSessionStateController.getPresentationUrl()
+      return studioEditorCanonicalSessionStateController
+        && typeof studioEditorCanonicalSessionStateController.getPresentationUrl === 'function'
+        ? studioEditorCanonicalSessionStateController.getPresentationUrl()
         : '';
     }
     function setStudioCurrentPresentationUrl(nextUrl) {
-      return studioEditorSessionStateController
-        && typeof studioEditorSessionStateController.setPresentationUrl === 'function'
-        ? studioEditorSessionStateController.setPresentationUrl(nextUrl)
+      return studioEditorCanonicalSessionStateController
+        && typeof studioEditorCanonicalSessionStateController.setPresentationUrl === 'function'
+        ? studioEditorCanonicalSessionStateController.setPresentationUrl(nextUrl)
         : '';
     }
     function getStudioEditorSessionToken() {
-      return studioEditorSessionStateController
-        && typeof studioEditorSessionStateController.getSessionToken === 'function'
-        ? studioEditorSessionStateController.getSessionToken()
+      return studioEditorCanonicalSessionStateController
+        && typeof studioEditorCanonicalSessionStateController.getSessionToken === 'function'
+        ? studioEditorCanonicalSessionStateController.getSessionToken()
         : 0;
     }
     function advanceStudioEditorSessionToken() {
-      return studioEditorSessionStateController
-        && typeof studioEditorSessionStateController.advanceSessionToken === 'function'
-        ? studioEditorSessionStateController.advanceSessionToken()
+      return studioEditorCanonicalSessionStateController
+        && typeof studioEditorCanonicalSessionStateController.advanceSessionToken === 'function'
+        ? studioEditorCanonicalSessionStateController.advanceSessionToken()
         : 0;
     }
     const studioEditorPresentationMetadataStateStore = typeof SlideNextStudioEditorPresentationMetadataStateStore !== 'undefined'

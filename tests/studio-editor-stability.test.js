@@ -18,6 +18,17 @@ const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
+test('main editor script parses without duplicate top-level bindings', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const inlineScripts = [...fileContent.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
+    .map((match) => match[1])
+    .filter((source) => source.trim());
+  assert.ok(inlineScripts.length > 0, 'Missing inline editor script');
+  assert.doesNotThrow(
+    () => new vm.Script(inlineScripts.at(-1), { filename: 'index.html:inline-editor-script' })
+  );
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const source = selectionFixture.extractSelectionAwareFunctionSource(
     fileContent,
