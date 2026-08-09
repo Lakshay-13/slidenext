@@ -1427,6 +1427,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
+  <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1855,15 +1856,15 @@
         ? studioEditorWallpaperStateController.clearPendingCustomWallpaperVersion()
         : false;
     }
-    const studioEditorSaveButtonStateController = typeof SlideNextStudioEditorSaveButtonStateController !== 'undefined'
-      && SlideNextStudioEditorSaveButtonStateController
-      && typeof SlideNextStudioEditorSaveButtonStateController.createStudioEditorSaveButtonStateController === 'function'
-      ? SlideNextStudioEditorSaveButtonStateController.createStudioEditorSaveButtonStateController({})
+    const studioEditorSaveButtonStateStore = typeof SlideNextStudioEditorSaveButtonStateStore !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateStore
+      && typeof SlideNextStudioEditorSaveButtonStateStore.createStudioEditorSaveButtonStateStore === 'function'
+      ? SlideNextStudioEditorSaveButtonStateStore.createStudioEditorSaveButtonStateStore({})
       : null;
     function getStudioSaveButtonState() {
-      return studioEditorSaveButtonStateController
-        && typeof studioEditorSaveButtonStateController.getState === 'function'
-        ? studioEditorSaveButtonStateController.getState()
+      return studioEditorSaveButtonStateStore
+        && typeof studioEditorSaveButtonStateStore.getState === 'function'
+        ? studioEditorSaveButtonStateStore.getState()
         : 'idle';
     }
     const studioEditorVersionRenameStateController = typeof SlideNextStudioEditorVersionRenameStateController !== 'undefined'
@@ -11879,10 +11880,10 @@
       const normalizedState = state === 'saving-version'
         ? 'saving-version'
         : 'idle';
-      if (typeof studioEditorSaveButtonStateController !== 'undefined'
-        && studioEditorSaveButtonStateController
-        && typeof studioEditorSaveButtonStateController.setState === 'function') {
-        studioEditorSaveButtonStateController.setState(normalizedState);
+      if (typeof studioEditorSaveButtonStateStore !== 'undefined'
+        && studioEditorSaveButtonStateStore
+        && typeof studioEditorSaveButtonStateStore.setState === 'function') {
+        studioEditorSaveButtonStateStore.setState(normalizedState);
       } else {
         currentStudioSaveButtonState = normalizedState;
       }
