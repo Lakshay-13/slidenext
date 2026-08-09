@@ -101,7 +101,11 @@
     }
 
     const nodeIds = sourceSelection.map(getElementId).filter(Boolean);
-    return updateCanonicalNodeVisibility(canonicalDeckBeforeMutation, nodeIds, visibilityPatch);
+    try {
+      return updateCanonicalNodeVisibility(canonicalDeckBeforeMutation, nodeIds, visibilityPatch);
+    } catch (err) {
+      return null;
+    }
   }
 
   function buildStudioCanonicalVisibilityMutation(selection, visibilityPatch = {}, options = {}) {

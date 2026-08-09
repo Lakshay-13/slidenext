@@ -150,6 +150,27 @@ test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches witho
   assert.deepEqual(sourceDeck.slides[0].nodes[0].visibility, { hidden: false, locked: false });
 });
 
+test('buildStudioCanonicalVisibilityDeck fails closed when the canonical visibility mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalNodeVisibility() {
+      throw new Error('canonical visibility mutation failed');
+    }
+  };
+
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityDeck(
+    [{ dataset: { editorId: 'node-1' } }],
+    { hidden: true },
+    {
+      canonicalDeckApi: throwingCanonicalDeckApi,
+      canonicalDeckBeforeMutation: createSourceDeck(),
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalVisibilityDeck fails closed when the selection or adapter is unavailable', () => {
   assert.equal(canonicalVisibility.buildStudioCanonicalVisibilityDeck([], { hidden: true }, {
     canonicalDeckApi: canonicalDeck,
