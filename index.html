@@ -1428,6 +1428,7 @@
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
   <script src="/shared/studio-editor-history-store.js"></script>
+  <script src="/shared/studio-editor-history-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
@@ -1619,10 +1620,17 @@
         ? studioEditorSelectionStateStore.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
-    const studioEditorHistoryStateController = typeof SlideNextStudioEditorHistoryStore !== 'undefined'
-      && SlideNextStudioEditorHistoryStore
-      && typeof SlideNextStudioEditorHistoryStore.createStudioEditorHistoryStateController === 'function'
-      ? SlideNextStudioEditorHistoryStore.createStudioEditorHistoryStateController({})
+    const studioEditorHistoryRuntime = typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'
+      && SlideNextStudioEditorHistoryRuntime
+      && typeof SlideNextStudioEditorHistoryRuntime.createStudioEditorHistoryRuntime === 'function'
+      ? SlideNextStudioEditorHistoryRuntime.createStudioEditorHistoryRuntime({
+          historyStore: typeof SlideNextStudioEditorHistoryStore !== 'undefined'
+            ? SlideNextStudioEditorHistoryStore
+            : null
+        })
+      : null;
+    const studioEditorHistoryStateController = studioEditorHistoryRuntime
+      ? studioEditorHistoryRuntime.historyStateController
       : null;
     function getStudioUndoStack() {
       return studioEditorHistoryStateController
