@@ -1307,6 +1307,7 @@
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
+  <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
@@ -2621,6 +2622,34 @@
             && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem === 'function'
             ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(...args)
             : null
+        })
+      : null;
+    const studioEditorClipboardInsertionController = typeof SlideNextStudioEditorClipboardInsertionController !== 'undefined'
+      && SlideNextStudioEditorClipboardInsertionController
+      && typeof SlideNextStudioEditorClipboardInsertionController.createStudioEditorClipboardInsertionController === 'function'
+      ? SlideNextStudioEditorClipboardInsertionController.createStudioEditorClipboardInsertionController({
+          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+            ? SlideNextStudioEditorClipboard
+            : null,
+          mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
+            ? SlideNextStudioEditorClipboardMutation
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
+          getIframeDoc: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
+          getSlideMetrics: (slide) => getSlideMetrics(slide),
+          makeElementsHoverable: (element) => makeElementsHoverable(element),
+          getRectOnSlide: (...args) => getRectOnSlide(...args),
+          getOffsetPx: () => DUPLICATE_OFFSET_PX,
+          getElementId: (element) => {
+            if (typeof assignEditorElementId === 'function') {
+              const assignedId = assignEditorElementId(element);
+              if (assignedId) return assignedId;
+            }
+            return element && element.dataset && element.dataset.editorId;
+          }
         })
       : null;
     const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
@@ -7498,6 +7527,11 @@
     }
 
     function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {
+      if (typeof studioEditorClipboardInsertionController !== 'undefined'
+        && studioEditorClipboardInsertionController
+        && typeof studioEditorClipboardInsertionController.insert === 'function') {
+        return studioEditorClipboardInsertionController.insert(items, offsetMultiplier, options);
+      }
       const doc = getIframeDoc();
       const slide = getActiveSlide(doc);
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
