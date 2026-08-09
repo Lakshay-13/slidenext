@@ -143,6 +143,42 @@ test('block mutations reject malformed fallback state without a canonical valida
   assert.equal(controller.saveSelection({ id: 'invalid-block' }), null);
 });
 
+test('block controller fails closed when saving a block canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Heading' }]
+    }]
+  });
+  const calls = [];
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      saveCanonicalBlockFromNodeIds() {
+        throw new Error('canonical block save failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onBlocksChanged() {
+      calls.push('blocks');
+    }
+  });
+
+  assert.equal(controller.saveSelection({ id: 'broken-block' }), null);
+  assert.deepEqual(calls, []);
+});
+
 test('block controller fails closed when selection or dependencies are unavailable', () => {
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,

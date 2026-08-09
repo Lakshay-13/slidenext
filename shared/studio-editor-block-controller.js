@@ -115,12 +115,17 @@
       const canonicalDeck = resolveCanonicalDeck();
       const slideId = getActiveSlideId();
       const nodeIds = getSelectedNodeIds();
-      const nextCanonicalDeck = canonicalDeckApi.saveCanonicalBlockFromNodeIds(
-        canonicalDeck,
-        slideId,
-        nodeIds,
-        blockLike
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.saveCanonicalBlockFromNodeIds(
+          canonicalDeck,
+          slideId,
+          nodeIds,
+          blockLike
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
 
       const block = nextCanonicalDeck.blocks[nextCanonicalDeck.blocks.length - 1] || null;
