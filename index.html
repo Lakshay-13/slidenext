@@ -1395,6 +1395,7 @@
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
+  <script src="/shared/studio-editor-auto-version-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
@@ -1824,10 +1825,13 @@
         ? studioEditorAutoVersionTimerStore.clearTimer(timerKey)
         : undefined;
     }
-    const studioEditorAutoVersionController = typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
-      && SlideNextStudioEditorAutoVersionController
-      && typeof SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionController === 'function'
-      ? SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionController({
+    const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionRuntime !== 'undefined'
+      && SlideNextStudioEditorAutoVersionRuntime
+      && typeof SlideNextStudioEditorAutoVersionRuntime.createStudioEditorAutoVersionRuntime === 'function'
+      ? SlideNextStudioEditorAutoVersionRuntime.createStudioEditorAutoVersionRuntime({
+          controllerApi: typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionController
+            : null,
           versionActions: typeof SlideNextStudioVersionActions !== 'undefined'
             ? SlideNextStudioVersionActions
             : null,
@@ -1837,13 +1841,7 @@
           setTimer: setStudioAutoVersionTimer,
           clearStoredTimer: clearStudioAutoVersionTimer,
           schedule: (callback, delayMs) => setTimeout(callback, delayMs),
-          execute: executeSaveAutoVersion
-        })
-      : null;
-    const studioEditorAutoVersionExecutor = typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
-      && SlideNextStudioEditorAutoVersionController
-      && typeof SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionExecutor === 'function'
-      ? SlideNextStudioEditorAutoVersionController.createStudioEditorAutoVersionExecutor({
+          execute: executeSaveAutoVersion,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
             : null,
@@ -1855,6 +1853,12 @@
           saveCheckpoint: executeCurrentStudioVersionCheckpointSaveWithFailure,
           logger: typeof console !== 'undefined' ? console : null
         })
+      : null;
+    const studioEditorAutoVersionController = studioEditorAutoVersionRuntime
+      ? studioEditorAutoVersionRuntime.autoVersionController
+      : null;
+    const studioEditorAutoVersionExecutor = studioEditorAutoVersionRuntime
+      ? studioEditorAutoVersionRuntime.autoVersionExecutor
       : null;
     const studioEditorWallpaperStateRuntime = typeof SlideNextStudioEditorWallpaperStateRuntime !== 'undefined'
       && SlideNextStudioEditorWallpaperStateRuntime
