@@ -62,6 +62,36 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
   assert.deepEqual(result.slides[0].nodes.map((node) => node.id), ['inserted']);
 });
 
+test('buildStudioCanonicalInsertionBaseline delegates baseline resolution to the shared canonical-state reader', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let readerOptions = null;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          assert.equal(documentRef, sourceDocument);
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeckBaseline() {
+      return null;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+  assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
+});
+
 test('buildStudioCanonicalInsertionBaseline prefers a valid live canonical deck', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
@@ -117,6 +147,18 @@ test('buildStudioCanonicalInsertionBaseline uses structural validation without a
     }),
     validDeck
   );
+});
+
+test('buildStudioCanonicalInsertionBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('legacy baseline failed');
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, null);
 });
 
 test('createStudioCanonicalInsertionMutationBuilders preserves an explicit baseline', () => {
