@@ -164,15 +164,19 @@
       return null;
     }
 
-    const groupNode = importElementToCanonicalNode(groupElement, { getNodeId });
-    if (!groupNode) return null;
-    return groupCanonicalNodes(
-      canonicalDeckBeforeMutation,
-      slideId,
-      parentNodeId,
-      nodeIds,
-      groupNode
-    );
+    try {
+      const groupNode = importElementToCanonicalNode(groupElement, { getNodeId });
+      if (!groupNode) return null;
+      return groupCanonicalNodes(
+        canonicalDeckBeforeMutation,
+        slideId,
+        parentNodeId,
+        nodeIds,
+        groupNode
+      );
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalGroupMutationBuilders(options = {}) {

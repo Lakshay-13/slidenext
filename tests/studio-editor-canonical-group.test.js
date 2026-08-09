@@ -35,6 +35,28 @@ test('buildStudioCanonicalGroupDeck imports and groups selected nodes without mu
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1', 'node-2', 'after']);
 });
 
+test('buildStudioCanonicalGroupDeck fails closed when the canonical group mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    groupCanonicalNodes() {
+      throw new Error('canonical group mutation failed');
+    }
+  };
+
+  const result = canonicalGroup.buildStudioCanonicalGroupDeck({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: createSourceDeck(),
+    slideId: 'slide-1',
+    nodeIds: ['node-1', 'node-2'],
+    groupElement: { dataset: { editorId: 'group-1' } },
+    importElementToCanonicalNode() {
+      return { id: 'group-1' };
+    }
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalGroupDeck fails closed when grouping dependencies are incomplete', () => {
   assert.equal(canonicalGroup.buildStudioCanonicalGroupDeck({}), null);
   assert.equal(canonicalGroup.buildStudioCanonicalGroupDeck({
