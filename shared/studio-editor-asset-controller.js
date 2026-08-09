@@ -137,7 +137,15 @@
       if (!canonicalDeckApi || typeof canonicalDeckApi.removeCanonicalAsset !== 'function') {
         return false;
       }
-      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalAsset(resolveCanonicalDeck(), assetId);
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.removeCanonicalAsset(
+          resolveCanonicalDeck(),
+          assetId
+        );
+      } catch (err) {
+        return false;
+      }
       if (!nextCanonicalDeck) return false;
       commitDeck(nextCanonicalDeck, `Auto: Removed Asset "${assetId}"`);
       return true;
