@@ -205,6 +205,37 @@ test('createStudioDeckSnapshotBuildOptions reuses the shared deck-view canonical
   assert.equal(typeof (delegatedOptions && delegatedOptions.options.resolveLiveActiveSlideId), 'function');
 });
 
+test('snapshot canonical view-state fallback reuses shared callback normalization', { concurrency: false }, () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = { slides: [{ id: 'slide-1', title: 'Intro', nodes: [] }] };
+  const buildCanonicalDeck = () => canonicalDeck;
+  const resolveLiveActiveSlideId = () => '';
+  const originalResolveStudioCanonicalDeckViewState = deckView.resolveStudioCanonicalDeckViewState;
+  const originalCreateCanonicalStateOptions = deckView.createStudioDeckViewCanonicalStateOptions;
+  let factoryOptions = null;
+
+  deckView.resolveStudioCanonicalDeckViewState = null;
+  deckView.createStudioDeckViewCanonicalStateOptions = (options) => {
+    factoryOptions = options;
+    return originalCreateCanonicalStateOptions(options);
+  };
+
+  try {
+    const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+      buildCanonicalDeck,
+      resolveLiveActiveSlideId
+    });
+
+    assert.equal(result.buildCanonicalDeck(doc), canonicalDeck);
+  } finally {
+    deckView.resolveStudioCanonicalDeckViewState = originalResolveStudioCanonicalDeckViewState;
+    deckView.createStudioDeckViewCanonicalStateOptions = originalCreateCanonicalStateOptions;
+  }
+
+  assert.equal(factoryOptions && factoryOptions.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(factoryOptions && factoryOptions.resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+});
+
 test('createStudioDeckSnapshotBuildOptions reuses the shared deck-view live active slide resolver when available', { concurrency: false }, () => {
   const doc = { label: 'doc' };
   const activeSlide = { id: 'active-slide-el' };

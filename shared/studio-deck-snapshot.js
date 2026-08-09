@@ -76,14 +76,26 @@
       });
     }
 
+    const canonicalStateOptions = deckView
+      && typeof deckView.createStudioDeckViewCanonicalStateOptions === 'function'
+      ? deckView.createStudioDeckViewCanonicalStateOptions({
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          resolveLiveActiveSlideId: options.resolveLiveActiveSlideId
+        })
+      : {
+          buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+            ? options.buildCanonicalDeck
+            : () => null,
+          resolveLiveActiveSlideId: typeof options.resolveLiveActiveSlideId === 'function'
+            ? options.resolveLiveActiveSlideId
+            : () => ''
+        };
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : createStudioDeckSnapshotCanonicalDeckResolver(doc, {
-          buildCanonicalDeck: options.buildCanonicalDeck
+          buildCanonicalDeck: canonicalStateOptions.buildCanonicalDeck
         });
-    const resolveLiveActiveSlideId = typeof options.resolveLiveActiveSlideId === 'function'
-      ? options.resolveLiveActiveSlideId
-      : () => '';
+    const resolveLiveActiveSlideId = canonicalStateOptions.resolveLiveActiveSlideId;
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
     const resolvedCanonicalDeck = !doc
       ? resolveCanonicalDeck(doc)
