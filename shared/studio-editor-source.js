@@ -124,8 +124,16 @@
       canonicalDeck
     };
 
-    if (typeof options.beforeApply === 'function' && options.beforeApply(historyEntry) === false) {
-      return fail('Source HTML could not start an editor transaction');
+    if (typeof options.beforeApply === 'function') {
+      let canApply = false;
+      try {
+        canApply = options.beforeApply(historyEntry);
+      } catch (error) {
+        return fail('Source HTML could not start an editor transaction');
+      }
+      if (canApply === false) {
+        return fail('Source HTML could not start an editor transaction');
+      }
     }
 
     if (typeof options.restoreHistoryEntry === 'function') {

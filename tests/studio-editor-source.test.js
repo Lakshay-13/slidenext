@@ -172,6 +172,39 @@ test('applyStudioEditorSource fails closed when restoring source history throws'
   assert.equal(afterApplyCalls, 0);
 });
 
+test('applyStudioEditorSource fails closed when the pre-apply callback throws', () => {
+  let restoreCalls = 0;
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    beforeApply() {
+      throw new Error('transaction setup failed');
+    },
+    restoreHistoryEntry() {
+      restoreCalls += 1;
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not start an editor transaction'
+  });
+  assert.equal(restoreCalls, 0);
+});
+
 test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
   const sourceRoot = {
     innerHTML: '<section class="slide">Edited</section>',
