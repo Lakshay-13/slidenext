@@ -19,8 +19,10 @@ test('editor routes autosave timer access through the shared controller', () => 
   const indexHtml = fs.readFileSync('index.html', 'utf8');
 
   assert.match(indexHtml, /studio-editor-autosave-timer-controller\.js/);
-  assert.match(indexHtml, /createStudioEditorAutoSaveTimerController\(\{\}\)/);
+  assert.match(indexHtml, /studio-editor-autosave-timer-store\.js/);
+  assert.match(indexHtml, /studioEditorAutoSaveTimerStore/);
   assert.match(indexHtml, /getStudioAutoSaveDebounceTimer\(\)/);
   assert.match(indexHtml, /setStudioAutoSaveDebounceTimer\(nextTimer\)/);
+  assert.doesNotMatch(indexHtml, /const studioEditorAutoSaveTimerController =/);
   assert.doesNotMatch(indexHtml, /let autoSaveDebounceTimer = null/);
 });

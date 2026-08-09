@@ -1425,6 +1425,7 @@
   <script src="/shared/studio-editor-history-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
+  <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1716,21 +1717,21 @@
         ? studioEditorPersistedDeckStateStore.setPlaybackState(nextPlaybackState)
         : false;
     }
-    const studioEditorAutoSaveTimerController = typeof SlideNextStudioEditorAutoSaveTimerController !== 'undefined'
-      && SlideNextStudioEditorAutoSaveTimerController
-      && typeof SlideNextStudioEditorAutoSaveTimerController.createStudioEditorAutoSaveTimerController === 'function'
-      ? SlideNextStudioEditorAutoSaveTimerController.createStudioEditorAutoSaveTimerController({})
+    const studioEditorAutoSaveTimerStore = typeof SlideNextStudioEditorAutoSaveTimerStore !== 'undefined'
+      && SlideNextStudioEditorAutoSaveTimerStore
+      && typeof SlideNextStudioEditorAutoSaveTimerStore.createStudioEditorAutoSaveTimerStore === 'function'
+      ? SlideNextStudioEditorAutoSaveTimerStore.createStudioEditorAutoSaveTimerStore({})
       : null;
     function getStudioAutoSaveDebounceTimer() {
-      return studioEditorAutoSaveTimerController
-        && typeof studioEditorAutoSaveTimerController.getTimer === 'function'
-        ? studioEditorAutoSaveTimerController.getTimer()
+      return studioEditorAutoSaveTimerStore
+        && typeof studioEditorAutoSaveTimerStore.getTimer === 'function'
+        ? studioEditorAutoSaveTimerStore.getTimer()
         : null;
     }
     function setStudioAutoSaveDebounceTimer(nextTimer) {
-      return studioEditorAutoSaveTimerController
-        && typeof studioEditorAutoSaveTimerController.setTimer === 'function'
-        ? studioEditorAutoSaveTimerController.setTimer(nextTimer)
+      return studioEditorAutoSaveTimerStore
+        && typeof studioEditorAutoSaveTimerStore.setTimer === 'function'
+        ? studioEditorAutoSaveTimerStore.setTimer(nextTimer)
         : false;
     }
     const studioEditorAutoVersionTimerController = typeof SlideNextStudioEditorAutoVersionTimerController !== 'undefined'
