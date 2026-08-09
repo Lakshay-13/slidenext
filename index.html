@@ -1414,6 +1414,7 @@
   <script src="/shared/studio-editor-session-state.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
+  <script src="/shared/studio-editor-selection-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
@@ -1553,45 +1554,45 @@
         ? studioEditorSlideIndexController.setSlideIndex(nextValue)
         : false;
     }
-    const studioEditorSelectionStateController = typeof SlideNextStudioEditorSelectionStateController !== 'undefined'
-      && SlideNextStudioEditorSelectionStateController
-      && typeof SlideNextStudioEditorSelectionStateController.createStudioEditorSelectionStateController === 'function'
-      ? SlideNextStudioEditorSelectionStateController.createStudioEditorSelectionStateController({})
+    const studioEditorSelectionStateStore = typeof SlideNextStudioEditorSelectionStateStore !== 'undefined'
+      && SlideNextStudioEditorSelectionStateStore
+      && typeof SlideNextStudioEditorSelectionStateStore.createStudioEditorSelectionStateStore === 'function'
+      ? SlideNextStudioEditorSelectionStateStore.createStudioEditorSelectionStateStore({})
       : null;
     function getStudioSelectedElements() {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.getSelectedElements === 'function'
-        ? studioEditorSelectionStateController.getSelectedElements()
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.getSelectedElements === 'function'
+        ? studioEditorSelectionStateStore.getSelectedElements()
         : [];
     }
     function getStudioSelectedElement() {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.getSelectedElement === 'function'
-        ? studioEditorSelectionStateController.getSelectedElement()
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.getSelectedElement === 'function'
+        ? studioEditorSelectionStateStore.getSelectedElement()
         : null;
     }
     function setStudioSelectionState(nextState = {}) {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.setState === 'function'
-        ? studioEditorSelectionStateController.setState(nextState)
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.setState === 'function'
+        ? studioEditorSelectionStateStore.setState(nextState)
         : false;
     }
     function clearStudioSelectionState() {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.clear === 'function'
-        ? studioEditorSelectionStateController.clear()
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.clear === 'function'
+        ? studioEditorSelectionStateStore.clear()
         : false;
     }
     function getStudioPreserveSelectionOnNextActiveSlideSync() {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.getPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorSelectionStateController.getPreserveSelectionOnNextActiveSlideSync()
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.getPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorSelectionStateStore.getPreserveSelectionOnNextActiveSlideSync()
         : false;
     }
     function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
-      return studioEditorSelectionStateController
-        && typeof studioEditorSelectionStateController.setPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorSelectionStateController.setPreserveSelectionOnNextActiveSlideSync(nextValue)
+      return studioEditorSelectionStateStore
+        && typeof studioEditorSelectionStateStore.setPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorSelectionStateStore.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
     const studioEditorHistoryStateController = typeof SlideNextStudioEditorHistoryStore !== 'undefined'
