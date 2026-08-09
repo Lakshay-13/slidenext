@@ -1309,6 +1309,7 @@
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
+  <script src="/shared/studio-editor-clipboard-payload-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
@@ -2651,10 +2652,13 @@
     const studioEditorClipboardController = studioEditorClipboardRuntime
       ? studioEditorClipboardRuntime.clipboardController
       : null;
-    const studioEditorClipboardPayloadController = typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
-      && SlideNextStudioEditorClipboardPayloadController
-      && typeof SlideNextStudioEditorClipboardPayloadController.createStudioEditorClipboardPayloadController === 'function'
-      ? SlideNextStudioEditorClipboardPayloadController.createStudioEditorClipboardPayloadController({
+    const studioEditorClipboardPayloadRuntime = typeof SlideNextStudioEditorClipboardPayloadRuntime !== 'undefined'
+      && SlideNextStudioEditorClipboardPayloadRuntime
+      && typeof SlideNextStudioEditorClipboardPayloadRuntime.createStudioEditorClipboardPayloadRuntime === 'function'
+      ? SlideNextStudioEditorClipboardPayloadRuntime.createStudioEditorClipboardPayloadRuntime({
+          controllerApi: typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
+            ? SlideNextStudioEditorClipboardPayloadController
+            : null,
           clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
             ? SlideNextStudioEditorClipboard
             : null,
@@ -2681,6 +2685,9 @@
             ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(...args)
             : null
         })
+      : null;
+    const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
+      ? studioEditorClipboardPayloadRuntime.payloadController
       : null;
     const studioEditorClipboardInsertionController = typeof SlideNextStudioEditorClipboardInsertionController !== 'undefined'
       && SlideNextStudioEditorClipboardInsertionController
