@@ -99,3 +99,44 @@ test('alignment controller requires three selected elements for distribution', (
   assert.equal(controller.distribute('horizontal'), false);
   assert.equal(buildCalls, 0);
 });
+
+test('alignment controller fails closed before DOM mutation when canonical layout construction throws', () => {
+  let applyCalls = 0;
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    alignmentApi: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      },
+      buildStudioDistributedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 16, nextTop: 18 }]
+        };
+      }
+    },
+    canonicalLayoutApi: {
+      createStudioCanonicalLayoutMutationBuilder() {
+        return () => {
+          throw new Error('canonical layout unavailable');
+        };
+      }
+    },
+    buildAlignmentActionState: () => ({
+      alignmentActionState: {
+        canAlign: true,
+        selection: [{ id: 'one' }, { id: 'two' }, { id: 'three' }]
+      }
+    }),
+    applyPositionLayout: () => {
+      applyCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.align('left'), false);
+  assert.equal(controller.distribute('horizontal'), false);
+  assert.equal(applyCalls, 0);
+});

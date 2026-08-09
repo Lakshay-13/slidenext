@@ -56,13 +56,19 @@
             getCanonicalDeckBaseline
           })
         : null;
-      const canonicalDeck = canonicalLayoutBuilder
-        ? canonicalLayoutBuilder({
+      let canonicalDeck = null;
+      if (canonicalLayoutBuilder) {
+        try {
+          canonicalDeck = canonicalLayoutBuilder({
             sourceDocument: getIframeDoc(),
             nextItems,
             getElementId: getAlignmentElementId
-          })
-        : null;
+          });
+        } catch (err) {
+          // Do not apply a DOM-only alignment when the canonical sidecar fails.
+          return false;
+        }
+      }
       const mutation = applyPositionLayout(nextItems, {
         getElementId: getAlignmentElementId
       });
