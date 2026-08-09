@@ -1313,6 +1313,7 @@
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
+  <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
@@ -2724,10 +2725,13 @@
     const studioEditorClipboardInsertionController = studioEditorClipboardInsertionRuntime
       ? studioEditorClipboardInsertionRuntime.insertionController
       : null;
-    const studioEditorClipboardSelectionController = typeof SlideNextStudioEditorClipboardSelectionController !== 'undefined'
-      && SlideNextStudioEditorClipboardSelectionController
-      && typeof SlideNextStudioEditorClipboardSelectionController.createStudioEditorClipboardSelectionController === 'function'
-      ? SlideNextStudioEditorClipboardSelectionController.createStudioEditorClipboardSelectionController({
+    const studioEditorClipboardSelectionRuntime = typeof SlideNextStudioEditorClipboardSelectionRuntime !== 'undefined'
+      && SlideNextStudioEditorClipboardSelectionRuntime
+      && typeof SlideNextStudioEditorClipboardSelectionRuntime.createStudioEditorClipboardSelectionRuntime === 'function'
+      ? SlideNextStudioEditorClipboardSelectionRuntime.createStudioEditorClipboardSelectionRuntime({
+          controllerApi: typeof SlideNextStudioEditorClipboardSelectionController !== 'undefined'
+            ? SlideNextStudioEditorClipboardSelectionController
+            : null,
           clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
             ? SlideNextStudioEditorClipboard
             : null,
@@ -2739,6 +2743,9 @@
           getCanonicalVisibilityReader: (...args) => getEditorCanonicalVisibilityReader(...args),
           buildPayload: (elements, doc) => buildClipboardPayload(elements, doc)
         })
+      : null;
+    const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
+      ? studioEditorClipboardSelectionRuntime.selectionController
       : null;
     const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
       && SlideNextStudioEditorElementInsertionController
