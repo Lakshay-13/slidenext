@@ -1228,7 +1228,7 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
   assert.equal(calls[14][1], 2);
 });
 
-test('slide reorder wiring rebuilds the canonical deck from the iframe DOM', () => {
+test('slide reorder wiring uses a dedicated canonical baseline builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
@@ -1238,11 +1238,15 @@ test('slide reorder wiring rebuilds the canonical deck from the iframe DOM', () 
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
   );
   assert.match(
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
+  assert.doesNotMatch(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
   );
 });
 
