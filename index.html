@@ -2032,13 +2032,15 @@
             canonicalDeck
           ),
           resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
-          buildDomSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshotFromDom(
-            sourceDoc,
-            buildOptions
-          ),
           getActiveSlideId: getEditorSlideId,
           getSlideById,
-          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
+          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl),
+          getSlides,
+          getActiveSlide,
+          getSlideId: getEditorSlideId,
+          getSlideEditableElements,
+          getNormalizedSlideLayerOrder,
+          buildElementSnapshot: buildEditorElementSnapshot
         })
       : null;
     const studioEditorPreviewController = typeof SlideNextStudioEditorPreviewController !== 'undefined'
@@ -5342,6 +5344,11 @@
     }
 
     function buildEditorDeckSnapshotFromDom(doc = getIframeDoc(), options = {}) {
+      if (typeof studioEditorDeckSnapshotController !== 'undefined'
+        && studioEditorDeckSnapshotController
+        && typeof studioEditorDeckSnapshotController.buildFromDom === 'function') {
+        return studioEditorDeckSnapshotController.buildFromDom(doc, options);
+      }
       return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom(doc, {
         includeLayers: !!options.includeLayers,
         getSlides,

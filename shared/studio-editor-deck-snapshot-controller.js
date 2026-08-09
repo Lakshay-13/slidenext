@@ -28,7 +28,7 @@
     const resolveLiveActiveSlide = typeof options.resolveLiveActiveSlide === 'function'
       ? options.resolveLiveActiveSlide
       : () => null;
-    const buildDomSnapshot = typeof options.buildDomSnapshot === 'function'
+    const buildDomSnapshotOverride = typeof options.buildDomSnapshot === 'function'
       ? options.buildDomSnapshot
       : () => null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
@@ -40,6 +40,44 @@
     const buildSlideLayerSnapshot = typeof options.buildSlideLayerSnapshot === 'function'
       ? options.buildSlideLayerSnapshot
       : () => null;
+    const getSlides = typeof options.getSlides === 'function' ? options.getSlides : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getSlideId = typeof options.getSlideId === 'function' ? options.getSlideId : () => '';
+    const getSlideEditableElements = typeof options.getSlideEditableElements === 'function'
+      ? options.getSlideEditableElements
+      : () => [];
+    const getNormalizedSlideLayerOrder = typeof options.getNormalizedSlideLayerOrder === 'function'
+      ? options.getNormalizedSlideLayerOrder
+      : () => [];
+    const buildElementSnapshot = typeof options.buildElementSnapshot === 'function'
+      ? options.buildElementSnapshot
+      : () => null;
+
+    function buildFromDom(doc = getDocument(), buildOptions = {}) {
+      const buildSnapshotFromDom = snapshotApi
+        && typeof snapshotApi.buildStudioDeckSnapshotFromDom === 'function'
+        ? snapshotApi.buildStudioDeckSnapshotFromDom
+        : null;
+      if (!buildSnapshotFromDom) return null;
+
+      return buildSnapshotFromDom(doc, {
+        includeLayers: !!buildOptions.includeLayers,
+        getSlides,
+        getActiveSlide,
+        getSlideId,
+        getSlideEditableElements,
+        getNormalizedSlideLayerOrder,
+        elementSnapshotOptions: {
+          buildElementSnapshot
+        }
+      });
+    }
+
+    const buildDomSnapshot = typeof options.buildDomSnapshot === 'function'
+      ? buildDomSnapshotOverride
+      : buildFromDom;
 
     function build(doc = getDocument(), buildOptions = {}) {
       const createDeckSnapshotBuilder = snapshotApi
@@ -66,6 +104,7 @@
 
     return {
       build,
+      buildFromDom,
       buildDeckSnapshot: build
     };
   }

@@ -12,6 +12,7 @@ test('deck snapshot controller wires canonical and DOM snapshot callbacks', () =
   const buildOptions = { includeLayers: true };
   const snapshot = { activeSlideId: 'slide-1', slides: [] };
   let builderOptions = null;
+  let domOptions = null;
   const callbacks = {
     createDeckViewStateOptions: () => ({ buildCanonicalDeck: () => snapshot }),
     resolveCanonicalDeckViewState: () => ({ resolveCanonicalDeck: () => snapshot }),
@@ -31,6 +32,10 @@ test('deck snapshot controller wires canonical and DOM snapshot callbacks', () =
           currentDocument,
           currentOptions
         });
+      },
+      buildStudioDeckSnapshotFromDom(currentDocument, options) {
+        domOptions = { currentDocument, options };
+        return { activeSlideId: 'dom-slide', slides: [] };
       }
     },
     getDocument: () => documentRef,
@@ -46,6 +51,18 @@ test('deck snapshot controller wires canonical and DOM snapshot callbacks', () =
   Object.entries(callbacks).forEach(([name, callback]) => {
     assert.equal(builderOptions[name], callback);
   });
+  assert.deepEqual(controller.buildFromDom(documentRef, buildOptions), {
+    activeSlideId: 'dom-slide',
+    slides: []
+  });
+  assert.equal(domOptions.currentDocument, documentRef);
+  assert.equal(domOptions.options.includeLayers, true);
+  assert.equal(domOptions.options.getSlides instanceof Function, true);
+  assert.equal(domOptions.options.getActiveSlide instanceof Function, true);
+  assert.equal(domOptions.options.getSlideId instanceof Function, true);
+  assert.equal(domOptions.options.getSlideEditableElements instanceof Function, true);
+  assert.equal(domOptions.options.getNormalizedSlideLayerOrder instanceof Function, true);
+  assert.equal(domOptions.options.elementSnapshotOptions.buildElementSnapshot instanceof Function, true);
 });
 
 test('deck snapshot controller fails closed when the shared snapshot builder is unavailable', () => {
@@ -54,6 +71,7 @@ test('deck snapshot controller fails closed when the shared snapshot builder is 
   });
 
   assert.equal(controller.build(), null);
+  assert.equal(controller.buildFromDom(), null);
 });
 
 test('editor routes deck snapshot construction through the shared controller', () => {
@@ -61,4 +79,5 @@ test('editor routes deck snapshot construction through the shared controller', (
 
   assert.match(source, /SlideNextStudioEditorDeckSnapshotController/);
   assert.match(source, /studioEditorDeckSnapshotController\.build\(doc, options\)/);
+  assert.match(source, /studioEditorDeckSnapshotController\.buildFromDom\(doc, options\)/);
 });
