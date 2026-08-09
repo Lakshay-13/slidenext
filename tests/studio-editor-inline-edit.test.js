@@ -219,6 +219,47 @@ test('inline text editing cancels with Escape and refuses locked elements', () =
   assert.equal(lockedController.startEditing(element), false);
 });
 
+test('inline text editing restores the baseline when the commit callback fails', () => {
+  const element = createElement();
+  const endResults = [];
+  const controller = inlineEdit.createStudioInlineTextEditController({
+    onCommit: (change) => {
+      change.element.textContent = change.text;
+      return false;
+    },
+    onEnd: (result) => endResults.push(result)
+  });
+
+  assert.equal(controller.startEditing(element), true);
+  element.textContent = 'Changed';
+  assert.equal(controller.endEditing(true), true);
+  assert.equal(element.textContent, 'Before');
+  assert.deepEqual(endResults[0], {
+    element,
+    committed: false,
+    changed: true,
+    commitFailed: true
+  });
+});
+
+test('inline text editing contains commit exceptions and restores the baseline', () => {
+  const element = createElement();
+  const endResults = [];
+  const controller = inlineEdit.createStudioInlineTextEditController({
+    onCommit: () => {
+      throw new Error('mutation failed');
+    },
+    onEnd: (result) => endResults.push(result)
+  });
+
+  assert.equal(controller.startEditing(element), true);
+  element.textContent = 'Changed';
+  assert.equal(controller.endEditing(true), true);
+  assert.equal(element.textContent, 'Before');
+  assert.equal(endResults[0].committed, false);
+  assert.equal(endResults[0].commitFailed, true);
+});
+
 test('attachStudioInlineTextEditHandlers installs a capture-phase double-click handler', () => {
   let registration = null;
   const doc = {

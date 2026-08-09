@@ -108,25 +108,33 @@
       const element = currentSession.element;
       const nextText = typeof element.textContent === 'string' ? element.textContent : '';
       const didChange = nextText !== currentSession.previousText;
+      let commitFailed = false;
       if (commit && didChange) {
         // Restore the baseline before the callback so the existing mutation layer
         // can capture a reversible transaction from the original text.
         element.textContent = currentSession.previousText;
-        onCommit({
-          element,
-          previousText: currentSession.previousText,
-          text: nextText
-        });
+        try {
+          commitFailed = onCommit({
+            element,
+            previousText: currentSession.previousText,
+            text: nextText
+          }) === false;
+        } catch (error) {
+          commitFailed = true;
+        }
+        if (commitFailed) element.textContent = currentSession.previousText;
       } else if (!commit) {
         element.textContent = currentSession.previousText;
       }
 
       setEditingState(element, false, currentSession);
-      onEnd({
+      const endResult = {
         element,
-        committed: commit && didChange,
+        committed: commit && didChange && !commitFailed,
         changed: didChange
-      });
+      };
+      if (commitFailed) endResult.commitFailed = true;
+      onEnd(endResult);
       return true;
     }
 
