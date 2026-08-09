@@ -1,20 +1,29 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalDeck = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function isCanonicalDeckLike(value) {
-    return !!value && typeof value === 'object' && Array.isArray(value.slides);
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
   }
+
+  const sharedCanonicalDeckValidator = root
+    && root.SlideNextStudioEditorCanonicalState
+    && typeof root.SlideNextStudioEditorCanonicalState.isStudioEditorCanonicalDeckLike === 'function'
+    ? root.SlideNextStudioEditorCanonicalState.isStudioEditorCanonicalDeckLike
+    : null;
 
   function createStudioCanonicalDeckBuilder(options = {}) {
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
-      : isCanonicalDeckLike;
+      : sharedCanonicalDeckValidator || isCanonicalDeckLike;
     const isValidCanonicalDeck = (value) => {
       try {
         return isCanonicalDeck(value) === true;

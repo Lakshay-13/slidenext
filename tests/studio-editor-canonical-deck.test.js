@@ -1,6 +1,14 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
+
+const CANONICAL_DECK_SOURCE = fs.readFileSync(
+  path.join(__dirname, '..', 'shared', 'studio-editor-canonical-deck.js'),
+  'utf8'
+);
 
 function createDeck(id) {
   return {
@@ -30,6 +38,42 @@ test('canonical deck builder prioritizes overrides and session-scoped live state
   assert.equal(builder(documentRef), liveDeck);
   assert.equal(builder(documentRef, { canonicalDeckOverride: overrideDeck }), overrideDeck);
   assert.deepEqual(calls, [['live', documentRef]]);
+});
+
+test('canonical deck builder uses the shared editor shape predicate when available', () => {
+  const context = {
+    module: { exports: {} },
+    SlideNextStudioEditorCanonicalState: {
+      isStudioEditorCanonicalDeckLike(value) {
+        return !!value && value.sharedMarker === true;
+      }
+    }
+  };
+  vm.createContext(context);
+  vm.runInContext(CANONICAL_DECK_SOURCE, context);
+
+  const builder = context.module.exports.createStudioCanonicalDeckBuilder({
+    buildStudioCanonicalDeck() {
+      return { slides: [], sharedMarker: true };
+    },
+    resolveStoredCanonicalBaseline() {
+      return { slides: [] };
+    }
+  });
+
+  assert.deepEqual(builder({ id: 'document' }), { slides: [], sharedMarker: true });
+});
+
+test('canonical deck builder rejects array-shaped fake decks by default', () => {
+  const fakeDeck = [];
+  fakeDeck.slides = [];
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    buildStudioCanonicalDeck() {
+      return fakeDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), null);
 });
 
 test('canonical deck builder rejects invalid overrides and live models before falling back', () => {
