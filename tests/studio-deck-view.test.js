@@ -159,6 +159,57 @@ test('captureStudioDeckViewBeforeSlideMutation saves history before preserving s
   ]);
 });
 
+test('captureStudioDeckViewBeforeSlideMutation records a canonical baseline when available', () => {
+  const doc = { id: 'editor-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+
+  const result = deckView.captureStudioDeckViewBeforeSlideMutation({
+    doc,
+    buildCanonicalDeck(nextDoc) {
+      calls.push(['buildCanonicalDeck', nextDoc]);
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    getActiveSlideId() {
+      calls.push(['getActiveSlideId']);
+      return 'slide-2';
+    },
+    getCommittedSelectedElementIds() {
+      calls.push(['getCommittedSelectedElementIds']);
+      return ['element-1'];
+    }
+  });
+
+  assert.deepEqual(result, {
+    preservedActiveSlideId: 'slide-2',
+    preservedSelectionIds: ['element-1']
+  });
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', doc],
+    ['saveHistoryState', false, null, canonicalDeck],
+    ['getActiveSlideId'],
+    ['getCommittedSelectedElementIds']
+  ]);
+});
+
+test('captureStudioDeckViewBeforeSlideMutation falls back when canonical baseline building fails', () => {
+  const calls = [];
+
+  deckView.captureStudioDeckViewBeforeSlideMutation({
+    buildCanonicalDeck() {
+      throw new Error('canonical import failed');
+    },
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  assert.deepEqual(calls, [[]]);
+});
+
 test('applyStudioSlideReorderMutation moves a slide node and captures the container markup transaction', () => {
   const draggedNode = { id: 'slide-1' };
   const beforeNode = { id: 'slide-3' };

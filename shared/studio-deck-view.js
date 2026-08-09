@@ -956,6 +956,9 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
@@ -963,7 +966,19 @@
       ? options.getCommittedSelectedElementIds
       : () => [];
 
-    saveHistoryState();
+    let canonicalDeck = null;
+    if (buildCanonicalDeck) {
+      try {
+        canonicalDeck = buildCanonicalDeck(doc);
+      } catch (error) {
+        canonicalDeck = null;
+      }
+    }
+    if (canonicalDeck) {
+      saveHistoryState(false, null, canonicalDeck);
+    } else {
+      saveHistoryState();
+    }
     return {
       preservedActiveSlideId: getActiveSlideId(doc),
       preservedSelectionIds: getCommittedSelectedElementIds(doc)
