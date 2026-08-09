@@ -1343,6 +1343,7 @@
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
+  <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
@@ -2834,12 +2835,18 @@
     const studioEditorBlockController = studioEditorBlockRuntime
       ? studioEditorBlockRuntime.blockController
       : null;
-    const studioEditorTemplateController = typeof SlideNextStudioEditorTemplateController !== 'undefined'
-      && SlideNextStudioEditorTemplateController
-      && typeof SlideNextStudioEditorTemplateController.createStudioEditorTemplateController === 'function'
-      ? SlideNextStudioEditorTemplateController.createStudioEditorTemplateController({
+    const studioEditorTemplateRuntime = typeof SlideNextStudioEditorTemplateRuntime !== 'undefined'
+      && SlideNextStudioEditorTemplateRuntime
+      && typeof SlideNextStudioEditorTemplateRuntime.createStudioEditorTemplateRuntime === 'function'
+      ? SlideNextStudioEditorTemplateRuntime.createStudioEditorTemplateRuntime({
+          controllerApi: typeof SlideNextStudioEditorTemplateController !== 'undefined'
+            ? SlideNextStudioEditorTemplateController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
             : null,
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
@@ -2866,6 +2873,9 @@
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
           onTemplatesChanged: () => updateTemplateActionState()
         })
+      : null;
+    const studioEditorTemplateController = studioEditorTemplateRuntime
+      ? studioEditorTemplateRuntime.templateController
       : null;
     const studioEditorMasterSlideController = typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
       && SlideNextStudioEditorMasterSlideController
