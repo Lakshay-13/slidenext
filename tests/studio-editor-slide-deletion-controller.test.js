@@ -5,6 +5,7 @@ const deletionController = require('../shared/studio-editor-slide-deletion-contr
 test('slide deletion controller assembles canonical and editor mutation dependencies', () => {
   const calls = [];
   const liveCanonicalDeck = { id: 'live-baseline' };
+  const legacyCanonicalDeck = { slides: [] };
   const controller = deletionController.createStudioEditorSlideDeletionController({
     slideCommandsApi: {
       deleteStudioSlideNode(index, options) {
@@ -27,7 +28,8 @@ test('slide deletion controller assembles canonical and editor mutation dependen
     alert: () => {},
     captureSlideMutationState: () => ({ preservedActiveSlideId: 'slide-1' }),
     getSlideId: (slide) => slide.id,
-    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeck: () => legacyCanonicalDeck,
+    buildCanonicalDeckBaseline: () => ({ id: 'baseline-fallback' }),
     applyDeletion: () => ({ didApply: true }),
     generateThumbnails: () => {},
     restoreDeckViewAfterSlideMutation: () => {},
@@ -37,6 +39,8 @@ test('slide deletion controller assembles canonical and editor mutation dependen
   assert.equal(controller.remove(1), true);
   assert.equal(calls[0][0], 'builders');
   assert.equal(calls[0][1].canonicalDeckApi.id, 'canonical-api');
+  assert.equal(calls[0][1].buildCanonicalDeck({}), legacyCanonicalDeck);
+  assert.equal(calls[0][1].buildCanonicalDeckBaseline({}).id, 'baseline-fallback');
   assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   assert.equal(typeof calls[1][2].getIframeDoc, 'function');
   assert.equal(calls[1][2].getIframeDoc().id, 'doc');
