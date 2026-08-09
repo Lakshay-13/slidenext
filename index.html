@@ -1431,6 +1431,7 @@
   <script src="/shared/studio-editor-history-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-runtime.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
@@ -1704,10 +1705,17 @@
         ? studioEditorHistoryStateController.setUndoDebounceTimer(nextTimer)
         : false;
     }
-    const studioEditorPersistedDeckStateStore = typeof SlideNextStudioEditorPersistedDeckStateStore !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckStateStore
-      && typeof SlideNextStudioEditorPersistedDeckStateStore.createStudioEditorPersistedDeckStateStore === 'function'
-      ? SlideNextStudioEditorPersistedDeckStateStore.createStudioEditorPersistedDeckStateStore({})
+    const studioEditorPersistedDeckRuntime = typeof SlideNextStudioEditorPersistedDeckRuntime !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckRuntime
+      && typeof SlideNextStudioEditorPersistedDeckRuntime.createStudioEditorPersistedDeckRuntime === 'function'
+      ? SlideNextStudioEditorPersistedDeckRuntime.createStudioEditorPersistedDeckRuntime({
+          stateStore: typeof SlideNextStudioEditorPersistedDeckStateStore !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckStateStore
+            : null
+        })
+      : null;
+    const studioEditorPersistedDeckStateStore = studioEditorPersistedDeckRuntime
+      ? studioEditorPersistedDeckRuntime.persistedDeckStateStore
       : null;
     function getStudioPersistedDeckHtml() {
       return studioEditorPersistedDeckStateStore
