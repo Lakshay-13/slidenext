@@ -82,21 +82,25 @@
       const presentationUrl = readPresentationUrl();
       const presentationTitle = readPresentationTitle();
       if (buildStudioCanonicalDeck) {
-        const studioCanonicalDeck = buildStudioCanonicalDeck(doc, {
-          currentPresentationMetadata: presentationMetadata,
-          fallbackStoredPresentationMetadata: {
-            canonicalDeck: readPersistedCanonicalDeck()
-          },
-          buildPresentationMetadataSeed,
-          presentationUrl,
-          presentationTitle,
-          preferStoredCanonicalDeck: false,
-          canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
-          getSlideId: options.getSlideId,
-          getNodeId: options.getNodeId
-        });
-        if (isValidCanonicalDeck(studioCanonicalDeck)) {
-          return studioCanonicalDeck;
+        try {
+          const studioCanonicalDeck = buildStudioCanonicalDeck(doc, {
+            currentPresentationMetadata: presentationMetadata,
+            fallbackStoredPresentationMetadata: {
+              canonicalDeck: readPersistedCanonicalDeck()
+            },
+            buildPresentationMetadataSeed,
+            presentationUrl,
+            presentationTitle,
+            preferStoredCanonicalDeck: false,
+            canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
+            getSlideId: options.getSlideId,
+            getNodeId: options.getNodeId
+          });
+          if (isValidCanonicalDeck(studioCanonicalDeck)) {
+            return studioCanonicalDeck;
+          }
+        } catch (error) {
+          // Continue through stored and direct-import fallback sources.
         }
       }
 
@@ -114,15 +118,19 @@
         return storedCanonicalDeck || null;
       }
 
-      const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
-        presentationMetadata: presentationMetadata || buildPresentationMetadataSeed(presentationUrl, presentationTitle),
-        sourcePath: presentationUrl,
-        canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
-        getSlideId: options.getSlideId,
-        getNodeId: options.getNodeId
-      });
-      if (isValidCanonicalDeck(canonicalDeck)) {
-        return canonicalDeck;
+      try {
+        const canonicalDeck = buildCanonicalDeckFromDocument(doc, {
+          presentationMetadata: presentationMetadata || buildPresentationMetadataSeed(presentationUrl, presentationTitle),
+          sourcePath: presentationUrl,
+          canonicalDeckBaseline: buildOptions.canonicalDeckBaseline,
+          getSlideId: options.getSlideId,
+          getNodeId: options.getNodeId
+        });
+        if (isValidCanonicalDeck(canonicalDeck)) {
+          return canonicalDeck;
+        }
+      } catch (error) {
+        // Preserve the stored canonical baseline when direct import fails.
       }
       return storedCanonicalDeck || null;
     };

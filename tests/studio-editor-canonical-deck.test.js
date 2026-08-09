@@ -114,6 +114,34 @@ test('canonical deck builder falls back when live state resolution throws', () =
   assert.equal(builder({ id: 'document' }), rebuiltDeck);
 });
 
+test('canonical deck builder falls back when the studio DOM adapter throws', () => {
+  const storedDeck = createDeck('stored');
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    buildStudioCanonicalDeck() {
+      throw new Error('studio adapter failed');
+    },
+    resolveStoredCanonicalBaseline() {
+      return storedDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), storedDeck);
+});
+
+test('canonical deck builder falls back when the direct importer throws', () => {
+  const storedDeck = createDeck('stored');
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    buildCanonicalDeckFromDocument() {
+      throw new Error('direct importer failed');
+    },
+    resolveStoredCanonicalBaseline() {
+      return storedDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }), storedDeck);
+});
+
 test('canonical deck builder falls back when deck validation throws', () => {
   const rebuiltDeck = createDeck('rebuilt');
   let validationCalls = 0;
