@@ -2677,7 +2677,6 @@
       : null;
     let isDraggingElement = false;
     let suppressNextFrameClick = false;
-    let zoomFactor = 1.0;
     const studioEditorZoomController = typeof SlideNextStudioEditorZoomController !== 'undefined'
       && SlideNextStudioEditorZoomController
       && typeof SlideNextStudioEditorZoomController.createStudioEditorZoomController === 'function'
@@ -2690,11 +2689,8 @@
             : null,
           documentRef: document,
           localStorageRef: localStorage,
+          initialZoomFactor: 1.0,
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
-          getZoomFactor: () => zoomFactor,
-          setZoomFactor: (nextZoomFactor) => {
-            zoomFactor = nextZoomFactor;
-          }
         })
       : null;
     let customGradientType = 'linear';

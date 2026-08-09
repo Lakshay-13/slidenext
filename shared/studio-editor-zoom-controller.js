@@ -12,15 +12,20 @@
     const rulerViewApi = options.rulerViewApi || null;
     const documentRef = options.documentRef || null;
     const localStorageRef = options.localStorageRef || null;
+    let managedZoomFactor = Number.isFinite(options.initialZoomFactor)
+      ? options.initialZoomFactor
+      : 1;
     const resolveActionState = typeof options.resolveActionState === 'function'
       ? options.resolveActionState
       : () => ({ canUseZoomControls: false });
     const getZoomFactor = typeof options.getZoomFactor === 'function'
       ? options.getZoomFactor
-      : () => 1;
+      : () => managedZoomFactor;
     const setZoomFactor = typeof options.setZoomFactor === 'function'
       ? options.setZoomFactor
-      : () => {};
+      : (nextZoomFactor) => {
+          managedZoomFactor = nextZoomFactor;
+        };
     const applyZoomOverride = typeof options.applyZoom === 'function'
       ? options.applyZoom
       : null;
@@ -93,6 +98,7 @@
 
     return {
       syncRulers,
+      getZoomFactor,
       apply,
       zoomIn: (applyZoom) => step('in', applyZoom),
       zoomOut: (applyZoom) => step('out', applyZoom),
