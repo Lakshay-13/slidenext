@@ -231,17 +231,23 @@
       }
 
       syncFeedbackLabel(prop, styleMutationResult.displayValue);
-      const canonicalDeck = canonicalStyleBuilders
-        && typeof canonicalStyleBuilders.buildCanonicalStyleMutation === 'function'
-        ? canonicalStyleBuilders.buildCanonicalStyleMutation({
+      let canonicalDeck = null;
+      if (canonicalStyleBuilders
+        && typeof canonicalStyleBuilders.buildCanonicalStyleMutation === 'function') {
+        try {
+          canonicalDeck = canonicalStyleBuilders.buildCanonicalStyleMutation({
             canonicalDeckBeforeMutation,
             sourceDocument: doc,
             selection: styleMutationPlan.selection,
             prop,
             value,
             getElementId: getStyleElementId
-          })
-        : null;
+          });
+        } catch (err) {
+          // Preserve the style edit through transaction history when the sidecar fails.
+          canonicalDeck = null;
+        }
+      }
       if (finalizeDeckMutation) {
         finalizeDeckMutation(styleMutationPlan.versionLabel, {
           syncSelectionOverlay: true,

@@ -59,6 +59,47 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.deepEqual(calls[6][2].canonicalDeck, { id: 'after' });
 });
 
+test('style controller preserves transaction finalization when canonical style construction throws', () => {
+  const calls = [];
+  const element = { dataset: { editorId: 'node-1' } };
+  const transaction = { id: 'tx' };
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        return {
+          canApply: true,
+          selection,
+          versionLabel: 'Auto: Styled Element'
+        };
+      }
+    },
+    canonicalStyleApi: {
+      createStudioCanonicalStyleMutationBuilders() {
+        return {
+          buildCanonicalStyleMutation() {
+            throw new Error('canonical style unavailable');
+          }
+        };
+      }
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: () => ({
+      didApply: true,
+      displayValue: '32',
+      transaction
+    }),
+    finalizeDeckMutation: (label, options) => calls.push([label, options])
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.apply('size', '32'), true));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'Auto: Styled Element');
+  assert.equal(calls[0][1].transaction, transaction);
+  assert.equal(Object.prototype.hasOwnProperty.call(calls[0][1], 'canonicalDeck'), false);
+});
+
 test('style controller refreshes inspector and fails closed for unavailable edits', () => {
   let syncCalls = 0;
   const controller = styleController.createStudioEditorStyleController({
