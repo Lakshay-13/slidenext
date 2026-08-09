@@ -239,6 +239,7 @@
       const mode = canonicalNode && canonicalNode.layout && canonicalNode.layout.mode;
       if (mode === 'absolute') return true;
       if (mode === 'flow') return false;
+      if (typeof mode === 'string' && mode.trim()) return false;
       return fallbackReader(element);
     };
   }

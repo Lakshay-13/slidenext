@@ -434,12 +434,14 @@ test('canonical freeform reader treats layout mode as authoritative and preserve
   const elements = {
     absolute: { dataset: { editorId: 'absolute' }, domFreeform: false },
     flow: { dataset: { editorId: 'flow' }, domFreeform: true },
+    structured: { dataset: { editorId: 'structured' }, domFreeform: true },
     legacy: { dataset: { editorId: 'legacy' }, domFreeform: true }
   };
   const canonicalDeckApi = {
     findCanonicalNodeById(_deck, elementId) {
       if (elementId === 'absolute') return { layout: { mode: 'absolute' } };
       if (elementId === 'flow') return { layout: { mode: 'flow' } };
+      if (elementId === 'structured') return { layout: { mode: 'grid' } };
       return null;
     }
   };
@@ -453,6 +455,7 @@ test('canonical freeform reader treats layout mode as authoritative and preserve
 
   assert.equal(readFreeform(elements.absolute), true);
   assert.equal(readFreeform(elements.flow), false);
+  assert.equal(readFreeform(elements.structured), false);
   assert.equal(readFreeform(elements.legacy), true);
 });
 
