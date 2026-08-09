@@ -58,6 +58,31 @@
     return true;
   }
 
+  function setPresentationLibraryErrorState(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+
+    const loader = documentRef.getElementById('loader');
+    const categoryTabs = documentRef.getElementById('categoryTabs');
+    const presentationsGrid = documentRef.getElementById('presentationsGrid');
+    if (loader) {
+      const message = typeof options.message === 'string' && options.message.trim()
+        ? options.message.trim()
+        : 'Failed to load SlideNext workspace';
+      loader.innerHTML = `
+        <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
+        <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest" role="alert">${escapeHtml(message)}</p>
+        <button type="button" onclick="loadPresentations()" class="mt-4 inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all">
+          <span class="material-symbols-outlined text-[16px]">refresh</span> Try again
+        </button>
+      `;
+      loader.classList.remove('hidden');
+    }
+    if (categoryTabs) categoryTabs.classList.add('hidden');
+    if (presentationsGrid) presentationsGrid.classList.add('hidden');
+    return true;
+  }
+
   function renderPresentationLibraryCategories(options = {}) {
     const container = options.container;
     const activeCategory = typeof options.activeCategory === 'string' ? options.activeCategory : 'all';
@@ -115,6 +140,7 @@
 
   return {
     setPresentationLibraryLoadingState,
+    setPresentationLibraryErrorState,
     renderPresentationLibraryCategories,
     renderPresentationLibraryGrid
   };

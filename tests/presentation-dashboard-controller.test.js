@@ -118,7 +118,7 @@ test('dashboard controller filters current data and updates active tab state', a
   assert.equal(documentRef.tabs[1].classList.contains('active'), true);
 });
 
-test('dashboard controller reports current load failures without replacing stale state', async () => {
+test('dashboard controller reports current load failures with the legacy fallback state', async () => {
   const documentRef = createDocumentStub();
   const errors = [];
   const controller = dashboardController.createPresentationDashboardController({
@@ -143,5 +143,41 @@ test('dashboard controller reports current load failures without replacing stale
   assert.deepEqual(await controller.load(), []);
   assert.equal(errors.length, 1);
   assert.match(errors[0][1].message, /network failed/);
-  assert.equal(documentRef.elements.loader.innerHTML, '<p>old error</p>');
+  assert.match(documentRef.elements.loader.innerHTML, /Failed to load SlideNext workspace/);
+});
+
+test('dashboard controller delegates load failures to the shared retryable error state', async () => {
+  const documentRef = createDocumentStub();
+  const errors = [];
+  const renderedErrors = [];
+  const controller = dashboardController.createPresentationDashboardController({
+    documentRef,
+    consoleRef: {
+      error(...args) {
+        errors.push(args);
+      }
+    },
+    presentationLibraryView: {
+      setPresentationLibraryLoadingState() {
+        return true;
+      },
+      setPresentationLibraryErrorState(options) {
+        renderedErrors.push(options);
+        return true;
+      }
+    },
+    presentationLibrary: {
+      loadPresentationLibrary(options) {
+        options.onError(new Error('network failed'));
+        return Promise.resolve([]);
+      }
+    }
+  });
+
+  assert.deepEqual(await controller.load(), []);
+  assert.equal(errors.length, 1);
+  assert.deepEqual(renderedErrors, [{
+    documentRef,
+    message: 'Failed to load SlideNext workspace'
+  }]);
 });

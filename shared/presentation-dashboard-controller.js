@@ -64,6 +64,31 @@
       renderGrid(data);
     }
 
+    function renderErrorState() {
+      if (view && typeof view.setPresentationLibraryErrorState === 'function') {
+        return view.setPresentationLibraryErrorState({
+          documentRef,
+          message: 'Failed to load SlideNext workspace'
+        });
+      }
+
+      const loader = documentRef && documentRef.getElementById
+        ? documentRef.getElementById('loader')
+        : null;
+      if (loader) {
+        loader.innerHTML = '<span class="material-symbols-outlined text-[36px] text-rose-500">error</span>'
+          + '<p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>';
+      }
+      return !!loader;
+    }
+
+    function reportLoadError(error) {
+      if (consoleRef && typeof consoleRef.error === 'function') {
+        consoleRef.error('Error fetching presentations:', error);
+      }
+      renderErrorState();
+    }
+
     async function load() {
       const requestedLoadToken = ++presentationLibraryLoadToken;
       setLoadingState();
@@ -82,23 +107,12 @@
           },
           onError: (error) => {
             if (requestedLoadToken !== presentationLibraryLoadToken) return;
-            if (consoleRef && typeof consoleRef.error === 'function') {
-              consoleRef.error('Error fetching presentations:', error);
-            }
-            const loader = documentRef && documentRef.getElementById
-              ? documentRef.getElementById('loader')
-              : null;
-            if (loader) {
-              loader.innerHTML = '<span class="material-symbols-outlined text-[36px] text-rose-500">error</span>'
-                + '<p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest">Failed to load SlideNext workspace</p>';
-            }
+            reportLoadError(error);
           }
         });
       } catch (error) {
-        if (requestedLoadToken === presentationLibraryLoadToken
-          && consoleRef
-          && typeof consoleRef.error === 'function') {
-          consoleRef.error('Error fetching presentations:', error);
+        if (requestedLoadToken === presentationLibraryLoadToken) {
+          reportLoadError(error);
         }
         return [];
       }

@@ -43,6 +43,30 @@ test('setPresentationLibraryLoadingState safely skips an unavailable document', 
   assert.equal(presentationLibraryView.setPresentationLibraryLoadingState(), false);
 });
 
+test('setPresentationLibraryErrorState renders a retryable error state', () => {
+  const loader = { classList: createClassList(['hidden']), innerHTML: '' };
+  const categoryTabs = { classList: createClassList() };
+  const presentationsGrid = { classList: createClassList() };
+  const elements = { loader, categoryTabs, presentationsGrid };
+
+  const didApply = presentationLibraryView.setPresentationLibraryErrorState({
+    documentRef: {
+      getElementById(id) {
+        return elements[id];
+      }
+    },
+    message: 'Workspace unavailable'
+  });
+
+  assert.equal(didApply, true);
+  assert.equal(loader.classList.contains('hidden'), false);
+  assert.match(loader.innerHTML, /Workspace unavailable/);
+  assert.match(loader.innerHTML, /Try again/);
+  assert.match(loader.innerHTML, /onclick="loadPresentations\(\)"/);
+  assert.equal(categoryTabs.classList.contains('hidden'), true);
+  assert.equal(presentationsGrid.classList.contains('hidden'), true);
+});
+
 test('renderPresentationLibraryCategories renders active and inactive category tabs', () => {
   const container = { innerHTML: '' };
   const markup = presentationLibraryView.renderPresentationLibraryCategories({
