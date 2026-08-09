@@ -380,6 +380,21 @@ test('transform wiring prefers live canonical state and keeps a legacy baseline 
   );
 });
 
+test('nudge eligibility uses the canonical freeform reader with a legacy fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const nudgeSource = extractFunctionSource(
+    fileContent,
+    'function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
+    '\n\n    function isElementHidden'
+  );
+
+  assert.match(nudgeSource, /getEditorCanonicalFreeformReader\(/);
+  assert.doesNotMatch(
+    nudgeSource,
+    /isFreeformPositioned: SlideNextStudioEditorTransform\.isStudioFreeformPositioned/
+  );
+});
+
 test('slide reorder wiring prefers live canonical state and keeps a legacy baseline fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(

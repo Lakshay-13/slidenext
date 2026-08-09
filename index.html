@@ -6891,7 +6891,10 @@
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
         isLocked: readLockedState,
         isHidden: readHiddenState,
-        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        isFreeformPositioned: getEditorCanonicalFreeformReader(
+          doc,
+          SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        )
       });
     }
 
