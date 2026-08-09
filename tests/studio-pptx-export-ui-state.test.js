@@ -51,7 +51,7 @@ test('deck-view export wiring prefers the live canonical deck resolver', () => {
   assert.notEqual(runtimeEnd, -1);
   const runtimeSource = fileContent.slice(runtimeStart, runtimeEnd);
   const callbackStart = runtimeSource.indexOf('buildCanonicalDeck:');
-  const callbackEnd = runtimeSource.indexOf('\n          getCanonicalDeckBaseline', callbackStart);
+  const callbackEnd = runtimeSource.indexOf('\n          buildMutationCanonicalDeck', callbackStart);
   assert.notEqual(callbackStart, -1);
   assert.notEqual(callbackEnd, -1);
   const callbackExpression = runtimeSource
@@ -73,6 +73,23 @@ test('deck-view export wiring prefers the live canonical deck resolver', () => {
 
   assert.equal(buildCanonicalDeck(sourceDoc), liveCanonicalDeck);
   assert.equal(receivedDoc, sourceDoc);
+});
+
+test('deck-view export wiring supplies pending mutation canonical rebuilds', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const runtimeEnd = fileContent.indexOf('const studioEditorExportController =', runtimeStart);
+  assert.notEqual(runtimeStart, -1);
+  assert.notEqual(runtimeEnd, -1);
+  const runtimeSource = fileContent.slice(runtimeStart, runtimeEnd);
+  assert.match(
+    runtimeSource,
+    /buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'/
+  );
+  assert.match(
+    runtimeSource,
+    /getPendingTransaction: getStudioPendingEditorTransaction/
+  );
 });
 
 test('exportPptx posts the canonical deck and downloads the server response', async () => {

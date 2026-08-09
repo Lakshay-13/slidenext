@@ -26,6 +26,66 @@
     }
   }
 
+  function resolveStudioExportCanonicalDeck(options = {}) {
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
+      : null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const isValidDeck = (value) => isValidStudioExportDeck(value, isCanonicalDeck);
+
+    let pendingTransaction = null;
+    if (getPendingTransaction) {
+      try {
+        pendingTransaction = getPendingTransaction();
+      } catch (error) {
+        pendingTransaction = null;
+      }
+    }
+    if (pendingTransaction && buildMutationCanonicalDeck) {
+      try {
+        const mutationCanonicalDeck = buildMutationCanonicalDeck();
+        if (isValidDeck(mutationCanonicalDeck)) {
+          return mutationCanonicalDeck;
+        }
+      } catch (error) {
+        // Fall back to the live baseline when a legacy mutation rebuild fails.
+      }
+    }
+
+    if (getCanonicalDeckBaseline) {
+      try {
+        const canonicalDeckBaseline = getCanonicalDeckBaseline();
+        if (isValidDeck(canonicalDeckBaseline)) {
+          return canonicalDeckBaseline;
+        }
+      } catch (error) {
+        // Continue to the DOM-derived canonical builder.
+      }
+    }
+    if (buildCanonicalDeck) {
+      try {
+        const canonicalDeck = buildCanonicalDeck();
+        if (isValidDeck(canonicalDeck)) {
+          return canonicalDeck;
+        }
+      } catch (error) {
+        // Export actions fail closed when no usable canonical deck exists.
+      }
+    }
+    return null;
+  }
+
   function createStudioPdfExportAction(options = {}) {
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
@@ -35,6 +95,12 @@
       : () => '';
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
+      : null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
       : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
@@ -64,21 +130,13 @@
         return failPdfExport();
       }
 
-      let canonicalDeck = null;
-      try {
-        if (getCanonicalDeckBaseline) {
-          try {
-            canonicalDeck = getCanonicalDeckBaseline();
-          } catch (error) {
-            canonicalDeck = null;
-          }
-        }
-        if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck) && buildCanonicalDeck) {
-          canonicalDeck = buildCanonicalDeck();
-        }
-      } catch (error) {
-        canonicalDeck = null;
-      }
+      const canonicalDeck = resolveStudioExportCanonicalDeck({
+        buildCanonicalDeck,
+        buildMutationCanonicalDeck,
+        getCanonicalDeckBaseline,
+        getPendingTransaction,
+        isCanonicalDeck
+      });
       if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck)
         || !Array.isArray(canonicalDeck.slides)
         || canonicalDeck.slides.length === 0) {
@@ -147,6 +205,12 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -171,23 +235,13 @@
       const actionState = resolveReadyState();
       if (!actionState || !actionState.canUseDeckActions) return false;
 
-      let canonicalDeck;
-      try {
-        canonicalDeck = null;
-        if (getCanonicalDeckBaseline) {
-          try {
-            canonicalDeck = getCanonicalDeckBaseline();
-          } catch (error) {
-            canonicalDeck = null;
-          }
-        }
-        if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck) && buildCanonicalDeck) {
-          canonicalDeck = buildCanonicalDeck();
-        }
-      } catch (error) {
-        setStatus('export-failed');
-        return false;
-      }
+      const canonicalDeck = resolveStudioExportCanonicalDeck({
+        buildCanonicalDeck,
+        buildMutationCanonicalDeck,
+        getCanonicalDeckBaseline,
+        getPendingTransaction,
+        isCanonicalDeck
+      });
       if (!isValidStudioExportDeck(canonicalDeck, isCanonicalDeck)
         || !Array.isArray(canonicalDeck.slides)
         || canonicalDeck.slides.length === 0) {
@@ -235,6 +289,7 @@
   }
 
   return {
+    resolveStudioExportCanonicalDeck,
     createStudioPdfExportAction,
     createStudioPptxExportAction
   };

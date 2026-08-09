@@ -2153,6 +2153,10 @@
             : typeof buildEditorCanonicalDeck === 'function'
               ? buildEditorCanonicalDeck
               : null,
+          buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+            ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc())
+            : null,
+          getPendingTransaction: getStudioPendingEditorTransaction,
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()

@@ -30,8 +30,14 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
+      ? options.buildMutationCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
+      : null;
+    const getPendingTransaction = typeof options.getPendingTransaction === 'function'
+      ? options.getPendingTransaction
       : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
@@ -53,6 +59,8 @@
         resolveReadyState,
         buildPreviewHtml,
         buildCanonicalDeck,
+        buildMutationCanonicalDeck,
+        getPendingTransaction,
         getCanonicalDeckBaseline,
         isCanonicalDeck,
         pdfExport,
@@ -73,6 +81,8 @@
       return exportActions.createStudioPptxExportAction({
         resolveReadyState,
         buildCanonicalDeck,
+        buildMutationCanonicalDeck,
+        getPendingTransaction,
         getCanonicalDeckBaseline,
         isCanonicalDeck,
         pptxExport,

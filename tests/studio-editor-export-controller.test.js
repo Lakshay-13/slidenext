@@ -6,6 +6,8 @@ const exportController = require('../shared/studio-editor-export-controller.js')
 test('export controller delegates PDF with current shared dependencies', () => {
   const calls = [];
   const isCanonicalDeck = () => true;
+  const buildMutationCanonicalDeck = () => ({ slides: [{ id: 'mutation-slide' }] });
+  const getPendingTransaction = () => ({ id: 'pending-transaction' });
   const getCanonicalDeckBaseline = () => ({ slides: [{ id: 'live-slide' }] });
   const controller = exportController.createStudioEditorExportController({
     exportActions: {
@@ -17,6 +19,8 @@ test('export controller delegates PDF with current shared dependencies', () => {
     resolveReadyState: () => ({ canUseDeckActions: true }),
     buildPreviewHtml: () => '<html></html>',
     buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildMutationCanonicalDeck,
+    getPendingTransaction,
     getCanonicalDeckBaseline,
     isCanonicalDeck,
     pdfExport: { openStudioPdfPrintWindow() {} },
@@ -28,6 +32,8 @@ test('export controller delegates PDF with current shared dependencies', () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].buildPreviewHtml(), '<html></html>');
   assert.equal(calls[0].buildCanonicalDeck().slides.length, 1);
+  assert.equal(calls[0].buildMutationCanonicalDeck, buildMutationCanonicalDeck);
+  assert.equal(calls[0].getPendingTransaction, getPendingTransaction);
   assert.equal(calls[0].getCanonicalDeckBaseline, getCanonicalDeckBaseline);
   assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
   assert.equal(calls[0].pdfExport.openStudioPdfPrintWindow instanceof Function, true);
@@ -36,6 +42,8 @@ test('export controller delegates PDF with current shared dependencies', () => {
 test('export controller resolves current PPTX path and filename on each call', async () => {
   const calls = [];
   const isCanonicalDeck = () => true;
+  const buildMutationCanonicalDeck = () => ({ slides: [{ id: 'mutation-slide' }] });
+  const getPendingTransaction = () => ({ id: 'pending-transaction' });
   const getCanonicalDeckBaseline = () => ({ slides: [{ id: 'live-slide' }] });
   let sourcePath = '/presentations/first/index.html';
   let filename = 'First.pptx';
@@ -48,6 +56,8 @@ test('export controller resolves current PPTX path and filename on each call', a
     },
     resolveReadyState: () => ({ canUseDeckActions: true }),
     buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildMutationCanonicalDeck,
+    getPendingTransaction,
     getCanonicalDeckBaseline,
     isCanonicalDeck,
     resolveSourcePath: () => sourcePath,
@@ -66,6 +76,8 @@ test('export controller resolves current PPTX path and filename on each call', a
     ]
   );
   assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
+  assert.equal(calls[0].buildMutationCanonicalDeck, buildMutationCanonicalDeck);
+  assert.equal(calls[0].getPendingTransaction, getPendingTransaction);
   assert.equal(calls[0].getCanonicalDeckBaseline, getCanonicalDeckBaseline);
 });
 

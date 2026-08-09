@@ -121,6 +121,62 @@ test('PDF and PPTX exports prefer a valid live canonical baseline before rebuild
   assert.equal(buildCalls, 0);
 });
 
+test('PDF and PPTX exports rebuild from the current DOM while a transaction is pending', async () => {
+  const liveDeck = { slides: [{ id: 'live-slide' }] };
+  const mutationDeck = { slides: [{ id: 'mutation-slide' }] };
+  const fallbackDeck = { slides: [{ id: 'fallback-slide' }] };
+  let mutationBuildCalls = 0;
+  let baselineCalls = 0;
+  let fallbackBuildCalls = 0;
+  let previewDeck = null;
+  let pptxDeck = null;
+  const sharedOptions = {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getPendingTransaction: () => ({ id: 'pending-transaction' }),
+    getCanonicalDeckBaseline: () => {
+      baselineCalls += 1;
+      return liveDeck;
+    },
+    buildMutationCanonicalDeck: () => {
+      mutationBuildCalls += 1;
+      return mutationDeck;
+    },
+    buildCanonicalDeck: () => {
+      fallbackBuildCalls += 1;
+      return fallbackDeck;
+    }
+  };
+  const pdfExport = exportActions.createStudioPdfExportAction({
+    ...sharedOptions,
+    buildPreviewHtml: (canonicalDeck) => {
+      previewDeck = canonicalDeck;
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        return true;
+      }
+    }
+  });
+  const pptxExport = exportActions.createStudioPptxExportAction({
+    ...sharedOptions,
+    pptxExport: {
+      async exportStudioPptx({ canonicalDeck }) {
+        pptxDeck = canonicalDeck;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(pdfExport(), true);
+  assert.equal(await pptxExport(), true);
+  assert.equal(previewDeck, mutationDeck);
+  assert.equal(pptxDeck, mutationDeck);
+  assert.equal(mutationBuildCalls, 2);
+  assert.equal(baselineCalls, 0);
+  assert.equal(fallbackBuildCalls, 0);
+});
+
 test('PPTX export rejects malformed canonical decks before invoking exporter', async () => {
   let exportCalls = 0;
   const statuses = [];

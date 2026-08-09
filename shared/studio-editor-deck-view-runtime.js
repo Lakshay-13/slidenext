@@ -31,6 +31,8 @@
           resolveReadyState: options.resolveReadyState,
           buildPreviewHtml: options.buildPreviewHtml,
           buildCanonicalDeck: options.buildCanonicalDeck,
+          buildMutationCanonicalDeck: options.buildMutationCanonicalDeck,
+          getPendingTransaction: options.getPendingTransaction,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           isCanonicalDeck: options.isCanonicalDeck,
           pdfExport: options.pdfExport,
