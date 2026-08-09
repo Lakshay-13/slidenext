@@ -256,6 +256,14 @@
     return deckViewApi.createStudioDeckViewCanonicalHtmlResolver(options);
   }
 
+  function createStudioEditorDeckViewHtmlOptions(options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi || typeof deckViewApi.createStudioDeckViewHtmlOptions !== 'function') {
+      return null;
+    }
+    return deckViewApi.createStudioDeckViewHtmlOptions(options);
+  }
+
   return {
     createStudioEditorCanonicalDeckViewStateOptions,
     resolveStudioEditorCanonicalDeckViewState,
@@ -267,6 +275,7 @@
     buildStudioEditorDeckHtml,
     buildStudioEditorDeckViewHtml,
     createStudioEditorDeckViewBuildViewOptionsResolver,
-    createStudioEditorDeckViewCanonicalHtmlResolver
+    createStudioEditorDeckViewCanonicalHtmlResolver,
+    createStudioEditorDeckViewHtmlOptions
   };
 });

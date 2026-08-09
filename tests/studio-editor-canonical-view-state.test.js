@@ -350,4 +350,33 @@ test('editor deck view resolver factories delegate to shared deck view APIs', ()
 test('editor deck view resolver factories fail closed without the shared APIs', () => {
   assert.equal(canonicalViewState.createStudioEditorDeckViewBuildViewOptionsResolver(), null);
   assert.equal(canonicalViewState.createStudioEditorDeckViewCanonicalHtmlResolver(), null);
+  assert.equal(canonicalViewState.createStudioEditorDeckViewHtmlOptions(), null);
+});
+
+test('editor deck view html options delegate to the shared deck view API', () => {
+  const calls = [];
+  const createBuildViewOptionsResolver = () => 'build-resolver';
+  const createCanonicalHtmlResolver = () => 'canonical-resolver';
+  const createBuildOptions = () => ({ marker: 'build-options' });
+  const deckViewApi = {
+    createStudioDeckViewHtmlOptions(options) {
+      calls.push(options);
+      return 'html-options';
+    }
+  };
+
+  const result = canonicalViewState.createStudioEditorDeckViewHtmlOptions({
+    deckViewApi,
+    createBuildViewOptionsResolver,
+    createCanonicalHtmlResolver,
+    createBuildOptions,
+    marker: 'editor'
+  });
+
+  assert.equal(result, 'html-options');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].createBuildViewOptionsResolver, createBuildViewOptionsResolver);
+  assert.equal(calls[0].createCanonicalHtmlResolver, createCanonicalHtmlResolver);
+  assert.equal(calls[0].createBuildOptions, createBuildOptions);
+  assert.equal(calls[0].marker, 'editor');
 });
