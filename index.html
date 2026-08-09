@@ -3051,6 +3051,7 @@
             setStudioPersistedPlaybackState(playbackState);
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          capturePersistableDeckState: (...args) => captureEditorPersistableDeckState(...args),
           setCurrentPresentationCanonicalDeck: (...args) => setCurrentPresentationCanonicalDeck(...args),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
@@ -10338,6 +10339,14 @@
       const nextOptions = options && typeof options === 'object'
         ? options
         : {};
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolvePersistenceStateFromCapture === 'function') {
+        const resolvedState = studioEditorPersistenceController.resolvePersistenceStateFromCapture(doc, nextOptions);
+        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
+          return resolvedState;
+        }
+      }
       const createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

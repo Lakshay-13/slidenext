@@ -176,3 +176,28 @@ test('persistence controller captures persistable deck state through supplied ca
     playbackState: { activeSlideIds: ['slide-1'] }
   });
 });
+
+test('persistence controller resolves persistence state from document capture', () => {
+  const calls = [];
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    capturePersistableDeckState: () => ({ cleanHtml: '<html></html>' })
+  });
+
+  const resolvedState = controller.resolvePersistenceStateFromCapture({ id: 'iframe-doc' }, {
+    resolvePersistenceStateFromCapture(...args) {
+      calls.push(args);
+      return { cleanHtml: '<html></html>', canonicalDeck: null, playbackState: null };
+    }
+  });
+
+  assert.deepEqual(resolvedState, {
+    cleanHtml: '<html></html>',
+    canonicalDeck: null,
+    playbackState: null
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][2], '/presentations/demo/index.html');
+});
