@@ -11,12 +11,24 @@
     const persistenceApi = options.persistenceApi
       || (root && root.SlideNextStudioEditorPersistence)
       || null;
+    const deckContextApi = options.deckContextApi
+      || (root && root.SlideNextStudioDeckContext)
+      || null;
     const setCurrentPresentationMetadata = typeof options.setCurrentPresentationMetadata === 'function'
       ? options.setCurrentPresentationMetadata
       : () => {};
     const getCurrentPresentationUrl = typeof options.getCurrentPresentationUrl === 'function'
       ? options.getCurrentPresentationUrl
       : () => options.currentPresentationUrl;
+    const getCurrentPresentationMetadata = typeof options.getCurrentPresentationMetadata === 'function'
+      ? options.getCurrentPresentationMetadata
+      : () => null;
+    const buildPresentationMetadataSeed = typeof options.buildPresentationMetadataSeed === 'function'
+      ? options.buildPresentationMetadataSeed
+      : () => null;
+    const applyPresentationMetadata = typeof options.applyPresentationMetadata === 'function'
+      ? options.applyPresentationMetadata
+      : () => {};
     const resolveStoredCanonicalDeck = typeof options.resolveStoredCanonicalDeck === 'function'
       ? options.resolveStoredCanonicalDeck
       : () => null;
@@ -78,7 +90,29 @@
       );
     }
 
-    return { apply, load };
+    function applyCanonicalDeck(
+      canonicalDeck,
+      presentationUrl = getCurrentPresentationUrl(),
+      presentationTitle = ''
+    ) {
+      if (!deckContextApi
+        || typeof deckContextApi.applyStudioPresentationMetadataCanonicalDeckUpdate !== 'function') {
+        return false;
+      }
+      return deckContextApi.applyStudioPresentationMetadataCanonicalDeckUpdate(
+        canonicalDeck,
+        {
+          currentPresentationMetadata: getCurrentPresentationMetadata(),
+          currentPresentationUrl: getCurrentPresentationUrl(),
+          presentationUrl,
+          presentationTitle,
+          buildPresentationMetadataSeed,
+          applyPresentationMetadata
+        }
+      );
+    }
+
+    return { apply, load, applyCanonicalDeck };
   }
 
   return {

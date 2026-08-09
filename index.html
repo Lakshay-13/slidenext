@@ -3108,6 +3108,10 @@
             setStudioCurrentPresentationMetadata(value);
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+          applyPresentationMetadata: applyCurrentPresentationMetadata,
+          deckContextApi: SlideNextStudioDeckContext,
           loadPresentationMetadata: SlideNextStudioDeckContext
             && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
             ? (...args) => SlideNextStudioDeckContext.loadStudioPresentationMetadata(...args)
@@ -5126,6 +5130,15 @@
     }
 
     function setCurrentPresentationCanonicalDeck(canonicalDeck, presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {
+      if (typeof studioEditorPresentationMetadataController !== 'undefined'
+        && studioEditorPresentationMetadataController
+        && typeof studioEditorPresentationMetadataController.applyCanonicalDeck === 'function') {
+        return studioEditorPresentationMetadataController.applyCanonicalDeck(
+          canonicalDeck,
+          presentationUrl,
+          presentationTitle
+        );
+      }
       const applyStudioPresentationMetadataCanonicalDeckUpdate = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate === 'function'
         ? SlideNextStudioDeckContext.applyStudioPresentationMetadataCanonicalDeckUpdate
