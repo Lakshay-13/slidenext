@@ -1554,6 +1554,7 @@
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
+  <script src="/shared/studio-editor-version-rename-controller.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
@@ -12886,6 +12887,27 @@
       );
       
       const btn = document.getElementById('confirmRenameVersionBtn');
+      const versionRenameController = typeof SlideNextStudioEditorVersionRenameController !== 'undefined'
+        ? SlideNextStudioEditorVersionRenameController
+        : null;
+      if (versionRenameController
+        && typeof versionRenameController.renameStudioVersion === 'function') {
+        return versionRenameController.renameStudioVersion({
+          versionFilename,
+          newLabel,
+          renameContext,
+          isCurrentSession: isCurrentRenameSession,
+          versionActionsApi: SlideNextStudioVersionActions,
+          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+          applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
+          applyFailure: applyCurrentStudioVersionActionFailure,
+          closeRenameVersionModal,
+          refreshVersionEntries: loadVersions,
+          setBusy: () => setCurrentStudioRenameVersionButtonBusyState(btn),
+          setIdle: () => resetCurrentStudioRenameVersionButtonState(btn),
+          alertAction: alert
+        });
+      }
       setCurrentStudioRenameVersionButtonBusyState(btn);
       const createStudioRenameVersionRequestExecutor = (
         typeof SlideNextStudioVersionActions !== 'undefined'
