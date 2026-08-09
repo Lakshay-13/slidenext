@@ -70,3 +70,23 @@ test('slide reorder controller fails closed without a reorder command', () => {
 
   assert.equal(controller.reorder(0, 1), false);
 });
+
+test('slide reorder controller fails closed when canonical builder construction throws', () => {
+  let reorderCalls = 0;
+  const controller = reorderController.createStudioEditorSlideReorderController({
+    slideCommandsApi: {
+      reorderStudioSlideNodes() {
+        reorderCalls += 1;
+        return true;
+      }
+    },
+    canonicalSlideApi: {
+      createStudioCanonicalReorderSlideMutationBuilders() {
+        throw new Error('canonical builder unavailable');
+      }
+    }
+  });
+
+  assert.equal(controller.reorder(0, 1), false);
+  assert.equal(reorderCalls, 0);
+});
