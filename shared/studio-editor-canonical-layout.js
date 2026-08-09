@@ -94,7 +94,14 @@
       return null;
     }
 
-    return updateCanonicalNodeLayout(canonicalDeckBeforeMutation, Array.isArray(layoutUpdates) ? layoutUpdates : []);
+    try {
+      return updateCanonicalNodeLayout(
+        canonicalDeckBeforeMutation,
+        Array.isArray(layoutUpdates) ? layoutUpdates : []
+      );
+    } catch (err) {
+      return null;
+    }
   }
 
   function buildStudioCanonicalLayoutMutation(options = {}) {

@@ -151,6 +151,25 @@ test('buildStudioCanonicalLayoutDeck applies layout updates to the provided pre-
   assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
 });
 
+test('buildStudioCanonicalLayoutDeck fails closed when the canonical layout mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalNodeLayout() {
+      throw new Error('canonical layout mutation failed');
+    }
+  };
+
+  const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
+    [{ id: 'node-1', layout: { x: 40 } }],
+    {
+      canonicalDeckApi: throwingCanonicalDeckApi,
+      canonicalDeckBeforeMutation: createSourceDeck()
+    }
+  );
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalLayoutDeck supports a builder and fails closed without the update API', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutDeck(
