@@ -382,6 +382,34 @@
     });
   }
 
+  function createStudioInsertionToolbarActionStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : (doc) => resolveStudioInsertionActionState(doc, {
+          getActiveSlide: options.getActiveSlide,
+          getSlideContainer: options.getSlideContainer
+        });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorInsertionToolbarActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const actionState = getActionState(resolvedDoc) || {};
+        return renderStudioInsertionToolbarActionState({
+          documentRef: getDocumentRef(),
+          ...actionState
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function resolveStudioWallpaperActionState(doc, options = {}) {
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
@@ -1242,6 +1270,7 @@
     resolveStudioInsertionActionState,
     renderStudioInsertionToolbarActionState,
     syncStudioInsertionToolbarActionState,
+    createStudioInsertionToolbarActionStateSync,
     resolveStudioWallpaperActionState,
     renderStudioWallpaperToolbarActionState,
     syncStudioWallpaperToolbarActionState,

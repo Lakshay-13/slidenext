@@ -838,6 +838,56 @@ test('syncStudioInsertionToolbarActionState resolves and renders insertion contr
   assert.equal(controls.insertChartBtn.disabled, false);
 });
 
+test('createStudioInsertionToolbarActionStateSync resolves insertion state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const controls = {
+    addSlideBtn: { disabled: true },
+    duplicateSlideBtn: { disabled: true },
+    toolbarInsertHeadingBtn: { disabled: true }
+  };
+  const calls = [];
+  const syncState = deckView.createStudioInsertionToolbarActionStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return {
+        canAddSlide: true,
+        canDuplicateSlide: true,
+        canInsertElements: true
+      };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncState(), true);
+  assert.deepEqual(Object.values(controls).map((control) => control.disabled), [false, false, false]);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioInsertionToolbarActionStateSync fails closed when insertion state resolution throws', () => {
+  const syncState = deckView.createStudioInsertionToolbarActionStateSync({
+    getActionState() {
+      throw new Error('insertion state unavailable');
+    }
+  });
+
+  assert.equal(syncState(), false);
+});
+
 test('resolveStudioWallpaperActionState derives wallpaper readiness from the active slide resolver', () => {
   assert.deepEqual(
     deckView.resolveStudioWallpaperActionState(null),

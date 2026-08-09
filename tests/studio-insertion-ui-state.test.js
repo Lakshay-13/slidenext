@@ -425,3 +425,51 @@ test('updateInsertionActionState delegates toolbar rendering to the shared deck 
   assert.equal(calls[0].doc, doc);
   assert.equal(calls[0].getActiveSlide, context.getActiveSlide);
 });
+
+test('updateInsertionActionState caches the shared insertion toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateInsertionActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateInsertionActionState(doc = getIframeDoc()) {',
+    '\n\n    function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'active-doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      resolveStudioInsertionActionState() {
+        return {
+          canAddSlide: true,
+          canDuplicateSlide: true,
+          canInsertElements: true
+        };
+      },
+      syncStudioInsertionToolbarActionState() {
+        throw new Error('direct insertion sync should not run');
+      },
+      createStudioInsertionToolbarActionStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          return options.getActionState(currentDoc).canInsertElements;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveCurrentStudioInsertionActionState(fileContent, context);
+  vm.runInContext(updateInsertionActionStateSource, context);
+
+  assert.equal(context.updateInsertionActionState(doc), true);
+  assert.equal(context.updateInsertionActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
