@@ -77,6 +77,31 @@ test('buildStudioCanonicalTransformBaseline delegates baseline resolution to the
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
 });
 
+test('buildStudioCanonicalTransformBaseline prefers the shared canonical deck resolver', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  let resolverOptions = null;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => sourceDeck;
+      },
+      createStudioEditorCanonicalDeckBaselineReader() {
+        throw new Error('legacy baseline reader should not be used');
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalTransformBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
   let didBuildFromDocument = false;
