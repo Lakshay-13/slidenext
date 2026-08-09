@@ -159,6 +159,15 @@
       });
     }
 
+    function tryBuildCanonicalDeckForInsertion(context) {
+      try {
+        return buildCanonicalDeckForInsertion(context);
+      } catch (err) {
+        // Preserve the pasted or duplicated DOM mutation through its transaction.
+        return null;
+      }
+    }
+
     function copy() {
       if (!buildClipboardSelectionMutationPlan
         || !clipboardApi
@@ -188,7 +197,7 @@
           transaction = nextTransaction;
         }
       });
-      const canonicalDeck = buildCanonicalDeckForInsertion({
+      const canonicalDeck = tryBuildCanonicalDeckForInsertion({
         ...(insertionContext || {}),
         items: pasted
       });
@@ -214,7 +223,7 @@
         }
       });
       if (duplicates.length === 0) return finalizeClipboardActionResult(false);
-      const canonicalDeck = buildCanonicalDeckForInsertion({
+      const canonicalDeck = tryBuildCanonicalDeckForInsertion({
         ...(insertionContext || {}),
         items: duplicates
       });

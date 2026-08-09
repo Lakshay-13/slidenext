@@ -75,6 +75,52 @@ test('clipboard controller routes paste and duplicate through the insertion cont
   ]);
 });
 
+test('clipboard controller preserves transaction finalization when canonical reconstruction throws', () => {
+  const calls = [];
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan() {
+        return {
+          canPaste: true,
+          items: [{ id: 'item-1' }],
+          nextPasteCount: 1,
+          nextClipboard: { items: [{ id: 'item-1' }], pasteCount: 1 }
+        };
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionSequence() {
+            throw new Error('canonical clipboard reconstruction unavailable');
+          }
+        };
+      }
+    },
+    getClipboard: () => ({ items: [{ id: 'item-1' }], pasteCount: 0 }),
+    setClipboard: () => {},
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    insertClipboardPayload: (_items, _offset, options) => {
+      options.onTransaction({ id: 'tx-1' });
+      return [{ id: 'node-1' }];
+    },
+    finalizeInsertedElements: (items, label, transaction, canonicalDeck) => {
+      calls.push([items, label, transaction, canonicalDeck]);
+      return true;
+    },
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.paste(), true));
+  assert.deepEqual(calls, [[
+    [{ id: 'node-1' }],
+    'Auto: Pasted Element',
+    { id: 'tx-1' },
+    null
+  ]]);
+});
+
 test('clipboard controller rebuilds canonical state from the live post-insertion document', () => {
   const sourceDocument = { id: 'editor-document' };
   const liveCanonicalDeck = {
