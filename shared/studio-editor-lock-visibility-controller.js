@@ -263,12 +263,17 @@
         }
       );
       if (!visibilityMutationPlan || !visibilityMutationPlan.didChange) return false;
-      const canonicalDeck = buildCanonicalVisibilityMutation(
-        visibilityMutationPlan.selection,
-        { hidden: visibilityMutationPlan.shouldHide },
-        doc,
-        getVisibilityElementId
-      );
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = buildCanonicalVisibilityMutation(
+          visibilityMutationPlan.selection,
+          { hidden: visibilityMutationPlan.shouldHide },
+          doc,
+          getVisibilityElementId
+        );
+      } catch (error) {
+        return false;
+      }
       const mutation = applyVisibilityMutation(
         visibilityMutationPlan.selection,
         visibilityMutationPlan.shouldHide,

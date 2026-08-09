@@ -116,6 +116,37 @@ test('lock toggle fails closed when canonical builder construction throws', () =
   assert.equal(lockCalls, 0);
 });
 
+test('visibility toggle fails closed when canonical builder construction throws', () => {
+  let visibilityCalls = 0;
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements) {
+        return {
+          didChange: true,
+          selection: elements,
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      }
+    },
+    canonicalVisibilityApi: {
+      createStudioCanonicalVisibilityMutationBuilders() {
+        throw new Error('canonical visibility builders unavailable');
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyVisibilityMutation: () => {
+      visibilityCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(visibilityCalls, 0);
+});
+
 test('lock and visibility mutation plans prefer canonical metadata over stale DOM state', () => {
   const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
   const canonicalDeckModel = canonicalDeck.createCanonicalDeck({
