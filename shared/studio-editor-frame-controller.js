@@ -79,7 +79,12 @@
       }
       if (!capturePersistableDeckState) return undefined;
 
-      const initialPersistedDeckState = capturePersistableDeckState(iframeDoc);
+      let initialPersistedDeckState = null;
+      try {
+        initialPersistedDeckState = capturePersistableDeckState(iframeDoc);
+      } catch (error) {
+        initialPersistedDeckState = null;
+      }
       if (saveHistoryState) {
         if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
           saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);

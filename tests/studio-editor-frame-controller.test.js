@@ -147,3 +147,40 @@ test('frame controller captures the canonical initial history baseline through i
     ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, 9]
   ]);
 });
+
+test('frame controller keeps bootstrap alive when initial persistence capture fails', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    capturePersistableDeckState() {
+      throw new Error('persistence capture failed');
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.captureInitialHistoryState(doc);
+      }
+    },
+    updateDeckReadyToolbarActionState() {
+      calls.push('ready');
+    },
+    setStudioAutoSaveStatus(status) {
+      calls.push(['status', status]);
+    },
+    syncInspectorForSelection() {
+      calls.push('inspector');
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, [
+    ['saveHistoryState', false],
+    'ready',
+    ['status', 'saved'],
+    'inspector'
+  ]);
+});
