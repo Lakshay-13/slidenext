@@ -82,8 +82,60 @@
     };
   }
 
+  function getEditorDeckViewSharedOptions(doc, options = {}) {
+    return typeof options.getDeckViewSharedOptions === 'function'
+      ? options.getDeckViewSharedOptions(doc)
+      : {};
+  }
+
+  function resolveStudioEditorFallbackActiveSlideId(doc, canonicalDeck, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi || typeof deckViewApi.resolveStudioFallbackActiveSlideId !== 'function') {
+      return '';
+    }
+    return deckViewApi.resolveStudioFallbackActiveSlideId(
+      doc,
+      canonicalDeck,
+      getEditorDeckViewSharedOptions(doc, options)
+    );
+  }
+
+  function resolveStudioEditorLiveActiveSlide(doc, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi || typeof deckViewApi.resolveStudioLiveActiveSlide !== 'function') {
+      return null;
+    }
+    return deckViewApi.resolveStudioLiveActiveSlide(doc);
+  }
+
+  function resolveStudioEditorLiveActiveSlideId(doc, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi || typeof deckViewApi.resolveStudioLiveActiveSlideId !== 'function') {
+      return '';
+    }
+    const getActiveSlideId = typeof options.getActiveSlideId === 'function'
+      ? options.getActiveSlideId
+      : () => '';
+    return deckViewApi.resolveStudioLiveActiveSlideId(doc, { getActiveSlideId });
+  }
+
+  function createStudioEditorDeckRenderOptions(doc, canonicalDeck, options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    if (!deckViewApi || typeof deckViewApi.createStudioDeckRenderOptions !== 'function') {
+      return null;
+    }
+    return deckViewApi.createStudioDeckRenderOptions(doc, canonicalDeck, {
+      activeSlideId: options.activeSlideId,
+      ...getEditorDeckViewSharedOptions(doc, options)
+    });
+  }
+
   return {
     createStudioEditorCanonicalDeckViewStateOptions,
-    resolveStudioEditorCanonicalDeckViewState
+    resolveStudioEditorCanonicalDeckViewState,
+    resolveStudioEditorFallbackActiveSlideId,
+    resolveStudioEditorLiveActiveSlide,
+    resolveStudioEditorLiveActiveSlideId,
+    createStudioEditorDeckRenderOptions
   };
 });

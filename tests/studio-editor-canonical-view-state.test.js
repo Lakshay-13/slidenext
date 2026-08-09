@@ -89,3 +89,74 @@ test('canonical view state resolver fails closed to the live slide callback with
   assert.equal(result.resolvedCanonicalDeck, null);
   assert.equal(result.resolveCanonicalDeck(), null);
 });
+
+test('editor fallback slide resolution passes canonical and shared editor state to deck view', () => {
+  const doc = { id: 'editor-doc' };
+  const canonicalDeck = { slides: [] };
+  const sharedOptions = { currentSlideIndex: 2 };
+  const calls = [];
+  const result = canonicalViewState.resolveStudioEditorFallbackActiveSlideId(doc, canonicalDeck, {
+    deckViewApi: {
+      resolveStudioFallbackActiveSlideId(nextDoc, nextCanonicalDeck, options) {
+        calls.push([nextDoc, nextCanonicalDeck, options]);
+        return 'slide-fallback';
+      }
+    },
+    getDeckViewSharedOptions() {
+      return sharedOptions;
+    }
+  });
+
+  assert.equal(result, 'slide-fallback');
+  assert.deepEqual(calls, [[doc, canonicalDeck, sharedOptions]]);
+});
+
+test('editor live slide helpers delegate through the deck view API', () => {
+  const doc = { id: 'editor-doc' };
+  const activeSlide = { id: 'slide-element' };
+  const calls = [];
+  const deckViewApi = {
+    resolveStudioLiveActiveSlide(nextDoc) {
+      calls.push(['slide', nextDoc]);
+      return activeSlide;
+    },
+    resolveStudioLiveActiveSlideId(nextDoc, options) {
+      calls.push(['id', nextDoc, options.getActiveSlideId(nextDoc)]);
+      return 'slide-live';
+    }
+  };
+
+  assert.equal(canonicalViewState.resolveStudioEditorLiveActiveSlide(doc, { deckViewApi }), activeSlide);
+  assert.equal(canonicalViewState.resolveStudioEditorLiveActiveSlideId(doc, {
+    deckViewApi,
+    getActiveSlideId: () => 'slide-id'
+  }), 'slide-live');
+  assert.deepEqual(calls, [
+    ['slide', doc],
+    ['id', doc, 'slide-id']
+  ]);
+});
+
+test('editor render options delegate active-slide and shared options to deck view', () => {
+  const doc = { id: 'editor-doc' };
+  const canonicalDeck = { slides: [] };
+  const sharedOptions = { currentSlideIndex: 1 };
+  const result = canonicalViewState.createStudioEditorDeckRenderOptions(doc, canonicalDeck, {
+    deckViewApi: {
+      createStudioDeckRenderOptions(nextDoc, nextCanonicalDeck, options) {
+        assert.equal(nextDoc, doc);
+        assert.equal(nextCanonicalDeck, canonicalDeck);
+        return options;
+      }
+    },
+    activeSlideId: 'slide-explicit',
+    getDeckViewSharedOptions() {
+      return sharedOptions;
+    }
+  });
+
+  assert.deepEqual(result, {
+    activeSlideId: 'slide-explicit',
+    currentSlideIndex: 1
+  });
+});
