@@ -74,11 +74,19 @@
     }
 
     function applySourceHtml(sourceHtml = '') {
+      if (!canUseDeckActions()) {
+        return { success: false, error: 'Editor deck is unavailable' };
+      }
       if (!sourceApi || typeof sourceApi.applyStudioEditorSource !== 'function') {
         return { success: false, error: 'Source editor is unavailable' };
       }
 
-      const historyOptions = resolveHistoryOptions() || {};
+      let historyOptions = {};
+      try {
+        historyOptions = resolveHistoryOptions() || {};
+      } catch (error) {
+        historyOptions = {};
+      }
       let canonicalDeckBaseline = null;
       if (getCanonicalDeckBaseline) {
         try {
@@ -87,7 +95,7 @@
           canonicalDeckBaseline = null;
         }
       }
-      return sourceApi.applyStudioEditorSource(sourceHtml, {
+      const sourceOptions = {
         DOMParser: DOMParserConstructor,
         sanitizeSourceRoot: typeof historyOptions.sanitizeFrameRoot === 'function'
           ? historyOptions.sanitizeFrameRoot
@@ -100,7 +108,12 @@
         beforeApply,
         restoreHistoryEntry,
         afterApply
-      });
+      };
+      try {
+        return sourceApi.applyStudioEditorSource(sourceHtml, sourceOptions);
+      } catch (error) {
+        return { success: false, error: 'Source HTML could not be applied' };
+      }
     }
 
     function apply() {

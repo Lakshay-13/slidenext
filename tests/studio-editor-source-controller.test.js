@@ -106,3 +106,40 @@ test('source controller reports source engine unavailability without throwing', 
     error: 'Source editor is unavailable'
   });
 });
+
+test('source controller blocks direct source application when the editor deck is unavailable', () => {
+  let sourceCalls = 0;
+  const { controller } = createController({
+    resolveReadyState: () => ({ canUseDeckActions: false }),
+    sourceApi: {
+      applyStudioEditorSource() {
+        sourceCalls += 1;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.deepEqual(controller.applySourceHtml('<html></html>'), {
+    success: false,
+    error: 'Editor deck is unavailable'
+  });
+  assert.equal(sourceCalls, 0);
+});
+
+test('source controller contains resolver and source adapter failures', () => {
+  const { controller } = createController({
+    resolveHistoryOptions() {
+      throw new Error('history options unavailable');
+    },
+    sourceApi: {
+      applyStudioEditorSource() {
+        throw new Error('source adapter failed');
+      }
+    }
+  });
+
+  assert.deepEqual(controller.applySourceHtml('<html></html>'), {
+    success: false,
+    error: 'Source HTML could not be applied'
+  });
+});
