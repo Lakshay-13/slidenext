@@ -75,5 +75,8 @@ test('shared block state sync updates block controls before rendering the librar
   }), true);
   assert.equal(controls.saveSelectionBlockBtn.disabled, true);
   assert.equal(controls.blockNameInput.disabled, true);
-  assert.equal(list.children[0].textContent, 'No reusable blocks saved');
+  assert.equal(
+    list.children[0].textContent,
+    'No reusable blocks saved. Select elements and save a block.'
+  );
 });

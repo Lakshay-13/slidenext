@@ -22,7 +22,7 @@
     list.textContent = '';
     if (normalizedBlocks.length === 0) {
       const emptyState = documentRef.createElement('span');
-      emptyState.textContent = 'No reusable blocks saved';
+      emptyState.textContent = 'No reusable blocks saved. Select elements and save a block.';
       list.appendChild(emptyState);
       return true;
     }
