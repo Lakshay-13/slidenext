@@ -26,6 +26,9 @@
     const setLiveCanonicalDeck = typeof options.setLiveCanonicalDeck === 'function'
       ? options.setLiveCanonicalDeck
       : () => {};
+    const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -61,6 +64,7 @@
         setPendingTransaction,
         setPendingCanonicalDeck,
         setLiveCanonicalDeck,
+        getLiveCanonicalDeck,
         isCanonicalDeck,
         getTimer,
         setTimer,

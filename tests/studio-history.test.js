@@ -876,6 +876,31 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
   assert.equal(scheduledCapture, true);
 });
 
+test('createStudioHistorySaveHandler preserves the live canonical deck without a new sidecar', () => {
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  let capturedLiveCanonicalDeck = null;
+  let pendingCanonicalDeck = liveCanonicalDeck;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    getLiveCanonicalDeck() {
+      return liveCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      capturedLiveCanonicalDeck = nextCanonicalDeck;
+    },
+    setPendingCanonicalDeck(nextCanonicalDeck) {
+      pendingCanonicalDeck = nextCanonicalDeck;
+    },
+    scheduleCapture() {
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  saveHistoryState(false, { id: 'selection-only-transaction' });
+
+  assert.equal(capturedLiveCanonicalDeck, liveCanonicalDeck);
+  assert.equal(pendingCanonicalDeck, null);
+});
+
 test('createStudioHistorySaveHandler rejects malformed canonical sidecars while preserving transactions', () => {
   let pendingTransaction = null;
   let pendingCanonicalDeck = null;

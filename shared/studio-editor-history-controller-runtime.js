@@ -43,6 +43,7 @@
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           setPendingCanonicalDeck: options.setPendingCanonicalDeck,
           setLiveCanonicalDeck: options.setLiveCanonicalDeck,
+          getLiveCanonicalDeck: options.getLiveCanonicalDeck,
           isCanonicalDeck: options.isCanonicalDeck,
           getTimer: options.getTimer,
           setTimer: options.setTimer,

@@ -3278,6 +3278,11 @@
               getStudioEditorSessionToken()
             );
           },
+          getLiveCanonicalDeck: () => (
+            typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(getIframeDoc(), getStudioEditorSessionToken())
+              : null
+          ),
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
             ? getEditorCanonicalDeckValidator()
             : null,
@@ -9359,6 +9364,14 @@
               ? getStudioEditorSessionToken()
               : null;
             setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
+          },
+          getLiveCanonicalDeck() {
+            if (typeof resolveEditorLiveCanonicalDeck !== 'function') return null;
+            const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+            const liveSessionToken = typeof getStudioEditorSessionToken === 'function'
+              ? getStudioEditorSessionToken()
+              : null;
+            return resolveEditorLiveCanonicalDeck(liveEditorDoc, liveSessionToken);
           },
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
             ? getEditorCanonicalDeckValidator()

@@ -695,6 +695,9 @@
     const setLiveCanonicalDeck = typeof options.setLiveCanonicalDeck === 'function'
       ? options.setLiveCanonicalDeck
       : () => {};
+    const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : isStudioHistoryCanonicalDeckLike;
@@ -728,7 +731,27 @@
           nextCanonicalDeck = null;
         }
       }
-      setLiveCanonicalDeck(nextCanonicalDeck);
+      let liveCanonicalDeck = nextCanonicalDeck;
+      let shouldSetLiveCanonicalDeck = true;
+      if (!hasCanonicalDeck && getLiveCanonicalDeck) {
+        try {
+          liveCanonicalDeck = getLiveCanonicalDeck();
+        } catch (error) {
+          shouldSetLiveCanonicalDeck = false;
+        }
+      }
+      if (liveCanonicalDeck && isCanonicalDeck) {
+        try {
+          if (!isCanonicalDeck(liveCanonicalDeck)) {
+            liveCanonicalDeck = null;
+          }
+        } catch (error) {
+          liveCanonicalDeck = null;
+        }
+      }
+      if (shouldSetLiveCanonicalDeck) {
+        setLiveCanonicalDeck(liveCanonicalDeck);
+      }
       setPendingCanonicalDeck(nextCanonicalDeck);
       const normalizedTransaction = transactionApi
         && typeof transactionApi.normalizeStudioEditorTransaction === 'function'

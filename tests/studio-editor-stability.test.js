@@ -140,6 +140,10 @@ test('history controller wires the named fallback active-slide resolver', () => 
     controllerSource,
     /buildMutationCanonicalDeck:\s*buildEditorMutationCanonicalDeck/
   );
+  assert.match(
+    controllerSource,
+    /getLiveCanonicalDeck: \(\) => \(/
+  );
   assert.doesNotMatch(
     controllerSource,
     /resolveFallbackActiveSlideId,\s*getActiveSlideId/
