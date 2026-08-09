@@ -172,3 +172,30 @@ test('style controller rejects malformed canonical baselines before lock lookup'
   assert.equal(receivedLockState, true);
   assert.equal(didUseMalformedDeck, false);
 });
+
+test('style controller rejects malformed baselines without a canonical validator', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      isCanonicalDeck: undefined
+    },
+    canonicalStateApi: {},
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => true
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
+});
