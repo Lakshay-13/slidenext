@@ -67,6 +67,7 @@
       sourceWidth: finitePositive(source.sourceWidth, null),
       sourceHeight: finitePositive(source.sourceHeight, null),
       assetBaseDir: typeof source.assetBaseDir === 'string' ? source.assetBaseDir : '',
+      assetRootDir: typeof source.assetRootDir === 'string' ? source.assetRootDir : '',
       assetExists: typeof source.assetExists === 'function' ? source.assetExists : null,
       availableFonts: Array.isArray(source.availableFonts)
         ? source.availableFonts.filter(font => typeof font === 'string' && font.trim())
@@ -729,7 +730,11 @@
 
   function resolveAssetSource(source, options) {
     if (!source) return '';
-    if (/^(data:|https?:\/\/|file:\/\/|\/)/i.test(source) || !options.assetBaseDir) return source;
+    if (/^(data:|https?:\/\/|file:\/\/)/i.test(source)) return source;
+    if (/^\//.test(source) && options.assetRootDir) {
+      return `${options.assetRootDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
+    }
+    if (/^\//.test(source) || !options.assetBaseDir) return source;
     return `${options.assetBaseDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
   }
 

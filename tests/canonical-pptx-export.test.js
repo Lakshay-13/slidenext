@@ -898,6 +898,31 @@ test('preflightCanonicalPptxExport checks non-empty image paths when an asset re
   assert.match(report.diagnostics.warnings.join('\n'), /missing image asset/);
 });
 
+test('createCanonicalPptxExport resolves root-relative asset paths through the asset root', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { src: '/presentations/demo/assets/image.png' },
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, {
+    PptxGenJS: FakePptx,
+    assetRootDir: '/workspace',
+    assetExists(source) {
+      return source === '/workspace/presentations/demo/assets/image.png';
+    }
+  });
+
+  assert.deepEqual(result.diagnostics.missingAssets, []);
+  assert.equal(
+    result.pptx.slides[0].calls[0].options.path,
+    '/workspace/presentations/demo/assets/image.png'
+  );
+});
+
 test('createCanonicalPptxExport skips missing image files after preflight', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{

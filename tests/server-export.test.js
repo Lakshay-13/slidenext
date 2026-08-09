@@ -59,6 +59,38 @@ test('PPTX export route returns a real generalized PPTX response', async (t) => 
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
 });
 
+test('PPTX export route resolves root-relative presentation assets', async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/export/pptx`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      canonicalDeck: {
+        metadata: { title: 'Root-relative asset smoke' },
+        layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+        slides: [{
+          id: 'slide-1',
+          nodes: [{
+            id: 'image-1',
+            type: 'image',
+            attributes: {
+              src: '/presentations/computer-vision-presentation/assets/street.png'
+            },
+            layout: { x: 0, y: 0, width: 500, height: 300 }
+          }]
+        }]
+      }
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '0');
+  assert.equal((await response.arrayBuffer()).byteLength > 0, true);
+});
+
 test('PPTX export route rejects an empty canonical deck without generating a file', async (t) => {
   const server = http.createServer(app);
   const port = await listenOnEphemeralPort(server);

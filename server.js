@@ -218,6 +218,7 @@ app.post('/api/export/pptx', async (req, res) => {
   try {
     const result = canonicalPptxExport.createCanonicalPptxExport(resolvedCanonicalDeck, {
       assetBaseDir: resolvePptxAssetBaseDir(sourcePath || resolvedCanonicalDeck.metadata?.sourcePath),
+      assetRootDir: workspaceDir,
       assetExists(assetSource) {
         if (/^(data:|https?:\/\/)/i.test(assetSource)) return true;
         const resolvedAssetPath = path.resolve(assetSource);
