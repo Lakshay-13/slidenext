@@ -1385,6 +1385,7 @@
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
+  <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
   <script src="/shared/presentation-creation-view.js"></script>
@@ -1614,6 +1615,23 @@
       return studioEditorPersistedDeckStateController
         && typeof studioEditorPersistedDeckStateController.setPlaybackState === 'function'
         ? studioEditorPersistedDeckStateController.setPlaybackState(nextPlaybackState)
+        : false;
+    }
+    const studioEditorAutoSaveTimerController = typeof SlideNextStudioEditorAutoSaveTimerController !== 'undefined'
+      && SlideNextStudioEditorAutoSaveTimerController
+      && typeof SlideNextStudioEditorAutoSaveTimerController.createStudioEditorAutoSaveTimerController === 'function'
+      ? SlideNextStudioEditorAutoSaveTimerController.createStudioEditorAutoSaveTimerController({})
+      : null;
+    function getStudioAutoSaveDebounceTimer() {
+      return studioEditorAutoSaveTimerController
+        && typeof studioEditorAutoSaveTimerController.getTimer === 'function'
+        ? studioEditorAutoSaveTimerController.getTimer()
+        : null;
+    }
+    function setStudioAutoSaveDebounceTimer(nextTimer) {
+      return studioEditorAutoSaveTimerController
+        && typeof studioEditorAutoSaveTimerController.setTimer === 'function'
+        ? studioEditorAutoSaveTimerController.setTimer(nextTimer)
         : false;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
@@ -3978,11 +3996,11 @@
         presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
       });
       const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-        autoSaveDebounceTimer,
+        autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
         autoVersionTimers,
         clearTimer: clearTimeout
       });
-      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
+      setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
       autoVersionTimers = clearedTimerState.autoVersionTimers;
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
@@ -4072,11 +4090,11 @@
         presentationMetadata: null
       });
       const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-        autoSaveDebounceTimer,
+        autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
         autoVersionTimers,
         clearTimer: clearTimeout
       });
-      autoSaveDebounceTimer = clearedTimerState.autoSaveDebounceTimer;
+      setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
       autoVersionTimers = clearedTimerState.autoVersionTimers;
       applyCurrentStudioPersistedDeckState({
         cleanHtml: '',
@@ -10033,7 +10051,6 @@
     }
 
     // 6. AutoSave debouncing pipeline
-    let autoSaveDebounceTimer = null;
     function triggerAutoSave() {
       if (typeof triggerAutoSave.adapter !== 'function') {
         const createStudioEditorAutoSaveAdapter = (
@@ -10050,11 +10067,9 @@
             : null,
           captureSessionState: captureCurrentStudioSessionState,
           setStatus: setStudioAutoSaveStatus,
-          getTimer: () => autoSaveDebounceTimer,
+          getTimer: getStudioAutoSaveDebounceTimer,
           clearTimer: clearTimeout,
-          setTimer(nextTimer) {
-            autoSaveDebounceTimer = nextTimer;
-          },
+          setTimer: setStudioAutoSaveDebounceTimer,
           schedule: (callback, delayMs) => setTimeout(callback, delayMs),
           isTaskStale: isCurrentStudioPersistenceTaskStale,
           getDocument: getIframeDoc,

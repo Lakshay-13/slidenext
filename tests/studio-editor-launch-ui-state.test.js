@@ -9,17 +9,18 @@ const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
+const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const source = historyStackFixture.extractHistoryStackAwareFunctionSource(
+  const historyAwareSource = historyStackFixture.extractHistoryStackAwareFunctionSource(
     fileContent,
     startMarker,
     endMarker
   );
-  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  assert.notEqual(historyAwareSource, null, `Missing function markers: ${startMarker}`);
+  return `${autoSaveTimerFixture.getAutoSaveTimerFixtureSource()}\n${historyAwareSource}`;
 }
 
 function installSlideIndexAccessor(context) {

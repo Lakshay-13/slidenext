@@ -10,6 +10,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
+const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -217,11 +218,12 @@ function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
 
 function loadTriggerAutoSave(fileContent, context) {
   context.SlideNextStudioEditorAutoSave ??= editorAutoSave;
-  const helperSource = extractFunctionSource(
+  const helperSource = autoSaveTimerFixture.extractAutoSaveTimerAwareFunctionSource(
     fileContent,
     'function triggerAutoSave() {',
     '\n\n    // Custom styled checkpoint version modal controls'
   );
+  assert.notEqual(helperSource, null, 'Missing triggerAutoSave markers');
   vm.runInContext(helperSource, context);
 }
 
