@@ -3052,6 +3052,28 @@
           },
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
           getCurrentSessionToken: getStudioEditorSessionToken,
+          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
+          resolveMergedPresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+            : null,
+          resolvePresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+            : null,
+          mergePresentationPersistenceOptions: (
+            typeof SlideNextPresentationMetadata !== 'undefined'
+            && SlideNextPresentationMetadata
+            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+            : null,
           createSessionReaderOptions: (...args) => createCurrentStudioSessionReaderOptions(...args),
           applyPersistedDeckState: (...args) => applyCurrentStudioPersistedDeckState(...args),
           capturePersistableDeckState: (...args) => captureEditorPersistableDeckState(...args),
@@ -8791,6 +8813,14 @@
     }
 
     function resolveEditorMetadataPersistenceOptions(options = {}) {
+      if (typeof studioEditorPersistenceController !== 'undefined'
+        && studioEditorPersistenceController
+        && typeof studioEditorPersistenceController.resolveMetadataPersistenceOptions === 'function') {
+        const result = studioEditorPersistenceController.resolveMetadataPersistenceOptions(options);
+        if (result !== null && typeof result !== 'undefined') {
+          return result;
+        }
+      }
       const createStudioEditorMetadataPersistenceOptionsAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState

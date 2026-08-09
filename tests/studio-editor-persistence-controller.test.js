@@ -514,3 +514,32 @@ test('persistence controller builds persistable deck sanitizer options through t
   });
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller resolves metadata persistence options through the shared adapter', () => {
+  const currentPresentationMetadata = { persistence: { emptyContainerIds: ['pixelMatrix'] } };
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorMetadataPersistenceOptionsAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, persistence);
+        assert.equal(options.getCurrentPresentationMetadata(), currentPresentationMetadata);
+        return (nextOptions) => ({
+          metadata: options.getCurrentPresentationMetadata(),
+          persistenceOptions: nextOptions.persistenceOptions
+        });
+      }
+    },
+    getCurrentPresentationMetadata: () => currentPresentationMetadata
+  });
+
+  assert.deepEqual(controller.resolveMetadataPersistenceOptions({
+    persistenceOptions: { transientClassNames: ['revealed'] }
+  }), {
+    metadata: currentPresentationMetadata,
+    persistenceOptions: { transientClassNames: ['revealed'] }
+  });
+  controller.resolveMetadataPersistenceOptions();
+  assert.equal(adapterCreateCalls, 1);
+});

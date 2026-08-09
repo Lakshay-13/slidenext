@@ -3282,6 +3282,31 @@ test('resolveEditorMetadataPersistenceOptions creates the shared persistence-sta
   assert.deepEqual(calls.map((options) => options.id), [1, 2]);
 });
 
+test('resolveEditorMetadataPersistenceOptions delegates to the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
+    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
+  );
+  let delegatedOptions = null;
+  const context = {
+    studioEditorPersistenceController: {
+      resolveMetadataPersistenceOptions(options) {
+        delegatedOptions = options;
+        return { delegated: true };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+
+  const options = { persistenceOptions: { transientClassNames: ['revealed'] } };
+  assert.deepEqual(context.resolveEditorMetadataPersistenceOptions(options), { delegated: true });
+  assert.equal(delegatedOptions, options);
+});
+
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(

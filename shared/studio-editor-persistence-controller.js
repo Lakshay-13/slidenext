@@ -47,6 +47,18 @@
     const getCurrentSessionToken = typeof options.getCurrentSessionToken === 'function'
       ? options.getCurrentSessionToken
       : () => currentSessionToken;
+    const getCurrentPresentationMetadata = typeof options.getCurrentPresentationMetadata === 'function'
+      ? options.getCurrentPresentationMetadata
+      : () => options.currentPresentationMetadata;
+    const resolveMergedPresentationPersistenceOptions = typeof options.resolveMergedPresentationPersistenceOptions === 'function'
+      ? options.resolveMergedPresentationPersistenceOptions
+      : null;
+    const resolvePresentationPersistenceOptions = typeof options.resolvePresentationPersistenceOptions === 'function'
+      ? options.resolvePresentationPersistenceOptions
+      : null;
+    const mergePresentationPersistenceOptions = typeof options.mergePresentationPersistenceOptions === 'function'
+      ? options.mergePresentationPersistenceOptions
+      : null;
     const createHandlerOptions = typeof options.createHandlerOptions === 'function'
       ? options.createHandlerOptions
       : null;
@@ -94,6 +106,7 @@
     let saveRequestBodyBuilder = null;
     let reusablePersistedHtmlSanitizer = null;
     let persistableDeckSanitizerOptionsBuilder = null;
+    let metadataPersistenceOptionsResolver = null;
     let playbackStateCapturer = null;
     let persistableDeckStateCapturer = null;
     let persistenceStateFromCaptureResolver = null;
@@ -292,6 +305,29 @@
       }
       return typeof persistableDeckSanitizerOptionsBuilder === 'function'
         ? persistableDeckSanitizerOptionsBuilder(playbackState, nextOptions)
+        : null;
+    }
+
+    function createMetadataPersistenceOptionsResolver() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorMetadataPersistenceOptionsAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorMetadataPersistenceOptionsAdapter({
+        persistenceApi,
+        getCurrentPresentationMetadata,
+        resolveMergedPresentationPersistenceOptions,
+        resolvePresentationPersistenceOptions,
+        mergePresentationPersistenceOptions
+      });
+    }
+
+    function resolveMetadataPersistenceOptions(nextOptions = {}) {
+      if (typeof metadataPersistenceOptionsResolver !== 'function') {
+        metadataPersistenceOptionsResolver = createMetadataPersistenceOptionsResolver();
+      }
+      return typeof metadataPersistenceOptionsResolver === 'function'
+        ? metadataPersistenceOptionsResolver(nextOptions)
         : null;
     }
 
@@ -587,6 +623,7 @@
       buildSaveRequestBody,
       sanitizeReusablePersistedHtml,
       buildPersistableDeckSanitizerOptions,
+      resolveMetadataPersistenceOptions,
       getPersistedActiveSlideId,
       capturePersistedDeckPlaybackState,
       capturePersistableDeckState,
