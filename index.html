@@ -9195,6 +9195,26 @@
     }
 
     function applyWallpaperToAllSlides() {
+      const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'
+        ? SlideNextStudioEditorWallpaperController
+        : null;
+      if (wallpaperController
+        && typeof wallpaperController.applyStudioWallpaperToAllSlides === 'function') {
+        return wallpaperController.applyStudioWallpaperToAllSlides({
+          resolveActionState: resolveCurrentStudioWallpaperActionState,
+          getIframeDocument: getIframeDoc,
+          wallpaperView: typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          getSlides,
+          applyMutation: applyEditorWallpaperSlidesMutationWithTransaction,
+          getSlideId: (slide) => typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(slide)
+            : '',
+          finalizeMutation: finalizeWallpaperMutation,
+          alertRef: typeof alert === 'function' ? alert : null
+        });
+      }
       const iframeDoc = getIframeDoc();
       const actionState = resolveCurrentStudioWallpaperActionState(iframeDoc);
       if (!actionState.canUseWallpaperControls) return false;

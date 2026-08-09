@@ -79,8 +79,54 @@ test('wallpaper controller skips unchanged paints and unavailable decks', () => 
   assert.equal(mutationCalls, 0);
 });
 
+test('wallpaper controller applies the active paint to all slides and alerts after finalization', () => {
+  const calls = [];
+  const slides = [{ id: 'slide-1' }, { id: 'slide-2' }];
+  const mutation = { didChange: true, transaction: { id: 'tx-all' } };
+  const result = controller.applyStudioWallpaperToAllSlides({
+    resolveActionState() {
+      return {
+        canUseWallpaperControls: true,
+        activeSlide: { style: { background: '#111111' } }
+      };
+    },
+    getIframeDocument() {
+      return { id: 'iframe-doc' };
+    },
+    wallpaperView: {
+      resolveStudioActiveSlideBackgroundPaint() {
+        return '#111111';
+      }
+    },
+    getSlides(documentRef) {
+      calls.push(['slides', documentRef]);
+      return slides;
+    },
+    applyMutation(nextSlides, background, options) {
+      calls.push(['mutation', nextSlides, background, options.sourceDocument, options.getSlideId(slides[0])]);
+      return mutation;
+    },
+    getSlideId(slide) {
+      return slide.id;
+    },
+    finalizeMutation(...args) {
+      calls.push(['finalize', ...args]);
+    },
+    alertRef(message) {
+      calls.push(['alert', message]);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(calls.map(([name]) => name), ['slides', 'mutation', 'finalize', 'alert']);
+  assert.equal(calls[1][2], '#111111');
+  assert.deepEqual(calls[2].slice(1), ['Auto: Applied Background to All Slides', mutation.transaction]);
+  assert.match(calls[3][1], /all slides/);
+});
+
 test('index routes normal preset wallpaper actions through the shared controller seam', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-wallpaper-controller\.js"/);
   assert.match(source, /wallpaperController\.applyStudioPresetWallpaper/);
+  assert.match(source, /wallpaperController\.applyStudioWallpaperToAllSlides/);
 });
