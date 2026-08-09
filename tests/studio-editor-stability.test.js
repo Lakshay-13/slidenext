@@ -1539,7 +1539,8 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
           top: '',
           width: '',
           height: ''
-        }
+        },
+        isPrePositioned: true
       }]
     }
   }, {

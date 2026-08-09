@@ -752,7 +752,7 @@
     const draggingClassName = options.draggingClassName || 'editor-dragging';
     const overlayDraggingClassName = options.overlayDraggingClassName || 'drag-preview';
     const items = Array.isArray(session.items) ? session.items : [];
-    if (items.some((item) => item && item.isPrePositioned === false)) {
+    if (items.some((item) => item && item.isPrePositioned !== true)) {
       return {
         didMaterialize: false,
         session
@@ -1052,7 +1052,7 @@
       const element = item && item.element;
       const style = element && element.style ? element.style : null;
       const nodeId = getElementId(element);
-      if (item && item.isPrePositioned === false) return null;
+      if (item && item.isPrePositioned !== true) return null;
       const left = parsePixelValue(style && style.left);
       const top = parsePixelValue(style && style.top);
       if (!nodeId || left === null || top === null) return null;

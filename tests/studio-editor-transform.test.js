@@ -109,7 +109,8 @@ test('buildStudioTransformCanonicalLayoutUpdates derives absolute positions and 
       items: [{
         element,
         parentOffsetLeft: 20,
-        parentOffsetTop: 10
+        parentOffsetTop: 10,
+        isPrePositioned: true
       }]
     }
   }), [{
@@ -1326,7 +1327,8 @@ test('materializeStudioTransformSession applies absolute positioning state only 
       parentOffsetLeft: 40,
       parentOffsetTop: 20,
       lockWidth: true,
-      lockHeight: false
+      lockHeight: false,
+      isPrePositioned: true
     }],
     overlay
   };
@@ -1369,6 +1371,24 @@ test('materializeStudioTransformSession fails closed for normal-flow items', () 
   assert.equal(session.materialized, false);
 });
 
+test('materializeStudioTransformSession fails closed when positioning metadata is missing', () => {
+  const element = {
+    style: { position: 'relative' },
+    classList: createClassList()
+  };
+  const session = {
+    materialized: false,
+    items: [{ element }]
+  };
+
+  assert.deepEqual(transformState.materializeStudioTransformSession(session), {
+    didMaterialize: false,
+    session
+  });
+  assert.equal(element.style.position, 'relative');
+  assert.equal(session.materialized, false);
+});
+
 test('buildStudioTransformCanonicalLayoutUpdates ignores normal-flow items', () => {
   const element = {
     dataset: { editorId: 'flow-node' },
@@ -1378,6 +1398,19 @@ test('buildStudioTransformCanonicalLayoutUpdates ignores normal-flow items', () 
   assert.deepEqual(transformState.buildStudioTransformCanonicalLayoutUpdates({
     session: {
       items: [{ element, isPrePositioned: false }]
+    }
+  }), []);
+});
+
+test('buildStudioTransformCanonicalLayoutUpdates ignores items without positioning metadata', () => {
+  const element = {
+    dataset: { editorId: 'unknown-node' },
+    style: { left: '120px', top: '80px' }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformCanonicalLayoutUpdates({
+    session: {
+      items: [{ element }]
     }
   }), []);
 });
@@ -1439,7 +1472,8 @@ test('progressStudioTransformSession applies drag threshold gating before contin
       parentOffsetLeft: 40,
       parentOffsetTop: 20,
       lockWidth: false,
-      lockHeight: false
+      lockHeight: false,
+      isPrePositioned: true
     }],
     overlay
   };
