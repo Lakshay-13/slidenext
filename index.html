@@ -2313,7 +2313,7 @@
           sanitizeDuplicatedSubtree: (...args) => sanitizeDuplicatedSubtree(...args),
           assignSlideId: (...args) => assignEditorSlideId(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
+          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()

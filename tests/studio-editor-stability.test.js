@@ -431,6 +431,28 @@ test('slide deletion wiring prefers live canonical state and keeps a legacy base
   );
 });
 
+test('slide duplication wiring prefers live canonical state and keeps a legacy baseline fallback', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const controllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideDuplicationController =',
+    'const studioEditorSlideMetadataController ='
+  );
+
+  assert.match(
+    controllerSource,
+    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+  );
+  assert.match(
+    controllerSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
+  );
+  assert.doesNotMatch(
+    controllerSource,
+    /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
+  );
+});
+
 test('deck mutation finalizer wiring uses the DOM mutation canonical builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(

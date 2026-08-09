@@ -51,6 +51,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -81,6 +84,7 @@
           ? canonicalSlideApi.createStudioCanonicalDuplicateSlideMutationBuilders({
               canonicalDeckApi,
               buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
               getCanonicalDeckBaseline,
               importSlideToCanonicalSlide
             })
