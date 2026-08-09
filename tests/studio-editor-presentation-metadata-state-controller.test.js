@@ -34,7 +34,10 @@ test('editor wires presentation metadata reads and writes through the controller
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-presentation-metadata-state-controller\.js/);
+  assert.match(source, /studio-editor-presentation-metadata-store\.js/);
+  assert.match(source, /studioEditorPresentationMetadataStateStore/);
   assert.match(source, /getStudioCurrentPresentationMetadata\(\)/);
   assert.match(source, /setStudioCurrentPresentationMetadata\(/);
+  assert.doesNotMatch(source, /const studioEditorPresentationMetadataStateController =/);
   assert.doesNotMatch(source, /\blet currentPresentationMetadata\b/);
 });
