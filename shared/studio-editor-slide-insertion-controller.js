@@ -71,16 +71,21 @@
         && typeof deckImportApi.importSlideToCanonicalSlide === 'function'
         ? deckImportApi.importSlideToCanonicalSlide
         : null;
-      const canonicalAddSlideBuilders = canonicalSlideApi
-        && typeof canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders === 'function'
-        ? canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            getCanonicalDeckBaseline,
-            importSlideToCanonicalSlide,
-            getSlideId
-          })
-        : null;
+      let canonicalAddSlideBuilders = null;
+      try {
+        canonicalAddSlideBuilders = canonicalSlideApi
+          && typeof canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders === 'function'
+          ? canonicalSlideApi.createStudioCanonicalAddSlideMutationBuilders({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              getCanonicalDeckBaseline,
+              importSlideToCanonicalSlide,
+              getSlideId
+            })
+          : null;
+      } catch (error) {
+        return false;
+      }
 
       return addStudioSlideNode({
         getIframeDoc,

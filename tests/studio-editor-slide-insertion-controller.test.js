@@ -62,3 +62,23 @@ test('slide insertion controller fails closed without a slide-command adapter', 
 
   assert.equal(controller.add(), false);
 });
+
+test('slide insertion controller fails closed when canonical builder construction throws', () => {
+  let addCalls = 0;
+  const controller = insertionController.createStudioEditorSlideInsertionController({
+    slideCommandsApi: {
+      addStudioSlideNode() {
+        addCalls += 1;
+        return true;
+      }
+    },
+    canonicalSlideApi: {
+      createStudioCanonicalAddSlideMutationBuilders() {
+        throw new Error('canonical builder unavailable');
+      }
+    }
+  });
+
+  assert.equal(controller.add(), false);
+  assert.equal(addCalls, 0);
+});
