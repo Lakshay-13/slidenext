@@ -973,8 +973,8 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
     setActiveSlide() {},
     bindDeckNavigationSync() {},
     observeDeckActiveSlideState() {},
-    saveHistoryState(shouldDebounce) {
-      calls.push(['saveHistoryState', shouldDebounce]);
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
     },
     capturePersistedDeckPlaybackState(doc) {
       assert.equal(doc, iframeDoc);
@@ -1039,8 +1039,14 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   context.initStudioFrame();
 
   assert.deepEqual(calls.map(([name]) => name), [
+    'buildPersistableDeckHtml',
+    'saveHistoryState'
+  ]);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[1])), [
     'saveHistoryState',
-    'buildPersistableDeckHtml'
+    false,
+    null,
+    canonicalDeck
   ]);
   assert.deepEqual(JSON.parse(JSON.stringify(capturedActionContextArgs)), {
     nextPersistedDeckState: {

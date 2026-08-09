@@ -4352,8 +4352,12 @@
         bindDeckNavigationSync,
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
-          saveHistoryState(false);
           const initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+          if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
+            saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+          } else {
+            saveHistoryState(false);
+          }
           applyCurrentStudioPersistenceSuccess(
             SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
               initialPersistedDeckState,
