@@ -117,7 +117,10 @@ test('shared master-slide state sync updates controls before rendering the libra
   assert.equal(controls.masterSlideNameInput.disabled, true);
   assert.equal(controls.masterSlideSelect.disabled, true);
   assert.equal(controls.applyMasterSlideBtn.disabled, true);
-  assert.equal(list.children[0].textContent, 'No master layouts saved');
+  assert.equal(
+    list.children[0].textContent,
+    'No master layouts saved. Save the active slide as a master layout.'
+  );
 });
 
 test('master layout actions delegate save, apply, and removal to the controller', () => {

@@ -36,7 +36,7 @@
     list.textContent = '';
     if (normalizedMasterSlides.length === 0) {
       const emptyState = documentRef.createElement('span');
-      emptyState.textContent = 'No master layouts saved';
+      emptyState.textContent = 'No master layouts saved. Save the active slide as a master layout.';
       list.appendChild(emptyState);
       return true;
     }
