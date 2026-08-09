@@ -222,11 +222,17 @@
 
       const slideMetrics = getSlideMetrics(ungroupActionState.slide);
       const getUngroupElementId = (element) => assignElementId(element);
+      let canonicalUngroupBuilders;
+      try {
+        canonicalUngroupBuilders = createCanonicalUngroupBuilders();
+      } catch (error) {
+        return false;
+      }
       const {
         importElementToCanonicalNode,
         buildCanonicalUngroupDeck,
         buildCanonicalUngroupBaseline
-      } = createCanonicalUngroupBuilders();
+      } = canonicalUngroupBuilders;
       let canonicalDeckBeforeUngrouping = null;
       let canonicalGroupTargets = [];
       if (buildCanonicalUngroupDeck

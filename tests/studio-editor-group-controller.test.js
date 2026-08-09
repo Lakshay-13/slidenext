@@ -183,3 +183,29 @@ test('group controller fails closed when canonical builder construction throws',
   assert.equal(controller.group(), false);
   assert.equal(groupCalls, 0);
 });
+
+test('ungroup controller fails closed when canonical builder construction throws', () => {
+  let ungroupCalls = 0;
+  const slide = { id: 'slide-1' };
+  const group = { id: 'group-1', parentElement: slide };
+  const controller = groupController.createStudioEditorGroupController({
+    canonicalGroupApi: {
+      createStudioCanonicalUngroupMutationBuilders() {
+        throw new Error('canonical ungroup builders unavailable');
+      }
+    },
+    buildUngroupSelectionActionState: () => ({
+      canUngroup: true,
+      slide,
+      groups: [group]
+    }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    applyUngroupMutation: () => {
+      ungroupCalls += 1;
+      return { didApply: true, restoredElements: [], restoredGroups: [], transaction: null };
+    }
+  });
+
+  assert.equal(controller.ungroup(), false);
+  assert.equal(ungroupCalls, 0);
+});
