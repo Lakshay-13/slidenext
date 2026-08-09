@@ -7043,6 +7043,19 @@
       if (!groupApi || typeof groupApi.syncStudioGroupToolbarState !== 'function') {
         return false;
       }
+      if (typeof groupApi.createStudioGroupToolbarStateSync === 'function') {
+        if (typeof updateGroupActionState.sync !== 'function') {
+          updateGroupActionState.sync = groupApi.createStudioGroupToolbarStateSync({
+            getDocument: () => getIframeDoc(),
+            getGroupActionState: (sourceDoc) => buildGroupSelectionActionState(sourceDoc),
+            getUngroupActionState: (sourceDoc) => buildUngroupSelectionActionState(sourceDoc),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateGroupActionState.sync === 'function') {
+          return updateGroupActionState.sync(doc);
+        }
+      }
       const groupState = buildGroupSelectionActionState(doc);
       const ungroupState = buildUngroupSelectionActionState(doc);
       return groupApi.syncStudioGroupToolbarState({

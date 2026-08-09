@@ -282,6 +282,57 @@ test('syncStudioGroupToolbarState builds and renders group controls in one share
   assert.equal(buttons.ungroupSelectionBtn.disabled, true);
 });
 
+test('createStudioGroupToolbarStateSync resolves group and ungroup readiness through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const buttons = {
+    groupSelectionBtn: { disabled: true },
+    ungroupSelectionBtn: { disabled: true }
+  };
+  const calls = [];
+  const syncToolbar = group.createStudioGroupToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getGroupActionState(currentDoc) {
+      calls.push(['group-state', currentDoc]);
+      return { canGroup: true };
+    },
+    getUngroupActionState(currentDoc) {
+      calls.push(['ungroup-state', currentDoc]);
+      return { canUngroup: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return buttons[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.equal(buttons.groupSelectionBtn.disabled, false);
+  assert.equal(buttons.ungroupSelectionBtn.disabled, false);
+  assert.deepEqual(calls, [
+    'document',
+    ['group-state', doc],
+    ['ungroup-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioGroupToolbarStateSync fails closed when a readiness resolver throws', () => {
+  const syncToolbar = group.createStudioGroupToolbarStateSync({
+    getGroupActionState() {
+      throw new Error('group state unavailable');
+    }
+  });
+
+  assert.equal(syncToolbar(), false);
+});
+
 test('applyStudioGroupMutation wraps ordered children and captures the parent markup transaction', () => {
   const first = { style: {}, parentElement: null };
   const second = { style: {}, parentElement: null };

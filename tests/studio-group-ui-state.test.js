@@ -115,6 +115,55 @@ test('updateGroupActionState delegates toolbar state assembly to the shared grou
   assert.equal(calls[0].canUngroup, false);
 });
 
+test('updateGroupActionState caches the shared group toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateGroupActionState(doc = getIframeDoc()) {',
+    '\n\n    function isEditorGroupElement(element) {'
+  );
+  const doc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    buildGroupSelectionActionState(currentDoc) {
+      calls.push(['group-state', currentDoc]);
+      return { canGroup: true };
+    },
+    buildUngroupSelectionActionState(currentDoc) {
+      calls.push(['ungroup-state', currentDoc]);
+      return { canUngroup: false };
+    },
+    SlideNextStudioEditorGroup: {
+      syncStudioGroupToolbarState() {
+        throw new Error('direct group sync should not run');
+      },
+      createStudioGroupToolbarStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          const groupState = options.getGroupActionState(currentDoc);
+          const ungroupState = options.getUngroupActionState(currentDoc);
+          return groupState.canGroup && !ungroupState.canUngroup;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateGroupActionState(doc), true);
+  assert.equal(context.updateGroupActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'group-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
+  assert.deepEqual(calls.filter(([name]) => name === 'ungroup-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
+
 test('updateGroupActionState fails closed when the shared group view is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

@@ -260,6 +260,36 @@
     });
   }
 
+  function createStudioGroupToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getGroupActionState = typeof options.getGroupActionState === 'function'
+      ? options.getGroupActionState
+      : () => ({ canGroup: false });
+    const getUngroupActionState = typeof options.getUngroupActionState === 'function'
+      ? options.getUngroupActionState
+      : () => ({ canUngroup: false });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorGroupToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      try {
+        const groupActionState = getGroupActionState(resolvedDoc) || {};
+        const ungroupActionState = getUngroupActionState(resolvedDoc) || {};
+        return renderStudioGroupToolbarState({
+          documentRef: getDocumentRef(),
+          canGroup: !!groupActionState.canGroup,
+          canUngroup: !!ungroupActionState.canUngroup
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function buildStudioUngroupedLayout(groupBounds = {}, items = []) {
     const layoutItems = Array.isArray(items) ? items : [];
     if (!Number.isFinite(groupBounds.left)
@@ -511,6 +541,7 @@
     buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
     syncStudioGroupToolbarState,
+    createStudioGroupToolbarStateSync,
     buildStudioUngroupedLayout,
     applyStudioGroupMutation,
     applyStudioUngroupMutation
