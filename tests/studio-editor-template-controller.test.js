@@ -351,3 +351,35 @@ test('template controller fails closed when inserting a template canonical mutat
   assert.equal(controller.insertTemplate('hero-template'), false);
   assert.equal(didApply, false);
 });
+
+test('template controller fails closed when rendering an inserted template slide throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let didApply = false;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        throw new Error('template slide rendering failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {};
+      }
+    }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [],
+    applyInsertion() {
+      didApply = true;
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.equal(didApply, false);
+});
