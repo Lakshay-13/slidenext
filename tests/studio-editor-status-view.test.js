@@ -71,6 +71,32 @@ test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', ()
   assert.match(statusEl.title, /Additional warnings not shown/);
 });
 
+test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progress', () => {
+  const statusEl = { innerHTML: '', title: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatusWithWarningCount({
+    documentRef,
+    state: 'exported-with-warnings',
+    warningCount: 2,
+    warnings: ['Missing asset'],
+    warningsTruncated: false
+  }), true);
+  assert.match(statusEl.innerHTML, /PPTX Exported with warnings \(2\)/);
+  assert.match(statusEl.title, /Missing asset/);
+
+  assert.equal(statusView.setStudioAutoSaveStatusWithWarningCount({
+    documentRef,
+    state: 'exporting-pdf',
+    warningCount: { percent: 60 }
+  }), true);
+  assert.match(statusEl.innerHTML, /Exporting PDF 60%/);
+});
+
 test('setStudioSaveButtonState renders saving and idle version states', () => {
   const saveBtn = { disabled: false, innerHTML: '<span>Save Version</span>' };
   const documentRef = {

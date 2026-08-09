@@ -59,6 +59,19 @@
     return true;
   }
 
+  function setStudioAutoSaveStatusWithWarningCount(options = {}) {
+    const progress = options.warningCount && typeof options.warningCount === 'object'
+      ? options.warningCount
+      : null;
+    return setStudioAutoSaveStatus({
+      ...options,
+      warningCount: progress ? 0 : options.warningCount,
+      warnings: progress ? [] : options.warnings,
+      warningsTruncated: progress ? false : options.warningsTruncated,
+      progressPercent: progress ? progress.percent : options.progressPercent
+    });
+  }
+
   function setStudioSaveButtonState(options = {}) {
     const documentRef = options.documentRef;
     const saveBtn = documentRef && typeof documentRef.getElementById === 'function'
@@ -77,5 +90,9 @@
     return true;
   }
 
-  return { setStudioAutoSaveStatus, setStudioSaveButtonState };
+  return {
+    setStudioAutoSaveStatus,
+    setStudioAutoSaveStatusWithWarningCount,
+    setStudioSaveButtonState
+  };
 });

@@ -11095,17 +11095,13 @@
       const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
         ? SlideNextStudioEditorStatusView
         : null;
-      if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
-      const progress = warningCount && typeof warningCount === 'object'
-        ? warningCount
-        : null;
-      return statusView.setStudioAutoSaveStatus({
+      if (!statusView || typeof statusView.setStudioAutoSaveStatusWithWarningCount !== 'function') return false;
+      return statusView.setStudioAutoSaveStatusWithWarningCount({
         documentRef: document,
         state,
-        warningCount: progress ? 0 : warningCount,
-        warnings: progress ? [] : warnings,
-        warningsTruncated: progress ? false : warningsTruncated,
-        progressPercent: progress ? progress.percent : null
+        warningCount,
+        warnings,
+        warningsTruncated
       });
     }
 
