@@ -1412,6 +1412,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
+  <script src="/shared/studio-editor-frame-controller.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
@@ -3235,6 +3236,63 @@
           navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
         })
       : null;
+    const studioEditorFrameController = typeof SlideNextStudioEditorFrameController !== 'undefined'
+      && SlideNextStudioEditorFrameController
+      && typeof SlideNextStudioEditorFrameController.createStudioEditorFrameController === 'function'
+      ? SlideNextStudioEditorFrameController.createStudioEditorFrameController({
+          getIframeDocument: getIframeDoc,
+          resetLiveCanonicalDeck: () => {
+            if (typeof resetEditorLiveCanonicalDeck === 'function') {
+              resetEditorLiveCanonicalDeck();
+            }
+          },
+          syncIframeTheme,
+          editorStyleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
+            ? SlideNextStudioEditorStyle
+            : null,
+          makeElementsHoverable,
+          frameInteractions: studioEditorFrameInteractions,
+          frameBootstrapApi: typeof SlideNextStudioFrameBootstrap !== 'undefined'
+            ? SlideNextStudioFrameBootstrap
+            : null,
+          setupIframeDragging,
+          generateThumbnails,
+          syncStudioChromeToActiveSlide,
+          setActiveSlide,
+          bindDeckNavigationSync,
+          observeDeckActiveSlideState,
+          captureInitialHistoryState: (iframeDoc) => {
+            const initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
+            if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
+              saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+            } else {
+              saveHistoryState(false);
+            }
+            applyCurrentStudioPersistenceSuccess(
+              SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
+                initialPersistedDeckState,
+                getStudioCurrentPresentationUrl(),
+                {
+                  sessionToken: getStudioEditorSessionToken()
+                }
+              ),
+              {
+                presentationUrl: getStudioCurrentPresentationUrl()
+              }
+            );
+            if (typeof setEditorLiveCanonicalDeck === 'function') {
+              setEditorLiveCanonicalDeck(
+                initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
+                iframeDoc,
+                getStudioEditorSessionToken()
+              );
+            }
+          },
+          updateDeckReadyToolbarActionState,
+          setStudioAutoSaveStatus,
+          syncInspectorForSelection
+        })
+      : null;
     const studioEditorThemeController = typeof SlideNextStudioEditorThemeController !== 'undefined'
       && SlideNextStudioEditorThemeController
       && typeof SlideNextStudioEditorThemeController.createStudioEditorThemeController === 'function'
@@ -4323,6 +4381,11 @@
 
     // Initialize Frame Hooks
     function initStudioFrame() {
+      if (typeof studioEditorFrameController !== 'undefined'
+        && studioEditorFrameController
+        && typeof studioEditorFrameController.init === 'function') {
+        return studioEditorFrameController.init();
+      }
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
         resetEditorLiveCanonicalDeck();
       }
