@@ -165,10 +165,7 @@ test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requ
       canonicalDeck: canonicalDeckModel.createCanonicalDeck(canonicalDeck)
     }
   );
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(canonicalBuildOptions)),
-    { preferLiveCanonicalDeck: false }
-  );
+  assert.equal(canonicalBuildOptions, undefined);
 });
 
 test('buildEditorSaveRequestBody creates the shared save adapter once', () => {
@@ -5927,10 +5924,7 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
     }
   );
   assert.equal(buildEditorCanonicalDeckCalls, 1);
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(canonicalBuildOptions)),
-    { preferLiveCanonicalDeck: false }
-  );
+  assert.equal(canonicalBuildOptions, undefined);
 });
 
 test('buildPersistableDeckHtml reports the resolved live canonical deck when requested', () => {
@@ -5995,10 +5989,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   );
   assert.equal(reportedCanonicalDeck, canonicalDeck);
   assert.equal(buildEditorCanonicalDeckCalls, 1);
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(canonicalBuildOptions)),
-    { preferLiveCanonicalDeck: false }
-  );
+  assert.equal(canonicalBuildOptions, undefined);
 });
 
 test('buildPersistableDeckHtml reports canonical deck and playback state for live iframe persistence', () => {

@@ -10300,7 +10300,7 @@
       const sharedBuildFromDocumentOptions = {
         resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
           || (shouldReportCanonicalDeck
-            ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
+            ? buildEditorCanonicalDeck(doc)
             : null),
         resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
         onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
@@ -10392,7 +10392,7 @@
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
         || (shouldReportCanonicalDeck
-          ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
+          ? buildEditorCanonicalDeck(doc)
           : null);
       const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
       if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
@@ -10621,9 +10621,7 @@
             : null,
           captureBuildState: captureEditorPersistableDeckBuildState,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         });
@@ -10654,9 +10652,7 @@
                 : null,
               captureBuildState: captureEditorPersistableDeckBuildState,
               buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-                  preferLiveCanonicalDeck: false
-                })
+                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
               }),
               resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
             })
@@ -10688,9 +10684,7 @@
           ),
           captureBuildState: captureEditorPersistableDeckBuildState,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         })(doc, {
@@ -10710,9 +10704,7 @@
           canonicalDeck: providedCanonicalDeck,
           captureBuildState: captureEditorPersistableDeckBuildState,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         });
@@ -10733,9 +10725,7 @@
             ? capturedBuildState.playbackState
             : undefined,
           buildCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
           }),
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         }
@@ -10773,9 +10763,7 @@
             slideIdAttr: EDITOR_SLIDE_ID_ATTR,
             resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => resolveEditorFallbackActiveSlideId(
               nextDoc,
-              nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc, {
-                preferLiveCanonicalDeck: false
-              })
+              nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc)
             )
           });
         }
@@ -10829,9 +10817,7 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc, {
-                  preferLiveCanonicalDeck: false
-                })
+                canonicalDeck || buildEditorCanonicalDeck(doc)
               )
             : null
         })(doc);
@@ -10872,9 +10858,7 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc, {
-                  preferLiveCanonicalDeck: false
-                })
+                canonicalDeck || buildEditorCanonicalDeck(doc)
               )
             : null
         });
@@ -10894,9 +10878,7 @@
           resolveFallbackActiveSlideId: doc
             ? () => resolveEditorFallbackActiveSlideId(
                 doc,
-                canonicalDeck || buildEditorCanonicalDeck(doc, {
-                  preferLiveCanonicalDeck: false
-                })
+                canonicalDeck || buildEditorCanonicalDeck(doc)
               )
             : null
         });
@@ -10920,9 +10902,7 @@
         return ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
           resolveFallbackActiveSlideId: () => resolveEditorFallbackActiveSlideId(
             doc,
-            canonicalDeck || buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            canonicalDeck || buildEditorCanonicalDeck(doc)
           )
         });
       }
@@ -10936,9 +10916,7 @@
 
       const fallbackActiveSlideId = resolveEditorFallbackActiveSlideId(
         doc,
-        canonicalDeck || buildEditorCanonicalDeck(doc, {
-          preferLiveCanonicalDeck: false
-        })
+        canonicalDeck || buildEditorCanonicalDeck(doc)
       );
       if (!fallbackActiveSlideId) {
         return playbackState;
@@ -10974,9 +10952,7 @@
             : (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
                 nextCanonicalDeck,
                 {
-                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
-                    preferLiveCanonicalDeck: false
-                  })
+                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
                 }
               ),
           buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
@@ -11015,9 +10991,7 @@
             : (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
                 nextCanonicalDeck,
                 {
-                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
-                    preferLiveCanonicalDeck: false
-                  })
+                  buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
                 }
               ),
           buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
@@ -11062,9 +11036,7 @@
           resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
             nextCanonicalDeck,
             {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
-                preferLiveCanonicalDeck: false
-              })
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
             }
           ),
           buildPersistableDeckHtml
@@ -11087,9 +11059,7 @@
           resolveCanonicalDeck: (nextCanonicalDeck, nextDoc = doc) => resolveEditorCanonicalDeckOverride(
             nextCanonicalDeck,
             {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc, {
-                preferLiveCanonicalDeck: false
-              })
+              buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
             }
           ),
           buildPersistableDeckHtml
@@ -11113,9 +11083,7 @@
       const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
         ? capturedDeckState.canonicalDeck
         : resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc, {
-              preferLiveCanonicalDeck: false
-            })
+            buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
           });
       const resolvedCleanHtml = typeof cleanHtml === 'string'
         ? cleanHtml

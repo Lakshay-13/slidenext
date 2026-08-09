@@ -462,10 +462,7 @@ test('captureEditorPersistableDeckState delegates capture orchestration through 
   assert.equal(typeof delegatedArgs.captureBuildState, 'function');
   assert.equal(typeof delegatedArgs.buildCanonicalDeck, 'function');
   assert.equal(typeof delegatedArgs.resolvePlaybackState, 'function');
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(canonicalBuildOptions)),
-    { preferLiveCanonicalDeck: false }
-  );
+  assert.equal(canonicalBuildOptions, undefined);
 });
 
 test('captureEditorPersistableDeckState creates the shared capture adapter once', () => {
