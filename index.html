@@ -1555,6 +1555,7 @@
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-controller.js"></script>
+  <script src="/shared/studio-editor-version-delete-controller.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
@@ -12974,6 +12975,23 @@
     }
 
     async function deleteVersion(filename) {
+      const versionDeleteController = typeof SlideNextStudioEditorVersionDeleteController !== 'undefined'
+        ? SlideNextStudioEditorVersionDeleteController
+        : null;
+      if (versionDeleteController
+        && typeof versionDeleteController.deleteStudioVersion === 'function') {
+        return versionDeleteController.deleteStudioVersion({
+          filename,
+          confirmAction: confirm,
+          createVersionActionContext: createCurrentStudioVersionActionContext,
+          versionActionsApi: SlideNextStudioVersionActions,
+          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+          applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
+          applyFailure: applyCurrentStudioVersionActionFailure,
+          refreshVersionEntries: loadVersions,
+          alertAction: alert
+        });
+      }
       if (!confirm('Are you sure you want to delete this version? This action cannot be undone.')) {
         return;
       }
