@@ -127,6 +127,22 @@ test('block mutations require strict canonical baseline validation', () => {
   assert.equal(didUseFallback, true);
 });
 
+test('block mutations reject malformed fallback state without a canonical validator', () => {
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    isCanonicalDeck: undefined
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getCanonicalDeck: () => ({ invalid: true }),
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  assert.equal(controller.saveSelection({ id: 'invalid-block' }), null);
+});
+
 test('block controller fails closed when selection or dependencies are unavailable', () => {
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
