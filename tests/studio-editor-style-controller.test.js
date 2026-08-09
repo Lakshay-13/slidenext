@@ -145,6 +145,49 @@ test('style controller refreshes inspector and fails closed for unavailable edit
   assert.equal(syncCalls, 1);
 });
 
+test('style controller contains mutation-plan failures before touching the live selection', () => {
+  let applyCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan() {
+        throw new Error('inspector plan failed');
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    applyStyleMutation() {
+      applyCalls += 1;
+      return { didApply: true };
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.apply('color', '#fff'), false));
+  assert.equal(applyCalls, 0);
+});
+
+test('style controller contains injected mutation failures and skips finalization', () => {
+  let finalizeCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        assert.equal(options.canMutateDeck(), true);
+        return { canApply: true, selection: [{ id: 'node-1' }] };
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation() {
+      throw new Error('style adapter failed');
+    },
+    finalizeDeckMutation() {
+      finalizeCalls += 1;
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.apply('color', '#fff'), false));
+  assert.equal(finalizeCalls, 0);
+});
+
 test('style controller blocks canonical-locked elements even when the DOM is stale', () => {
   const element = { dataset: { editorId: 'node-1' } };
   const deck = canonicalDeck.createCanonicalDeck({

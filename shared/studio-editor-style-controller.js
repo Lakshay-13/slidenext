@@ -217,11 +217,17 @@
       if (!styleApi || typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
         return finalizeStyleActionResult(false);
       }
-      const doc = getIframeDoc();
-      const styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(), prop, value, {
-        isLocked: resolveLockedReader(doc),
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      let doc = null;
+      let styleMutationPlan = null;
+      try {
+        doc = getIframeDoc();
+        styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(), prop, value, {
+          isLocked: resolveLockedReader(doc),
+          canMutateDeck: () => !!getActiveSlide(doc)
+        });
+      } catch (error) {
+        return finalizeStyleActionResult(false);
+      }
       if (!styleMutationPlan || !styleMutationPlan.canApply) {
         return finalizeStyleActionResult(false);
       }
@@ -248,13 +254,18 @@
         return finalizeStyleActionResult(false);
       }
       const getStyleElementId = (element) => assignElementId(element);
-      const styleMutationResult = applyStyleMutation(
-        styleApi,
-        styleMutationPlan.selection,
-        prop,
-        value,
-        { getElementId: getStyleElementId }
-      );
+      let styleMutationResult = null;
+      try {
+        styleMutationResult = applyStyleMutation(
+          styleApi,
+          styleMutationPlan.selection,
+          prop,
+          value,
+          { getElementId: getStyleElementId }
+        );
+      } catch (error) {
+        return finalizeStyleActionResult(false);
+      }
       const transaction = styleMutationResult && styleMutationResult.transaction
         ? styleMutationResult.transaction
         : null;
