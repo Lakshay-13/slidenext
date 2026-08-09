@@ -115,16 +115,23 @@
       }
 
       const activeSlideId = getEditorSlideId(activeSlide) || '';
-      const canonicalInsertionBuilders = buildCanonicalInsertionBuilders();
-      const canonicalDeckBeforeInsertion = canonicalInsertionBuilders
-        && typeof canonicalInsertionBuilders.buildCanonicalInsertionBaseline === 'function'
-        ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            buildCanonicalDeckBaseline,
-            sourceDocument: iframeDoc
-          })
-        : null;
+      let canonicalInsertionBuilders = null;
+      let canonicalDeckBeforeInsertion = null;
+      try {
+        canonicalInsertionBuilders = buildCanonicalInsertionBuilders();
+        canonicalDeckBeforeInsertion = canonicalInsertionBuilders
+          && typeof canonicalInsertionBuilders.buildCanonicalInsertionBaseline === 'function'
+          ? canonicalInsertionBuilders.buildCanonicalInsertionBaseline({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
+              sourceDocument: iframeDoc
+            })
+          : null;
+      } catch (err) {
+        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        return false;
+      }
       const insertionLayoutMode = resolveCanonicalInsertionLayoutMode(
         canonicalDeckBeforeInsertion,
         activeSlideId

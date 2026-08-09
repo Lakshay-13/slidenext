@@ -130,3 +130,32 @@ test('element insertion controller refreshes insertion state when no active slid
   assert.equal(controller.insert('h2'), false);
   assert.deepEqual(calls, [doc]);
 });
+
+test('element insertion controller fails closed before DOM mutation when canonical baseline construction throws', () => {
+  let insertionCalls = 0;
+  const calls = [];
+  const doc = { id: 'doc' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            throw new Error('canonical insertion unavailable');
+          }
+        };
+      }
+    },
+    getIframeDoc: () => doc,
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: () => {
+      insertionCalls += 1;
+      return { element: { id: 'inserted' }, transaction: null };
+    },
+    updateInsertionActionState: (currentDoc) => calls.push(currentDoc)
+  });
+
+  assert.equal(controller.insert('h2'), false);
+  assert.equal(insertionCalls, 0);
+  assert.deepEqual(calls, [doc]);
+});
