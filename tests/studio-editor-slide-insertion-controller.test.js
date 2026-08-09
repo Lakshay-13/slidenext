@@ -5,6 +5,7 @@ const insertionController = require('../shared/studio-editor-slide-insertion-con
 test('slide insertion controller assembles canonical and editor mutation dependencies', () => {
   const calls = [];
   const liveCanonicalDeck = { id: 'live-baseline' };
+  const legacyCanonicalDeck = { slides: [] };
   const controller = insertionController.createStudioEditorSlideInsertionController({
     slideCommandsApi: {
       addStudioSlideNode(options) {
@@ -30,7 +31,8 @@ test('slide insertion controller assembles canonical and editor mutation depende
     resolveInsertionActionState: () => ({ canAddSlide: true }),
     getSlides: () => [{ id: 'slide-1' }],
     createBlankSlide: () => ({ id: 'slide-2' }),
-    buildCanonicalDeck: () => ({ slides: [] }),
+    buildCanonicalDeck: () => legacyCanonicalDeck,
+    buildCanonicalDeckBaseline: () => ({ id: 'baseline-fallback' }),
     getSlideId: (slide) => slide.id,
     saveHistoryState: () => {},
     applyInsertion: () => ({ didApply: true }),
@@ -43,6 +45,8 @@ test('slide insertion controller assembles canonical and editor mutation depende
   assert.equal(calls[0][0], 'builders');
   assert.equal(calls[0][1].canonicalDeckApi.id, 'canonical-api');
   assert.equal(typeof calls[0][1].importSlideToCanonicalSlide, 'function');
+  assert.equal(calls[0][1].buildCanonicalDeck({}), legacyCanonicalDeck);
+  assert.equal(calls[0][1].buildCanonicalDeckBaseline({}).id, 'baseline-fallback');
   assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
   const options = calls[1];
   assert.equal(options.getIframeDoc().id, 'doc');
