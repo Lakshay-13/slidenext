@@ -47,6 +47,36 @@ test('buildStudioCanonicalTransformBaseline prefers a valid live canonical deck'
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalTransformBaseline delegates baseline resolution to the shared canonical-state reader', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  const sourceDocument = { id: 'editor-doc' };
+  let readerOptions = null;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          assert.equal(documentRef, sourceDocument);
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeckBaseline() {
+      return null;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+  assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
+});
+
 test('buildStudioCanonicalTransformBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
   let didBuildFromDocument = false;
@@ -102,6 +132,18 @@ test('buildStudioCanonicalTransformBaseline uses structural validation without a
     }),
     validDeck
   );
+});
+
+test('buildStudioCanonicalTransformBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('legacy baseline failed');
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalTransformDeck applies canonical layout updates to the current model', () => {
