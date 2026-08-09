@@ -118,6 +118,37 @@ test('asset mutations reject malformed fallback state without a canonical valida
   assert.equal(controller.addAsset({ id: 'invalid-asset', src: '/invalid.png' }), null);
 });
 
+test('asset controller fails closed when adding an asset canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const calls = [];
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      appendCanonicalAsset() {
+        throw new Error('canonical asset add failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onAssetsChanged() {
+      calls.push('assets');
+    }
+  });
+
+  assert.equal(controller.addAsset({ id: 'broken-asset', src: '/broken.png' }), null);
+  assert.deepEqual(calls, []);
+});
+
 test('removeAsset commits unused asset removal and rejects referenced assets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [

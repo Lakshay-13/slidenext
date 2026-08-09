@@ -116,7 +116,15 @@
       if (!canonicalDeckApi || typeof canonicalDeckApi.appendCanonicalAsset !== 'function') {
         return null;
       }
-      const nextCanonicalDeck = canonicalDeckApi.appendCanonicalAsset(resolveCanonicalDeck(), assetLike);
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.appendCanonicalAsset(
+          resolveCanonicalDeck(),
+          assetLike
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
       const asset = nextCanonicalDeck.assets[nextCanonicalDeck.assets.length - 1] || null;
       return commitDeck(
