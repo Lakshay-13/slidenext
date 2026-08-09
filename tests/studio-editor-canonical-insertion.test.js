@@ -24,6 +24,31 @@ test('buildStudioCanonicalInsertionDeck imports and appends a new node without m
   assert.equal(sourceDeck.slides[0].nodes.length, 1);
 });
 
+test('buildStudioCanonicalInsertionDeck fails closed when the canonical append throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    appendCanonicalNode() {
+      throw new Error('canonical insertion failed');
+    }
+  };
+
+  const result = canonicalInsertion.buildStudioCanonicalInsertionDeck({
+    dataset: { editorId: 'inserted' }
+  }, {
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: sourceDeck,
+    slideId: 'slide-1',
+    importElementToCanonicalNode() {
+      return { id: 'inserted', text: 'Inserted' };
+    }
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalInsertionDeck fails closed when insertion dependencies are missing', () => {
   assert.equal(canonicalInsertion.buildStudioCanonicalInsertionDeck(null, {}), null);
   assert.equal(canonicalInsertion.buildStudioCanonicalInsertionDeck({ dataset: { editorId: 'inserted' } }, {

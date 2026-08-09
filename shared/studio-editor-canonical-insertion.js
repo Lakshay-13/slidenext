@@ -116,9 +116,13 @@
       return null;
     }
 
-    const canonicalNode = importElementToCanonicalNode(element, { getNodeId });
-    if (!canonicalNode) return null;
-    return appendCanonicalNode(canonicalDeckBeforeMutation, slideId, canonicalNode);
+    try {
+      const canonicalNode = importElementToCanonicalNode(element, { getNodeId });
+      if (!canonicalNode) return null;
+      return appendCanonicalNode(canonicalDeckBeforeMutation, slideId, canonicalNode);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalInsertionMutationBuilders(options = {}) {
