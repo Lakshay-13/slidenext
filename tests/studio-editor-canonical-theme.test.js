@@ -195,6 +195,26 @@ test('buildStudioCanonicalThemeDeck applies token updates to a supplied baseline
   assert.equal(sourceDeck.theme.tokens['--color-primary'], '#7028d0');
 });
 
+test('buildStudioCanonicalThemeDeck fails closed when the canonical theme mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalThemeTokens() {
+      throw new Error('canonical theme mutation failed');
+    }
+  };
+
+  const result = canonicalTheme.buildStudioCanonicalThemeDeck({
+    '--color-primary': '#10b981'
+  }, {
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1' }]
+    })
+  });
+
+  assert.equal(result, null);
+});
+
 test('createStudioCanonicalThemeMutationBuilders builds its baseline from the supplied document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     theme: { tokens: { '--color-primary': '#7028d0' } },

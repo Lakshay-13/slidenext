@@ -134,7 +134,11 @@
       : buildStudioCanonicalThemeBaseline(options);
 
     if (!updateCanonicalThemeTokens || !canonicalDeckBeforeMutation) return null;
-    return updateCanonicalThemeTokens(canonicalDeckBeforeMutation, tokenUpdates);
+    try {
+      return updateCanonicalThemeTokens(canonicalDeckBeforeMutation, tokenUpdates);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalThemeMutationBuilders(options = {}) {
