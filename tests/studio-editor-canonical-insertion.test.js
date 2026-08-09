@@ -117,6 +117,31 @@ test('buildStudioCanonicalInsertionBaseline delegates baseline resolution to the
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
 });
 
+test('buildStudioCanonicalInsertionBaseline prefers the shared canonical deck resolver', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let resolverOptions = null;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => sourceDeck;
+      },
+      createStudioEditorCanonicalDeckBaselineReader() {
+        throw new Error('legacy baseline reader should not be used');
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalInsertionBaseline prefers a valid live canonical deck', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;
