@@ -397,7 +397,12 @@
     }
 
     // The print flow needs the WindowProxy so it can write the prepared deck and call print().
-    const printWindow = openWindow('', '_blank');
+    let printWindow = null;
+    try {
+      printWindow = openWindow('', '_blank');
+    } catch (error) {
+      return false;
+    }
     if (!printWindow || !printWindow.document) {
       return false;
     }

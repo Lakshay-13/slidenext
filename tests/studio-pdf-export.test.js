@@ -685,4 +685,10 @@ test('openStudioPdfPrintWindow returns false when popup or html input is unavail
       return null;
     }
   }), false);
+  assert.doesNotThrow(() => assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html></html>',
+    openWindow() {
+      throw new Error('popup creation failed');
+    }
+  }), false));
 });
