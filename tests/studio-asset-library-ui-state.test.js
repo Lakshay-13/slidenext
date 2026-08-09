@@ -373,6 +373,59 @@ test('insertAssetToActiveSlide stamps the canonical asset before insertion', () 
   assert.equal(context.insertAssetToActiveSlide('missing'), false);
 });
 
+test('insertAssetToActiveSlide prefers live canonical asset metadata', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function addAssetToLibrary() {',
+    '\n\n    function nudgeSelectedElements'
+  );
+  const element = {
+    src: '',
+    setAttribute() {}
+  };
+  const doc = { id: 'live-doc' };
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    document: { getElementById() { return { value: '' }; } },
+    getIframeDoc() {
+      return doc;
+    },
+    getStudioEditorSessionToken() {
+      return 29;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 29);
+      return { assets: [{ id: 'live-hero', name: 'Live Hero', src: '/images/live-hero.png' }] };
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('DOM rebuild should not run when live asset metadata is available');
+    },
+    studioEditorElementInsertionController: {
+      insert(type, options) {
+        calls.push([type, options.versionLabel]);
+        options.prepareElement(element);
+        return true;
+      }
+    },
+    studioEditorAssetController: {
+      addAsset() { return null; },
+      removeAsset() { return false; },
+      applyAsset() { return false; }
+    },
+    updateAssetLibraryState() {}
+  };
+
+  vm.createContext(context);
+  runSourceWithCanonicalUi(source, context);
+
+  assert.equal(context.insertAssetToActiveSlide('live-hero'), true);
+  assert.deepEqual(calls, [['img', 'Auto: Inserted Asset "Live Hero"']]);
+  assert.equal(element.src, '/images/live-hero.png');
+});
+
 test('asset library state resolves relative previews against the current presentation', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

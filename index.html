@@ -8417,9 +8417,11 @@
 
     function insertAssetToActiveSlide(assetId) {
       const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(getIframeDoc())
-        : null;
+      const canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+        ? resolveEditorUiCanonicalDeck(getIframeDoc())
+        : typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck(getIframeDoc())
+          : null;
       const asset = canonicalDeck && Array.isArray(canonicalDeck.assets)
         ? canonicalDeck.assets.find((candidate) => candidate && candidate.id === normalizedAssetId)
         : null;
