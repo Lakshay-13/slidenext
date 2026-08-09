@@ -145,7 +145,13 @@
         nextCanonicalDeck.masterSlides
       );
       if (!nextSlideElement) return false;
-      if (prepareSlide) prepareSlide(nextSlideElement);
+      if (prepareSlide) {
+        try {
+          prepareSlide(nextSlideElement);
+        } catch (err) {
+          return false;
+        }
+      }
       if (typeof currentSlide.replaceWith === 'function') {
         currentSlide.replaceWith(nextSlideElement);
       } else if (currentSlide.parentNode && typeof currentSlide.parentNode.replaceChild === 'function') {

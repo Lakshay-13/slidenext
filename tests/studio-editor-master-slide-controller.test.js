@@ -210,6 +210,45 @@ test('master slide controller fails closed when rendering an assigned master sli
   assert.equal(replaceCount, 0);
 });
 
+test('master slide controller fails closed when preparing an assigned master slide throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let replaceCount = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: { firstElementChild: {} },
+          set innerHTML(value) {
+            this.markup = value;
+          }
+        };
+      }
+    }),
+    getSlides: () => [{
+      replaceWith() {
+        replaceCount += 1;
+      }
+    }],
+    prepareSlide() {
+      throw new Error('master slide preparation failed');
+    }
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), false);
+  assert.equal(replaceCount, 0);
+});
+
 test('master slide controller fails closed when removing a master canonical mutation throws', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base' }],
