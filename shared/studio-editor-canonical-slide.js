@@ -171,11 +171,15 @@
       return null;
     }
 
-    const canonicalSlide = importSlideToCanonicalSlide
-      ? importSlideToCanonicalSlide(duplicateSlide, insertionIndex, { getSlideId })
-      : { id: duplicateSlideId, title };
-    if (!canonicalSlide) return null;
-    return insertCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide, insertionIndex);
+    try {
+      const canonicalSlide = importSlideToCanonicalSlide
+        ? importSlideToCanonicalSlide(duplicateSlide, insertionIndex, { getSlideId })
+        : { id: duplicateSlideId, title };
+      if (!canonicalSlide) return null;
+      return insertCanonicalSlide(canonicalDeckBeforeMutation, canonicalSlide, insertionIndex);
+    } catch (err) {
+      return null;
+    }
   }
 
   function createStudioCanonicalDuplicateSlideMutationBuilders(options = {}) {

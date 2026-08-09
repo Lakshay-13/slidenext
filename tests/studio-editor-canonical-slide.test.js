@@ -162,6 +162,27 @@ test('buildStudioCanonicalDuplicateSlideDeck imports and inserts a duplicate wit
   assert.deepEqual(sourceDeck.slides.map((slide) => slide.id), ['slide-1', 'slide-3']);
 });
 
+test('buildStudioCanonicalDuplicateSlideDeck fails closed when canonical insertion throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    insertCanonicalSlide() {
+      throw new Error('canonical duplicate insertion failed');
+    }
+  };
+
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideDeck({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: canonicalDeck.createCanonicalDeck({
+      slides: [{ id: 'slide-1' }]
+    }),
+    duplicateSlide: { id: 'duplicate-slide' },
+    duplicateSlideId: 'slide-2',
+    insertionIndex: 1
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalDuplicateSlideDeck preserves the fallback slide import path', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideDeck({
