@@ -6877,6 +6877,33 @@
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
+      if (groupApi && typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function') {
+        if (typeof buildGroupSelectionActionState.builder !== 'function') {
+          buildGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getLiveSelectedElements,
+            getSlideMetrics,
+            buildPositionedLayoutItems(selection, options) {
+              return SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, options);
+            },
+            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+            getRectOnSlide,
+            getLockedState(sourceDoc) {
+              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
+                && typeof buildEditorCanonicalDeck === 'function';
+              return canReadCanonicalState
+                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+                : isElementLocked;
+            },
+            isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          });
+        }
+        if (typeof buildGroupSelectionActionState.builder === 'function') {
+          return buildGroupSelectionActionState.builder(doc);
+        }
+      }
       const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
         && typeof buildEditorCanonicalDeck === 'function'
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)

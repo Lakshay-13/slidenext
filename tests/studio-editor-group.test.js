@@ -128,6 +128,37 @@ test('buildStudioGroupSelectionActionState resolves same-parent geometry before 
   assert.equal(result.groupPlan.canGroup, true);
 });
 
+test('createStudioGroupSelectionActionStateBuilder resolves editor callbacks through shared state', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const parent = { id: 'parent' };
+  const first = { id: 'first', parentElement: parent };
+  const second = { id: 'second', parentElement: parent };
+  const selection = [first, second];
+  const layoutItems = [
+    { element: first, absLeft: 10, absTop: 20, width: 40, height: 30, parentLeft: 0, parentTop: 0 },
+    { element: second, absLeft: 80, absTop: 60, width: 50, height: 20, parentLeft: 0, parentTop: 0 }
+  ];
+  const buildActionState = group.createStudioGroupSelectionActionStateBuilder({
+    getDocument: () => doc,
+    getSelectedElements: () => selection,
+    getActiveSlide: () => slide,
+    getLiveSelectedElements: (elements) => elements,
+    getSlideMetrics: () => ({ logicalWidth: 1920, logicalHeight: 1080 }),
+    buildPositionedLayoutItems: () => layoutItems,
+    getClosestPositionedAncestor: () => parent,
+    isFreeformPositioned: () => true
+  });
+
+  const result = buildActionState();
+
+  assert.equal(result.slide, slide);
+  assert.equal(result.parent, parent);
+  assert.equal(result.layoutItems, layoutItems);
+  assert.equal(result.canGroup, true);
+  assert.equal(result.groupPlan.canGroup, true);
+});
+
 test('buildStudioUngroupSelectionActionState keeps only valid selected group wrappers', () => {
   const doc = { id: 'doc' };
   const slide = { id: 'slide' };

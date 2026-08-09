@@ -134,6 +134,54 @@
     };
   }
 
+  function createStudioGroupSelectionActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getLiveSelectedElements = typeof options.getLiveSelectedElements === 'function'
+      ? options.getLiveSelectedElements
+      : (selection) => selection;
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const buildPositionedLayoutItems = typeof options.buildPositionedLayoutItems === 'function'
+      ? options.buildPositionedLayoutItems
+      : () => [];
+    const getClosestPositionedAncestor = typeof options.getClosestPositionedAncestor === 'function'
+      ? options.getClosestPositionedAncestor
+      : () => null;
+    const getRectOnSlide = typeof options.getRectOnSlide === 'function'
+      ? options.getRectOnSlide
+      : (rect) => rect;
+    const getLockedState = typeof options.getLockedState === 'function'
+      ? options.getLockedState
+      : () => (typeof options.isLocked === 'function' ? options.isLocked : () => false);
+    const isFreeformPositioned = typeof options.isFreeformPositioned === 'function'
+      ? options.isFreeformPositioned
+      : () => true;
+
+    return function buildStudioEditorGroupSelectionActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      return buildStudioGroupSelectionActionState(getSelectedElements(), {
+        doc: resolvedDoc,
+        getActiveSlide,
+        getLiveSelectedElements,
+        getSlideMetrics,
+        buildPositionedLayoutItems,
+        getClosestPositionedAncestor,
+        getRectOnSlide,
+        isLocked: getLockedState(resolvedDoc),
+        isFreeformPositioned
+      });
+    };
+  }
+
   function buildStudioUngroupSelectionActionState(elements = [], options = {}) {
     const resolvedDoc = options.doc || null;
     const getActiveSlide = typeof options.getActiveSlide === 'function'
@@ -429,6 +477,7 @@
     getStudioGroupableSelection,
     buildStudioGroupPlan,
     buildStudioGroupSelectionActionState,
+    createStudioGroupSelectionActionStateBuilder,
     buildStudioUngroupSelectionActionState,
     buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
