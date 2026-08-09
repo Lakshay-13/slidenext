@@ -8,15 +8,17 @@ const liveSelection = require('../shared/studio-editor-live-selection.js');
 const inspectorController = require('../shared/studio-editor-inspector-controller.js');
 const inspectorView = require('../shared/studio-editor-inspector-view.js');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  const source = fileContent.slice(start, end);
+  const source = selectionFixture.extractSelectionAwareFunctionSource(
+    fileContent,
+    startMarker,
+    endMarker
+  );
+  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
   if (startMarker !== 'function syncInspectorForSelection() {') {
     return source;
   }

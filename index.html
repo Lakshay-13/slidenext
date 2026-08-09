@@ -1397,6 +1397,7 @@
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
+  <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1433,8 +1434,6 @@
     let currentPresentationMetadata = null;
     let currentTitle = '';
     let currentCategory = '';
-    let selectedElement = null;
-    let selectedElements = [];
     let lastPersistedDeckHtml = '';
     let lastPersistedCanonicalDeck = null;
     let persistedDeckPlaybackState = null;
@@ -1459,6 +1458,35 @@
       return studioEditorSlideIndexController
         && typeof studioEditorSlideIndexController.setSlideIndex === 'function'
         ? studioEditorSlideIndexController.setSlideIndex(nextValue)
+        : false;
+    }
+    const studioEditorSelectionStateController = typeof SlideNextStudioEditorSelectionStateController !== 'undefined'
+      && SlideNextStudioEditorSelectionStateController
+      && typeof SlideNextStudioEditorSelectionStateController.createStudioEditorSelectionStateController === 'function'
+      ? SlideNextStudioEditorSelectionStateController.createStudioEditorSelectionStateController({})
+      : null;
+    function getStudioSelectedElements() {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.getSelectedElements === 'function'
+        ? studioEditorSelectionStateController.getSelectedElements()
+        : [];
+    }
+    function getStudioSelectedElement() {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.getSelectedElement === 'function'
+        ? studioEditorSelectionStateController.getSelectedElement()
+        : null;
+    }
+    function setStudioSelectionState(nextState = {}) {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.setState === 'function'
+        ? studioEditorSelectionStateController.setState(nextState)
+        : false;
+    }
+    function clearStudioSelectionState() {
+      return studioEditorSelectionStateController
+        && typeof studioEditorSelectionStateController.clear === 'function'
+        ? studioEditorSelectionStateController.clear()
         : false;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
@@ -2027,7 +2055,7 @@
           canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
             ? SlideNextStudioEditorCanonicalState
             : null,
-          getSelectedElements: () => selectedElements,
+          getSelectedElements: getStudioSelectedElements,
           getIframeDoc: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           isLocked: (...args) => isElementLocked(...args),
@@ -2113,7 +2141,7 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
-          getSelectedElements: () => selectedElements,
+          getSelectedElements: getStudioSelectedElements,
           getIframeDoc: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           isElementLocked: (...args) => isElementLocked(...args),
@@ -2313,6 +2341,7 @@
           ),
           getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
           getSelectedImage: () => {
+            const selectedElements = getStudioSelectedElements();
             const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
               ? selectedElements[0]
               : null;
@@ -2389,7 +2418,7 @@
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
           getClosestPositionedAncestor: (...args) => SlideNextStudioEditorDom
             .getStudioClosestPositionedAncestor(...args),
-          getSelectedElements: () => getLiveSelectedElements(selectedElements, getIframeDoc()),
+          getSelectedElements: () => getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
           getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           updateDragHud: (...args) => updateDragHud(...args),
@@ -2847,7 +2876,7 @@
             syncSelectionOverlay();
             syncInspectorForSelection();
           },
-          getSelectedElements: (doc) => getLiveSelectedElements(selectedElements, doc),
+          getSelectedElements: (doc) => getLiveSelectedElements(getStudioSelectedElements(), doc),
           canMutateDeck: (doc) => !!getActiveSlide(doc),
           editorUndo,
           editorRedo,
@@ -5047,7 +5076,10 @@
         getElementId: assignEditorElementId,
         isElementLocked,
         isElementHidden,
-        isSelectedElement: candidate => SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(selectedElements, candidate)
+        isSelectedElement: candidate => SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(
+          getStudioSelectedElements(),
+          candidate
+        )
       });
     }
 
@@ -5057,7 +5089,7 @@
       });
     }
 
-    function getSelectedEditorElementIds(elements = selectedElements) {
+    function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
@@ -5071,7 +5103,7 @@
         : null;
       if (!selectionApi || typeof selectionApi.getStudioCommittedSelectedElementIds !== 'function') return [];
       return selectionApi.getStudioCommittedSelectedElementIds(
-        selectedElements,
+        getStudioSelectedElements(),
         doc,
         getEditorSelectionOptions({ doc })
       );
@@ -5201,7 +5233,7 @@
       });
     }
 
-    function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {
+    function reorderSlideLayers(action, targetElements = getStudioSelectedElements(), options = {}) {
       return studioEditorLayerOrderController
         && typeof studioEditorLayerOrderController.reorder === 'function'
         ? studioEditorLayerOrderController.reorder(action, targetElements, options)
@@ -5220,7 +5252,7 @@
         return null;
       }
       return inlineEditApi.resolveStudioInlineTextEditTarget(node, slide, {
-        selectedElements: getLiveSelectedElements(selectedElements, getIframeDoc()),
+        selectedElements: getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
         textTagNames: EDITOR_INLINE_EDIT_TEXT_TAGS
       });
     }
@@ -5230,18 +5262,16 @@
         ? SlideNextStudioEditorSelection
         : null;
       if (!selectionApi || typeof selectionApi.refreshStudioSelectionClasses !== 'function') {
-        selectedElements = [];
-        selectedElement = null;
+        clearStudioSelectionState();
         return false;
       }
       const doc = getIframeDoc();
       const nextSelectionState = selectionApi.refreshStudioSelectionClasses(
         doc,
-        selectedElements,
+        getStudioSelectedElements(),
         getEditorSelectionOptions({ doc })
       );
-      selectedElements = nextSelectionState.selectedElements;
-      selectedElement = nextSelectionState.selectedElement;
+      setStudioSelectionState(nextSelectionState);
       return true;
     }
 
@@ -5250,16 +5280,14 @@
         ? SlideNextStudioEditorSelection
         : null;
       if (!selectionApi || typeof selectionApi.normalizeStudioSelectionState !== 'function') {
-        selectedElements = [];
-        selectedElement = null;
+        clearStudioSelectionState();
         return false;
       }
       const normalizedSelectionState = selectionApi.normalizeStudioSelectionState(
         nextState,
         getEditorSelectionOptions()
       );
-      selectedElements = normalizedSelectionState.selectedElements;
-      selectedElement = normalizedSelectionState.selectedElement;
+      setStudioSelectionState(normalizedSelectionState);
       return true;
     }
 
@@ -5429,7 +5457,7 @@
       return SlideNextStudioEditorTransform.getStudioPointerOnSlide(e, slideMetrics);
     }
 
-    function getSelectionBounds(elements = selectedElements, slideMetrics = null) {
+    function getSelectionBounds(elements = getStudioSelectedElements(), slideMetrics = null) {
       const slide = getActiveSlide();
       if (!slide) return null;
       const metrics = slideMetrics || getSlideMetrics(slide);
@@ -5451,7 +5479,7 @@
         documentRef: doc,
         getActiveSlide,
         ...getEditorOverlayOptions(),
-        selectedElements,
+        selectedElements: getStudioSelectedElements(),
         buildSelectionOverlayState: SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState,
         isHidden: readHiddenState,
         getSelectionBounds,
@@ -5468,7 +5496,7 @@
       if (!liveSelectionApi || typeof liveSelectionApi.buildStudioLiveSelectionState !== 'function') {
         return false;
       }
-      const liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(selectedElements);
+      const liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(getStudioSelectedElements());
       const inspectorController = typeof SlideNextStudioEditorInspectorController !== 'undefined'
         ? SlideNextStudioEditorInspectorController
         : null;
@@ -5542,7 +5570,7 @@
       if (!selectionApi || typeof selectionApi.selectStudioElement !== 'function') return false;
       return selectionApi.selectStudioElement({
         element: el,
-        selectedElements,
+        selectedElements: getStudioSelectedElements(),
         additive: options.additive,
         toggle: options.toggle,
         resolveEditableTarget,
@@ -5617,7 +5645,7 @@
       }
     }
 
-    function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {
+    function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       const liveSelectionApi = typeof SlideNextStudioEditorLiveSelection !== 'undefined'
         ? SlideNextStudioEditorLiveSelection
         : null;
@@ -5628,7 +5656,7 @@
       );
     }
 
-    function getTransformSelectionState(elements = selectedElements) {
+    function getTransformSelectionState(elements = getStudioSelectedElements()) {
       const doc = getIframeDoc();
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
@@ -5639,7 +5667,7 @@
       });
     }
 
-    function selectionHasLockedElements(elements = selectedElements) {
+    function selectionHasLockedElements(elements = getStudioSelectedElements()) {
       const readLockedState = getEditorCanonicalVisibilityReader(
         'locked',
         getIframeDoc(),
@@ -5650,7 +5678,7 @@
       });
     }
 
-    function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {
+    function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
@@ -5767,7 +5795,7 @@
         : isElementLocked;
       return lockState.syncStudioLockToolbarState({
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -5780,7 +5808,7 @@
       const readLockedState = canReadCanonicalState
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
         : isElementLocked;
-      return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(selectedElements, {
+      return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(getStudioSelectedElements(), {
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
       });
@@ -5799,7 +5827,7 @@
         : isElementLocked;
       return removalState.syncStudioRemovalToolbarState({
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -5831,7 +5859,7 @@
         : isElementHidden;
       return visibilityState.syncStudioVisibilityToolbarState({
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         isHidden: readHiddenState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -5917,7 +5945,7 @@
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
         : isElementLocked;
       if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
-        return groupApi.buildStudioGroupSelectionActionState(selectedElements, {
+        return groupApi.buildStudioGroupSelectionActionState(getStudioSelectedElements(), {
           doc: resolvedDoc,
           getActiveSlide,
           getLiveSelectedElements,
@@ -5932,7 +5960,7 @@
         });
       }
       const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
+      const selection = getLiveSelectedElements(getStudioSelectedElements(), resolvedDoc);
       if (!resolvedDoc || !slide || selection.length < 2) {
         return {
           slide,
@@ -6007,7 +6035,7 @@
         ? SlideNextStudioEditorGroup
         : null;
       if (groupApi && typeof groupApi.buildStudioUngroupSelectionActionState === 'function') {
-        return groupApi.buildStudioUngroupSelectionActionState(selectedElements, {
+        return groupApi.buildStudioUngroupSelectionActionState(getStudioSelectedElements(), {
           doc: resolvedDoc,
           getActiveSlide,
           getLiveSelectedElements,
@@ -6015,7 +6043,7 @@
         });
       }
       const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(selectedElements, resolvedDoc);
+      const selection = getLiveSelectedElements(getStudioSelectedElements(), resolvedDoc);
       const groups = selection.filter(isEditorGroupElement).filter((group) => {
         return !!(group.parentElement && group.children && group.children.length > 0);
       });
@@ -6063,14 +6091,14 @@
         : isElementLocked;
       const toolbarOptions = {
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       };
       return styleApi.syncStudioStyleToolbarState(toolbarOptions);
     }
 
-    function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {
+    function buildLayerOrderSelectionActionState(elements = getStudioSelectedElements(), options = {}) {
       const hasDocOverride = Object.prototype.hasOwnProperty.call(options, 'doc');
       const resolvedDoc = hasDocOverride ? options.doc : getIframeDoc();
       const hasSlideOverride = Object.prototype.hasOwnProperty.call(options, 'slide');
@@ -6107,7 +6135,7 @@
         return layerController.syncStudioLayerOrderActionState({
           documentRef: document,
           doc,
-          selectedElements,
+          selectedElements: getStudioSelectedElements(),
           layerOrderApi,
           styleApi,
           getActiveSlide,
@@ -6130,7 +6158,7 @@
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
       return layerOrderApi.syncStudioLayerOrderToolbarState({
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         orderedElements,
         isLocked: readLockedState,
         canMutateDeck,
@@ -6142,8 +6170,10 @@
       const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
         ? SlideNextStudioEditorSelection
         : null;
-      if (!selectionApi || typeof selectionApi.syncStudioSelectionUiAfterMutation !== 'function') return selectedElements;
-      return selectionApi.syncStudioSelectionUiAfterMutation(selectedElements, {
+      if (!selectionApi || typeof selectionApi.syncStudioSelectionUiAfterMutation !== 'function') {
+        return getStudioSelectedElements();
+      }
+      return selectionApi.syncStudioSelectionUiAfterMutation(getStudioSelectedElements(), {
         refreshSelectionClasses,
         syncSelectionOverlay,
         syncInspectorForSelection,
@@ -6442,7 +6472,7 @@
         : isElementLocked;
       return clipboardApi.syncStudioClipboardToolbarState({
         documentRef: document,
-        elements: selectedElements,
+        elements: getStudioSelectedElements(),
         clipboard: editorClipboard,
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
@@ -6459,6 +6489,7 @@
       if (!assetView || typeof assetView.syncStudioAssetState !== 'function') {
         return false;
       }
+      const selectedElements = getStudioSelectedElements();
       const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
         ? selectedElements[0]
         : null;
@@ -6555,12 +6586,12 @@
         return false;
       }
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-        ? selectionHasLockedElements(selectedElements)
+        ? selectionHasLockedElements(getStudioSelectedElements())
         : typeof isElementLocked === 'function'
-          ? selectedElements.some((element) => isElementLocked(element))
+          ? getStudioSelectedElements().some((element) => isElementLocked(element))
           : false;
       const canSave = !!getActiveSlide(doc)
-        && selectedElements.length > 0
+        && getStudioSelectedElements().length > 0
         && !hasLockedSelection;
       const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
         ? buildEditorCanonicalDeck(doc)
@@ -6582,7 +6613,7 @@
       });
     }
 
-    function buildClipboardPayload(elements = selectedElements, doc = getIframeDoc()) {
+    function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       const resolvedDoc = doc || getIframeDoc();
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
@@ -6716,7 +6747,7 @@
         ? clipboardApi.buildStudioClipboardSelectionMutationPlan
         : null;
       if (buildStudioClipboardSelectionMutationPlan) {
-        return buildStudioClipboardSelectionMutationPlan(selectedElements, editorClipboard, {
+        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(), editorClipboard, {
           isLocked: readLockedState,
           canMutateDeck: () => !!getActiveSlide(resolvedDoc),
           buildPayloadItems(selection) {
@@ -6735,7 +6766,7 @@
           canBuildPayload: false
         };
       }
-      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(selectedElements, editorClipboard, {
+      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(getStudioSelectedElements(), editorClipboard, {
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });
@@ -11018,7 +11049,7 @@
         isElementLocked,
         reorderSlideLayers,
         liveSelectionApi: SlideNextStudioEditorLiveSelection,
-        selectedElements,
+        selectedElements: getStudioSelectedElements(),
         syncLayerOrderZIndexInput,
         finalizeLayerOrderMutation
       });

@@ -13,15 +13,18 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const styleController = require('../shared/studio-editor-style-controller.js');
+const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  const source = selectionFixture.extractSelectionAwareFunctionSource(
+    fileContent,
+    startMarker,
+    endMarker
+  );
+  assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
+  return source;
 }
 
 function loadFinalizeEditorDeckMutation(fileContent, context) {

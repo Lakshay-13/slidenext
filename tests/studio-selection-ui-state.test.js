@@ -18,7 +18,33 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function installSelectionAccessors(context) {
+  context.getStudioSelectedElements = () => context.selectedElements || [];
+  context.getStudioSelectedElement = () => context.selectedElement || null;
+  context.setStudioSelectionState = (nextState = {}) => {
+    context.selectedElements = Array.isArray(nextState.selectedElements)
+      ? nextState.selectedElements
+      : [];
+    context.selectedElement = Object.prototype.hasOwnProperty.call(nextState, 'selectedElement')
+      ? nextState.selectedElement
+      : context.selectedElements[0] || null;
+    return {
+      selectedElements: context.selectedElements,
+      selectedElement: context.selectedElement
+    };
+  };
+  context.clearStudioSelectionState = () => {
+    context.selectedElements = [];
+    context.selectedElement = null;
+    return {
+      selectedElements: [],
+      selectedElement: null
+    };
+  };
+}
+
 function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
+  installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {',
@@ -28,15 +54,17 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
 }
 
 function loadGetSelectedEditorElementIds(fileContent, context) {
+  installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'function getSelectedEditorElementIds(elements = selectedElements) {',
+    'function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {',
     '\n\n    function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
 }
 
 function loadRefreshSelectionClasses(fileContent, context) {
+  installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
     'function refreshSelectionClasses() {',
@@ -329,6 +357,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
       return readyDoc;
     }
   };
+  installSelectionAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(getEditorSelectionOptionsSource, context);
@@ -363,6 +392,7 @@ test('applyEditorSelectionState clears local selection when the shared selection
     selectedElement: staleElement,
     SlideNextStudioEditorSelection: null
   };
+  installSelectionAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(applyEditorSelectionStateSource, context);
@@ -381,8 +411,8 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   );
   const getLiveSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {',
-    '\n\n    function getTransformSelectionState(elements = selectedElements) {'
+    'function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
+    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements()) {'
   );
 
   const activeElement = { id: 'active', isConnected: true, onActiveSlide: true };
@@ -415,6 +445,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
       return readyDoc;
     }
   };
+  installSelectionAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(getEditorSelectionOptionsSource, context);
@@ -428,13 +459,14 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getLiveSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function getLiveSelectedElements(elements = selectedElements, doc = getIframeDoc()) {',
-    '\n\n    function getTransformSelectionState(elements = selectedElements) {'
+    'function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
+    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements()) {'
   );
   const context = {
     selectedElements: [{ id: 'stale' }],
     SlideNextStudioEditorLiveSelection: null
   };
+  installSelectionAccessors(context);
 
   vm.createContext(context);
   vm.runInContext(getLiveSelectedElementsSource, context);
