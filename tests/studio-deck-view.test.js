@@ -31,6 +31,21 @@ test('createStudioDeckViewBuildViewOptionsResolver uses the document and extensi
   ]);
 });
 
+test('createStudioDeckViewCanonicalStateOptions normalizes canonical view callbacks', () => {
+  const buildCanonicalDeck = () => ({ slides: [] });
+  const resolveLiveActiveSlideId = () => 'slide-1';
+
+  const options = deckView.createStudioDeckViewCanonicalStateOptions({
+    buildCanonicalDeck,
+    resolveLiveActiveSlideId
+  });
+
+  assert.equal(options.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(options.resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+  assert.equal(typeof deckView.createStudioDeckViewCanonicalStateOptions().buildCanonicalDeck, 'function');
+  assert.equal(deckView.createStudioDeckViewCanonicalStateOptions().resolveLiveActiveSlideId(), '');
+});
+
 test('createStudioDeckViewCanonicalHtmlResolver maps canonical html arguments', () => {
   const calls = [];
   const resolveCanonicalHtml = deckView.createStudioDeckViewCanonicalHtmlResolver({

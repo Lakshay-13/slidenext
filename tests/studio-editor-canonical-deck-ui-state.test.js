@@ -2904,6 +2904,48 @@ test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and li
   assert.equal(options.resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
 });
 
+test('createEditorCanonicalDeckViewStateOptions delegates callback normalization to the shared deck view helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createEditorCanonicalDeckViewStateOptions(options = {}) {',
+    '\n\n    function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {'
+  );
+  const calls = [];
+  const customBuildCanonicalDeck = () => ({ slides: [] });
+  const customResolveLiveActiveSlideId = () => 'slide-live';
+  const sharedOptions = {
+    buildCanonicalDeck: customBuildCanonicalDeck,
+    resolveLiveActiveSlideId: customResolveLiveActiveSlideId,
+    source: 'shared'
+  };
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioDeckViewCanonicalStateOptions(options) {
+        calls.push(options);
+        return sharedOptions;
+      }
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('editor canonical fallback should not run');
+    },
+    resolveEditorLiveActiveSlideId() {
+      throw new Error('editor active-slide fallback should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(context.createEditorCanonicalDeckViewStateOptions({
+    buildCanonicalDeck: customBuildCanonicalDeck,
+    resolveLiveActiveSlideId: customResolveLiveActiveSlideId
+  }), sharedOptions);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].buildCanonicalDeck, customBuildCanonicalDeck);
+  assert.equal(calls[0].resolveLiveActiveSlideId, customResolveLiveActiveSlideId);
+});
+
 test('buildEditorDeckSnapshot fails closed when only the legacy snapshot builder is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
