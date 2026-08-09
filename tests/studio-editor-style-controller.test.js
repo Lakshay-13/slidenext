@@ -216,6 +216,41 @@ test('style controller delegates canonical lock baseline resolution to canonical
   assert.equal(receivedLockState, true);
 });
 
+test('style controller uses the shared canonical deck resolver', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let resolverOptions = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        assert.equal(options.isLocked(element), true);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => deck;
+      },
+      createStudioEditorCanonicalVisibilityReaderForDeck() {
+        return () => true;
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    getSelectedElements: () => [element],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('style controller delegates locked visibility assembly to canonical state', () => {
   const element = { dataset: { editorId: 'node-1' } };
   const documentRef = { id: 'doc' };

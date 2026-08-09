@@ -79,13 +79,18 @@
       ? options.finalizeDeckMutation
       : null;
 
+    const createCanonicalDeckResolver = canonicalStateApi
+      && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
+      ? canonicalStateApi.createStudioEditorCanonicalDeckResolver
+      : null;
     const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
       : null;
-    const resolveCanonicalDeck = createCanonicalDeckBaselineReader
+    const resolveCanonicalDeck = createCanonicalDeckResolver
       ? (() => {
-          const sharedReader = createCanonicalDeckBaselineReader({
+          const sharedResolver = createCanonicalDeckResolver({
+            getCanonicalDeck: () => null,
             getCanonicalDeckBaseline,
             isCanonicalDeck: canonicalDeckApi
               && typeof canonicalDeckApi.isCanonicalDeck === 'function'
@@ -93,29 +98,41 @@
               : null,
             buildCanonicalDeckBaseline
           });
-          return typeof sharedReader === 'function' ? sharedReader : () => null;
+          return typeof sharedResolver === 'function' ? sharedResolver : () => null;
         })()
-      : (sourceDocument) => {
-          if (getCanonicalDeckBaseline) {
-            try {
-              const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
-              if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
-            } catch (err) {
-              // Fall through to the document rebuild path.
+      : createCanonicalDeckBaselineReader
+        ? (() => {
+            const sharedReader = createCanonicalDeckBaselineReader({
+              getCanonicalDeckBaseline,
+              isCanonicalDeck: canonicalDeckApi
+                && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+                ? canonicalDeckApi.isCanonicalDeck
+                : null,
+              buildCanonicalDeckBaseline
+            });
+            return typeof sharedReader === 'function' ? sharedReader : () => null;
+          })()
+        : (sourceDocument) => {
+            if (getCanonicalDeckBaseline) {
+              try {
+                const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+                if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+              } catch (err) {
+                // Fall through to the document rebuild path.
+              }
             }
-          }
-          if (buildCanonicalDeckBaseline) {
-            try {
-              const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
-              return isValidCanonicalDeck(rebuiltCanonicalDeck)
-                ? rebuiltCanonicalDeck
-                : null;
-            } catch (err) {
-              return null;
+            if (buildCanonicalDeckBaseline) {
+              try {
+                const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+                return isValidCanonicalDeck(rebuiltCanonicalDeck)
+                  ? rebuiltCanonicalDeck
+                  : null;
+              } catch (err) {
+                return null;
+              }
             }
-          }
-          return null;
-        };
+            return null;
+          };
 
     function resolveLockedReader(sourceDocument) {
       if (!canonicalDeckApi
