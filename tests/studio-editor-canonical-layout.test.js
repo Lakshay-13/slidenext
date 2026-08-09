@@ -86,6 +86,31 @@ test('buildStudioCanonicalLayoutBaseline delegates baseline resolution to the sh
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
 });
 
+test('buildStudioCanonicalLayoutBaseline prefers the shared canonical deck resolver', () => {
+  const sourceDeck = createSourceDeck();
+  let resolverOptions = null;
+  const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckResolver(options) {
+        resolverOptions = options;
+        return () => sourceDeck;
+      },
+      createStudioEditorCanonicalDeckBaselineReader() {
+        throw new Error('legacy baseline reader should not be used');
+      }
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true }),
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalLayoutBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
