@@ -72,6 +72,36 @@ test('buildStudioCanonicalWallpaperBaseline prefers a valid live canonical deck'
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalWallpaperBaseline delegates baseline resolution to canonical state', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  const getCanonicalDeckBaseline = () => sourceDeck;
+  const buildCanonicalDeckBaseline = () => sourceDeck;
+  let readerOptions = null;
+  let readerDocument = null;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          readerDocument = documentRef;
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline,
+    buildCanonicalDeckBaseline,
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalWallpaperBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
@@ -127,6 +157,17 @@ test('buildStudioCanonicalWallpaperBaseline falls back when the live canonical d
 
   assert.equal(result, sourceDeck);
   assert.equal(didBuildFromDocument, true);
+});
+
+test('buildStudioCanonicalWallpaperBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('compatibility rebuild failed');
+    }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency is missing', () => {
