@@ -139,6 +139,39 @@ test('applyStudioEditorSource preserves raw HTML when canonical import fails', (
   });
 });
 
+test('applyStudioEditorSource fails closed when restoring source history throws', () => {
+  let afterApplyCalls = 0;
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    restoreHistoryEntry() {
+      throw new Error('restore failed');
+    },
+    afterApply() {
+      afterApplyCalls += 1;
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not be applied to the editor'
+  });
+  assert.equal(afterApplyCalls, 0);
+});
+
 test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
   const sourceRoot = {
     innerHTML: '<section class="slide">Edited</section>',

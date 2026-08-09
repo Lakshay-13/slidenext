@@ -128,9 +128,16 @@
       return fail('Source HTML could not start an editor transaction');
     }
 
-    if (typeof options.restoreHistoryEntry === 'function'
-      && options.restoreHistoryEntry(historyEntry) === false) {
-      return fail('Source HTML could not be applied to the editor');
+    if (typeof options.restoreHistoryEntry === 'function') {
+      let didRestore = false;
+      try {
+        didRestore = options.restoreHistoryEntry(historyEntry);
+      } catch (error) {
+        return fail('Source HTML could not be applied to the editor');
+      }
+      if (didRestore === false) {
+        return fail('Source HTML could not be applied to the editor');
+      }
     }
 
     if (typeof options.afterApply === 'function') {
