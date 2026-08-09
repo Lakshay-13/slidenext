@@ -88,6 +88,22 @@
     return true;
   }
 
+  function setStudioVersionHistoryErrorState(options = {}) {
+    const documentRef = options.documentRef;
+    const list = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('versionsList')
+      : null;
+    if (!list) return false;
+
+    list.innerHTML = `
+      <span class="text-rose-400 text-center py-2 text-[11px]" role="alert">Failed to load version history</span>
+      <button type="button" onclick="loadVersions()" class="mx-2 mb-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded text-[11px] font-semibold transition-all">
+        <span class="material-symbols-outlined text-[14px]">refresh</span> Try again
+      </button>
+    `;
+    return true;
+  }
+
   function renderStudioVersionsList(options = {}) {
     const documentRef = options.documentRef;
     const list = documentRef && typeof documentRef.getElementById === 'function'
@@ -150,6 +166,7 @@
     resetStudioVersionUiState,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,
+    setStudioVersionHistoryErrorState,
     renderStudioVersionsList,
     syncStudioVersionsList
   };

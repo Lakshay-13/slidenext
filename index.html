@@ -11302,6 +11302,16 @@
       return versionView.syncStudioVersionsList(options);
     }
 
+    function renderVersionHistoryLoadError() {
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.setStudioVersionHistoryErrorState !== 'function') return false;
+      return versionView.setStudioVersionHistoryErrorState({
+        documentRef: document
+      });
+    }
+
     // Fetch versions checklist
     function createCurrentStudioVersionHistoryLoadOptions(
       presentationUrl = getStudioCurrentPresentationUrl(),
@@ -11351,6 +11361,7 @@
             : null,
           reportLoadError: (error) => {
             console.error('Failed to load version history:', error);
+            renderVersionHistoryLoadError();
           }
         })(presentationUrl, sessionToken);
       }
@@ -11363,6 +11374,7 @@
         );
       } catch (err) {
         console.error('Failed to load version history:', err);
+        renderVersionHistoryLoadError();
       }
     }
 

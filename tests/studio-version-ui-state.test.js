@@ -2800,6 +2800,58 @@ test('loadVersions reuses the shared version-history loader when available', asy
   assert.equal(delegatedArgs.loadVersionHistory, context.SlideNextStudioVersionHistory.loadStudioVersionHistory);
 });
 
+test('loadVersions renders an error state when the shared version-history loader fails', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioVersionHistoryLoadOptions(',
+    '\n\n    async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {'
+  );
+  const loadVersionsSource = extractFunctionSource(
+    fileContent,
+    'async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
+    '\n\n    // Rollback backup version'
+  );
+
+  const errorCalls = [];
+  const renderedErrors = [];
+  const context = {
+    console: {
+      error(...args) {
+        errorCalls.push(args);
+      }
+    },
+    document: {},
+    createCurrentStudioVersionHistoryLoadOptions() {},
+    renderVersionHistoryLoadError() {
+      renderedErrors.push(true);
+    },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    studioEditorSessionToken: 18,
+    SlideNextStudioVersionHistory: {
+      createStudioVersionHistoryLoader(options = {}) {
+        return async () => {
+          options.reportLoadError(new Error('versions unavailable'));
+        };
+      },
+      loadStudioVersionHistory() {}
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+  vm.runInContext(loadVersionsSource, context);
+
+  await context.loadVersions(
+    '/presentations/onboarding-presentation/index.html',
+    18
+  );
+
+  assert.equal(errorCalls.length, 1);
+  assert.match(errorCalls[0][1].message, /versions unavailable/);
+  assert.deepEqual(renderedErrors, [true]);
+});
+
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let capturedAdapterOptions = null;

@@ -68,6 +68,20 @@ test('version rename button view helpers render reset and busy states', () => {
   assert.equal(button.textContent, 'Renaming...');
 });
 
+test('version view renders a retryable history load error', () => {
+  const list = { innerHTML: '' };
+  assert.equal(versionView.setStudioVersionHistoryErrorState({
+    documentRef: {
+      getElementById(id) {
+        return id === 'versionsList' ? list : null;
+      }
+    }
+  }), true);
+  assert.match(list.innerHTML, /Failed to load version history/);
+  assert.match(list.innerHTML, /Try again/);
+  assert.match(list.innerHTML, /onclick="loadVersions\(\)"/);
+});
+
 test('version view helpers safely skip missing chrome', () => {
   assert.equal(versionView.hideStudioVersionsDropdown(), false);
   assert.deepEqual(versionView.toggleStudioVersionsDropdown(), {
