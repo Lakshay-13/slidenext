@@ -577,6 +577,49 @@ test('updateMotionActionState delegates toolbar state assembly to the shared nud
   assert.equal(calls[0].canNudge, true);
 });
 
+test('updateMotionActionState caches the shared nudge toolbar synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateMotionActionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateMotionActionState(doc = getIframeDoc()) {',
+    '\n\n    function updateStyleActionState(doc = getIframeDoc()) {'
+  );
+  const doc = { id: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    buildMotionSelectionActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canNudge: true };
+    },
+    SlideNextStudioEditorNudge: {
+      syncStudioNudgeToolbarState() {
+        throw new Error('direct nudge sync should not run');
+      },
+      createStudioNudgeToolbarStateSync(options) {
+        calls.push(['factory', options]);
+        return (currentDoc) => {
+          calls.push(['sync', currentDoc]);
+          const actionState = options.getActionState(currentDoc);
+          return actionState.canNudge;
+        };
+      }
+    },
+    document: {},
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(updateMotionActionStateSource, context);
+
+  assert.equal(context.updateMotionActionState(doc), true);
+  assert.equal(context.updateMotionActionState(doc), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'action-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
+});
+
 test('nudgeSelectedElements returns false and refreshes motion controls when selection geometry cannot be resolved', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(

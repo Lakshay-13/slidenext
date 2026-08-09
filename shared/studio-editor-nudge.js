@@ -103,6 +103,32 @@
     };
   }
 
+  function createStudioNudgeToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActionState = typeof options.getActionState === 'function'
+      ? options.getActionState
+      : () => ({ canNudge: false });
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorNudgeToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      let actionState = null;
+      try {
+        actionState = getActionState(resolvedDoc);
+        return syncStudioNudgeToolbarState({
+          documentRef: getDocumentRef(),
+          canNudge: !!(actionState && actionState.canNudge)
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function renderStudioNudgeToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -240,6 +266,7 @@
     buildStudioNudgeSelectionState,
     buildStudioNudgeActionState,
     createStudioNudgeActionStateBuilder,
+    createStudioNudgeToolbarStateSync,
     buildStudioNudgeToolbarState,
     renderStudioNudgeToolbarState,
     syncStudioNudgeToolbarState,

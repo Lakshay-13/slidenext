@@ -283,6 +283,53 @@ test('syncStudioNudgeToolbarState builds and renders directional controls in one
   assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false, false]);
 });
 
+test('createStudioNudgeToolbarStateSync resolves live action state through callbacks', () => {
+  const doc = { id: 'iframe-doc' };
+  const buttons = {
+    nudgeSelectionUpBtn: { disabled: true },
+    nudgeSelectionLeftBtn: { disabled: true },
+    nudgeSelectionRightBtn: { disabled: true },
+    nudgeSelectionDownBtn: { disabled: true }
+  };
+  const calls = [];
+  const syncToolbar = nudge.createStudioNudgeToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActionState(currentDoc) {
+      calls.push(['action-state', currentDoc]);
+      return { canNudge: true };
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return buttons[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.deepEqual(Object.values(buttons).map((button) => button.disabled), [false, false, false, false]);
+  assert.deepEqual(calls, [
+    'document',
+    ['action-state', doc],
+    'document-ref'
+  ]);
+});
+
+test('createStudioNudgeToolbarStateSync fails closed when action-state resolution throws', () => {
+  const syncToolbar = nudge.createStudioNudgeToolbarStateSync({
+    getActionState() {
+      throw new Error('action state unavailable');
+    }
+  });
+
+  assert.equal(syncToolbar(), false);
+});
+
 test('buildStudioNudgedLayout clamps to slide bounds and skips no-op edge nudges', () => {
   assert.deepEqual(nudge.buildStudioNudgedLayout([
     {

@@ -6879,6 +6879,18 @@
       if (!nudgeState || typeof nudgeState.syncStudioNudgeToolbarState !== 'function') {
         return false;
       }
+      if (typeof nudgeState.createStudioNudgeToolbarStateSync === 'function') {
+        if (typeof updateMotionActionState.sync !== 'function') {
+          updateMotionActionState.sync = nudgeState.createStudioNudgeToolbarStateSync({
+            getDocument: () => getIframeDoc(),
+            getActionState: (sourceDoc) => buildMotionSelectionActionState(sourceDoc),
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateMotionActionState.sync === 'function') {
+          return updateMotionActionState.sync(doc);
+        }
+      }
       const motionActionState = buildMotionSelectionActionState(doc);
       return nudgeState.syncStudioNudgeToolbarState({
         documentRef: document,
