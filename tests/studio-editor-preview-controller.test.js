@@ -29,6 +29,58 @@ test('launches the shared preview with the live editor session state', () => {
   }]);
 });
 
+test('launches preview with one validated canonical deck snapshot', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    resolveReadyState: () => ({ canLaunchPreview: true }),
+    resolvePresentationUrl: () => '/presentations/demo/index.html',
+    buildCanonicalDeck() {
+      return canonicalDeck;
+    },
+    isCanonicalDeck(value) {
+      return value === canonicalDeck;
+    },
+    buildPreviewHtml(nextCanonicalDeck) {
+      assert.equal(nextCanonicalDeck, canonicalDeck);
+      return '<html>canonical-preview</html>';
+    }
+  });
+
+  assert.equal(controller.launch(), true);
+  assert.equal(calls[0].previewHtml, '<html>canonical-preview</html>');
+});
+
+test('keeps preview fallback behavior when canonical snapshot resolution fails', () => {
+  let receivedCanonicalDeck = 'unset';
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation(options) {
+        assert.equal(options.previewHtml, '<html>legacy-preview</html>');
+        return true;
+      }
+    },
+    resolveReadyState: () => ({ canLaunchPreview: true }),
+    resolvePresentationUrl: () => '/presentations/demo/index.html',
+    buildCanonicalDeck() {
+      throw new Error('legacy deck has no canonical snapshot');
+    },
+    buildPreviewHtml(nextCanonicalDeck) {
+      receivedCanonicalDeck = nextCanonicalDeck;
+      return '<html>legacy-preview</html>';
+    }
+  });
+
+  assert.equal(controller.launch(), true);
+  assert.equal(receivedCanonicalDeck, null);
+});
+
 test('does not build or launch preview content when the editor is not ready', () => {
   let buildCalls = 0;
   let launchCalls = 0;

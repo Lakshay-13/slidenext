@@ -2054,7 +2054,12 @@
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           resolvePresentationUrl: getStudioCurrentPresentationUrl,
           resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
-          buildPreviewHtml: () => buildEditorPreviewHtml()
+          buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(
+            getIframeDoc(),
+            canonicalDeck ? { canonicalDeck } : {}
+          ),
+          buildCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          isCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value)
         })
       : null;
     const studioEditorSourceController = typeof SlideNextStudioEditorSourceController !== 'undefined'

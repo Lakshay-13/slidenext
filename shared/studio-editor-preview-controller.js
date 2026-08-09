@@ -26,6 +26,12 @@
     const buildPreviewHtml = typeof options.buildPreviewHtml === 'function'
       ? options.buildPreviewHtml
       : () => '';
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : (value) => !!value && typeof value === 'object' && Array.isArray(value.slides);
 
     function createStudioEditorPreviewFallbackHtmlTransformer(transformOptions = {}) {
       const injectBaseHrefIntoHtml = typeof transformOptions.injectBaseHrefIntoHtml === 'function'
@@ -106,11 +112,21 @@
       if (typeof presentationUrl !== 'string' || !presentationUrl) return false;
       if (!previewApi || typeof previewApi.launchStudioPresentation !== 'function') return false;
 
+      let canonicalDeck = null;
+      if (buildCanonicalDeck) {
+        try {
+          const candidate = buildCanonicalDeck();
+          canonicalDeck = isCanonicalDeck(candidate) ? candidate : null;
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+
       return previewApi.launchStudioPresentation({
         document: documentRef,
         startSlideIdx: resolveActiveSlideIndex(),
         presentationUrl,
-        previewHtml: buildPreviewHtml()
+        previewHtml: buildPreviewHtml(canonicalDeck)
       });
     }
 
