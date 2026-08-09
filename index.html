@@ -2077,17 +2077,9 @@
       let canonicalDeck = null;
       const sourceDoc = getIframeDoc();
       try {
-        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
-          canonicalDeck = resolveEditorLiveCanonicalDeck(
-            sourceDoc,
-            typeof getStudioEditorSessionToken === 'function'
-              ? getStudioEditorSessionToken()
-              : null
-          );
-        }
-        if (!canonicalDeck) {
-          canonicalDeck = buildEditorCanonicalDeck(sourceDoc);
-        }
+        canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+          ? resolveEditorUiCanonicalDeck(sourceDoc)
+          : buildEditorCanonicalDeck(sourceDoc);
       } catch (error) {
         canonicalDeck = null;
       }

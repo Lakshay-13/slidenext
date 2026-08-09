@@ -173,11 +173,8 @@ test('source history capture prefers the current canonical deck before source re
     getIframeDoc() {
       return { id: 'current-frame' };
     },
-    getStudioEditorSessionToken() {
-      return 12;
-    },
-    resolveEditorLiveCanonicalDeck(doc, sessionToken) {
-      calls.push(['live', doc, sessionToken]);
+    resolveEditorUiCanonicalDeck(doc) {
+      calls.push(['resolver', doc]);
       return canonicalDeck;
     },
     buildEditorCanonicalDeck(doc) {
@@ -194,7 +191,7 @@ test('source history capture prefers the current canonical deck before source re
 
   assert.equal(context.captureEditorSourceHistoryBaseline(), true);
   assert.deepEqual(calls, [
-    ['live', { id: 'current-frame' }, 12],
+    ['resolver', { id: 'current-frame' }],
     ['history', false, null, canonicalDeck]
   ]);
 });
