@@ -6776,11 +6776,14 @@
         && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderResolver === 'function'
         ? canonicalStateApi.createStudioEditorCanonicalVisibilityReaderResolver
         : null;
+      const resolveCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+        ? resolveEditorUiCanonicalDeck
+        : typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null;
       if (createVisibilityReaderResolver) {
         return createVisibilityReaderResolver({
-          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-            ? buildEditorCanonicalDeck
-            : null,
+          buildCanonicalDeck: resolveCanonicalDeck,
           canonicalDeckApi,
           getElementId,
           resolveCanonicalNode
@@ -6789,9 +6792,9 @@
 
       // Keep older embedded decks and partial test contexts usable while the shared reader loads.
       let canonicalDeck = null;
-      if (typeof buildEditorCanonicalDeck === 'function') {
+      if (resolveCanonicalDeck) {
         try {
-          canonicalDeck = buildEditorCanonicalDeck(doc);
+          canonicalDeck = resolveCanonicalDeck(doc);
         } catch (error) {
           canonicalDeck = null;
         }

@@ -464,6 +464,53 @@ test('canonical visibility reader resolver returns the fallback when model const
   assert.equal(readerResolver('hidden', { id: 'iframe-doc' }, fallbackReader), fallbackReader);
 });
 
+test('editor visibility reader passes the live-first canonical resolver to shared state', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',
+    '\n\n    function setElementHiddenState'
+  );
+  const documentRef = { id: 'active-frame' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalState: {
+      createStudioEditorCanonicalVisibilityReaderResolver(options) {
+        calls.push(['factory', options.buildCanonicalDeck]);
+        return (property, doc, fallbackReader) => {
+          calls.push(['reader', property, doc, options.buildCanonicalDeck(doc)]);
+          return fallbackReader;
+        };
+      }
+    },
+    resolveEditorUiCanonicalDeck(doc) {
+      calls.push(['resolver', doc]);
+      return canonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('visibility reads should use the live-first resolver');
+    },
+    assignEditorElementId(element) {
+      return element.dataset.editorId;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(visibilityReaderSource, context);
+
+  const fallbackReader = () => false;
+  assert.equal(
+    context.getEditorCanonicalVisibilityReader('hidden', documentRef, fallbackReader)({}),
+    false
+  );
+  assert.equal(calls[0][0], 'factory');
+  assert.deepEqual(calls.slice(1), [
+    ['resolver', documentRef],
+    ['reader', 'hidden', documentRef, canonicalDeck]
+  ]);
+});
+
 test('editor selection bounds and overlays use canonical hidden state before DOM fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const visibilityReaderSource = extractFunctionSource(
