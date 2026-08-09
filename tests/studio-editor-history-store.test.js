@@ -2,10 +2,24 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const historyStateApi = require('../shared/studio-editor-history-store.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const HISTORY_STORE_PATH = path.join(__dirname, '..', 'shared', 'studio-editor-history-store.js');
+
+test('history store publishes the global consumed by the editor shell', () => {
+  const context = { globalThis: {} };
+  vm.runInNewContext(fs.readFileSync(HISTORY_STORE_PATH, 'utf8'), context);
+
+  assert.equal(typeof context.globalThis.SlideNextStudioEditorHistoryStore, 'object');
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorHistoryStore.createStudioEditorHistoryStateController,
+    'function'
+  );
+  assert.equal(context.globalThis.SlideNextStudioEditorHistoryState, undefined);
+});
 
 test('history state composes stacks, pending values, and debounce timing', () => {
   const undoStack = ['undo-entry'];

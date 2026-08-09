@@ -4,7 +4,7 @@
     module.exports = api;
   }
   if (root) {
-    root.SlideNextStudioEditorHistoryState = api;
+    root.SlideNextStudioEditorHistoryStore = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function resolveController(options, key, globalName, factoryName) {
