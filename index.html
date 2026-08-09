@@ -1348,6 +1348,7 @@
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
+  <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -2915,12 +2916,18 @@
     const studioEditorMasterSlideController = studioEditorMasterSlideRuntime
       ? studioEditorMasterSlideRuntime.masterSlideController
       : null;
-    const studioEditorAssetController = typeof SlideNextStudioEditorAssetController !== 'undefined'
-      && SlideNextStudioEditorAssetController
-      && typeof SlideNextStudioEditorAssetController.createStudioEditorAssetController === 'function'
-      ? SlideNextStudioEditorAssetController.createStudioEditorAssetController({
+    const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetRuntime !== 'undefined'
+      && SlideNextStudioEditorAssetRuntime
+      && typeof SlideNextStudioEditorAssetRuntime.createStudioEditorAssetRuntime === 'function'
+      ? SlideNextStudioEditorAssetRuntime.createStudioEditorAssetRuntime({
+          controllerApi: typeof SlideNextStudioEditorAssetController !== 'undefined'
+            ? SlideNextStudioEditorAssetController
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
             : null,
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
@@ -2946,6 +2953,9 @@
           finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
           onAssetsChanged: () => updateAssetLibraryState()
         })
+      : null;
+    const studioEditorAssetController = studioEditorAssetRuntime
+      ? studioEditorAssetRuntime.assetController
       : null;
     const GRID_SNAP_SIZE_PX = 20;
     const studioEditorGridSnapController = typeof SlideNextStudioEditorGridSnapController !== 'undefined'
