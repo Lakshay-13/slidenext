@@ -159,12 +159,16 @@ test('history restore wiring supplies a canonical rebuild fallback', () => {
 
   const controllerSource = fileContent.slice(controllerStart, controllerEnd);
   assert.match(
-    controllerSource,
-    /buildCanonicalDeck: \(sourceDoc\) => \(\s*typeof buildEditorCanonicalDeck === 'function'/
+    fileContent,
+    /<script src="\/shared\/studio-editor-history-restore-options\.js"><\/script>/
   );
   assert.match(
     controllerSource,
-    /isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'/
+    /restoreOptionsApi\.createStudioEditorHistoryRestoreOptions\(\{/
+  );
+  assert.match(
+    controllerSource,
+    /buildEditorCanonicalDeck,\s*\n\s+getEditorCanonicalDeckValidator,/
   );
 });
 
