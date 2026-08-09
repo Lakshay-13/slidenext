@@ -42,6 +42,7 @@ test('createHistoryEntry delegates editor dependencies through the shared histor
     pendingEditorCanonicalDeck: { id: 'pending-deck' },
     pendingEditorTransaction: { id: 'pending-transaction' },
     buildEditorCanonicalDeck: () => ({ id: 'canonical-deck' }),
+    buildEditorMutationCanonicalDeck: () => ({ id: 'mutation-deck' }),
     getEditorHistoryOptions: () => ({ id: 'history-options' }),
     resolveEditorFallbackActiveSlideId: () => 'slide-1',
     buildHistoryFrameHtml: () => '<html></html>',
@@ -65,6 +66,7 @@ test('createHistoryEntry delegates editor dependencies through the shared histor
   assert.deepEqual(capturedOptions.getDocument(), { id: 'iframe-doc' });
   assert.equal(capturedOptions.getPendingCanonicalDeck().id, 'pending-deck');
   assert.equal(capturedOptions.getPendingTransaction().id, 'pending-transaction');
+  assert.equal(capturedOptions.buildMutationCanonicalDeck, context.buildEditorMutationCanonicalDeck);
 });
 
 test('captureState delegates editor stacks and pending cleanup through the shared history adapter', () => {

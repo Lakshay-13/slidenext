@@ -9424,6 +9424,9 @@
           getDocument: getIframeDoc,
           getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           buildCanonicalDeck: buildEditorCanonicalDeck,
+          buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+            ? buildEditorMutationCanonicalDeck
+            : null,
           getCanonicalDeckBaseline: (sourceDoc) => (
             typeof resolveEditorLiveCanonicalDeck === 'function'
               ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), getStudioEditorSessionToken())
