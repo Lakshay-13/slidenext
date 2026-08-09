@@ -45,6 +45,36 @@ test('buildStudioCanonicalRemovalBaseline prefers a valid live canonical deck', 
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalRemovalBaseline delegates baseline resolution to canonical state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  const sourceDocument = { id: 'editor-doc' };
+  const getCanonicalDeckBaseline = () => sourceDeck;
+  const buildCanonicalDeckBaseline = () => sourceDeck;
+  let readerOptions = null;
+  let readerDocument = null;
+  const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (documentRef) => {
+          readerDocument = documentRef;
+          return sourceDeck;
+        };
+      }
+    },
+    getCanonicalDeckBaseline,
+    buildCanonicalDeckBaseline,
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
 test('buildStudioCanonicalRemovalBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
@@ -81,6 +111,17 @@ test('buildStudioCanonicalRemovalBaseline uses structural validation without a c
     }),
     validDeck
   );
+});
+
+test('buildStudioCanonicalRemovalBaseline fails closed when a compatibility rebuild throws', () => {
+  const result = canonicalRemoval.buildStudioCanonicalRemovalBaseline({
+    canonicalDeckApi: canonicalDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('compatibility rebuild failed');
+    }
+  });
+
+  assert.equal(result, null);
 });
 
 test('buildStudioCanonicalRemovalDeck removes selected nodes without mutating the source', () => {
