@@ -62,12 +62,49 @@ test('preview controller wiring supplies the canonical snapshot resolver', () =>
   );
   assert.match(
     controllerSource,
-    /previewBuildCanonicalDeck: \(\) => buildEditorCanonicalDeck\(getIframeDoc\(\)\)/,
+    /previewBuildCanonicalDeck: \(\) => typeof resolveEditorUiCanonicalDeck === 'function'/,
   );
   assert.match(
     controllerSource,
     /previewIsCanonicalDeck: \(value\) => getEditorCanonicalDeckValidator\(\)\(value\)/,
   );
+});
+
+test('preview canonical deck callback prefers the live UI resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const end = fileContent.indexOf('const studioEditorExportController =', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+
+  const controllerSource = fileContent.slice(start, end);
+  const callbackStart = controllerSource.indexOf('previewBuildCanonicalDeck:');
+  const callbackEnd = controllerSource.indexOf('\n          previewIsCanonicalDeck', callbackStart);
+  assert.notEqual(callbackStart, -1);
+  assert.notEqual(callbackEnd, -1);
+
+  const callbackExpression = controllerSource
+    .slice(callbackStart + 'previewBuildCanonicalDeck:'.length, callbackEnd)
+    .trim()
+    .replace(/,$/, '');
+  const sourceDoc = { id: 'preview-doc' };
+  const liveCanonicalDeck = { slides: [{ id: 'live-slide' }] };
+  let receivedDoc = null;
+  const previewBuildCanonicalDeck = vm.runInNewContext(`(${callbackExpression})`, {
+    getIframeDoc() {
+      return sourceDoc;
+    },
+    resolveEditorUiCanonicalDeck(doc) {
+      receivedDoc = doc;
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      throw new Error('DOM rebuild should not run when live preview state is available');
+    }
+  });
+
+  assert.equal(previewBuildCanonicalDeck(), liveCanonicalDeck);
+  assert.equal(receivedDoc, sourceDoc);
 });
 
 function createClassList(initialValues = []) {

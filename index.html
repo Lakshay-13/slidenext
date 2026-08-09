@@ -2176,7 +2176,9 @@
             getIframeDoc(),
             canonicalDeck ? { canonicalDeck } : {}
           ),
-          previewBuildCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
+          previewBuildCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(getIframeDoc())
+            : buildEditorCanonicalDeck(getIframeDoc()),
           previewIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           sourceApi: typeof SlideNextStudioEditorSource !== 'undefined'
             ? SlideNextStudioEditorSource
