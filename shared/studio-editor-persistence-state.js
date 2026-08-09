@@ -512,6 +512,44 @@
     };
   }
 
+  function createStudioEditorPersistableDeckHtmlAdapter(options = {}) {
+    const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
+      ? options.persistenceApi
+      : null;
+    const defaultBuildWithoutDocument = typeof options.buildPersistableDeckHtmlWithoutDocument === 'function'
+      ? options.buildPersistableDeckHtmlWithoutDocument
+      : persistenceApi
+        && typeof persistenceApi.buildStudioPersistableDeckHtmlWithoutDocument === 'function'
+        ? persistenceApi.buildStudioPersistableDeckHtmlWithoutDocument
+        : null;
+    const defaultBuildFromDocument = typeof options.buildPersistableDeckHtmlFromDocument === 'function'
+      ? options.buildPersistableDeckHtmlFromDocument
+      : persistenceApi
+        && typeof persistenceApi.buildStudioPersistableDeckHtmlFromDocument === 'function'
+        ? persistenceApi.buildStudioPersistableDeckHtmlFromDocument
+        : null;
+
+    return function buildEditorPersistableDeckHtml(doc = null, nextOptions = {}) {
+      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
+        ? nextOptions
+        : {};
+      const buildWithoutDocument = typeof resolvedOptions.buildPersistableDeckHtmlWithoutDocument === 'function'
+        ? resolvedOptions.buildPersistableDeckHtmlWithoutDocument
+        : defaultBuildWithoutDocument;
+      const buildFromDocument = typeof resolvedOptions.buildPersistableDeckHtmlFromDocument === 'function'
+        ? resolvedOptions.buildPersistableDeckHtmlFromDocument
+        : defaultBuildFromDocument;
+      if (!doc) {
+        return typeof buildWithoutDocument === 'function'
+          ? buildWithoutDocument(resolvedOptions)
+          : null;
+      }
+      return typeof buildFromDocument === 'function'
+        ? buildFromDocument(doc, resolvedOptions)
+        : null;
+    };
+  }
+
   function createStudioEditorCapturedPersistableDeckStateResolverAdapter(options = {}) {
     const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
       ? options.persistenceApi
@@ -1359,6 +1397,7 @@
     createStudioEditorMetadataPersistenceOptionsAdapter,
     createStudioEditorPersistableDeckSanitizerOptionsAdapter,
     createStudioEditorReusablePersistedHtmlSanitizerAdapter,
+    createStudioEditorPersistableDeckHtmlAdapter,
     createStudioEditorCapturedPersistableDeckStateResolverAdapter,
     createStudioEditorPersistableDeckBuildStateCapturerAdapter,
     createStudioEditorPersistableDeckStateCapturerAdapter,

@@ -598,3 +598,25 @@ test('persistence controller resolves captured persistable deck state through th
   controller.resolveCapturedPersistableDeckState('<html>next</html>', { canonicalDeck });
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller dispatches persistable deck html through the shared adapter', () => {
+  const doc = { label: 'iframe-doc' };
+  let adapterCreateCalls = 0;
+  const persistenceStateWithAdapter = {
+    createStudioEditorPersistableDeckHtmlAdapter(options) {
+      adapterCreateCalls += 1;
+      assert.equal(options.persistenceApi, persistence);
+      return (nextDoc, nextOptions) => nextDoc
+        ? `document:${nextDoc.label}:${nextOptions.id}`
+        : `fallback:${nextOptions.id}`;
+    }
+  };
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceStateWithAdapter
+  });
+
+  assert.equal(controller.buildPersistableDeckHtml(doc, { id: 1 }), 'document:iframe-doc:1');
+  assert.equal(controller.buildPersistableDeckHtml(null, { id: 2 }), 'fallback:2');
+  assert.equal(adapterCreateCalls, 1);
+});

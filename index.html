@@ -9192,45 +9192,84 @@
       )
         ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlFromDocument
         : null;
-      if (!doc) {
-        if (buildStudioPersistableDeckHtmlWithoutDocument) {
-          return buildStudioPersistableDeckHtmlWithoutDocument({
-            getPersistedDeckState: getCurrentEditorPersistedDeckState,
-            resolvePersistedDeckStateWithContent: resolveEditorPersistedDeckStateWithContent,
-            resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-            }),
-            onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-              ? buildOptions.onCanonicalDeckResolved
+      const sharedBuildPersistableDeckHtml = (
+        typeof SlideNextDeckPersistence !== 'undefined'
+        && SlideNextDeckPersistence
+        && typeof SlideNextDeckPersistence.buildPersistableDeckHtml === 'function'
+      )
+        ? SlideNextDeckPersistence.buildPersistableDeckHtml
+        : null;
+      const sharedBuildWithoutDocumentOptions = {
+        getPersistedDeckState: (...args) => getCurrentEditorPersistedDeckState(...args),
+        resolvePersistedDeckStateWithContent: (...args) => resolveEditorPersistedDeckStateWithContent(...args),
+        resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+        }),
+        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
+          ? buildOptions.onCanonicalDeckResolved
+          : null,
+        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
+          ? buildOptions.onPlaybackStateResolved
+          : null,
+        resolveReusablePersistedHtml: (...args) => resolveEditorReusablePersistedHtml(...args),
+        sanitizeReusablePersistedHtml: (persistedHtml, options = {}) => sanitizeEditorReusablePersistedHtml(
+          persistedHtml,
+          {
+            playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
+              ? options.playbackState
               : null,
-            onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-              ? buildOptions.onPlaybackStateResolved
-              : null,
-            resolveReusablePersistedHtml: resolveEditorReusablePersistedHtml,
-            sanitizeReusablePersistedHtml: (persistedHtml, options = {}) => sanitizeEditorReusablePersistedHtml(
-              persistedHtml,
-              {
-                playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
-                  ? options.playbackState
-                  : null,
-                resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-              }
-            ),
-            buildSourceDeckHtml: ({ canonicalDeck, persistedHtml }) => {
-              const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
-                buildCanonicalDeck: () => canonicalDeck,
-                buildFallbackHtml: () => persistedHtml,
-                buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-                  sourceDoc,
-                  nextCanonicalDeck,
-                  options
-                )
-              });
-              return buildEditorSourceDeckHtml(doc, {
-                buildViewOptions: () => sourceViewOptions
-              });
-            }
+            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
+          }
+        ),
+        buildSourceDeckHtml: ({ canonicalDeck, persistedHtml }) => {
+          const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
+            buildCanonicalDeck: () => canonicalDeck,
+            buildFallbackHtml: () => persistedHtml,
+            buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
+              sourceDoc,
+              nextCanonicalDeck,
+              options
+            )
           });
+          return buildEditorSourceDeckHtml(doc, {
+            buildViewOptions: () => sourceViewOptions
+          });
+        }
+      };
+      const sharedBuildFromDocumentOptions = {
+        resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
+          || (shouldReportCanonicalDeck
+            ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
+            : null),
+        resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
+        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
+          ? buildOptions.onCanonicalDeckResolved
+          : null,
+        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
+          ? buildOptions.onPlaybackStateResolved
+          : null,
+        buildPersistableDeckSanitizerOptions: (playbackState) => buildEditorPersistableDeckSanitizerOptions(
+          playbackState,
+          {
+            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
+          }
+        ),
+        buildPersistableDeckHtml: sharedBuildPersistableDeckHtml
+      };
+      if (!doc) {
+        if (typeof studioEditorPersistenceController !== 'undefined'
+          && studioEditorPersistenceController
+          && typeof studioEditorPersistenceController.buildPersistableDeckHtml === 'function') {
+          const sharedResult = studioEditorPersistenceController.buildPersistableDeckHtml(
+            doc,
+            sharedBuildWithoutDocumentOptions
+          );
+          if (sharedResult !== null && typeof sharedResult !== 'undefined') {
+            return sharedResult;
+          }
+        }
+        if (buildStudioPersistableDeckHtmlWithoutDocument) {
+          return buildStudioPersistableDeckHtmlWithoutDocument(sharedBuildWithoutDocumentOptions);
         }
 
         const persistedDeckState = getCurrentEditorPersistedDeckState();
@@ -9275,26 +9314,18 @@
         });
       }
       if (buildStudioPersistableDeckHtmlFromDocument) {
-        return buildStudioPersistableDeckHtmlFromDocument(doc, {
-          resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-            || (shouldReportCanonicalDeck
-              ? buildEditorCanonicalDeck(doc, { preferLiveCanonicalDeck: false })
-              : null),
-          resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
-          onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-            ? buildOptions.onCanonicalDeckResolved
-            : null,
-          onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-            ? buildOptions.onPlaybackStateResolved
-            : null,
-          buildPersistableDeckSanitizerOptions: (playbackState) => buildEditorPersistableDeckSanitizerOptions(
-            playbackState,
-            {
-              resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-            }
-          ),
-          buildPersistableDeckHtml: SlideNextDeckPersistence.buildPersistableDeckHtml
-        });
+        if (typeof studioEditorPersistenceController !== 'undefined'
+          && studioEditorPersistenceController
+          && typeof studioEditorPersistenceController.buildPersistableDeckHtml === 'function') {
+          const sharedResult = studioEditorPersistenceController.buildPersistableDeckHtml(
+            doc,
+            sharedBuildFromDocumentOptions
+          );
+          if (sharedResult !== null && typeof sharedResult !== 'undefined') {
+            return sharedResult;
+          }
+        }
+        return buildStudioPersistableDeckHtmlFromDocument(doc, sharedBuildFromDocumentOptions);
       }
 
       const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';

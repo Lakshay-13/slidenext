@@ -4379,6 +4379,43 @@ test('buildPersistableDeckHtml reports canonical deck and playback state when th
   assert.equal(reportedPlaybackState, playbackState);
 });
 
+test('buildPersistableDeckHtml delegates document dispatch through the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+  );
+  const doc = { label: 'iframe-doc' };
+  const calls = [];
+  const context = {
+    studioEditorPersistenceController: {
+      buildPersistableDeckHtml(nextDoc, options) {
+        calls.push([nextDoc, options]);
+        return nextDoc ? 'document-html' : 'fallback-html';
+      }
+    },
+    SlideNextStudioEditorPersistence: {
+      buildStudioPersistableDeckHtmlFromDocument() {
+        throw new Error('shared document builder should be bypassed by the controller');
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildPersistableDeckHtmlSource, context);
+
+  assert.equal(context.buildPersistableDeckHtml(doc, { id: 1 }), 'document-html');
+  assert.equal(context.buildPersistableDeckHtml(null, { id: 2 }), 'fallback-html');
+  assert.equal(calls[0][0], doc);
+  assert.equal(typeof calls[0][1].resolveCanonicalDeck, 'function');
+  assert.equal(calls[1][0], null);
+  assert.equal(typeof calls[1][1].getPersistedDeckState, 'function');
+});
+
 test('buildPersistableDeckHtml reuses the local persisted deck state-with-content resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

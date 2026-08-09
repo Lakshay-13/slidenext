@@ -558,6 +558,28 @@ test('createStudioEditorReusablePersistedHtmlSanitizerAdapter fails closed witho
   assert.equal(adapter(null), '');
 });
 
+test('createStudioEditorPersistableDeckHtmlAdapter dispatches document and fallback builders', () => {
+  const calls = [];
+  const adapter = editorPersistenceState.createStudioEditorPersistableDeckHtmlAdapter({
+    buildPersistableDeckHtmlWithoutDocument(options) {
+      calls.push(['without-document', options.id]);
+      return 'fallback-html';
+    },
+    buildPersistableDeckHtmlFromDocument(doc, options) {
+      calls.push(['document', doc, options.id]);
+      return 'document-html';
+    }
+  });
+  const doc = { label: 'iframe-doc' };
+
+  assert.equal(adapter(null, { id: 1 }), 'fallback-html');
+  assert.equal(adapter(doc, { id: 2 }), 'document-html');
+  assert.deepEqual(calls, [
+    ['without-document', 1],
+    ['document', doc, 2]
+  ]);
+});
+
 test('createStudioEditorCapturedPersistableDeckStateResolverAdapter preserves builder precedence', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const playbackState = { activeSlideIds: ['slide-2'] };
