@@ -68,6 +68,34 @@
     });
   }
 
+  function createStudioVisibilityToolbarStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getHiddenState = typeof options.getHiddenState === 'function'
+      ? options.getHiddenState
+      : () => () => false;
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+
+    return function syncStudioEditorVisibilityToolbarState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      return syncStudioVisibilityToolbarState({
+        documentRef: getDocumentRef(),
+        elements: getSelectedElements(),
+        isHidden: getHiddenState(resolvedDoc),
+        canMutateDeck: () => !!getActiveSlide(resolvedDoc)
+      });
+    };
+  }
+
   function buildStudioVisibilityMutationPlan(elements = [], options = {}) {
     const selection = getStudioVisibilitySelection(elements, options);
     const isHidden = typeof options.isHidden === 'function'
@@ -224,6 +252,7 @@
     buildStudioVisibilityToolbarState,
     renderStudioVisibilityToolbarState,
     syncStudioVisibilityToolbarState,
+    createStudioVisibilityToolbarStateSync,
     buildStudioVisibilityMutationPlan,
     applyStudioVisibilityMutation,
     applyStudioVisibilityWithTransaction

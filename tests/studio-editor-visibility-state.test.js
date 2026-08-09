@@ -132,6 +132,56 @@ test('syncStudioVisibilityToolbarState builds and renders visibility controls in
   assert.equal(label.textContent, 'Show Selected');
 });
 
+test('createStudioVisibilityToolbarStateSync resolves live selection and slide readiness through callbacks', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const selectedElements = [{ id: 'node-1', isConnected: true }];
+  const nodes = {
+    toggleVisibilitySelectionBtn: { disabled: true },
+    toggleVisibilitySelectionIcon: { textContent: '' },
+    toggleVisibilitySelectionLabel: { textContent: '' }
+  };
+  const calls = [];
+  const syncToolbar = visibilityState.createStudioVisibilityToolbarStateSync({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getSelectedElements() {
+      calls.push('selection');
+      return selectedElements;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return slide;
+    },
+    getHiddenState(currentDoc) {
+      calls.push(['hidden-state', currentDoc]);
+      return () => false;
+    },
+    getDocumentRef() {
+      calls.push('document-ref');
+      return {
+        getElementById(id) {
+          return nodes[id] || null;
+        }
+      };
+    }
+  });
+
+  assert.equal(syncToolbar(), true);
+  assert.equal(nodes.toggleVisibilitySelectionBtn.disabled, false);
+  assert.equal(nodes.toggleVisibilitySelectionIcon.textContent, 'visibility_off');
+  assert.equal(nodes.toggleVisibilitySelectionLabel.textContent, 'Hide Selected');
+  assert.deepEqual(calls, [
+    'document',
+    'document-ref',
+    'selection',
+    ['hidden-state', doc],
+    ['active-slide', doc]
+  ]);
+});
+
 test('buildStudioVisibilityMutationPlan derives the next visibility toggle from the live selection only', () => {
   const visible = { id: 1, isConnected: true, hidden: false };
   const hidden = { id: 2, isConnected: true, hidden: true };

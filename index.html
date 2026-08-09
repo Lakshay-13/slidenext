@@ -6783,6 +6783,22 @@
       if (!visibilityState || typeof visibilityState.syncStudioVisibilityToolbarState !== 'function') {
         return false;
       }
+      if (typeof visibilityState.createStudioVisibilityToolbarStateSync === 'function') {
+        if (typeof updateVisibilityActionState.sync !== 'function') {
+          updateVisibilityActionState.sync = visibilityState.createStudioVisibilityToolbarStateSync({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getHiddenState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader('hidden', sourceDoc, isElementHidden)
+              : isElementHidden,
+            getDocumentRef: () => document
+          });
+        }
+        if (typeof updateVisibilityActionState.sync === 'function') {
+          return updateVisibilityActionState.sync(doc);
+        }
+      }
       const readHiddenState = typeof getEditorCanonicalVisibilityReader === 'function'
         ? getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden)
         : isElementHidden;
