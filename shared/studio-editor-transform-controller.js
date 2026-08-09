@@ -59,12 +59,18 @@
     const getCanonicalVisibilityReader = typeof options.getCanonicalVisibilityReader === 'function'
       ? options.getCanonicalVisibilityReader
       : null;
+    const getCanonicalFreeformReader = typeof options.getCanonicalFreeformReader === 'function'
+      ? options.getCanonicalFreeformReader
+      : null;
     const getRectOnSlide = typeof options.getRectOnSlide === 'function'
       ? options.getRectOnSlide
       : null;
     const ensureOverlay = typeof options.ensureOverlay === 'function' ? options.ensureOverlay : () => {};
     const getClosestPositionedAncestor = typeof options.getClosestPositionedAncestor === 'function'
       ? options.getClosestPositionedAncestor
+      : null;
+    const isFreeformPositioned = typeof options.isFreeformPositioned === 'function'
+      ? options.isFreeformPositioned
       : null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
@@ -239,6 +245,9 @@
         }
         return false;
       };
+      const readFreeformState = getCanonicalFreeformReader
+        ? getCanonicalFreeformReader(doc, isFreeformPositioned)
+        : isFreeformPositioned;
       const buildStudioTransformInteractionOptions = (overrides = {}) => (
         interactionOptionsApi
         && typeof interactionOptionsApi.buildStudioTransformInteractionOptions === 'function'
@@ -257,7 +266,8 @@
               ensureOverlay: (slide) => ensureOverlay(slide),
               itemOptions: {
                 getClosestPositionedAncestor,
-                getRectOnSlide
+                getRectOnSlide,
+                ...(readFreeformState ? { isFreeformPositioned: readFreeformState } : {})
               },
               captureTarget: doc && doc.body,
               dragStartThresholdPx,

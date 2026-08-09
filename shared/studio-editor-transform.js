@@ -228,6 +228,8 @@
         : '';
     const isPrePositioned = typeof options.isPrePositioned === 'boolean'
       ? options.isPrePositioned
+      : typeof options.isFreeformPositioned === 'function'
+        ? options.isFreeformPositioned(element)
       : isStudioFreeformPositioned(element, options);
     const tagName = element && typeof element.tagName === 'string'
       ? element.tagName.toLowerCase()

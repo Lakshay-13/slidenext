@@ -3118,6 +3118,12 @@
               ? getEditorCanonicalVisibilityReader(property, doc || getIframeDoc(), fallbackReader)
               : fallbackReader;
           },
+          getCanonicalFreeformReader: (doc, fallbackReader) => getEditorCanonicalFreeformReader(
+            doc || getIframeDoc(),
+            fallbackReader || SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          ),
+          isFreeformPositioned: (...args) => SlideNextStudioEditorTransform
+            .isStudioFreeformPositioned(...args),
           isHidden: (...args) => isElementHidden(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
@@ -6861,7 +6867,10 @@
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
         isLocked: readLockedState,
         isHidden: readHiddenState,
-        isFreeformPositioned: SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        isFreeformPositioned: getEditorCanonicalFreeformReader(
+          doc,
+          SlideNextStudioEditorTransform.isStudioFreeformPositioned
+        )
       });
     }
 
@@ -6944,6 +6953,42 @@
             fallbackReader: fallback
           })
         : fallback;
+    }
+
+    function getEditorCanonicalFreeformReader(doc = getIframeDoc(), fallbackReader) {
+      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+        ? SlideNextStudioEditorCanonicalState
+        : null;
+      const fallback = typeof fallbackReader === 'function'
+        ? fallbackReader
+        : SlideNextStudioEditorTransform.isStudioFreeformPositioned;
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const getElementId = typeof assignEditorElementId === 'function'
+        ? assignEditorElementId
+        : (element) => element && element.dataset && element.dataset.editorId;
+      const resolveCanonicalNode = typeof resolveEditorCanonicalNodeForElement === 'function'
+        ? resolveEditorCanonicalNodeForElement
+        : null;
+      const createFreeformReaderResolver = canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalFreeformReaderResolver === 'function'
+        ? canonicalStateApi.createStudioEditorCanonicalFreeformReaderResolver
+        : null;
+      const resolveCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+        ? resolveEditorUiCanonicalDeck
+        : typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck
+          : null;
+      if (createFreeformReaderResolver) {
+        return createFreeformReaderResolver({
+          buildCanonicalDeck: resolveCanonicalDeck,
+          canonicalDeckApi,
+          getElementId,
+          resolveCanonicalNode
+        })(doc, fallback);
+      }
+      return fallback;
     }
 
     function setElementHiddenState(el, hidden) {

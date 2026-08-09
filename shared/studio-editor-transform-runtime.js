@@ -46,6 +46,8 @@
           getSelectionBounds: options.getSelectionBounds,
           getSlideEditableElements: options.getSlideEditableElements,
           getCanonicalVisibilityReader: options.getCanonicalVisibilityReader,
+          getCanonicalFreeformReader: options.getCanonicalFreeformReader,
+          isFreeformPositioned: options.isFreeformPositioned,
           isHidden: options.isHidden,
           getRectOnSlide: options.getRectOnSlide,
           ensureOverlay: options.ensureOverlay,

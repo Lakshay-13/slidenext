@@ -212,6 +212,74 @@
     };
   }
 
+  function createStudioEditorCanonicalFreeformReaderForDeck(canonicalDeck, options = {}) {
+    const fallbackReader = typeof options.fallbackReader === 'function'
+      ? options.fallbackReader
+      : () => false;
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
+      ? options.canonicalDeckApi
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : null;
+    const readCanonicalNode = canonicalDeckApi
+      ? createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+          canonicalDeckApi,
+          getElementId
+        })
+      : createStudioEditorCanonicalNodeReader(canonicalDeck, { resolveCanonicalNode });
+
+    if (!canonicalDeck) return fallbackReader;
+    return function readCanonicalFreeformState(element) {
+      const canonicalNode = readCanonicalNode(element);
+      const mode = canonicalNode && canonicalNode.layout && canonicalNode.layout.mode;
+      if (mode === 'absolute') return true;
+      if (mode === 'flow') return false;
+      return fallbackReader(element);
+    };
+  }
+
+  function createStudioEditorCanonicalFreeformReaderResolver(options = {}) {
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
+      ? options.canonicalDeckApi
+      : null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : null;
+
+    return function resolveStudioEditorCanonicalFreeformReader(
+      doc = null,
+      fallbackReader = () => false
+    ) {
+      const fallback = typeof fallbackReader === 'function' ? fallbackReader : () => false;
+      let canonicalDeck = null;
+      if (buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(doc);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      return createStudioEditorCanonicalFreeformReaderForDeck(canonicalDeck, {
+        canonicalDeckApi,
+        getElementId,
+        resolveCanonicalNode,
+        fallbackReader: fallback
+      });
+    };
+  }
+
   function createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, options = {}) {
     const property = typeof options.property === 'string' ? options.property : '';
     const fallbackReader = typeof options.fallbackReader === 'function'
@@ -386,6 +454,8 @@
     createStudioEditorCanonicalNodeReader,
     createStudioEditorCanonicalNodeReaderFromApi,
     createStudioEditorCanonicalNodeResolver,
+    createStudioEditorCanonicalFreeformReaderForDeck,
+    createStudioEditorCanonicalFreeformReaderResolver,
     createStudioEditorCanonicalVisibilityReaderForDeck,
     createStudioEditorCanonicalVisibilityReaderResolver,
     createStudioEditorCanonicalLockReader,

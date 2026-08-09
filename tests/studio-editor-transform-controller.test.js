@@ -5,6 +5,7 @@ const transformController = require('../shared/studio-editor-transform-controlle
 test('transform controller delegates modern transform and marquee setup with shared options', () => {
   const calls = [];
   const doc = { body: {} };
+  const isFreeformPositioned = () => true;
   const controller = transformController.createStudioEditorTransformController({
     transformApi: {
       createStudioTransformSessionFinalizer(options) {
@@ -29,6 +30,7 @@ test('transform controller delegates modern transform and marquee setup with sha
       }
     },
     getGridSizePx: () => 20,
+    isFreeformPositioned,
     dragStartThresholdPx: 3,
     minSizePx: 12,
     snapDistancePx: 8
@@ -39,6 +41,7 @@ test('transform controller delegates modern transform and marquee setup with sha
   assert.equal(calls[1][0], 'transformOptions');
   assert.equal(calls[1][1].dragStartThresholdPx, 3);
   assert.equal(calls[1][1].getGridSizePx(), 20);
+  assert.equal(calls[1][1].itemOptions.isFreeformPositioned, isFreeformPositioned);
   assert.equal(calls[2][0], 'marqueeOptions');
   assert.equal(calls[3][0], 'attach');
   assert.equal(calls[3][1], doc);

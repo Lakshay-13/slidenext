@@ -35,6 +35,8 @@ test('transform runtime composes the full controller dependency bundle', () => {
     getSelectionBounds: () => null,
     getSlideEditableElements: () => [],
     getCanonicalVisibilityReader: () => null,
+    getCanonicalFreeformReader: () => () => true,
+    isFreeformPositioned: () => false,
     isHidden: () => false,
     getRectOnSlide: () => null,
     ensureOverlay: () => {},
@@ -75,6 +77,8 @@ test('transform runtime composes the full controller dependency bundle', () => {
   assert.equal(calls[0].transformApi, null);
   assert.equal(calls[0].canonicalTransformApi, options.canonicalTransformApi);
   assert.equal(calls[0].getCanonicalVisibilityReader, options.getCanonicalVisibilityReader);
+  assert.equal(calls[0].getCanonicalFreeformReader, options.getCanonicalFreeformReader);
+  assert.equal(calls[0].isFreeformPositioned, options.isFreeformPositioned);
   assert.equal(calls[0].getClosestPositionedAncestor, options.getClosestPositionedAncestor);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getCanonicalDeckBaseline, options.getCanonicalDeckBaseline);

@@ -719,6 +719,28 @@ test('buildStudioTransformSizingLockState preserves flow layout sizing constrain
   });
 });
 
+test('buildStudioTransformSizingLockState prefers canonical freeform state over computed CSS', () => {
+  const element = {
+    tagName: 'DIV',
+    style: { width: '', height: '' },
+    ownerDocument: {
+      defaultView: {
+        getComputedStyle() {
+          return { position: 'absolute' };
+        }
+      }
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformSizingLockState(element, {
+    isFreeformPositioned: () => false
+  }), {
+    isPrePositioned: false,
+    lockWidth: true,
+    lockHeight: false
+  });
+});
+
 test('shouldStudioResizeWidth and shouldStudioResizeHeight follow the editor resize tag policy', () => {
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'IMG' }), true);
   assert.equal(transformState.shouldStudioResizeWidth({ tagName: 'SPAN' }), false);

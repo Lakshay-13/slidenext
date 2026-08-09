@@ -429,6 +429,33 @@ test('canonical visibility reader assembly selects shared lock and property adap
   );
 });
 
+test('canonical freeform reader treats layout mode as authoritative and preserves legacy fallback', () => {
+  const canonicalDeck = createDeck('active');
+  const elements = {
+    absolute: { dataset: { editorId: 'absolute' }, domFreeform: false },
+    flow: { dataset: { editorId: 'flow' }, domFreeform: true },
+    legacy: { dataset: { editorId: 'legacy' }, domFreeform: true }
+  };
+  const canonicalDeckApi = {
+    findCanonicalNodeById(_deck, elementId) {
+      if (elementId === 'absolute') return { layout: { mode: 'absolute' } };
+      if (elementId === 'flow') return { layout: { mode: 'flow' } };
+      return null;
+    }
+  };
+  const readFreeform = canonicalState.createStudioEditorCanonicalFreeformReaderForDeck(
+    canonicalDeck,
+    {
+      canonicalDeckApi,
+      fallbackReader: (element) => element.domFreeform
+    }
+  );
+
+  assert.equal(readFreeform(elements.absolute), true);
+  assert.equal(readFreeform(elements.flow), false);
+  assert.equal(readFreeform(elements.legacy), true);
+});
+
 test('canonical visibility reader resolver builds once and prefers canonical state', () => {
   const documentRef = { id: 'iframe-doc' };
   const canonicalDeck = createDeck('active');
