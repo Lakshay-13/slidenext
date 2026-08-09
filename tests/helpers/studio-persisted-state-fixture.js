@@ -1,3 +1,5 @@
+const sessionTokenFixture = require('./studio-session-token-fixture.js');
+
 function normalizePersistedStateMarker(marker) {
   return marker
     .replace(
@@ -46,7 +48,7 @@ function extractPersistedStateAwareFunctionSource(fileContent, startMarker, endM
   if (start === -1) return null;
   const end = fileContent.indexOf(normalizedEndMarker, start);
   if (end === -1) return null;
-  return `${getPersistedStateFixtureSource()}\n${fileContent.slice(start, end)}`;
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${getPersistedStateFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 module.exports = {

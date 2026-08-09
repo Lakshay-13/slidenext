@@ -1200,6 +1200,7 @@ test('saveHistoryState delegates transaction scheduling to the shared history sa
     captureState() {},
     pendingEditorCanonicalDeck: null,
     liveCanonicalArgs: null,
+    studioEditorSessionToken: null,
     setEditorLiveCanonicalDeck(...args) {
       context.liveCanonicalArgs = args;
     }
@@ -1248,6 +1249,7 @@ test('saveHistoryState preserves canonical sidecars through the shared handler',
     getIframeDoc() {
       return null;
     },
+    studioEditorSessionToken: null,
     setEditorLiveCanonicalDeck(...args) {
       liveCanonicalArgs = args;
     }

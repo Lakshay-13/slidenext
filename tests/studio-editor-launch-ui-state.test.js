@@ -631,7 +631,7 @@ test('createCurrentStudioPresentationMetadataLoadOptions merges live session rea
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
 
@@ -1241,7 +1241,7 @@ test('loadCurrentPresentationMetadata passes live session getters when delegatin
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
@@ -1350,7 +1350,7 @@ test('loadCurrentPresentationMetadata fails closed when the deck context loader 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(
@@ -1640,7 +1640,7 @@ test('loadCurrentPresentationMetadata refreshes the persisted canonical baseline
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {',
+    'function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    async function loadCurrentPresentationMetadata('
   );
   const loadCurrentPresentationMetadataSource = extractFunctionSource(

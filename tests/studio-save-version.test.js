@@ -11,13 +11,14 @@ const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
 const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
+const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${fileContent.slice(start, end)}`;
 }
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
@@ -1366,7 +1367,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 
@@ -1428,7 +1429,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 
@@ -1536,7 +1537,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 
@@ -2026,7 +2027,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 
@@ -2110,7 +2111,7 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 
@@ -2185,7 +2186,7 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(
     fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {',
+    'async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {',
     '\n\n    // 7. Versions and Backups listing'
   );
 

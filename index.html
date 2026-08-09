@@ -1399,6 +1399,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
@@ -1442,7 +1443,23 @@
     // Global Editor State
     let currentPresentationUrl = '';
     let currentPresentationMetadata = null;
-    let studioEditorSessionToken = 0;
+    const studioEditorSessionTokenStateController = typeof SlideNextStudioEditorSessionTokenStateController !== 'undefined'
+      && SlideNextStudioEditorSessionTokenStateController
+      && typeof SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController === 'function'
+      ? SlideNextStudioEditorSessionTokenStateController.createStudioEditorSessionTokenStateController({})
+      : null;
+    function getStudioEditorSessionToken() {
+      return studioEditorSessionTokenStateController
+        && typeof studioEditorSessionTokenStateController.getSessionToken === 'function'
+        ? studioEditorSessionTokenStateController.getSessionToken()
+        : 0;
+    }
+    function advanceStudioEditorSessionToken() {
+      return studioEditorSessionTokenStateController
+        && typeof studioEditorSessionTokenStateController.advanceSessionToken === 'function'
+        ? studioEditorSessionTokenStateController.advanceSessionToken()
+        : 0;
+    }
     const studioEditorPresentationLabelStateController = typeof SlideNextStudioEditorPresentationLabelStateController !== 'undefined'
       && SlideNextStudioEditorPresentationLabelStateController
       && typeof SlideNextStudioEditorPresentationLabelStateController.createStudioEditorPresentationLabelStateController === 'function'
@@ -1927,7 +1944,7 @@
           buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getCurrentDocument: () => getIframeDoc(),
           resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
@@ -2065,7 +2082,7 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
@@ -2101,7 +2118,7 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getSlideId: (...args) => getEditorSlideId(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
@@ -2132,7 +2149,7 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
@@ -2166,7 +2183,7 @@
           buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
@@ -2201,7 +2218,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           getDocument: (...args) => getIframeDoc(...args),
@@ -2249,7 +2266,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
@@ -2276,7 +2293,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
@@ -2296,7 +2313,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
@@ -2313,7 +2330,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
           applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
@@ -2356,7 +2373,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
@@ -2381,7 +2398,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
@@ -2410,7 +2427,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
         })
@@ -2440,7 +2457,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
@@ -2472,7 +2489,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           insertClipboardPayload: (...args) => insertClipboardPayload(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
@@ -2498,7 +2515,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
@@ -2522,7 +2539,7 @@
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
@@ -2562,7 +2579,7 @@
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getDocument: () => getIframeDoc(),
           getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
@@ -2595,7 +2612,7 @@
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getDocument: () => getIframeDoc(),
           getSlides: (doc) => getSlides(doc),
@@ -2620,7 +2637,7 @@
           getCanonicalDeck: () => buildEditorCanonicalDeck(getIframeDoc()),
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
           getSelectedImage: () => {
@@ -2719,7 +2736,7 @@
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           assignElementId: (...args) => assignEditorElementId(...args),
           getGridSizePx: () => studioEditorGridSnapController
@@ -2770,7 +2787,7 @@
           ),
           getCurrentPresentationMetadata: () => currentPresentationMetadata,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
-          resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, studioEditorSessionToken),
+          resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, getStudioEditorSessionToken()),
           resolveStoredCanonicalBaseline: resolveEditorStoredCanonicalBaseline,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
           getPresentationUrl: () => currentPresentationUrl,
@@ -2800,7 +2817,7 @@
           buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           isCanonicalDeck: getEditorCanonicalDeckValidator()
         })
@@ -2814,7 +2831,7 @@
           mutationCanonicalDeckBuilder: studioEditorMutationCanonicalDeckBuilder,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getDocument: getIframeDoc
@@ -2854,7 +2871,7 @@
             setEditorLiveCanonicalDeck(
               nextCanonicalDeck,
               typeof getIframeDoc === 'function' ? getIframeDoc() : null,
-              studioEditorSessionToken
+              getStudioEditorSessionToken()
             );
           },
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
@@ -2868,7 +2885,7 @@
           buildCanonicalDeck: buildEditorCanonicalDeck,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           getHistoryOptions: getEditorHistoryOptions,
           buildPersistableDeckHtml,
@@ -2914,7 +2931,7 @@
             capturePersistedDeckPlaybackState,
             applyPersistedDeckState: (nextState) => applyCurrentStudioPersistedDeckState(nextState),
             setEditorLiveCanonicalDeck,
-            getSessionToken: () => studioEditorSessionToken,
+            getSessionToken: getStudioEditorSessionToken,
             setCurrentPresentationCanonicalDeck,
             applyEditorSelectionState,
             buildDeckViewOptions: (nextHistoryEntry) => createEditorDeckViewBuildOptions(null, {
@@ -2976,7 +2993,7 @@
       ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateController({
           sessionApi: SlideNextStudioEditorSession,
           getPresentationUrl: () => currentPresentationUrl,
-          getSessionToken: () => studioEditorSessionToken,
+          getSessionToken: getStudioEditorSessionToken,
           setPresentationUrl: (value) => {
             currentPresentationUrl = value;
           },
@@ -3887,7 +3904,7 @@
           createCurrentStudioSessionStateReaders.adapter = createStudioEditorSessionStateReadersAdapter({
             sessionApi: SlideNextStudioEditorSession,
             getCurrentPresentationUrl: () => currentPresentationUrl,
-            getCurrentSessionToken: () => studioEditorSessionToken
+            getCurrentSessionToken: getStudioEditorSessionToken
           });
         }
         if (typeof createCurrentStudioSessionStateReaders.adapter === 'function') {
@@ -3908,13 +3925,13 @@
       if (createStudioSessionStateReaders) {
         return createStudioSessionStateReaders({
           getCurrentPresentationUrl: () => currentPresentationUrl,
-          getCurrentSessionToken: () => studioEditorSessionToken
+          getCurrentSessionToken: getStudioEditorSessionToken
         });
       }
 
       return {
         getCurrentPresentationUrl: () => currentPresentationUrl,
-        getCurrentSessionToken: () => studioEditorSessionToken
+        getCurrentSessionToken: getStudioEditorSessionToken
       };
     }
 
@@ -3983,7 +4000,7 @@
           captureCurrentStudioSessionState.adapter = createStudioEditorSessionSnapshotAdapter({
             sessionApi: SlideNextStudioEditorSession,
             getPresentationUrl: () => currentPresentationUrl,
-            getSessionToken: () => studioEditorSessionToken
+            getSessionToken: getStudioEditorSessionToken
           });
         }
         const snapshot = typeof captureCurrentStudioSessionState.adapter === 'function'
@@ -4003,13 +4020,13 @@
       if (createStudioSessionSnapshot) {
         return createStudioSessionSnapshot({
           presentationUrl: currentPresentationUrl,
-          sessionToken: studioEditorSessionToken
+          sessionToken: getStudioEditorSessionToken()
         });
       }
 
       return {
         presentationUrl: currentPresentationUrl,
-        sessionToken: studioEditorSessionToken
+        sessionToken: getStudioEditorSessionToken()
       };
     }
 
@@ -4123,7 +4140,7 @@
     }
 
     function launchStudioEditor(url, title, category) {
-      const editorSessionToken = ++studioEditorSessionToken;
+      const editorSessionToken = advanceStudioEditorSessionToken();
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
         resetEditorLiveCanonicalDeck();
       }
@@ -4216,7 +4233,7 @@
     function closeStudioEditor() {
       const editor = document.getElementById('studioEditor');
       const iframe = getStudioFrame();
-      studioEditorSessionToken += 1;
+      advanceStudioEditorSessionToken();
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
         resetEditorLiveCanonicalDeck();
       }
@@ -4308,7 +4325,7 @@
               initialPersistedDeckState,
               currentPresentationUrl,
               {
-                sessionToken: studioEditorSessionToken
+                sessionToken: getStudioEditorSessionToken()
               }
             ),
             {
@@ -4319,7 +4336,7 @@
             setEditorLiveCanonicalDeck(
               initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
               iframeDoc,
-              studioEditorSessionToken
+              getStudioEditorSessionToken()
             );
           }
         }
@@ -4816,7 +4833,7 @@
       return buildStudioPresentationMetadataSeed(presentationUrl, presentationTitle);
     }
 
-    function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = studioEditorSessionToken) {
+    function createCurrentStudioPresentationMetadataLoadOptions(sessionToken = getStudioEditorSessionToken()) {
       return createCurrentStudioSessionReaderOptions({
         sessionToken,
         setCurrentPresentationMetadata: (metadata) => {
@@ -4831,7 +4848,7 @@
     async function loadCurrentPresentationMetadata(
       presentationUrl = currentPresentationUrl,
       presentationTitle = getStudioPresentationTitle(),
-      sessionToken = studioEditorSessionToken
+      sessionToken = getStudioEditorSessionToken()
     ) {
       const loadStudioPresentationMetadata = SlideNextStudioDeckContext
         && typeof SlideNextStudioDeckContext.loadStudioPresentationMetadata === 'function'
@@ -7712,7 +7729,7 @@
           : null,
         getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
           sourceDoc || sourceDocument,
-          studioEditorSessionToken
+          getStudioEditorSessionToken()
         )
       });
     }
@@ -7786,7 +7803,7 @@
           sourceDocument: iframeDoc,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || iframeDoc,
-            studioEditorSessionToken
+            getStudioEditorSessionToken()
           ),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || iframeDoc)
         });
@@ -8013,8 +8030,8 @@
           setLiveCanonicalDeck(nextCanonicalDeck) {
             if (typeof setEditorLiveCanonicalDeck !== 'function') return;
             const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
-            const liveSessionToken = typeof studioEditorSessionToken !== 'undefined'
-              ? studioEditorSessionToken
+            const liveSessionToken = typeof getStudioEditorSessionToken === 'function'
+              ? getStudioEditorSessionToken()
               : null;
             setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
           },
@@ -8096,7 +8113,7 @@
           buildCanonicalDeck: buildEditorCanonicalDeck,
           getCanonicalDeckBaseline: (sourceDoc) => (
             typeof resolveEditorLiveCanonicalDeck === 'function'
-              ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), studioEditorSessionToken)
+              ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), getStudioEditorSessionToken())
               : null
           ),
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
@@ -8368,7 +8385,7 @@
           setEditorLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
             ? setEditorLiveCanonicalDeck
             : null,
-          getSessionToken: () => studioEditorSessionToken,
+          getSessionToken: getStudioEditorSessionToken,
           setCurrentPresentationCanonicalDeck: typeof setCurrentPresentationCanonicalDeck === 'function'
             ? setCurrentPresentationCanonicalDeck
             : null,
@@ -10002,7 +10019,7 @@
 
     function isCurrentStudioPersistenceTaskStale(
       presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
+      sessionToken = getStudioEditorSessionToken()
     ) {
       const createStudioEditorPersistenceTaskStaleCheckerAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
@@ -10018,7 +10035,7 @@
               ? SlideNextStudioEditorPersistence
               : null,
             getPresentationUrl: () => currentPresentationUrl,
-            getSessionToken: () => studioEditorSessionToken
+            getSessionToken: getStudioEditorSessionToken
           });
         }
         const result = typeof isCurrentStudioPersistenceTaskStale.adapter === 'function'
@@ -10038,7 +10055,7 @@
       if (createStudioPersistenceTaskStaleChecker) {
         return createStudioPersistenceTaskStaleChecker({
           getPresentationUrl: () => currentPresentationUrl,
-          getSessionToken: () => studioEditorSessionToken,
+          getSessionToken: getStudioEditorSessionToken,
           isPersistenceTaskStale: (
             typeof SlideNextStudioEditorPersistence !== 'undefined'
             && SlideNextStudioEditorPersistence
@@ -10051,7 +10068,7 @@
 
       return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
         currentPresentationUrl,
-        currentSessionToken: studioEditorSessionToken,
+        currentSessionToken: getStudioEditorSessionToken(),
         sessionToken
       });
     }
@@ -10607,7 +10624,7 @@
     function resolveCurrentStudioVersionCheckpointPersistenceState(
       doc = getIframeDoc(),
       presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
+      sessionToken = getStudioEditorSessionToken()
     ) {
       return resolveCurrentStudioPersistenceStateFromCapture(doc, {
         presentationUrl,
@@ -10697,7 +10714,7 @@
       }
     }
 
-    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
+    async function executeSaveAutoVersion(label, presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {
       if (isCurrentStudioPersistenceTaskStale(presentationUrl, sessionToken)) return;
       const iframeDoc = getIframeDoc();
       const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
@@ -10750,7 +10767,7 @@
         });
         if (!toggleResult || !toggleResult.didToggle) return false;
         if (toggleResult.shouldOpen && currentPresentationUrl) {
-          loadVersions(currentPresentationUrl, studioEditorSessionToken);
+          loadVersions(currentPresentationUrl, getStudioEditorSessionToken());
         }
         return true;
       }
@@ -10760,7 +10777,7 @@
       const shouldOpen = menu.classList.contains('hidden');
       menu.classList.toggle('hidden');
       if (shouldOpen && currentPresentationUrl) {
-        loadVersions(currentPresentationUrl, studioEditorSessionToken);
+        loadVersions(currentPresentationUrl, getStudioEditorSessionToken());
       }
       return true;
     }
@@ -10783,7 +10800,7 @@
     // Fetch versions checklist
     function createCurrentStudioVersionHistoryLoadOptions(
       presentationUrl = currentPresentationUrl,
-      sessionToken = studioEditorSessionToken
+      sessionToken = getStudioEditorSessionToken()
     ) {
       const createStudioVersionHistoryLoadOptionsBuilder = (
         typeof SlideNextStudioVersionHistory !== 'undefined'
@@ -10807,7 +10824,7 @@
       });
     }
 
-    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = studioEditorSessionToken) {
+    async function loadVersions(presentationUrl = currentPresentationUrl, sessionToken = getStudioEditorSessionToken()) {
       const createStudioVersionHistoryLoader = (
         typeof SlideNextStudioVersionHistory !== 'undefined'
         && SlideNextStudioVersionHistory
@@ -10818,7 +10835,7 @@
       if (createStudioVersionHistoryLoader) {
         return createStudioVersionHistoryLoader({
           getPresentationUrl: () => currentPresentationUrl,
-          getSessionToken: () => studioEditorSessionToken,
+          getSessionToken: getStudioEditorSessionToken,
           createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
           loadVersionHistory: (
             typeof SlideNextStudioVersionHistory !== 'undefined'
@@ -10858,7 +10875,7 @@
           getPresentationUrl: () => currentPresentationUrl,
           getPresentationTitle: getStudioPresentationTitle,
           getPresentationCategory: getStudioPresentationCategory,
-          getSessionToken: () => studioEditorSessionToken,
+          getSessionToken: getStudioEditorSessionToken,
           createVersionActionContext: (
             typeof SlideNextStudioVersionActions !== 'undefined'
             && SlideNextStudioVersionActions
@@ -10874,7 +10891,7 @@
         getStudioPresentationTitle(),
         getStudioPresentationCategory(),
         {
-          sessionToken: studioEditorSessionToken
+          sessionToken: getStudioEditorSessionToken()
         }
       );
     }
