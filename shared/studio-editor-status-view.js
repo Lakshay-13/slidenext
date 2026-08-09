@@ -123,6 +123,26 @@
     };
   }
 
+  function createStudioSaveButtonStateSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => options.documentRef || null;
+    const setState = typeof options.setState === 'function'
+      ? options.setState
+      : setStudioSaveButtonState;
+
+    return function syncStudioSaveButtonState(state) {
+      try {
+        return setState({
+          documentRef: getDocument(),
+          state
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function setStudioSaveButtonState(options = {}) {
     const documentRef = options.documentRef;
     const saveBtn = documentRef && typeof documentRef.getElementById === 'function'
@@ -146,6 +166,7 @@
     setStudioAutoSaveStatusWithWarningCount,
     createStudioAutoSaveStatusSync,
     createStudioAutoSaveStatusWithWarningCountSync,
+    createStudioSaveButtonStateSync,
     setStudioSaveButtonState
   };
 });

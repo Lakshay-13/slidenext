@@ -132,6 +132,27 @@ test('createStudioAutoSaveStatusWithWarningCountSync fails closed when status re
   assert.equal(syncStatus('exported-with-warnings', 2, ['Missing asset'], true), false);
 });
 
+test('createStudioSaveButtonStateSync resolves the document through callbacks', () => {
+  const documentRef = { id: 'editor-shell' };
+  const calls = [];
+  const syncState = statusView.createStudioSaveButtonStateSync({
+    getDocument() {
+      calls.push('document');
+      return documentRef;
+    },
+    setState(options) {
+      calls.push(options);
+      return true;
+    }
+  });
+
+  assert.equal(syncState('saving-version'), true);
+  assert.deepEqual(calls, [
+    'document',
+    { documentRef, state: 'saving-version' }
+  ]);
+});
+
 test('setStudioSaveButtonState renders saving and idle version states', () => {
   const saveBtn = { disabled: false, innerHTML: '<span>Save Version</span>' };
   const documentRef = {

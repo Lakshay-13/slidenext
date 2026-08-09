@@ -11917,6 +11917,15 @@
         ? SlideNextStudioEditorStatusView
         : null;
       if (!statusView || typeof statusView.setStudioSaveButtonState !== 'function') return false;
+      if (typeof setStudioSaveButtonState.sync !== 'function'
+        && typeof statusView.createStudioSaveButtonStateSync === 'function') {
+        setStudioSaveButtonState.sync = statusView.createStudioSaveButtonStateSync({
+          getDocument: () => document
+        });
+      }
+      if (typeof setStudioSaveButtonState.sync === 'function') {
+        return setStudioSaveButtonState.sync(normalizedState);
+      }
       return statusView.setStudioSaveButtonState({
         documentRef: document,
         state: normalizedState

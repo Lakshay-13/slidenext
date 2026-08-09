@@ -560,6 +560,48 @@ test('setStudioSaveButtonState renders the version button loading and idle state
   assert.match(saveBtnEl.innerHTML, /Save Version/);
 });
 
+test('setStudioSaveButtonState caches the shared save button synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setStudioSaveButtonStateSource = extractFunctionSource(
+    fileContent,
+    'function setStudioSaveButtonState(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+  const calls = [];
+  const documentRef = { id: 'editor-shell' };
+  const context = {
+    document: documentRef,
+    studioEditorSaveButtonStateController: {
+      setState(state) {
+        calls.push(['state', state]);
+      }
+    },
+    SlideNextStudioEditorStatusView: {
+      setStudioSaveButtonState() {
+        throw new Error('direct save button rendering should not run');
+      },
+      createStudioSaveButtonStateSync(options) {
+        calls.push(['factory', options]);
+        return (state) => {
+          calls.push(['sync', options.getDocument(), state]);
+          return true;
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setStudioSaveButtonStateSource, context);
+
+  assert.equal(context.setStudioSaveButtonState('saving-version'), true);
+  assert.equal(context.setStudioSaveButtonState('idle'), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync'), [
+    ['sync', documentRef, 'saving-version'],
+    ['sync', documentRef, 'idle']
+  ]);
+});
+
 test('resolveCurrentStudioPersistenceStateFromCapture delegates current deck capture through the shared persistence helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };
