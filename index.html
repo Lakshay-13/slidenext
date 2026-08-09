@@ -1362,6 +1362,7 @@
   <script src="/shared/studio-editor-notes-actions.js"></script>
   <script src="/shared/studio-editor-slide-metadata.js"></script>
   <script src="/shared/studio-editor-slide-metadata-controller.js"></script>
+  <script src="/shared/studio-editor-slide-metadata-runtime.js"></script>
   <script src="/shared/studio-editor-slide-routing-controller.js"></script>
   <script src="/shared/studio-editor-slide-routing-runtime.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
@@ -2334,10 +2335,13 @@
     const studioEditorSlideDuplicationController = studioEditorSlideMutationRuntime
       ? studioEditorSlideMutationRuntime.slideDuplicationController
       : null;
-    const studioEditorSlideMetadataController = typeof SlideNextStudioEditorSlideMetadataController !== 'undefined'
-      && SlideNextStudioEditorSlideMetadataController
-      && typeof SlideNextStudioEditorSlideMetadataController.createStudioEditorSlideMetadataController === 'function'
-      ? SlideNextStudioEditorSlideMetadataController.createStudioEditorSlideMetadataController({
+    const studioEditorSlideMetadataRuntime = typeof SlideNextStudioEditorSlideMetadataRuntime !== 'undefined'
+      && SlideNextStudioEditorSlideMetadataRuntime
+      && typeof SlideNextStudioEditorSlideMetadataRuntime.createStudioEditorSlideMetadataRuntime === 'function'
+      ? SlideNextStudioEditorSlideMetadataRuntime.createStudioEditorSlideMetadataRuntime({
+          controllerApi: typeof SlideNextStudioEditorSlideMetadataController !== 'undefined'
+            ? SlideNextStudioEditorSlideMetadataController
+            : null,
           slideMetadataApi: typeof SlideNextStudioEditorSlideMetadata !== 'undefined'
             ? SlideNextStudioEditorSlideMetadata
             : null,
@@ -2373,6 +2377,9 @@
           finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
           syncChrome: (...args) => syncStudioChromeToActiveSlide(...args)
         })
+      : null;
+    const studioEditorSlideMetadataController = studioEditorSlideMetadataRuntime
+      ? studioEditorSlideMetadataRuntime.slideMetadataController
       : null;
     const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingRuntime !== 'undefined'
       && SlideNextStudioEditorSlideRoutingRuntime

@@ -43,8 +43,8 @@ test('slide metadata wiring uses a dedicated canonical baseline builder', () => 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideMetadataController =',
-    'const studioEditorSlideRoutingController ='
+    'const studioEditorSlideMetadataRuntime =',
+    'const studioEditorSlideMetadataController ='
   );
 
   assert.match(
