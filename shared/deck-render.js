@@ -844,7 +844,7 @@
       themeStyleBlocks.push(`<style>\n:root {\n${tokenLines}\n}\n</style>`);
     }
     if (themeCustomCss) {
-      themeStyleBlocks.push(`<style>\n${escapeStyleText(themeCustomCss)}\n</style>`);
+      themeStyleBlocks.push(`<style data-slidenext-source-css="custom">\n${escapeStyleText(themeCustomCss)}\n</style>`);
     }
     return themeStyleBlocks;
   }

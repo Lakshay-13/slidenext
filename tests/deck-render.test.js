@@ -572,7 +572,7 @@ test('renderCanonicalDeckHtml overlays canonical theme styles onto reused source
   });
 
   assert.match(html, /<style>\s*:root\s*\{\s*--color-primary: #00f2ff;\s*\}\s*<\/style>/);
-  assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
+  assert.match(html, /<style data-slidenext-source-css="custom">\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
   assert.ok(html.indexOf('--color-primary: #111111;') < html.indexOf('--color-primary: #00f2ff;'));
   assert.ok(html.indexOf('color: red;') < html.indexOf('color: var(--color-primary);'));
 });
@@ -1253,7 +1253,7 @@ test('renderCanonicalDeckHtml can rebuild canonical head when source head html i
 
   assert.match(html, /<title>Canonical Head Deck<\/title>/);
   assert.match(html, /<meta name="description" content="Canonical description">/);
-  assert.match(html, /<style>\s*\.slide \{ color: cyan; \}\s*<\/style>/);
+  assert.match(html, /<style data-slidenext-source-css="custom">\s*\.slide \{ color: cyan; \}\s*<\/style>/);
   assert.doesNotMatch(html, /stale description/);
   assert.doesNotMatch(html, /\.stale\{color:red;\}/);
 });
@@ -1508,7 +1508,7 @@ test('renderCanonicalDeckHtml emits theme tokens and custom css when rendering w
   assert.match(html, /<style>\s*:root\s*\{/);
   assert.match(html, /--color-primary: #00f2ff;/);
   assert.match(html, /--font-heading: 'Sora', sans-serif;/);
-  assert.match(html, /<style>\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
+  assert.match(html, /<style data-slidenext-source-css="custom">\s*\.slide \{ color: var\(--color-primary\); \}\s*<\/style>/);
 });
 
 test('renderCanonicalDeckHtml emits canonical deck layout sizing when source head html is absent', () => {
