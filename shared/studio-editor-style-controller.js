@@ -125,6 +125,15 @@
       const canonicalDeck = resolveCanonicalDeck(sourceDocument);
       if (!canonicalDeck) return isElementLocked;
       if (canonicalStateApi
+        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck === 'function') {
+        return canonicalStateApi.createStudioEditorCanonicalVisibilityReaderForDeck(canonicalDeck, {
+          property: 'locked',
+          canonicalDeckApi,
+          getElementId: assignElementId,
+          fallbackReader: isElementLocked
+        });
+      }
+      if (canonicalStateApi
         && typeof canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi === 'function') {
         return canonicalStateApi.createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, {
           canonicalDeckApi,
