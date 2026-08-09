@@ -2930,7 +2930,6 @@
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          buildCanonicalDeck: (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc),
           buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
