@@ -55,25 +55,31 @@
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
       const getRemovalElementId = (element) => assignElementId(element);
-      const canonicalRemovalBuilders = canonicalRemovalApi
-        && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
-        ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            buildCanonicalDeckBaseline,
-            getCanonicalDeckBaseline
-          })
-        : null;
-      const buildCanonicalRemovalMutation = canonicalRemovalBuilders
-        && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
-        ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
-        : null;
-      const canonicalDeck = buildCanonicalRemovalMutation
-        ? buildCanonicalRemovalMutation(removalActionState.selection, {
-            sourceDocument: doc,
-            getElementId: getRemovalElementId
-          })
-        : null;
+      let canonicalDeck = null;
+      try {
+        const canonicalRemovalBuilders = canonicalRemovalApi
+          && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
+          ? canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
+              getCanonicalDeckBaseline
+            })
+          : null;
+        const buildCanonicalRemovalMutation = canonicalRemovalBuilders
+          && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
+          ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
+          : null;
+        canonicalDeck = buildCanonicalRemovalMutation
+          ? buildCanonicalRemovalMutation(removalActionState.selection, {
+              sourceDocument: doc,
+              getElementId: getRemovalElementId
+            })
+          : null;
+      } catch (err) {
+        // Do not remove DOM nodes without a canonical deletion sidecar.
+        return finalizeRemovalActionResult(false, doc);
+      }
       const mutation = applyRemovalMutation(removalActionState.selection, {
         getElementId: getRemovalElementId,
         removeElement(element) {
