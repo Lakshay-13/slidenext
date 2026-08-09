@@ -1441,6 +1441,7 @@
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
+  <script src="/shared/studio-editor-wallpaper-state-runtime.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1855,10 +1856,17 @@
           logger: typeof console !== 'undefined' ? console : null
         })
       : null;
-    const studioEditorWallpaperStateStore = typeof SlideNextStudioEditorWallpaperStateStore !== 'undefined'
-      && SlideNextStudioEditorWallpaperStateStore
-      && typeof SlideNextStudioEditorWallpaperStateStore.createStudioEditorWallpaperStateStore === 'function'
-      ? SlideNextStudioEditorWallpaperStateStore.createStudioEditorWallpaperStateStore()
+    const studioEditorWallpaperStateRuntime = typeof SlideNextStudioEditorWallpaperStateRuntime !== 'undefined'
+      && SlideNextStudioEditorWallpaperStateRuntime
+      && typeof SlideNextStudioEditorWallpaperStateRuntime.createStudioEditorWallpaperStateRuntime === 'function'
+      ? SlideNextStudioEditorWallpaperStateRuntime.createStudioEditorWallpaperStateRuntime({
+          stateStore: typeof SlideNextStudioEditorWallpaperStateStore !== 'undefined'
+            ? SlideNextStudioEditorWallpaperStateStore
+            : null
+        })
+      : null;
+    const studioEditorWallpaperStateStore = studioEditorWallpaperStateRuntime
+      ? studioEditorWallpaperStateRuntime.wallpaperStateStore
       : null;
     function getStudioWallpaperTab() {
       return studioEditorWallpaperStateStore
