@@ -63,14 +63,19 @@
     function remove(index) {
       if (!deleteStudioSlideNode) return false;
 
-      const canonicalDeleteSlideBuilders = canonicalSlideApi
-        && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
-        ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            getCanonicalDeckBaseline
-          })
-        : null;
+      let canonicalDeleteSlideBuilders = null;
+      try {
+        canonicalDeleteSlideBuilders = canonicalSlideApi
+          && typeof canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders === 'function'
+          ? canonicalSlideApi.createStudioCanonicalDeleteSlideMutationBuilders({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              getCanonicalDeckBaseline
+            })
+          : null;
+      } catch (error) {
+        return false;
+      }
 
       return deleteStudioSlideNode(index, {
         getIframeDoc,

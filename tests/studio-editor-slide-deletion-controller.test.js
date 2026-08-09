@@ -56,3 +56,23 @@ test('slide deletion controller fails closed without a slide-command adapter', (
 
   assert.equal(controller.remove(0), false);
 });
+
+test('slide deletion controller fails closed when canonical builder construction throws', () => {
+  let deleteCalls = 0;
+  const controller = deletionController.createStudioEditorSlideDeletionController({
+    slideCommandsApi: {
+      deleteStudioSlideNode() {
+        deleteCalls += 1;
+        return true;
+      }
+    },
+    canonicalSlideApi: {
+      createStudioCanonicalDeleteSlideMutationBuilders() {
+        throw new Error('canonical builder unavailable');
+      }
+    }
+  });
+
+  assert.equal(controller.remove(0), false);
+  assert.equal(deleteCalls, 0);
+});
