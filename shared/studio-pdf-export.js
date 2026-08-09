@@ -117,22 +117,41 @@
 `.trim();
   }
 
+  function escapeStudioPdfAttribute(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function buildStudioPdfPrintHtml(html, options = {}) {
     if (typeof html !== 'string' || !html.trim()) {
       return '';
     }
 
+    const baseHref = typeof options.baseHref === 'string' ? options.baseHref.trim() : '';
+    const baseTag = baseHref && !/[\u0000-\u001f\u007f]/.test(baseHref)
+      ? `<base href="${escapeStudioPdfAttribute(baseHref)}">`
+      : '';
     const styleTag = `<style data-slidenext-pdf-print="true">\n${buildStudioPdfPrintStyles(options)}\n</style>`;
-    if (/<\/head\s*>/i.test(html)) {
-      return html.replace(/<\/head\s*>/i, `${styleTag}</head>`);
+    let printHtml = html;
+    if (baseTag && /<base\b[^>]*>/i.test(printHtml)) {
+      printHtml = printHtml.replace(/<base\b[^>]*>/i, baseTag);
     }
-    if (/<head(?:\s[^>]*)?>/i.test(html)) {
-      return html.replace(/<head(?:\s[^>]*)?>/i, `$&${styleTag}`);
+    const baseTagForInsertion = baseTag && !/<base\b[^>]*>/i.test(printHtml)
+      ? baseTag
+      : '';
+    if (/<\/head\s*>/i.test(printHtml)) {
+      return printHtml.replace(/<\/head\s*>/i, `${baseTagForInsertion}${styleTag}</head>`);
     }
-    if (/<html(?:\s[^>]*)?>/i.test(html)) {
-      return html.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${styleTag}</head>`);
+    if (/<head(?:\s[^>]*)?>/i.test(printHtml)) {
+      return printHtml.replace(/<head(?:\s[^>]*)?>/i, `$&${baseTagForInsertion}${styleTag}`);
     }
-    return `${styleTag}${html}`;
+    if (/<html(?:\s[^>]*)?>/i.test(printHtml)) {
+      return printHtml.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${baseTagForInsertion}${styleTag}</head>`);
+    }
+    return `${baseTagForInsertion}${styleTag}${printHtml}`;
   }
 
   function validateStudioPdfSlideCount(documentRef, options = {}) {
@@ -529,6 +548,7 @@
     normalizeDimension,
     resolveStudioPdfPageDimensions,
     buildStudioPdfPrintStyles,
+    escapeStudioPdfAttribute,
     buildStudioPdfPrintHtml,
     validateStudioPdfSlideCount,
     waitForStudioPdfPrintResources,

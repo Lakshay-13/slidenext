@@ -50,6 +50,27 @@ test('buildStudioPdfPrintHtml prepends print styles to html fragments', () => {
   assert.match(html, /<div class="slide">Fragment<\/div>/);
 });
 
+test('buildStudioPdfPrintHtml injects and replaces a safe asset base href', () => {
+  const html = pdfExport.buildStudioPdfPrintHtml(
+    '<html><head><base href="/old/"><title>Deck</title></head><body><img src="assets/hero.png"></body></html>',
+    { baseHref: '/presentations/demo/' }
+  );
+
+  assert.match(html, /<base href="\/presentations\/demo\/">/);
+  assert.doesNotMatch(html, /<base href="\/old\/">/);
+  assert.equal((html.match(/<base\b/gi) || []).length, 1);
+  assert.match(
+    pdfExport.buildStudioPdfPrintHtml('<div class="slide">A</div>', {
+      baseHref: 'https://example.com/deck/\" onerror=\"alert(1)'
+    }),
+    /&quot; onerror=&quot;alert\(1\)/
+  );
+  assert.doesNotMatch(
+    pdfExport.buildStudioPdfPrintHtml('<div class="slide">A</div>', { baseHref: 'bad\nvalue' }),
+    /<base\b/
+  );
+});
+
 test('openStudioPdfPrintWindow rejects a known empty deck before opening a popup', () => {
   let openCalls = 0;
   assert.equal(pdfExport.openStudioPdfPrintWindow({
