@@ -1346,6 +1346,7 @@
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-zoom-controller.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
+  <script src="/shared/studio-editor-save-button-state-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-controller.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
@@ -1686,6 +1687,17 @@
         && typeof studioEditorWallpaperStateController.clearPendingCustomWallpaperVersion === 'function'
         ? studioEditorWallpaperStateController.clearPendingCustomWallpaperVersion()
         : false;
+    }
+    const studioEditorSaveButtonStateController = typeof SlideNextStudioEditorSaveButtonStateController !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateController
+      && typeof SlideNextStudioEditorSaveButtonStateController.createStudioEditorSaveButtonStateController === 'function'
+      ? SlideNextStudioEditorSaveButtonStateController.createStudioEditorSaveButtonStateController({})
+      : null;
+    function getStudioSaveButtonState() {
+      return studioEditorSaveButtonStateController
+        && typeof studioEditorSaveButtonStateController.getState === 'function'
+        ? studioEditorSaveButtonStateController.getState()
+        : 'idle';
     }
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
@@ -2943,7 +2955,6 @@
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
       : null;
-    let currentStudioSaveButtonState = 'idle';
     let renamingFilename = '';
     let renamingVersionContext = null;
     let editorClipboard = null;
@@ -3090,7 +3101,7 @@
             persistedDeckState
           ),
           getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
-          getSaveButtonState: () => currentStudioSaveButtonState
+          getSaveButtonState: getStudioSaveButtonState
         })
       : null;
 
@@ -10457,7 +10468,13 @@
       const normalizedState = state === 'saving-version'
         ? 'saving-version'
         : 'idle';
-      currentStudioSaveButtonState = normalizedState;
+      if (typeof studioEditorSaveButtonStateController !== 'undefined'
+        && studioEditorSaveButtonStateController
+        && typeof studioEditorSaveButtonStateController.setState === 'function') {
+        studioEditorSaveButtonStateController.setState(normalizedState);
+      } else {
+        currentStudioSaveButtonState = normalizedState;
+      }
       const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
         ? SlideNextStudioEditorStatusView
         : null;
