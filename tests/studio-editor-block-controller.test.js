@@ -262,6 +262,34 @@ test('block controller fails closed when removing a block canonical mutation thr
   assert.deepEqual(calls, []);
 });
 
+test('block controller fails closed when inserting a block canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{ id: 'hero', nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }] }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let appendCount = 0;
+  const activeSlide = {
+    appendChild() {
+      appendCount += 1;
+    }
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      insertCanonicalBlockInstance() {
+        throw new Error('canonical block insertion failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => ({}),
+    getActiveSlide: () => activeSlide,
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  assert.equal(controller.insertBlock('hero'), false);
+  assert.equal(appendCount, 0);
+});
+
 test('block controller renders and inserts canonical block nodes through a markup transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [{

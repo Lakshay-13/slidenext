@@ -217,12 +217,17 @@
       if (!canonicalDeck || !documentRef || !activeSlide || !slideId) return false;
 
       const sourceSlide = canonicalDeck.slides.find((slide) => slide && slide.id === slideId);
-      const nextCanonicalDeck = canonicalDeckApi.insertCanonicalBlockInstance(
-        canonicalDeck,
-        slideId,
-        blockId,
-        insertionOptions
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.insertCanonicalBlockInstance(
+          canonicalDeck,
+          slideId,
+          blockId,
+          insertionOptions
+        );
+      } catch (err) {
+        return false;
+      }
       const nextSlide = nextCanonicalDeck
         && nextCanonicalDeck.slides.find((slide) => slide && slide.id === slideId);
       if (!sourceSlide || !nextSlide) return false;
