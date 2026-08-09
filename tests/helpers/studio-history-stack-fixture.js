@@ -42,6 +42,13 @@ function clearStudioPendingEditorCanonicalDeck() {
   pendingEditorCanonicalDeck = null;
   return pendingEditorCanonicalDeck;
 }
+function getStudioUndoDebounceTimer() {
+  return typeof undoDebounceTimer !== 'undefined' ? undoDebounceTimer : null;
+}
+function setStudioUndoDebounceTimer(nextTimer) {
+  undoDebounceTimer = nextTimer;
+  return undoDebounceTimer;
+}
 `;
 }
 

@@ -1400,6 +1400,7 @@
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
+  <script src="/shared/studio-editor-history-timer-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -1556,6 +1557,23 @@
       return studioEditorHistoryPendingController
         && typeof studioEditorHistoryPendingController.setPendingCanonicalDeck === 'function'
         ? studioEditorHistoryPendingController.setPendingCanonicalDeck(nextCanonicalDeck)
+        : false;
+    }
+    const studioEditorHistoryTimerController = typeof SlideNextStudioEditorHistoryTimerController !== 'undefined'
+      && SlideNextStudioEditorHistoryTimerController
+      && typeof SlideNextStudioEditorHistoryTimerController.createStudioEditorHistoryTimerController === 'function'
+      ? SlideNextStudioEditorHistoryTimerController.createStudioEditorHistoryTimerController({})
+      : null;
+    function getStudioUndoDebounceTimer() {
+      return studioEditorHistoryTimerController
+        && typeof studioEditorHistoryTimerController.getTimer === 'function'
+        ? studioEditorHistoryTimerController.getTimer()
+        : null;
+    }
+    function setStudioUndoDebounceTimer(nextTimer) {
+      return studioEditorHistoryTimerController
+        && typeof studioEditorHistoryTimerController.setTimer === 'function'
+        ? studioEditorHistoryTimerController.setTimer(nextTimer)
         : false;
     }
     const studioEditorWallpaperStateController = typeof SlideNextStudioEditorWallpaperStateController !== 'undefined'
@@ -2641,9 +2659,9 @@
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
             ? getEditorCanonicalDeckValidator()
             : null,
-          getTimer: () => undoDebounceTimer,
+          getTimer: getStudioUndoDebounceTimer,
           setTimer: (nextTimer) => {
-            undoDebounceTimer = nextTimer;
+            setStudioUndoDebounceTimer(nextTimer);
           },
           getDocument: getIframeDoc,
           buildCanonicalDeck: buildEditorCanonicalDeck,
@@ -7745,7 +7763,6 @@
     }
 
     // 5. Undo/Redo Engine
-    let undoDebounceTimer = null;
     function saveHistoryState(debounce = false, transaction = null) {
       if (typeof studioEditorHistoryController !== 'undefined'
         && studioEditorHistoryController
@@ -7765,7 +7782,7 @@
           ? SlideNextStudioEditorHistoryState.createStudioEditorHistorySaveAdapter
           : null;
         if (!createStudioEditorHistorySaveAdapter) {
-          return { didCapture: false, nextTimer: undoDebounceTimer };
+          return { didCapture: false, nextTimer: getStudioUndoDebounceTimer() };
         }
         saveHistoryState.adapter = createStudioEditorHistorySaveAdapter({
           historyApi: SlideNextStudioHistory,
@@ -7793,9 +7810,9 @@
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
             ? getEditorCanonicalDeckValidator()
             : null,
-          getTimer: () => undoDebounceTimer,
+          getTimer: getStudioUndoDebounceTimer,
           setTimer(nextTimer) {
-            undoDebounceTimer = nextTimer;
+            setStudioUndoDebounceTimer(nextTimer);
           },
           captureState,
           scheduleOptions: {
@@ -7805,7 +7822,7 @@
         });
       }
       if (typeof saveHistoryState.adapter !== 'function') {
-        return { didCapture: false, nextTimer: undoDebounceTimer };
+        return { didCapture: false, nextTimer: getStudioUndoDebounceTimer() };
       }
       return saveHistoryState.adapter(
         debounce,
