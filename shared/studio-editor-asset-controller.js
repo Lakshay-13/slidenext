@@ -189,12 +189,17 @@
         }
         if (canonicalLockState === true || isElementLocked(selectedImage)) return false;
       }
-      const nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
-        canonicalDeck,
-        getActiveSlideId(),
-        getElementId(selectedImage),
-        assetId
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
+          canonicalDeck,
+          getActiveSlideId(),
+          getElementId(selectedImage),
+          assetId
+        );
+      } catch (err) {
+        return false;
+      }
       if (!nextCanonicalDeck) return false;
 
       const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';

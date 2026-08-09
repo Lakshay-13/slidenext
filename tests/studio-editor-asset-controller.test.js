@@ -181,6 +181,46 @@ test('asset controller fails closed when removing an asset canonical mutation th
   assert.deepEqual(calls, []);
 });
 
+test('asset controller fails closed when applying an asset canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', name: 'Hero', src: '/hero.png' }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'image-1', type: 'image' }] }]
+  });
+  const selectedImage = {
+    dataset: { editorId: 'image-1' },
+    setAttribute() {
+      throw new Error('DOM asset mutation should not run');
+    }
+  };
+  const calls = [];
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      updateCanonicalNodeAsset() {
+        throw new Error('canonical asset application failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onAssetsChanged() {
+      calls.push('assets');
+    }
+  });
+
+  assert.equal(controller.applyAsset('hero'), false);
+  assert.deepEqual(calls, []);
+});
+
 test('removeAsset commits unused asset removal and rejects referenced assets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [
