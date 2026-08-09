@@ -205,6 +205,43 @@ test('applyStudioEditorSource fails closed when the pre-apply callback throws', 
   assert.equal(restoreCalls, 0);
 });
 
+test('applyStudioEditorSource falls back when active-slide resolution throws', () => {
+  let restoredEntry = null;
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    buildCanonicalDeck() {
+      return {
+        kind: 'slidenext.deck',
+        slides: [{ id: 'slide-1' }]
+      };
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    resolveActiveSlideId() {
+      throw new Error('active slide unavailable');
+    },
+    restoreHistoryEntry(historyEntry) {
+      restoredEntry = historyEntry;
+    }
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.historyEntry.activeSlideId, 'slide-1');
+  assert.equal(restoredEntry.activeSlideId, 'slide-1');
+});
+
 test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
   const sourceRoot = {
     innerHTML: '<section class="slide">Edited</section>',

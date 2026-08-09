@@ -111,7 +111,12 @@
     const resolveActiveSlideId = typeof options.resolveActiveSlideId === 'function'
       ? options.resolveActiveSlideId
       : () => '';
-    const resolvedActiveSlideId = resolveActiveSlideId(parsedDocument, canonicalDeck);
+    let resolvedActiveSlideId = '';
+    try {
+      resolvedActiveSlideId = resolveActiveSlideId(parsedDocument, canonicalDeck);
+    } catch (error) {
+      resolvedActiveSlideId = '';
+    }
     const activeSlideId = typeof resolvedActiveSlideId === 'string' && resolvedActiveSlideId.trim()
       ? resolvedActiveSlideId
       : (hasCanonicalSlides && typeof canonicalDeck.slides[0].id === 'string'
