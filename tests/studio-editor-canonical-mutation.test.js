@@ -59,6 +59,46 @@ test('mutation canonical builder forwards the pre-mutation baseline when availab
   });
 });
 
+test('mutation canonical builder delegates baseline resolution to canonical state', () => {
+  const documentRef = { id: 'post-mutation-document' };
+  const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  let readerOptions = null;
+  let readerDocument = null;
+  let capturedOptions = null;
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      canonicalStateApi: {
+        createStudioEditorCanonicalDeckBaselineReader(options) {
+          readerOptions = options;
+          return (sourceDocument) => {
+            readerDocument = sourceDocument;
+            return canonicalDeckBaseline;
+          };
+        }
+      },
+      isCanonicalDeck(value) {
+        return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
+      },
+      buildCanonicalDeck(sourceDocument, options) {
+        assert.equal(sourceDocument, documentRef);
+        capturedOptions = options;
+        return canonicalDeckBaseline;
+      },
+      getCanonicalDeckBaseline() {
+        throw new Error('custom reader should own baseline resolution');
+      }
+    });
+
+  assert.equal(buildMutationDeck(documentRef), canonicalDeckBaseline);
+  assert.equal(readerDocument, documentRef);
+  assert.equal(readerOptions.isCanonicalDeck !== null, true);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.deepEqual(capturedOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline
+  });
+});
+
 test('mutation canonical builder rebuilds when the live baseline is invalid', () => {
   const documentRef = { id: 'post-mutation-document' };
   const rebuiltCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
