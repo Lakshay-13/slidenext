@@ -6756,6 +6756,30 @@
     }
 
     function buildMotionSelectionActionState(doc = null) {
+      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
+        ? SlideNextStudioEditorNudge
+        : null;
+      if (nudgeApi && typeof nudgeApi.createStudioNudgeActionStateBuilder === 'function') {
+        if (typeof buildMotionSelectionActionState.builder !== 'function') {
+          buildMotionSelectionActionState.builder = nudgeApi.createStudioNudgeActionStateBuilder({
+            getDocument: () => getIframeDoc(),
+            getActiveSlide,
+            getNudgeSelectionState: (elements, sourceDoc) => getNudgeSelectionState(elements, sourceDoc),
+            getSlideMetrics,
+            buildPositionedLayoutItems(selection, currentSlideMetrics) {
+              return SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, {
+                getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+                getRectOnSlide,
+                slideMetrics: currentSlideMetrics
+              });
+            }
+          });
+        }
+        if (typeof buildMotionSelectionActionState.builder === 'function') {
+          return buildMotionSelectionActionState.builder(doc);
+        }
+      }
+
       const resolvedDoc = doc || getIframeDoc();
       const slide = getActiveSlide(resolvedDoc);
       const nudgeSelectionState = getNudgeSelectionState(undefined, resolvedDoc);

@@ -199,6 +199,52 @@ test('buildStudioNudgeActionState derives geometry readiness from the resolved s
   });
 });
 
+test('createStudioNudgeActionStateBuilder resolves editor geometry through shared callbacks', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide-1' };
+  const selectionState = { selection: [{ id: 'node-1' }], canNudge: true };
+  const slideMetrics = { logicalWidth: 1920, logicalHeight: 1080 };
+  const layoutItems = [{ element: selectionState.selection[0] }];
+  const calls = [];
+  const buildActionState = nudge.createStudioNudgeActionStateBuilder({
+    getDocument() {
+      calls.push('document');
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      calls.push(['active-slide', currentDoc]);
+      return slide;
+    },
+    getNudgeSelectionState(elements, currentDoc) {
+      calls.push(['selection', elements, currentDoc]);
+      return selectionState;
+    },
+    getSlideMetrics(currentSlide) {
+      calls.push(['metrics', currentSlide]);
+      return slideMetrics;
+    },
+    buildPositionedLayoutItems(selection, currentMetrics) {
+      calls.push(['layout', selection, currentMetrics]);
+      return layoutItems;
+    }
+  });
+
+  const result = buildActionState();
+
+  assert.equal(result.doc, doc);
+  assert.equal(result.slide, slide);
+  assert.equal(result.slideMetrics, slideMetrics);
+  assert.equal(result.nudgeLayoutItems, layoutItems);
+  assert.equal(result.canNudge, true);
+  assert.deepEqual(calls, [
+    'document',
+    ['active-slide', doc],
+    ['selection', undefined, doc],
+    ['metrics', slide],
+    ['layout', selectionState.selection, slideMetrics]
+  ]);
+});
+
 test('renderStudioNudgeToolbarState applies the nudge readiness to all directional controls', () => {
   const buttons = {
     nudgeSelectionUpBtn: { disabled: true },

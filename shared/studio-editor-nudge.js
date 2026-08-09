@@ -69,6 +69,40 @@
     };
   }
 
+  function createStudioNudgeActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getNudgeSelectionState = typeof options.getNudgeSelectionState === 'function'
+      ? options.getNudgeSelectionState
+      : () => ({ selection: [], canNudge: false });
+    const getSlideMetrics = typeof options.getSlideMetrics === 'function'
+      ? options.getSlideMetrics
+      : () => null;
+    const buildPositionedLayoutItems = typeof options.buildPositionedLayoutItems === 'function'
+      ? options.buildPositionedLayoutItems
+      : () => [];
+    const buildNudgeActionState = typeof options.buildNudgeActionState === 'function'
+      ? options.buildNudgeActionState
+      : buildStudioNudgeActionState;
+
+    return function buildStudioEditorNudgeActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      const slide = getActiveSlide(resolvedDoc);
+      const nudgeSelectionState = getNudgeSelectionState(undefined, resolvedDoc);
+      const slideMetrics = slide ? getSlideMetrics(slide) : null;
+      return buildNudgeActionState(nudgeSelectionState, {
+        doc: resolvedDoc,
+        slide,
+        slideMetrics,
+        buildPositionedLayoutItems
+      });
+    };
+  }
+
   function renderStudioNudgeToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -205,6 +239,7 @@
     getStudioNudgeSelection,
     buildStudioNudgeSelectionState,
     buildStudioNudgeActionState,
+    createStudioNudgeActionStateBuilder,
     buildStudioNudgeToolbarState,
     renderStudioNudgeToolbarState,
     syncStudioNudgeToolbarState,
