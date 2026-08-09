@@ -134,3 +134,26 @@ test('persistence controller reads the persisted active slide id through the sha
   assert.equal(controller.getPersistedActiveSlideId(), 'slide-2');
   assert.equal(controller.getPersistedActiveSlideId({ activeSlideId: 'slide-3' }), 'slide-3');
 });
+
+test('persistence controller captures playback state through the shared adapter', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = canonicalDeckModel.createCanonicalDeck({ slides: [] });
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: persistenceState,
+    deckPersistenceApi: {
+      capturePersistedDeckPlaybackStateWithFallback() {
+        return { activeSlideIds: ['slide-2'] };
+      }
+    },
+    getSlides: () => [],
+    slideIdAttr: 'data-slide-id',
+    resolveFallbackActiveSlideId: () => 'slide-1'
+  });
+
+  assert.deepEqual(controller.capturePersistedDeckPlaybackState(iframeDoc, {
+    canonicalDeck
+  }), {
+    activeSlideIds: ['slide-2']
+  });
+});

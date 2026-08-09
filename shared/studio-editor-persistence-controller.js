@@ -56,11 +56,21 @@
     const getPersistedPlaybackState = typeof options.getPersistedPlaybackState === 'function'
       ? options.getPersistedPlaybackState
       : () => options.persistedPlaybackState;
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : null;
+    const slideIdAttr = typeof options.slideIdAttr === 'string'
+      ? options.slideIdAttr
+      : '';
+    const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
+      ? options.resolveFallbackActiveSlideId
+      : null;
 
     let stateUpdater = null;
     let stateApplier = null;
     let stateReader = null;
     let activeSlideIdReader = null;
+    let playbackStateCapturer = null;
     let canonicalDeckOverrideResolver = null;
     let fallbackCanonicalDeckResolver = null;
 
@@ -152,6 +162,29 @@
         : '';
     }
 
+    function createPlaybackStateCapturer() {
+      if (!persistenceStateApi
+        || typeof persistenceStateApi.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter !== 'function') {
+        return null;
+      }
+      return persistenceStateApi.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
+        persistenceApi,
+        deckPersistenceApi: options.deckPersistenceApi || null,
+        getSlides,
+        slideIdAttr,
+        resolveFallbackActiveSlideId
+      });
+    }
+
+    function capturePersistedDeckPlaybackState(doc = null, nextOptions = {}) {
+      if (typeof playbackStateCapturer !== 'function') {
+        playbackStateCapturer = createPlaybackStateCapturer();
+      }
+      return typeof playbackStateCapturer === 'function'
+        ? playbackStateCapturer(doc, nextOptions)
+        : null;
+    }
+
     function createStateApplier() {
       if (!persistenceStateApi
         || typeof persistenceStateApi.createStudioEditorPersistedDeckStateApplierAdapter !== 'function') {
@@ -218,6 +251,7 @@
       resolveWithContent,
       resolvePersistedDeckStateWithContent,
       getPersistedActiveSlideId,
+      capturePersistedDeckPlaybackState,
       update,
       apply,
       resolveCanonicalDeckOverride,
