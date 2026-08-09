@@ -234,3 +234,33 @@ test('lock reader uses a rebuilt deck after strict compatibility validation', ()
   assert.equal(controller.toggleLock(), false);
   assert.equal(capturedDeck, rebuiltDeck);
 });
+
+test('lock reader rejects malformed baselines without a canonical validator', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  let fallbackLockReads = 0;
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        assert.equal(options.isLocked(elements[0]), false);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      isCanonicalDeck: undefined
+    },
+    canonicalStateApi: {},
+    getSelectedElements: () => selected,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => {
+      fallbackLockReads += 1;
+      return false;
+    },
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline: () => ({ invalid: true })
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(fallbackLockReads, 1);
+});
