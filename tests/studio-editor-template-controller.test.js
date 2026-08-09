@@ -383,3 +383,43 @@ test('template controller fails closed when rendering an inserted template slide
   assert.equal(controller.insertTemplate('hero-template'), false);
   assert.equal(didApply, false);
 });
+
+test('template controller fails closed when preparing an inserted template slide throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let didApply = false;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: { firstElementChild: {} },
+          set innerHTML(value) {
+            this.markup = value;
+          }
+        };
+      }
+    }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [],
+    prepareSlide() {
+      throw new Error('template slide preparation failed');
+    },
+    applyInsertion() {
+      didApply = true;
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.equal(didApply, false);
+});

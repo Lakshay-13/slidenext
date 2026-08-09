@@ -230,7 +230,13 @@
 
       const slideElement = renderCanonicalSlideElement(documentRef, nextSlide, insertionIndex);
       if (!slideElement) return false;
-      if (prepareSlide) prepareSlide(slideElement);
+      if (prepareSlide) {
+        try {
+          prepareSlide(slideElement);
+        } catch (err) {
+          return false;
+        }
+      }
 
       if (saveHistoryState) saveHistoryState(false);
       const mutation = applyInsertion(container, slideElement, {
