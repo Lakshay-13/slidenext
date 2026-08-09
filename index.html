@@ -1517,6 +1517,7 @@
   <script src="/shared/studio-editor-frame-controller.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-frame-runtime.js"></script>
+  <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -3597,37 +3598,35 @@
       : null;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
-    const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
-    const EDITOR_SELECTABLE_SELECTOR = [
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'p', 'li', 'img', 'pre', 'code', 'button', 'a',
-      'svg', 'canvas', 'video', 'figure', 'blockquote',
-      '.editor-shape', '.editor-chart', '.editor-embed-placeholder', '.material-symbols-outlined', 'table',
-      '.glass-card', '.glass-panel', '.nav-btn',
-      '.pipeline-step', '.dim3-card', '.fail-card', '.av-node',
-      "[class*='card']", "[class*='panel']", "[class*='node']", "[class*='step']", "[class*='box']",
-      "[style*='position:absolute']", "[style*='position: absolute']",
-      "[style*='position:fixed']", "[style*='position: fixed']"
-    ].join(', ');
-    const EDITOR_PARENT_TARGET_SELECTOR = [
-      'button',
-      'a',
-      '[role="button"]',
-      '.glass-card',
-      '.glass-panel',
-      '.nav-btn',
-      "[class*='card']",
-      "[class*='panel']",
-      "[class*='node']",
-      "[class*='step']",
-      "[class*='box']"
-    ].join(', ');
-    const EDITOR_INLINE_TEXT_TAGS = new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
-    const EDITOR_INLINE_EDIT_TEXT_TAGS = new Set([
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'pre', 'code', 'blockquote', 'td', 'th',
-      ...EDITOR_INLINE_TEXT_TAGS
-    ]);
-    const RESIZE_HANDLE_DIRECTIONS = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    const editorConfiguration = typeof SlideNextStudioEditorConfiguration !== 'undefined'
+      ? SlideNextStudioEditorConfiguration
+      : null;
+    const EDITOR_CHROME_NODE_IDS = editorConfiguration && Array.isArray(editorConfiguration.EDITOR_CHROME_NODE_IDS)
+      ? editorConfiguration.EDITOR_CHROME_NODE_IDS
+      : ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
+    const EDITOR_SELECTABLE_SELECTOR = editorConfiguration
+      && typeof editorConfiguration.EDITOR_SELECTABLE_SELECTOR === 'string'
+      ? editorConfiguration.EDITOR_SELECTABLE_SELECTOR
+      : "h1, h2, h3, h4, h5, h6, p, li, img, pre, code, button, a, svg, canvas, video, figure, blockquote, .editor-shape, .editor-chart, .editor-embed-placeholder, .material-symbols-outlined, table, .glass-card, .glass-panel, .nav-btn, .pipeline-step, .dim3-card, .fail-card, .av-node, [class*='card'], [class*='panel'], [class*='node'], [class*='step'], [class*='box'], [style*='position:absolute'], [style*='position: absolute'], [style*='position:fixed'], [style*='position: fixed']";
+    const EDITOR_PARENT_TARGET_SELECTOR = editorConfiguration
+      && typeof editorConfiguration.EDITOR_PARENT_TARGET_SELECTOR === 'string'
+      ? editorConfiguration.EDITOR_PARENT_TARGET_SELECTOR
+      : "button, a, [role=\"button\"], .glass-card, .glass-panel, .nav-btn, [class*='card'], [class*='panel'], [class*='node'], [class*='step'], [class*='box']";
+    const EDITOR_INLINE_TEXT_TAGS = editorConfiguration
+      && editorConfiguration.EDITOR_INLINE_TEXT_TAGS instanceof Set
+      ? editorConfiguration.EDITOR_INLINE_TEXT_TAGS
+      : new Set(['span', 'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'sup', 'sub', 'label']);
+    const EDITOR_INLINE_EDIT_TEXT_TAGS = editorConfiguration
+      && editorConfiguration.EDITOR_INLINE_EDIT_TEXT_TAGS instanceof Set
+      ? editorConfiguration.EDITOR_INLINE_EDIT_TEXT_TAGS
+      : new Set([
+          'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'pre', 'code', 'blockquote', 'td', 'th',
+          ...EDITOR_INLINE_TEXT_TAGS
+        ]);
+    const RESIZE_HANDLE_DIRECTIONS = editorConfiguration
+      && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
+      ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
+      : ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
     const studioEditorFrameRuntime = typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
       && SlideNextStudioEditorFrameRuntime
       && typeof SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime === 'function'
