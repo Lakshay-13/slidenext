@@ -363,3 +363,56 @@ test('applyStudioStyleMutationWithTransaction accepts an injected mutation primi
   assert.equal(result.displayValue, '#fff');
   assert.deepEqual(calls, [[[element], 'color', '#fff']]);
 });
+
+test('applyStudioStyleMutationWithTransaction restores styles when an adapter rejects after mutating', () => {
+  const first = createElement();
+  const second = createElement();
+  first.style.color = 'red';
+  second.style.color = 'blue';
+
+  const result = styleState.applyStudioStyleMutationWithTransaction(
+    [first, second],
+    'color',
+    '#fff',
+    {
+      applyStudioStyleMutation(selection) {
+        selection.forEach((element) => {
+          element.style.color = '#fff';
+        });
+        return { didApply: false, displayValue: '#fff' };
+      }
+    }
+  );
+
+  assert.deepEqual(result, {
+    didApply: false,
+    displayValue: '#fff',
+    transaction: null
+  });
+  assert.equal(first.style.color, 'red');
+  assert.equal(second.style.color, 'blue');
+});
+
+test('applyStudioStyleMutationWithTransaction restores text when an adapter throws', () => {
+  const element = createElement();
+  element.textContent = 'Before';
+
+  const result = styleState.applyStudioStyleMutationWithTransaction(
+    [element],
+    'text',
+    'After',
+    {
+      applyStudioStyleMutation(targets) {
+        targets[0].textContent = 'After';
+        throw new Error('mutation failed');
+      }
+    }
+  );
+
+  assert.deepEqual(result, {
+    didApply: false,
+    displayValue: 'After',
+    transaction: null
+  });
+  assert.equal(element.textContent, 'Before');
+});

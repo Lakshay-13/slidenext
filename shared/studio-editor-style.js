@@ -327,10 +327,55 @@
         }))
       : [];
 
-    const mutationResult = applyMutation(selection, prop, value);
-    if (!mutationResult.didApply) {
+    const rollbackStyleItems = styleTransactionProperty
+      ? selection.map((element) => ({
+          element,
+          property: styleTransactionProperty,
+          before: element && element.style ? element.style[styleTransactionProperty] : ''
+        }))
+      : [];
+    const rollbackPropertyItems = propertyTransactionProperty
+      ? selection.slice(0, 1).map((element) => ({
+          element,
+          property: propertyTransactionProperty,
+          before: element ? element[propertyTransactionProperty] : ''
+        }))
+      : [];
+    const restoreMutationBaseline = () => {
+      rollbackStyleItems.forEach((item) => {
+        try {
+          if (item.element && item.element.style) {
+            item.element.style[item.property] = item.before;
+          }
+        } catch (error) {
+          // Keep failure handling deterministic when a target has disconnected.
+        }
+      });
+      rollbackPropertyItems.forEach((item) => {
+        try {
+          if (item.element) item.element[item.property] = item.before;
+        } catch (error) {
+          // Keep failure handling deterministic when a target has disconnected.
+        }
+      });
+    };
+
+    let mutationResult;
+    try {
+      mutationResult = applyMutation(selection, prop, value);
+    } catch (error) {
+      restoreMutationBaseline();
       return {
-        ...mutationResult,
+        didApply: false,
+        displayValue: `${value}`,
+        transaction: null
+      };
+    }
+    if (!mutationResult || !mutationResult.didApply) {
+      restoreMutationBaseline();
+      return {
+        ...(mutationResult && typeof mutationResult === 'object' ? mutationResult : {}),
+        didApply: false,
         transaction: null
       };
     }
