@@ -1308,6 +1308,7 @@
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
+  <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
@@ -2650,6 +2651,22 @@
             }
             return element && element.dataset && element.dataset.editorId;
           }
+        })
+      : null;
+    const studioEditorClipboardSelectionController = typeof SlideNextStudioEditorClipboardSelectionController !== 'undefined'
+      && SlideNextStudioEditorClipboardSelectionController
+      && typeof SlideNextStudioEditorClipboardSelectionController.createStudioEditorClipboardSelectionController === 'function'
+      ? SlideNextStudioEditorClipboardSelectionController.createStudioEditorClipboardSelectionController({
+          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+            ? SlideNextStudioEditorClipboard
+            : null,
+          getIframeDoc: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
+          getSelectedElements: () => getStudioSelectedElements(),
+          getClipboard: () => getStudioEditorClipboard(),
+          isElementLocked: (...args) => isElementLocked(...args),
+          getCanonicalVisibilityReader: (...args) => getEditorCanonicalVisibilityReader(...args),
+          buildPayload: (elements, doc) => buildClipboardPayload(elements, doc)
         })
       : null;
     const studioEditorElementInsertionController = typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
@@ -7574,6 +7591,11 @@
     }
 
     function buildClipboardSelectionMutationPlan(doc = null) {
+      if (typeof studioEditorClipboardSelectionController !== 'undefined'
+        && studioEditorClipboardSelectionController
+        && typeof studioEditorClipboardSelectionController.build === 'function') {
+        return studioEditorClipboardSelectionController.build(doc);
+      }
       const resolvedDoc = doc || getIframeDoc();
       const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
         ? SlideNextStudioEditorClipboard
