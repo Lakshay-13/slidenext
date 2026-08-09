@@ -29,6 +29,14 @@
     return element && element.dataset && element.dataset.editorId;
   }
 
+  function runCanonicalStyleMutation(callback) {
+    try {
+      return callback();
+    } catch (err) {
+      return null;
+    }
+  }
+
   function buildStudioCanonicalStyleBaseline(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -120,25 +128,25 @@
           ? { id: elementId, layout: { zIndex } }
           : null;
       }).filter(Boolean);
-      return canonicalDeckApi.updateCanonicalNodeLayout(
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeLayout(
         canonicalDeckBeforeMutation,
         canonicalNodeLayouts
-      );
+      ));
     }
 
     if (prop === 'text' && typeof canonicalDeckApi.updateCanonicalNodeText === 'function') {
       const element = selection[0];
-      return canonicalDeckApi.updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
         id: resolveElementId(element, getElementId),
         text: element && typeof element.textContent === 'string'
           ? element.textContent
           : `${value}`
-      }]);
+      }]));
     }
 
     if (prop === 'src' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
       const element = selection[0];
-      return canonicalDeckApi.updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{
         id: resolveElementId(element, getElementId),
         attributes: {
           src: element && typeof element.getAttribute === 'function'
@@ -147,12 +155,12 @@
               ? element.src
               : `${value}`
         }
-      }]);
+      }]));
     }
 
     const styleProperty = CANONICAL_STYLE_PROPERTIES[prop];
     if (styleProperty && typeof canonicalDeckApi.updateCanonicalNodeStyle === 'function') {
-      return canonicalDeckApi.updateCanonicalNodeStyle(
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeStyle(
         canonicalDeckBeforeMutation,
         selection.map((element) => ({
           id: resolveElementId(element, getElementId),
@@ -163,7 +171,7 @@
             ? element.style[styleProperty.domProperty]
             : `${value}`
         }))
-      );
+      ));
     }
 
     return null;

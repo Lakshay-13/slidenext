@@ -188,6 +188,26 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
   assert.equal(zIndexDeck.slides[0].nodes[0].layout.zIndex, 9);
 });
 
+test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
+  const throwingCanonicalDeckApi = {
+    ...canonicalDeck,
+    updateCanonicalNodeStyle() {
+      throw new Error('canonical style mutation failed');
+    }
+  };
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: throwingCanonicalDeckApi,
+    canonicalDeckBeforeMutation: createSourceDeck(),
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result, null);
+});
+
 test('buildStudioCanonicalStyleMutation returns null without a canonical model or supported property', () => {
   const element = createElement();
   assert.equal(canonicalStyle.buildStudioCanonicalStyleMutation({
