@@ -119,6 +119,82 @@ test('layer order controller blocks canonical-locked elements when the DOM is st
   assert.equal(applied, false);
 });
 
+test('layer order controller delegates lock baseline resolution to canonical state', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const slide = { contains: () => true };
+  const documentRef = { id: 'doc' };
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let readerOptions = null;
+  let readerDocument = null;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader(options) {
+        readerOptions = options;
+        return (sourceDocument) => {
+          readerDocument = sourceDocument;
+          return deck;
+        };
+      },
+      createStudioEditorCanonicalLockReaderFromApi() {
+        return () => true;
+      }
+    },
+    getCanonicalDeckBaseline() {
+      throw new Error('custom reader should own baseline resolution');
+    },
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(_elements, _action, options) {
+        assert.equal(options.isLocked(first), true);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => documentRef,
+    getNormalizedSlideLayerOrder: () => [first],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(readerDocument, documentRef);
+  assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+  assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+});
+
+test('layer order controller fails closed when the shared baseline reader is unavailable', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const slide = { contains: () => true };
+  let fallbackLockReads = 0;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalDeckBaselineReader() {
+        return null;
+      }
+    },
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(_elements, _action, options) {
+        assert.equal(options.isLocked(first), false);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getNormalizedSlideLayerOrder: () => [first],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => {
+      fallbackLockReads += 1;
+      return false;
+    }
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(fallbackLockReads, 1);
+});
+
 test('layer order controller rebuilds the canonical lock baseline when live state is invalid', () => {
   const first = { id: 'node-1', isConnected: true };
   const slide = { contains: () => true };

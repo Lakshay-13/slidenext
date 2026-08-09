@@ -68,16 +68,22 @@
       }
     }
 
-    const resolveCanonicalDeck = canonicalStateApi
+    const createCanonicalDeckBaselineReader = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
-      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
-          getCanonicalDeckBaseline,
-          isCanonicalDeck: canonicalDeckApi
-            && typeof canonicalDeckApi.isCanonicalDeck === 'function'
-            ? canonicalDeckApi.isCanonicalDeck
-            : null,
-          buildCanonicalDeckBaseline
-        })
+      ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader
+      : null;
+    const resolveCanonicalDeck = createCanonicalDeckBaselineReader
+      ? (() => {
+          const sharedReader = createCanonicalDeckBaselineReader({
+            getCanonicalDeckBaseline,
+            isCanonicalDeck: canonicalDeckApi
+              && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+              ? canonicalDeckApi.isCanonicalDeck
+              : null,
+            buildCanonicalDeckBaseline
+          });
+          return typeof sharedReader === 'function' ? sharedReader : () => null;
+        })()
       : (sourceDocument) => {
           if (getCanonicalDeckBaseline) {
             try {
