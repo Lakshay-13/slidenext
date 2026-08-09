@@ -159,3 +159,37 @@ test('element insertion controller fails closed before DOM mutation when canonic
   assert.equal(insertionCalls, 0);
   assert.deepEqual(calls, [doc]);
 });
+
+test('element insertion controller preserves transaction finalization when canonical sidecar construction throws', () => {
+  const calls = [];
+  const element = { id: 'element-1' };
+  const transaction = { id: 'tx-1' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return {
+              kind: 'slidenext.deck',
+              slides: [{ id: 'slide-1', nodes: [] }]
+            };
+          },
+          buildCanonicalInsertionDeck() {
+            throw new Error('canonical insertion sidecar unavailable');
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: () => ({ element, transaction }),
+    finalizeInsertedElements: (...args) => {
+      calls.push(args);
+      return true;
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
+  assert.deepEqual(calls, [[[element], 'Auto: Added H2', transaction, null]]);
+});

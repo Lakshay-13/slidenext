@@ -163,13 +163,18 @@
         && typeof canonicalInsertionBuilders.buildCanonicalInsertionDeck === 'function'
         && canonicalDeckBeforeInsertion
         && newElement) {
-        canonicalDeck = canonicalInsertionBuilders.buildCanonicalInsertionDeck(newElement, {
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
-          slideId: activeSlideId,
-          sourceDocument: iframeDoc,
-          getNodeId: (element) => assignElementId(element)
-        });
+        try {
+          canonicalDeck = canonicalInsertionBuilders.buildCanonicalInsertionDeck(newElement, {
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeInsertion,
+            slideId: activeSlideId,
+            sourceDocument: iframeDoc,
+            getNodeId: (element) => assignElementId(element)
+          });
+        } catch (err) {
+          // Preserve the inserted element through transaction history when the sidecar fails.
+          canonicalDeck = null;
+        }
       }
 
       if (newElement) {
