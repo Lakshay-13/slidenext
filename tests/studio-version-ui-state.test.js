@@ -17,7 +17,43 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return `
+function getStudioRenameVersionState() {
+  if (typeof studioEditorVersionRenameStateController !== 'undefined'
+    && studioEditorVersionRenameStateController
+    && typeof studioEditorVersionRenameStateController.getState === 'function') {
+    return studioEditorVersionRenameStateController.getState();
+  }
+  return {
+    filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+    context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+  };
+}
+function setStudioRenameVersionState(nextState = {}) {
+  if (typeof studioEditorVersionRenameStateController !== 'undefined'
+    && studioEditorVersionRenameStateController
+    && typeof studioEditorVersionRenameStateController.setState === 'function') {
+    return studioEditorVersionRenameStateController.setState(nextState);
+  }
+  if (typeof renamingFilename !== 'undefined') {
+    renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
+  }
+  if (typeof renamingVersionContext !== 'undefined') {
+    renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
+      ? nextState.context
+      : null;
+  }
+  return getStudioRenameVersionState();
+}
+function clearStudioRenameVersionState() {
+  if (typeof studioEditorVersionRenameStateController !== 'undefined'
+    && studioEditorVersionRenameStateController
+    && typeof studioEditorVersionRenameStateController.clear === 'function') {
+    return studioEditorVersionRenameStateController.clear();
+  }
+  return setStudioRenameVersionState();
+}
+${fileContent.slice(start, end)}`;
 }
 
 function createClassList(initialValues = []) {

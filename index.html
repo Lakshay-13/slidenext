@@ -1400,6 +1400,7 @@
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
+  <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1710,6 +1711,43 @@
         && typeof studioEditorSaveButtonStateController.getState === 'function'
         ? studioEditorSaveButtonStateController.getState()
         : 'idle';
+    }
+    const studioEditorVersionRenameStateController = typeof SlideNextStudioEditorVersionRenameStateController !== 'undefined'
+      && SlideNextStudioEditorVersionRenameStateController
+      && typeof SlideNextStudioEditorVersionRenameStateController.createStudioEditorVersionRenameStateController === 'function'
+      ? SlideNextStudioEditorVersionRenameStateController.createStudioEditorVersionRenameStateController({})
+      : null;
+    function getStudioRenameVersionState() {
+      if (studioEditorVersionRenameStateController
+        && typeof studioEditorVersionRenameStateController.getState === 'function') {
+        return studioEditorVersionRenameStateController.getState();
+      }
+      return {
+        filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+        context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+      };
+    }
+    function setStudioRenameVersionState(nextState = {}) {
+      if (studioEditorVersionRenameStateController
+        && typeof studioEditorVersionRenameStateController.setState === 'function') {
+        return studioEditorVersionRenameStateController.setState(nextState);
+      }
+      if (typeof renamingFilename !== 'undefined') {
+        renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
+      }
+      if (typeof renamingVersionContext !== 'undefined') {
+        renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
+          ? nextState.context
+          : null;
+      }
+      return getStudioRenameVersionState();
+    }
+    function clearStudioRenameVersionState() {
+      if (studioEditorVersionRenameStateController
+        && typeof studioEditorVersionRenameStateController.clear === 'function') {
+        return studioEditorVersionRenameStateController.clear();
+      }
+      return setStudioRenameVersionState();
     }
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
@@ -2968,8 +3006,6 @@
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
       : null;
-    let renamingFilename = '';
-    let renamingVersionContext = null;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const EDITOR_CHROME_NODE_IDS = ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
@@ -10960,8 +10996,10 @@
     }
 
     function promptRenameVersion(filename, currentLabel) {
-      renamingFilename = filename;
-      renamingVersionContext = createCurrentStudioVersionActionContext();
+      setStudioRenameVersionState({
+        filename,
+        context: createCurrentStudioVersionActionContext()
+      });
       const renameInput = document.getElementById('newVersionNameInput');
       if (renameInput) {
         renameInput.value = currentLabel;
@@ -10991,8 +11029,7 @@
     }
 
     function resetCurrentStudioRenameVersionState() {
-      renamingFilename = '';
-      renamingVersionContext = null;
+      clearStudioRenameVersionState();
     }
 
     function resetCurrentStudioRenameVersionButtonState(button = document.getElementById('confirmRenameVersionBtn')) {
@@ -11015,8 +11052,9 @@
       const renameInput = document.getElementById('newVersionNameInput');
       const newLabel = renameInput ? renameInput.value.trim() : '';
       if (!newLabel) return;
-      const renameContext = renamingVersionContext || createCurrentStudioVersionActionContext();
-      const versionFilename = renamingFilename;
+      const renameState = getStudioRenameVersionState();
+      const renameContext = renameState.context || createCurrentStudioVersionActionContext();
+      const versionFilename = renameState.filename;
       if (!versionFilename || !renameContext.presentationUrl) return;
       const modal = document.getElementById('renameVersionModal');
       const renameSessionToken = modal
