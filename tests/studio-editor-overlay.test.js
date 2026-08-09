@@ -182,6 +182,62 @@ test('syncStudioSelectionOverlayForActiveSlide resolves the current slide before
   assert.equal(result.overlay, overlay);
 });
 
+test('createStudioSelectionOverlaySynchronizer assembles editor overlay state', () => {
+  const documentRef = { id: 'iframe-document' };
+  const selectedElements = [{ id: 'element-1' }];
+  const hiddenReader = () => false;
+  const calls = [];
+  const synchronizer = overlayView.createStudioSelectionOverlaySynchronizer({
+    overlayApi: {
+      syncStudioSelectionOverlayForActiveSlide(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    overlayStateApi: {
+      buildStudioSelectionOverlayState() {}
+    },
+    getCurrentDocument: () => documentRef,
+    getActiveSlide: (doc) => {
+      assert.equal(doc, documentRef);
+      return { id: 'slide-1' };
+    },
+    getSelectedElements: () => selectedElements,
+    getOverlayOptions: ({ documentRef: currentDocument }) => {
+      assert.equal(currentDocument, documentRef);
+      return { selectionOverlayId: 'custom-overlay' };
+    },
+    getHiddenStateReader: (doc) => {
+      assert.equal(doc, documentRef);
+      return hiddenReader;
+    },
+    getSelectionBounds: () => ({ left: 1, top: 2, width: 3, height: 4 }),
+    getTransformSelectionState: () => ({ canTransform: true }),
+    hideGuides: () => calls.push('hide-guides'),
+    hideDragHud: () => calls.push('hide-drag-hud')
+  });
+
+  assert.equal(synchronizer(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, documentRef);
+  assert.equal(calls[0].getActiveSlide(documentRef).id, 'slide-1');
+  assert.deepEqual(calls[0].selectedElements, selectedElements);
+  assert.equal(calls[0].buildSelectionOverlayState instanceof Function, true);
+  assert.equal(calls[0].isHidden, hiddenReader);
+  assert.equal(calls[0].getSelectionBounds instanceof Function, true);
+  assert.equal(calls[0].getTransformSelectionState instanceof Function, true);
+  assert.equal(calls[0].selectionOverlayId, 'custom-overlay');
+});
+
+test('createStudioSelectionOverlaySynchronizer fails closed without overlay state support', () => {
+  const synchronizer = overlayView.createStudioSelectionOverlaySynchronizer({
+    overlayApi: {},
+    overlayStateApi: null
+  });
+
+  assert.equal(synchronizer(), false);
+});
+
 test('renderStudioGuidesForActiveSlide resolves the current slide before rendering guides', () => {
   const guideLine = { style: {} };
   const guidesLayer = {

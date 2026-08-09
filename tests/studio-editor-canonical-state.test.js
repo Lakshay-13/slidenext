@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const overlayApi = require('../shared/studio-editor-overlay.js');
 
 test('shared editor canonical-deck shape predicate accepts decks and rejects malformed values', () => {
   assert.equal(canonicalState.isStudioEditorCanonicalDeckLike({ slides: [] }), true);
@@ -508,6 +509,7 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorSelectionBounds: selectionBounds,
     SlideNextStudioEditorOverlay: {
+      createStudioSelectionOverlaySynchronizer: overlayApi.createStudioSelectionOverlaySynchronizer,
       syncStudioSelectionOverlayForActiveSlide(options) {
         return options.isHidden(hiddenElement);
       }

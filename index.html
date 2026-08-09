@@ -6368,24 +6368,33 @@
     }
 
     function syncSelectionOverlay() {
-      const doc = getIframeDoc();
-      if (!SlideNextStudioEditorOverlay
-        || typeof SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide !== 'function') {
+      const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
+        ? SlideNextStudioEditorOverlay
+        : null;
+      if (!overlayApi
+        || typeof overlayApi.createStudioSelectionOverlaySynchronizer !== 'function') {
         return false;
       }
-      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc);
-      return SlideNextStudioEditorOverlay.syncStudioSelectionOverlayForActiveSlide({
-        documentRef: doc,
-        getActiveSlide,
-        ...getEditorOverlayOptions(),
-        selectedElements: getStudioSelectedElements(),
-        buildSelectionOverlayState: SlideNextStudioEditorOverlayState.buildStudioSelectionOverlayState,
-        isHidden: readHiddenState,
-        getSelectionBounds,
-        getTransformSelectionState,
-        hideGuides,
-        hideDragHud
-      });
+      if (typeof syncSelectionOverlay.synchronizer !== 'function') {
+        syncSelectionOverlay.synchronizer = overlayApi.createStudioSelectionOverlaySynchronizer({
+          overlayApi,
+          overlayStateApi: typeof SlideNextStudioEditorOverlayState !== 'undefined'
+            ? SlideNextStudioEditorOverlayState
+            : null,
+          getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
+          getActiveSlide: typeof getActiveSlide === 'function' ? (doc) => getActiveSlide(doc) : null,
+          getSelectedElements: () => getStudioSelectedElements(),
+          getOverlayOptions: (options = {}) => getEditorOverlayOptions(options),
+          getHiddenStateReader: (doc) => getEditorCanonicalVisibilityReader('hidden', doc),
+          getSelectionBounds: (elements) => getSelectionBounds(elements),
+          getTransformSelectionState: () => getTransformSelectionState(),
+          hideGuides: () => hideGuides(),
+          hideDragHud: () => hideDragHud()
+        });
+      }
+      return typeof syncSelectionOverlay.synchronizer === 'function'
+        ? syncSelectionOverlay.synchronizer()
+        : false;
     }
 
     function syncInspectorForSelection() {

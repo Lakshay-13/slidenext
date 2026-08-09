@@ -267,6 +267,66 @@
     return syncStudioSelectionOverlay(documentRef, slide, options);
   }
 
+  function createStudioSelectionOverlaySynchronizer(options = {}) {
+    const overlayApi = options.overlayApi
+      && typeof options.overlayApi.syncStudioSelectionOverlayForActiveSlide === 'function'
+      ? options.overlayApi
+      : { syncStudioSelectionOverlayForActiveSlide };
+    const overlayStateApi = options.overlayStateApi
+      && typeof options.overlayStateApi.buildStudioSelectionOverlayState === 'function'
+      ? options.overlayStateApi
+      : null;
+    const getCurrentDocument = typeof options.getCurrentDocument === 'function'
+      ? options.getCurrentDocument
+      : () => null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getOverlayOptions = typeof options.getOverlayOptions === 'function'
+      ? options.getOverlayOptions
+      : () => ({});
+    const getHiddenStateReader = typeof options.getHiddenStateReader === 'function'
+      ? options.getHiddenStateReader
+      : () => null;
+    const getSelectionBounds = typeof options.getSelectionBounds === 'function'
+      ? options.getSelectionBounds
+      : () => null;
+    const getTransformSelectionState = typeof options.getTransformSelectionState === 'function'
+      ? options.getTransformSelectionState
+      : () => ({ canTransform: false });
+
+    return function syncStudioSelectionOverlayFromEditor() {
+      if (!overlayStateApi) return false;
+
+      let documentRef;
+      let overlayOptions;
+      let isHidden;
+      try {
+        documentRef = getCurrentDocument();
+        overlayOptions = getOverlayOptions({ documentRef }) || {};
+        isHidden = getHiddenStateReader(documentRef);
+      } catch (error) {
+        return false;
+      }
+
+      return overlayApi.syncStudioSelectionOverlayForActiveSlide({
+        documentRef,
+        getActiveSlide,
+        ...overlayOptions,
+        selectedElements: getSelectedElements(),
+        buildSelectionOverlayState: overlayStateApi.buildStudioSelectionOverlayState,
+        isHidden,
+        getSelectionBounds,
+        getTransformSelectionState,
+        hideGuides: options.hideGuides,
+        hideDragHud: options.hideDragHud
+      });
+    };
+  }
+
   return {
     ensureStudioSelectionOverlay,
     hideStudioSelectionOverlay,
@@ -285,6 +345,7 @@
     clearStudioMarqueeSelection,
     clearStudioMarqueeSelectionForActiveSlide,
     syncStudioSelectionOverlay,
-    syncStudioSelectionOverlayForActiveSlide
+    syncStudioSelectionOverlayForActiveSlide,
+    createStudioSelectionOverlaySynchronizer
   };
 });
