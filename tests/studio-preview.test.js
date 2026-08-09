@@ -574,12 +574,14 @@ test('applyStudioSourceView keeps the source modal open when the apply callback 
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };
   const textareaEl = { value: '<html>invalid</html>' };
+  const errorEl = { classList: createClassList(['hidden']), textContent: '' };
   const documentStub = {
     getElementById(id) {
       return {
         sourceViewModal: modalEl,
         sourceViewModalContent: contentEl,
-        sourceViewContent: textareaEl
+        sourceViewContent: textareaEl,
+        sourceViewError: errorEl
       }[id] || null;
     }
   };
@@ -588,10 +590,12 @@ test('applyStudioSourceView keeps the source modal open when the apply callback 
     canOpenSourceView: true,
     document: documentStub,
     onApplySourceHtml() {
-      return { success: false };
+      return { success: false, error: 'Source HTML must contain at least one slide' };
     }
   }), false);
   assert.equal(modalEl.classList.contains('opacity-0'), false);
+  assert.equal(errorEl.textContent, 'Source HTML must contain at least one slide');
+  assert.equal(errorEl.classList.contains('hidden'), false);
 });
 
 test('resetSourceViewModal clears source modal state immediately', () => {
@@ -601,16 +605,20 @@ test('resetSourceViewModal clears source modal state immediately', () => {
     value: '<html>stale</html>',
     scrollTop: 40
   };
+  const errorEl = { classList: createClassList([]), textContent: 'Stale error' };
   const tokenBefore = 0;
 
   preview.resetSourceViewModal({
     modalEl,
     contentEl,
-    textareaEl
+    textareaEl,
+    errorEl
   });
 
   assert.equal(textareaEl.value, '');
   assert.equal(textareaEl.scrollTop, 0);
+  assert.equal(errorEl.textContent, '');
+  assert.equal(errorEl.classList.contains('hidden'), true);
   assert.equal(modalEl.classList.contains('hidden'), true);
   assert.equal(modalEl.classList.contains('opacity-0'), true);
   assert.equal(modalEl.classList.contains('opacity-100'), false);

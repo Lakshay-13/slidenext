@@ -309,11 +309,30 @@
     return true;
   }
 
+  function clearSourceViewError(errorEl) {
+    if (!errorEl) return false;
+    errorEl.textContent = '';
+    if (errorEl.classList && typeof errorEl.classList.add === 'function') {
+      errorEl.classList.add('hidden');
+    }
+    return true;
+  }
+
+  function renderSourceViewError(errorEl, message = 'Source HTML could not be applied') {
+    if (!errorEl) return false;
+    errorEl.textContent = message;
+    if (errorEl.classList && typeof errorEl.classList.remove === 'function') {
+      errorEl.classList.remove('hidden');
+    }
+    return true;
+  }
+
   function openSourceViewModal(options = {}) {
     const {
       modalEl,
       contentEl,
       textareaEl,
+      errorEl,
       sourceHtml,
       editable = false,
       emptySourceHtml = '<!DOCTYPE html>\n<!-- No source available -->'
@@ -321,6 +340,7 @@
 
     if (!modalEl || !contentEl) return;
 
+    clearSourceViewError(errorEl);
     if (textareaEl) {
       textareaEl.value = sourceHtml || emptySourceHtml;
       textareaEl.readOnly = editable !== true;
@@ -363,6 +383,7 @@
     const modalEl = options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal');
     const contentEl = options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent');
     const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    const errorEl = options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError');
     if (!modalEl || !contentEl || !textareaEl) {
       return false;
     }
@@ -375,6 +396,7 @@
       modalEl,
       contentEl,
       textareaEl,
+      errorEl,
       sourceHtml
     });
     return true;
@@ -414,16 +436,23 @@
   function applySourceViewModal(options = {}) {
     const documentRef = resolvePreviewDocument(options);
     const textareaEl = options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent');
+    const errorEl = options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError');
     if (!textareaEl || typeof options.onApplySourceHtml !== 'function') {
+      renderSourceViewError(errorEl, 'Source editor is unavailable');
       return false;
     }
 
     const sourceHtml = typeof textareaEl.value === 'string' ? textareaEl.value : '';
     const result = options.onApplySourceHtml(sourceHtml);
     if (result === false || (result && result.success === false)) {
+      const message = result && typeof result.error === 'string' && result.error.trim()
+        ? result.error.trim()
+        : 'Source HTML could not be applied';
+      renderSourceViewError(errorEl, message);
       return false;
     }
 
+    clearSourceViewError(errorEl);
     closeStudioSourceView({
       ...options,
       document: documentRef
@@ -452,9 +481,11 @@
     const {
       modalEl,
       contentEl,
-      textareaEl
+      textareaEl,
+      errorEl
     } = options;
 
+    clearSourceViewError(errorEl);
     if (textareaEl) {
       textareaEl.value = '';
       textareaEl.scrollTop = 0;
@@ -478,7 +509,8 @@
     resetSourceViewModal({
       modalEl: options.modalEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModal'),
       contentEl: options.contentEl || resolvePreviewDocumentElement(documentRef, 'sourceViewModalContent'),
-      textareaEl: options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent')
+      textareaEl: options.textareaEl || resolvePreviewDocumentElement(documentRef, 'sourceViewContent'),
+      errorEl: options.errorEl || resolvePreviewDocumentElement(documentRef, 'sourceViewError')
     });
   }
 
