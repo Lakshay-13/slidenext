@@ -1282,6 +1282,7 @@
   <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-bridge.js"></script>
+  <script src="/shared/studio-editor-canonical-runtime.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
   <script src="/shared/deck-import.js"></script>
@@ -2958,30 +2959,23 @@
           snapDistancePx: SNAP_THRESHOLD_PX
         })
       : null;
-    const studioEditorCanonicalState = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-      && SlideNextStudioEditorCanonicalState
-      && typeof SlideNextStudioEditorCanonicalState.createStudioEditorCanonicalState === 'function'
-      ? SlideNextStudioEditorCanonicalState.createStudioEditorCanonicalState({
-          isCanonicalDeck: (value) => (
-            typeof SlideNextCanonicalDeck !== 'undefined'
-            && SlideNextCanonicalDeck
-            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-              ? SlideNextCanonicalDeck.isCanonicalDeck(value)
-              : !!(value && typeof value === 'object' && Array.isArray(value.slides))
-          )
-        })
-      : null;
-    const studioEditorCanonicalDeckBuilder = typeof SlideNextStudioEditorCanonicalDeck !== 'undefined'
-      && SlideNextStudioEditorCanonicalDeck
-      && typeof SlideNextStudioEditorCanonicalDeck.createStudioCanonicalDeckBuilder === 'function'
-      ? SlideNextStudioEditorCanonicalDeck.createStudioCanonicalDeckBuilder({
-          isCanonicalDeck: (value) => (
-            typeof SlideNextCanonicalDeck !== 'undefined'
-            && SlideNextCanonicalDeck
-            && typeof SlideNextCanonicalDeck.isCanonicalDeck === 'function'
-              ? SlideNextCanonicalDeck.isCanonicalDeck(value)
-              : !!(value && typeof value === 'object' && Array.isArray(value.slides))
-          ),
+    const studioEditorCanonicalRuntime = typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
+      && SlideNextStudioEditorCanonicalRuntime
+      && typeof SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime === 'function'
+      ? SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime({
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
+          canonicalDeckApi: typeof SlideNextStudioEditorCanonicalDeck !== 'undefined'
+            ? SlideNextStudioEditorCanonicalDeck
+            : null,
+          canonicalMutationApi: typeof SlideNextStudioEditorCanonicalMutation !== 'undefined'
+            ? SlideNextStudioEditorCanonicalMutation
+            : null,
+          canonicalBridgeApi: typeof SlideNextStudioEditorCanonicalBridge !== 'undefined'
+            ? SlideNextStudioEditorCanonicalBridge
+            : null,
+          isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
           resolveLiveCanonicalDeck: (doc) => resolveEditorLiveCanonicalDeck(doc, getStudioEditorSessionToken()),
@@ -3004,35 +2998,26 @@
             ? (doc, options) => SlideNextDeckLoader.buildCanonicalDeckFromDocument(doc, options)
             : null,
           getSlideId: getEditorSlideId,
-          getNodeId: assignEditorElementId
-        })
-      : null;
-    const studioEditorMutationCanonicalDeckBuilder = typeof SlideNextStudioEditorCanonicalMutation !== 'undefined'
-      && SlideNextStudioEditorCanonicalMutation
-      && typeof SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder === 'function'
-      ? SlideNextStudioEditorCanonicalMutation.createStudioEditorMutationCanonicalDeckBuilder({
+          getNodeId: assignEditorElementId,
           buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          isCanonicalDeck: getEditorCanonicalDeckValidator()
-        })
-      : null;
-    const studioEditorCanonicalBridge = typeof SlideNextStudioEditorCanonicalBridge !== 'undefined'
-      && SlideNextStudioEditorCanonicalBridge
-      && typeof SlideNextStudioEditorCanonicalBridge.createStudioEditorCanonicalBridge === 'function'
-      ? SlideNextStudioEditorCanonicalBridge.createStudioEditorCanonicalBridge({
-          state: studioEditorCanonicalState,
-          canonicalDeckBuilder: studioEditorCanonicalDeckBuilder,
-          mutationCanonicalDeckBuilder: studioEditorMutationCanonicalDeckBuilder,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getDocument: getIframeDoc
         })
+      : null;
+    const studioEditorCanonicalState = studioEditorCanonicalRuntime
+      ? studioEditorCanonicalRuntime.canonicalState
+      : null;
+    const studioEditorCanonicalDeckBuilder = studioEditorCanonicalRuntime
+      ? studioEditorCanonicalRuntime.canonicalDeckBuilder
+      : null;
+    const studioEditorMutationCanonicalDeckBuilder = studioEditorCanonicalRuntime
+      ? studioEditorCanonicalRuntime.mutationCanonicalDeckBuilder
+      : null;
+    const studioEditorCanonicalBridge = studioEditorCanonicalRuntime
+      ? studioEditorCanonicalRuntime.canonicalBridge
       : null;
     const studioEditorHistoryController = typeof SlideNextStudioEditorHistoryController !== 'undefined'
       && SlideNextStudioEditorHistoryController
