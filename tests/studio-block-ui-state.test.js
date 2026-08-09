@@ -199,3 +199,58 @@ test('updateBlockActionState caches the shared block state synchronizer when ava
   assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
+
+test('block state prefers the live canonical deck before rebuilding from the frame', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateBlockActionState(doc = getIframeDoc()) {',
+    '\n\n    function sanitizeDuplicatedSubtree(root) {'
+  );
+  const doc = { id: 'live-doc', activeSlide: {} };
+  const liveCanonicalDeck = { blocks: [{ id: 'live-block' }] };
+  let receivedOptions = null;
+  let buildCalls = 0;
+  const context = {
+    SlideNextStudioEditorBlockView: {
+      syncStudioBlockState(options) {
+        receivedOptions = options;
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide(currentDoc) {
+      return currentDoc.activeSlide;
+    },
+    getStudioEditorSessionToken() {
+      return 37;
+    },
+    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(sessionToken, 37);
+      return liveCanonicalDeck;
+    },
+    buildEditorCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('DOM rebuild should not run when the live deck is available');
+    },
+    getStudioSelectedElements() {
+      return [{ id: 'selected' }];
+    },
+    selectionHasLockedElements() {
+      return false;
+    },
+    insertSavedBlock() {},
+    removeSavedBlock() {},
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateBlockActionState(doc), true);
+  assert.equal(receivedOptions.blocks, liveCanonicalDeck.blocks);
+  assert.equal(buildCalls, 0);
+});

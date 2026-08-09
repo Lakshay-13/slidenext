@@ -7992,6 +7992,24 @@
       if (!blockView || typeof blockView.syncStudioBlockState !== 'function') {
         return false;
       }
+      const resolveCanonicalDeck = (sourceDoc) => {
+        let liveCanonicalDeck = null;
+        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
+          try {
+            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
+              sourceDoc,
+              typeof getStudioEditorSessionToken === 'function'
+                ? getStudioEditorSessionToken()
+                : null
+            );
+          } catch (error) {
+            liveCanonicalDeck = null;
+          }
+        }
+        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
+          ? buildEditorCanonicalDeck(sourceDoc)
+          : null);
+      };
       if (typeof blockView.createStudioBlockStateSync === 'function') {
         if (typeof updateBlockActionState.sync !== 'function') {
           updateBlockActionState.sync = blockView.createStudioBlockStateSync({
@@ -8005,9 +8023,7 @@
               const canSave = !!getActiveSlide(sourceDoc)
                 && getStudioSelectedElements().length > 0
                 && !hasLockedSelection;
-              const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-                ? buildEditorCanonicalDeck(sourceDoc)
-                : null;
+              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
               return {
                 blocks: canonicalDeck && canonicalDeck.blocks,
                 canUseBlockActions: canSave,
@@ -8030,9 +8046,7 @@
       const canSave = !!getActiveSlide(doc)
         && getStudioSelectedElements().length > 0
         && !hasLockedSelection;
-      const canonicalDeck = typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
-        : null;
+      const canonicalDeck = resolveCanonicalDeck(doc);
       blockView.syncStudioBlockState({
         documentRef: document,
         blocks: canonicalDeck && canonicalDeck.blocks,
