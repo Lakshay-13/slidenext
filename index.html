@@ -1480,6 +1480,7 @@
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
+  <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
@@ -3652,10 +3653,13 @@
     const studioEditorThemeController = studioEditorThemeRuntime
       ? studioEditorThemeRuntime.themeController
       : null;
-    const studioEditorDeckReadyController = typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
-      && SlideNextStudioEditorDeckReadyController
-      && typeof SlideNextStudioEditorDeckReadyController.createStudioEditorDeckReadyController === 'function'
-      ? SlideNextStudioEditorDeckReadyController.createStudioEditorDeckReadyController({
+    const studioEditorDeckReadyRuntime = typeof SlideNextStudioEditorDeckReadyRuntime !== 'undefined'
+      && SlideNextStudioEditorDeckReadyRuntime
+      && typeof SlideNextStudioEditorDeckReadyRuntime.createStudioEditorDeckReadyRuntime === 'function'
+      ? SlideNextStudioEditorDeckReadyRuntime.createStudioEditorDeckReadyRuntime({
+          controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
+            ? SlideNextStudioEditorDeckReadyController
+            : null,
           deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
             ? SlideNextStudioDeckReady
             : null,
@@ -3669,6 +3673,9 @@
           getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
           getSaveButtonState: getStudioSaveButtonState
         })
+      : null;
+    const studioEditorDeckReadyController = studioEditorDeckReadyRuntime
+      ? studioEditorDeckReadyRuntime.deckReadyController
       : null;
 
     // Slide Wallpapers Presets Data
