@@ -212,6 +212,7 @@ test('buildEditorSaveRequestBody creates the shared save adapter once', () => {
   assert.equal(calls.length, 2);
   assert.equal(calls[0][0], doc);
   assert.equal(typeof calls[0][2].resolveCanonicalDeck, 'function');
+  assert.equal(typeof calls[0][2].getLiveCanonicalDeck, 'function');
   assert.equal(typeof calls[0][2].capturePersistableDeckState, 'function');
   assert.equal(calls[1][1], '<html>provided</html>');
 });
@@ -263,6 +264,7 @@ test('buildEditorSaveRequestBody delegates to the persistence controller when av
   assert.equal(delegatedArgs[1], '<html>provided</html>');
   assert.equal(delegatedArgs[2].capturePersistableDeckState, captureSentinel);
   assert.equal(delegatedArgs[2].resolveCanonicalDeck, resolveSentinel);
+  assert.equal(typeof delegatedArgs[2].getLiveCanonicalDeck, 'function');
   assert.equal(delegatedArgs[2].buildPersistableDeckHtml, htmlSentinel);
 });
 

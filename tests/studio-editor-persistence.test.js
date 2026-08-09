@@ -1696,6 +1696,36 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
   );
 });
 
+test('buildStudioSaveRequestBody uses the live canonical deck when no sidecar is provided', () => {
+  const liveCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    metadata: {
+      title: 'Live Project'
+    },
+    slides: [
+      {
+        id: 'slide-1',
+        nodes: []
+      }
+    ]
+  });
+  let liveReaderCalls = 0;
+
+  const saveRequestBody = editorPersistence.buildStudioSaveRequestBody(
+    '/presentations/live/index.html',
+    '<html></html>',
+    {
+      getLiveCanonicalDeck() {
+        liveReaderCalls += 1;
+        return liveCanonicalDeck;
+      },
+      isCanonicalDeck: canonicalDeckModel.isCanonicalDeck
+    }
+  );
+
+  assert.equal(saveRequestBody.canonicalDeck, liveCanonicalDeck);
+  assert.equal(liveReaderCalls, 1);
+});
+
 test('createStudioSaveRequestBodyBuilder reuses call-time overrides before builder defaults', () => {
   const doc = { label: 'iframe-doc' };
   const canonicalDeck = {

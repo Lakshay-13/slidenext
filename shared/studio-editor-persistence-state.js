@@ -852,6 +852,9 @@
     const defaultResolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : (canonicalDeck) => canonicalDeck || null;
+    const defaultGetLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const defaultBuildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
       ? options.buildPersistableDeckHtml
       : () => '';
@@ -872,6 +875,9 @@
       const resolveCanonicalDeck = typeof resolvedOptions.resolveCanonicalDeck === 'function'
         ? resolvedOptions.resolveCanonicalDeck
         : defaultResolveCanonicalDeck;
+      const getLiveCanonicalDeck = typeof resolvedOptions.getLiveCanonicalDeck === 'function'
+        ? resolvedOptions.getLiveCanonicalDeck
+        : defaultGetLiveCanonicalDeck;
       const buildPersistableDeckHtml = typeof resolvedOptions.buildPersistableDeckHtml === 'function'
         ? resolvedOptions.buildPersistableDeckHtml
         : defaultBuildPersistableDeckHtml;
@@ -886,6 +892,7 @@
           buildSaveRequestBody,
           capturePersistableDeckState,
           resolveCanonicalDeck,
+          getLiveCanonicalDeck,
           buildPersistableDeckHtml
         });
         return typeof builder === 'function'
@@ -899,18 +906,23 @@
           : null,
         capturePersistableDeckState,
         resolveCanonicalDeck,
+        getLiveCanonicalDeck,
         buildPersistableDeckHtml
       });
+      const saveRequestOptions = {
+        isAutoSave: !!resolvedOptions.isAutoSave,
+        versionLabel: resolvedOptions.versionLabel,
+        canonicalDeck: resolvedDeckState.canonicalDeck
+      };
+      if (getLiveCanonicalDeck) {
+        saveRequestOptions.getLiveCanonicalDeck = getLiveCanonicalDeck;
+      }
       return buildSaveRequestBody(
         Object.prototype.hasOwnProperty.call(resolvedOptions, 'presentationUrl')
           ? resolvedOptions.presentationUrl
           : defaultGetPresentationUrl(),
         resolvedDeckState.cleanHtml,
-        {
-          isAutoSave: !!resolvedOptions.isAutoSave,
-          versionLabel: resolvedOptions.versionLabel,
-          canonicalDeck: resolvedDeckState.canonicalDeck
-        }
+        saveRequestOptions
       );
     };
   }

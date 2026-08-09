@@ -10962,6 +10962,18 @@
       const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
         ? options.canonicalDeck
         : null;
+      const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+        ? options.getLiveCanonicalDeck
+        : () => (
+            typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(
+                  doc,
+                  typeof getStudioEditorSessionToken === 'function'
+                    ? getStudioEditorSessionToken()
+                    : null
+                )
+              : null
+          );
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
         && typeof studioEditorPersistenceController.buildSaveRequestBody === 'function') {
@@ -10980,6 +10992,7 @@
                   buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
                 }
               ),
+          getLiveCanonicalDeck,
           buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
             ? options.buildPersistableDeckHtml
             : buildPersistableDeckHtml
@@ -11019,6 +11032,7 @@
                   buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
                 }
               ),
+          getLiveCanonicalDeck,
           buildPersistableDeckHtml: typeof options.buildPersistableDeckHtml === 'function'
             ? options.buildPersistableDeckHtml
             : buildPersistableDeckHtml
@@ -11064,6 +11078,7 @@
               buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
             }
           ),
+          getLiveCanonicalDeck,
           buildPersistableDeckHtml
         })(doc, cleanHtml, options);
       }
@@ -11087,6 +11102,7 @@
               buildCanonicalDeck: () => buildEditorCanonicalDeck(nextDoc)
             }
           ),
+          getLiveCanonicalDeck,
           buildPersistableDeckHtml
         });
         return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
@@ -11123,7 +11139,8 @@
         {
           isAutoSave: !!options.isAutoSave,
           versionLabel: options.versionLabel,
-          canonicalDeck: resolvedCanonicalDeck
+          canonicalDeck: resolvedCanonicalDeck,
+          getLiveCanonicalDeck
         }
       );
     }

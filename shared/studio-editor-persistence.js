@@ -591,6 +591,9 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
+    const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const resolutionOptions = {
       createCanonicalDeck: options.createCanonicalDeck,
       isCanonicalDeck,
@@ -601,6 +604,24 @@
       return isCanonicalDeck && isCanonicalDeck(options.canonicalDeck)
         ? options.canonicalDeck
         : canonicalDeck;
+    }
+
+    if (getLiveCanonicalDeck) {
+      let liveCanonicalDeck = null;
+      try {
+        liveCanonicalDeck = getLiveCanonicalDeck();
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+      const resolvedLiveCanonicalDeck = resolveStudioPersistenceCanonicalDeck(
+        liveCanonicalDeck,
+        resolutionOptions
+      );
+      if (resolvedLiveCanonicalDeck) {
+        return isCanonicalDeck && isCanonicalDeck(liveCanonicalDeck)
+          ? liveCanonicalDeck
+          : resolvedLiveCanonicalDeck;
+      }
     }
 
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
@@ -984,6 +1005,9 @@
     const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
       ? options.capturePersistableDeckState
       : null;
+    const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : (canonicalDeck) => canonicalDeck || null;
@@ -1003,6 +1027,9 @@
         capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
           ? nextOptions.capturePersistableDeckState
           : capturePersistableDeckState,
+        getLiveCanonicalDeck: typeof nextOptions.getLiveCanonicalDeck === 'function'
+          ? nextOptions.getLiveCanonicalDeck
+          : getLiveCanonicalDeck,
         resolveCanonicalDeck: typeof nextOptions.resolveCanonicalDeck === 'function'
           ? nextOptions.resolveCanonicalDeck
           : resolveCanonicalDeck,
@@ -1010,11 +1037,18 @@
           ? nextOptions.buildPersistableDeckHtml
           : buildPersistableDeckHtml
       });
-      return buildSaveRequestBody(presentationUrl, resolvedDeckState.cleanHtml, {
+      const saveRequestOptions = {
         isAutoSave: !!nextOptions.isAutoSave,
         versionLabel: nextOptions.versionLabel,
         canonicalDeck: resolvedDeckState.canonicalDeck
-      });
+      };
+      const resolvedLiveCanonicalDeckReader = typeof nextOptions.getLiveCanonicalDeck === 'function'
+        ? nextOptions.getLiveCanonicalDeck
+        : getLiveCanonicalDeck;
+      if (resolvedLiveCanonicalDeckReader) {
+        saveRequestOptions.getLiveCanonicalDeck = resolvedLiveCanonicalDeckReader;
+      }
+      return buildSaveRequestBody(presentationUrl, resolvedDeckState.cleanHtml, saveRequestOptions);
     };
   }
 
