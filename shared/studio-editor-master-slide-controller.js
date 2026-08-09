@@ -104,23 +104,27 @@
     }
 
     function renderCanonicalSlideElement(documentRef, slide, index, masterSlides) {
-      if (!documentRef
-        || typeof documentRef.createElement !== 'function'
-        || !renderApi
-        || typeof renderApi.renderCanonicalSlide !== 'function') {
+      try {
+        if (!documentRef
+          || typeof documentRef.createElement !== 'function'
+          || !renderApi
+          || typeof renderApi.renderCanonicalSlide !== 'function') {
+          return null;
+        }
+        const html = renderApi.renderCanonicalSlide(slide, index, {
+          masterSlides,
+          preferSlideSourceHtml: false
+        });
+        if (typeof html !== 'string' || !html.trim()) return null;
+        const template = documentRef.createElement('template');
+        if (!template) return null;
+        template.innerHTML = html;
+        return template.content && template.content.firstElementChild
+          ? template.content.firstElementChild
+          : null;
+      } catch (err) {
         return null;
       }
-      const html = renderApi.renderCanonicalSlide(slide, index, {
-        masterSlides,
-        preferSlideSourceHtml: false
-      });
-      if (typeof html !== 'string' || !html.trim()) return null;
-      const template = documentRef.createElement('template');
-      if (!template) return null;
-      template.innerHTML = html;
-      return template.content && template.content.firstElementChild
-        ? template.content.firstElementChild
-        : null;
     }
 
     function replaceActiveSlide(nextCanonicalDeck) {
