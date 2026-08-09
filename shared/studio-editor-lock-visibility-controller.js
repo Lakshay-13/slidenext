@@ -208,12 +208,17 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan || !lockMutationPlan.didChange) return false;
-      const canonicalDeck = buildCanonicalVisibilityMutation(
-        lockMutationPlan.selection,
-        { locked: lockMutationPlan.shouldLock },
-        doc,
-        getLockElementId
-      );
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = buildCanonicalVisibilityMutation(
+          lockMutationPlan.selection,
+          { locked: lockMutationPlan.shouldLock },
+          doc,
+          getLockElementId
+        );
+      } catch (error) {
+        return false;
+      }
       const mutation = applyLockMutation(
         lockMutationPlan.selection,
         lockMutationPlan.shouldLock,
