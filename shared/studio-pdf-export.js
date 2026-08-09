@@ -10,6 +10,7 @@
   const DEFAULT_PAGE_WIDTH = '16in';
   const DEFAULT_PAGE_HEIGHT = '9in';
   const DEFAULT_LOAD_TIMEOUT_MS = 10000;
+  const DEFAULT_AFTER_PRINT_TIMEOUT_MS = 2000;
 
   function hasStudioPdfTimerHandle(timerId) {
     return timerId !== null && typeof timerId !== 'undefined';
@@ -432,9 +433,11 @@
     }
 
     let didPrint = false;
+    let didReportPrintSuccess = false;
     let didLoad = false;
     let loadTimeoutId = null;
     let fallbackLoadTimeoutId = null;
+    let afterPrintTimeoutId = null;
     const clearLoadTimeout = () => {
       if (hasStudioPdfTimerHandle(loadTimeoutId)) {
         clearTimeout(loadTimeoutId);
@@ -445,18 +448,33 @@
         fallbackLoadTimeoutId = null;
       }
     };
+    const clearAfterPrintTimeout = () => {
+      if (hasStudioPdfTimerHandle(afterPrintTimeoutId)) {
+        clearTimeout(afterPrintTimeoutId);
+        afterPrintTimeoutId = null;
+      }
+    };
     const closePrintWindow = () => {
       if (typeof printWindow.close === 'function') {
         printWindow.close();
       }
     };
     const reportPrintSuccess = () => {
+      if (didReportPrintSuccess) return;
+      didReportPrintSuccess = true;
+      clearAfterPrintTimeout();
       if (typeof options.onPrint === 'function') {
         options.onPrint();
       }
     };
+    const handleAfterPrint = () => {
+      if (didReportPrintSuccess) return;
+      reportPrintSuccess();
+      closePrintWindow();
+    };
     const reportPrintFailure = (error) => {
       clearLoadTimeout();
+      clearAfterPrintTimeout();
       closePrintWindow();
       if (typeof options.onError === 'function') {
         options.onError(error);
@@ -474,10 +492,20 @@
       }
       try {
         if (typeof printWindow.addEventListener === 'function') {
-          printWindow.addEventListener('afterprint', closePrintWindow, { once: true });
+          printWindow.addEventListener('afterprint', handleAfterPrint, { once: true });
         }
         printWindow.print();
-        reportPrintSuccess();
+        if (typeof printWindow.addEventListener === 'function') {
+          if (!didReportPrintSuccess) {
+            const afterPrintTimeoutMs = Number.isFinite(options.afterPrintTimeoutMs)
+              ? Math.max(0, options.afterPrintTimeoutMs)
+              : DEFAULT_AFTER_PRINT_TIMEOUT_MS;
+            // Some embedded browsers never dispatch afterprint after print().
+            afterPrintTimeoutId = setTimeout(handleAfterPrint, afterPrintTimeoutMs);
+          }
+        } else {
+          reportPrintSuccess();
+        }
       } catch (error) {
         reportPrintFailure(error);
       }
@@ -545,6 +573,7 @@
     DEFAULT_PAGE_WIDTH,
     DEFAULT_PAGE_HEIGHT,
     DEFAULT_LOAD_TIMEOUT_MS,
+    DEFAULT_AFTER_PRINT_TIMEOUT_MS,
     normalizeDimension,
     resolveStudioPdfPageDimensions,
     buildStudioPdfPrintStyles,

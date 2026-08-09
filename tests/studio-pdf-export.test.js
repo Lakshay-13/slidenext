@@ -415,9 +415,10 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     setImmediate(() => {
       assert.equal(printCalls, 1);
       assert.equal(focusCalls, 1);
-      assert.equal(printSuccessCalls, 1);
+      assert.equal(printSuccessCalls, 0);
       assert.equal(typeof afterPrintHandler, 'function');
       afterPrintHandler();
+      assert.equal(printSuccessCalls, 1);
       assert.equal(closeCalls, 1);
       resolve();
     });
@@ -471,6 +472,7 @@ test('openStudioPdfPrintWindow clears zero-valued popup timeout handles', () => 
 test('openStudioPdfPrintWindow falls back to a completed synchronously written document', () => {
   let printCalls = 0;
   let printSuccessCalls = 0;
+  let afterPrintHandler = null;
   const printWindow = {
     document: {
       readyState: 'complete',
@@ -481,7 +483,9 @@ test('openStudioPdfPrintWindow falls back to a completed synchronously written d
         ready: Promise.resolve()
       }
     },
-    addEventListener() {},
+    addEventListener(type, handler) {
+      if (type === 'afterprint') afterPrintHandler = handler;
+    },
     focus() {},
     print() {
       printCalls += 1;
@@ -501,6 +505,8 @@ test('openStudioPdfPrintWindow falls back to a completed synchronously written d
   return new Promise((resolve) => {
     setImmediate(() => {
       assert.equal(printCalls, 1);
+      assert.equal(printSuccessCalls, 0);
+      afterPrintHandler();
       assert.equal(printSuccessCalls, 1);
       resolve();
     });
@@ -510,6 +516,7 @@ test('openStudioPdfPrintWindow falls back to a completed synchronously written d
 test('openStudioPdfPrintWindow falls back when the popup never emits load', async () => {
   let printCalls = 0;
   let printSuccessCalls = 0;
+  let afterPrintHandler = null;
   const printWindow = {
     document: {
       readyState: 'loading',
@@ -520,7 +527,9 @@ test('openStudioPdfPrintWindow falls back when the popup never emits load', asyn
         ready: Promise.resolve()
       }
     },
-    addEventListener() {},
+    addEventListener(type, handler) {
+      if (type === 'afterprint') afterPrintHandler = handler;
+    },
     focus() {},
     print() {
       printCalls += 1;
@@ -540,7 +549,49 @@ test('openStudioPdfPrintWindow falls back when the popup never emits load', asyn
 
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(printCalls, 1);
+  assert.equal(printSuccessCalls, 0);
+  afterPrintHandler();
   assert.equal(printSuccessCalls, 1);
+});
+
+test('openStudioPdfPrintWindow completes when the popup never emits afterprint', async () => {
+  let printCalls = 0;
+  let printSuccessCalls = 0;
+  let closeCalls = 0;
+  const printWindow = {
+    document: {
+      readyState: 'complete',
+      open() {},
+      write() {},
+      close() {},
+      fonts: {
+        ready: Promise.resolve()
+      }
+    },
+    addEventListener() {},
+    print() {
+      printCalls += 1;
+    },
+    close() {
+      closeCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><head></head><body><div class="slide">A</div></body></html>',
+    afterPrintTimeoutMs: 5,
+    openWindow() {
+      return printWindow;
+    },
+    onPrint() {
+      printSuccessCalls += 1;
+    }
+  }), true);
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(printCalls, 1);
+  assert.equal(printSuccessCalls, 1);
+  assert.equal(closeCalls, 1);
 });
 
 test('openStudioPdfPrintWindow reports print-dialog failures', () => {
@@ -552,8 +603,8 @@ test('openStudioPdfPrintWindow reports print-dialog failures', () => {
       close() {}
     },
     addEventListener(type, handler) {
-      assert.equal(type, 'load');
-      this.loadHandler = handler;
+      if (type === 'load') this.loadHandler = handler;
+      else this.afterPrintHandler = handler;
     }
   };
 
@@ -595,8 +646,7 @@ test('openStudioPdfPrintWindow reports resource failures without printing', () =
       }]
     },
     addEventListener(type, handler) {
-      assert.equal(type, 'load');
-      loadHandler = handler;
+      if (type === 'load') loadHandler = handler;
     },
     print() {
       printCalls += 1;
@@ -639,8 +689,7 @@ test('openStudioPdfPrintWindow refuses to print when the loaded slide count mism
       }
     },
     addEventListener(type, handler) {
-      assert.equal(type, 'load');
-      this.loadHandler = handler;
+      if (type === 'load') this.loadHandler = handler;
     },
     print() {
       printCalls += 1;
