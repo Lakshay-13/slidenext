@@ -294,3 +294,35 @@ test('template controller removes a saved template and finalizes persistence hoo
   assert.deepEqual(calls[3][0], 'templates');
   assert.deepEqual(calls[3][1], ['stats-template']);
 });
+
+test('template controller fails closed when removing a template canonical mutation throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: {
+      ...canonicalDeck,
+      removeCanonicalTemplate() {
+        throw new Error('canonical template removal failed');
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    },
+    onTemplatesChanged() {
+      calls.push('templates');
+    }
+  });
+
+  assert.equal(controller.removeTemplate('hero-template'), null);
+  assert.deepEqual(calls, []);
+});

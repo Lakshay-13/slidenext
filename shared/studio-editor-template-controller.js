@@ -173,10 +173,15 @@
         && Array.isArray(canonicalDeck.templates)
         ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === normalizedTemplateId)
         : null;
-      const nextCanonicalDeck = canonicalDeckApi.removeCanonicalTemplate(
-        canonicalDeck,
-        normalizedTemplateId
-      );
+      let nextCanonicalDeck = null;
+      try {
+        nextCanonicalDeck = canonicalDeckApi.removeCanonicalTemplate(
+          canonicalDeck,
+          normalizedTemplateId
+        );
+      } catch (err) {
+        return null;
+      }
       if (!nextCanonicalDeck) return null;
 
       if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
