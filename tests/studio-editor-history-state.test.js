@@ -69,9 +69,8 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     preferCanonicalDeck: true,
     buildCanonicalDeck(doc, options) {
       buildOptionsCalls.push(options);
-      return options && options.canonicalDeckOverride
-        ? options.canonicalDeckOverride
-        : baseDeck;
+      assert.equal(options && options.canonicalDeckOverride, undefined);
+      return baseDeck;
     },
     getPendingTransaction() {
       return pendingTransaction;
@@ -96,7 +95,6 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
     { doc: 'doc-2', canonicalDeck: baseDeck, transaction: { id: 'transaction-2' } }
   ]);
   assert.deepEqual(buildOptionsCalls, [
-    { canonicalDeckOverride: overrideDeck },
     { preferLiveCanonicalDeck: false }
   ]);
   assert.equal(calls[0].preferCanonicalDeck, true);

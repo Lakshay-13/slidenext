@@ -164,10 +164,8 @@
         return null;
       }
       const pendingCanonicalDeck = getPendingCanonicalDeck();
-      const historyCanonicalDeckBuilder = pendingCanonicalDeck
-        ? (sourceDoc) => buildCanonicalDeck(sourceDoc, {
-            canonicalDeckOverride: pendingCanonicalDeck
-          })
+      const historyCanonicalDeckBuilder = isValidCanonicalDeck(pendingCanonicalDeck)
+        ? () => pendingCanonicalDeck
           : (sourceDoc) => {
             const buildOptions = {
               preferLiveCanonicalDeck: false
