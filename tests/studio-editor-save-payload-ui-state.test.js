@@ -2269,6 +2269,34 @@ test('resolveEditorCapturedPersistableDeckState creates the shared persistence-s
   assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
 });
 
+test('resolveEditorCapturedPersistableDeckState delegates to the persistence controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  let delegatedArgs = null;
+  const context = {
+    studioEditorPersistenceController: {
+      resolveCapturedPersistableDeckState(cleanHtml, options) {
+        delegatedArgs = { cleanHtml, options };
+        return { delegated: true };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+
+  const options = { id: 1 };
+  assert.deepEqual(context.resolveEditorCapturedPersistableDeckState('<html>persisted</html>', options), {
+    delegated: true
+  });
+  assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
+  assert.equal(delegatedArgs.options, options);
+});
+
 test('captureEditorPersistableDeckBuildState delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(

@@ -571,3 +571,30 @@ test('persistence controller captures persistable deck build state through the s
   controller.capturePersistableDeckBuildState(doc, { buildPersistableDeckHtml });
   assert.equal(adapterCreateCalls, 1);
 });
+
+test('persistence controller resolves captured persistable deck state through the shared adapter', () => {
+  let adapterCreateCalls = 0;
+  const controller = persistenceController.createStudioEditorPersistenceController({
+    persistenceApi: persistence,
+    persistenceStateApi: {
+      createStudioEditorCapturedPersistableDeckStateResolverAdapter(options) {
+        adapterCreateCalls += 1;
+        assert.equal(options.persistenceApi, persistence);
+        return (cleanHtml, nextOptions) => ({
+          cleanHtml,
+          canonicalDeck: nextOptions.canonicalDeck
+        });
+      }
+    }
+  });
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+
+  assert.deepEqual(controller.resolveCapturedPersistableDeckState('<html></html>', {
+    canonicalDeck
+  }), {
+    cleanHtml: '<html></html>',
+    canonicalDeck
+  });
+  controller.resolveCapturedPersistableDeckState('<html>next</html>', { canonicalDeck });
+  assert.equal(adapterCreateCalls, 1);
+});
