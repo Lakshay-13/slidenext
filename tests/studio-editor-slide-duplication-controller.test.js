@@ -67,3 +67,23 @@ test('slide duplication controller fails closed without a slide-command adapter'
 
   assert.equal(controller.duplicate(), false);
 });
+
+test('slide duplication controller fails closed when canonical builder construction throws', () => {
+  let duplicateCalls = 0;
+  const controller = duplicationController.createStudioEditorSlideDuplicationController({
+    slideCommandsApi: {
+      duplicateStudioSlideNode() {
+        duplicateCalls += 1;
+        return true;
+      }
+    },
+    canonicalSlideApi: {
+      createStudioCanonicalDuplicateSlideMutationBuilders() {
+        throw new Error('canonical builder unavailable');
+      }
+    }
+  });
+
+  assert.equal(controller.duplicate(), false);
+  assert.equal(duplicateCalls, 0);
+});
