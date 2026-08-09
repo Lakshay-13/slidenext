@@ -173,9 +173,16 @@ test('source history capture prefers the current canonical deck before source re
     getIframeDoc() {
       return { id: 'current-frame' };
     },
+    getStudioEditorSessionToken() {
+      return 12;
+    },
+    resolveEditorLiveCanonicalDeck(doc, sessionToken) {
+      calls.push(['live', doc, sessionToken]);
+      return canonicalDeck;
+    },
     buildEditorCanonicalDeck(doc) {
       calls.push(['build', doc]);
-      return canonicalDeck;
+      throw new Error('DOM rebuild should not be needed when live canonical state exists');
     },
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
@@ -187,7 +194,7 @@ test('source history capture prefers the current canonical deck before source re
 
   assert.equal(context.captureEditorSourceHistoryBaseline(), true);
   assert.deepEqual(calls, [
-    ['build', { id: 'current-frame' }],
+    ['live', { id: 'current-frame' }, 12],
     ['history', false, null, canonicalDeck]
   ]);
 });

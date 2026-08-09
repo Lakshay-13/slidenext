@@ -1954,8 +1954,19 @@
       : null;
     function captureEditorSourceHistoryBaseline() {
       let canonicalDeck = null;
+      const sourceDoc = getIframeDoc();
       try {
-        canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
+          canonicalDeck = resolveEditorLiveCanonicalDeck(
+            sourceDoc,
+            typeof getStudioEditorSessionToken === 'function'
+              ? getStudioEditorSessionToken()
+              : null
+          );
+        }
+        if (!canonicalDeck) {
+          canonicalDeck = buildEditorCanonicalDeck(sourceDoc);
+        }
       } catch (error) {
         canonicalDeck = null;
       }
