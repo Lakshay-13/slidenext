@@ -93,6 +93,29 @@ test('buildStudioCanonicalStyleBaseline rejects invalid compatibility baselines'
   assert.equal(rebuildCalls, 1);
 });
 
+test('buildStudioCanonicalStyleBaseline uses structural validation without a canonical validator', () => {
+  const canonicalDeckApi = {
+    updateCanonicalNodeStyle() {}
+  };
+  const malformedDeck = { invalid: true };
+  const validDeck = { slides: [] };
+
+  assert.equal(
+    canonicalStyle.buildStudioCanonicalStyleBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => malformedDeck
+    }),
+    null
+  );
+  assert.equal(
+    canonicalStyle.buildStudioCanonicalStyleBaseline({
+      canonicalDeckApi,
+      getCanonicalDeckBaseline: () => validDeck
+    }),
+    validDeck
+  );
+});
+
 test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index edits to the model', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();
