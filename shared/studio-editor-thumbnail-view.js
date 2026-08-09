@@ -40,6 +40,13 @@
       return false;
     }
 
+    const fragment = typeof documentRef.createDocumentFragment === 'function'
+      ? documentRef.createDocumentFragment()
+      : null;
+    const renderTarget = fragment && typeof fragment.appendChild === 'function'
+      ? fragment
+      : listContainer;
+
     const canMutateSlides = !!options.canMutateSlides;
     const canDeleteSlides = !!options.canDeleteSlides && slides.length > 1;
     const onSelectSlide = typeof options.onSelectSlide === 'function'
@@ -57,7 +64,7 @@
         const sectionLabel = documentRef.createElement('div');
         sectionLabel.className = 'text-[9px] font-mono uppercase tracking-widest text-zinc-500 px-1 pt-2 pb-0.5';
         sectionLabel.textContent = section || 'Unsectioned';
-        listContainer.appendChild(sectionLabel);
+        renderTarget.appendChild(sectionLabel);
       }
       previousSection = section;
 
@@ -90,8 +97,11 @@
         setupDragAndDropThumbnail(thumbCard);
       }
 
-      listContainer.appendChild(thumbCard);
+      renderTarget.appendChild(thumbCard);
     });
+    if (renderTarget !== listContainer) {
+      listContainer.appendChild(renderTarget);
+    }
     return true;
   }
 
