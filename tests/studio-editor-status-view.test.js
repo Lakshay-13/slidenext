@@ -97,6 +97,41 @@ test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progre
   assert.match(statusEl.innerHTML, /Exporting PDF 60%/);
 });
 
+test('createStudioAutoSaveStatusSync resolves the document and progress through callbacks', () => {
+  const documentRef = { id: 'editor-shell' };
+  const calls = [];
+  const syncStatus = statusView.createStudioAutoSaveStatusSync({
+    getDocument() {
+      calls.push('document');
+      return documentRef;
+    },
+    setStatus(options) {
+      calls.push(options);
+      return true;
+    }
+  });
+
+  assert.equal(syncStatus('exporting-pdf', { percent: 42 }), true);
+  assert.deepEqual(calls, [
+    'document',
+    {
+      documentRef,
+      state: 'exporting-pdf',
+      progressPercent: 42
+    }
+  ]);
+});
+
+test('createStudioAutoSaveStatusWithWarningCountSync fails closed when status rendering throws', () => {
+  const syncStatus = statusView.createStudioAutoSaveStatusWithWarningCountSync({
+    setStatus() {
+      throw new Error('status unavailable');
+    }
+  });
+
+  assert.equal(syncStatus('exported-with-warnings', 2, ['Missing asset'], true), false);
+});
+
 test('setStudioSaveButtonState renders saving and idle version states', () => {
   const saveBtn = { disabled: false, innerHTML: '<span>Save Version</span>' };
   const documentRef = {

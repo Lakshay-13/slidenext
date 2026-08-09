@@ -72,6 +72,57 @@
     });
   }
 
+  function createStudioAutoSaveStatusSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => options.documentRef || null;
+    const setStatus = typeof options.setStatus === 'function'
+      ? options.setStatus
+      : setStudioAutoSaveStatus;
+
+    return function syncStudioAutoSaveStatus(state, progress = null) {
+      try {
+        return setStatus({
+          documentRef: getDocument(),
+          state,
+          progressPercent: progress && typeof progress === 'object'
+            ? progress.percent
+            : null
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
+  function createStudioAutoSaveStatusWithWarningCountSync(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => options.documentRef || null;
+    const setStatus = typeof options.setStatus === 'function'
+      ? options.setStatus
+      : setStudioAutoSaveStatusWithWarningCount;
+
+    return function syncStudioAutoSaveStatusWithWarningCount(
+      state,
+      warningCount = 0,
+      warnings = [],
+      warningsTruncated = false
+    ) {
+      try {
+        return setStatus({
+          documentRef: getDocument(),
+          state,
+          warningCount,
+          warnings,
+          warningsTruncated
+        });
+      } catch (error) {
+        return false;
+      }
+    };
+  }
+
   function setStudioSaveButtonState(options = {}) {
     const documentRef = options.documentRef;
     const saveBtn = documentRef && typeof documentRef.getElementById === 'function'
@@ -93,6 +144,8 @@
   return {
     setStudioAutoSaveStatus,
     setStudioAutoSaveStatusWithWarningCount,
+    createStudioAutoSaveStatusSync,
+    createStudioAutoSaveStatusWithWarningCountSync,
     setStudioSaveButtonState
   };
 });

@@ -1102,6 +1102,43 @@ test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
   assert.match(statusEl.innerHTML, /Network Error/);
 });
 
+test('setStudioAutoSaveStatus caches the shared status synchronizer when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const setStudioAutoSaveStatusSource = extractFunctionSource(
+    fileContent,
+    'function setStudioAutoSaveStatus(state) {',
+    '\n\n    function resetStudioSaveButtonState() {'
+  );
+  const calls = [];
+  const documentRef = { id: 'editor-shell' };
+  const context = {
+    document: documentRef,
+    SlideNextStudioEditorStatusView: {
+      setStudioAutoSaveStatus() {
+        throw new Error('direct status rendering should not run');
+      },
+      createStudioAutoSaveStatusSync(options) {
+        calls.push(['factory', options]);
+        return (state, progress) => {
+          calls.push(['sync', options.getDocument(), state, progress]);
+          return true;
+        };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(setStudioAutoSaveStatusSource, context);
+
+  assert.equal(context.setStudioAutoSaveStatus('exporting-pdf', { percent: 42 }), true);
+  assert.equal(context.setStudioAutoSaveStatus('saved'), true);
+  assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
+  assert.deepEqual(calls.filter(([name]) => name === 'sync'), [
+    ['sync', documentRef, 'exporting-pdf', { percent: 42 }],
+    ['sync', documentRef, 'saved', null]
+  ]);
+});
+
 test('closeStudioEditor reuses the shared frame accessor before clearing the editor shell state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const closeStudioEditorSource = extractFunctionSource(

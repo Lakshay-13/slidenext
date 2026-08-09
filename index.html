@@ -11856,6 +11856,15 @@
         : null;
       if (!statusView || typeof statusView.setStudioAutoSaveStatus !== 'function') return false;
       const progress = arguments.length > 1 ? arguments[1] : null;
+      if (typeof setStudioAutoSaveStatus.sync !== 'function'
+        && typeof statusView.createStudioAutoSaveStatusSync === 'function') {
+        setStudioAutoSaveStatus.sync = statusView.createStudioAutoSaveStatusSync({
+          getDocument: () => document
+        });
+      }
+      if (typeof setStudioAutoSaveStatus.sync === 'function') {
+        return setStudioAutoSaveStatus.sync(state, progress);
+      }
       return statusView.setStudioAutoSaveStatus({
         documentRef: document,
         state,
@@ -11870,6 +11879,20 @@
         ? SlideNextStudioEditorStatusView
         : null;
       if (!statusView || typeof statusView.setStudioAutoSaveStatusWithWarningCount !== 'function') return false;
+      if (typeof setStudioAutoSaveStatusWithWarningCount.sync !== 'function'
+        && typeof statusView.createStudioAutoSaveStatusWithWarningCountSync === 'function') {
+        setStudioAutoSaveStatusWithWarningCount.sync = statusView.createStudioAutoSaveStatusWithWarningCountSync({
+          getDocument: () => document
+        });
+      }
+      if (typeof setStudioAutoSaveStatusWithWarningCount.sync === 'function') {
+        return setStudioAutoSaveStatusWithWarningCount.sync(
+          state,
+          warningCount,
+          warnings,
+          warningsTruncated
+        );
+      }
       return statusView.setStudioAutoSaveStatusWithWarningCount({
         documentRef: document,
         state,
