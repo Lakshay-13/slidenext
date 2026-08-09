@@ -189,6 +189,28 @@ test('buildStudioUngroupSelectionActionState keeps only valid selected group wra
   assert.equal(result.canUngroup, false);
 });
 
+test('createStudioUngroupSelectionActionStateBuilder resolves editor callbacks through shared state', () => {
+  const doc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const parent = { id: 'parent' };
+  const groupNode = { id: 'group', parentElement: parent, children: [{}] };
+  const selection = [groupNode];
+  const buildActionState = group.createStudioUngroupSelectionActionStateBuilder({
+    getDocument: () => doc,
+    getSelectedElements: () => selection,
+    getActiveSlide: () => slide,
+    getLiveSelectedElements: (elements) => elements,
+    isEditorGroupElement: (element) => element === groupNode
+  });
+
+  const result = buildActionState();
+
+  assert.equal(result.slide, slide);
+  assert.deepEqual(result.selection, selection);
+  assert.deepEqual(result.groups, [groupNode]);
+  assert.equal(result.canUngroup, true);
+});
+
 test('buildStudioUngroupedLayout restores absolute positions from group-relative coordinates', () => {
   assert.deepEqual(group.buildStudioUngroupedLayout({ left: 100, top: 120 }, [
     { id: 'first', relativeLeft: 0, relativeTop: 0, parentLeft: 0, parentTop: 0 },

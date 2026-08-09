@@ -6998,6 +6998,20 @@
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
+      if (groupApi && typeof groupApi.createStudioUngroupSelectionActionStateBuilder === 'function') {
+        if (typeof buildUngroupSelectionActionState.builder !== 'function') {
+          buildUngroupSelectionActionState.builder = groupApi.createStudioUngroupSelectionActionStateBuilder({
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: () => getStudioSelectedElements(),
+            getActiveSlide,
+            getLiveSelectedElements,
+            isEditorGroupElement
+          });
+        }
+        if (typeof buildUngroupSelectionActionState.builder === 'function') {
+          return buildUngroupSelectionActionState.builder(doc);
+        }
+      }
       if (groupApi && typeof groupApi.buildStudioUngroupSelectionActionState === 'function') {
         return groupApi.buildStudioUngroupSelectionActionState(getStudioSelectedElements(), {
           doc: resolvedDoc,

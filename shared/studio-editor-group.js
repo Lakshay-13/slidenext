@@ -207,6 +207,34 @@
     };
   }
 
+  function createStudioUngroupSelectionActionStateBuilder(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getSelectedElements = typeof options.getSelectedElements === 'function'
+      ? options.getSelectedElements
+      : () => [];
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getLiveSelectedElements = typeof options.getLiveSelectedElements === 'function'
+      ? options.getLiveSelectedElements
+      : (selection) => selection;
+    const isEditorGroupElement = typeof options.isEditorGroupElement === 'function'
+      ? options.isEditorGroupElement
+      : () => false;
+
+    return function buildStudioEditorUngroupSelectionActionState(doc = null) {
+      const resolvedDoc = doc || getDocument();
+      return buildStudioUngroupSelectionActionState(getSelectedElements(), {
+        doc: resolvedDoc,
+        getActiveSlide,
+        getLiveSelectedElements,
+        isEditorGroupElement
+      });
+    };
+  }
+
   function renderStudioGroupToolbarState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -479,6 +507,7 @@
     buildStudioGroupSelectionActionState,
     createStudioGroupSelectionActionStateBuilder,
     buildStudioUngroupSelectionActionState,
+    createStudioUngroupSelectionActionStateBuilder,
     buildStudioGroupToolbarState,
     renderStudioGroupToolbarState,
     syncStudioGroupToolbarState,
