@@ -15,6 +15,20 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function runSourceWithCanonicalUi(source, context) {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  vm.runInContext(`${canonicalUiSource}\n${resolverSource}\n${source}`, context);
+}
+
 test('saveActiveSlideAsTemplate delegates the name and refreshes template state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -44,7 +58,7 @@ test('saveActiveSlideAsTemplate delegates the name and refreshes template state'
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.saveActiveSlideAsTemplate(), true);
   assert.equal(delegatedName, 'Quarterly Hero');
@@ -208,7 +222,7 @@ test('insertSavedTemplate delegates to the template controller and refreshes edi
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.insertSavedTemplate('hero-template'), true);
   assert.equal(delegatedId, 'hero-template');
@@ -238,7 +252,7 @@ test('removeSavedTemplate delegates removal and refreshes template state', () =>
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.removeSavedTemplate('hero-template'), true);
   assert.equal(delegatedId, 'hero-template');
@@ -282,7 +296,7 @@ test('updateTemplateActionState caches the shared template state synchronizer wh
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateTemplateActionState(doc), true);
   assert.equal(context.updateTemplateActionState(doc), true);
@@ -332,7 +346,7 @@ test('template state prefers the live canonical deck before rebuilding from the 
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateTemplateActionState(doc), true);
   assert.equal(receivedOptions.templates, liveCanonicalDeck.templates);

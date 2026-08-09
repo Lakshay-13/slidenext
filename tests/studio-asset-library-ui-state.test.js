@@ -20,6 +20,20 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return source;
 }
 
+function runSourceWithCanonicalUi(source, context) {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  vm.runInContext(`${canonicalUiSource}\n${resolverSource}\n${source}`, context);
+}
+
 test('shared asset view wires use and remove actions to injected callbacks', () => {
   const list = {
     children: [],
@@ -260,7 +274,7 @@ test('addAssetToLibrary validates the source and delegates a normalized image as
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.addAssetToLibrary(), true);
   assert.equal(calls.length, 1);
@@ -303,7 +317,7 @@ test('applyAssetToSelectedImage delegates asset binding and refreshes the librar
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.applyAssetToSelectedImage('hero'), true);
   assert.equal(delegatedId, 'hero');
@@ -350,7 +364,7 @@ test('insertAssetToActiveSlide stamps the canonical asset before insertion', () 
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.insertAssetToActiveSlide('hero'), true);
   assert.deepEqual(calls, [['img', 'Auto: Inserted Asset "Hero"']]);
@@ -390,7 +404,7 @@ test('asset library state resolves relative previews against the current present
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateAssetLibraryState(), true);
   assert.equal(
@@ -437,7 +451,7 @@ test('updateAssetLibraryState caches the shared asset state synchronizer when av
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateAssetLibraryState(doc), true);
   assert.equal(context.updateAssetLibraryState(doc), true);
@@ -485,7 +499,7 @@ test('asset library state prefers the live canonical deck before rebuilding from
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateAssetLibraryState(doc), true);
   assert.equal(receivedOptions.assets, liveCanonicalDeck.assets);
@@ -543,7 +557,7 @@ test('asset library state prefers canonical lock metadata when available', () =>
   };
 
   vm.createContext(context);
-  vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
+  runSourceWithCanonicalUi(`${visibilityReaderSource}\n${source}`, context);
 
   assert.equal(context.updateAssetLibraryState(doc), true);
   assert.equal(receivedOptions.selectedElement, selectedElement);

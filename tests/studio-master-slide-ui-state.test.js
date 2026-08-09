@@ -15,6 +15,20 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function runSourceWithCanonicalUi(source, context) {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  vm.runInContext(`${canonicalUiSource}\n${resolverSource}\n${source}`, context);
+}
+
 test('shared master-slide view wires apply and remove actions to injected callbacks', () => {
   const select = {
     children: [],
@@ -230,7 +244,7 @@ test('master layout actions delegate save, apply, and removal to the controller'
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.saveActiveSlideAsMaster(), true);
   assert.equal(context.applySelectedMasterSlide(), true);
@@ -283,7 +297,7 @@ test('updateMasterSlideActionState reflects the active slide reference', () => {
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateMasterSlideActionState({}), true);
   assert.equal(elements.masterSlideSelect.disabled, false);
@@ -336,7 +350,7 @@ test('updateMasterSlideActionState caches the shared master state synchronizer w
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateMasterSlideActionState(doc), true);
   assert.equal(context.updateMasterSlideActionState(doc), true);
@@ -392,7 +406,7 @@ test('master-slide state prefers the live canonical deck before rebuilding from 
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateMasterSlideActionState(doc), true);
   assert.equal(receivedOptions.masterSlides, liveCanonicalDeck.masterSlides);

@@ -1291,6 +1291,7 @@
   <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-bridge.js"></script>
+  <script src="/shared/studio-editor-canonical-ui.js"></script>
   <script src="/shared/studio-editor-canonical-runtime.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
@@ -5705,6 +5706,29 @@
       return studioEditorCanonicalBridge.buildCanonicalDeck(doc, options);
     }
 
+    function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {
+      const canonicalUiApi = typeof SlideNextStudioEditorCanonicalUi !== 'undefined'
+        ? SlideNextStudioEditorCanonicalUi
+        : null;
+      if (canonicalUiApi
+        && typeof canonicalUiApi.resolveStudioEditorCanonicalDeck === 'function') {
+        return canonicalUiApi.resolveStudioEditorCanonicalDeck(doc, {
+          resolveLiveCanonicalDeck: typeof resolveEditorLiveCanonicalDeck === 'function'
+            ? resolveEditorLiveCanonicalDeck
+            : null,
+          getSessionToken: typeof getStudioEditorSessionToken === 'function'
+            ? getStudioEditorSessionToken
+            : null,
+          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+            ? buildEditorCanonicalDeck
+            : null
+        });
+      }
+      return typeof buildEditorCanonicalDeck === 'function'
+        ? buildEditorCanonicalDeck(doc)
+        : null;
+    }
+
     function buildEditorMutationCanonicalDeck(sourceDoc) {
       if (!studioEditorCanonicalBridge
         || typeof studioEditorCanonicalBridge.buildMutationCanonicalDeck !== 'function') return null;
@@ -7738,25 +7762,7 @@
     }
 
     function updateAssetLibraryState(doc = getIframeDoc()) {
-      const resolveCanonicalDeck = (sourceDoc) => {
-        let liveCanonicalDeck = null;
-        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
-          try {
-            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
-              sourceDoc,
-              typeof getStudioEditorSessionToken === 'function'
-                ? getStudioEditorSessionToken()
-                : null
-            );
-          } catch (error) {
-            liveCanonicalDeck = null;
-          }
-        }
-        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(sourceDoc)
-          : null);
-      };
-      const canonicalDeck = resolveCanonicalDeck(doc);
+      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
         ? SlideNextStudioEditorAssetView
         : null;
@@ -7768,7 +7774,7 @@
           updateAssetLibraryState.sync = assetView.createStudioAssetStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
-              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
+              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               const selectedElements = getStudioSelectedElements();
               const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
                 ? selectedElements[0]
@@ -7864,31 +7870,13 @@
       if (!templateView || typeof templateView.syncStudioTemplateState !== 'function') {
         return false;
       }
-      const resolveCanonicalDeck = (sourceDoc) => {
-        let liveCanonicalDeck = null;
-        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
-          try {
-            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
-              sourceDoc,
-              typeof getStudioEditorSessionToken === 'function'
-                ? getStudioEditorSessionToken()
-                : null
-            );
-          } catch (error) {
-            liveCanonicalDeck = null;
-          }
-        }
-        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(sourceDoc)
-          : null);
-      };
       if (typeof templateView.createStudioTemplateStateSync === 'function') {
         if (typeof updateTemplateActionState.sync !== 'function') {
           updateTemplateActionState.sync = templateView.createStudioTemplateStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
               const canSave = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
+              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               return {
                 templates: canonicalDeck && canonicalDeck.templates,
                 canUseTemplateActions: canSave,
@@ -7904,7 +7892,7 @@
         }
       }
       const canSave = !!getActiveSlide(doc);
-      const canonicalDeck = resolveCanonicalDeck(doc);
+      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       templateView.syncStudioTemplateState({
         documentRef: document,
         templates: canonicalDeck && canonicalDeck.templates,
@@ -7922,31 +7910,13 @@
       if (!masterSlideView || typeof masterSlideView.syncStudioMasterSlideState !== 'function') {
         return false;
       }
-      const resolveCanonicalDeck = (sourceDoc) => {
-        let liveCanonicalDeck = null;
-        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
-          try {
-            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
-              sourceDoc,
-              typeof getStudioEditorSessionToken === 'function'
-                ? getStudioEditorSessionToken()
-                : null
-            );
-          } catch (error) {
-            liveCanonicalDeck = null;
-          }
-        }
-        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(sourceDoc)
-          : null);
-      };
       if (typeof masterSlideView.createStudioMasterSlideStateSync === 'function') {
         if (typeof updateMasterSlideActionState.sync !== 'function') {
           updateMasterSlideActionState.sync = masterSlideView.createStudioMasterSlideStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
               const canUse = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
+              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(sourceDoc) : '';
               const activeSlide = canonicalDeck
                 && Array.isArray(canonicalDeck.slides)
@@ -7968,7 +7938,7 @@
         }
       }
       const canUse = !!getActiveSlide(doc);
-      const canonicalDeck = resolveCanonicalDeck(doc);
+      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(doc) : '';
       const activeSlide = canonicalDeck
         && Array.isArray(canonicalDeck.slides)
@@ -7992,24 +7962,6 @@
       if (!blockView || typeof blockView.syncStudioBlockState !== 'function') {
         return false;
       }
-      const resolveCanonicalDeck = (sourceDoc) => {
-        let liveCanonicalDeck = null;
-        if (typeof resolveEditorLiveCanonicalDeck === 'function') {
-          try {
-            liveCanonicalDeck = resolveEditorLiveCanonicalDeck(
-              sourceDoc,
-              typeof getStudioEditorSessionToken === 'function'
-                ? getStudioEditorSessionToken()
-                : null
-            );
-          } catch (error) {
-            liveCanonicalDeck = null;
-          }
-        }
-        return liveCanonicalDeck || (typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(sourceDoc)
-          : null);
-      };
       if (typeof blockView.createStudioBlockStateSync === 'function') {
         if (typeof updateBlockActionState.sync !== 'function') {
           updateBlockActionState.sync = blockView.createStudioBlockStateSync({
@@ -8023,7 +7975,7 @@
               const canSave = !!getActiveSlide(sourceDoc)
                 && getStudioSelectedElements().length > 0
                 && !hasLockedSelection;
-              const canonicalDeck = resolveCanonicalDeck(sourceDoc);
+              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               return {
                 blocks: canonicalDeck && canonicalDeck.blocks,
                 canUseBlockActions: canSave,
@@ -8046,7 +7998,7 @@
       const canSave = !!getActiveSlide(doc)
         && getStudioSelectedElements().length > 0
         && !hasLockedSelection;
-      const canonicalDeck = resolveCanonicalDeck(doc);
+      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       blockView.syncStudioBlockState({
         documentRef: document,
         blocks: canonicalDeck && canonicalDeck.blocks,

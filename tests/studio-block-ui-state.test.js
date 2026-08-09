@@ -15,6 +15,20 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
+function runSourceWithCanonicalUi(source, context) {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorMutationCanonicalDeck'
+  );
+  const canonicalUiSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
+    'utf8'
+  );
+  vm.runInContext(`${canonicalUiSource}\n${resolverSource}\n${source}`, context);
+}
+
 test('shared block view wires insert and remove actions to injected callbacks', () => {
   const list = {
     children: [],
@@ -192,7 +206,7 @@ test('updateBlockActionState caches the shared block state synchronizer when ava
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateBlockActionState(doc), true);
   assert.equal(context.updateBlockActionState(doc), true);
@@ -248,7 +262,7 @@ test('block state prefers the live canonical deck before rebuilding from the fra
   };
 
   vm.createContext(context);
-  vm.runInContext(source, context);
+  runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.updateBlockActionState(doc), true);
   assert.equal(receivedOptions.blocks, liveCanonicalDeck.blocks);
