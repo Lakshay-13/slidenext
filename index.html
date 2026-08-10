@@ -2439,11 +2439,13 @@
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),
-          createBlankSlide: (doc) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, {
-            ...getEditorDomOptions(),
-            assignSlideId: assignEditorSlideId,
-            decorateSlide: makeElementsHoverable
-          }),
+          createBlankSlide: (doc) => typeof studioEditorBlankSlideFactory === 'function'
+            ? studioEditorBlankSlideFactory(doc, {
+                ...getEditorDomOptions(),
+                assignSlideId: assignEditorSlideId,
+                decorateSlide: makeElementsHoverable
+              })
+            : null,
           saveHistoryState: (...args) => saveHistoryState(...args),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
@@ -3262,6 +3264,12 @@
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
       ? (node, options) => SlideNextStudioEditorDom.resolveStudioEditableTarget(node, options)
+      : null;
+
+    const studioEditorBlankSlideFactory = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.createStudioBlankSlide === 'function'
+      ? (doc, options) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, options)
       : null;
 
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'

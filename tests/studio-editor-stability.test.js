@@ -2973,6 +2973,63 @@ test('resolveEditableTarget fails closed when the shared DOM module is unavailab
   assert.equal(context.resolveEditableTarget({}), null);
 });
 
+test('editor composes blank-slide creation through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorBlankSlideFactory =/);
+  assert.match(source, /typeof studioEditorBlankSlideFactory === 'function'/);
+  assert.doesNotMatch(source, /createBlankSlide: \(doc\) => SlideNextStudioEditorDom\.createStudioBlankSlide/);
+});
+
+test('blank-slide factory delegates the document and creation options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const blankSlideFactorySource = extractFunctionSource(
+    fileContent,
+    'const studioEditorBlankSlideFactory =',
+    'const studioEditorTransformRuntime ='
+  );
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      createStudioBlankSlide(docValue, optionsValue) {
+        calls.push([docValue, optionsValue]);
+        return { id: 'slide-1' };
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(blankSlideFactorySource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(vm.runInContext(
+      'studioEditorBlankSlideFactory({id: "iframe-doc"}, {slideClassName: "slide"})',
+      context
+    ))),
+    { id: 'slide-1' }
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0].id, 'iframe-doc');
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), { slideClassName: 'slide' });
+});
+
+test('blank-slide factory fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const blankSlideFactorySource = extractFunctionSource(
+    fileContent,
+    'const studioEditorBlankSlideFactory =',
+    'const studioEditorTransformRuntime ='
+  );
+  const context = {
+    SlideNextStudioEditorDom: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(blankSlideFactorySource, context);
+
+  assert.equal(vm.runInContext('studioEditorBlankSlideFactory', context), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
