@@ -1308,6 +1308,9 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   assert.deepEqual(JSON.parse(JSON.stringify(context.undoStack)), []);
   assert.deepEqual(JSON.parse(JSON.stringify(context.redoStack)), []);
   assert.equal(loadPresentationsCalls, 1);
+
+  context.SlideNextStudioEditorPersistence = null;
+  assert.doesNotThrow(() => context.closeStudioEditor());
 });
 
 test('loadCurrentPresentationMetadata passes live session getters when delegating to the deck context', async () => {
