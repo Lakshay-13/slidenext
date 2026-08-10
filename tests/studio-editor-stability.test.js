@@ -200,7 +200,7 @@ test('nudge wiring prefers live canonical state and keeps a legacy baseline fall
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -222,7 +222,7 @@ test('alignment wiring prefers live canonical state and keeps a legacy baseline 
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -249,7 +249,7 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
