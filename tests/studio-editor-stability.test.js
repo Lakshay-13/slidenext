@@ -1211,6 +1211,55 @@ test('selectAllElementsOnActiveSlide fails closed when the shared selection modu
   assert.equal(context.selectAllElementsOnActiveSlide(), false);
 });
 
+test('editor composes element lock reads through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementLockReader =/);
+  assert.match(source, /isStudioElementLocked/);
+  assert.match(source, /typeof studioEditorElementLockReader === 'function'/);
+  assert.doesNotMatch(source, /isElementLocked\.reader/);
+});
+
+test('isElementLocked delegates the element to the shared element state module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const lockReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementLockReader =',
+    '\n\n    function resolveEditorCanonicalNodeForElement('
+  );
+  const element = { id: 'element-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioElementState: {
+      isStudioElementLocked(value) {
+        calls.push(value);
+        return true;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(lockReaderSource, context);
+
+  assert.equal(context.isElementLocked(element), true);
+  assert.deepEqual(calls, [element]);
+});
+
+test('isElementLocked fails closed when the shared element state module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const lockReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementLockReader =',
+    '\n\n    function resolveEditorCanonicalNodeForElement('
+  );
+  const context = { SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(lockReaderSource, context);
+
+  assert.equal(context.isElementLocked({ id: 'element-1' }), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

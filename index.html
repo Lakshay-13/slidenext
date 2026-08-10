@@ -6920,8 +6920,16 @@
       });
     }
 
+    const studioEditorElementLockReader = typeof SlideNextStudioElementState !== 'undefined'
+      && SlideNextStudioElementState
+      && typeof SlideNextStudioElementState.isStudioElementLocked === 'function'
+      ? (element) => SlideNextStudioElementState.isStudioElementLocked(element)
+      : null;
+
     function isElementLocked(el) {
-      return SlideNextStudioElementState.isStudioElementLocked(el);
+      return typeof studioEditorElementLockReader === 'function'
+        ? studioEditorElementLockReader(el)
+        : false;
     }
 
     function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {
