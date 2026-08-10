@@ -7436,12 +7436,20 @@
     }
 
     function selectionHasLockedElements(elements = getStudioSelectedElements()) {
+      const hasStudioLockedLiveSelection = (
+        typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+        && SlideNextStudioEditorLiveSelection
+        && typeof SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection === 'function'
+      )
+        ? SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection
+        : null;
+      if (!hasStudioLockedLiveSelection) return false;
       const readLockedState = getEditorCanonicalVisibilityReader(
         'locked',
         getIframeDoc(),
         isElementLocked
       );
-      return SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection(elements, {
+      return hasStudioLockedLiveSelection(elements, {
         isLocked: readLockedState
       });
     }

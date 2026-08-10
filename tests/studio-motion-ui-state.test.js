@@ -258,6 +258,28 @@ test('selectionHasLockedElements prefers canonical lock state over stale DOM sta
   assert.equal(context.selectionHasLockedElements(), true);
 });
 
+test('selectionHasLockedElements fails closed when the live-selection runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    selectedElements: [{ id: 'node-1' }],
+    SlideNextStudioEditorLiveSelection: {},
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    getEditorCanonicalVisibilityReader() {
+      throw new Error('canonical lock reader should not be evaluated without the live-selection runtime');
+    },
+    isElementLocked() {
+      throw new Error('fallback lock reader should not be evaluated without the live-selection runtime');
+    }
+  };
+
+  vm.createContext(context);
+  loadSelectionHasLockedElements(fileContent, context);
+
+  assert.equal(context.selectionHasLockedElements(), false);
+});
+
 test('buildMotionSelectionActionState resolves nudge geometry from the current doc and slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = { activeSlide: { id: 'slide-1' } };
