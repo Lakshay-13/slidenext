@@ -1015,6 +1015,29 @@ test('isCurrentDeckStatePersisted creates the shared persistence-state adapter o
   assert.equal(checkerCalls, 2);
 });
 
+test('isCurrentDeckStatePersisted fails closed when all shared save-request checkers are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckStatePersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {',
+    '\n\n    function createCurrentStudioPersistenceHandlerOptions(options = {}) {'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getCurrentEditorPersistedDeckState() {
+      throw new Error('persisted state should not be read without a save-request checker');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentDeckStatePersistedSource, context);
+
+  assert.equal(
+    context.isCurrentDeckStatePersisted({ htmlContent: '<html>current</html>' }),
+    false
+  );
+});
+
 test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-options builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const createCurrentStudioPersistenceHandlerOptionsSource = extractFunctionSource(

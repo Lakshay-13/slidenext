@@ -12022,7 +12022,15 @@
         })(saveRequestBody, cleanHtml);
       }
 
-      return SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest(
+      const isStudioPersistedSaveRequest = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest
+        : null;
+      if (!isStudioPersistedSaveRequest) return false;
+      return isStudioPersistedSaveRequest(
         saveRequestBody,
         getCurrentEditorPersistedDeckState(),
         cleanHtml
