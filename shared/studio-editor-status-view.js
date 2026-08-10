@@ -51,6 +51,8 @@
     } else if (state === 'exporting-pdf') {
       const progressSuffix = progressPercent === null ? '' : ` ${progressPercent}%`;
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PDF${progressSuffix}...</span>`;
+    } else if (state === 'pdf-printing') {
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> PDF Print Dialog Open</span>`;
     } else if (state === 'pdf-export-failed') {
       statusEl.innerHTML = `<span class="text-rose-400">PDF Export Failed</span>`;
     } else if (state === 'pdf-exported') {

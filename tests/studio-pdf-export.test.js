@@ -533,6 +533,7 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
   let afterPrintHandler = null;
   let closeCalls = 0;
   let printSuccessCalls = 0;
+  let printStartCalls = 0;
   const events = [];
   const printWindow = {
     opener: 'parent-window',
@@ -579,6 +580,9 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     },
     onPrint() {
       printSuccessCalls += 1;
+    },
+    onPrintStart() {
+      printStartCalls += 1;
     }
   }), true);
   assert.equal(printWindow.opener, null);
@@ -593,6 +597,7 @@ test('openStudioPdfPrintWindow writes export html and waits for the print window
     setImmediate(() => {
       assert.equal(printCalls, 1);
       assert.equal(focusCalls, 1);
+      assert.equal(printStartCalls, 1);
       assert.equal(printSuccessCalls, 0);
       assert.equal(typeof afterPrintHandler, 'function');
       afterPrintHandler();

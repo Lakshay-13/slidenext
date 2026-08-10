@@ -55,6 +55,7 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
     SlideNextStudioPdfExport: {
       openStudioPdfPrintWindow(options) {
         calls.push(['openStudioPdfPrintWindow', options]);
+        options.onPrintStart();
         options.onPrint();
         return true;
       }
@@ -89,7 +90,7 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
       slideCount: 1
     }]
   ]);
-  assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-exported']);
+  assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-printing', 'pdf-exported']);
   assert.equal(exportButton.disabled, false);
 });
 

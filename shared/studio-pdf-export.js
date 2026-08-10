@@ -661,6 +661,13 @@
         if (typeof printWindow.addEventListener === 'function') {
           printWindow.addEventListener('afterprint', handleAfterPrint, { once: true });
         }
+        if (typeof options.onPrintStart === 'function') {
+          try {
+            options.onPrintStart();
+          } catch (error) {
+            // Status reporting must not interrupt the native print flow.
+          }
+        }
         printWindow.print();
         if (typeof printWindow.addEventListener === 'function') {
           if (!didReportPrintSuccess) {

@@ -192,6 +192,9 @@
             setStatus('exporting-pdf', progress);
           },
           ...pageDimensions,
+          onPrintStart: () => {
+            setStatus('pdf-printing');
+          },
           onPrint: () => {
             if (pdfWarningCount > 0) {
               setStatus('pdf-exported-with-warnings', pdfWarningCount, pdfWarnings, false);
