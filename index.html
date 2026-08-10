@@ -11599,6 +11599,13 @@
                 )
               : null
           );
+      const buildStudioSaveRequestBody = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.buildStudioSaveRequestBody === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.buildStudioSaveRequestBody
+        : null;
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
         && typeof studioEditorPersistenceController.buildSaveRequestBody === 'function') {
@@ -11730,7 +11737,10 @@
           getLiveCanonicalDeck,
           buildPersistableDeckHtml
         });
-        return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
+        if (!buildStudioSaveRequestBody) {
+          return null;
+        }
+        return buildStudioSaveRequestBody(
           presentationUrl,
           resolvedDeckState.cleanHtml,
           {
@@ -11758,7 +11768,10 @@
           : buildPersistableDeckHtml(doc, {
               canonicalDeck: resolvedCanonicalDeck
             });
-      return SlideNextStudioEditorPersistence.buildStudioSaveRequestBody(
+      if (!buildStudioSaveRequestBody) {
+        return null;
+      }
+      return buildStudioSaveRequestBody(
         presentationUrl,
         resolvedCleanHtml,
         {

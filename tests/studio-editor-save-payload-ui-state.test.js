@@ -630,6 +630,47 @@ test('buildEditorSaveRequestBody reuses the shared save-request body builder whe
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);
 });
 
+test('buildEditorSaveRequestBody fails closed when the shared save builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorSaveRequestBodySource = extractFunctionSource(
+    fileContent,
+    'function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {',
+    '\n\n    function isCurrentDeckHtmlPersisted(cleanHtml) {'
+  );
+  const doc = { label: 'iframe-doc' };
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getStudioCurrentPresentationUrl() {
+      return 'presentations/onboarding-presentation/index.html';
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    resolveEditorCanonicalDeckOverride() {
+      return null;
+    },
+    buildPersistableDeckHtml() {
+      return '<html>persisted</html>';
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
+
+  assert.equal(
+    context.buildEditorSaveRequestBody(doc, '<html>provided</html>'),
+    null
+  );
+  context.SlideNextStudioEditorPersistence.resolveStudioSaveRequestDeckState = () => ({
+    cleanHtml: '<html>resolved</html>',
+    canonicalDeck: null
+  });
+  assert.equal(
+    context.buildEditorSaveRequestBody(doc, '<html>provided</html>'),
+    null
+  );
+});
+
 test('buildEditorSaveRequestBody delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
