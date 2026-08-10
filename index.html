@@ -7640,6 +7640,13 @@
       const removalApi = typeof SlideNextStudioEditorRemoval !== 'undefined'
         ? SlideNextStudioEditorRemoval
         : null;
+      if (!removalApi || typeof removalApi.buildStudioRemovalActionState !== 'function') {
+        return {
+          selection: [],
+          hasSelection: false,
+          canRemove: false
+        };
+      }
       if (removalApi && typeof removalApi.createStudioRemovalActionStateBuilder === 'function') {
         if (typeof buildRemovalSelectionActionState.builder !== 'function') {
           buildRemovalSelectionActionState.builder = removalApi.createStudioRemovalActionStateBuilder({

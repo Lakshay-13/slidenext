@@ -162,6 +162,34 @@ test('buildRemovalSelectionActionState disables removal for canonical locked sel
   assert.equal(context.buildRemovalSelectionActionState().canRemove, false);
 });
 
+test('buildRemovalSelectionActionState fails closed when the shared removal builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorRemoval: {},
+    getStudioSelectedElements() {
+      throw new Error('selection should not be read without a removal builder');
+    },
+    getEditorCanonicalVisibilityReader() {
+      throw new Error('canonical lock state should not be read without a removal builder');
+    },
+    isElementLocked() {
+      throw new Error('fallback lock state should not be read without a removal builder');
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildRemovalSelectionActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildRemovalSelectionActionState({ id: 'iframe-doc' }))),
+    {
+      selection: [],
+      hasSelection: false,
+      canRemove: false
+    }
+  );
+});
+
 test('updateRemovalActionState enables the delete control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateRemovalActionStateSource = extractFunctionSource(
