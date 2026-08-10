@@ -1176,6 +1176,72 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial persistence 
   ]);
 });
 
+test('initStudioFrame keeps the legacy bootstrap alive when persistence runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+  const iframeDoc = { addEventListener() {} };
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    syncIframeTheme() {},
+    SlideNextStudioEditorStyle: {
+      ensureStudioEditorStyle() {}
+    },
+    makeElementsHoverable() {},
+    studioEditorFrameInteractions: {
+      attach(doc) {
+        assert.equal(doc, iframeDoc);
+      }
+    },
+    SlideNextStudioFrameBootstrap: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.captureInitialHistoryState();
+      }
+    },
+    setupIframeDragging() {},
+    generateThumbnails() {},
+    syncStudioChromeToActiveSlide() {},
+    setActiveSlide() {},
+    bindDeckNavigationSync() {},
+    observeDeckActiveSlideState() {},
+    captureEditorPersistableDeckState() {
+      throw new Error('persistence capture failed');
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    currentPresentationUrl: '/presentations/legacy/index.html',
+    studioEditorSessionToken: 4,
+    updateDeckReadyToolbarActionState() {
+      calls.push('ready');
+    },
+    setStudioAutoSaveStatus(status) {
+      calls.push(['status', status]);
+    },
+    syncInspectorForSelection() {
+      calls.push('inspector');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  assert.doesNotThrow(() => context.initStudioFrame());
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['saveHistoryState', false],
+    'ready',
+    ['status', 'saved'],
+    'inspector'
+  ]);
+});
+
 test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncIframeThemeSource = extractFunctionSource(

@@ -5332,6 +5332,9 @@
       const frameBootstrapApi = typeof SlideNextStudioFrameBootstrap !== 'undefined'
         ? SlideNextStudioFrameBootstrap
         : null;
+      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+        ? SlideNextStudioEditorPersistence
+        : null;
       if (!editorStyleApi
         || typeof editorStyleApi.ensureStudioEditorStyle !== 'function'
         || !frameBootstrapApi
@@ -5373,18 +5376,21 @@
           } else {
             saveHistoryState(false);
           }
-          applyCurrentStudioPersistenceSuccess(
-            SlideNextStudioEditorPersistence.createStudioPersistedDeckStateActionContext(
-              initialPersistedDeckState,
-              getStudioCurrentPresentationUrl(),
+          if (persistenceApi
+            && typeof persistenceApi.createStudioPersistedDeckStateActionContext === 'function') {
+            applyCurrentStudioPersistenceSuccess(
+              persistenceApi.createStudioPersistedDeckStateActionContext(
+                initialPersistedDeckState,
+                getStudioCurrentPresentationUrl(),
+                {
+                  sessionToken: getStudioEditorSessionToken()
+                }
+              ),
               {
-                sessionToken: getStudioEditorSessionToken()
+                presentationUrl: getStudioCurrentPresentationUrl()
               }
-            ),
-            {
-              presentationUrl: getStudioCurrentPresentationUrl()
-            }
-          );
+            );
+          }
           if (typeof setEditorLiveCanonicalDeck === 'function') {
             setEditorLiveCanonicalDeck(
               initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
