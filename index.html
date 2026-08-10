@@ -3246,6 +3246,12 @@
       ? (slide, options) => SlideNextStudioEditorDom.getStudioSlideEditableElements(slide, options)
       : null;
 
+    const studioEditorNormalizedSlideLayerOrderReader = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder === 'function'
+      ? (slide, options) => SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(slide, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6652,10 +6658,19 @@
     }
 
     function getNormalizedSlideLayerOrder(slide) {
-      return SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(slide, {
-        ...getEditorDomOptions(),
-        getSlideEditableElements
-      });
+      const normalizedSlideLayerOrderReader = typeof studioEditorNormalizedSlideLayerOrderReader === 'function'
+        ? studioEditorNormalizedSlideLayerOrderReader
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(...args)
+          : null;
+      return typeof normalizedSlideLayerOrderReader === 'function'
+        ? normalizedSlideLayerOrderReader(slide, {
+            ...getEditorDomOptions(),
+            getSlideEditableElements
+          })
+        : [];
     }
 
     function applySlideLayerOrder(slide, orderedElements) {

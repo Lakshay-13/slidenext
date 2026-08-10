@@ -2767,6 +2767,81 @@ test('getSlideEditableElements fails closed when the shared DOM module is unavai
   assert.deepEqual(JSON.parse(JSON.stringify(context.getSlideEditableElements({}))), []);
 });
 
+test('editor composes normalized slide layer order through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorNormalizedSlideLayerOrderReader =/);
+  assert.match(source, /typeof normalizedSlideLayerOrderReader === 'function'/);
+});
+
+test('getNormalizedSlideLayerOrder delegates the slide and composed DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const normalizedSlideLayerOrderReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorNormalizedSlideLayerOrderReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getNormalizedSlideLayerOrderSource = extractFunctionSource(
+    fileContent,
+    'function getNormalizedSlideLayerOrder(slide) {',
+    '\n\n    function applySlideLayerOrder'
+  );
+  const slide = { id: 'slide-1' };
+  const editorOptions = { editorSlideIdAttr: 'data-slide-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getNormalizedStudioSlideLayerOrder(slideValue, optionsValue) {
+        calls.push([slideValue, optionsValue]);
+        return ['element-1'];
+      }
+    },
+    getEditorDomOptions() {
+      return editorOptions;
+    },
+    getSlideEditableElements() {
+      return ['element-1'];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${normalizedSlideLayerOrderReaderSource}\n${getNormalizedSlideLayerOrderSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getNormalizedSlideLayerOrder(slide))), ['element-1']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], slide);
+  assert.equal(calls[0][1].editorSlideIdAttr, editorOptions.editorSlideIdAttr);
+  assert.equal(typeof calls[0][1].getSlideEditableElements, 'function');
+});
+
+test('getNormalizedSlideLayerOrder fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const normalizedSlideLayerOrderReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorNormalizedSlideLayerOrderReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getNormalizedSlideLayerOrderSource = extractFunctionSource(
+    fileContent,
+    'function getNormalizedSlideLayerOrder(slide) {',
+    '\n\n    function applySlideLayerOrder'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    },
+    getSlideEditableElements() {
+      return [];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${normalizedSlideLayerOrderReaderSource}\n${getNormalizedSlideLayerOrderSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getNormalizedSlideLayerOrder({}))), []);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
