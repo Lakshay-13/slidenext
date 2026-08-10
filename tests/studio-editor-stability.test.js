@@ -866,6 +866,52 @@ test('renderMarqueeSelection passes the rectangle and overlay context to the sha
   assert.deepEqual(calls[0].marker, 'overlay-options');
 });
 
+test('editor composes marquee clearing through the shared overlay module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorMarqueeClearer =/);
+  assert.match(source, /clearStudioMarqueeSelectionForActiveSlide/);
+  assert.match(source, /typeof studioEditorMarqueeClearer === 'function'/);
+  assert.doesNotMatch(source, /clearMarqueeSelection\.clearer/);
+});
+
+test('clearMarqueeSelection passes overlay context to the shared overlay module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const clearMarqueeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorMarqueeClearer =',
+    '\n\n    function getSlideMetrics(slide) {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorOverlay: {
+      clearStudioMarqueeSelectionForActiveSlide(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getActiveSlide() {
+      return { id: 'active-slide' };
+    },
+    getEditorOverlayOptions() {
+      return { marker: 'overlay-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(clearMarqueeSource, context);
+
+  assert.equal(context.clearMarqueeSelection(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, iframeDoc);
+  assert.equal(typeof calls[0].getActiveSlide, 'function');
+  assert.deepEqual(calls[0].marker, 'overlay-options');
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
