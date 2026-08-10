@@ -66,6 +66,14 @@ test('editor composes live selection ID reading through the shared selection API
   assert.doesNotMatch(source, /getSelectedEditorElementIds\.reader/);
 });
 
+test('editor composes ID-list equality through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorIdListEqualityChecker =/);
+  assert.match(source, /typeof studioEditorIdListEqualityChecker === 'function'/);
+  assert.doesNotMatch(source, /areEditorIdListsEqual\.checker/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -105,6 +113,15 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
     fileContent,
     'const studioEditorCommittedSelectionIdsReader =',
     '\n\n    function areEditorIdListsEqual(a = [], b = []) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadAreEditorIdListsEqual(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorIdListEqualityChecker =',
+    '\n\n    function getActiveSlide(doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -368,6 +385,38 @@ test('getCommittedSelectedEditorElementIds fails closed when the shared selectio
   loadGetCommittedSelectedEditorElementIds(fileContent, context);
 
   assert.equal(context.getCommittedSelectedEditorElementIds({ id: 'doc' }).length, 0);
+});
+
+test('areEditorIdListsEqual delegates to shared selection', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const firstIds = ['node-1'];
+  const secondIds = ['node-1'];
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorSelection: {
+      areStudioIdListsEqual(...args) {
+        delegatedArgs = args;
+        return true;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadAreEditorIdListsEqual(fileContent, context);
+
+  assert.equal(context.areEditorIdListsEqual(firstIds, secondIds), true);
+  assert.equal(delegatedArgs[0], firstIds);
+  assert.equal(delegatedArgs[1], secondIds);
+});
+
+test('areEditorIdListsEqual fails closed when the shared selection API is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = { SlideNextStudioEditorSelection: null };
+
+  vm.createContext(context);
+  loadAreEditorIdListsEqual(fileContent, context);
+
+  assert.equal(context.areEditorIdListsEqual(['node-1'], ['node-1']), false);
 });
 
 test('applyEditorSelectionState keeps only connected selections on the active slide', () => {

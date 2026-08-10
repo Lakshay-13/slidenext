@@ -6517,8 +6517,16 @@
       );
     }
 
+    const studioEditorIdListEqualityChecker = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.areStudioIdListsEqual === 'function'
+      ? (a, b) => SlideNextStudioEditorSelection.areStudioIdListsEqual(a, b)
+      : null;
+
     function areEditorIdListsEqual(a = [], b = []) {
-      return SlideNextStudioEditorSelection.areStudioIdListsEqual(a, b);
+      return typeof studioEditorIdListEqualityChecker === 'function'
+        ? studioEditorIdListEqualityChecker(a, b)
+        : false;
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
