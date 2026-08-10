@@ -7011,8 +7011,16 @@
       });
     }
 
+    const studioEditorElementHiddenReader = typeof SlideNextStudioElementState !== 'undefined'
+      && SlideNextStudioElementState
+      && typeof SlideNextStudioElementState.isStudioElementHidden === 'function'
+      ? (element) => SlideNextStudioElementState.isStudioElementHidden(element)
+      : null;
+
     function isElementHidden(el) {
-      return SlideNextStudioElementState.isStudioElementHidden(el);
+      return typeof studioEditorElementHiddenReader === 'function'
+        ? studioEditorElementHiddenReader(el)
+        : false;
     }
 
     function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {

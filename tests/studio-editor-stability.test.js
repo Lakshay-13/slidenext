@@ -1260,6 +1260,55 @@ test('isElementLocked fails closed when the shared element state module is unava
   assert.equal(context.isElementLocked({ id: 'element-1' }), false);
 });
 
+test('editor composes element hidden reads through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementHiddenReader =/);
+  assert.match(source, /isStudioElementHidden/);
+  assert.match(source, /typeof studioEditorElementHiddenReader === 'function'/);
+  assert.doesNotMatch(source, /isElementHidden\.reader/);
+});
+
+test('isElementHidden delegates the element to the shared element state module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hiddenReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementHiddenReader =',
+    '\n\n    function getEditorCanonicalVisibilityReader('
+  );
+  const element = { id: 'element-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioElementState: {
+      isStudioElementHidden(value) {
+        calls.push(value);
+        return true;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(hiddenReaderSource, context);
+
+  assert.equal(context.isElementHidden(element), true);
+  assert.deepEqual(calls, [element]);
+});
+
+test('isElementHidden fails closed when the shared element state module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hiddenReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementHiddenReader =',
+    '\n\n    function getEditorCanonicalVisibilityReader('
+  );
+  const context = { SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(hiddenReaderSource, context);
+
+  assert.equal(context.isElementHidden({ id: 'element-1' }), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
