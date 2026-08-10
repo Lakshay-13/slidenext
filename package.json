@@ -9,6 +9,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "export:pdf": "node scripts/export-canonical-pdf.js",
     "export:pptx": "node scripts/export-canonical-pptx.js"
   },
   "dependencies": {

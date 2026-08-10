@@ -1,0 +1,72 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+
+const pdfScript = require('../scripts/export-canonical-pdf.js');
+
+function buildSmokeDeck() {
+  return {
+    metadata: { title: 'PDF export smoke' },
+    layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'title',
+        type: 'text',
+        tagName: 'h1',
+        text: 'PDF export smoke',
+        layout: { x: 100, y: 100, width: 800, height: 120 }
+      }]
+    }]
+  };
+}
+
+test('canonical PDF HTML uses the canonical renderer and print contract', () => {
+  const html = pdfScript.buildCanonicalPdfHtml(buildSmokeDeck(), 'http://127.0.0.1:1234/assets/');
+
+  assert.match(html, /data-slidenext-pdf-print="true"/);
+  assert.match(html, /<section[^>]*class="[^"]*slide/);
+  assert.match(html, /<h1[^>]*>PDF export smoke<\/h1>/);
+  assert.match(html, /<base href="http:\/\/127\.0\.0\.1:1234\/assets\/">/);
+  assert.match(html, /@page[\s\S]*size: 1920px 1080px/);
+});
+
+test('canonical PDF input validation rejects malformed and empty decks', () => {
+  assert.throws(
+    () => pdfScript.resolveCanonicalDeck({ slides: [] }),
+    /Cannot export an empty deck/
+  );
+  assert.throws(
+    () => pdfScript.resolveCanonicalDeck({ metadata: {} }),
+    /valid canonical deck/
+  );
+});
+
+test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
+  const inputPath = path.join(temporaryDir, 'deck.json');
+  const outputPath = path.join(temporaryDir, 'deck.pdf');
+  const deck = buildSmokeDeck();
+  deck.slides.push({
+    id: 'slide-2',
+    nodes: [{
+      id: 'second-title',
+      type: 'text',
+      tagName: 'h1',
+      text: 'Second slide',
+      layout: { x: 100, y: 100, width: 800, height: 120 }
+    }]
+  });
+
+  try {
+    await fs.writeFile(inputPath, `${JSON.stringify(deck)}\n`, 'utf8');
+    assert.equal(await pdfScript.main([inputPath, outputPath]), 0);
+    const pdfBuffer = await fs.readFile(outputPath);
+    assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
+    assert.equal((pdfBuffer.toString('latin1').match(/\/Type \/Page\b/g) || []).length >= 2, true);
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
