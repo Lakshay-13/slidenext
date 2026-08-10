@@ -123,6 +123,26 @@
     };
   }
 
+  function createStudioEditorSourceCssApplier(options = {}) {
+    const buildSourceHtml = typeof options.buildSourceHtml === 'function'
+      ? options.buildSourceHtml
+      : () => '';
+    const applySourceHtml = typeof options.applySourceHtml === 'function'
+      ? options.applySourceHtml
+      : () => ({ success: false, error: 'Source editor is unavailable' });
+    const resolveReplaceSourceCss = typeof options.resolveReplaceSourceCss === 'function'
+      ? options.resolveReplaceSourceCss
+      : () => null;
+
+    return function applySourceCss(sourceCss = '') {
+      const replaceSourceCss = resolveReplaceSourceCss();
+      if (typeof replaceSourceCss !== 'function') {
+        return { success: false, error: 'Source CSS editor is unavailable' };
+      }
+      return applySourceHtml(replaceSourceCss(buildSourceHtml(), sourceCss));
+    };
+  }
+
   function createStudioEditorSourceController(options = {}) {
     const previewApi = options.previewApi
       || (root && root.SlideNextStudioPreview)
@@ -318,6 +338,7 @@
 
   return {
     createStudioEditorSourceHtmlBuilder,
+    createStudioEditorSourceCssApplier,
     createStudioEditorSourceCssResolver,
     createStudioEditorSourceHistoryBaselineCapture,
     createStudioEditorSourceController

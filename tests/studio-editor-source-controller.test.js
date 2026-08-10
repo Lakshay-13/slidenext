@@ -111,6 +111,47 @@ test('source CSS resolver falls back to marked source CSS', () => {
   assert.deepEqual(calls, [['build'], ['extract', '<html>source</html>']]);
 });
 
+test('source CSS applier rebuilds source HTML before delegating', () => {
+  const calls = [];
+  const applySourceCss = sourceController.createStudioEditorSourceCssApplier({
+    buildSourceHtml: () => {
+      calls.push(['build']);
+      return '<html>source</html>';
+    },
+    resolveReplaceSourceCss: () => (sourceHtml, sourceCss) => {
+      calls.push(['replace', sourceHtml, sourceCss]);
+      return '<html>updated</html>';
+    },
+    applySourceHtml: (sourceHtml) => {
+      calls.push(['apply', sourceHtml]);
+      return { success: true };
+    }
+  });
+
+  assert.deepEqual(applySourceCss('.slide { color: blue; }'), { success: true });
+  assert.deepEqual(calls, [
+    ['build'],
+    ['replace', '<html>source</html>', '.slide { color: blue; }'],
+    ['apply', '<html>updated</html>']
+  ]);
+});
+
+test('source CSS applier fails closed when source replacement is unavailable', () => {
+  let buildCalls = 0;
+  const applySourceCss = sourceController.createStudioEditorSourceCssApplier({
+    buildSourceHtml: () => {
+      buildCalls += 1;
+      return '<html>source</html>';
+    }
+  });
+
+  assert.deepEqual(applySourceCss('.slide { color: blue; }'), {
+    success: false,
+    error: 'Source CSS editor is unavailable'
+  });
+  assert.equal(buildCalls, 0);
+});
+
 function createController(overrides = {}) {
   const calls = [];
   const previewApi = {

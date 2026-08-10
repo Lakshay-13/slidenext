@@ -2215,7 +2215,9 @@
           resolveSourceCss: () => studioEditorSourceCssResolver
             ? studioEditorSourceCssResolver()
             : '',
-          applySourceCss: (sourceCss) => applyEditorSourceCss(sourceCss),
+          applySourceCss: (sourceCss) => studioEditorSourceCssApplier
+            ? studioEditorSourceCssApplier(sourceCss)
+            : { success: false, error: 'Source CSS editor is unavailable' },
           sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
@@ -2292,6 +2294,24 @@
               ? sourceModeApi.extractStudioSourceCss(sourceHtml)
               : '';
           }
+        })
+      : null;
+    const studioEditorSourceCssApplier = typeof SlideNextStudioEditorSourceController !== 'undefined'
+      && SlideNextStudioEditorSourceController
+      && typeof SlideNextStudioEditorSourceController.createStudioEditorSourceCssApplier === 'function'
+      ? SlideNextStudioEditorSourceController.createStudioEditorSourceCssApplier({
+          buildSourceHtml: () => buildEditorSourceHtml(),
+          resolveReplaceSourceCss: () => {
+            const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+              ? SlideNextStudioEditorSourceMode
+              : null;
+            return sourceModeApi && typeof sourceModeApi.replaceStudioSourceCss === 'function'
+              ? sourceModeApi.replaceStudioSourceCss
+              : null;
+          },
+          applySourceHtml: (sourceHtml) => studioEditorSourceController
+            ? studioEditorSourceController.applySourceHtml(sourceHtml)
+            : { success: false, error: 'Source editor is unavailable' }
         })
       : null;
     const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
@@ -4487,19 +4507,6 @@
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
       return buildEditorSourceDeckHtml(doc);
-    }
-
-    function applyEditorSourceCss(sourceCss = '') {
-      const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
-        ? SlideNextStudioEditorSourceMode
-        : null;
-      if (!sourceModeApi || typeof sourceModeApi.replaceStudioSourceCss !== 'function') {
-        return { success: false, error: 'Source CSS editor is unavailable' };
-      }
-      return applyEditorSourceHtml(sourceModeApi.replaceStudioSourceCss(
-        buildEditorSourceHtml(),
-        sourceCss
-      ));
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
