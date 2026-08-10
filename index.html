@@ -3252,6 +3252,12 @@
       ? (slide, options) => SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(slide, options)
       : null;
 
+    const studioEditorSlideLayerOrderWriter = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.applyStudioSlideLayerOrder === 'function'
+      ? (slide, orderedElements) => SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6674,7 +6680,16 @@
     }
 
     function applySlideLayerOrder(slide, orderedElements) {
-      return SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements);
+      const slideLayerOrderWriter = typeof studioEditorSlideLayerOrderWriter === 'function'
+        ? studioEditorSlideLayerOrderWriter
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.applyStudioSlideLayerOrder === 'function'
+          ? (...args) => SlideNextStudioEditorDom.applyStudioSlideLayerOrder(...args)
+          : null;
+      return typeof slideLayerOrderWriter === 'function'
+        ? slideLayerOrderWriter(slide, orderedElements)
+        : [];
     }
 
     function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {

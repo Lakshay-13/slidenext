@@ -2842,6 +2842,68 @@ test('getNormalizedSlideLayerOrder fails closed when the shared DOM module is un
   assert.deepEqual(JSON.parse(JSON.stringify(context.getNormalizedSlideLayerOrder({}))), []);
 });
 
+test('editor composes slide layer-order writes through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideLayerOrderWriter =/);
+  assert.match(source, /typeof slideLayerOrderWriter === 'function'/);
+});
+
+test('applySlideLayerOrder delegates the slide and ordered elements to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideLayerOrderWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideLayerOrderWriter =',
+    'const studioEditorTransformRuntime ='
+  );
+  const applySlideLayerOrderSource = extractFunctionSource(
+    fileContent,
+    'function applySlideLayerOrder(slide, orderedElements) {',
+    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+  );
+  const slide = { id: 'slide-1' };
+  const orderedElements = [{ id: 'element-1' }];
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      applyStudioSlideLayerOrder(slideValue, orderedElementsValue) {
+        calls.push([slideValue, orderedElementsValue]);
+        return orderedElementsValue;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideLayerOrderWriterSource}\n${applySlideLayerOrderSource}`, context);
+
+  assert.equal(context.applySlideLayerOrder(slide, orderedElements), orderedElements);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], slide);
+  assert.equal(calls[0][1], orderedElements);
+});
+
+test('applySlideLayerOrder fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideLayerOrderWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideLayerOrderWriter =',
+    'const studioEditorTransformRuntime ='
+  );
+  const applySlideLayerOrderSource = extractFunctionSource(
+    fileContent,
+    'function applySlideLayerOrder(slide, orderedElements) {',
+    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideLayerOrderWriterSource}\n${applySlideLayerOrderSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.applySlideLayerOrder({}, []))), []);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
