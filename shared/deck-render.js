@@ -392,6 +392,16 @@
     return normalizeString(asset && asset.src).trim();
   }
 
+  function resolveCanonicalNodeBackgroundAssetSource(node = {}, assets = []) {
+    const assetId = normalizeString(node.backgroundAssetId).trim();
+    if (!assetId || !Array.isArray(assets)) {
+      return '';
+    }
+
+    const asset = assets.find((candidate) => candidate && candidate.id === assetId);
+    return normalizeString(asset && asset.src).trim();
+  }
+
   function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '', assets = []) {
     const attributes = asPlainObject(node.attributes);
     if (node.type === 'group') {
@@ -406,7 +416,15 @@
       delete attributes.class;
     }
     const explicitStyleText = normalizeString(attributes.style || node.style).trim();
-    const mergedStyleText = mergeStyleTextWithFallback(explicitStyleText, fallbackStyleText);
+    let mergedStyleText = mergeStyleTextWithFallback(explicitStyleText, fallbackStyleText);
+    const canonicalBackgroundAssetSource = resolveCanonicalNodeBackgroundAssetSource(node, assets);
+    if (canonicalBackgroundAssetSource) {
+      mergedStyleText = replaceStyleDeclaration(
+        mergedStyleText,
+        'background-image',
+        `url("${escapeCssUrlValue(canonicalBackgroundAssetSource)}")`
+      );
+    }
     if (mergedStyleText) {
       attributes.style = mergedStyleText;
     } else {
@@ -636,6 +654,34 @@
       return normalizedDeclaration;
     }
     return `${normalizedStyleText}${normalizedStyleText.endsWith(';') ? '' : ';'} ${normalizedDeclaration}`;
+  }
+
+  function replaceStyleDeclaration(styleText, propertyName, value) {
+    const normalizedStyleText = normalizeString(styleText).trim();
+    const normalizedPropertyName = normalizeString(propertyName).trim();
+    const normalizedValue = normalizeString(value).trim();
+    if (!normalizedPropertyName || !normalizedValue) {
+      return normalizedStyleText;
+    }
+
+    const escapedPropertyName = normalizedPropertyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const declarationPattern = new RegExp(
+      `(^|;)\\s*${escapedPropertyName}\\s*:\\s*[^;]*(?:;|$)`,
+      'gi'
+    );
+    const declaration = `${normalizedPropertyName}: ${normalizedValue};`;
+    let didReplace = false;
+    const replacedStyleText = normalizedStyleText.replace(
+      declarationPattern,
+      (_match, prefix) => {
+        didReplace = true;
+        return `${prefix} ${declaration}`;
+      }
+    ).trim();
+
+    return didReplace
+      ? replacedStyleText
+      : appendStyleDeclaration(replacedStyleText, declaration);
   }
 
   function mergeStyleTextWithFallback(styleText = '', fallbackStyleText = '') {
