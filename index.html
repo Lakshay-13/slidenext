@@ -6696,11 +6696,7 @@
     function resolveEditableTarget(node) {
       const editableTargetResolver = typeof studioEditorEditableTargetResolver === 'function'
         ? studioEditorEditableTargetResolver
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
-          ? (...args) => SlideNextStudioEditorDom.resolveStudioEditableTarget(...args)
-          : null;
+        : null;
       return typeof editableTargetResolver === 'function'
         ? editableTargetResolver(node, getEditorDomOptions())
         : null;

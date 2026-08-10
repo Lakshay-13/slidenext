@@ -3015,9 +3015,15 @@ test('applySlideLayerOrder fails closed when the shared DOM module is unavailabl
 
 test('editor composes editable-target resolution through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditableTargetSource = extractFunctionSource(
+    source,
+    'function resolveEditableTarget(node) {',
+    '\n\n    function resolveInlineTextEditTarget'
+  );
 
   assert.match(source, /const studioEditorEditableTargetResolver =/);
   assert.match(source, /typeof editableTargetResolver === 'function'/);
+  assert.doesNotMatch(resolveEditableTargetSource, /SlideNextStudioEditorDom\.resolveStudioEditableTarget/);
 });
 
 test('resolveEditableTarget delegates the node and DOM options to the shared DOM module', () => {
