@@ -6685,17 +6685,11 @@
         : null;
     }
 
-    function syncSelectionOverlay() {
-      const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
-        ? SlideNextStudioEditorOverlay
-        : null;
-      if (!overlayApi
-        || typeof overlayApi.createStudioSelectionOverlaySynchronizer !== 'function') {
-        return false;
-      }
-      if (typeof syncSelectionOverlay.synchronizer !== 'function') {
-        syncSelectionOverlay.synchronizer = overlayApi.createStudioSelectionOverlaySynchronizer({
-          overlayApi,
+    const studioEditorSelectionOverlaySynchronizer = typeof SlideNextStudioEditorOverlay !== 'undefined'
+      && SlideNextStudioEditorOverlay
+      && typeof SlideNextStudioEditorOverlay.createStudioSelectionOverlaySynchronizer === 'function'
+      ? SlideNextStudioEditorOverlay.createStudioSelectionOverlaySynchronizer({
+          overlayApi: SlideNextStudioEditorOverlay,
           overlayStateApi: typeof SlideNextStudioEditorOverlayState !== 'undefined'
             ? SlideNextStudioEditorOverlayState
             : null,
@@ -6708,10 +6702,12 @@
           getTransformSelectionState: () => getTransformSelectionState(),
           hideGuides: () => hideGuides(),
           hideDragHud: () => hideDragHud()
-        });
-      }
-      return typeof syncSelectionOverlay.synchronizer === 'function'
-        ? syncSelectionOverlay.synchronizer()
+        })
+      : null;
+
+    function syncSelectionOverlay() {
+      return typeof studioEditorSelectionOverlaySynchronizer === 'function'
+        ? studioEditorSelectionOverlaySynchronizer()
         : false;
     }
 

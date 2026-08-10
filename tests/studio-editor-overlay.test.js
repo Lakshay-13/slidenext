@@ -1,7 +1,20 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const overlayView = require('../shared/studio-editor-overlay.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor composes selection overlay synchronization through the shared controller', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionOverlaySynchronizer =/);
+  assert.match(source, /createStudioSelectionOverlaySynchronizer\(/);
+  assert.match(source, /return typeof studioEditorSelectionOverlaySynchronizer === 'function'/);
+  assert.doesNotMatch(source, /syncSelectionOverlay\.synchronizer/);
+});
 
 function createOverlay() {
   const classes = new Set();
