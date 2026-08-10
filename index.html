@@ -6579,7 +6579,15 @@
     }
 
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {
-      return SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex(
+      const resolveStudioActiveSlideIndex = (
+        typeof SlideNextStudioDeckSnapshot !== 'undefined'
+        && SlideNextStudioDeckSnapshot
+        && typeof SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex === 'function'
+      )
+        ? SlideNextStudioDeckSnapshot.resolveStudioActiveSlideIndex
+        : null;
+      if (!resolveStudioActiveSlideIndex) return getStudioCurrentSlideIndex();
+      return resolveStudioActiveSlideIndex(
         buildEditorDeckSnapshot(doc),
         getStudioCurrentSlideIndex()
       );

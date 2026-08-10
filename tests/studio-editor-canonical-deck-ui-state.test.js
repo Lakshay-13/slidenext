@@ -3209,6 +3209,32 @@ test('buildEditorDeckSnapshotFromDom fails closed when the shared DOM snapshot b
   );
 });
 
+test('getStudioActiveSlideIndex falls back to the current slide when the shared resolver is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getStudioActiveSlideIndexSource = extractFunctionSource(
+    fileContent,
+    'function getStudioActiveSlideIndex(doc = getIframeDoc()) {',
+    '\n\n    function getEditorLayerDisplayMetadata(el) {'
+  );
+  const context = {
+    SlideNextStudioDeckSnapshot: {},
+    getStudioCurrentSlideIndex() {
+      return 3;
+    },
+    buildEditorDeckSnapshot() {
+      throw new Error('deck snapshot should not be built without an active-slide resolver');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getStudioActiveSlideIndexSource, context);
+
+  assert.equal(
+    context.getStudioActiveSlideIndex({ label: 'iframe-doc' }),
+    3
+  );
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
