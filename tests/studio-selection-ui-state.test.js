@@ -30,6 +30,15 @@ test('editor composes selection class refresh through the shared selection API',
   assert.doesNotMatch(source, /refreshSelectionClasses\.refresher/);
 });
 
+test('editor composes selection state commits through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionStateCommitter =/);
+  assert.match(source, /commitStudioSelectionState/);
+  assert.match(source, /if \(typeof studioEditorSelectionStateCommitter !== 'function'\)/);
+  assert.doesNotMatch(source, /commitEditorSelectionState\.committer/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -96,7 +105,7 @@ function loadRefreshSelectionClasses(fileContent, context) {
 function loadCommitEditorSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function commitEditorSelectionState(nextSelectionState, options = {}) {',
+    'const studioEditorSelectionStateCommitter =',
     '\n\n    function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);

@@ -6504,20 +6504,26 @@
       return true;
     }
 
+    const studioEditorSelectionStateCommitter = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.commitStudioSelectionState === 'function'
+      ? (nextSelectionState, options = {}) => SlideNextStudioEditorSelection.commitStudioSelectionState(
+          nextSelectionState,
+          {
+            ...getEditorSelectionOptions(),
+            applySelectionState: applyEditorSelectionState,
+            refreshSelectionClasses,
+            syncSelectionOverlay,
+            syncInspectorForSelection,
+            updateLayersList,
+            ...options
+          }
+        )
+      : null;
+
     function commitEditorSelectionState(nextSelectionState, options = {}) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.commitStudioSelectionState !== 'function') return false;
-      return selectionApi.commitStudioSelectionState(nextSelectionState, {
-        ...getEditorSelectionOptions(),
-        applySelectionState: applyEditorSelectionState,
-        refreshSelectionClasses,
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList,
-        ...options
-      });
+      if (typeof studioEditorSelectionStateCommitter !== 'function') return false;
+      return studioEditorSelectionStateCommitter(nextSelectionState, options);
     }
 
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
