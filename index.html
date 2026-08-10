@@ -12366,7 +12366,15 @@
         })(persistenceContext, action);
       }
 
-      return SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent(
+      const runStudioPersistenceActionIfCurrent = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.runStudioPersistenceActionIfCurrent
+        : null;
+      if (!runStudioPersistenceActionIfCurrent) return false;
+      return runStudioPersistenceActionIfCurrent(
         persistenceContext,
         createCurrentStudioSessionStateReaders(),
         action

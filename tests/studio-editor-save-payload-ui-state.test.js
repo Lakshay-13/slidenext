@@ -1603,6 +1603,29 @@ test('runCurrentStudioPersistenceActionIfCurrent creates the shared current-acti
   assert.deepEqual(calls.map(([, action]) => action), ['action-one', 'action-two']);
 });
 
+test('runCurrentStudioPersistenceActionIfCurrent fails closed when the shared runner is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
+    fileContent,
+    'function runCurrentStudioPersistenceActionIfCurrent(',
+    '\n\n    function isCurrentStudioPersistenceTaskStale('
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    createCurrentStudioSessionStateReaders() {
+      throw new Error('session readers should not be built without a shared persistence runner');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+
+  assert.equal(
+    context.runCurrentStudioPersistenceActionIfCurrent({ id: 'persistence' }, 'action'),
+    false
+  );
+});
+
 test('applyCurrentStudioPersistenceFailure reuses the shared failure handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioPersistenceFailureSource = extractFunctionSource(
