@@ -13,12 +13,25 @@
       ? options.schedule
       : (callback, delayMs) => setTimeout(callback, delayMs);
 
-    function open(editor, iframe, url = '') {
+    function open(editor, iframe, url = '', source = {}) {
       if (!editor || !iframe) return false;
 
       editor.classList.remove('hidden');
       void editor.offsetWidth;
-      iframe.src = url;
+      const srcdoc = source && typeof source.srcdoc === 'string'
+        ? source.srcdoc
+        : '';
+      if (srcdoc) {
+        iframe.srcdoc = srcdoc;
+        if (typeof iframe.removeAttribute === 'function') {
+          iframe.removeAttribute('src');
+        } else {
+          iframe.src = '';
+        }
+      } else {
+        iframe.srcdoc = '';
+        iframe.src = url;
+      }
       editor.classList.add('active');
       editor.style.opacity = '1';
       editor.style.pointerEvents = 'auto';
@@ -32,6 +45,7 @@
       if (!editor || !iframe) return false;
 
       iframe.onload = null;
+      iframe.srcdoc = '';
       iframe.src = '';
       editor.classList.remove('active');
       editor.style.opacity = '0';

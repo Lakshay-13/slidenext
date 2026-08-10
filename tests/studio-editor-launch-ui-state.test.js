@@ -124,7 +124,7 @@ function loadCreateCurrentStudioFrameLoadHandler(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioFrameLoadHandler(options = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -153,11 +153,11 @@ function createClassList(initialValues = []) {
   };
 }
 
-test('launchStudioEditor shows a loading autosave status until the iframe deck finishes bootstrapping', () => {
+test('launchStudioEditor shows a loading autosave status until the iframe deck finishes bootstrapping', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchStudioEditorSource = extractFunctionSource(
     fileContent,
-    'function launchStudioEditor(url, title, category) {',
+    'async function launchStudioEditor(url, title, category) {',
     '\n\n    function closeStudioEditor() {'
   );
   const setStudioAutoSaveStatusSource = extractFunctionSource(
@@ -276,7 +276,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
-  context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  await context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
 
   assert.match(elements.autoSaveStatus.innerHTML, /Loading deck/);
   assert.equal(elements.studioCategoryLabel.textContent, 'General');
@@ -298,16 +298,14 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   ]]);
 
   context.SlideNextStudioEditorPersistence = null;
-  assert.doesNotThrow(() => {
-    context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
-  });
+  await context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
 });
 
-test('launchStudioEditor tolerates missing header labels while bootstrapping the editor shell', () => {
+test('launchStudioEditor tolerates missing header labels while bootstrapping the editor shell', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchStudioEditorSource = extractFunctionSource(
     fileContent,
-    'function launchStudioEditor(url, title, category) {',
+    'async function launchStudioEditor(url, title, category) {',
     '\n\n    function closeStudioEditor() {'
   );
   const setStudioAutoSaveStatusSource = extractFunctionSource(
@@ -448,9 +446,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
-  assert.doesNotThrow(() => {
-    context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
-  });
+  await context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
   assert.match(elements.autoSaveStatus.innerHTML, /Loading deck/);
   assert.equal(elements.studioFrame.src, '/presentations/onboarding-presentation/index.html');
   assert.equal(elements.studioEditor.classList.contains('active'), true);
@@ -702,11 +698,11 @@ test('createCurrentStudioPresentationMetadataLoadOptions merges live session rea
   assert.equal(options.getCurrentSessionToken(), 13);
 });
 
-test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', () => {
+test('launchStudioEditor after-load zoom guard passes live session getters to the editor session helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchStudioEditorSource = extractFunctionSource(
     fileContent,
-    'function launchStudioEditor(url, title, category) {',
+    'async function launchStudioEditor(url, title, category) {',
     '\n\n    function closeStudioEditor() {'
   );
   const setStudioAutoSaveStatusSource = extractFunctionSource(
@@ -846,7 +842,7 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
-  context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  await context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
   assert.equal(capturedFrameLoadHandlerArgs.options.presentationUrl, '/presentations/onboarding-presentation/index.html');
   assert.equal(capturedFrameLoadHandlerArgs.options.sessionToken, 1);
   assert.equal(readerCallCount, 1);
@@ -879,7 +875,7 @@ test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard ada
   const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
     fileContent,
     'function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = \'\', options = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
   let adapterCreateCalls = 0;
   const calls = [];
@@ -944,7 +940,7 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
     fileContent,
     'function updateCurrentPresentationSessionState(nextState = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
 
   const metadata = { id: 'deck-1' };
@@ -995,7 +991,7 @@ test('updateCurrentPresentationSessionState delegates normalization through the 
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
     fileContent,
     'function updateCurrentPresentationSessionState(nextState = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
   let adapterOptions = null;
   const metadata = { id: 'deck-1' };
@@ -1061,7 +1057,7 @@ test('updateCurrentPresentationSessionState creates the shared session update ad
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
     fileContent,
     'function updateCurrentPresentationSessionState(nextState = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
   vm.runInContext(updateCurrentPresentationSessionStateSource, context);
 
@@ -1089,7 +1085,7 @@ test('updateCurrentPresentationSessionState safely no-ops without a session runt
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
     fileContent,
     'function updateCurrentPresentationSessionState(nextState = {}) {',
-    '\n\n    function launchStudioEditor(url, title, category) {'
+    '\n\n    async function launchStudioEditor(url, title, category) {'
   );
   vm.runInContext(updateCurrentPresentationSessionStateSource, context);
 

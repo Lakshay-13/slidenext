@@ -1483,6 +1483,7 @@
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-shell-controller.js"></script>
+  <script src="/shared/studio-editor-launch-source.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
@@ -5070,7 +5071,58 @@
         : false;
     }
 
-    function launchStudioEditor(url, title, category) {
+    function resolveCurrentStudioEditorLaunchSource(metadata, presentationUrl = '') {
+      const launchSourceApi = typeof SlideNextStudioEditorLaunchSource !== 'undefined'
+        ? SlideNextStudioEditorLaunchSource
+        : null;
+      if (!launchSourceApi
+        || typeof launchSourceApi.createStudioEditorLaunchSourceResolver !== 'function') {
+        return {
+          kind: 'url',
+          url: presentationUrl,
+          srcdoc: '',
+          canonicalDeck: null
+        };
+      }
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      const deckHtmlApi = typeof SlideNextDeckHtml !== 'undefined'
+        ? SlideNextDeckHtml
+        : null;
+      const resolver = launchSourceApi.createStudioEditorLaunchSourceResolver({
+        isCanonicalDeck: canonicalDeckApi
+          && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+          ? canonicalDeckApi.isCanonicalDeck
+          : null,
+        buildCanonicalHtml: deckHtmlApi
+          && typeof deckHtmlApi.buildDeckPreviewHtml === 'function'
+          ? (canonicalDeck, sourcePath) => deckHtmlApi.buildDeckPreviewHtml(canonicalDeck, sourcePath)
+          : null
+      });
+      return resolver.resolve(presentationUrl, metadata);
+    }
+
+    function setCurrentStudioEditorFrameSource(iframe, presentationUrl, source = {}) {
+      if (!iframe) return false;
+      const srcdoc = source && typeof source.srcdoc === 'string'
+        ? source.srcdoc
+        : '';
+      if (srcdoc) {
+        iframe.srcdoc = srcdoc;
+        if (typeof iframe.removeAttribute === 'function') {
+          iframe.removeAttribute('src');
+        } else {
+          iframe.src = '';
+        }
+      } else {
+        iframe.srcdoc = '';
+        iframe.src = presentationUrl;
+      }
+      return true;
+    }
+
+    async function launchStudioEditor(url, title, category) {
       const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
         ? SlideNextStudioEditorPersistence
         : null;
@@ -5200,24 +5252,55 @@
         }
       });
       
+      // Fetch backups independently so a slow metadata sidecar does not delay version UI.
+      loadVersions(url, editorSessionToken);
+
+      let loadedPresentationMetadata = null;
+      try {
+        loadedPresentationMetadata = typeof loadCurrentPresentationMetadata === 'function'
+          ? await loadCurrentPresentationMetadata(url, title, editorSessionToken)
+          : null;
+      } catch (error) {
+        if (typeof console !== 'undefined' && console && typeof console.warn === 'function') {
+          console.warn('Failed to load presentation metadata before editor render:', error);
+        }
+      }
+      const currentLaunchUrl = typeof getStudioCurrentPresentationUrl === 'function'
+        ? getStudioCurrentPresentationUrl()
+        : url;
+      const currentLaunchToken = typeof getStudioEditorSessionToken === 'function'
+        ? getStudioEditorSessionToken()
+        : editorSessionToken;
+      if (currentLaunchUrl !== url || currentLaunchToken !== editorSessionToken) {
+        return false;
+      }
+      const launchSource = typeof resolveCurrentStudioEditorLaunchSource === 'function'
+        ? resolveCurrentStudioEditorLaunchSource(loadedPresentationMetadata, url)
+        : {
+            kind: 'url',
+            url,
+            srcdoc: '',
+            canonicalDeck: null
+          };
       const didOpenEditorShell = typeof studioEditorShellController !== 'undefined'
         && studioEditorShellController
         && typeof studioEditorShellController.open === 'function'
-        ? studioEditorShellController.open(editor, iframe, url)
+        ? studioEditorShellController.open(editor, iframe, url, launchSource)
         : false;
       if (!didOpenEditorShell) {
         editor.classList.remove('hidden');
         void editor.offsetWidth;
-        iframe.src = url;
+        if (typeof setCurrentStudioEditorFrameSource === 'function') {
+          setCurrentStudioEditorFrameSource(iframe, url, launchSource);
+        } else {
+          iframe.src = url;
+        }
         editor.classList.add('active');
         editor.style.opacity = '1';
         editor.style.pointerEvents = 'auto';
         document.body.style.overflow = 'hidden';
       }
-      void loadCurrentPresentationMetadata(url, title, editorSessionToken);
-      
-      // Fetch backups list
-      loadVersions(url, editorSessionToken);
+      return true;
     }
 
     function closeStudioEditor() {

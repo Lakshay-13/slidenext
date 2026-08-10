@@ -26,7 +26,8 @@ function createShellElements() {
     },
     iframe: {
       onload: () => {},
-      src: 'old.html'
+      src: 'old.html',
+      srcdoc: 'old source'
     },
     documentRef: {
       body: {
@@ -43,6 +44,7 @@ test('editor shell controller opens the iframe and activates the editor shell', 
 
   assert.equal(controller.open(editor, iframe, 'presentations/demo/index.html'), true);
   assert.equal(iframe.src, 'presentations/demo/index.html');
+  assert.equal(iframe.srcdoc, '');
   assert.equal(editor.classList.contains('hidden'), false);
   assert.equal(editor.classList.contains('active'), true);
   assert.equal(editor.style.opacity, '1');
@@ -62,6 +64,7 @@ test('editor shell controller closes the iframe and hides the shell after its tr
   assert.equal(controller.close(editor, iframe), true);
   assert.equal(iframe.onload, null);
   assert.equal(iframe.src, '');
+  assert.equal(iframe.srcdoc, '');
   assert.equal(editor.classList.contains('active'), false);
   assert.equal(editor.style.opacity, '0');
   assert.equal(editor.style.pointerEvents, 'none');
@@ -70,4 +73,16 @@ test('editor shell controller closes the iframe and hides the shell after its tr
 
   scheduled[0].callback();
   assert.equal(editor.classList.contains('hidden'), true);
+});
+
+test('editor shell controller opens canonical source through srcdoc', () => {
+  const { editor, iframe, documentRef } = createShellElements();
+  const controller = shell.createStudioEditorShellController({ documentRef });
+
+  assert.equal(controller.open(editor, iframe, 'presentations/demo/index.html', {
+    kind: 'srcdoc',
+    srcdoc: '<html>canonical</html>'
+  }), true);
+  assert.equal(iframe.src, '');
+  assert.equal(iframe.srcdoc, '<html>canonical</html>');
 });
