@@ -8428,6 +8428,18 @@
       });
     }
 
+    const studioEditorPositionedLayoutItemBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'
+      && SlideNextStudioEditorTransform
+      && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem === 'function'
+      ? (element, options) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(element, options)
+      : null;
+
+    function buildEditorPositionedLayoutItem(element, options) {
+      return typeof studioEditorPositionedLayoutItemBuilder === 'function'
+        ? studioEditorPositionedLayoutItemBuilder(element, options)
+        : null;
+    }
+
     function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       if (typeof studioEditorClipboardPayloadController !== 'undefined'
         && studioEditorClipboardPayloadController
@@ -8462,7 +8474,7 @@
         hoverableClassName: 'editor-hoverable',
         getComputedStyle,
         getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
-        buildPositionedLayoutItem: SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem,
+        buildPositionedLayoutItem: buildEditorPositionedLayoutItem,
         positionedLayoutOptions: {
           getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
           getRectOnSlide,

@@ -1620,6 +1620,60 @@ test('sanitizeDuplicatedSubtree fails closed when the shared element state modul
   assert.equal(context.sanitizeDuplicatedSubtree({ id: 'root-1' }), undefined);
 });
 
+test('editor composes clipboard positioned-item building through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorPositionedLayoutItemBuilder =/);
+  assert.match(source, /buildStudioPositionedLayoutItem/);
+  assert.match(source, /buildPositionedLayoutItem: buildEditorPositionedLayoutItem/);
+  assert.match(source, /typeof studioEditorPositionedLayoutItemBuilder === 'function'/);
+  assert.doesNotMatch(source, /buildEditorPositionedLayoutItem\.builder/);
+});
+
+test('buildEditorPositionedLayoutItem delegates the element and options to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const positionedItemSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPositionedLayoutItemBuilder =',
+    '\n\n    function buildClipboardPayload('
+  );
+  const element = { id: 'element-1' };
+  const options = { slideMetrics: { scaleX: 2 } };
+  const calls = [];
+  const layoutItem = { element, absLeft: 10, absTop: 20 };
+  const context = {
+    SlideNextStudioEditorTransform: {
+      buildStudioPositionedLayoutItem(elementValue, optionsValue) {
+        calls.push([elementValue, optionsValue]);
+        return layoutItem;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(positionedItemSource, context);
+
+  assert.equal(context.buildEditorPositionedLayoutItem(element, options), layoutItem);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], element);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), { slideMetrics: { scaleX: 2 } });
+});
+
+test('buildEditorPositionedLayoutItem fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const positionedItemSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPositionedLayoutItemBuilder =',
+    '\n\n    function buildClipboardPayload('
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(positionedItemSource, context);
+
+  assert.equal(context.buildEditorPositionedLayoutItem({ id: 'element-1' }, {}), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
