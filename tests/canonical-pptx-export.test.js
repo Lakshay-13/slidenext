@@ -961,6 +961,26 @@ test('preflightCanonicalPptxExport keeps warnings for unpositioned text beside p
   assert.ok(report.diagnostics.warnings.includes('Node inline-1 has no exportable bounds'));
 });
 
+test('preflightCanonicalPptxExport ignores structural inline break nodes without bounds', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'heading-1',
+        type: 'text',
+        tagName: 'h1',
+        text: 'Heading',
+        layout: { x: 10, y: 20, width: 300, height: 40 },
+        children: [{
+          id: 'break-1',
+          tagName: 'br'
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
 test('createCanonicalPptxExport uses rendered bounds for flow nodes and nested children', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

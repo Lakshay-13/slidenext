@@ -336,6 +336,11 @@
       || ['blockquote', 'code', 'li', 'p', 'pre', 'span'].includes(tagName);
   }
 
+  function isStructuralInlineBreakNode(node) {
+    const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    return tagName === 'br' || tagName === 'wbr';
+  }
+
   function getCanonicalTableRows(node, themeTokens = {}) {
     return (Array.isArray(node.children) ? node.children : [])
       .filter(row => row && row.tagName === 'tr')
@@ -1256,7 +1261,10 @@
       const isUnpositionedFlowTextDescendant = flowTextAncestor
         && isTextContainerNode(node)
         && !!nestedText;
-      if (!hasBounds && !hasExportableChildren && !isUnpositionedFlowTextDescendant) {
+      if (!hasBounds
+        && !hasExportableChildren
+        && !isUnpositionedFlowTextDescendant
+        && !isStructuralInlineBreakNode(node)) {
         diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
       } else if (hasBounds && (
         bounds.x < 0
