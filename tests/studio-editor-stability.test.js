@@ -2229,6 +2229,12 @@ test('editor composes slide collection reads through the shared DOM module', () 
 
   assert.match(source, /const studioEditorSlidesReader =/);
   assert.match(source, /typeof slidesReader === 'function'/);
+  const getSlidesSource = extractFunctionSource(
+    source,
+    'function getSlides(doc = getIframeDoc()) {',
+    '\n\n    function getSlideById'
+  );
+  assert.doesNotMatch(getSlidesSource, /SlideNextStudioEditorDom\.getStudioSlides/);
 });
 
 test('getSlides delegates the document and DOM options to the shared DOM module', () => {

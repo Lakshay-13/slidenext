@@ -5801,11 +5801,7 @@
     function getSlides(doc = getIframeDoc()) {
       const slidesReader = typeof studioEditorSlidesReader === 'function'
         ? studioEditorSlidesReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getStudioSlides === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getStudioSlides(...args)
-          : null;
+        : null;
       return typeof slidesReader === 'function'
         ? slidesReader(doc, getEditorDomOptions())
         : [];
