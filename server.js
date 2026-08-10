@@ -241,6 +241,7 @@ app.post('/api/export/pptx', async (req, res) => {
     }
 
     const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
+    canonicalPptxExport.validatePptxArtifact(buffer);
     const downloadFilename = normalizePptxDownloadFilename(filename, resolvedCanonicalDeck.metadata?.title);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);

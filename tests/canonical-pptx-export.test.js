@@ -95,6 +95,7 @@ test('createCanonicalPptxExport writes a valid PPTX with the real generator', as
   assert.ok(result.pptx);
   const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
   assert.ok(Buffer.isBuffer(buffer));
+  assert.equal(pptxExport.validatePptxArtifact(buffer).length, buffer.length);
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-'));
@@ -105,6 +106,17 @@ test('createCanonicalPptxExport writes a valid PPTX with the real generator', as
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('PPTX artifact validation rejects non-ZIP output', () => {
+  assert.throws(
+    () => pptxExport.validatePptxArtifact(Buffer.from('not-pptx')),
+    /PPTX export did not produce a valid ZIP artifact/
+  );
+  assert.throws(
+    () => pptxExport.validatePptxArtifact(null),
+    /PPTX export did not produce a binary artifact/
+  );
 });
 
 test('canonical PPTX CLI reports missing local assets during preflight', async () => {

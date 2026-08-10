@@ -52,6 +52,26 @@
     }));
   }
 
+  function validatePptxArtifact(value) {
+    const bytes = value instanceof Uint8Array
+      ? value
+      : (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer)
+        ? new Uint8Array(value)
+        : null;
+    if (!bytes || bytes.length < 4) {
+      throw new Error('PPTX export did not produce a binary artifact');
+    }
+    const hasZipSignature = bytes[0] === 0x50
+      && bytes[1] === 0x4b
+      && ((bytes[2] === 0x03 && bytes[3] === 0x04)
+        || (bytes[2] === 0x05 && bytes[3] === 0x06)
+        || (bytes[2] === 0x07 && bytes[3] === 0x08));
+    if (!hasZipSignature) {
+      throw new Error('PPTX export did not produce a valid ZIP artifact');
+    }
+    return bytes;
+  }
+
   function finitePositive(value, fallback) {
     return Number.isFinite(value) && value > 0 ? value : fallback;
   }
@@ -1908,6 +1928,7 @@
     DEFAULT_SOURCE_WIDTH,
     DEFAULT_SOURCE_HEIGHT,
     createPptxWarningDetailsHeader,
+    validatePptxArtifact,
     normalizePptxExportOptions,
     resolvePptxExportOptions,
     normalizeHexColor,

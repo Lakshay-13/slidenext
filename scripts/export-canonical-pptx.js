@@ -4,7 +4,10 @@ const fs = require('node:fs/promises');
 const fsSync = require('node:fs');
 const path = require('node:path');
 
-const { createCanonicalPptxExport } = require('../shared/canonical-pptx-export.js');
+const {
+  createCanonicalPptxExport,
+  validatePptxArtifact
+} = require('../shared/canonical-pptx-export.js');
 const presentationMetadata = require('../shared/presentation-metadata.js');
 
 function printUsage() {
@@ -38,6 +41,7 @@ async function main(argv = process.argv.slice(2)) {
 
   await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
   await result.pptx.writeFile({ fileName: resolvedOutputPath });
+  validatePptxArtifact(await fs.readFile(resolvedOutputPath));
 
   if (result.diagnostics.warnings.length > 0) {
     console.error(`PPTX export completed with ${result.diagnostics.warnings.length} warning(s):`);
