@@ -66,6 +66,14 @@ test('editor composes live selection ID reading through the shared selection API
   assert.doesNotMatch(source, /getSelectedEditorElementIds\.reader/);
 });
 
+test('editor composes selection option building through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionOptionsBuilder =/);
+  assert.match(source, /typeof studioEditorSelectionOptionsBuilder === 'function'/);
+  assert.doesNotMatch(source, /getEditorSelectionOptions\.api/);
+});
+
 test('editor composes ID-list equality through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -423,7 +431,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
     fileContent,
-    'function getEditorSelectionOptions(options = {}) {',
+    'const studioEditorSelectionOptionsBuilder =',
     '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const applyEditorSelectionStateSource = extractFunctionSource(
@@ -514,7 +522,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
     fileContent,
-    'function getEditorSelectionOptions(options = {}) {',
+    'const studioEditorSelectionOptionsBuilder =',
     '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const getLiveSelectedElementsSource = extractFunctionSource(
