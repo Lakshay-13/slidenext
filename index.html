@@ -6628,7 +6628,15 @@
     }
 
     function buildEditorLayerSnapshot(slide) {
-      return SlideNextStudioElementSnapshot.buildStudioLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
+      const buildStudioLayerSnapshot = (
+        typeof SlideNextStudioElementSnapshot !== 'undefined'
+        && SlideNextStudioElementSnapshot
+        && typeof SlideNextStudioElementSnapshot.buildStudioLayerSnapshot === 'function'
+      )
+        ? SlideNextStudioElementSnapshot.buildStudioLayerSnapshot
+        : null;
+      if (!buildStudioLayerSnapshot) return [];
+      return buildStudioLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
         buildElementSnapshot: buildEditorElementSnapshot
       });
     }

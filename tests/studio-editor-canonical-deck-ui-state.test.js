@@ -3280,6 +3280,32 @@ test('buildEditorElementSnapshot uses a neutral fallback when the shared element
   );
 });
 
+test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snapshot builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorLayerSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorLayerSnapshot(slide) {',
+    '\n\n    const studioEditorSelectionIdsReader ='
+  );
+  const context = {
+    SlideNextStudioElementSnapshot: {},
+    getNormalizedSlideLayerOrder() {
+      throw new Error('layer snapshot dependencies should not run');
+    },
+    buildEditorElementSnapshot() {
+      throw new Error('layer snapshot dependencies should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorLayerSnapshotSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorLayerSnapshot({ label: 'slide' }))),
+    []
+  );
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
