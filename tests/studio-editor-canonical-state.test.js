@@ -637,6 +637,15 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
 
   vm.createContext(context);
   vm.runInContext(`${visibilityReaderSource}\n${selectionBoundsSource}`, context);
+  context.studioEditorSelectionBoundsResolver = selectionBounds.createStudioSelectionBoundsResolver({
+    getCurrentDocument: () => context.getIframeDoc(),
+    getActiveSlide: (doc) => context.getActiveSlide(doc),
+    getSelectedElements: () => context.selectedElements,
+    getSlideMetrics: (currentSlide) => context.getSlideMetrics(currentSlide),
+    getRectOnSlide: (rect, metrics) => context.getRectOnSlide(rect, metrics),
+    getHiddenStateReader: (doc) => context.getEditorCanonicalVisibilityReader('hidden', doc),
+    getMinSizePx: () => context.MIN_ELEMENT_SIZE_PX
+  });
   context.studioEditorSelectionOverlaySynchronizer = overlayApi.createStudioSelectionOverlaySynchronizer({
     overlayApi: context.SlideNextStudioEditorOverlay,
     overlayStateApi: context.SlideNextStudioEditorOverlayState,

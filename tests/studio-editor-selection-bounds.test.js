@@ -1,7 +1,20 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const selectionBounds = require('../shared/studio-editor-selection-bounds.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor composes selection bounds through the shared resolver', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionBoundsResolver =/);
+  assert.match(source, /createStudioSelectionBoundsResolver\(/);
+  assert.match(source, /return typeof studioEditorSelectionBoundsResolver === 'function'/);
+  assert.doesNotMatch(source, /getSelectionBounds\.resolver/);
+});
 
 test('getStudioBoundableSelection ignores disconnected and hidden selections', () => {
   assert.deepEqual(selectionBounds.getStudioBoundableSelection([
