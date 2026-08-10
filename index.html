@@ -12225,7 +12225,15 @@
         })(persistenceContext, options);
       }
 
-      return SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess(
+      const handleStudioPersistenceSuccess = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess
+        : null;
+      if (!handleStudioPersistenceSuccess) return false;
+      return handleStudioPersistenceSuccess(
         persistenceContext,
         createCurrentStudioPersistenceHandlerOptions(options)
       );
