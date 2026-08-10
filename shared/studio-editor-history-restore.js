@@ -113,7 +113,9 @@
         : null;
       if (!restoredCanonicalDeck && buildCanonicalDeck) {
         try {
-          const rebuiltCanonicalDeck = buildCanonicalDeck(iframeDoc);
+          const rebuiltCanonicalDeck = buildCanonicalDeck(iframeDoc, {
+            preferLiveCanonicalDeck: false
+          });
           if (isValidCanonicalDeck(rebuiltCanonicalDeck, isCanonicalDeck)) {
             restoredCanonicalDeck = rebuiltCanonicalDeck;
           }

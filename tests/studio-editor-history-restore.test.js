@@ -46,8 +46,8 @@ test('history restore rebuilds canonical state when the entry has no canonical d
     getIframeDoc() {
       return iframeDoc;
     },
-    buildCanonicalDeck(doc) {
-      calls.push(['buildCanonicalDeck', doc]);
+    buildCanonicalDeck(doc, options) {
+      calls.push(['buildCanonicalDeck', doc, options]);
       return rebuiltCanonicalDeck;
     },
     capturePersistedDeckPlaybackState(doc, canonicalDeck) {
@@ -68,7 +68,7 @@ test('history restore rebuilds canonical state when the entry has no canonical d
   restoreHandler({ canonicalDeck: null });
 
   assert.deepEqual(calls, [
-    ['buildCanonicalDeck', iframeDoc],
+    ['buildCanonicalDeck', iframeDoc, { preferLiveCanonicalDeck: false }],
     ['capturePersistedDeckPlaybackState', iframeDoc, rebuiltCanonicalDeck],
     ['applyPersistedDeckState', {
       canonicalDeck: rebuiltCanonicalDeck,

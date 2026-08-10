@@ -10569,6 +10569,15 @@
           setCurrentPresentationCanonicalDeck: typeof setCurrentPresentationCanonicalDeck === 'function'
             ? setCurrentPresentationCanonicalDeck
             : null,
+          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
+            ? (sourceDoc, buildOptions) => buildEditorCanonicalDeck(
+                sourceDoc || getIframeDoc(),
+                buildOptions
+              )
+            : null,
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
           applyEditorSelectionState: typeof applyEditorSelectionState === 'function'
             ? applyEditorSelectionState
             : null,

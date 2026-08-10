@@ -49,7 +49,10 @@
       getSessionToken: getFunction('getSessionToken'),
       setCurrentPresentationCanonicalDeck: getFunction('setCurrentPresentationCanonicalDeck'),
       buildCanonicalDeck: buildEditorCanonicalDeck
-        ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
+        ? (sourceDoc, buildOptions) => buildEditorCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            buildOptions
+          )
         : null,
       isCanonicalDeck: getEditorCanonicalDeckValidator
         ? getEditorCanonicalDeckValidator()
