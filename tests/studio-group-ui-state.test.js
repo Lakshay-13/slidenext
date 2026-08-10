@@ -293,6 +293,53 @@ test('buildGroupSelectionActionState fails closed before reading the document wh
   );
 });
 
+test('buildGroupSelectionActionState fails closed when a shared group builder factory returns no builder', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
+  const context = {
+    SlideNextStudioEditorGroup: {
+      createStudioGroupSelectionActionStateBuilder() {
+        return null;
+      }
+    },
+    getIframeDoc() {
+      throw new Error('document should not be read without a usable group builder');
+    },
+    getStudioSelectedElements() {
+      throw new Error('selection should not be read without a usable group builder');
+    },
+    getActiveSlide() {},
+    getLiveSelectedElements() {},
+    getSlideMetrics() {},
+    getRectOnSlide() {},
+    isElementLocked() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildGroupSelectionActionState())),
+    {
+      slide: null,
+      selection: [],
+      layoutItems: [],
+      parent: null,
+      groupPlan: {
+        canGroup: false,
+        selection: [],
+        bounds: null,
+        nextItems: []
+      },
+      canGroup: false
+    }
+  );
+});
+
 test('buildGroupSelectionActionState delegates geometry orchestration to the shared group module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(

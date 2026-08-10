@@ -7905,6 +7905,19 @@
     }
 
     function buildGroupSelectionActionState(doc = null) {
+      const buildDisabledGroupActionState = () => ({
+        slide: null,
+        selection: [],
+        layoutItems: [],
+        parent: null,
+        groupPlan: {
+          canGroup: false,
+          selection: [],
+          bounds: null,
+          nextItems: []
+        },
+        canGroup: false
+      });
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -7914,21 +7927,8 @@
         || typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function'
       );
       if (!hasGroupActionStateBuilder) {
-        return {
-          slide: null,
-          selection: [],
-          layoutItems: [],
-          parent: null,
-          groupPlan: {
-            canGroup: false,
-            selection: [],
-            bounds: null,
-            nextItems: []
-          },
-          canGroup: false
-        };
+        return buildDisabledGroupActionState();
       }
-      const resolvedDoc = doc || getIframeDoc();
       const positionedLayoutItemsBuilder = typeof buildEditorPositionedLayoutItems === 'function'
         ? buildEditorPositionedLayoutItems
         : typeof SlideNextStudioEditorTransform !== 'undefined'
@@ -7980,6 +7980,13 @@
           return buildGroupSelectionActionState.builder(doc);
         }
       }
+      const buildStudioGroupPlan = typeof groupApi.buildStudioGroupPlan === 'function'
+        ? groupApi.buildStudioGroupPlan
+        : null;
+      if (typeof groupApi.buildStudioGroupSelectionActionState !== 'function' && !buildStudioGroupPlan) {
+        return buildDisabledGroupActionState();
+      }
+      const resolvedDoc = doc || getIframeDoc();
       const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
         && typeof buildEditorCanonicalDeck === 'function'
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
@@ -8035,7 +8042,7 @@
         return element.parentElement === parent
           && closestPositionedAncestorResolver(element) === parent;
       });
-      const groupPlan = SlideNextStudioEditorGroup.buildStudioGroupPlan(layoutItems, {
+      const groupPlan = buildStudioGroupPlan(layoutItems, {
         isLocked: readLockedState,
         isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
           ? getEditorCanonicalFreeformReader(
