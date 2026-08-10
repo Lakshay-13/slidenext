@@ -1447,6 +1447,7 @@
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation-runtime.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
+  <script src="/shared/studio-editor-global-shortcuts.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-table-navigation.js"></script>
   <script src="/shared/studio-editor-keyboard.js"></script>
@@ -4030,14 +4031,18 @@
     });
 
     function bindStudioGlobalKeydownHandler() {
-      const eventsApi = typeof SlideNextStudioEditorEvents !== 'undefined'
-        ? SlideNextStudioEditorEvents
+      const shortcutsApi = typeof SlideNextStudioEditorGlobalShortcuts !== 'undefined'
+        ? SlideNextStudioEditorGlobalShortcuts
         : null;
-      if (!eventsApi || typeof eventsApi.createStudioGlobalKeydownHandler !== 'function') {
+      if (!shortcutsApi || typeof shortcutsApi.bindStudioGlobalKeydownHandler !== 'function') {
         return false;
       }
 
-      const keydownHandler = eventsApi.createStudioGlobalKeydownHandler({
+      return shortcutsApi.bindStudioGlobalKeydownHandler({
+        documentRef: document,
+        eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
+          ? SlideNextStudioEditorEvents
+          : null,
         isEditorActive: () => {
           const editor = document.getElementById('studioEditor');
           return !!editor && (editor.classList.contains('active') || editor.style.opacity === '1');
@@ -4057,12 +4062,6 @@
         nudgeSelectedElements,
         navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
       });
-      if (typeof keydownHandler !== 'function') {
-        return false;
-      }
-
-      document.addEventListener('keydown', keydownHandler);
-      return true;
     }
 
     function updateGridSnapActionState() {
