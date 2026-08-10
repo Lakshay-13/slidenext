@@ -1903,6 +1903,82 @@ test('getActiveSlide fails closed when the shared DOM module is unavailable', ()
   assert.equal(context.getActiveSlide(), null);
 });
 
+test('editor composes active-slide ID lookup through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorActiveSlideIdResolver =/);
+  assert.match(source, /getStudioActiveSlideId/);
+  assert.match(source, /typeof studioEditorActiveSlideIdResolver === 'function'/);
+  assert.doesNotMatch(source, /getActiveSlideId\.resolver/);
+});
+
+test('getActiveSlideId delegates the document and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const activeSlideIdSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function applyActiveSlideMetadataEdit'
+  );
+  const doc = { id: 'iframe-doc' };
+  const options = { editorElementIdAttr: 'data-editor-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioActiveSlideId(docValue, optionsValue) {
+        calls.push([docValue, optionsValue]);
+        return 'slide-1';
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${activeSlideIdSource}\n${getActiveSlideIdSource}`, context);
+
+  assert.equal(context.getActiveSlideId(), 'slide-1');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('getActiveSlideId fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const activeSlideIdSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function applyActiveSlideMetadataEdit'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    },
+    getIframeDoc() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${activeSlideIdSource}\n${getActiveSlideIdSource}`, context);
+
+  assert.equal(context.getActiveSlideId(), '');
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

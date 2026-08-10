@@ -3174,6 +3174,12 @@
       ? (doc, options) => SlideNextStudioEditorDom.getStudioActiveSlide(doc, options)
       : null;
 
+    const studioEditorActiveSlideIdResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getStudioActiveSlideId === 'function'
+      ? (doc, options) => SlideNextStudioEditorDom.getStudioActiveSlideId(doc, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6404,7 +6410,16 @@
     }
 
     function getActiveSlideId(doc = getIframeDoc()) {
-      return SlideNextStudioEditorDom.getStudioActiveSlideId(doc, getEditorDomOptions());
+      const activeSlideIdResolver = typeof studioEditorActiveSlideIdResolver === 'function'
+        ? studioEditorActiveSlideIdResolver
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioActiveSlideId === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioActiveSlideId(...args)
+          : null;
+      return typeof activeSlideIdResolver === 'function'
+        ? activeSlideIdResolver(doc, getEditorDomOptions())
+        : '';
     }
 
     function applyActiveSlideMetadataEdit(value = '', options = {}) {
