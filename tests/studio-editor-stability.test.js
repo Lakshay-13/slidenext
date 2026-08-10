@@ -1064,6 +1064,58 @@ test('getPointerOnSlide fails closed when the shared transform module is unavail
   assert.equal(context.getPointerOnSlide({}, {}), null);
 });
 
+test('editor composes freeform-position reads through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorFreeformPositionReader =/);
+  assert.match(source, /isStudioFreeformPositioned/);
+  assert.match(source, /typeof studioEditorFreeformPositionReader === 'function'/);
+  assert.doesNotMatch(source, /isElementFreeformPositioned\.reader/);
+});
+
+test('isElementFreeformPositioned delegates the element and options to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const freeformReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorFreeformPositionReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const element = { id: 'element-1' };
+  const options = { view: { id: 'view-1' } };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorTransform: {
+      isStudioFreeformPositioned(elementValue, optionsValue) {
+        calls.push([elementValue, optionsValue]);
+        return true;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(freeformReaderSource, context);
+
+  assert.equal(context.isElementFreeformPositioned(element, options), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], element);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), { view: { id: 'view-1' } });
+});
+
+test('isElementFreeformPositioned fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const freeformReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorFreeformPositionReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(freeformReaderSource, context);
+
+  assert.equal(context.isElementFreeformPositioned({ id: 'element-1' }), false);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(

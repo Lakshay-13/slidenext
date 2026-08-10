@@ -3133,6 +3133,19 @@
     const studioEditorGridSnapController = studioEditorGridSnapRuntime
       ? studioEditorGridSnapRuntime.gridSnapController
       : null;
+
+    const studioEditorFreeformPositionReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+      && SlideNextStudioEditorTransform
+      && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
+      ? (element, options) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(element, options)
+      : null;
+
+    function isElementFreeformPositioned(element, options) {
+      return typeof studioEditorFreeformPositionReader === 'function'
+        ? studioEditorFreeformPositionReader(element, options)
+        : false;
+    }
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -3183,10 +3196,9 @@
           },
           getCanonicalFreeformReader: (doc, fallbackReader) => getEditorCanonicalFreeformReader(
             doc || getIframeDoc(),
-            fallbackReader || SlideNextStudioEditorTransform.isStudioFreeformPositioned
+            fallbackReader
           ),
-          isFreeformPositioned: (...args) => SlideNextStudioEditorTransform
-            .isStudioFreeformPositioned(...args),
+          isFreeformPositioned: (...args) => isElementFreeformPositioned(...args),
           isHidden: (...args) => isElementHidden(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
@@ -6999,6 +7011,13 @@
 
     function getTransformSelectionState(elements = getStudioSelectedElements()) {
       const doc = getIframeDoc();
+      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
+        ? isElementFreeformPositioned
+        : typeof SlideNextStudioEditorTransform !== 'undefined'
+          && SlideNextStudioEditorTransform
+          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
+          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
+          : () => false;
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
@@ -7006,7 +7025,7 @@
         isHidden: readHiddenState,
         isFreeformPositioned: getEditorCanonicalFreeformReader(
           doc,
-          SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          freeformPositionFallback
         )
       });
     }
@@ -7023,6 +7042,13 @@
     }
 
     function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
+      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
+        ? isElementFreeformPositioned
+        : typeof SlideNextStudioEditorTransform !== 'undefined'
+          && SlideNextStudioEditorTransform
+          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
+          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
+          : () => false;
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
@@ -7030,7 +7056,7 @@
         isHidden: readHiddenState,
         isFreeformPositioned: getEditorCanonicalFreeformReader(
           doc,
-          SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          freeformPositionFallback
         )
       });
     }
@@ -7109,7 +7135,13 @@
         : null;
       const fallback = typeof fallbackReader === 'function'
         ? fallbackReader
-        : SlideNextStudioEditorTransform.isStudioFreeformPositioned;
+        : typeof isElementFreeformPositioned === 'function'
+          ? isElementFreeformPositioned
+          : typeof SlideNextStudioEditorTransform !== 'undefined'
+            && SlideNextStudioEditorTransform
+            && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
+            ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
+            : () => false;
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
@@ -7429,6 +7461,13 @@
 
     function buildGroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getIframeDoc();
+      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
+        ? isElementFreeformPositioned
+        : typeof SlideNextStudioEditorTransform !== 'undefined'
+          && SlideNextStudioEditorTransform
+          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
+          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
+          : () => false;
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -7456,9 +7495,9 @@
               return typeof getEditorCanonicalFreeformReader === 'function'
                 ? getEditorCanonicalFreeformReader(
                     sourceDoc,
-                    SlideNextStudioEditorTransform.isStudioFreeformPositioned
+                    freeformPositionFallback
                   )
-                : SlideNextStudioEditorTransform.isStudioFreeformPositioned;
+                : freeformPositionFallback;
             }
           });
         }
@@ -7485,9 +7524,9 @@
           isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
             ? getEditorCanonicalFreeformReader(
                 resolvedDoc,
-                SlideNextStudioEditorTransform.isStudioFreeformPositioned
+                freeformPositionFallback
               )
-            : SlideNextStudioEditorTransform.isStudioFreeformPositioned
+            : freeformPositionFallback
         });
       }
       const slide = getActiveSlide(resolvedDoc);
@@ -7526,9 +7565,9 @@
         isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
           ? getEditorCanonicalFreeformReader(
               resolvedDoc,
-              SlideNextStudioEditorTransform.isStudioFreeformPositioned
+              freeformPositionFallback
             )
-          : SlideNextStudioEditorTransform.isStudioFreeformPositioned
+          : freeformPositionFallback
       });
 
       return {
