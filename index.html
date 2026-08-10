@@ -3160,6 +3160,18 @@
         : [];
     }
 
+    const studioEditorClosestPositionedAncestorResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
+      ? (element) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(element)
+      : null;
+
+    function getEditorClosestPositionedAncestor(element) {
+      return typeof studioEditorClosestPositionedAncestorResolver === 'function'
+        ? studioEditorClosestPositionedAncestorResolver(element)
+        : null;
+    }
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -7363,6 +7375,13 @@
           && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
           ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(...args)
           : () => [];
+      const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
+        ? getEditorClosestPositionedAncestor
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
+          : () => null;
       const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
         ? SlideNextStudioEditorNudge
         : null;
@@ -7375,7 +7394,7 @@
             getSlideMetrics,
             buildPositionedLayoutItems(selection, currentSlideMetrics) {
               return positionedLayoutItemsBuilder(selection, {
-                getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+                getClosestPositionedAncestor: closestPositionedAncestorResolver,
                 getRectOnSlide,
                 slideMetrics: currentSlideMetrics
               });
@@ -7405,7 +7424,7 @@
           slideMetrics,
           buildPositionedLayoutItems(selection, currentSlideMetrics) {
             return positionedLayoutItemsBuilder(selection, {
-              getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+              getClosestPositionedAncestor: closestPositionedAncestorResolver,
               getRectOnSlide,
               slideMetrics: currentSlideMetrics
             });
@@ -7498,6 +7517,13 @@
           && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
           ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(...args)
           : () => [];
+      const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
+        ? getEditorClosestPositionedAncestor
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
+          : () => null;
       const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
         ? isElementFreeformPositioned
         : typeof SlideNextStudioEditorTransform !== 'undefined'
@@ -7519,7 +7545,7 @@
             buildPositionedLayoutItems(selection, options) {
               return positionedLayoutItemsBuilder(selection, options);
             },
-            getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+            getClosestPositionedAncestor: closestPositionedAncestorResolver,
             getRectOnSlide,
             getLockedState(sourceDoc) {
               const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
@@ -7555,7 +7581,7 @@
           buildPositionedLayoutItems(selection, options) {
             return positionedLayoutItemsBuilder(selection, options);
           },
-          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getClosestPositionedAncestor: closestPositionedAncestorResolver,
           getRectOnSlide,
           isLocked: readLockedState,
           isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
@@ -7586,16 +7612,16 @@
 
       const slideMetrics = getSlideMetrics(slide);
       const layoutItems = positionedLayoutItemsBuilder(selection, {
-        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+        getClosestPositionedAncestor: closestPositionedAncestorResolver,
         getRectOnSlide,
         slideMetrics
       });
       const parent = selection.length > 0
-        ? SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(selection[0])
+        ? closestPositionedAncestorResolver(selection[0])
         : null;
       const sameDirectParent = !!parent && selection.every((element) => {
         return element.parentElement === parent
-          && SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(element) === parent;
+          && closestPositionedAncestorResolver(element) === parent;
       });
       const groupPlan = SlideNextStudioEditorGroup.buildStudioGroupPlan(layoutItems, {
         isLocked: readLockedState,
@@ -8495,10 +8521,10 @@
         sanitizeElement: sanitizeDuplicatedSubtree,
         hoverableClassName: 'editor-hoverable',
         getComputedStyle,
-        getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+        getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
         buildPositionedLayoutItem: buildEditorPositionedLayoutItem,
         positionedLayoutOptions: {
-          getClosestPositionedAncestor: SlideNextStudioEditorDom.getStudioClosestPositionedAncestor,
+          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
           getRectOnSlide,
           slideMetrics
         }

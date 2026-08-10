@@ -1743,6 +1743,71 @@ test('clipboard payload runtime composes positioned-item building through the ed
   );
 });
 
+test('editor composes positioned-ancestor lookup through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorClosestPositionedAncestorResolver =/);
+  assert.match(source, /getStudioClosestPositionedAncestor/);
+  assert.match(source, /typeof studioEditorClosestPositionedAncestorResolver === 'function'/);
+  assert.doesNotMatch(source, /getEditorClosestPositionedAncestor\.resolver/);
+});
+
+test('getEditorClosestPositionedAncestor delegates the element to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const ancestorSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorClosestPositionedAncestorResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const element = { id: 'element-1' };
+  const ancestor = { id: 'parent-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioClosestPositionedAncestor(value) {
+        calls.push(value);
+        return ancestor;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(ancestorSource, context);
+
+  assert.equal(context.getEditorClosestPositionedAncestor(element), ancestor);
+  assert.deepEqual(calls, [element]);
+});
+
+test('getEditorClosestPositionedAncestor fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const ancestorSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorClosestPositionedAncestorResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const context = { SlideNextStudioEditorDom: null };
+
+  vm.createContext(context);
+  vm.runInContext(ancestorSource, context);
+
+  assert.equal(context.getEditorClosestPositionedAncestor({ id: 'element-1' }), null);
+});
+
+test('clipboard payload construction uses the composed positioned-ancestor resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const payloadSource = extractFunctionSource(
+    fileContent,
+    'function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
+    '\n\n    function applyEditorClipboardInsertionWithTransaction'
+  );
+
+  assert.match(payloadSource, /getClosestPositionedAncestor: getEditorClosestPositionedAncestor/);
+  assert.doesNotMatch(
+    payloadSource,
+    /getClosestPositionedAncestor: SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/
+  );
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
