@@ -1325,6 +1325,34 @@ test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture
   assert.deepEqual(calls.map(([doc]) => doc.id), ['one', 'two']);
 });
 
+test('resolveCurrentStudioPersistenceStateFromCapture fails closed when the shared resolver is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getStudioCurrentPresentationUrl() {
+      throw new Error('current presentation should not be read without a shared capture resolver');
+    },
+    captureEditorPersistableDeckState() {
+      throw new Error('persistable state should not be captured without a shared capture resolver');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+
+  assert.equal(
+    context.resolveCurrentStudioPersistenceStateFromCapture({ id: 'capture' }, {
+      resolvePersistenceStateFromCapture() {}
+    }),
+    null
+  );
+});
+
 test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(

@@ -12513,7 +12513,15 @@
       if (typeof nextOptions.resolvePersistenceStateFromCapture !== 'function') {
         return null;
       }
-      return SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture(
+      const resolveStudioPersistenceStateFromDocumentCapture = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture
+        : null;
+      if (!resolveStudioPersistenceStateFromDocumentCapture) return null;
+      return resolveStudioPersistenceStateFromDocumentCapture(
         doc,
         typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
           ? nextOptions.presentationUrl
