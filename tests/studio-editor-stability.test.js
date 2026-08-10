@@ -818,6 +818,54 @@ test('renderGuides passes guide definitions and overlay context to the shared ov
   assert.deepEqual(calls[0].marker, 'overlay-options');
 });
 
+test('editor composes marquee rendering through the shared overlay module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorMarqueeRenderer =/);
+  assert.match(source, /renderStudioMarqueeSelectionForActiveSlide/);
+  assert.match(source, /typeof studioEditorMarqueeRenderer === 'function'/);
+  assert.doesNotMatch(source, /renderMarqueeSelection\.renderer/);
+});
+
+test('renderMarqueeSelection passes the rectangle and overlay context to the shared overlay module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const renderMarqueeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorMarqueeRenderer =',
+    '\n\n    function clearMarqueeSelection() {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const rect = { left: 10, top: 20, right: 80, bottom: 90 };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorOverlay: {
+      renderStudioMarqueeSelectionForActiveSlide(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getActiveSlide() {
+      return { id: 'active-slide' };
+    },
+    getEditorOverlayOptions() {
+      return { marker: 'overlay-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(renderMarqueeSource, context);
+
+  assert.equal(context.renderMarqueeSelection(rect), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, iframeDoc);
+  assert.equal(calls[0].rect, rect);
+  assert.equal(typeof calls[0].getActiveSlide, 'function');
+  assert.deepEqual(calls[0].marker, 'overlay-options');
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
