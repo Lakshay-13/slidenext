@@ -24,6 +24,24 @@ test('history stack controller owns undo and redo stacks', () => {
   });
 });
 
+test('history stack controller isolates stack containers from consumer mutation', () => {
+  const initialUndoStack = ['undo-entry'];
+  const initialRedoStack = ['redo-entry'];
+  const controller = historyStackController.createStudioEditorHistoryStackController({
+    initialUndoStack,
+    initialRedoStack
+  });
+
+  initialUndoStack.push('unexpected-undo');
+  initialRedoStack.push('unexpected-redo');
+  const exposedState = controller.getState();
+  exposedState.undoStack.pop();
+  exposedState.redoStack.pop();
+
+  assert.deepEqual(controller.getUndoStack(), ['undo-entry']);
+  assert.deepEqual(controller.getRedoStack(), ['redo-entry']);
+});
+
 test('editor wiring routes history stacks through the shared controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

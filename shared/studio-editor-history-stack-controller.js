@@ -9,24 +9,27 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function createStudioEditorHistoryStackController(options = {}) {
     let undoStack = Array.isArray(options.initialUndoStack)
-      ? options.initialUndoStack
+      ? [...options.initialUndoStack]
       : [];
     let redoStack = Array.isArray(options.initialRedoStack)
-      ? options.initialRedoStack
+      ? [...options.initialRedoStack]
       : [];
 
     function getState() {
-      return { undoStack, redoStack };
+      return {
+        undoStack: [...undoStack],
+        redoStack: [...redoStack]
+      };
     }
 
     function setUndoStack(nextStack) {
-      undoStack = Array.isArray(nextStack) ? nextStack : [];
-      return undoStack;
+      undoStack = Array.isArray(nextStack) ? [...nextStack] : [];
+      return [...undoStack];
     }
 
     function setRedoStack(nextStack) {
-      redoStack = Array.isArray(nextStack) ? nextStack : [];
-      return redoStack;
+      redoStack = Array.isArray(nextStack) ? [...nextStack] : [];
+      return [...redoStack];
     }
 
     function clear() {
@@ -37,8 +40,8 @@
 
     return {
       getState,
-      getUndoStack: () => undoStack,
-      getRedoStack: () => redoStack,
+      getUndoStack: () => [...undoStack],
+      getRedoStack: () => [...redoStack],
       setUndoStack,
       setRedoStack,
       clear
