@@ -180,6 +180,36 @@ test('buildLayerOrderSelectionActionState reuses the current slide ordering and 
   ]);
 });
 
+test('buildLayerOrderSelectionActionState fails closed when all shared layer-order builders are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorLayerOrder: {},
+    getIframeDoc() {
+      throw new Error('document should not be read without a layer-order builder');
+    },
+    getStudioSelectedElements() {
+      throw new Error('selection should not be read without a layer-order builder');
+    }
+  };
+
+  vm.createContext(context);
+  loadBuildLayerOrderSelectionActionState(fileContent, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildLayerOrderSelectionActionState([]))),
+    {
+      selection: [],
+      hasSelection: false,
+      hasLockedSelection: false,
+      canReorder: false,
+      canBringToFront: false,
+      canSendToBack: false,
+      canBringForward: false,
+      canSendBackward: false
+    }
+  );
+});
+
 test('reorderSlideLayers forwards a reversible z-index transaction', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const first = {

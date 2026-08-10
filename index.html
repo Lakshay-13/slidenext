@@ -8211,6 +8211,22 @@
       const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
         ? SlideNextStudioEditorLayerOrder
         : null;
+      const hasLayerOrderActionStateBuilder = !!layerOrderApi && (
+        typeof layerOrderApi.createStudioLayerOrderActionStateBuilder === 'function'
+        || typeof layerOrderApi.buildStudioLayerOrderActionState === 'function'
+      );
+      if (!hasLayerOrderActionStateBuilder) {
+        return {
+          selection: [],
+          hasSelection: false,
+          hasLockedSelection: false,
+          canReorder: false,
+          canBringToFront: false,
+          canSendToBack: false,
+          canBringForward: false,
+          canSendBackward: false
+        };
+      }
       if (layerOrderApi && typeof layerOrderApi.createStudioLayerOrderActionStateBuilder === 'function') {
         if (typeof buildLayerOrderSelectionActionState.builder !== 'function') {
           buildLayerOrderSelectionActionState.builder = layerOrderApi.createStudioLayerOrderActionStateBuilder({
@@ -8237,7 +8253,7 @@
         ? options.canMutateDeck
         : () => !!resolvedSlide;
 
-      return SlideNextStudioEditorLayerOrder.buildStudioLayerOrderActionState(elements, {
+      return layerOrderApi.buildStudioLayerOrderActionState(elements, {
         orderedElements,
         isLocked: typeof options.isLocked === 'function' ? options.isLocked : isElementLocked,
         canMutateDeck
