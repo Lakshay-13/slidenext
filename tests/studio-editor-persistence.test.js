@@ -1696,6 +1696,31 @@ test('buildStudioSaveRequestBody includes canonical deck sidecars only when they
   );
 });
 
+test('buildStudioSaveRequestBody preserves an explicit null canonical deck clear request', () => {
+  let liveReaderCalls = 0;
+
+  assert.deepEqual(
+    editorPersistence.buildStudioSaveRequestBody(
+      '/presentations/legacy/index.html',
+      '<html></html>',
+      {
+        canonicalDeck: null,
+        getLiveCanonicalDeck() {
+          liveReaderCalls += 1;
+          return canonicalDeckModel.createCanonicalDeck({ slides: [] });
+        }
+      }
+    ),
+    {
+      htmlPath: '/presentations/legacy/index.html',
+      htmlContent: '<html></html>',
+      isAutoSave: false,
+      canonicalDeck: null
+    }
+  );
+  assert.equal(liveReaderCalls, 0);
+});
+
 test('buildStudioSaveRequestBody uses the live canonical deck when no sidecar is provided', () => {
   const liveCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

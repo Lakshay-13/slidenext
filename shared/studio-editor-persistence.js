@@ -984,8 +984,11 @@
       body.versionLabel = versionLabel;
     }
 
-    const canonicalDeck = resolveStudioSaveRequestCanonicalDeck(options);
-    if (canonicalDeck) {
+    const hasCanonicalDeckOption = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck');
+    const canonicalDeck = hasCanonicalDeckOption && options.canonicalDeck === null
+      ? null
+      : resolveStudioSaveRequestCanonicalDeck(options);
+    if (canonicalDeck || (hasCanonicalDeckOption && options.canonicalDeck === null)) {
       body.canonicalDeck = canonicalDeck;
     }
 
