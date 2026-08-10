@@ -770,6 +770,54 @@ test('updateDragHud passes bounds and overlay context to the shared overlay modu
   assert.deepEqual(calls[0].marker, 'overlay-options');
 });
 
+test('editor composes guide rendering through the shared overlay module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorGuidesRenderer =/);
+  assert.match(source, /renderStudioGuidesForActiveSlide/);
+  assert.match(source, /typeof studioEditorGuidesRenderer === 'function'/);
+  assert.doesNotMatch(source, /renderGuides\.renderer/);
+});
+
+test('renderGuides passes guide definitions and overlay context to the shared overlay module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const renderGuidesSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorGuidesRenderer =',
+    '\n\n    function renderMarqueeSelection(rect) {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const guidesDef = [{ axis: 'vertical', position: 100 }];
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorOverlay: {
+      renderStudioGuidesForActiveSlide(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getActiveSlide() {
+      return { id: 'active-slide' };
+    },
+    getEditorOverlayOptions() {
+      return { marker: 'overlay-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(renderGuidesSource, context);
+
+  assert.equal(context.renderGuides(guidesDef), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, iframeDoc);
+  assert.equal(calls[0].guidesDef, guidesDef);
+  assert.equal(typeof calls[0].getActiveSlide, 'function');
+  assert.deepEqual(calls[0].marker, 'overlay-options');
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(

@@ -6670,18 +6670,22 @@
         : false;
     }
 
+    const studioEditorGuidesRenderer = typeof SlideNextStudioEditorOverlay !== 'undefined'
+      && SlideNextStudioEditorOverlay
+      && typeof SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide === 'function'
+      ? (options) => SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide(options)
+      : null;
+
     function renderGuides(guidesDef) {
       const doc = getIframeDoc();
-      if (!SlideNextStudioEditorOverlay
-        || typeof SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide !== 'function') {
-        return false;
-      }
-      return SlideNextStudioEditorOverlay.renderStudioGuidesForActiveSlide({
-        documentRef: doc,
-        getActiveSlide,
-        guidesDef,
-        ...getEditorOverlayOptions()
-      });
+      return typeof studioEditorGuidesRenderer === 'function'
+        ? studioEditorGuidesRenderer({
+            documentRef: doc,
+            getActiveSlide,
+            guidesDef,
+            ...getEditorOverlayOptions()
+          })
+        : false;
     }
 
     function renderMarqueeSelection(rect) {
