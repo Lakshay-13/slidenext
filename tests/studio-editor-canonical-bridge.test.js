@@ -59,6 +59,23 @@ test('canonical bridge clears stale live state when history publishes no canonic
   ]);
 });
 
+test('canonical bridge ignores an owner-mismatched clear request', () => {
+  const state = canonicalState.createStudioEditorCanonicalState();
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    state,
+    canonicalStateApi: canonicalState
+  });
+  const activeDocument = {};
+  const staleDocument = {};
+  const deck = { kind: 'slidenext.deck', slides: [] };
+
+  assert.equal(bridge.setLiveCanonicalDeck(deck, activeDocument, 3), deck);
+  assert.equal(bridge.setLiveCanonicalDeck(null, staleDocument, 4), null);
+  assert.equal(bridge.resolveLiveCanonicalDeck(activeDocument, 3), deck);
+  assert.equal(bridge.setLiveCanonicalDeck(null, activeDocument, 3), null);
+  assert.equal(bridge.resolveLiveCanonicalDeck(activeDocument, 3), null);
+});
+
 test('canonical bridge uses the document getter and normalizes build options', () => {
   const documentRef = { id: 'frame' };
   const calls = [];

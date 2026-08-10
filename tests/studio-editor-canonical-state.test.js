@@ -188,6 +188,19 @@ test('studio editor canonical state rejects stale writes from another owner', ()
   assert.equal(state.resolve({ documentRef: staleDocument, sessionToken: 5 }), null);
 });
 
+test('studio editor canonical state rejects stale clears but accepts the active owner', () => {
+  const state = canonicalState.createStudioEditorCanonicalState();
+  const activeDocument = {};
+  const staleDocument = {};
+  const deck = createDeck('active');
+
+  assert.equal(state.set(deck, { documentRef: activeDocument, sessionToken: 4 }), deck);
+  assert.equal(state.clear({ documentRef: staleDocument, sessionToken: 5 }), null);
+  assert.equal(state.resolve({ documentRef: activeDocument, sessionToken: 4 }), deck);
+  assert.equal(state.clear({ documentRef: activeDocument, sessionToken: 4 }), null);
+  assert.equal(state.resolve({ documentRef: activeDocument, sessionToken: 4 }), null);
+});
+
 test('studio editor canonical state rejects invalid models and can be reset', () => {
   const state = canonicalState.createStudioEditorCanonicalState();
   const deck = createDeck('active');

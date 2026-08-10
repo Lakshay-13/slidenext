@@ -44,6 +44,13 @@
       return null;
     }
 
+    function clear(owner = {}) {
+      if (canonicalDeck && hasOwnerConflict(owner)) {
+        return null;
+      }
+      return reset();
+    }
+
     function hasOwnerConflict(owner = {}) {
       const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
       const hasIncomingDocument = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
@@ -91,6 +98,7 @@
 
     return {
       reset,
+      clear,
       set,
       resolve
     };

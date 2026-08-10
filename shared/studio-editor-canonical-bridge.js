@@ -85,6 +85,16 @@
     function setLiveCanonicalDeck(canonicalDeck, documentRef = null, sessionToken = null) {
       if (!state) return null;
       if (canonicalDeck === null || typeof canonicalDeck === 'undefined') {
+        if (typeof state.clear === 'function') {
+          try {
+            return state.clear({
+              documentRef,
+              sessionToken
+            });
+          } catch (error) {
+            return null;
+          }
+        }
         return resetLiveCanonicalDeck();
       }
       if (typeof state.set !== 'function' || !isValidCanonicalDeck(canonicalDeck)) return null;
