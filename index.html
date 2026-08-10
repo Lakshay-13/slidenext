@@ -6616,14 +6616,20 @@
           isSelected: false
         };
       }
+      const isStudioLiveSelectedElement = (
+        typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+        && SlideNextStudioEditorLiveSelection
+        && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
+      )
+        ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+        : null;
       return buildStudioElementSnapshot(el, {
         getElementId: assignEditorElementId,
         isElementLocked,
         isElementHidden,
-        isSelectedElement: candidate => SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement(
-          getStudioSelectedElements(),
-          candidate
-        )
+        isSelectedElement: candidate => isStudioLiveSelectedElement
+          ? isStudioLiveSelectedElement(getStudioSelectedElements(), candidate)
+          : false
       });
     }
 

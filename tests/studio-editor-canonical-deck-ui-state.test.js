@@ -3306,6 +3306,51 @@ test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snap
   );
 });
 
+test('buildEditorElementSnapshot defaults selection state when live selection runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorElementSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorElementSnapshot(el) {',
+    '\n\n    function buildEditorLayerSnapshot(slide) {'
+  );
+  let receivedOptions = null;
+  const context = {
+    SlideNextStudioElementSnapshot: {
+      buildStudioElementSnapshot(element, options) {
+        receivedOptions = options;
+        return {
+          id: element.id,
+          isSelected: options.isSelectedElement(element)
+        };
+      }
+    },
+    assignEditorElementId() {
+      return 'element-1';
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    },
+    getStudioSelectedElements() {
+      throw new Error('selected elements should not be read without live selection runtime');
+    },
+    SlideNextStudioEditorLiveSelection: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorElementSnapshotSource, context);
+
+  const result = context.buildEditorElementSnapshot({ id: 'element-1' });
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(result)),
+    { id: 'element-1', isSelected: false }
+  );
+  assert.equal(typeof receivedOptions.isSelectedElement, 'function');
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
