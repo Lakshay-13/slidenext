@@ -127,7 +127,12 @@
       } catch (error) {
         restoredPlaybackState = null;
       }
-      applyPersistedDeckState({ playbackState: restoredPlaybackState });
+      applyPersistedDeckState({
+        canonicalDeck: restoredCanonicalDeck,
+        playbackState: restoredPlaybackState
+      }, {
+        syncPresentationMetadata: false
+      });
       if (setEditorLiveCanonicalDeck) {
         setEditorLiveCanonicalDeck(restoredCanonicalDeck, iframeDoc, getSessionToken());
       }

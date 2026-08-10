@@ -1724,7 +1724,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   assert.equal(callLog[20][0], 'updateEditorPersistedDeckState');
   assert.deepEqual(
     JSON.parse(JSON.stringify(callLog[20][1])),
-    { playbackState: restoredPlaybackState }
+    { canonicalDeck, playbackState: restoredPlaybackState }
   );
   assert.deepEqual(callLog[21], ['setCurrentPresentationCanonicalDeck', canonicalDeck]);
 });
@@ -1763,7 +1763,7 @@ test('history restore preserves canonical state when playback capture fails', ()
 
   assert.doesNotThrow(() => restoreHandler({ canonicalDeck }));
   assert.deepEqual(calls, [
-    ['applyPersistedDeckState', { playbackState: null }],
+    ['applyPersistedDeckState', { canonicalDeck, playbackState: null }],
     ['setEditorLiveCanonicalDeck', canonicalDeck, iframeDoc],
     ['setCurrentPresentationCanonicalDeck', canonicalDeck]
   ]);
@@ -1869,7 +1869,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
   assert.deepEqual(callLog[0], ['capturePersistedDeckPlaybackState', iframeDoc, null]);
   assert.deepEqual(
     JSON.parse(JSON.stringify(callLog[1])),
-    ['updateEditorPersistedDeckState', { playbackState: null }]
+    ['updateEditorPersistedDeckState', { canonicalDeck: null, playbackState: null }]
   );
   assert.deepEqual(callLog[2], ['setCurrentPresentationCanonicalDeck', null]);
 });

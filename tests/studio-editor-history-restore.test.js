@@ -70,7 +70,10 @@ test('history restore rebuilds canonical state when the entry has no canonical d
   assert.deepEqual(calls, [
     ['buildCanonicalDeck', iframeDoc],
     ['capturePersistedDeckPlaybackState', iframeDoc, rebuiltCanonicalDeck],
-    ['applyPersistedDeckState', { playbackState: { activeSlideIds: ['slide-1'] } }],
+    ['applyPersistedDeckState', {
+      canonicalDeck: rebuiltCanonicalDeck,
+      playbackState: { activeSlideIds: ['slide-1'] }
+    }],
     ['setEditorLiveCanonicalDeck', rebuiltCanonicalDeck, iframeDoc],
     ['setCurrentPresentationCanonicalDeck', rebuiltCanonicalDeck]
   ]);

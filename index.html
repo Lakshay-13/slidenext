@@ -10560,7 +10560,7 @@
             ? capturePersistedDeckPlaybackState
             : null,
           applyPersistedDeckState: typeof applyCurrentStudioPersistedDeckState === 'function'
-            ? (nextState) => applyCurrentStudioPersistedDeckState(nextState)
+            ? (nextState, nextOptions) => applyCurrentStudioPersistedDeckState(nextState, nextOptions)
             : null,
           setEditorLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
             ? setEditorLiveCanonicalDeck
