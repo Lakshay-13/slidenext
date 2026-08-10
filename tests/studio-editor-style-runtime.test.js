@@ -74,4 +74,8 @@ test('index forwards canonical style rebuild options through the editor builder'
     fileContent,
     /buildCanonicalDeck: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
+  assert.match(
+    fileContent,
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
+  );
 });

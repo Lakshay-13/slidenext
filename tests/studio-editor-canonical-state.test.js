@@ -38,8 +38,9 @@ test('canonical deck baseline reader prefers live state and falls back to rebuil
     getCanonicalDeckBaseline() {
       throw new Error('live state unavailable');
     },
-    buildCanonicalDeckBaseline(sourceDocument) {
+    buildCanonicalDeckBaseline(sourceDocument, buildOptions) {
       assert.equal(sourceDocument, doc);
+      assert.deepEqual(buildOptions, { preferLiveCanonicalDeck: false });
       return rebuiltDeck;
     }
   });
