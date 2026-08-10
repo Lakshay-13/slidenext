@@ -1517,6 +1517,7 @@
   <script src="/shared/studio-editor-timer-state-bridge.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-runtime.js"></script>
+  <script src="/shared/studio-editor-save-button-state-bridge.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
@@ -2018,10 +2019,17 @@
     const studioEditorSaveButtonStateStore = studioEditorSaveButtonStateRuntime
       ? studioEditorSaveButtonStateRuntime.saveButtonStateStore
       : null;
+    const studioEditorSaveButtonStateBridge = typeof SlideNextStudioEditorSaveButtonStateBridge !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateBridge
+      && typeof SlideNextStudioEditorSaveButtonStateBridge.createStudioEditorSaveButtonStateBridge === 'function'
+      ? SlideNextStudioEditorSaveButtonStateBridge.createStudioEditorSaveButtonStateBridge({
+          stateStore: studioEditorSaveButtonStateStore
+        })
+      : null;
     function getStudioSaveButtonState() {
-      return studioEditorSaveButtonStateStore
-        && typeof studioEditorSaveButtonStateStore.getState === 'function'
-        ? studioEditorSaveButtonStateStore.getState()
+      return studioEditorSaveButtonStateBridge
+        && typeof studioEditorSaveButtonStateBridge.getState === 'function'
+        ? studioEditorSaveButtonStateBridge.getState()
         : 'idle';
     }
     const studioEditorVersionRenameStateRuntime = typeof SlideNextStudioEditorVersionRenameStateRuntime !== 'undefined'
@@ -13084,10 +13092,10 @@
       const normalizedState = state === 'saving-version'
         ? 'saving-version'
         : 'idle';
-      if (typeof studioEditorSaveButtonStateStore !== 'undefined'
-        && studioEditorSaveButtonStateStore
-        && typeof studioEditorSaveButtonStateStore.setState === 'function') {
-        studioEditorSaveButtonStateStore.setState(normalizedState);
+      if (typeof studioEditorSaveButtonStateBridge !== 'undefined'
+        && studioEditorSaveButtonStateBridge
+        && typeof studioEditorSaveButtonStateBridge.setState === 'function') {
+        studioEditorSaveButtonStateBridge.setState(normalizedState);
       } else {
         currentStudioSaveButtonState = normalizedState;
       }

@@ -22,7 +22,7 @@ test('editor routes save button state through the shared controller', () => {
   assert.match(indexHtml, /studio-editor-save-button-state-store\.js/);
   assert.match(indexHtml, /studioEditorSaveButtonStateStore/);
   assert.match(indexHtml, /getSaveButtonState: getStudioSaveButtonState/);
-  assert.match(indexHtml, /studioEditorSaveButtonStateStore\.setState\(normalizedState\)/);
+  assert.match(indexHtml, /studioEditorSaveButtonStateBridge\.setState\(normalizedState\)/);
   assert.doesNotMatch(indexHtml, /const studioEditorSaveButtonStateController =/);
   assert.doesNotMatch(indexHtml, /let currentStudioSaveButtonState = 'idle'/);
 });
