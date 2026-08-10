@@ -31,8 +31,44 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function createInspectorTestContext(context) {
-  if (!context.__withoutInspectorController) {
+  if (context.__withoutInspectorController) {
+    context.studioEditorInspectorSelectionSynchronizer = null;
+  } else {
     context.SlideNextStudioEditorInspectorController = inspectorController;
+    const callback = (name) => typeof context[name] === 'function' ? context[name] : null;
+    const buildCanonicalDeck = callback('resolveEditorUiCanonicalDeck')
+      || callback('buildEditorCanonicalDeck');
+    context.studioEditorInspectorSelectionSynchronizer = inspectorController
+      .createStudioInspectorSelectionSynchronizer({
+        liveSelectionApi: context.SlideNextStudioEditorLiveSelection || null,
+        inspectorApi: inspectorController,
+        inspectorView: context.SlideNextStudioEditorInspectorView || null,
+        documentRef: context.document || null,
+        getSelectedElements: () => context.selectedElements || [],
+        getCurrentDocument: () => {
+          const getIframeDoc = callback('getIframeDoc');
+          return getIframeDoc ? getIframeDoc() : null;
+        },
+        buildCanonicalDeck,
+        resolveCanonicalNode: (element, deck) => {
+          const nodeId = element && element.dataset && element.dataset.editorId;
+          return nodeId && deck
+            ? canonicalDeck.findCanonicalNodeById(deck, nodeId)
+            : null;
+        },
+        rgbToHex: callback('rgbToHex'),
+        highlightAlignButton: callback('highlightAlignButton'),
+        updateAssetLibraryState: callback('updateAssetLibraryState'),
+        updateClipboardActionState: callback('updateClipboardActionState'),
+        updateRemovalActionState: callback('updateRemovalActionState'),
+        updateLockActionState: callback('updateLockActionState'),
+        updateVisibilityActionState: callback('updateVisibilityActionState'),
+        updateMotionActionState: callback('updateMotionActionState'),
+        updateAlignmentActionState: callback('updateAlignmentActionState'),
+        updateGroupActionState: callback('updateGroupActionState'),
+        updateStyleActionState: callback('updateStyleActionState'),
+        updateLayerOrderActionState: callback('updateLayerOrderActionState')
+      });
   }
   delete context.__withoutInspectorController;
   vm.createContext(context);

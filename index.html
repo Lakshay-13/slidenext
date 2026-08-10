@@ -6715,20 +6715,14 @@
         : false;
     }
 
-    function syncInspectorForSelection() {
-      const inspectorController = typeof SlideNextStudioEditorInspectorController !== 'undefined'
-        ? SlideNextStudioEditorInspectorController
-        : null;
-      if (!inspectorController
-        || typeof inspectorController.createStudioInspectorSelectionSynchronizer !== 'function') {
-        return false;
-      }
-      if (typeof syncInspectorForSelection.synchronizer !== 'function') {
-        syncInspectorForSelection.synchronizer = inspectorController.createStudioInspectorSelectionSynchronizer({
+    const studioEditorInspectorSelectionSynchronizer = typeof SlideNextStudioEditorInspectorController !== 'undefined'
+      && SlideNextStudioEditorInspectorController
+      && typeof SlideNextStudioEditorInspectorController.createStudioInspectorSelectionSynchronizer === 'function'
+      ? SlideNextStudioEditorInspectorController.createStudioInspectorSelectionSynchronizer({
           liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
             ? SlideNextStudioEditorLiveSelection
             : null,
-          inspectorApi: inspectorController,
+          inspectorApi: SlideNextStudioEditorInspectorController,
           inspectorView: typeof SlideNextStudioEditorInspectorView !== 'undefined'
             ? SlideNextStudioEditorInspectorView
             : null,
@@ -6777,10 +6771,12 @@
           updateLayerOrderActionState: typeof updateLayerOrderActionState === 'function'
             ? updateLayerOrderActionState
             : null
-        });
-      }
-      return typeof syncInspectorForSelection.synchronizer === 'function'
-        ? syncInspectorForSelection.synchronizer()
+        })
+      : null;
+
+    function syncInspectorForSelection() {
+      return typeof studioEditorInspectorSelectionSynchronizer === 'function'
+        ? studioEditorInspectorSelectionSynchronizer()
         : false;
     }
 

@@ -1,7 +1,20 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const inspectorController = require('../shared/studio-editor-inspector-controller.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor composes inspector selection synchronization through the shared controller', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorInspectorSelectionSynchronizer =/);
+  assert.match(source, /createStudioInspectorSelectionSynchronizer\(/);
+  assert.match(source, /return typeof studioEditorInspectorSelectionSynchronizer === 'function'/);
+  assert.doesNotMatch(source, /syncInspectorForSelection\.synchronizer/);
+});
 
 test('syncStudioInspectorActionStates preserves the inspector toolbar refresh order', () => {
   const calls = [];
