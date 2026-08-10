@@ -202,12 +202,14 @@ test('buildStudioCanonicalStyleMutation rebuilds text edits from the live source
   });
   const sourceDocument = { id: 'editor-doc', documentElement: {} };
   let receivedDocument = null;
+  let receivedBuildOptions = null;
 
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck(documentRef) {
+    buildCanonicalDeck(documentRef, buildOptions) {
       receivedDocument = documentRef;
+      receivedBuildOptions = buildOptions;
       return rebuiltDeck;
     },
     sourceDocument,
@@ -218,6 +220,10 @@ test('buildStudioCanonicalStyleMutation rebuilds text edits from the live source
   });
 
   assert.equal(receivedDocument, sourceDocument);
+  assert.deepEqual(receivedBuildOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline: sourceDeck
+  });
   assert.equal(result, rebuiltDeck);
   assert.equal(result.slides[0].nodes[0].html, '<p><strong>After</strong></p>');
 });
@@ -235,6 +241,7 @@ test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source
     }]
   });
   const sourceDocument = { id: 'editor-doc', documentElement: {} };
+  let receivedBuildOptions = null;
   const chart = {
     dataset: { editorId: 'node-1', chartValues: '10,20,15,30' },
     getAttribute(name) {
@@ -245,7 +252,10 @@ test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck: () => rebuiltDeck,
+    buildCanonicalDeck: (_documentRef, buildOptions) => {
+      receivedBuildOptions = buildOptions;
+      return rebuiltDeck;
+    },
     sourceDocument,
     selection: [chart],
     prop: 'chartValues',
@@ -254,6 +264,10 @@ test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source
   });
 
   assert.equal(result, rebuiltDeck);
+  assert.deepEqual(receivedBuildOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline: sourceDeck
+  });
   assert.equal(result.slides[0].nodes[0].attributes['data-chart-values'], '10,20,15,30');
 });
 
@@ -270,6 +284,7 @@ test('buildStudioCanonicalStyleMutation rebuilds chart titles from the live sour
     }]
   });
   const sourceDocument = { id: 'editor-doc', documentElement: {} };
+  let receivedBuildOptions = null;
   const title = { textContent: 'Updated trend' };
   const chart = {
     dataset: { editorId: 'node-1' },
@@ -282,7 +297,10 @@ test('buildStudioCanonicalStyleMutation rebuilds chart titles from the live sour
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck: () => rebuiltDeck,
+    buildCanonicalDeck: (_documentRef, buildOptions) => {
+      receivedBuildOptions = buildOptions;
+      return rebuiltDeck;
+    },
     sourceDocument,
     selection: [chart],
     prop: 'chartTitle',
@@ -291,6 +309,10 @@ test('buildStudioCanonicalStyleMutation rebuilds chart titles from the live sour
   });
 
   assert.equal(result, rebuiltDeck);
+  assert.deepEqual(receivedBuildOptions, {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline: sourceDeck
+  });
   assert.equal(result.slides[0].nodes[0].attributes['data-chart-title'], 'Updated trend');
 });
 

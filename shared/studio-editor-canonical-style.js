@@ -144,7 +144,10 @@
           || typeof sourceDocument.querySelector === 'function'));
       if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
         const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument)
+          () => options.buildCanonicalDeck(sourceDocument, {
+            preferLiveCanonicalDeck: false,
+            canonicalDeckBaseline: canonicalDeckBeforeMutation
+          })
         );
         const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
@@ -172,7 +175,10 @@
           || typeof sourceDocument.querySelector === 'function'));
       if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
         const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument)
+          () => options.buildCanonicalDeck(sourceDocument, {
+            preferLiveCanonicalDeck: false,
+            canonicalDeckBaseline: canonicalDeckBeforeMutation
+          })
         );
         const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
@@ -206,7 +212,10 @@
           || typeof sourceDocument.querySelector === 'function'));
       if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
         const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument)
+          () => options.buildCanonicalDeck(sourceDocument, {
+            preferLiveCanonicalDeck: false,
+            canonicalDeckBaseline: canonicalDeckBeforeMutation
+          })
         );
         const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
