@@ -64,6 +64,10 @@ test('save route atomically persists the canonical deck sidecar', async (t) => {
   });
 
   const persistedMetadata = JSON.parse(await fs.readFile(metadataPath, 'utf8'));
+  assert.equal(
+    await fs.readFile(path.join(folderPath, 'index.html'), 'utf8'),
+    '<!doctype html><html><body>updated</body></html>'
+  );
   assert.equal(persistedMetadata.canonicalDeck.slides[0].nodes[0].text, 'Updated');
   assert.deepEqual(
     (await fs.readdir(folderPath)).sort(),

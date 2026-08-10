@@ -279,6 +279,16 @@ async function createVersionBackupFromContent(targetFile, htmlContent, versionLa
   return backupFilename;
 }
 
+async function writeFileAtomically(targetFile, content) {
+  const temporaryFile = `${targetFile}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+  try {
+    await fs.writeFile(temporaryFile, content, 'utf8');
+    await fs.rename(temporaryFile, targetFile);
+  } finally {
+    await fs.rm(temporaryFile, { force: true }).catch(() => {});
+  }
+}
+
 async function readPresentationMetadataSidecar(htmlPath) {
   const metadataPath = presentationMetadata.derivePresentationMetadataPath(htmlPath);
   if (!metadataPath) {
@@ -315,14 +325,8 @@ async function writePresentationMetadataSidecar(metadataInfo, metadata) {
   if (!metadataInfo || !metadataInfo.metadataFile) {
     return false;
   }
-  const temporaryMetadataFile = `${metadataInfo.metadataFile}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
-  try {
-    await fs.writeFile(temporaryMetadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
-    await fs.rename(temporaryMetadataFile, metadataInfo.metadataFile);
-    return true;
-  } finally {
-    await fs.rm(temporaryMetadataFile, { force: true }).catch(() => {});
-  }
+  await writeFileAtomically(metadataInfo.metadataFile, `${JSON.stringify(metadata, null, 2)}\n`);
+  return true;
 }
 
 function derivePresentationMetadataVersionFilename(versionFilename, targetFile, metadataFile) {
@@ -412,7 +416,7 @@ app.post('/api/save', async (req, res) => {
     }
 
     // Write new content to the target file
-    await fs.writeFile(targetFile, htmlContent, 'utf8');
+    await writeFileAtomically(targetFile, htmlContent);
     console.log(`Saved new content to ${targetFile} (AutoSave: ${!!isAutoSave})`);
 
     if (canonicalDeck) {
