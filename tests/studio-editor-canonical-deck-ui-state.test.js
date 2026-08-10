@@ -3235,6 +3235,51 @@ test('getStudioActiveSlideIndex falls back to the current slide when the shared 
   );
 });
 
+test('buildEditorElementSnapshot uses a neutral fallback when the shared element snapshot builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorElementSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorElementSnapshot(el) {',
+    '\n\n    function buildEditorLayerSnapshot(slide) {'
+  );
+  const context = {
+    SlideNextStudioElementSnapshot: {},
+    assignEditorElementId() {
+      throw new Error('element snapshot dependencies should not run');
+    },
+    isElementLocked() {
+      throw new Error('element snapshot dependencies should not run');
+    },
+    isElementHidden() {
+      throw new Error('element snapshot dependencies should not run');
+    },
+    getStudioSelectedElements() {
+      throw new Error('element snapshot dependencies should not run');
+    },
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement() {
+        throw new Error('element snapshot dependencies should not run');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorElementSnapshotSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildEditorElementSnapshot({ label: 'element' }))),
+    {
+      id: '',
+      typeIcon: 'description',
+      displayName: 'Element',
+      zIndex: '0',
+      isLocked: false,
+      isHidden: false,
+      isSelected: false
+    }
+  );
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(

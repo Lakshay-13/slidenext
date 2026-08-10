@@ -6598,7 +6598,25 @@
     }
 
     function buildEditorElementSnapshot(el) {
-      return SlideNextStudioElementSnapshot.buildStudioElementSnapshot(el, {
+      const buildStudioElementSnapshot = (
+        typeof SlideNextStudioElementSnapshot !== 'undefined'
+        && SlideNextStudioElementSnapshot
+        && typeof SlideNextStudioElementSnapshot.buildStudioElementSnapshot === 'function'
+      )
+        ? SlideNextStudioElementSnapshot.buildStudioElementSnapshot
+        : null;
+      if (!buildStudioElementSnapshot) {
+        return {
+          id: '',
+          typeIcon: 'description',
+          displayName: 'Element',
+          zIndex: '0',
+          isLocked: false,
+          isHidden: false,
+          isSelected: false
+        };
+      }
+      return buildStudioElementSnapshot(el, {
         getElementId: assignEditorElementId,
         isElementLocked,
         isElementHidden,
