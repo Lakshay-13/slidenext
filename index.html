@@ -12539,7 +12539,15 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {
-      const versionCheckpointResult = await SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess(
+      const executeStudioVersionCheckpointPersistenceRequestWithSuccess = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess
+        : null;
+      if (!executeStudioVersionCheckpointPersistenceRequestWithSuccess) return null;
+      const versionCheckpointResult = await executeStudioVersionCheckpointPersistenceRequestWithSuccess(
         versionLabel,
         cleanHtml,
         presentationUrl,

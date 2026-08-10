@@ -483,6 +483,45 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   ]]);
 });
 
+test('saveVersionCheckpoint fails closed when the shared request executor is unavailable', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveVersionCheckpointSource = extractFunctionSource(
+    fileContent,
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
+    '\n\n    // 6. AutoSave debouncing pipeline'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getStudioCurrentPresentationUrl() {
+      throw new Error('current presentation should not be read without the shared request executor');
+    },
+    isCurrentDeckStatePersisted() {
+      throw new Error('persistence state should not be read without the shared request executor');
+    },
+    buildEditorSaveRequestBody() {
+      throw new Error('save request should not be built without the shared request executor');
+    },
+    capturePersistedDeckPlaybackState() {
+      throw new Error('playback state should not be captured without the shared request executor');
+    },
+    fetch() {
+      throw new Error('fetch should not run without the shared request executor');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveVersionCheckpointSource, context);
+
+  assert.equal(
+    await context.saveVersionCheckpoint(
+      'Unavailable executor',
+      '<html>unchanged</html>',
+      'presentations/onboarding-presentation/index.html'
+    ),
+    null
+  );
+});
+
 test('saveVersionCheckpoint clears the persisted playback baseline after a successful save rewrite without live playback markers', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const saveVersionCheckpointSource = extractFunctionSource(
