@@ -2193,6 +2193,80 @@ test('getEditorSlideId fails closed when the shared DOM module is unavailable', 
   assert.equal(context.getEditorSlideId({}), '');
 });
 
+test('editor composes slide collection reads through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlidesReader =/);
+  assert.match(source, /typeof slidesReader === 'function'/);
+});
+
+test('getSlides delegates the document and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slidesReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlidesReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlidesSource = extractFunctionSource(
+    fileContent,
+    'function getSlides(doc = getIframeDoc()) {',
+    '\n\n    function getSlideById'
+  );
+  const doc = { id: 'iframe-doc' };
+  const options = { editorSlideIdAttr: 'data-slide-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioSlides(docValue, optionsValue) {
+        calls.push([docValue, optionsValue]);
+        return ['slide-1'];
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slidesReaderSource}\n${getSlidesSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getSlides())), ['slide-1']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('getSlides fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slidesReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlidesReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlidesSource = extractFunctionSource(
+    fileContent,
+    'function getSlides(doc = getIframeDoc()) {',
+    '\n\n    function getSlideById'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getIframeDoc() {
+      return {};
+    },
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slidesReaderSource}\n${getSlidesSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getSlides())), []);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
