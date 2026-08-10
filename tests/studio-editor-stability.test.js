@@ -1358,6 +1358,57 @@ test('setElementHiddenState ignores connected elements when the shared module is
   assert.equal(context.setElementHiddenState({ id: 'element-1', isConnected: true }, true), undefined);
 });
 
+test('editor composes visibility snapshots through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementVisibilityStateReader =/);
+  assert.match(source, /getStudioElementVisibilityState/);
+  assert.match(source, /getVisibilityState: \(\.\.\.args\) => getElementVisibilityState\(\.\.\.args\)/);
+  assert.match(source, /typeof studioEditorElementVisibilityStateReader === 'function'/);
+  assert.doesNotMatch(source, /getElementVisibilityState\.reader/);
+});
+
+test('getElementVisibilityState delegates the element to the shared element state module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityStateSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementVisibilityStateReader =',
+    'const studioEditorLockVisibilityRuntime ='
+  );
+  const element = { id: 'element-1' };
+  const calls = [];
+  const state = { hidden: false, display: '', ariaHidden: null };
+  const context = {
+    SlideNextStudioElementState: {
+      getStudioElementVisibilityState(value) {
+        calls.push(value);
+        return state;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(visibilityStateSource, context);
+
+  assert.equal(context.getElementVisibilityState(element), state);
+  assert.deepEqual(calls, [element]);
+});
+
+test('getElementVisibilityState fails closed when the shared element state module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const visibilityStateSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementVisibilityStateReader =',
+    'const studioEditorLockVisibilityRuntime ='
+  );
+  const context = { SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(visibilityStateSource, context);
+
+  assert.equal(context.getElementVisibilityState({ id: 'element-1' }), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
