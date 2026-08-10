@@ -2554,6 +2554,75 @@ test('isEligibleEditableElement fails closed when the shared DOM module is unava
   assert.equal(context.isEligibleEditableElement({}), false);
 });
 
+test('editor composes element-ID assignment through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementIdAssigner =/);
+  assert.match(source, /typeof elementIdAssigner === 'function'/);
+});
+
+test('assignEditorElementId delegates the element and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const elementIdAssignerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementIdAssigner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const assignEditorElementIdSource = extractFunctionSource(
+    fileContent,
+    'function assignEditorElementId(el, options = {}) {',
+    '\n\n    function getElementByEditorId'
+  );
+  const element = { id: 'element-node' };
+  const options = { elementAttrName: 'data-editor-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      assignStudioElementId(elementValue, optionsValue) {
+        calls.push([elementValue, optionsValue]);
+        return 'element-1';
+      }
+    },
+    getEditorDomOptions(optionsValue) {
+      assert.deepEqual(JSON.parse(JSON.stringify(optionsValue)), options);
+      return optionsValue;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${elementIdAssignerSource}\n${assignEditorElementIdSource}`, context);
+
+  assert.equal(context.assignEditorElementId(element, options), 'element-1');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], element);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('assignEditorElementId fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const elementIdAssignerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementIdAssigner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const assignEditorElementIdSource = extractFunctionSource(
+    fileContent,
+    'function assignEditorElementId(el, options = {}) {',
+    '\n\n    function getElementByEditorId'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${elementIdAssignerSource}\n${assignEditorElementIdSource}`, context);
+
+  assert.equal(context.assignEditorElementId({}), '');
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

@@ -3228,6 +3228,12 @@
       ? (element, options) => SlideNextStudioEditorDom.isEligibleEditableElement(element, options)
       : null;
 
+    const studioEditorElementIdAssigner = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.assignStudioElementId === 'function'
+      ? (element, options) => SlideNextStudioEditorDom.assignStudioElementId(element, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6595,7 +6601,16 @@
     }
 
     function assignEditorElementId(el, options = {}) {
-      return SlideNextStudioEditorDom.assignStudioElementId(el, getEditorDomOptions(options));
+      const elementIdAssigner = typeof studioEditorElementIdAssigner === 'function'
+        ? studioEditorElementIdAssigner
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.assignStudioElementId === 'function'
+          ? (...args) => SlideNextStudioEditorDom.assignStudioElementId(...args)
+          : null;
+      return typeof elementIdAssigner === 'function'
+        ? elementIdAssigner(el, getEditorDomOptions(options))
+        : '';
     }
 
     function getElementByEditorId(editorId, doc = getIframeDoc()) {
