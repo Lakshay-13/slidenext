@@ -57,6 +57,15 @@ test('editor composes committed selection ID reading through the shared selectio
   assert.doesNotMatch(source, /getCommittedSelectedEditorElementIds\.reader/);
 });
 
+test('editor composes live selection ID reading through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionIdsReader =/);
+  assert.match(source, /getStudioSelectedElementIds/);
+  assert.match(source, /if \(typeof studioEditorSelectionIdsReader !== 'function'\)/);
+  assert.doesNotMatch(source, /getSelectedEditorElementIds\.reader/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -104,8 +113,8 @@ function loadGetSelectedEditorElementIds(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {',
-    '\n\n    function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {'
+    'const studioEditorSelectionIdsReader =',
+    '\n\n    const studioEditorCommittedSelectionIdsReader ='
   );
   vm.runInContext(helperSource, context);
 }

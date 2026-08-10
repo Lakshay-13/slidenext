@@ -6293,12 +6293,15 @@
       });
     }
 
+    const studioEditorSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.getStudioSelectedElementIds === 'function'
+      ? (elements, options) => SlideNextStudioEditorSelection.getStudioSelectedElementIds(elements, options)
+      : null;
+
     function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.getStudioSelectedElementIds !== 'function') return [];
-      return selectionApi.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
+      if (typeof studioEditorSelectionIdsReader !== 'function') return [];
+      return studioEditorSelectionIdsReader(elements, getEditorSelectionOptions());
     }
 
     const studioEditorCommittedSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'
