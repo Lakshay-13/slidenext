@@ -911,6 +911,56 @@ test('preflightCanonicalPptxExport does not warn for bound children inside flow 
   assert.deepEqual(report.diagnostics.warnings, []);
 });
 
+test('preflightCanonicalPptxExport ignores unpositioned inline descendants rendered by flow text parents', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'paragraph-1',
+        type: 'text',
+        tagName: 'p',
+        text: '',
+        layout: { x: 10, y: 20, width: 300, height: 40 },
+        children: [{
+          id: 'inline-1',
+          type: 'text',
+          tagName: 'span',
+          text: 'Inline text'
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
+test('preflightCanonicalPptxExport keeps warnings for unpositioned text beside positioned flow children', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'paragraph-1',
+        type: 'text',
+        tagName: 'p',
+        text: '',
+        layout: { x: 10, y: 20, width: 300, height: 40 },
+        children: [{
+          id: 'inline-1',
+          type: 'text',
+          tagName: 'span',
+          text: 'Unpositioned text'
+        }, {
+          id: 'positioned-1',
+          type: 'text',
+          tagName: 'span',
+          text: 'Positioned text',
+          layout: { x: 10, y: 20, width: 100, height: 20 }
+        }]
+      }]
+    }]
+  });
+
+  assert.ok(report.diagnostics.warnings.includes('Node inline-1 has no exportable bounds'));
+});
+
 test('createCanonicalPptxExport uses rendered bounds for flow nodes and nested children', () => {
   const result = pptxExport.createCanonicalPptxExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

@@ -1241,7 +1241,7 @@
     const diagnostics = createExportDiagnostics();
     const themeTokens = asObject(deck.theme && deck.theme.tokens);
 
-    function visit(node, origin = {}, parentClip = null) {
+    function visit(node, origin = {}, parentClip = null, flowTextAncestor = false) {
       if (!node || node.visibility?.hidden) return;
       const nodeId = node.id || 'unknown';
       const bounds = getNodeCanvasLayout(node, origin);
@@ -1252,7 +1252,11 @@
       const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
       const childOrigin = getNodeChildOrigin(node, origin);
       const hasExportableChildren = hasExportableChildBounds(childNodes, childOrigin);
-      if (!hasBounds && !hasExportableChildren) {
+      const nestedText = getNestedNodeText(node);
+      const isUnpositionedFlowTextDescendant = flowTextAncestor
+        && isTextContainerNode(node)
+        && !!nestedText;
+      if (!hasBounds && !hasExportableChildren && !isUnpositionedFlowTextDescendant) {
         diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
       } else if (hasBounds && (
         bounds.x < 0
@@ -1458,7 +1462,7 @@
       }
 
       if (isTextContainerNode(node)
-        && getNestedNodeText(node)
+        && nestedText
         && !hasExportableChildBounds(childNodes, childOrigin)) {
         return;
       }
@@ -1474,7 +1478,17 @@
             }
           : { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height }
         : parentClip;
-      getPptxRenderOrder(childNodes).forEach(child => visit(child, childOrigin, nextClip));
+      const nextFlowTextAncestor = flowTextAncestor
+        || (hasBounds
+          && isTextContainerNode(node)
+          && !!nestedText
+          && !hasExportableChildren);
+      getPptxRenderOrder(childNodes).forEach(child => visit(
+        child,
+        childOrigin,
+        nextClip,
+        nextFlowTextAncestor
+      ));
     }
 
     deck.slides.forEach(slide => {
