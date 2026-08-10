@@ -3180,6 +3180,12 @@
       ? (doc, options) => SlideNextStudioEditorDom.getStudioActiveSlideId(doc, options)
       : null;
 
+    const studioEditorChromeNodePruner = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.pruneStudioChromeNodes === 'function'
+      ? (doc, options) => SlideNextStudioEditorDom.pruneStudioChromeNodes(doc, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6443,10 +6449,19 @@
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
-      SlideNextStudioEditorDom.pruneStudioChromeNodes(doc, {
+      const chromeNodePruner = typeof studioEditorChromeNodePruner === 'function'
+        ? studioEditorChromeNodePruner
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.pruneStudioChromeNodes === 'function'
+          ? (...args) => SlideNextStudioEditorDom.pruneStudioChromeNodes(...args)
+          : null;
+      if (typeof chromeNodePruner !== 'function') return false;
+      chromeNodePruner(doc, {
         activeSlide,
         chromeNodeIds: EDITOR_CHROME_NODE_IDS
       });
+      return true;
     }
 
     function setActiveSlideById(slideId, doc = getIframeDoc(), options = {}) {

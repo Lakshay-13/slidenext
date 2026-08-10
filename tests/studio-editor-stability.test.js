@@ -1979,6 +1979,82 @@ test('getActiveSlideId fails closed when the shared DOM module is unavailable', 
   assert.equal(context.getActiveSlideId(), '');
 });
 
+test('editor composes chrome-node pruning through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorChromeNodePruner =/);
+  assert.match(source, /typeof studioEditorChromeNodePruner === 'function'/);
+});
+
+test('pruneEditorChromeNodes delegates the document and chrome options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const chromeNodePrunerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorChromeNodePruner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const pruneEditorChromeNodesSource = extractFunctionSource(
+    fileContent,
+    'function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {',
+    '\n\n    function setActiveSlideById'
+  );
+  const doc = { id: 'iframe-doc' };
+  const activeSlide = { id: 'slide-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      pruneStudioChromeNodes(docValue, optionsValue) {
+        calls.push([docValue, optionsValue]);
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    EDITOR_CHROME_NODE_IDS: ['editor-chrome']
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${chromeNodePrunerSource}\n${pruneEditorChromeNodesSource}`, context);
+
+  assert.equal(context.pruneEditorChromeNodes(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], doc);
+  assert.equal(calls[0][1].activeSlide, activeSlide);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1].chromeNodeIds)), ['editor-chrome']);
+});
+
+test('pruneEditorChromeNodes fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const chromeNodePrunerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorChromeNodePruner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const pruneEditorChromeNodesSource = extractFunctionSource(
+    fileContent,
+    'function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {',
+    '\n\n    function setActiveSlideById'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getIframeDoc() {
+      return {};
+    },
+    getActiveSlide() {
+      return null;
+    },
+    EDITOR_CHROME_NODE_IDS: []
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${chromeNodePrunerSource}\n${pruneEditorChromeNodesSource}`, context);
+
+  assert.equal(context.pruneEditorChromeNodes(), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
