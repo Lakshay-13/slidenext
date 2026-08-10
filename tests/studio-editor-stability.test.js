@@ -573,6 +573,15 @@ test('editor composes element selection through the shared selection module', ()
   assert.doesNotMatch(source, /selectElement\.selector/);
 });
 
+test('editor composes select-all through the shared selection module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectAllElements =/);
+  assert.match(source, /selectAllStudioElementsOnActiveSlide/);
+  assert.match(source, /if \(typeof studioEditorSelectAllElements !== 'function'\)/);
+  assert.doesNotMatch(source, /selectAllElementsOnActiveSlide\.selector/);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
@@ -675,7 +684,7 @@ test('selectAllElementsOnActiveSlide delegates selection orchestration to the sh
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectAllSource = extractFunctionSource(
     fileContent,
-    'function selectAllElementsOnActiveSlide() {',
+    'const studioEditorSelectAllElements =',
     '\n\n    function isElementLocked(el) {'
   );
   const calls = [];
@@ -707,7 +716,7 @@ test('selectAllElementsOnActiveSlide fails closed when the shared selection modu
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectAllSource = extractFunctionSource(
     fileContent,
-    'function selectAllElementsOnActiveSlide() {',
+    'const studioEditorSelectAllElements =',
     '\n\n    function isElementLocked(el) {'
   );
 
