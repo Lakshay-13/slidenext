@@ -1852,6 +1852,12 @@ test('editor composes active-slide lookup through the shared DOM module', () => 
   assert.match(source, /getStudioActiveSlide/);
   assert.match(source, /typeof studioEditorActiveSlideResolver === 'function'/);
   assert.doesNotMatch(source, /getActiveSlide\.resolver/);
+  const getActiveSlideSource = extractFunctionSource(
+    source,
+    'function getActiveSlide(doc = getIframeDoc()) {',
+    '\n\n    function getActiveSlideId'
+  );
+  assert.doesNotMatch(getActiveSlideSource, /SlideNextStudioEditorDom\.getStudioActiveSlide/);
 });
 
 test('getActiveSlide delegates the document and DOM options to the shared DOM module', () => {
@@ -1929,6 +1935,12 @@ test('editor composes active-slide ID lookup through the shared DOM module', () 
   assert.match(source, /getStudioActiveSlideId/);
   assert.match(source, /typeof studioEditorActiveSlideIdResolver === 'function'/);
   assert.doesNotMatch(source, /getActiveSlideId\.resolver/);
+  const getActiveSlideIdSource = extractFunctionSource(
+    source,
+    'function getActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function applyActiveSlideMetadataEdit'
+  );
+  assert.doesNotMatch(getActiveSlideIdSource, /SlideNextStudioEditorDom\.getStudioActiveSlideId/);
 });
 
 test('getActiveSlideId delegates the document and DOM options to the shared DOM module', () => {
