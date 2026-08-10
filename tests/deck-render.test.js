@@ -142,6 +142,33 @@ test('renderCanonicalDeckHtml inherits master layout metadata and preserves slid
   assert.doesNotMatch(html, /id="slide-2"[^>]*background-color: #101010/);
 });
 
+test('renderCanonicalDeckHtml resolves slide background asset references when no image css is stored', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [{ id: 'background-1', type: 'image', src: 'assets/background.png' }],
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          assetId: 'background-1'
+        }
+      },
+      nodes: [],
+      source: {}
+    }],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /background-image: url\(&quot;assets\/background\.png&quot;\);/);
+});
+
 test('renderCanonicalDeckHtml preserves explicit slide classes when source attributes already provide them', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

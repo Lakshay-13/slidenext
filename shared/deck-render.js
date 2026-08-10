@@ -479,10 +479,30 @@
     return nextClassNames.join(' ');
   }
 
-  function buildRenderedSlideBackgroundStyle(background = {}) {
+  function escapeCssUrlValue(value) {
+    return normalizeString(value).replace(/["\\]/g, '\\$&');
+  }
+
+  function resolveCanonicalBackgroundImage(background = {}, assets = []) {
+    const explicitImage = normalizeString(background.image).trim();
+    if (explicitImage) {
+      return explicitImage;
+    }
+
+    const assetId = normalizeString(background.assetId).trim();
+    if (!assetId || !Array.isArray(assets)) {
+      return '';
+    }
+
+    const asset = assets.find((candidate) => candidate && candidate.id === assetId);
+    const assetSource = normalizeString(asset && asset.src).trim();
+    return assetSource ? `url("${escapeCssUrlValue(assetSource)}")` : '';
+  }
+
+  function buildRenderedSlideBackgroundStyle(background = {}, assets = []) {
     const styleFragments = [];
     const backgroundColor = normalizeString(background.color).trim();
-    const backgroundImage = normalizeString(background.image).trim();
+    const backgroundImage = resolveCanonicalBackgroundImage(background, assets);
 
     if (backgroundColor) {
       styleFragments.push(`background-color: ${backgroundColor};`);
@@ -530,7 +550,7 @@
     }
     const canonicalBackgroundStyleText = mergeStyleTextWithFallback(
       normalizeString(background.style).trim(),
-      buildRenderedSlideBackgroundStyle(background)
+      buildRenderedSlideBackgroundStyle(background, options.assets)
     );
     const fallbackStyleText = normalizeString(fallback.style).trim();
     let resolvedStyleText = hasExplicitSourceStyle
@@ -1040,6 +1060,7 @@
       ? deck.slides.map((slide, index) => renderCanonicalSlide(slide, index, {
         ...options,
         masterSlides: deck.masterSlides,
+        assets: deck.assets,
         activeSlideId: resolvedActiveSlideId
       })).join('\n')
       : '';
