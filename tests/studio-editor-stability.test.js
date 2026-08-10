@@ -2343,6 +2343,81 @@ test('getSlideById fails closed when the shared DOM module is unavailable', () =
   assert.equal(context.getSlideById('slide-1'), null);
 });
 
+test('editor composes slide-index lookup through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideIndexByIdReader =/);
+  assert.match(source, /typeof slideIndexByIdReader === 'function'/);
+});
+
+test('getSlideIndexById delegates the slide ID, document, and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIndexByIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIndexByIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlideIndexByIdSource = extractFunctionSource(
+    fileContent,
+    'function getSlideIndexById(slideId, doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshotFromDom'
+  );
+  const doc = { id: 'iframe-doc' };
+  const options = { editorSlideIdAttr: 'data-slide-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioSlideIndexById(slideId, docValue, optionsValue) {
+        calls.push([slideId, docValue, optionsValue]);
+        return 2;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIndexByIdReaderSource}\n${getSlideIndexByIdSource}`, context);
+
+  assert.equal(context.getSlideIndexById('slide-3'), 2);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'slide-3');
+  assert.equal(calls[0][1], doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][2])), options);
+});
+
+test('getSlideIndexById fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIndexByIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIndexByIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlideIndexByIdSource = extractFunctionSource(
+    fileContent,
+    'function getSlideIndexById(slideId, doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshotFromDom'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getIframeDoc() {
+      return {};
+    },
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIndexByIdReaderSource}\n${getSlideIndexByIdSource}`, context);
+
+  assert.equal(context.getSlideIndexById('slide-1'), -1);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
