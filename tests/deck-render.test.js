@@ -169,6 +169,36 @@ test('renderCanonicalDeckHtml resolves slide background asset references when no
   assert.match(html, /background-image: url\(&quot;assets\/background\.png&quot;\);/);
 });
 
+test('renderCanonicalDeckHtml resolves canonical image assets over stale source markup', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    assets: [{ id: 'hero-asset', type: 'image', src: 'assets/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'hero-image',
+        type: 'image',
+        tagName: 'img',
+        assetId: 'hero-asset',
+        html: '<img src="stale-hero.png" alt="Hero">'
+      }],
+      source: {}
+    }],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: true
+  });
+
+  assert.match(html, /<img[^>]*src="assets\/hero\.png"[^>]*>/);
+  assert.match(html, /<img[^>]*alt="Hero"[^>]*>/);
+  assert.doesNotMatch(html, /stale-hero\.png/);
+});
+
 test('renderCanonicalDeckHtml preserves explicit slide classes when source attributes already provide them', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [

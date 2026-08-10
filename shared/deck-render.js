@@ -382,7 +382,17 @@
     return nextClassNames.join(' ');
   }
 
-  function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '') {
+  function resolveCanonicalNodeAssetSource(node = {}, assets = []) {
+    const assetId = normalizeString(node.assetId).trim();
+    if (!assetId || !Array.isArray(assets)) {
+      return '';
+    }
+
+    const asset = assets.find((candidate) => candidate && candidate.id === assetId);
+    return normalizeString(asset && asset.src).trim();
+  }
+
+  function buildRenderedNodeAttributes(node = {}, fallbackStyleText = '', assets = []) {
     const attributes = asPlainObject(node.attributes);
     if (node.type === 'group') {
       attributes['data-editor-group'] = 'true';
@@ -410,10 +420,17 @@
       attributes.hidden = true;
       attributes['aria-hidden'] = attributes['aria-hidden'] || 'true';
     }
+    const nodeTagName = normalizeString(node.tagName).toLowerCase();
+    const canonicalAssetSource = (node.type === 'image' || nodeTagName === 'img')
+      ? resolveCanonicalNodeAssetSource(node, assets)
+      : '';
+    if (canonicalAssetSource) {
+      attributes.src = canonicalAssetSource;
+    }
     return attributes;
   }
 
-  function applyCanonicalNodeSourceHtmlState(html, node = {}, canonicalStyleText = '') {
+  function applyCanonicalNodeSourceHtmlState(html, node = {}, canonicalStyleText = '', assets = []) {
     const sourceHtml = normalizeString(html);
     if (!sourceHtml) {
       return sourceHtml;
@@ -426,7 +443,7 @@
 
     const existingClassName = readOpeningTagAttributeValue(openingTagMatch[2], 'class');
     const existingStyleText = readOpeningTagAttributeValue(openingTagMatch[2], 'style');
-    const canonicalAttributes = buildRenderedNodeAttributes(node, canonicalStyleText);
+    const canonicalAttributes = buildRenderedNodeAttributes(node, canonicalStyleText, assets);
     const hasExplicitCanonicalClass = !!(
       normalizeString(node && node.attributes && node.attributes.class).trim()
       || (Array.isArray(node.classes) && node.classes.length > 0)
@@ -806,11 +823,12 @@
       return applyCanonicalNodeSourceHtmlState(
         node.html,
         node,
-        layoutStyleText
+        layoutStyleText,
+        options.assets
       );
     }
 
-    const attributes = buildRenderedNodeAttributes(node, layoutStyleText);
+    const attributes = buildRenderedNodeAttributes(node, layoutStyleText, options.assets);
 
     const tagName = normalizeString(node.tagName, node.type === 'image' ? 'img' : 'div').toLowerCase();
     const childrenHtml = Array.isArray(node.children)
