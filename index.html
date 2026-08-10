@@ -3204,6 +3204,12 @@
       ? (doc, options) => SlideNextStudioEditorDom.getStudioSlides(doc, options)
       : null;
 
+    const studioEditorSlideByIdReader = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getStudioSlideById === 'function'
+      ? (slideId, doc, options) => SlideNextStudioEditorDom.getStudioSlideById(slideId, doc, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -5747,7 +5753,16 @@
     }
 
     function getSlideById(slideId, doc = getIframeDoc()) {
-      return SlideNextStudioEditorDom.getStudioSlideById(slideId, doc, getEditorDomOptions());
+      const slideByIdReader = typeof studioEditorSlideByIdReader === 'function'
+        ? studioEditorSlideByIdReader
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioSlideById === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioSlideById(...args)
+          : null;
+      return typeof slideByIdReader === 'function'
+        ? slideByIdReader(slideId, doc, getEditorDomOptions())
+        : null;
     }
 
     function getSlideIndexById(slideId, doc = getIframeDoc()) {
