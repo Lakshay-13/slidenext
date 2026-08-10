@@ -23,7 +23,7 @@ test('autosave timer runtime composes the autosave timer store', () => {
   assert.deepEqual(calls, [{}]);
 });
 
-test('index wires autosave timer state through the runtime module', () => {
+test('index wires autosave timer state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -32,7 +32,11 @@ test('index wires autosave timer state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorAutoSaveTimerRuntime\.createStudioEditorAutoSaveTimerRuntime\(/
+    /<script src="\/shared\/studio-editor-timer-state-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorTimerStateBridge\.createStudioEditorTimerStateBridge\(/
   );
   assert.doesNotMatch(
     fileContent,

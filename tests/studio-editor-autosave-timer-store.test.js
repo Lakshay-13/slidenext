@@ -48,6 +48,6 @@ test('editor routes autosave timer access through the shared composition adapter
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-autosave-timer-store\.js/);
-  assert.match(source, /studioEditorAutoSaveTimerStore/);
+  assert.match(source, /studioEditorTimerStateBridge/);
   assert.doesNotMatch(source, /const studioEditorAutoSaveTimerController =/);
 });

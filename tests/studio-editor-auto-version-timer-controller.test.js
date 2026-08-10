@@ -35,7 +35,7 @@ test('editor routes auto-version timer ownership through the controller', () => 
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-auto-version-timer-store\.js/);
-  assert.match(source, /studioEditorAutoVersionTimerStore/);
+  assert.match(source, /studioEditorTimerStateBridge/);
   assert.match(source, /getStudioAutoVersionTimers\(\)/);
   assert.match(source, /setStudioAutoVersionTimer\(/);
   assert.doesNotMatch(source, /const studioEditorAutoVersionTimerController =/);

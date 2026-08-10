@@ -23,7 +23,7 @@ test('auto-version timer runtime composes the auto-version timer store', () => {
   assert.deepEqual(calls, [{}]);
 });
 
-test('index wires auto-version timer state through the runtime module', () => {
+test('index wires auto-version timer state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -32,7 +32,11 @@ test('index wires auto-version timer state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorAutoVersionTimerRuntime\.createStudioEditorAutoVersionTimerRuntime\(/
+    /<script src="\/shared\/studio-editor-timer-state-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorTimerStateBridge\.createStudioEditorTimerStateBridge\(/
   );
   assert.doesNotMatch(
     fileContent,

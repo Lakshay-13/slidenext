@@ -20,7 +20,7 @@ test('editor routes autosave timer access through the shared controller', () => 
 
   assert.match(indexHtml, /studio-editor-autosave-timer-controller\.js/);
   assert.match(indexHtml, /studio-editor-autosave-timer-store\.js/);
-  assert.match(indexHtml, /studioEditorAutoSaveTimerStore/);
+  assert.match(indexHtml, /studioEditorTimerStateBridge/);
   assert.match(indexHtml, /getStudioAutoSaveDebounceTimer\(\)/);
   assert.match(indexHtml, /setStudioAutoSaveDebounceTimer\(nextTimer\)/);
   assert.doesNotMatch(indexHtml, /const studioEditorAutoSaveTimerController =/);
