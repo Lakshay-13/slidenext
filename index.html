@@ -6595,11 +6595,7 @@
     function isEligibleEditableElement(el) {
       const editableElementEligibilityReader = typeof studioEditorEditableElementEligibilityReader === 'function'
         ? studioEditorEditableElementEligibilityReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.isEligibleEditableElement === 'function'
-          ? (...args) => SlideNextStudioEditorDom.isEligibleEditableElement(...args)
-          : null;
+        : null;
       return typeof editableElementEligibilityReader === 'function'
         ? editableElementEligibilityReader(el, getEditorDomOptions())
         : false;

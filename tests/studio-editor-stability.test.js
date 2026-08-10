@@ -2564,6 +2564,12 @@ test('editor composes editable-element eligibility through the shared DOM module
 
   assert.match(source, /const studioEditorEditableElementEligibilityReader =/);
   assert.match(source, /typeof editableElementEligibilityReader === 'function'/);
+  const isEligibleEditableElementSource = extractFunctionSource(
+    source,
+    'function isEligibleEditableElement(el) {',
+    '\n\n    function assignEditorElementId'
+  );
+  assert.doesNotMatch(isEligibleEditableElementSource, /SlideNextStudioEditorDom\.isEligibleEditableElement/);
 });
 
 test('isEligibleEditableElement delegates the element and DOM options to the shared DOM module', () => {
