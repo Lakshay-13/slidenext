@@ -888,6 +888,28 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   assert.deepEqual(iframeDoc.listeners.map((listener) => listener.type), ['click', 'keydown']);
 });
 
+test('initStudioFrame fails closed when legacy bootstrap runtimes are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+  const iframeDoc = {};
+  const context = {
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    SlideNextStudioEditorStyle: null,
+    SlideNextStudioFrameBootstrap: null
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  assert.equal(context.initStudioFrame(), false);
+});
+
 test('initStudioFrame reuses the resolved canonical deck when capturing the initial persisted state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(

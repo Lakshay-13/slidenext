@@ -5308,12 +5308,24 @@
       }
       const iframeDoc = getIframeDoc();
       if (!iframeDoc) return;
+      const editorStyleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
+        ? SlideNextStudioEditorStyle
+        : null;
+      const frameBootstrapApi = typeof SlideNextStudioFrameBootstrap !== 'undefined'
+        ? SlideNextStudioFrameBootstrap
+        : null;
+      if (!editorStyleApi
+        || typeof editorStyleApi.ensureStudioEditorStyle !== 'function'
+        || !frameBootstrapApi
+        || typeof frameBootstrapApi.runStudioFrameBootstrap !== 'function') {
+        return false;
+      }
       
       // Sync active theme to slide frame
       syncIframeTheme();
       
       // 1. Inject Stylesheet
-      SlideNextStudioEditorStyle.ensureStudioEditorStyle(iframeDoc);
+      editorStyleApi.ensureStudioEditorStyle(iframeDoc);
       
       // 2. Make elements hoverable & selectable
       makeElementsHoverable(iframeDoc);
@@ -5324,7 +5336,7 @@
         studioEditorFrameInteractions.attach(iframeDoc);
       }
 
-      SlideNextStudioFrameBootstrap.runStudioFrameBootstrap(iframeDoc, {
+      frameBootstrapApi.runStudioFrameBootstrap(iframeDoc, {
         setupIframeDragging,
         generateThumbnails,
         syncStudioChromeToActiveSlide,
