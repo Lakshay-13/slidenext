@@ -2391,6 +2391,12 @@ test('editor composes slide-index lookup through the shared DOM module', () => {
 
   assert.match(source, /const studioEditorSlideIndexByIdReader =/);
   assert.match(source, /typeof slideIndexByIdReader === 'function'/);
+  const getSlideIndexByIdSource = extractFunctionSource(
+    source,
+    'function getSlideIndexById(slideId, doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckSnapshotFromDom'
+  );
+  assert.doesNotMatch(getSlideIndexByIdSource, /SlideNextStudioEditorDom\.getStudioSlideIndexById/);
 });
 
 test('getSlideIndexById delegates the slide ID, document, and DOM options to the shared DOM module', () => {
