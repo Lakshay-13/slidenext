@@ -3,6 +3,108 @@ const assert = require('node:assert/strict');
 
 const pdfExport = require('../shared/studio-pdf-export.js');
 
+test('exportStudioPdf posts the canonical deck and downloads the server response', async () => {
+  const calls = [];
+  const anchor = {
+    click() {
+      calls.push(['click']);
+    },
+    remove() {
+      calls.push(['remove']);
+    }
+  };
+  const result = await pdfExport.exportStudioPdf({
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
+    sourcePath: '/presentations/demo/index.html',
+    filename: 'Demo deck.pdf',
+    fetchImpl(endpoint, options) {
+      calls.push(['fetch', endpoint, options]);
+      return Promise.resolve({
+        ok: true,
+        headers: {
+          get(name) {
+            return name === 'Content-Disposition'
+              ? 'attachment; filename="Demo_deck.pdf"'
+              : name === 'X-SlideNext-Pdf-Warning-Count'
+                ? '2'
+                : encodeURIComponent(JSON.stringify({
+                  warnings: ['PDF node image-1 references missing asset "hero"'],
+                  truncated: false
+                }));
+          }
+        },
+        blob() {
+          return Promise.resolve({ type: 'application/pdf' });
+        }
+      });
+    },
+    documentRef: {
+      createElement(tagName) {
+        assert.equal(tagName, 'a');
+        return anchor;
+      },
+      body: {
+        appendChild(node) {
+          calls.push(['appendChild', node]);
+        }
+      }
+    },
+    urlApi: {
+      createObjectURL(blob) {
+        calls.push(['createObjectURL', blob]);
+        return 'blob:slidenext';
+      },
+      revokeObjectURL(url) {
+        calls.push(['revokeObjectURL', url]);
+      }
+    }
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.filename, 'Demo_deck.pdf');
+  assert.equal(result.warningCount, 2);
+  assert.deepEqual(result.warnings, ['PDF node image-1 references missing asset "hero"']);
+  assert.equal(result.warningsTruncated, false);
+  assert.equal(calls[0][1], '/api/export/pdf');
+  assert.deepEqual(JSON.parse(calls[0][2].body), {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
+    sourcePath: '/presentations/demo/index.html',
+    filename: 'Demo deck.pdf'
+  });
+  assert.deepEqual(calls.slice(-3), [
+    ['click'],
+    ['remove'],
+    ['revokeObjectURL', 'blob:slidenext']
+  ]);
+});
+
+test('exportStudioPdf rejects unavailable dependencies and empty decks before requesting', async () => {
+  assert.deepEqual(await pdfExport.exportStudioPdf({}), {
+    success: false,
+    error: 'PDF browser export dependencies are unavailable'
+  });
+
+  let fetchCalls = 0;
+  const result = await pdfExport.exportStudioPdf({
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    fetchImpl: async () => {
+      fetchCalls += 1;
+      return { ok: true };
+    },
+    documentRef: { body: {}, createElement() {} },
+    urlApi: {
+      createObjectURL() {},
+      revokeObjectURL() {}
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'PDF canonical deck is empty'
+  });
+  assert.equal(fetchCalls, 0);
+});
+
 test('buildStudioPdfPrintHtml injects fixed-size one-slide-per-page print styles', () => {
   const html = pdfExport.buildStudioPdfPrintHtml(
     '<!doctype html><html><head><title>Deck</title></head><body><div class="slide">A</div></body></html>'

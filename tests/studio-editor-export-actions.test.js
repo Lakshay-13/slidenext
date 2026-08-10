@@ -7,6 +7,44 @@ function isCanonicalDeck(value) {
   return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
 }
 
+test('PDF export prefers the generalized server exporter when available', async () => {
+  const statuses = [];
+  const calls = [];
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => {
+      throw new Error('server export should not render popup html');
+    },
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    sourcePath: '/presentations/demo/index.html',
+    pdfExport: {
+      async exportStudioPdf(options) {
+        calls.push(options);
+        return {
+          success: true,
+          warningCount: 1,
+          warnings: ['PDF node image-1 references missing asset "hero"'],
+          warningsTruncated: false
+        };
+      },
+      openStudioPdfPrintWindow() {
+        throw new Error('popup exporter should not run');
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(await exportPdf(), true);
+  assert.deepEqual(calls, [{
+    canonicalDeck: { slides: [{ id: 'slide-1' }] },
+    sourcePath: '/presentations/demo/index.html'
+  }]);
+  assert.deepEqual(statuses, [
+    ['exporting-pdf'],
+    ['pdf-exported-with-warnings', 1, ['PDF node image-1 references missing asset "hero"'], false]
+  ]);
+});
+
 test('PDF export rejects malformed canonical decks before opening print flow', () => {
   let openCalls = 0;
   const statuses = [];

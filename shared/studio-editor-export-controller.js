@@ -69,6 +69,7 @@
         pdfExport,
         documentRef,
         resolveBaseHref: resolvePdfBaseHref,
+        sourcePath: resolveValue(options.resolveSourcePath, options.sourcePath || ''),
         setStatus
       })();
     }

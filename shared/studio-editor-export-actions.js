@@ -117,6 +117,7 @@
     const resolveBaseHref = typeof options.resolveBaseHref === 'function'
       ? options.resolveBaseHref
       : null;
+    const sourcePath = typeof options.sourcePath === 'string' ? options.sourcePath : '';
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
@@ -129,7 +130,9 @@
         setStatus('pdf-export-failed');
         return false;
       };
-      if (!pdfExport || typeof pdfExport.openStudioPdfPrintWindow !== 'function') {
+      if (!pdfExport
+        || (typeof pdfExport.openStudioPdfPrintWindow !== 'function'
+          && typeof pdfExport.exportStudioPdf !== 'function')) {
         return failPdfExport();
       }
 
@@ -160,6 +163,40 @@
         : [];
       const pdfWarningCount = pdfWarnings.length;
 
+      const exportButton = documentRef && typeof documentRef.getElementById === 'function'
+        ? documentRef.getElementById('exportPdfBtn')
+        : null;
+      const restoreExportButton = () => {
+        if (exportButton) {
+          exportButton.disabled = !resolveReadyState().canUseDeckActions;
+        }
+      };
+
+      if (typeof pdfExport.exportStudioPdf === 'function') {
+        return (async () => {
+          if (exportButton) exportButton.disabled = true;
+          setStatus('exporting-pdf');
+          try {
+            const result = await pdfExport.exportStudioPdf({
+              canonicalDeck,
+              sourcePath
+            });
+            if (!result || !result.success) return failPdfExport();
+            setStatus(
+              result.warningCount > 0 ? 'pdf-exported-with-warnings' : 'pdf-exported',
+              result.warningCount,
+              result.warnings,
+              result.warningsTruncated
+            );
+            return true;
+          } catch (error) {
+            return failPdfExport();
+          } finally {
+            restoreExportButton();
+          }
+        })();
+      }
+
       let html = '';
       try {
         html = buildPreviewHtml(canonicalDeck);
@@ -168,15 +205,7 @@
       }
       if (!html) return failPdfExport();
 
-      const exportButton = documentRef && typeof documentRef.getElementById === 'function'
-        ? documentRef.getElementById('exportPdfBtn')
-        : null;
       let printFlowAccepted = false;
-      const restoreExportButton = () => {
-        if (exportButton) {
-          exportButton.disabled = !resolveReadyState().canUseDeckActions;
-        }
-      };
       if (exportButton) exportButton.disabled = true;
       setStatus('exporting-pdf');
       try {

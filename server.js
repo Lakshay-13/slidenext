@@ -277,7 +277,7 @@ app.post('/api/export/pdf', async (req, res) => {
     res.setHeader('X-SlideNext-Pdf-Warning-Count', String(preflight.warnings.length));
     res.setHeader(
       'X-SlideNext-Pdf-Warning-Details',
-      preflight.warnings.map((warning) => encodeURIComponent(warning)).join(',')
+      canonicalPdfExport.createStudioPdfWarningDetailsHeader(preflight.warnings)
     );
     return res.send(buffer);
   } catch (err) {

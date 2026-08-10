@@ -11,6 +11,8 @@
   const DEFAULT_PAGE_HEIGHT = '9in';
   const DEFAULT_LOAD_TIMEOUT_MS = 10000;
   const DEFAULT_AFTER_PRINT_TIMEOUT_MS = 2000;
+  const PDF_WARNING_DETAILS_LIMIT = 3;
+  const PDF_WARNING_TEXT_LIMIT = 180;
 
   function hasStudioPdfTimerHandle(timerId) {
     return timerId !== null && typeof timerId !== 'undefined';
@@ -319,6 +321,162 @@
       return printHtml.replace(/<html(?:\s[^>]*)?>/i, `$&<head>${baseTagForInsertion}${styleTag}</head>`);
     }
     return `${baseTagForInsertion}${styleTag}${printHtml}`;
+  }
+
+  function normalizeStudioPdfDownloadFilename(value, fallback = 'slidenext-presentation.pdf') {
+    const candidate = typeof value === 'string' && value.trim() ? value.trim() : fallback;
+    const sanitized = candidate
+      .replace(/^.*[/\\]/, '')
+      .replace(/\.pdf$/i, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replace(/^\.+$/, 'slidenext-presentation');
+    return `${sanitized || 'slidenext-presentation'}.pdf`;
+  }
+
+  function readStudioPdfHeader(response, name) {
+    return response && response.headers && typeof response.headers.get === 'function'
+      ? response.headers.get(name) || ''
+      : '';
+  }
+
+  function getStudioPdfFilenameFromResponse(response, fallback) {
+    const disposition = readStudioPdfHeader(response, 'Content-Disposition');
+    const match = disposition.match(/filename\s*=\s*"([^"]+)"/i)
+      || disposition.match(/filename\s*=\s*([^;]+)/i);
+    return normalizeStudioPdfDownloadFilename(match ? match[1] : fallback);
+  }
+
+  function getStudioPdfWarningCount(response) {
+    const value = Number.parseInt(
+      readStudioPdfHeader(response, 'X-SlideNext-Pdf-Warning-Count'),
+      10
+    );
+    return Number.isFinite(value) && value >= 0 ? value : 0;
+  }
+
+  function getStudioPdfWarningDetails(response) {
+    const encoded = readStudioPdfHeader(response, 'X-SlideNext-Pdf-Warning-Details');
+    if (!encoded) return { warnings: [], warningsTruncated: false };
+    try {
+      const details = JSON.parse(decodeURIComponent(encoded));
+      const warnings = Array.isArray(details && details.warnings)
+        ? details.warnings.filter(warning => typeof warning === 'string' && warning.trim())
+        : [];
+      return {
+        warnings,
+        warningsTruncated: Boolean(details && details.truncated === true)
+      };
+    } catch (error) {
+      return { warnings: [], warningsTruncated: false };
+    }
+  }
+
+  function createStudioPdfWarningDetailsHeader(warnings = []) {
+    const normalizedWarnings = (Array.isArray(warnings) ? warnings : [])
+      .filter(warning => typeof warning === 'string' && warning.trim())
+      .map(warning => warning.trim());
+    const visibleWarnings = normalizedWarnings
+      .slice(0, PDF_WARNING_DETAILS_LIMIT)
+      .map(warning => warning.length > PDF_WARNING_TEXT_LIMIT
+        ? `${warning.slice(0, PDF_WARNING_TEXT_LIMIT - 3)}...`
+        : warning);
+    const hasTruncatedWarningText = visibleWarnings.some((warning, index) => (
+      warning !== normalizedWarnings[index]
+    ));
+    return encodeURIComponent(JSON.stringify({
+      warnings: visibleWarnings,
+      truncated: normalizedWarnings.length > visibleWarnings.length || hasTruncatedWarningText
+    }));
+  }
+
+  function getStudioPdfResponseFailureFallback(response) {
+    const status = Number(response && response.status);
+    return Number.isInteger(status) && status >= 400
+      ? `PDF export request failed (HTTP ${status})`
+      : 'PDF export request failed';
+  }
+
+  async function getStudioPdfResponseFailureMessage(response) {
+    const fallback = getStudioPdfResponseFailureFallback(response);
+    if (!response || typeof response.json !== 'function') return fallback;
+    try {
+      const payload = await response.json();
+      const message = payload && typeof payload.error === 'string' ? payload.error.trim() : '';
+      return message || fallback;
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  async function exportStudioPdf(options = {}) {
+    const fetchImpl = typeof options.fetchImpl === 'function'
+      ? options.fetchImpl
+      : root && typeof root.fetch === 'function'
+        ? root.fetch.bind(root)
+        : null;
+    const documentRef = options.documentRef || (root && root.document);
+    const urlApi = options.urlApi || (root && root.URL);
+    if (!fetchImpl || !documentRef || !documentRef.body || !urlApi
+      || typeof urlApi.createObjectURL !== 'function'
+      || typeof urlApi.revokeObjectURL !== 'function') {
+      return { success: false, error: 'PDF browser export dependencies are unavailable' };
+    }
+    if (!options.canonicalDeck || !Array.isArray(options.canonicalDeck.slides)) {
+      return { success: false, error: 'PDF canonical deck is unavailable' };
+    }
+    if (options.canonicalDeck.slides.length === 0) {
+      return { success: false, error: 'PDF canonical deck is empty' };
+    }
+
+    const endpoint = typeof options.endpoint === 'string' && options.endpoint.trim()
+      ? options.endpoint.trim()
+      : '/api/export/pdf';
+    try {
+      const response = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canonicalDeck: options.canonicalDeck,
+          sourcePath: options.sourcePath || '',
+          ...(options.filename ? { filename: options.filename } : {})
+        })
+      });
+      if (!response || response.ok !== true || typeof response.blob !== 'function') {
+        return {
+          success: false,
+          error: await getStudioPdfResponseFailureMessage(response),
+          response
+        };
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = urlApi.createObjectURL(blob);
+      let anchor = null;
+      try {
+        anchor = documentRef.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.download = getStudioPdfFilenameFromResponse(response, options.filename);
+        documentRef.body.appendChild(anchor);
+        anchor.click();
+      } finally {
+        if (anchor && typeof anchor.remove === 'function') anchor.remove();
+        urlApi.revokeObjectURL(downloadUrl);
+      }
+
+      return {
+        success: true,
+        filename: anchor.download,
+        warningCount: getStudioPdfWarningCount(response),
+        ...getStudioPdfWarningDetails(response)
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error && typeof error.message === 'string' && error.message.trim()
+          ? error.message.trim()
+          : 'PDF export request failed'
+      };
+    }
   }
 
   function validateStudioPdfSlideCount(documentRef, options = {}) {
@@ -766,6 +924,13 @@
     buildStudioPdfPrintStyles,
     escapeStudioPdfAttribute,
     buildStudioPdfPrintHtml,
+    normalizeStudioPdfDownloadFilename,
+    getStudioPdfFilenameFromResponse,
+    getStudioPdfWarningCount,
+    getStudioPdfWarningDetails,
+    createStudioPdfWarningDetailsHeader,
+    getStudioPdfResponseFailureMessage,
+    exportStudioPdf,
     validateStudioPdfSlideCount,
     waitForStudioPdfPrintResources,
     openStudioPdfPrintWindow

@@ -380,6 +380,7 @@ module.exports = {
   DEFAULT_CHROME_TIMEOUT_MS,
   DEFAULT_VIRTUAL_TIME_BUDGET_MS,
   buildCanonicalPdfHtml,
+  createStudioPdfWarningDetailsHeader: pdfExport.createStudioPdfWarningDetailsHeader,
   preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
   resolveCanonicalDeck,
   resolveChromeExecutable,
