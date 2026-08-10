@@ -273,7 +273,7 @@ test('lock and visibility wiring prefers live canonical state and keeps a legacy
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
