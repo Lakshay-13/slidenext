@@ -3258,6 +3258,12 @@
       ? (slide, orderedElements) => SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements)
       : null;
 
+    const studioEditorEditableTargetResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
+      ? (node, options) => SlideNextStudioEditorDom.resolveStudioEditableTarget(node, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6737,7 +6743,16 @@
     }
 
     function resolveEditableTarget(node) {
-      return SlideNextStudioEditorDom.resolveStudioEditableTarget(node, getEditorDomOptions());
+      const editableTargetResolver = typeof studioEditorEditableTargetResolver === 'function'
+        ? studioEditorEditableTargetResolver
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
+          ? (...args) => SlideNextStudioEditorDom.resolveStudioEditableTarget(...args)
+          : null;
+      return typeof editableTargetResolver === 'function'
+        ? editableTargetResolver(node, getEditorDomOptions())
+        : null;
     }
 
     function resolveInlineTextEditTarget(node, slide) {

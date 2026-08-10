@@ -2904,6 +2904,75 @@ test('applySlideLayerOrder fails closed when the shared DOM module is unavailabl
   assert.deepEqual(JSON.parse(JSON.stringify(context.applySlideLayerOrder({}, []))), []);
 });
 
+test('editor composes editable-target resolution through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorEditableTargetResolver =/);
+  assert.match(source, /typeof editableTargetResolver === 'function'/);
+});
+
+test('resolveEditableTarget delegates the node and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editableTargetResolverSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorEditableTargetResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const resolveEditableTargetSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditableTarget(node) {',
+    '\n\n    function resolveInlineTextEditTarget'
+  );
+  const node = { id: 'event-target' };
+  const target = { id: 'editable-target' };
+  const options = { selectableSelector: '[data-editor-id]' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      resolveStudioEditableTarget(nodeValue, optionsValue) {
+        calls.push([nodeValue, optionsValue]);
+        return target;
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${editableTargetResolverSource}\n${resolveEditableTargetSource}`, context);
+
+  assert.equal(context.resolveEditableTarget(node), target);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], node);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('resolveEditableTarget fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editableTargetResolverSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorEditableTargetResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const resolveEditableTargetSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditableTarget(node) {',
+    '\n\n    function resolveInlineTextEditTarget'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${editableTargetResolverSource}\n${resolveEditableTargetSource}`, context);
+
+  assert.equal(context.resolveEditableTarget({}), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
