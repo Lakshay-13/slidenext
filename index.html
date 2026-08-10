@@ -5044,6 +5044,9 @@
     }
 
     function launchStudioEditor(url, title, category) {
+      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+        ? SlideNextStudioEditorPersistence
+        : null;
       const sessionLifecycleController = typeof SlideNextStudioEditorSessionLifecycleController !== 'undefined'
         ? SlideNextStudioEditorSessionLifecycleController
         : null;
@@ -5058,7 +5061,7 @@
             updateSessionState: updateCurrentPresentationSessionState,
             buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
             sessionResetController: studioEditorSessionResetController,
-            persistenceApi: SlideNextStudioEditorPersistence,
+            persistenceApi,
             getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
             setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
             getAutoVersionTimers: getStudioAutoVersionTimers,
@@ -5090,11 +5093,17 @@
           ? studioEditorSessionResetController.reset()
           : false;
         if (!didResetSessionData) {
-          const clearedTimerState = SlideNextStudioEditorPersistence.clearStudioPersistenceTimers({
-            autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-            autoVersionTimers: getStudioAutoVersionTimers(),
-            clearTimer: clearTimeout
-          });
+          const clearedTimerState = persistenceApi
+            && typeof persistenceApi.clearStudioPersistenceTimers === 'function'
+            ? persistenceApi.clearStudioPersistenceTimers({
+                autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
+                autoVersionTimers: getStudioAutoVersionTimers(),
+                clearTimer: clearTimeout
+              })
+            : {
+                autoSaveDebounceTimer: null,
+                autoVersionTimers: {}
+              };
           setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
           setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
           applyCurrentStudioPersistedDeckState({

@@ -296,6 +296,11 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
     '/presentations/onboarding-presentation/index.html',
     1
   ]]);
+
+  context.SlideNextStudioEditorPersistence = null;
+  assert.doesNotThrow(() => {
+    context.launchStudioEditor('/presentations/onboarding-presentation/index.html', 'Project Onboarding', 'General');
+  });
 });
 
 test('launchStudioEditor tolerates missing header labels while bootstrapping the editor shell', () => {
