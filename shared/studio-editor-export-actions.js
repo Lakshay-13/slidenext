@@ -114,6 +114,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const resolveBaseHref = typeof options.resolveBaseHref === 'function'
+      ? options.resolveBaseHref
+      : null;
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
@@ -185,6 +188,14 @@
             pageDimensions = {};
           }
         }
+        let baseHref = '';
+        if (resolveBaseHref) {
+          try {
+            baseHref = resolveBaseHref() || '';
+          } catch (error) {
+            baseHref = '';
+          }
+        }
         const didOpenPrintFlow = pdfExport.openStudioPdfPrintWindow({
           html,
           slideCount: canonicalDeck.slides.length,
@@ -192,6 +203,7 @@
             setStatus('exporting-pdf', progress);
           },
           ...pageDimensions,
+          ...(typeof baseHref === 'string' && baseHref.trim() ? { baseHref } : {}),
           onPrintStart: () => {
             setStatus('pdf-printing');
           },

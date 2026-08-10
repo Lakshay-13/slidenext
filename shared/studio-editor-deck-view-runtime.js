@@ -38,6 +38,7 @@
           pdfExport: options.pdfExport,
           pptxExport: options.pptxExport,
           documentRef: options.documentRef,
+          resolvePdfBaseHref: options.resolvePdfBaseHref,
           setStatus: options.setStatus,
           resolveSourcePath: options.resolveSourcePath,
           resolveFilename: options.resolveFilename

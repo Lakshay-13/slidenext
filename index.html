@@ -2166,6 +2166,14 @@
             ? SlideNextStudioPptxExport
             : null,
           documentRef: document,
+          resolvePdfBaseHref: () => {
+            const deckHtmlApi = typeof SlideNextDeckHtml !== 'undefined'
+              ? SlideNextDeckHtml
+              : null;
+            return deckHtmlApi && typeof deckHtmlApi.buildPresentationBaseHref === 'function'
+              ? deckHtmlApi.buildPresentationBaseHref(getStudioCurrentPresentationUrl())
+              : '';
+          },
           setStatus: (...args) => {
             const statusHandler = typeof setStudioAutoSaveStatusWithWarningCount === 'function'
               ? setStudioAutoSaveStatusWithWarningCount

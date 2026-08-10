@@ -45,6 +45,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const resolvePdfBaseHref = typeof options.resolvePdfBaseHref === 'function'
+      ? options.resolvePdfBaseHref
+      : null;
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
@@ -65,6 +68,7 @@
         isCanonicalDeck,
         pdfExport,
         documentRef,
+        resolveBaseHref: resolvePdfBaseHref,
         setStatus
       })();
     }

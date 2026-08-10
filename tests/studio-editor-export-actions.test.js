@@ -76,6 +76,25 @@ test('PDF export builds preview html from the validated canonical snapshot', () 
   assert.equal(previewDeck, canonicalDeck);
 });
 
+test('PDF export forwards the current presentation base href to the print flow', () => {
+  let printOptions = null;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    resolveBaseHref: () => '/presentations/demo/',
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      openStudioPdfPrintWindow(options) {
+        printOptions = options;
+        return true;
+      }
+    }
+  });
+
+  assert.equal(exportPdf(), true);
+  assert.equal(printOptions.baseHref, '/presentations/demo/');
+});
+
 test('PDF and PPTX exports prefer a valid live canonical baseline before rebuilding', async () => {
   const liveDeck = { slides: [{ id: 'live-slide' }] };
   const rebuiltDeck = { slides: [{ id: 'rebuilt-slide' }] };

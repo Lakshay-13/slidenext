@@ -23,6 +23,7 @@ test('export controller delegates PDF with current shared dependencies', () => {
     getPendingTransaction,
     getCanonicalDeckBaseline,
     isCanonicalDeck,
+    resolvePdfBaseHref: () => '/presentations/demo/',
     pdfExport: { openStudioPdfPrintWindow() {} },
     documentRef: {},
     setStatus() {}
@@ -36,6 +37,7 @@ test('export controller delegates PDF with current shared dependencies', () => {
   assert.equal(calls[0].getPendingTransaction, getPendingTransaction);
   assert.equal(calls[0].getCanonicalDeckBaseline, getCanonicalDeckBaseline);
   assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
+  assert.equal(calls[0].resolveBaseHref(), '/presentations/demo/');
   assert.equal(calls[0].pdfExport.openStudioPdfPrintWindow instanceof Function, true);
 });
 

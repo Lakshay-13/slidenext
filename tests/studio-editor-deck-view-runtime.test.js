@@ -27,6 +27,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     pdfExport: {},
     pptxExport: {},
     documentRef: {},
+    resolvePdfBaseHref() {},
     setStatus() {},
     resolveSourcePath() {},
     resolveFilename() {},
@@ -85,6 +86,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
   assert.equal(calls[0][1].buildCanonicalDeck, callbacks.buildCanonicalDeck);
   assert.equal(calls[0][1].buildMutationCanonicalDeck, callbacks.buildMutationCanonicalDeck);
   assert.equal(calls[0][1].getPendingTransaction, callbacks.getPendingTransaction);
+  assert.equal(calls[0][1].resolvePdfBaseHref, callbacks.resolvePdfBaseHref);
   assert.equal(calls[0][1].pptxExport, callbacks.pptxExport);
   assert.equal(calls[1][1].snapshotApi, callbacks.snapshotApi);
   assert.equal(calls[1][1].buildElementSnapshot, callbacks.buildElementSnapshot);
