@@ -1499,6 +1499,7 @@
   <script src="/shared/studio-editor-presentation-label-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
   <script src="/shared/studio-editor-state-runtime.js"></script>
+  <script src="/shared/studio-editor-state-bridge.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1603,10 +1604,13 @@
         ? studioEditorSessionStateBridge.advanceSessionToken()
         : 0;
     }
-    const studioEditorStateRuntime = typeof SlideNextStudioEditorStateRuntime !== 'undefined'
-      && SlideNextStudioEditorStateRuntime
-      && typeof SlideNextStudioEditorStateRuntime.createStudioEditorStateRuntime === 'function'
-      ? SlideNextStudioEditorStateRuntime.createStudioEditorStateRuntime({
+    const studioEditorStateBridge = typeof SlideNextStudioEditorStateBridge !== 'undefined'
+      && SlideNextStudioEditorStateBridge
+      && typeof SlideNextStudioEditorStateBridge.createStudioEditorStateBridge === 'function'
+      ? SlideNextStudioEditorStateBridge.createStudioEditorStateBridge({
+          runtimeApi: typeof SlideNextStudioEditorStateRuntime !== 'undefined'
+            ? SlideNextStudioEditorStateRuntime
+            : null,
           presentationMetadataApi: typeof SlideNextStudioEditorPresentationMetadataStateStore !== 'undefined'
             ? SlideNextStudioEditorPresentationMetadataStateStore
             : null,
@@ -1621,100 +1625,88 @@
             : null
         })
       : null;
-    const studioEditorPresentationMetadataStateStore = studioEditorStateRuntime
-      ? studioEditorStateRuntime.presentationMetadataStateStore
-      : null;
     function getStudioCurrentPresentationMetadata() {
-      return studioEditorPresentationMetadataStateStore
-        && typeof studioEditorPresentationMetadataStateStore.getPresentationMetadata === 'function'
-        ? studioEditorPresentationMetadataStateStore.getPresentationMetadata()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getPresentationMetadata === 'function'
+        ? studioEditorStateBridge.getPresentationMetadata()
         : null;
     }
     function setStudioCurrentPresentationMetadata(nextMetadata) {
-      return studioEditorPresentationMetadataStateStore
-        && typeof studioEditorPresentationMetadataStateStore.setPresentationMetadata === 'function'
-        ? studioEditorPresentationMetadataStateStore.setPresentationMetadata(nextMetadata)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setPresentationMetadata === 'function'
+        ? studioEditorStateBridge.setPresentationMetadata(nextMetadata)
         : null;
     }
-    const studioEditorPresentationLabelStateStore = studioEditorStateRuntime
-      ? studioEditorStateRuntime.presentationLabelStateStore
-      : null;
     function getStudioPresentationTitle() {
-      return studioEditorPresentationLabelStateStore
-        && typeof studioEditorPresentationLabelStateStore.getTitle === 'function'
-        ? studioEditorPresentationLabelStateStore.getTitle()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getTitle === 'function'
+        ? studioEditorStateBridge.getTitle()
         : '';
     }
     function setStudioPresentationTitle(nextTitle) {
-      return studioEditorPresentationLabelStateStore
-        && typeof studioEditorPresentationLabelStateStore.setTitle === 'function'
-        ? studioEditorPresentationLabelStateStore.setTitle(nextTitle)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setTitle === 'function'
+        ? studioEditorStateBridge.setTitle(nextTitle)
         : false;
     }
     function getStudioPresentationCategory() {
-      return studioEditorPresentationLabelStateStore
-        && typeof studioEditorPresentationLabelStateStore.getCategory === 'function'
-        ? studioEditorPresentationLabelStateStore.getCategory()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getCategory === 'function'
+        ? studioEditorStateBridge.getCategory()
         : '';
     }
     function setStudioPresentationCategory(nextCategory) {
-      return studioEditorPresentationLabelStateStore
-        && typeof studioEditorPresentationLabelStateStore.setCategory === 'function'
-        ? studioEditorPresentationLabelStateStore.setCategory(nextCategory)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setCategory === 'function'
+        ? studioEditorStateBridge.setCategory(nextCategory)
         : false;
     }
-    const studioEditorSlideIndexStore = studioEditorStateRuntime
-      ? studioEditorStateRuntime.slideIndexStore
-      : null;
     function getStudioCurrentSlideIndex() {
-      return studioEditorSlideIndexStore
-        && typeof studioEditorSlideIndexStore.getSlideIndex === 'function'
-        ? studioEditorSlideIndexStore.getSlideIndex()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSlideIndex === 'function'
+        ? studioEditorStateBridge.getSlideIndex()
         : 0;
     }
     function setStudioCurrentSlideIndex(nextValue) {
-      return studioEditorSlideIndexStore
-        && typeof studioEditorSlideIndexStore.setSlideIndex === 'function'
-        ? studioEditorSlideIndexStore.setSlideIndex(nextValue)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setSlideIndex === 'function'
+        ? studioEditorStateBridge.setSlideIndex(nextValue)
         : false;
     }
-    const studioEditorSelectionStateStore = studioEditorStateRuntime
-      ? studioEditorStateRuntime.selectionStateStore
-      : null;
     function getStudioSelectedElements() {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.getSelectedElements === 'function'
-        ? studioEditorSelectionStateStore.getSelectedElements()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSelectedElements === 'function'
+        ? studioEditorStateBridge.getSelectedElements()
         : [];
     }
     function getStudioSelectedElement() {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.getSelectedElement === 'function'
-        ? studioEditorSelectionStateStore.getSelectedElement()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSelectedElement === 'function'
+        ? studioEditorStateBridge.getSelectedElement()
         : null;
     }
     function setStudioSelectionState(nextState = {}) {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.setState === 'function'
-        ? studioEditorSelectionStateStore.setState(nextState)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setSelectionState === 'function'
+        ? studioEditorStateBridge.setSelectionState(nextState)
         : false;
     }
     function clearStudioSelectionState() {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.clear === 'function'
-        ? studioEditorSelectionStateStore.clear()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.clearSelectionState === 'function'
+        ? studioEditorStateBridge.clearSelectionState()
         : false;
     }
     function getStudioPreserveSelectionOnNextActiveSlideSync() {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.getPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorSelectionStateStore.getPreserveSelectionOnNextActiveSlideSync()
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorStateBridge.getPreserveSelectionOnNextActiveSlideSync()
         : false;
     }
     function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
-      return studioEditorSelectionStateStore
-        && typeof studioEditorSelectionStateStore.setPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorSelectionStateStore.setPreserveSelectionOnNextActiveSlideSync(nextValue)
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setPreserveSelectionOnNextActiveSlideSync === 'function'
+        ? studioEditorStateBridge.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
     const studioEditorHistoryRuntime = typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'

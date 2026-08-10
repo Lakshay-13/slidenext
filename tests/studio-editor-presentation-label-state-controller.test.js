@@ -45,7 +45,7 @@ test('editor routes presentation title and category through the shared compositi
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-presentation-label-store\.js/);
-  assert.match(source, /studioEditorPresentationLabelStateStore/);
+  assert.match(source, /studioEditorStateBridge/);
   assert.match(source, /getStudioPresentationTitle\(\)/);
   assert.match(source, /getStudioPresentationCategory\(\)/);
   assert.doesNotMatch(source, /const studioEditorPresentationLabelStateController =/);

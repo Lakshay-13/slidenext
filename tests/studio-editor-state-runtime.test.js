@@ -56,7 +56,7 @@ test('state runtime composes metadata, label, slide, and selection stores', () =
   assert.deepEqual(calls[2][1], { initialSlideIndex: 0 });
 });
 
-test('index wires basic editor state through the runtime module', () => {
+test('index wires basic editor state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -65,7 +65,11 @@ test('index wires basic editor state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorStateRuntime\.createStudioEditorStateRuntime\(/
+    /<script src="\/shared\/studio-editor-state-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorStateBridge\.createStudioEditorStateBridge\(/
   );
   assert.doesNotMatch(
     fileContent,

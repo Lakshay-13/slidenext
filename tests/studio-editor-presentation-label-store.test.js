@@ -60,6 +60,6 @@ test('editor routes presentation labels through the shared composition adapter',
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-presentation-label-store\.js/);
-  assert.match(source, /studioEditorPresentationLabelStateStore/);
+  assert.match(source, /studioEditorStateBridge/);
   assert.doesNotMatch(source, /const studioEditorPresentationLabelStateController =/);
 });

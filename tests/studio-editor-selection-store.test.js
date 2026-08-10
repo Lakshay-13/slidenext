@@ -61,6 +61,6 @@ test('editor routes selection state access through the shared composition adapte
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-selection-store\.js/);
-  assert.match(source, /studioEditorSelectionStateStore/);
+  assert.match(source, /studioEditorStateBridge/);
   assert.doesNotMatch(source, /const studioEditorSelectionStateController =/);
 });

@@ -43,7 +43,7 @@ test('editor wiring routes selection state through the shared controller', () =>
     /<script src="\/shared\/studio-editor-selection-state-controller\.js"><\/script>/
   );
   assert.match(fileContent, /studio-editor-selection-store\.js/);
-  assert.match(fileContent, /studioEditorSelectionStateStore/);
+  assert.match(fileContent, /studioEditorStateBridge/);
   assert.match(fileContent, /getSelectedElements: getStudioSelectedElements/);
   assert.match(fileContent, /getPreserveSelection: getStudioPreserveSelectionOnNextActiveSlideSync/);
   assert.match(fileContent, /setStudioPreserveSelectionOnNextActiveSlideSync\(true\)/);

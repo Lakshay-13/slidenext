@@ -48,6 +48,6 @@ test('editor routes active slide index access through the shared composition ada
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-slide-index-store\.js/);
-  assert.match(source, /studioEditorSlideIndexStore/);
+  assert.match(source, /studioEditorStateBridge/);
   assert.doesNotMatch(source, /const studioEditorSlideIndexController =/);
 });

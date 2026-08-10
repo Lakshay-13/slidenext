@@ -51,6 +51,6 @@ test('editor routes presentation metadata through the shared composition adapter
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-presentation-metadata-store\.js/);
-  assert.match(source, /studioEditorPresentationMetadataStateStore/);
+  assert.match(source, /studioEditorStateBridge/);
   assert.doesNotMatch(source, /const studioEditorPresentationMetadataStateController =/);
 });
