@@ -1521,6 +1521,7 @@
   <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-runtime.js"></script>
+  <script src="/shared/studio-editor-wallpaper-state-bridge.js"></script>
   <script src="/shared/studio-editor-frame-interaction-state-controller.js"></script>
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
@@ -1950,52 +1951,59 @@
     const studioEditorWallpaperStateStore = studioEditorWallpaperStateRuntime
       ? studioEditorWallpaperStateRuntime.wallpaperStateStore
       : null;
+    const studioEditorWallpaperStateBridge = typeof SlideNextStudioEditorWallpaperStateBridge !== 'undefined'
+      && SlideNextStudioEditorWallpaperStateBridge
+      && typeof SlideNextStudioEditorWallpaperStateBridge.createStudioEditorWallpaperStateBridge === 'function'
+      ? SlideNextStudioEditorWallpaperStateBridge.createStudioEditorWallpaperStateBridge({
+          stateStore: studioEditorWallpaperStateStore
+        })
+      : null;
     function getStudioWallpaperTab() {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.getWallpaperTab === 'function'
-        ? studioEditorWallpaperStateStore.getWallpaperTab()
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.getWallpaperTab === 'function'
+        ? studioEditorWallpaperStateBridge.getWallpaperTab()
         : 'solid';
     }
     function setStudioWallpaperTab(nextValue) {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.setWallpaperTab === 'function'
-        ? studioEditorWallpaperStateStore.setWallpaperTab(nextValue)
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.setWallpaperTab === 'function'
+        ? studioEditorWallpaperStateBridge.setWallpaperTab(nextValue)
         : false;
     }
     function setStudioCustomGradientType(nextValue) {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.setCustomGradientType === 'function'
-        ? studioEditorWallpaperStateStore.setCustomGradientType(nextValue)
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.setCustomGradientType === 'function'
+        ? studioEditorWallpaperStateBridge.setCustomGradientType(nextValue)
         : false;
     }
     function getStudioCustomGradientType() {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.getCustomGradientType === 'function'
-        ? studioEditorWallpaperStateStore.getCustomGradientType()
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.getCustomGradientType === 'function'
+        ? studioEditorWallpaperStateBridge.getCustomGradientType()
         : 'linear';
     }
     function resetStudioWallpaperState() {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.reset === 'function'
-        ? studioEditorWallpaperStateStore.reset()
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.reset === 'function'
+        ? studioEditorWallpaperStateBridge.reset()
         : false;
     }
     function getStudioPendingCustomWallpaperVersion() {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.getPendingCustomWallpaperVersion === 'function'
-        ? studioEditorWallpaperStateStore.getPendingCustomWallpaperVersion()
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.getPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateBridge.getPendingCustomWallpaperVersion()
         : false;
     }
     function setStudioPendingCustomWallpaperVersion(nextValue) {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.setPendingCustomWallpaperVersion === 'function'
-        ? studioEditorWallpaperStateStore.setPendingCustomWallpaperVersion(nextValue)
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.setPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateBridge.setPendingCustomWallpaperVersion(nextValue)
         : false;
     }
     function clearStudioPendingCustomWallpaperVersion() {
-      return studioEditorWallpaperStateStore
-        && typeof studioEditorWallpaperStateStore.clearPendingCustomWallpaperVersion === 'function'
-        ? studioEditorWallpaperStateStore.clearPendingCustomWallpaperVersion()
+      return studioEditorWallpaperStateBridge
+        && typeof studioEditorWallpaperStateBridge.clearPendingCustomWallpaperVersion === 'function'
+        ? studioEditorWallpaperStateBridge.clearPendingCustomWallpaperVersion()
         : false;
     }
     const studioEditorSaveButtonStateRuntime = typeof SlideNextStudioEditorSaveButtonStateRuntime !== 'undefined'
