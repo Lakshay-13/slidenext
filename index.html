@@ -6815,12 +6815,15 @@
     }
 
     // Click Selection highlights
+    const studioEditorElementSelector = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.selectStudioElement === 'function'
+      ? (selectionOptions) => SlideNextStudioEditorSelection.selectStudioElement(selectionOptions)
+      : null;
+
     function selectElement(el, options = {}) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.selectStudioElement !== 'function') return false;
-      return selectionApi.selectStudioElement({
+      if (typeof studioEditorElementSelector !== 'function') return false;
+      return studioEditorElementSelector({
         element: el,
         selectedElements: getStudioSelectedElements(),
         additive: options.additive,

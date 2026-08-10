@@ -564,11 +564,20 @@ test('deck mutation finalizer wiring rebuilds canonical state from the mutated D
   );
 });
 
+test('editor composes element selection through the shared selection module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementSelector =/);
+  assert.match(source, /selectStudioElement/);
+  assert.match(source, /if \(typeof studioEditorElementSelector !== 'function'\)/);
+  assert.doesNotMatch(source, /selectElement\.selector/);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
     fileContent,
-    'function selectElement(el, options = {}) {',
+    'const studioEditorElementSelector =',
     '\n\n    function deselectElement() {'
   );
   const selectedElements = [{ id: 'node-1' }];
@@ -603,7 +612,7 @@ test('selectElement fails closed when the shared selection module is unavailable
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
     fileContent,
-    'function selectElement(el, options = {}) {',
+    'const studioEditorElementSelector =',
     '\n\n    function deselectElement() {'
   );
 
