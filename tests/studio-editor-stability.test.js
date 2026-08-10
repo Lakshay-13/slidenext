@@ -2699,6 +2699,74 @@ test('getElementByEditorId fails closed when the shared DOM module is unavailabl
   assert.equal(context.getElementByEditorId('element-1'), null);
 });
 
+test('editor composes slide editable-element collection through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideEditableElementsReader =/);
+  assert.match(source, /typeof slideEditableElementsReader === 'function'/);
+});
+
+test('getSlideEditableElements delegates the slide and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideEditableElementsReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideEditableElementsReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlideEditableElementsSource = extractFunctionSource(
+    fileContent,
+    'function getSlideEditableElements(slide) {',
+    '\n\n    function getNormalizedSlideLayerOrder'
+  );
+  const slide = { id: 'slide-1' };
+  const options = { selectableSelector: '[data-editor-id]' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioSlideEditableElements(slideValue, optionsValue) {
+        calls.push([slideValue, optionsValue]);
+        return ['element-1'];
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideEditableElementsReaderSource}\n${getSlideEditableElementsSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getSlideEditableElements(slide))), ['element-1']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], slide);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('getSlideEditableElements fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideEditableElementsReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideEditableElementsReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getSlideEditableElementsSource = extractFunctionSource(
+    fileContent,
+    'function getSlideEditableElements(slide) {',
+    '\n\n    function getNormalizedSlideLayerOrder'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideEditableElementsReaderSource}\n${getSlideEditableElementsSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.getSlideEditableElements({}))), []);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

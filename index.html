@@ -3240,6 +3240,12 @@
       ? (editorId, doc, options) => SlideNextStudioEditorDom.getElementByEditorId(editorId, doc, options)
       : null;
 
+    const studioEditorSlideEditableElementsReader = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getStudioSlideEditableElements === 'function'
+      ? (slide, options) => SlideNextStudioEditorDom.getStudioSlideEditableElements(slide, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6633,7 +6639,16 @@
     }
 
     function getSlideEditableElements(slide) {
-      return SlideNextStudioEditorDom.getStudioSlideEditableElements(slide, getEditorDomOptions());
+      const slideEditableElementsReader = typeof studioEditorSlideEditableElementsReader === 'function'
+        ? studioEditorSlideEditableElementsReader
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioSlideEditableElements === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioSlideEditableElements(...args)
+          : null;
+      return typeof slideEditableElementsReader === 'function'
+        ? slideEditableElementsReader(slide, getEditorDomOptions())
+        : [];
     }
 
     function getNormalizedSlideLayerOrder(slide) {
