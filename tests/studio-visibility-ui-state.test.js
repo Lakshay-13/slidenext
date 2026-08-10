@@ -39,7 +39,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
 function loadSyncSelectionUiAfterMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function syncSelectionUiAfterMutation() {',
+    'const studioEditorSelectionUiMutationSynchronizer =',
     '\n\n    function finalizeSelectionToggleMutation(versionLabel, options = {}) {'
   );
   vm.runInContext(helperSource, context);

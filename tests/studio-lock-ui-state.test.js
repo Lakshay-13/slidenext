@@ -38,7 +38,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
 function loadSyncSelectionUiAfterMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function syncSelectionUiAfterMutation() {',
+    'const studioEditorSelectionUiMutationSynchronizer =',
     '\n\n    function finalizeSelectionToggleMutation(versionLabel, options = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -92,6 +92,8 @@ function installLockVisibilityController(context) {
 
 test('syncSelectionUiAfterMutation refreshes selection classes before syncing selection chrome', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  assert.match(fileContent, /const studioEditorSelectionUiMutationSynchronizer =/);
+  assert.match(fileContent, /typeof studioEditorSelectionUiMutationSynchronizer !== 'function'/);
   const selectedElements = [{ id: 'node-1' }];
   const calls = [];
   const context = {

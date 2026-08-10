@@ -8063,14 +8063,20 @@
       });
     }
 
+    const studioEditorSelectionUiMutationSynchronizer = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.syncStudioSelectionUiAfterMutation === 'function'
+      ? (selectedElements, options) => SlideNextStudioEditorSelection.syncStudioSelectionUiAfterMutation(
+          selectedElements,
+          options
+        )
+      : null;
+
     function syncSelectionUiAfterMutation() {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.syncStudioSelectionUiAfterMutation !== 'function') {
+      if (typeof studioEditorSelectionUiMutationSynchronizer !== 'function') {
         return getStudioSelectedElements();
       }
-      return selectionApi.syncStudioSelectionUiAfterMutation(getStudioSelectedElements(), {
+      return studioEditorSelectionUiMutationSynchronizer(getStudioSelectedElements(), {
         refreshSelectionClasses,
         syncSelectionOverlay,
         syncInspectorForSelection,
