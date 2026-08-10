@@ -42,6 +42,17 @@ test('buildStudioPdfPrintHtml preserves legacy html fallback and supports safe d
   assert.equal(pdfExport.normalizeDimension('0in', '16in'), '16in');
 });
 
+test('PDF slide selectors reject CSS and markup injection while preserving valid selectors', () => {
+  assert.equal(pdfExport.normalizeSlideSelector('.frame'), '.frame');
+  assert.equal(pdfExport.normalizeSlideSelector('</style><script>alert(1)</script>'), '.slide');
+
+  const html = pdfExport.buildStudioPdfPrintHtml('<div class="slide">A</div>', {
+    slideSelector: '</style><script>alert(1)</script>'
+  });
+  assert.match(html, /\.slide \{/);
+  assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+});
+
 test('buildStudioPdfPrintHtml prepends print styles to html fragments', () => {
   const html = pdfExport.buildStudioPdfPrintHtml('<div class="slide">Fragment</div>');
 

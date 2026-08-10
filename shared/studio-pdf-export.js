@@ -25,6 +25,14 @@
     return normalizedValue;
   }
 
+  function normalizeSlideSelector(value, fallback = '.slide') {
+    const normalizedValue = typeof value === 'string' ? value.trim() : '';
+    if (!normalizedValue || /[\u0000-\u001f\u007f<>{};]/.test(normalizedValue)) {
+      return fallback;
+    }
+    return normalizedValue;
+  }
+
   function resolveStudioPdfPageDimensions(canonicalDeck) {
     const layout = canonicalDeck && typeof canonicalDeck === 'object'
       ? canonicalDeck.layout
@@ -205,9 +213,7 @@
   function buildStudioPdfPrintStyles(options = {}) {
     const pageWidth = normalizeDimension(options.pageWidth, DEFAULT_PAGE_WIDTH);
     const pageHeight = normalizeDimension(options.pageHeight, DEFAULT_PAGE_HEIGHT);
-    const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
-      ? options.slideSelector.trim()
-      : '.slide';
+    const slideSelector = normalizeSlideSelector(options.slideSelector);
 
     return `
 @page {
@@ -327,9 +333,7 @@
       return new Error('PDF slide selector could not be evaluated: querySelectorAll is unavailable');
     }
 
-    const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
-      ? options.slideSelector.trim()
-      : '.slide';
+    const slideSelector = normalizeSlideSelector(options.slideSelector);
     let actualSlideCount = 0;
     try {
       const slides = documentRef.querySelectorAll(slideSelector);
@@ -738,6 +742,7 @@
     DEFAULT_LOAD_TIMEOUT_MS,
     DEFAULT_AFTER_PRINT_TIMEOUT_MS,
     normalizeDimension,
+    normalizeSlideSelector,
     resolveStudioPdfPageDimensions,
     preflightStudioPdfExport,
     buildStudioPdfPrintStyles,
