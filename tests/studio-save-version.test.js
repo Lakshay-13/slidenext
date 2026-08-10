@@ -1468,6 +1468,63 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   assert.equal(saveVersionCalls, 0);
 });
 
+test('executeSaveAutoVersion fails closed when the checkpoint persisted-state checker is unavailable', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const executeSaveAutoVersionSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+  const versionCheckpointPersistenceState = {
+    cleanHtml: '<html>checkpoint</html>',
+    persistenceContext: { presentationUrl: '/presentations/demo/index.html' }
+  };
+  const context = {
+    SlideNextStudioEditorPersistence: {
+      isStudioPersistenceTaskStale() {
+        return false;
+      }
+    },
+    currentPresentationUrl: '/presentations/demo/index.html',
+    studioEditorSessionToken: 9,
+    getIframeDoc() {
+      return { label: 'iframe-doc' };
+    },
+    isCurrentStudioPersistenceTaskStale() {
+      return false;
+    },
+    resolveCurrentStudioVersionCheckpointPersistenceState() {
+      return versionCheckpointPersistenceState;
+    },
+    executeCurrentStudioVersionCheckpointSaveWithFailure() {
+      throw new Error('checkpoint save should not run without the persisted-state checker');
+    },
+    isCurrentDeckStatePersisted() {
+      throw new Error('persisted state should not be read without the checker');
+    },
+    buildEditorSaveRequestBody() {
+      throw new Error('save request should not be built without the checker');
+    },
+    console: {
+      error() {
+        throw new Error('autosave should not report an unavailable checker as a save failure');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(executeSaveAutoVersionSource, context);
+
+  assert.equal(
+    await context.executeSaveAutoVersion(
+      'Auto: Edited Text',
+      '/presentations/demo/index.html',
+      9
+    ),
+    true
+  );
+});
+
 test('executeSaveAutoVersion can save the persisted html baseline when the editor frame is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const executeSaveAutoVersionSource = extractFunctionSource(

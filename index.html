@@ -13212,7 +13212,15 @@
       );
       if (!versionCheckpointPersistenceState) return;
 
-      if (SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted(
+      const isStudioVersionCheckpointSavePersisted = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted
+        : null;
+      if (!isStudioVersionCheckpointSavePersisted) return true;
+      if (isStudioVersionCheckpointSavePersisted(
         label,
         versionCheckpointPersistenceState,
         presentationUrl,
