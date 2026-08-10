@@ -44,6 +44,17 @@ test('canonical PDF input validation rejects malformed and empty decks', () => {
   );
 });
 
+test('canonical PDF artifact validation enforces the one-page-per-slide contract', () => {
+  const artifact = Buffer.from('%PDF-1.7\n/Type /Page\n/Type /Page\n', 'latin1');
+
+  assert.equal(pdfScript.countPdfPages(artifact), 2);
+  assert.equal(pdfScript.validatePdfArtifact(artifact, 2).pageCount, 2);
+  assert.throws(
+    () => pdfScript.validatePdfArtifact(artifact, 1),
+    /PDF slide count mismatch: expected 1, found 2/
+  );
+});
+
 test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
   const inputPath = path.join(temporaryDir, 'deck.json');
@@ -65,7 +76,7 @@ test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { 
     assert.equal(await pdfScript.main([inputPath, outputPath]), 0);
     const pdfBuffer = await fs.readFile(outputPath);
     assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
-    assert.equal((pdfBuffer.toString('latin1').match(/\/Type \/Page\b/g) || []).length >= 2, true);
+    assert.equal(pdfScript.countPdfPages(pdfBuffer), 2);
   } finally {
     await fs.rm(temporaryDir, { recursive: true, force: true });
   }
@@ -75,5 +86,6 @@ test('canonical PDF buffer export reuses the temporary asset server and returns 
   const pdfBuffer = await pdfScript.exportCanonicalPdfBuffer(buildSmokeDeck());
 
   assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
+  assert.equal(pdfScript.countPdfPages(pdfBuffer), 1);
   assert.equal(pdfBuffer.length > 1000, true);
 });

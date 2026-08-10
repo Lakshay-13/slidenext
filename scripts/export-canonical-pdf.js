@@ -73,6 +73,29 @@ function buildCanonicalPdfHtml(deck, baseHref = '') {
   });
 }
 
+function countPdfPages(pdfBuffer) {
+  if (!Buffer.isBuffer(pdfBuffer) && !(pdfBuffer instanceof Uint8Array)) {
+    return 0;
+  }
+  const source = Buffer.from(pdfBuffer).toString('latin1');
+  return (source.match(/\/Type\s*\/Page\b/g) || []).length;
+}
+
+function validatePdfArtifact(pdfBuffer, expectedSlideCount = null) {
+  if (!Buffer.isBuffer(pdfBuffer) && !(pdfBuffer instanceof Uint8Array)) {
+    throw new Error('PDF export did not produce a binary artifact');
+  }
+  const normalizedBuffer = Buffer.from(pdfBuffer);
+  if (normalizedBuffer.subarray(0, 5).toString() !== '%PDF-') {
+    throw new Error('PDF export did not produce a valid PDF artifact');
+  }
+  const pageCount = countPdfPages(normalizedBuffer);
+  if (Number.isInteger(expectedSlideCount) && pageCount !== expectedSlideCount) {
+    throw new Error(`PDF slide count mismatch: expected ${expectedSlideCount}, found ${pageCount}`);
+  }
+  return { buffer: normalizedBuffer, pageCount };
+}
+
 function normalizeRequestPath(requestPath) {
   try {
     const pathname = decodeURIComponent(requestPath || '/');
@@ -329,11 +352,12 @@ async function exportCanonicalPdfBuffer(deck, options = {}) {
   try {
     const html = buildCanonicalPdfHtml(deck, exportServer.assetBaseUrl);
     await fs.writeFile(path.join(exportServer.temporaryDir, 'index.html'), html, 'utf8');
-    return await runChromePdfExport(
+    const pdfBuffer = await runChromePdfExport(
       exportServer.url,
       path.join(exportServer.temporaryDir, 'deck.pdf'),
       options
     );
+    return validatePdfArtifact(pdfBuffer, deck.slides.length).buffer;
   } finally {
     await closeExportServer(exportServer.server, exportServer.temporaryDir);
   }
@@ -380,6 +404,8 @@ module.exports = {
   DEFAULT_CHROME_TIMEOUT_MS,
   DEFAULT_VIRTUAL_TIME_BUDGET_MS,
   buildCanonicalPdfHtml,
+  countPdfPages,
+  validatePdfArtifact,
   createStudioPdfWarningDetailsHeader: pdfExport.createStudioPdfWarningDetailsHeader,
   preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
   resolveCanonicalDeck,
