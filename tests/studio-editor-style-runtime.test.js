@@ -66,3 +66,12 @@ test('index wires style through the runtime module', () => {
     /SlideNextStudioEditorStyleController\.createStudioEditorStyleController\(/
   );
 });
+
+test('index forwards canonical style rebuild options through the editor builder', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    fileContent,
+    /buildCanonicalDeck: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
+  );
+});
