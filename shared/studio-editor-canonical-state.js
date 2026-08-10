@@ -44,12 +44,25 @@
       return null;
     }
 
+    function hasOwnerConflict(owner = {}) {
+      const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
+      const hasIncomingDocument = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
+      const hasIncomingSession = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
+      return (hasDocumentOwner
+        && (!hasIncomingDocument || resolvedOwner.documentRef !== ownerDocument))
+        || (hasSessionOwner
+          && (!hasIncomingSession || resolvedOwner.sessionToken !== ownerSessionToken));
+    }
+
     function set(nextCanonicalDeck, owner = {}) {
       if (!isValidCanonicalDeck(nextCanonicalDeck)) {
         return reset();
       }
 
       const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
+      if (canonicalDeck && hasOwnerConflict(resolvedOwner)) {
+        return null;
+      }
       canonicalDeck = nextCanonicalDeck;
       hasDocumentOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
       hasSessionOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
