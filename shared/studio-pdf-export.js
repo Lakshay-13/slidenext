@@ -58,7 +58,7 @@
     const layout = node && node.layout && typeof node.layout === 'object'
       ? node.layout
       : null;
-    if (!layout || !['absolute', 'fixed'].includes(layout.mode)) return null;
+    if (!layout || !['absolute', 'fixed', 'freeform'].includes(layout.mode)) return null;
     const x = Number.isFinite(layout.x) ? layout.x : null;
     const y = Number.isFinite(layout.y) ? layout.y : null;
     const width = Number.isFinite(layout.width) ? layout.width : null;

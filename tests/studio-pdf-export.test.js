@@ -234,6 +234,44 @@ test('preflightStudioPdfExport uses measured flow bounds for nested overflow dia
   ]);
 });
 
+test('preflightStudioPdfExport uses explicit canonical freeform bounds', () => {
+  const report = pdfExport.preflightStudioPdfExport({
+    layout: { size: { width: 1000, height: 500, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'freeform-panel',
+        layout: {
+          mode: 'freeform',
+          x: 900,
+          y: 0,
+          width: 200,
+          height: 100
+        },
+        children: [{
+          id: 'freeform-child',
+          layout: {
+            mode: 'freeform',
+            x: 150,
+            y: 0,
+            width: 100,
+            height: 40
+          }
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.overflowNodes.map((node) => ({
+    id: node.id,
+    x: node.x,
+    y: node.y
+  })), [
+    { id: 'freeform-panel', x: 900, y: 0 },
+    { id: 'freeform-child', x: 1050, y: 0 }
+  ]);
+});
+
 test('validateStudioPdfSlideCount fails closed when the print document has the wrong number of slides', () => {
   assert.equal(
     pdfExport.validateStudioPdfSlideCount({
