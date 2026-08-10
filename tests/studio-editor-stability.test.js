@@ -1459,6 +1459,61 @@ test('setElementLockedState ignores writes when the shared element state module 
   assert.equal(context.setElementLockedState({ id: 'element-1' }, true), undefined);
 });
 
+test('editor composes duplicated-subtree sanitization through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorDuplicatedSubtreeSanitizer =/);
+  assert.match(source, /sanitizeStudioDuplicatedSubtree/);
+  assert.match(source, /typeof studioEditorDuplicatedSubtreeSanitizer !== 'function'/);
+  assert.doesNotMatch(source, /sanitizeDuplicatedSubtree\.sanitizer/);
+});
+
+test('sanitizeDuplicatedSubtree delegates the root and stable sanitization options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorDuplicatedSubtreeSanitizer =',
+    '\n\n    function buildClipboardPayload('
+  );
+  const root = { id: 'root-1' };
+  const calls = [];
+  const context = {
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    SlideNextStudioElementState: {
+      sanitizeStudioDuplicatedSubtree(rootValue, options) {
+        calls.push([rootValue, options]);
+        return 'ignored';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(sanitizerSource, context);
+
+  assert.equal(context.sanitizeDuplicatedSubtree(root), undefined);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], root);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), {
+    editorElementIdAttr: 'data-editor-id',
+    transientClassNames: ['editor-selected', 'editor-dragging']
+  });
+});
+
+test('sanitizeDuplicatedSubtree fails closed when the shared element state module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const sanitizerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorDuplicatedSubtreeSanitizer =',
+    '\n\n    function buildClipboardPayload('
+  );
+  const context = { EDITOR_ELEMENT_ID_ATTR: 'data-editor-id', SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(sanitizerSource, context);
+
+  assert.equal(context.sanitizeDuplicatedSubtree({ id: 'root-1' }), undefined);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

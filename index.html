@@ -8360,8 +8360,15 @@
       return canSave;
     }
 
+    const studioEditorDuplicatedSubtreeSanitizer = typeof SlideNextStudioElementState !== 'undefined'
+      && SlideNextStudioElementState
+      && typeof SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree === 'function'
+      ? (root, options) => SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree(root, options)
+      : null;
+
     function sanitizeDuplicatedSubtree(root) {
-      SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree(root, {
+      if (typeof studioEditorDuplicatedSubtreeSanitizer !== 'function') return;
+      studioEditorDuplicatedSubtreeSanitizer(root, {
         editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
         transientClassNames: ['editor-selected', 'editor-dragging']
       });
