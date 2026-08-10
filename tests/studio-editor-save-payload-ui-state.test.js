@@ -1748,6 +1748,29 @@ test('applyCurrentStudioPersistenceFailure creates the shared persistence-state 
   assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
 });
 
+test('applyCurrentStudioPersistenceFailure fails closed when the shared failure handler is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioPersistenceFailureSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceFailure(',
+    '\n\n    function applyCurrentStudioPersistenceSuccess('
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    createCurrentStudioPersistenceHandlerOptions() {
+      throw new Error('handler options should not be built without a failure handler');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioPersistenceFailureSource, context);
+
+  assert.equal(
+    context.applyCurrentStudioPersistenceFailure({ id: 'failure' }),
+    false
+  );
+});
+
 test('applyCurrentStudioPersistenceSuccess reuses the shared success handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applyCurrentStudioPersistenceSuccessSource = extractFunctionSource(
