@@ -1116,6 +1116,60 @@ test('isElementFreeformPositioned fails closed when the shared transform module 
   assert.equal(context.isElementFreeformPositioned({ id: 'element-1' }), false);
 });
 
+test('editor composes transform selection-state building through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorTransformSelectionStateBuilder =/);
+  assert.match(source, /buildStudioTransformSelectionState/);
+  assert.match(source, /typeof studioEditorTransformSelectionStateBuilder === 'function'/);
+  assert.doesNotMatch(source, /getTransformSelectionState\.builder/);
+});
+
+test('transform selection-state building delegates elements and options to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectionStateSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorTransformSelectionStateBuilder =',
+    'const studioEditorTransformRuntime ='
+  );
+  const elements = [{ id: 'element-1' }];
+  const options = { isLocked: () => false };
+  const calls = [];
+  const state = { canTransform: true, selection: elements };
+  const context = {
+    SlideNextStudioEditorTransform: {
+      buildStudioTransformSelectionState(elementsValue, optionsValue) {
+        calls.push([elementsValue, optionsValue]);
+        return state;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(selectionStateSource, context);
+
+  const builder = vm.runInContext('studioEditorTransformSelectionStateBuilder', context);
+  assert.equal(builder(elements, options), state);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], elements);
+  assert.equal(calls[0][1].isLocked, options.isLocked);
+});
+
+test('transform selection-state building fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectionStateSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorTransformSelectionStateBuilder =',
+    'const studioEditorTransformRuntime ='
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(selectionStateSource, context);
+
+  assert.equal(vm.runInContext('studioEditorTransformSelectionStateBuilder', context), null);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(

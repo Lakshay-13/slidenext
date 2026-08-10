@@ -3146,6 +3146,12 @@
         : false;
     }
 
+    const studioEditorTransformSelectionStateBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'
+      && SlideNextStudioEditorTransform
+      && typeof SlideNextStudioEditorTransform.buildStudioTransformSelectionState === 'function'
+      ? (elements, options) => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -7011,6 +7017,13 @@
 
     function getTransformSelectionState(elements = getStudioSelectedElements()) {
       const doc = getIframeDoc();
+      const selectionStateBuilder = typeof studioEditorTransformSelectionStateBuilder === 'function'
+        ? studioEditorTransformSelectionStateBuilder
+        : typeof SlideNextStudioEditorTransform !== 'undefined'
+          && SlideNextStudioEditorTransform
+          && typeof SlideNextStudioEditorTransform.buildStudioTransformSelectionState === 'function'
+          ? (...args) => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(...args)
+          : null;
       const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
         ? isElementFreeformPositioned
         : typeof SlideNextStudioEditorTransform !== 'undefined'
@@ -7020,14 +7033,16 @@
           : () => false;
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
-      return SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, {
-        isLocked: readLockedState,
-        isHidden: readHiddenState,
-        isFreeformPositioned: getEditorCanonicalFreeformReader(
-          doc,
-          freeformPositionFallback
-        )
-      });
+      return typeof selectionStateBuilder === 'function'
+        ? selectionStateBuilder(elements, {
+            isLocked: readLockedState,
+            isHidden: readHiddenState,
+            isFreeformPositioned: getEditorCanonicalFreeformReader(
+              doc,
+              freeformPositionFallback
+            )
+          })
+        : null;
     }
 
     function selectionHasLockedElements(elements = getStudioSelectedElements()) {
