@@ -6643,11 +6643,7 @@
     function applySlideLayerOrder(slide, orderedElements) {
       const slideLayerOrderWriter = typeof studioEditorSlideLayerOrderWriter === 'function'
         ? studioEditorSlideLayerOrderWriter
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.applyStudioSlideLayerOrder === 'function'
-          ? (...args) => SlideNextStudioEditorDom.applyStudioSlideLayerOrder(...args)
-          : null;
+        : null;
       return typeof slideLayerOrderWriter === 'function'
         ? slideLayerOrderWriter(slide, orderedElements)
         : [];

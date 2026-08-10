@@ -2947,9 +2947,15 @@ test('getNormalizedSlideLayerOrder fails closed when the shared DOM module is un
 
 test('editor composes slide layer-order writes through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applySlideLayerOrderSource = extractFunctionSource(
+    source,
+    'function applySlideLayerOrder(slide, orderedElements) {',
+    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+  );
 
   assert.match(source, /const studioEditorSlideLayerOrderWriter =/);
   assert.match(source, /typeof slideLayerOrderWriter === 'function'/);
+  assert.doesNotMatch(applySlideLayerOrderSource, /SlideNextStudioEditorDom\.applyStudioSlideLayerOrder/);
 });
 
 test('applySlideLayerOrder delegates the slide and ordered elements to the shared DOM module', () => {
