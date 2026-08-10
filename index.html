@@ -5332,11 +5332,7 @@
     function makeElementsHoverable(root) {
       const hoverableElementDecorator = typeof studioEditorHoverableElementDecorator === 'function'
         ? studioEditorHoverableElementDecorator
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.makeStudioElementsHoverable === 'function'
-          ? (...args) => SlideNextStudioEditorDom.makeStudioElementsHoverable(...args)
-          : null;
+        : null;
       return typeof hoverableElementDecorator === 'function'
         ? hoverableElementDecorator(root, getEditorDomOptions())
         : [];

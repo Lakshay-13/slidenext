@@ -2442,6 +2442,12 @@ test('editor composes hoverable-element decoration through the shared DOM module
 
   assert.match(source, /const studioEditorHoverableElementDecorator =/);
   assert.match(source, /typeof hoverableElementDecorator === 'function'/);
+  const makeElementsHoverableSource = extractFunctionSource(
+    source,
+    'function makeElementsHoverable(root) {',
+    '\n\n    // Render visual Slide Organizer thumbnails'
+  );
+  assert.doesNotMatch(makeElementsHoverableSource, /SlideNextStudioEditorDom\.makeStudioElementsHoverable/);
 });
 
 test('makeElementsHoverable delegates the root and DOM options to the shared DOM module', () => {
