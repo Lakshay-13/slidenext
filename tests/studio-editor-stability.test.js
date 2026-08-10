@@ -1826,6 +1826,25 @@ test('editor runtime wiring uses the composed positioned-ancestor resolver', () 
   );
 });
 
+test('motion and group action-state builders reuse the composed positioned-ancestor resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const motionSource = extractFunctionSource(
+    fileContent,
+    'function buildMotionSelectionActionState(doc = null) {',
+    '\n\n    function buildAlignmentActionState'
+  );
+  const groupSource = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
+
+  for (const source of [motionSource, groupSource]) {
+    assert.match(source, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
+    assert.doesNotMatch(source, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
+  }
+});
+
 test('editor composes active-slide lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

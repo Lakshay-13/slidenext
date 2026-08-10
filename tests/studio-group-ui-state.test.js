@@ -215,6 +215,9 @@ test('buildGroupSelectionActionState requires a complete same-parent freeform se
     getSlideMetrics() {
       return { scaleX: 1 };
     },
+    getEditorClosestPositionedAncestor() {
+      return parent;
+    },
     SlideNextStudioEditorTransform: {
       buildStudioPositionedLayoutItems() {
         return layoutItems;

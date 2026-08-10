@@ -7620,11 +7620,7 @@
           : () => [];
       const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
         ? getEditorClosestPositionedAncestor
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
-          : () => null;
+        : () => null;
       const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
         ? SlideNextStudioEditorNudge
         : null;
@@ -7762,11 +7758,7 @@
           : () => [];
       const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
         ? getEditorClosestPositionedAncestor
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
-          : () => null;
+        : () => null;
       const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
         ? isElementFreeformPositioned
         : typeof SlideNextStudioEditorTransform !== 'undefined'
