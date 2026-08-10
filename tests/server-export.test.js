@@ -15,6 +15,9 @@ function listenOnEphemeralPort(server) {
 }
 
 function closeServer(server) {
+  if (typeof server.closeAllConnections === 'function') {
+    server.closeAllConnections();
+  }
   return new Promise((resolve, reject) => {
     server.close((error) => error ? reject(error) : resolve());
   });
@@ -57,6 +60,28 @@ test('PPTX export route returns a real generalized PPTX response', async (t) => 
   assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '0');
   const buffer = Buffer.from(await response.arrayBuffer());
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
+});
+
+test('PDF export route returns a real generalized PDF response', { skip: !require('../scripts/export-canonical-pdf.js').resolveChromeExecutable() }, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/export/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      canonicalDeck: buildRuntimeSmokeDeck(),
+      filename: 'Runtime export.pdf'
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type') || '', /application\/pdf/);
+  assert.match(response.headers.get('content-disposition') || '', /Runtime_export\.pdf/);
+  assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '0');
+  const buffer = Buffer.from(await response.arrayBuffer());
+  assert.equal(buffer.subarray(0, 5).toString(), '%PDF-');
 });
 
 test('PPTX export route resolves root-relative presentation assets', async (t) => {

@@ -11,6 +11,7 @@ const {
 const presentationMetadata = require('./shared/presentation-metadata');
 const presentationCreation = require('./shared/presentation-creation');
 const canonicalPptxExport = require('./shared/canonical-pptx-export');
+const canonicalPdfExport = require('./scripts/export-canonical-pdf');
 const { isPathWithin } = require('./shared/path-boundary');
 
 const app = express();
@@ -177,6 +178,15 @@ function normalizePptxDownloadFilename(filename, title = '') {
   return `${baseName || 'slidenext-presentation'}.pptx`;
 }
 
+function normalizePdfDownloadFilename(filename, title = '') {
+  const fallback = title || 'slidenext-presentation';
+  const baseName = path.basename(typeof filename === 'string' && filename.trim() ? filename : fallback)
+    .replace(/\.pdf$/i, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/^\.+$/, 'slidenext-presentation');
+  return `${baseName || 'slidenext-presentation'}.pdf`;
+}
+
 function resolveProvidedCanonicalDeck(canonicalDeck) {
   if (canonicalDeck === undefined || canonicalDeck === null) {
     return null;
@@ -243,6 +253,36 @@ app.post('/api/export/pptx', async (req, res) => {
   } catch (err) {
     console.error('Error exporting PPTX:', err);
     return res.status(500).json({ error: `Failed to export PPTX: ${err.message}` });
+  }
+});
+
+app.post('/api/export/pdf', async (req, res) => {
+  const { canonicalDeck, filename, sourcePath } = req.body || {};
+  const resolvedCanonicalDeck = await resolveExportCanonicalDeck(canonicalDeck, sourcePath);
+  if (!resolvedCanonicalDeck) {
+    return res.status(400).json({ error: 'Invalid canonicalDeck' });
+  }
+  if (resolvedCanonicalDeck.slides.length === 0) {
+    return res.status(400).json({ error: 'Cannot export an empty deck' });
+  }
+
+  const preflight = canonicalPdfExport.preflightStudioPdfExport(resolvedCanonicalDeck);
+  try {
+    const buffer = await canonicalPdfExport.exportCanonicalPdfBuffer(resolvedCanonicalDeck, {
+      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || resolvedCanonicalDeck.metadata?.sourcePath)
+    });
+    const downloadFilename = normalizePdfDownloadFilename(filename, resolvedCanonicalDeck.metadata?.title);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+    res.setHeader('X-SlideNext-Pdf-Warning-Count', String(preflight.warnings.length));
+    res.setHeader(
+      'X-SlideNext-Pdf-Warning-Details',
+      preflight.warnings.map((warning) => encodeURIComponent(warning)).join(',')
+    );
+    return res.send(buffer);
+  } catch (err) {
+    console.error('Error exporting PDF:', err);
+    return res.status(500).json({ error: `Failed to export PDF: ${err.message}` });
   }
 });
 

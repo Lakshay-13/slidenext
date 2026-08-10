@@ -323,6 +323,22 @@ async function runChromePdfExport(url, outputPath, options = {}) {
   }
 }
 
+async function exportCanonicalPdfBuffer(deck, options = {}) {
+  const assetBaseDir = path.resolve(options.assetBaseDir || WORKSPACE_ROOT);
+  const exportServer = await startExportServer('', assetBaseDir);
+  try {
+    const html = buildCanonicalPdfHtml(deck, exportServer.assetBaseUrl);
+    await fs.writeFile(path.join(exportServer.temporaryDir, 'index.html'), html, 'utf8');
+    return await runChromePdfExport(
+      exportServer.url,
+      path.join(exportServer.temporaryDir, 'deck.pdf'),
+      options
+    );
+  } finally {
+    await closeExportServer(exportServer.server, exportServer.temporaryDir);
+  }
+}
+
 async function main(argv = process.argv.slice(2), options = {}) {
   const [inputPath, outputPath] = argv;
   if (!inputPath || !outputPath) {
@@ -340,15 +356,12 @@ async function main(argv = process.argv.slice(2), options = {}) {
     preflight.warnings.forEach((warning) => console.error(`- ${warning}`));
   }
 
-  const exportServer = await startExportServer('', path.dirname(resolvedInputPath));
-  try {
-    const html = buildCanonicalPdfHtml(deck, exportServer.assetBaseUrl);
-    await fs.writeFile(path.join(exportServer.temporaryDir, 'index.html'), html, 'utf8');
-    await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
-    await runChromePdfExport(exportServer.url, resolvedOutputPath, options);
-  } finally {
-    await closeExportServer(exportServer.server, exportServer.temporaryDir);
-  }
+  const pdfBuffer = await exportCanonicalPdfBuffer(deck, {
+    ...options,
+    assetBaseDir: path.dirname(resolvedInputPath)
+  });
+  await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
+  await fs.writeFile(resolvedOutputPath, pdfBuffer);
 
   console.log(`Exported ${deck.slides.length} slide(s) to ${resolvedOutputPath}`);
   return 0;
@@ -367,9 +380,11 @@ module.exports = {
   DEFAULT_CHROME_TIMEOUT_MS,
   DEFAULT_VIRTUAL_TIME_BUDGET_MS,
   buildCanonicalPdfHtml,
+  preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
   resolveCanonicalDeck,
   resolveChromeExecutable,
   runChromePdfExport,
+  exportCanonicalPdfBuffer,
   startExportServer,
   closeExportServer,
   main

@@ -70,3 +70,10 @@ test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { 
     await fs.rm(temporaryDir, { recursive: true, force: true });
   }
 });
+
+test('canonical PDF buffer export reuses the temporary asset server and returns a valid artifact', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
+  const pdfBuffer = await pdfScript.exportCanonicalPdfBuffer(buildSmokeDeck());
+
+  assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
+  assert.equal(pdfBuffer.length > 1000, true);
+});
