@@ -7710,10 +7710,19 @@
       }
 
       const motionActionState = buildMotionSelectionActionState(doc);
+      if (!alignmentApi || typeof alignmentApi.buildStudioAlignmentActionState !== 'function') {
+        return {
+          ...motionActionState,
+          alignmentActionState: {
+            selection: [],
+            canAlign: false
+          }
+        };
+      }
       const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
         ? getEditorCanonicalVisibilityReader('locked', doc || getIframeDoc(), isElementLocked)
         : isElementLocked;
-      const alignmentActionState = SlideNextStudioEditorAlignment.buildStudioAlignmentActionState(
+      const alignmentActionState = alignmentApi.buildStudioAlignmentActionState(
         motionActionState.nudgeLayoutItems,
         {
           isLocked: readLockedState,

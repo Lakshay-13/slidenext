@@ -86,6 +86,32 @@ test('buildAlignmentActionState reuses valid nudge layout geometry for alignment
   assert.equal(result.nudgeLayoutItems, layoutItems);
 });
 
+test('buildAlignmentActionState fails closed when the shared alignment runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildAlignmentActionState(doc = null) {',
+    '\n\n    function updateAlignmentActionState'
+  );
+  const context = {
+    buildMotionSelectionActionState() {
+      return {
+        slide: { id: 'slide-1' },
+        nudgeLayoutItems: [{ element: { id: 'node-1' } }],
+        canNudge: true
+      };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  const result = context.buildAlignmentActionState();
+  assert.equal(result.canNudge, true);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.alignmentActionState.selection)), []);
+  assert.equal(result.alignmentActionState.canAlign, false);
+});
+
 test('updateAlignmentActionState enables all positional controls only when alignment is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
