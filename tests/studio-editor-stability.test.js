@@ -912,6 +912,56 @@ test('clearMarqueeSelection passes overlay context to the shared overlay module'
   assert.deepEqual(calls[0].marker, 'overlay-options');
 });
 
+test('editor composes slide metrics through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideMetricsReader =/);
+  assert.match(source, /getStudioSlideMetrics/);
+  assert.match(source, /typeof studioEditorSlideMetricsReader === 'function'/);
+  assert.doesNotMatch(source, /getSlideMetrics\.reader/);
+});
+
+test('getSlideMetrics delegates the slide to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideMetricsSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideMetricsReader =',
+    '\n\n    function getRectOnSlide(rect, slideMetrics) {'
+  );
+  const slide = { id: 'slide-1' };
+  const calls = [];
+  const metrics = { logicalWidth: 1280, logicalHeight: 720 };
+  const context = {
+    SlideNextStudioEditorTransform: {
+      getStudioSlideMetrics(value) {
+        calls.push(value);
+        return metrics;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(slideMetricsSource, context);
+
+  assert.equal(context.getSlideMetrics(slide), metrics);
+  assert.deepEqual(calls, [slide]);
+});
+
+test('getSlideMetrics fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideMetricsSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideMetricsReader =',
+    '\n\n    function getRectOnSlide(rect, slideMetrics) {'
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(slideMetricsSource, context);
+
+  assert.equal(context.getSlideMetrics({ id: 'slide-1' }), null);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(

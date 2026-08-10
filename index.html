@@ -6723,8 +6723,16 @@
         : false;
     }
 
+    const studioEditorSlideMetricsReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+      && SlideNextStudioEditorTransform
+      && typeof SlideNextStudioEditorTransform.getStudioSlideMetrics === 'function'
+      ? (slide) => SlideNextStudioEditorTransform.getStudioSlideMetrics(slide)
+      : null;
+
     function getSlideMetrics(slide) {
-      return SlideNextStudioEditorTransform.getStudioSlideMetrics(slide);
+      return typeof studioEditorSlideMetricsReader === 'function'
+        ? studioEditorSlideMetricsReader(slide)
+        : null;
     }
 
     function getRectOnSlide(rect, slideMetrics) {
