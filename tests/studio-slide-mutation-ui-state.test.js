@@ -20,6 +20,15 @@ const routingController = require('../shared/studio-editor-slide-routing-control
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
+test('editor composes committed selection restore through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorCommittedSelectionRestorer =/);
+  assert.match(source, /restoreCommittedStudioSelectionByIdsOnActiveSlide/);
+  assert.match(source, /if \(typeof studioEditorCommittedSelectionRestorer !== 'function'\)/);
+  assert.doesNotMatch(source, /restoreCommittedSelectionByIdsOnActiveSlide\.restorer/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -207,7 +216,7 @@ function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
 function loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {',
+    'const studioEditorCommittedSelectionRestorer =',
     '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
@@ -546,7 +555,7 @@ test('restoreCommittedSelectionByIdsOnActiveSlide fails closed when the shared s
   vm.runInContext(
     extractFunctionSource(
       fileContent,
-      'function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {',
+      'const studioEditorCommittedSelectionRestorer =',
       '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
     ),
     context

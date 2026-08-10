@@ -6547,24 +6547,27 @@
       return nextSelectionState.restored;
     }
 
+    const studioEditorCommittedSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide === 'function'
+      ? (selectedIds, doc, options = {}) => SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide(
+          selectedIds,
+          doc,
+          {
+            ...getEditorSelectionOptions({ doc }),
+            applySelectionState: applyEditorSelectionState,
+            syncSelectionOverlay,
+            hideDragHud,
+            hideDragHudOnClear: !!options.hideDragHudOnClear,
+            syncInspectorForSelection,
+            updateLayersList
+          }
+        )
+      : null;
+
     function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.restoreCommittedStudioSelectionByIdsOnActiveSlide !== 'function') return false;
-      const nextSelectionState = selectionApi.restoreCommittedStudioSelectionByIdsOnActiveSlide(
-        selectedIds,
-        doc,
-        {
-          ...getEditorSelectionOptions({ doc }),
-          applySelectionState: applyEditorSelectionState,
-          syncSelectionOverlay,
-          hideDragHud,
-          hideDragHudOnClear: !!options.hideDragHudOnClear,
-          syncInspectorForSelection,
-          updateLayersList
-        }
-      );
+      if (typeof studioEditorCommittedSelectionRestorer !== 'function') return false;
+      const nextSelectionState = studioEditorCommittedSelectionRestorer(selectedIds, doc, options);
       return nextSelectionState.restored;
     }
 
