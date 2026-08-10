@@ -85,6 +85,7 @@
           getPresentationUrl: options.getPresentationUrl,
           getSessionToken: options.getSessionToken,
           setLiveCanonicalDeck: options.setLiveCanonicalDeck,
+          getInitialCanonicalDeck: options.getInitialCanonicalDeck,
           updateDeckReadyToolbarActionState: options.updateDeckReadyToolbarActionState,
           setStudioAutoSaveStatus: options.setStudioAutoSaveStatus,
           syncInspectorForSelection: options.syncInspectorForSelection

@@ -3945,6 +3945,7 @@
           setLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
             ? setEditorLiveCanonicalDeck
             : null,
+          getInitialCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
           updateDeckReadyToolbarActionState,
           setStudioAutoSaveStatus,
           syncInspectorForSelection

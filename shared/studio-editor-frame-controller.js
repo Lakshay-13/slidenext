@@ -63,6 +63,9 @@
     const setLiveCanonicalDeck = typeof options.setLiveCanonicalDeck === 'function'
       ? options.setLiveCanonicalDeck
       : null;
+    const getInitialCanonicalDeck = typeof options.getInitialCanonicalDeck === 'function'
+      ? options.getInitialCanonicalDeck
+      : null;
     const updateDeckReadyToolbarActionState = typeof options.updateDeckReadyToolbarActionState === 'function'
       ? options.updateDeckReadyToolbarActionState
       : () => {};
@@ -122,6 +125,18 @@
       resetLiveCanonicalDeck();
       const iframeDoc = getIframeDocument();
       if (!iframeDoc) return false;
+
+      if (getInitialCanonicalDeck && setLiveCanonicalDeck) {
+        let initialCanonicalDeck = null;
+        try {
+          initialCanonicalDeck = getInitialCanonicalDeck();
+        } catch (error) {
+          initialCanonicalDeck = null;
+        }
+        if (initialCanonicalDeck) {
+          setLiveCanonicalDeck(initialCanonicalDeck, iframeDoc, getSessionToken());
+        }
+      }
 
       syncIframeTheme();
       if (editorStyleApi && typeof editorStyleApi.ensureStudioEditorStyle === 'function') {

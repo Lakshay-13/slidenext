@@ -148,6 +148,39 @@ test('frame controller captures the canonical initial history baseline through i
   ]);
 });
 
+test('frame controller seeds the stored canonical model for the current iframe before bootstrap', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    resetLiveCanonicalDeck() {
+      calls.push('reset');
+    },
+    getIframeDocument: () => iframeDoc,
+    getInitialCanonicalDeck() {
+      calls.push('getInitialCanonicalDeck');
+      return canonicalDeck;
+    },
+    getSessionToken: () => 12,
+    setLiveCanonicalDeck(...args) {
+      calls.push(['setLiveCanonicalDeck', ...args]);
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap() {
+        calls.push('bootstrap');
+      }
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, [
+    'reset',
+    'getInitialCanonicalDeck',
+    ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, 12],
+    'bootstrap'
+  ]);
+});
+
 test('frame controller keeps bootstrap alive when initial persistence capture fails', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const calls = [];

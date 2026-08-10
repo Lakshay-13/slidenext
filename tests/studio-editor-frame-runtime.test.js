@@ -62,6 +62,7 @@ test('frame runtime composes transient state, interactions, and frame controller
     getPresentationUrl() {},
     getSessionToken() {},
     setLiveCanonicalDeck() {},
+    getInitialCanonicalDeck() {},
     updateDeckReadyToolbarActionState() {},
     setStudioAutoSaveStatus() {},
     syncInspectorForSelection() {}
@@ -104,6 +105,7 @@ test('frame runtime composes transient state, interactions, and frame controller
   assert.equal(calls[2][1].frameInteractions, frameInteractions);
   assert.equal(calls[2][1].getIframeDocument, callbacks.getIframeDocument);
   assert.equal(calls[2][1].persistenceApi, callbacks.persistenceApi);
+  assert.equal(calls[2][1].getInitialCanonicalDeck, callbacks.getInitialCanonicalDeck);
 });
 
 test('index wires frame editing composition through the runtime module', () => {
