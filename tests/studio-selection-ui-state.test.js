@@ -904,3 +904,28 @@ test('getEditorHistoryStackOptions forwards sanitizer overrides into the underly
   assert.equal(options.areEntriesEqual('a', 'a'), true);
   assert.equal(options.maxUndoEntries, 50);
 });
+
+test('getEditorHistoryStackOptions omits unavailable history normalizers safely', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorHistoryStackOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorHistoryStackOptions(options = {}) {',
+    '\n\n    function assignEditorSlideId(slide, options = {}) {'
+  );
+  const context = {
+    getEditorHistoryOptions() {
+      return { source: 'fallback' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorHistoryStackOptionsSource, context);
+
+  const options = context.getEditorHistoryStackOptions();
+  assert.deepEqual(JSON.parse(JSON.stringify(options)), {
+    source: 'fallback',
+    maxUndoEntries: 50
+  });
+  assert.equal(options.normalizeEntry, undefined);
+  assert.equal(options.areEntriesEqual, undefined);
+});

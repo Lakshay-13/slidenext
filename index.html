@@ -5781,10 +5781,19 @@
     }
 
     function getEditorHistoryStackOptions(options = {}) {
+      const historyApi = typeof SlideNextStudioHistory !== 'undefined'
+        ? SlideNextStudioHistory
+        : null;
       return {
         ...getEditorHistoryOptions(options),
-        normalizeEntry: SlideNextStudioHistory.normalizeStudioHistoryEntry,
-        areEntriesEqual: SlideNextStudioHistory.areStudioHistoryEntriesEqual,
+        normalizeEntry: historyApi
+          && typeof historyApi.normalizeStudioHistoryEntry === 'function'
+          ? historyApi.normalizeStudioHistoryEntry
+          : undefined,
+        areEntriesEqual: historyApi
+          && typeof historyApi.areStudioHistoryEntriesEqual === 'function'
+          ? historyApi.areStudioHistoryEntriesEqual
+          : undefined,
         maxUndoEntries: 50,
         ...options
       };
