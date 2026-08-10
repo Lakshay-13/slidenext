@@ -88,6 +88,7 @@
           getCurrentDocument: options.getCurrentDocument,
           resolveActiveSlideId: options.resolveActiveSlideId,
           resolveHistoryOptions: options.resolveHistoryOptions,
+          saveHistoryState: options.saveHistoryState,
           isCanonicalDeck: options.sourceIsCanonicalDeck,
           beforeApply: options.beforeApply,
           restoreHistoryEntry: options.restoreHistoryEntry,

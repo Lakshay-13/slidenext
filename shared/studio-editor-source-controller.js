@@ -43,6 +43,48 @@
     };
   }
 
+  function createStudioEditorSourceHistoryBaselineCapture(options = {}) {
+    const getCurrentDocument = typeof options.getCurrentDocument === 'function'
+      ? options.getCurrentDocument
+      : () => null;
+    const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
+      ? options.getCanonicalDeckBaseline
+      : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : null;
+
+    return function captureSourceHistoryBaseline() {
+      const sourceDocument = getCurrentDocument();
+      let canonicalDeck = null;
+      if (getCanonicalDeckBaseline) {
+        try {
+          canonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (!canonicalDeck && buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(sourceDocument);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (saveHistoryState) {
+        if (canonicalDeck) {
+          saveHistoryState(false, null, canonicalDeck);
+        } else {
+          saveHistoryState(false);
+        }
+      }
+      return true;
+    };
+  }
+
   function createStudioEditorSourceController(options = {}) {
     const previewApi = options.previewApi
       || (root && root.SlideNextStudioPreview)
@@ -80,6 +122,9 @@
     const resolveHistoryOptions = typeof options.resolveHistoryOptions === 'function'
       ? options.resolveHistoryOptions
       : () => ({});
+    const saveHistoryState = typeof options.saveHistoryState === 'function'
+      ? options.saveHistoryState
+      : null;
     const DOMParserConstructor = options.DOMParser
       || (root && root.DOMParser)
       || null;
@@ -88,7 +133,12 @@
       : null;
     const beforeApply = typeof options.beforeApply === 'function'
       ? options.beforeApply
-      : null;
+      : createStudioEditorSourceHistoryBaselineCapture({
+          getCurrentDocument,
+          getCanonicalDeckBaseline,
+          buildCanonicalDeck,
+          saveHistoryState
+        });
     const restoreHistoryEntry = typeof options.restoreHistoryEntry === 'function'
       ? options.restoreHistoryEntry
       : null;
@@ -230,6 +280,7 @@
 
   return {
     createStudioEditorSourceHtmlBuilder,
+    createStudioEditorSourceHistoryBaselineCapture,
     createStudioEditorSourceController
   };
 });

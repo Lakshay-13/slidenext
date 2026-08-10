@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const preview = require('../shared/studio-preview.js');
 const deckView = require('../shared/studio-deck-view.js');
+const sourceController = require('../shared/studio-editor-source-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -161,35 +162,26 @@ test('applyEditorSourceHtml wires canonical source editing through the shared pi
 });
 
 test('source history capture prefers the current canonical deck before source replacement', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorSourceHistoryBaseline() {',
-    '\n\n    const studioEditorExportController'
-  );
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];
-  const context = {
-    getIframeDoc() {
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument() {
       return { id: 'current-frame' };
     },
-    resolveEditorUiCanonicalDeck(doc) {
+    getCanonicalDeckBaseline(doc) {
       calls.push(['resolver', doc]);
       return canonicalDeck;
     },
-    buildEditorCanonicalDeck(doc) {
-      calls.push(['build', doc]);
+    buildCanonicalDeck() {
+      calls.push(['build']);
       throw new Error('DOM rebuild should not be needed when live canonical state exists');
     },
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
     }
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(captureSource, context);
-
-  assert.equal(context.captureEditorSourceHistoryBaseline(), true);
+  assert.equal(capture(), true);
   assert.deepEqual(calls, [
     ['resolver', { id: 'current-frame' }],
     ['history', false, null, canonicalDeck]
@@ -197,29 +189,23 @@ test('source history capture prefers the current canonical deck before source re
 });
 
 test('source history capture keeps the legacy fallback when canonical rebuilding fails', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorSourceHistoryBaseline() {',
-    '\n\n    const studioEditorExportController'
-  );
   const calls = [];
-  const context = {
-    getIframeDoc() {
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument() {
       return { id: 'current-frame' };
     },
-    buildEditorCanonicalDeck() {
+    getCanonicalDeckBaseline() {
+      return null;
+    },
+    buildCanonicalDeck() {
       throw new Error('canonical rebuild failed');
     },
     saveHistoryState(...args) {
       calls.push(args);
     }
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(captureSource, context);
-
-  assert.equal(context.captureEditorSourceHistoryBaseline(), true);
+  assert.equal(capture(), true);
   assert.deepEqual(calls, [[false]]);
 });
 

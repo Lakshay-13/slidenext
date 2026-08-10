@@ -2121,24 +2121,6 @@
     const presentationCreationController = presentationDashboardRuntime
       ? presentationDashboardRuntime.creationController
       : null;
-    function captureEditorSourceHistoryBaseline() {
-      let canonicalDeck = null;
-      const sourceDoc = getIframeDoc();
-      try {
-        canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
-          ? resolveEditorUiCanonicalDeck(sourceDoc)
-          : buildEditorCanonicalDeck(sourceDoc);
-      } catch (error) {
-        canonicalDeck = null;
-      }
-      if (canonicalDeck) {
-        saveHistoryState(false, null, canonicalDeck);
-      } else {
-        saveHistoryState(false);
-      }
-      return true;
-    }
-
     const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
       && SlideNextStudioEditorDeckViewRuntime
       && typeof SlideNextStudioEditorDeckViewRuntime.createStudioEditorDeckViewRuntime === 'function'
@@ -2243,8 +2225,8 @@
             canonicalDeck
           ),
           resolveHistoryOptions: () => getEditorHistoryOptions(),
+          saveHistoryState: (...args) => saveHistoryState(...args),
           sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
-          beforeApply: captureEditorSourceHistoryBaseline,
           restoreHistoryEntry: (historyEntry) => {
             restoreFrameFromHistoryEntry(historyEntry);
             return true;

@@ -34,6 +34,42 @@ test('shared source html builder resolves defaults and preserves per-call overri
   assert.equal(calls[1][1], doc);
 });
 
+test('source history baseline capture prefers the live canonical deck', () => {
+  const liveDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: (documentRef) => {
+      assert.deepEqual(documentRef, { id: 'live-frame' });
+      return liveDeck;
+    },
+    buildCanonicalDeck: () => {
+      throw new Error('DOM rebuild should not be needed');
+    },
+    saveHistoryState: (...args) => calls.push(args)
+  });
+
+  assert.equal(capture(), true);
+  assert.deepEqual(calls, [[false, null, liveDeck]]);
+});
+
+test('source history baseline capture falls back to rebuilding from the live document', () => {
+  const rebuiltDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: () => null,
+    buildCanonicalDeck: (documentRef) => {
+      assert.deepEqual(documentRef, { id: 'live-frame' });
+      return rebuiltDeck;
+    },
+    saveHistoryState: (...args) => calls.push(args)
+  });
+
+  assert.equal(capture(), true);
+  assert.deepEqual(calls, [[false, null, rebuiltDeck]]);
+});
+
 function createController(overrides = {}) {
   const calls = [];
   const previewApi = {
