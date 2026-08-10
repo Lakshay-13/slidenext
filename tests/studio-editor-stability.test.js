@@ -2486,6 +2486,74 @@ test('makeElementsHoverable fails closed when the shared DOM module is unavailab
   assert.deepEqual(JSON.parse(JSON.stringify(context.makeElementsHoverable({}))), []);
 });
 
+test('editor composes editable-element eligibility through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorEditableElementEligibilityReader =/);
+  assert.match(source, /typeof editableElementEligibilityReader === 'function'/);
+});
+
+test('isEligibleEditableElement delegates the element and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editableElementEligibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorEditableElementEligibilityReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const isEligibleEditableElementSource = extractFunctionSource(
+    fileContent,
+    'function isEligibleEditableElement(el) {',
+    '\n\n    function assignEditorElementId'
+  );
+  const element = { id: 'element-1' };
+  const options = { blockedIds: ['editor-overlay'] };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      isEligibleEditableElement(elementValue, optionsValue) {
+        calls.push([elementValue, optionsValue]);
+        return true;
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${editableElementEligibilityReaderSource}\n${isEligibleEditableElementSource}`, context);
+
+  assert.equal(context.isEligibleEditableElement(element), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], element);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('isEligibleEditableElement fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const editableElementEligibilityReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorEditableElementEligibilityReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const isEligibleEditableElementSource = extractFunctionSource(
+    fileContent,
+    'function isEligibleEditableElement(el) {',
+    '\n\n    function assignEditorElementId'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${editableElementEligibilityReaderSource}\n${isEligibleEditableElementSource}`, context);
+
+  assert.equal(context.isEligibleEditableElement({}), false);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

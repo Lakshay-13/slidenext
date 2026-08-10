@@ -3222,6 +3222,12 @@
       ? (root, options) => SlideNextStudioEditorDom.makeStudioElementsHoverable(root, options)
       : null;
 
+    const studioEditorEditableElementEligibilityReader = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.isEligibleEditableElement === 'function'
+      ? (element, options) => SlideNextStudioEditorDom.isEligibleEditableElement(element, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6576,7 +6582,16 @@
     }
 
     function isEligibleEditableElement(el) {
-      return SlideNextStudioEditorDom.isEligibleEditableElement(el, getEditorDomOptions());
+      const editableElementEligibilityReader = typeof studioEditorEditableElementEligibilityReader === 'function'
+        ? studioEditorEditableElementEligibilityReader
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.isEligibleEditableElement === 'function'
+          ? (...args) => SlideNextStudioEditorDom.isEligibleEditableElement(...args)
+          : null;
+      return typeof editableElementEligibilityReader === 'function'
+        ? editableElementEligibilityReader(el, getEditorDomOptions())
+        : false;
     }
 
     function assignEditorElementId(el, options = {}) {
