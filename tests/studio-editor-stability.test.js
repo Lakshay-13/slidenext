@@ -2124,6 +2124,75 @@ test('assignEditorSlideId fails closed when the shared DOM module is unavailable
   assert.equal(context.assignEditorSlideId({}), '');
 });
 
+test('editor composes slide-ID reads through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideIdReader =/);
+  assert.match(source, /typeof slideIdReader === 'function'/);
+});
+
+test('getEditorSlideId delegates the slide and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getEditorSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getEditorSlideId(slide, options = {}) {',
+    '\n\n    function getSlides'
+  );
+  const slide = { id: 'slide-node' };
+  const options = { editorSlideIdAttr: 'data-slide-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioSlideId(slideValue, optionsValue) {
+        calls.push([slideValue, optionsValue]);
+        return 'slide-1';
+      }
+    },
+    getEditorDomOptions(optionsValue) {
+      assert.deepEqual(JSON.parse(JSON.stringify(optionsValue)), options);
+      return optionsValue;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIdReaderSource}\n${getEditorSlideIdSource}`, context);
+
+  assert.equal(context.getEditorSlideId(slide, options), 'slide-1');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], slide);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('getEditorSlideId fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getEditorSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getEditorSlideId(slide, options = {}) {',
+    '\n\n    function getSlides'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIdReaderSource}\n${getEditorSlideIdSource}`, context);
+
+  assert.equal(context.getEditorSlideId({}), '');
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
