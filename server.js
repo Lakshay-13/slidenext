@@ -385,6 +385,12 @@ function derivePresentationMetadataVersionFilename(versionFilename, targetFile, 
   );
 }
 
+function applyPresentationCanonicalDeckUpdate(metadata, canonicalDeck) {
+  return canonicalDeck === null
+    ? presentationMetadata.stripPresentationCanonicalDeck(metadata)
+    : presentationMetadata.mergePresentationCanonicalDeck(metadata, canonicalDeck);
+}
+
 async function createPresentationMetadataVersionBackup(targetFile, versionFilename, metadataInfo, metadata) {
   if (!metadataInfo || !metadataInfo.metadataFile) {
     return '';
@@ -410,11 +416,13 @@ async function createPresentationMetadataVersionBackup(targetFile, versionFilena
 
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
 app.post('/api/save', async (req, res) => {
-  const { htmlPath, htmlContent, isAutoSave, versionLabel, canonicalDeck } = req.body;
+  const requestBody = req.body || {};
+  const { htmlPath, htmlContent, isAutoSave, versionLabel, canonicalDeck } = requestBody;
+  const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(requestBody, 'canonicalDeck');
   if (!htmlPath || !htmlContent) {
     return res.status(400).json({ error: 'Missing htmlPath or htmlContent' });
   }
-  if (canonicalDeck !== undefined && canonicalDeck !== null && !resolveProvidedCanonicalDeck(canonicalDeck)) {
+  if (hasCanonicalDeck && canonicalDeck !== null && !resolveProvidedCanonicalDeck(canonicalDeck)) {
     return res.status(400).json({ error: 'Invalid canonicalDeck' });
   }
 
@@ -433,12 +441,12 @@ app.post('/api/save', async (req, res) => {
         const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel, now);
         console.log(`Version backup saved: ${backupFilename}`);
 
-        if (canonicalDeck) {
+        if (hasCanonicalDeck) {
           const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
           if (metadataInfo) {
-            const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(metadataInfo.metadata, canonicalDeck);
+            const nextMetadata = applyPresentationCanonicalDeckUpdate(metadataInfo.metadata, canonicalDeck);
             const nextCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(nextMetadata);
-            if (nextCanonicalDeck) {
+            if (nextCanonicalDeck || canonicalDeck === null) {
               const metadataBackupFilename = await createPresentationMetadataVersionBackup(
                 targetFile,
                 backupFilename,
@@ -460,11 +468,11 @@ app.post('/api/save', async (req, res) => {
     await writeFileAtomically(targetFile, htmlContent);
     console.log(`Saved new content to ${targetFile} (AutoSave: ${!!isAutoSave})`);
 
-    if (canonicalDeck) {
+    if (hasCanonicalDeck) {
       try {
         const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
         if (metadataInfo) {
-          const nextMetadata = presentationMetadata.mergePresentationCanonicalDeck(metadataInfo.metadata, canonicalDeck);
+          const nextMetadata = applyPresentationCanonicalDeckUpdate(metadataInfo.metadata, canonicalDeck);
           await writePresentationMetadataSidecar(metadataInfo, nextMetadata);
           console.log(`Updated canonical deck sidecar: ${metadataInfo.metadataFile}`);
         }

@@ -74,3 +74,74 @@ test('save route atomically persists the canonical deck sidecar', async (t) => {
     ['index.html', 'presentation.json']
   );
 });
+
+test('save route clears the canonical deck sidecar only when explicitly given null', async (t) => {
+  const folder = `.test-save-clear-sidecar-${process.pid}-${Date.now()}`;
+  const folderPath = path.join(workspaceDir, 'presentations', folder);
+  const htmlPath = `presentations/${folder}/index.html`;
+  const metadataPath = path.join(folderPath, 'presentation.json');
+  await fs.mkdir(folderPath);
+  await fs.writeFile(path.join(folderPath, 'index.html'), '<!doctype html><html><body>old</body></html>');
+  await fs.writeFile(metadataPath, JSON.stringify({
+    title: 'Legacy fallback',
+    canonicalDeck: {
+      slides: [{ id: 'stale-slide', nodes: [] }]
+    }
+  }));
+  t.after(() => fs.rm(folderPath, { recursive: true, force: true }));
+
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      htmlPath,
+      htmlContent: '<!doctype html><html><body>legacy-updated</body></html>',
+      isAutoSave: true,
+      canonicalDeck: null
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    JSON.parse(await fs.readFile(metadataPath, 'utf8')).canonicalDeck,
+    undefined
+  );
+});
+
+test('save route leaves the canonical deck sidecar untouched when the field is omitted', async (t) => {
+  const folder = `.test-save-omit-sidecar-${process.pid}-${Date.now()}`;
+  const folderPath = path.join(workspaceDir, 'presentations', folder);
+  const htmlPath = `presentations/${folder}/index.html`;
+  const metadataPath = path.join(folderPath, 'presentation.json');
+  const metadata = {
+    title: 'Canonical remains',
+    canonicalDeck: {
+      slides: [{ id: 'kept-slide', nodes: [] }]
+    }
+  };
+  await fs.mkdir(folderPath);
+  await fs.writeFile(path.join(folderPath, 'index.html'), '<!doctype html><html><body>old</body></html>');
+  await fs.writeFile(metadataPath, JSON.stringify(metadata));
+  t.after(() => fs.rm(folderPath, { recursive: true, force: true }));
+
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      htmlPath,
+      htmlContent: '<!doctype html><html><body>legacy-updated</body></html>',
+      isAutoSave: true
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(JSON.parse(await fs.readFile(metadataPath, 'utf8')), metadata);
+});
