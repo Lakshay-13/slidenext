@@ -1170,6 +1170,60 @@ test('transform selection-state building fails closed when the shared transform 
   assert.equal(vm.runInContext('studioEditorTransformSelectionStateBuilder', context), null);
 });
 
+test('editor composes positioned-layout-items building through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorPositionedLayoutItemsBuilder =/);
+  assert.match(source, /buildStudioPositionedLayoutItems/);
+  assert.match(source, /typeof studioEditorPositionedLayoutItemsBuilder === 'function'/);
+  assert.doesNotMatch(source, /buildEditorPositionedLayoutItems\.builder/);
+});
+
+test('positioned-layout-items building delegates elements and options to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const positionedItemsSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPositionedLayoutItemsBuilder =',
+    'const studioEditorTransformRuntime ='
+  );
+  const elements = [{ id: 'element-1' }, { id: 'element-2' }];
+  const options = { slideMetrics: { scaleX: 2 } };
+  const calls = [];
+  const layoutItems = [{ element: elements[0] }, { element: elements[1] }];
+  const context = {
+    SlideNextStudioEditorTransform: {
+      buildStudioPositionedLayoutItems(elementsValue, optionsValue) {
+        calls.push([elementsValue, optionsValue]);
+        return layoutItems;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(positionedItemsSource, context);
+
+  const builder = vm.runInContext('studioEditorPositionedLayoutItemsBuilder', context);
+  assert.equal(builder(elements, options), layoutItems);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], elements);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), { slideMetrics: { scaleX: 2 } });
+});
+
+test('positioned-layout-items building fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const positionedItemsSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPositionedLayoutItemsBuilder =',
+    'const studioEditorTransformRuntime ='
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(positionedItemsSource, context);
+
+  assert.equal(vm.runInContext('studioEditorPositionedLayoutItemsBuilder', context), null);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
