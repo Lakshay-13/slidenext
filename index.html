@@ -7905,6 +7905,29 @@
     }
 
     function buildGroupSelectionActionState(doc = null) {
+      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
+        ? SlideNextStudioEditorGroup
+        : null;
+      const hasGroupActionStateBuilder = !!groupApi && (
+        typeof groupApi.buildStudioGroupPlan === 'function'
+        || typeof groupApi.buildStudioGroupSelectionActionState === 'function'
+        || typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function'
+      );
+      if (!hasGroupActionStateBuilder) {
+        return {
+          slide: null,
+          selection: [],
+          layoutItems: [],
+          parent: null,
+          groupPlan: {
+            canGroup: false,
+            selection: [],
+            bounds: null,
+            nextItems: []
+          },
+          canGroup: false
+        };
+      }
       const resolvedDoc = doc || getIframeDoc();
       const positionedLayoutItemsBuilder = typeof buildEditorPositionedLayoutItems === 'function'
         ? buildEditorPositionedLayoutItems
@@ -7923,9 +7946,6 @@
           && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
           ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
           : () => false;
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
-        : null;
       if (groupApi && typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function') {
         if (typeof buildGroupSelectionActionState.builder !== 'function') {
           buildGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({

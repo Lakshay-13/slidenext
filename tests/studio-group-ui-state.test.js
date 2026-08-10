@@ -255,6 +255,44 @@ test('buildGroupSelectionActionState requires a complete same-parent freeform se
   assert.equal(result.groupPlan.selection.length, 2);
 });
 
+test('buildGroupSelectionActionState fails closed before reading the document when the shared group planner is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function buildGroupSelectionActionState(doc = null) {',
+    '\n\n    function updateGroupActionState'
+  );
+  const context = {
+    SlideNextStudioEditorGroup: {},
+    getIframeDoc() {
+      throw new Error('document should not be read without a group planner');
+    },
+    getStudioSelectedElements() {
+      throw new Error('selection should not be read without a group planner');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.buildGroupSelectionActionState())),
+    {
+      slide: null,
+      selection: [],
+      layoutItems: [],
+      parent: null,
+      groupPlan: {
+        canGroup: false,
+        selection: [],
+        bounds: null,
+        nextItems: []
+      },
+      canGroup: false
+    }
+  );
+});
+
 test('buildGroupSelectionActionState delegates geometry orchestration to the shared group module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
