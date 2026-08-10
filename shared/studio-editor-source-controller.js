@@ -85,6 +85,44 @@
     };
   }
 
+  function createStudioEditorSourceCssResolver(options = {}) {
+    const getCurrentDocument = typeof options.getCurrentDocument === 'function'
+      ? options.getCurrentDocument
+      : () => null;
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : null;
+    const buildSourceHtml = typeof options.buildSourceHtml === 'function'
+      ? options.buildSourceHtml
+      : () => '';
+    const extractSourceCss = typeof options.extractSourceCss === 'function'
+      ? options.extractSourceCss
+      : () => '';
+
+    return function resolveSourceCss() {
+      let canonicalDeck = null;
+      if (resolveCanonicalDeck) {
+        try {
+          canonicalDeck = resolveCanonicalDeck(getCurrentDocument());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const canonicalCss = canonicalDeck
+        && canonicalDeck.theme
+        && typeof canonicalDeck.theme.customCss === 'string'
+        ? canonicalDeck.theme.customCss
+        : '';
+      if (canonicalCss.trim()) return canonicalCss;
+
+      try {
+        return extractSourceCss(buildSourceHtml());
+      } catch (error) {
+        return '';
+      }
+    };
+  }
+
   function createStudioEditorSourceController(options = {}) {
     const previewApi = options.previewApi
       || (root && root.SlideNextStudioPreview)
@@ -280,6 +318,7 @@
 
   return {
     createStudioEditorSourceHtmlBuilder,
+    createStudioEditorSourceCssResolver,
     createStudioEditorSourceHistoryBaselineCapture,
     createStudioEditorSourceController
   };

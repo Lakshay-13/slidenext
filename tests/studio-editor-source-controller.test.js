@@ -70,6 +70,47 @@ test('source history baseline capture falls back to rebuilding from the live doc
   assert.deepEqual(calls, [[false, null, rebuiltDeck]]);
 });
 
+test('source CSS resolver prefers canonical custom CSS', () => {
+  const calls = [];
+  const resolveSourceCss = sourceController.createStudioEditorSourceCssResolver({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    resolveCanonicalDeck: (documentRef) => {
+      calls.push(['resolve', documentRef]);
+      return { theme: { customCss: ' .slide { color: red; } ' } };
+    },
+    buildSourceHtml: () => {
+      calls.push(['build']);
+      return '<style data-slidenext-source-css="custom">fallback</style>';
+    },
+    extractSourceCss: () => {
+      calls.push(['extract']);
+      return 'fallback';
+    }
+  });
+
+  assert.equal(resolveSourceCss(), ' .slide { color: red; } ');
+  assert.deepEqual(calls, [['resolve', { id: 'live-frame' }]]);
+});
+
+test('source CSS resolver falls back to marked source CSS', () => {
+  const calls = [];
+  const resolveSourceCss = sourceController.createStudioEditorSourceCssResolver({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    resolveCanonicalDeck: () => null,
+    buildSourceHtml: () => {
+      calls.push(['build']);
+      return '<html>source</html>';
+    },
+    extractSourceCss: (sourceHtml) => {
+      calls.push(['extract', sourceHtml]);
+      return '.slide { color: blue; }';
+    }
+  });
+
+  assert.equal(resolveSourceCss(), '.slide { color: blue; }');
+  assert.deepEqual(calls, [['build'], ['extract', '<html>source</html>']]);
+});
+
 function createController(overrides = {}) {
   const calls = [];
   const previewApi = {

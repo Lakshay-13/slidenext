@@ -2212,7 +2212,9 @@
             ? SlideNextStudioEditorSource
             : null,
           resolveSourceHtml: () => buildEditorSourceHtml(),
-          resolveSourceCss: () => resolveEditorSourceCss(),
+          resolveSourceCss: () => studioEditorSourceCssResolver
+            ? studioEditorSourceCssResolver()
+            : '',
           applySourceCss: (sourceCss) => applyEditorSourceCss(sourceCss),
           sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
@@ -2271,6 +2273,25 @@
           createDeckViewHtmlOptions: (options) => createEditorDeckViewHtmlOptions(options),
           resolveBuildStudioSourceHtml: () => resolveStudioDeckViewMethod('buildStudioSourceHtml'),
           resolveBuildDeckSourceHtml: () => resolveDeckHtmlMethod('buildDeckSourceHtml')
+        })
+      : null;
+    const studioEditorSourceCssResolver = typeof SlideNextStudioEditorSourceController !== 'undefined'
+      && SlideNextStudioEditorSourceController
+      && typeof SlideNextStudioEditorSourceController.createStudioEditorSourceCssResolver === 'function'
+      ? SlideNextStudioEditorSourceController.createStudioEditorSourceCssResolver({
+          getCurrentDocument: () => getIframeDoc(),
+          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(sourceDoc)
+            : buildEditorCanonicalDeck(sourceDoc),
+          buildSourceHtml: () => buildEditorSourceHtml(),
+          extractSourceCss: (sourceHtml) => {
+            const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+              ? SlideNextStudioEditorSourceMode
+              : null;
+            return sourceModeApi && typeof sourceModeApi.extractStudioSourceCss === 'function'
+              ? sourceModeApi.extractStudioSourceCss(sourceHtml)
+              : '';
+          }
         })
       : null;
     const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
@@ -4466,30 +4487,6 @@
 
     function buildEditorSourceHtml(doc = getIframeDoc()) {
       return buildEditorSourceDeckHtml(doc);
-    }
-
-    function resolveEditorSourceCss() {
-      let canonicalDeck = null;
-      try {
-        canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
-          ? resolveEditorUiCanonicalDeck(getIframeDoc())
-          : buildEditorCanonicalDeck(getIframeDoc());
-      } catch (error) {
-        canonicalDeck = null;
-      }
-      const canonicalCss = canonicalDeck
-        && canonicalDeck.theme
-        && typeof canonicalDeck.theme.customCss === 'string'
-        ? canonicalDeck.theme.customCss
-        : '';
-      if (canonicalCss.trim()) return canonicalCss;
-
-      const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
-        ? SlideNextStudioEditorSourceMode
-        : null;
-      return sourceModeApi && typeof sourceModeApi.extractStudioSourceCss === 'function'
-        ? sourceModeApi.extractStudioSourceCss(buildEditorSourceHtml())
-        : '';
     }
 
     function applyEditorSourceCss(sourceCss = '') {
