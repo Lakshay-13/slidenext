@@ -4013,7 +4013,31 @@
       if (themeIconEditor) themeIconEditor.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
       
       // Bind shortcuts globally
-      document.addEventListener('keydown', SlideNextStudioEditorEvents.createStudioGlobalKeydownHandler({
+      bindStudioGlobalKeydownHandler();
+
+      // Bind window resize for FIT zoom scaling
+      window.addEventListener('resize', () => {
+        if (document.getElementById('zoomSelect') && document.getElementById('zoomSelect').value === 'fit') {
+          applyZoom('fit');
+        }
+        syncCanvasRulers();
+      });
+      const canvasStage = document.getElementById('canvasStage');
+      if (canvasStage) {
+        canvasStage.addEventListener('scroll', syncCanvasRulers);
+      }
+      syncCanvasRulers();
+    });
+
+    function bindStudioGlobalKeydownHandler() {
+      const eventsApi = typeof SlideNextStudioEditorEvents !== 'undefined'
+        ? SlideNextStudioEditorEvents
+        : null;
+      if (!eventsApi || typeof eventsApi.createStudioGlobalKeydownHandler !== 'function') {
+        return false;
+      }
+
+      const keydownHandler = eventsApi.createStudioGlobalKeydownHandler({
         isEditorActive: () => {
           const editor = document.getElementById('studioEditor');
           return !!editor && (editor.classList.contains('active') || editor.style.opacity === '1');
@@ -4032,21 +4056,14 @@
         duplicateSelectedElements,
         nudgeSelectedElements,
         navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
-      }));
-
-      // Bind window resize for FIT zoom scaling
-      window.addEventListener('resize', () => {
-        if (document.getElementById('zoomSelect') && document.getElementById('zoomSelect').value === 'fit') {
-          applyZoom('fit');
-        }
-        syncCanvasRulers();
       });
-      const canvasStage = document.getElementById('canvasStage');
-      if (canvasStage) {
-        canvasStage.addEventListener('scroll', syncCanvasRulers);
+      if (typeof keydownHandler !== 'function') {
+        return false;
       }
-      syncCanvasRulers();
-    });
+
+      document.addEventListener('keydown', keydownHandler);
+      return true;
+    }
 
     function updateGridSnapActionState() {
       return studioEditorGridSnapController

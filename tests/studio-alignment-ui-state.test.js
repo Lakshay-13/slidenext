@@ -112,6 +112,29 @@ test('buildAlignmentActionState fails closed when the shared alignment runtime i
   assert.equal(result.alignmentActionState.canAlign, false);
 });
 
+test('bindStudioGlobalKeydownHandler fails closed when the shared events runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function bindStudioGlobalKeydownHandler() {',
+    '\n\n    function updateGridSnapActionState'
+  );
+  const listeners = [];
+  const context = {
+    document: {
+      addEventListener(type, handler) {
+        listeners.push({ type, handler });
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.bindStudioGlobalKeydownHandler(), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(listeners)), []);
+});
+
 test('updateAlignmentActionState enables all positional controls only when alignment is available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
