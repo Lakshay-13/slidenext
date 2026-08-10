@@ -1309,6 +1309,55 @@ test('isElementHidden fails closed when the shared element state module is unava
   assert.equal(context.isElementHidden({ id: 'element-1' }), false);
 });
 
+test('editor composes element hidden writes through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementHiddenWriter =/);
+  assert.match(source, /setStudioElementHiddenState/);
+  assert.match(source, /typeof studioEditorElementHiddenWriter !== 'function'/);
+  assert.doesNotMatch(source, /setElementHiddenState\.writer/);
+});
+
+test('setElementHiddenState delegates connected elements and preserves its void contract', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hiddenWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementHiddenWriter =',
+    '\n\n    function updateLockActionState('
+  );
+  const element = { id: 'element-1', isConnected: true };
+  const calls = [];
+  const context = {
+    SlideNextStudioElementState: {
+      setStudioElementHiddenState(elementValue, hiddenValue) {
+        calls.push([elementValue, hiddenValue]);
+        return 'ignored';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(hiddenWriterSource, context);
+
+  assert.equal(context.setElementHiddenState(element, true), undefined);
+  assert.deepEqual(calls, [[element, true]]);
+});
+
+test('setElementHiddenState ignores connected elements when the shared module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hiddenWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementHiddenWriter =',
+    '\n\n    function updateLockActionState('
+  );
+  const context = { SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(hiddenWriterSource, context);
+
+  assert.equal(context.setElementHiddenState({ id: 'element-1', isConnected: true }, true), undefined);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

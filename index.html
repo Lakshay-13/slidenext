@@ -7115,9 +7115,16 @@
       return fallback;
     }
 
+    const studioEditorElementHiddenWriter = typeof SlideNextStudioElementState !== 'undefined'
+      && SlideNextStudioElementState
+      && typeof SlideNextStudioElementState.setStudioElementHiddenState === 'function'
+      ? (element, hidden) => SlideNextStudioElementState.setStudioElementHiddenState(element, hidden)
+      : null;
+
     function setElementHiddenState(el, hidden) {
       if (!el || !el.isConnected) return;
-      SlideNextStudioElementState.setStudioElementHiddenState(el, hidden);
+      if (typeof studioEditorElementHiddenWriter !== 'function') return;
+      studioEditorElementHiddenWriter(el, hidden);
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
