@@ -697,6 +697,60 @@
     return masterSlides.find((master) => master && master.id === masterSlideId) || null;
   }
 
+  function hasCanonicalSlideValue(value) {
+    return typeof value === 'string'
+      ? value.trim() !== ''
+      : value !== null && value !== undefined;
+  }
+
+  function mergeCanonicalMasterSlideLayout(masterLayout = {}, slideLayout = {}) {
+    const normalizedMasterLayout = asPlainObject(masterLayout);
+    const normalizedSlideLayout = asPlainObject(slideLayout);
+    const masterBackground = asPlainObject(normalizedMasterLayout.background);
+    const slideBackground = asPlainObject(normalizedSlideLayout.background);
+    const mergedBackground = { ...masterBackground };
+
+    Object.entries(slideBackground).forEach(([propertyName, value]) => {
+      if (hasCanonicalSlideValue(value)) {
+        mergedBackground[propertyName] = value;
+      }
+    });
+
+    const masterMode = normalizeString(normalizedMasterLayout.mode).trim();
+    const slideMode = normalizeString(normalizedSlideLayout.mode).trim();
+    const mergedMode = slideMode === 'flow' && masterMode && masterMode !== 'flow'
+      ? masterMode
+      : (slideMode || masterMode);
+
+    return {
+      ...normalizedMasterLayout,
+      ...normalizedSlideLayout,
+      ...(mergedMode ? { mode: mergedMode } : {}),
+      background: mergedBackground
+    };
+  }
+
+  function mergeCanonicalMasterSlide(slide = {}, masterSlide = {}) {
+    const masterDefinition = masterSlide && masterSlide.slide;
+    if (!masterDefinition || typeof masterDefinition !== 'object') {
+      return slide;
+    }
+
+    const masterSource = asPlainObject(masterDefinition.source);
+    const slideSource = asPlainObject(slide.source);
+    return {
+      ...slide,
+      layout: mergeCanonicalMasterSlideLayout(masterDefinition.layout, slide.layout),
+      source: {
+        ...slideSource,
+        attributes: {
+          ...asPlainObject(masterSource.attributes),
+          ...asPlainObject(slideSource.attributes)
+        }
+      }
+    };
+  }
+
   function mergeCanonicalMasterNodes(masterNodes = [], slideNodes = []) {
     const normalizedMasterNodes = Array.isArray(masterNodes) ? masterNodes : [];
     const normalizedSlideNodes = Array.isArray(slideNodes) ? slideNodes : [];
@@ -756,7 +810,7 @@
     const masterSlide = findCanonicalMasterSlide(slide, options.masterSlides);
     const effectiveSlide = masterSlide
       ? {
-          ...slide,
+          ...mergeCanonicalMasterSlide(slide, masterSlide),
           nodes: mergeCanonicalMasterNodes(masterSlide.slide && masterSlide.slide.nodes, slide.nodes)
         }
       : slide;

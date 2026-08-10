@@ -86,6 +86,62 @@ test('renderCanonicalDeckHtml composes master nodes and lets matching slide node
   assert.doesNotMatch(html, /stale slide source|stale deck source|stale body source/);
 });
 
+test('renderCanonicalDeckHtml inherits master layout metadata and preserves slide overrides', () => {
+  const html = deckRender.renderCanonicalDeckHtml({
+    masterSlides: [{
+      id: 'master-1',
+      slide: {
+        layout: {
+          mode: 'absolute',
+          background: {
+            color: '#101010',
+            className: 'master-shell',
+            style: 'border: 1px solid red;'
+          }
+        },
+        source: {
+          attributes: {
+            class: 'master-source'
+          }
+        },
+        nodes: []
+      }
+    }],
+    slides: [
+      {
+        id: 'slide-1',
+        masterSlideId: 'master-1',
+        nodes: [],
+        source: { attributes: {} }
+      },
+      {
+        id: 'slide-2',
+        masterSlideId: 'master-1',
+        layout: {
+          background: { color: '#ffffff' }
+        },
+        nodes: [],
+        source: { attributes: {} }
+      }
+    ],
+    source: {
+      html: '',
+      headHtml: '',
+      bodyHtml: ''
+    }
+  }, {
+    preferSourceHtml: false,
+    preferSlideSourceHtml: false,
+    preferNodeSourceHtml: false
+  });
+
+  assert.match(html, /class="slide master-source slide-active"/);
+  assert.match(html, /background-color: #101010;/);
+  assert.match(html, /border: 1px solid red;/);
+  assert.match(html, /id="slide-2"[^>]*style="border: 1px solid red; background-color: #ffffff;"/);
+  assert.doesNotMatch(html, /id="slide-2"[^>]*background-color: #101010/);
+});
+
 test('renderCanonicalDeckHtml preserves explicit slide classes when source attributes already provide them', () => {
   const html = deckRender.renderCanonicalDeckHtml({
     slides: [
