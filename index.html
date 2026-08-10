@@ -6747,8 +6747,16 @@
         : null;
     }
 
+    const studioEditorPointerOnSlideReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+      && SlideNextStudioEditorTransform
+      && typeof SlideNextStudioEditorTransform.getStudioPointerOnSlide === 'function'
+      ? (event, slideMetrics) => SlideNextStudioEditorTransform.getStudioPointerOnSlide(event, slideMetrics)
+      : null;
+
     function getPointerOnSlide(e, slideMetrics) {
-      return SlideNextStudioEditorTransform.getStudioPointerOnSlide(e, slideMetrics);
+      return typeof studioEditorPointerOnSlideReader === 'function'
+        ? studioEditorPointerOnSlideReader(e, slideMetrics)
+        : null;
     }
 
     const studioEditorSelectionBoundsResolver = typeof SlideNextStudioEditorSelectionBounds !== 'undefined'

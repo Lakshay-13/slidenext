@@ -1013,6 +1013,57 @@ test('getRectOnSlide fails closed when the shared transform module is unavailabl
   assert.equal(context.getRectOnSlide({}, {}), null);
 });
 
+test('editor composes pointer conversion through the shared transform module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorPointerOnSlideReader =/);
+  assert.match(source, /getStudioPointerOnSlide/);
+  assert.match(source, /typeof studioEditorPointerOnSlideReader === 'function'/);
+  assert.doesNotMatch(source, /getPointerOnSlide\.reader/);
+});
+
+test('getPointerOnSlide delegates the event and metrics to the shared transform module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const pointerOnSlideSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPointerOnSlideReader =',
+    '\n\n    const studioEditorSelectionBoundsResolver ='
+  );
+  const event = { clientX: 110, clientY: 220 };
+  const slideMetrics = { scaleX: 2, scaleY: 3 };
+  const calls = [];
+  const pointer = { x: 55, y: 73 };
+  const context = {
+    SlideNextStudioEditorTransform: {
+      getStudioPointerOnSlide(eventValue, metricsValue) {
+        calls.push([eventValue, metricsValue]);
+        return pointer;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(pointerOnSlideSource, context);
+
+  assert.equal(context.getPointerOnSlide(event, slideMetrics), pointer);
+  assert.deepEqual(calls, [[event, slideMetrics]]);
+});
+
+test('getPointerOnSlide fails closed when the shared transform module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const pointerOnSlideSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorPointerOnSlideReader =',
+    '\n\n    const studioEditorSelectionBoundsResolver ='
+  );
+  const context = { SlideNextStudioEditorTransform: null };
+
+  vm.createContext(context);
+  vm.runInContext(pointerOnSlideSource, context);
+
+  assert.equal(context.getPointerOnSlide({}, {}), null);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
