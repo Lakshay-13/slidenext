@@ -6479,19 +6479,21 @@
       return true;
     }
 
+    const studioEditorSelectionStateNormalizer = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.normalizeStudioSelectionState === 'function'
+      ? (nextState) => SlideNextStudioEditorSelection.normalizeStudioSelectionState(
+          nextState,
+          getEditorSelectionOptions()
+        )
+      : null;
+
     function applyEditorSelectionState(nextState = {}) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.normalizeStudioSelectionState !== 'function') {
+      if (typeof studioEditorSelectionStateNormalizer !== 'function') {
         clearStudioSelectionState();
         return false;
       }
-      const normalizedSelectionState = selectionApi.normalizeStudioSelectionState(
-        nextState,
-        getEditorSelectionOptions()
-      );
-      setStudioSelectionState(normalizedSelectionState);
+      setStudioSelectionState(studioEditorSelectionStateNormalizer(nextState));
       return true;
     }
 

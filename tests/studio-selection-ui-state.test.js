@@ -12,6 +12,15 @@ const presentationUrlFixture = require('./helpers/studio-presentation-url-fixtur
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
+test('editor composes selection state normalization through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionStateNormalizer =/);
+  assert.match(source, /normalizeStudioSelectionState/);
+  assert.match(source, /if \(typeof studioEditorSelectionStateNormalizer !== 'function'\)/);
+  assert.doesNotMatch(source, /applyEditorSelectionState\.normalizer/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -363,6 +372,8 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
 
   vm.createContext(context);
   vm.runInContext(getEditorSelectionOptionsSource, context);
+  context.studioEditorSelectionStateNormalizer = (nextState) => context.SlideNextStudioEditorSelection
+    .normalizeStudioSelectionState(nextState, context.getEditorSelectionOptions());
   vm.runInContext(applyEditorSelectionStateSource, context);
 
   context.applyEditorSelectionState({
@@ -392,7 +403,8 @@ test('applyEditorSelectionState clears local selection when the shared selection
   const context = {
     selectedElements: [staleElement],
     selectedElement: staleElement,
-    SlideNextStudioEditorSelection: null
+    SlideNextStudioEditorSelection: null,
+    studioEditorSelectionStateNormalizer: null
   };
   installSelectionAccessors(context);
 
