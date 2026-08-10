@@ -2680,6 +2680,47 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   assert.equal(buildEditorCanonicalDeckCalls, 1);
 });
 
+test('buildPersistableDeckHtml fails closed when the shared persistence runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
+    fileContent,
+    'function getEditorDeckSanitizerOptions(options = {}) {',
+    '\n\n    function getEditorHistoryOptions(options = {}) {'
+  );
+  const buildPersistableDeckHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
+    '\n\n    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+  const context = {
+    EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
+    EDITOR_ELEMENT_ID_ATTR: 'data-editor-id',
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorPersistence: {},
+    capturePersistedDeckPlaybackState() {
+      return null;
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    resolveEditorCanonicalDeckOverride() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
+
+  assert.equal(context.buildPersistableDeckHtml(), '');
+});
+
 test('buildPersistableDeckHtml reuses a provided canonical deck when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

@@ -11029,7 +11029,10 @@
       const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
         resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
       });
-      return SlideNextDeckPersistence.buildPersistableDeckHtml(doc, {
+      if (!sharedBuildPersistableDeckHtml) {
+        return '';
+      }
+      return sharedBuildPersistableDeckHtml(doc, {
         ...persistableDeckSanitizerOptions
       });
     }
