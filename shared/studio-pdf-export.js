@@ -72,6 +72,30 @@
     };
   }
 
+  function getStudioPdfNodeBounds(node, origin = { x: 0, y: 0 }) {
+    const positionedBounds = getStudioPdfPositionedNodeBounds(node, origin);
+    if (positionedBounds) return positionedBounds;
+
+    const layout = node && node.layout && typeof node.layout === 'object'
+      ? node.layout
+      : null;
+    const measuredBounds = layout && layout.bounds && typeof layout.bounds === 'object'
+      ? layout.bounds
+      : null;
+    if (!measuredBounds) return null;
+    const x = Number.isFinite(measuredBounds.x) ? measuredBounds.x : null;
+    const y = Number.isFinite(measuredBounds.y) ? measuredBounds.y : null;
+    const width = Number.isFinite(measuredBounds.width) ? measuredBounds.width : null;
+    const height = Number.isFinite(measuredBounds.height) ? measuredBounds.height : null;
+    if (x === null || y === null || !(width > 0) || !(height > 0)) return null;
+    return {
+      x: origin.x + x,
+      y: origin.y + y,
+      width,
+      height
+    };
+  }
+
   function preflightStudioPdfExport(canonicalDeck) {
     const slides = canonicalDeck && Array.isArray(canonicalDeck.slides)
       ? canonicalDeck.slides
@@ -111,7 +135,7 @@
     const visitNode = (node, slideId, origin = { x: 0, y: 0 }) => {
       if (!node || typeof node !== 'object') return;
       const nodeId = typeof node.id === 'string' && node.id.trim() ? node.id.trim() : 'unknown';
-      const bounds = getStudioPdfPositionedNodeBounds(node, origin);
+      const bounds = getStudioPdfNodeBounds(node, origin);
       if (canvasSize && bounds
         && (bounds.x < 0
           || bounds.y < 0
