@@ -700,6 +700,17 @@
       }
       waitForResources();
     };
+    const canUseFallbackLoad = () => {
+      if (printWindow.document.readyState === 'complete') return true;
+      if (typeof printWindow.document.querySelectorAll !== 'function') return true;
+      if (!Number.isInteger(options.slideCount)) return false;
+      try {
+        const slides = printWindow.document.querySelectorAll(normalizeSlideSelector(options.slideSelector));
+        return !!slides && slides.length === options.slideCount;
+      } catch (error) {
+        return false;
+      }
+    };
 
     if (typeof printWindow.addEventListener === 'function') {
       printWindow.addEventListener('load', handleLoad, { once: true });
@@ -715,7 +726,7 @@
         ? Math.max(0, options.fallbackLoadTimeoutMs)
         : 250;
       fallbackLoadTimeoutId = setTimeout(() => {
-        if (didLoad || didPrint) return;
+        if (didLoad || didPrint || !canUseFallbackLoad()) return;
         handleLoad();
       }, fallbackLoadTimeoutMs);
     }

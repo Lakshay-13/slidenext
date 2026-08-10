@@ -737,6 +737,62 @@ test('openStudioPdfPrintWindow falls back when the popup never emits load', asyn
   assert.equal(printSuccessCalls, 1);
 });
 
+test('openStudioPdfPrintWindow waits for a slow document to expose the expected slides before fallback printing', async () => {
+  let printCalls = 0;
+  let printSuccessCalls = 0;
+  let afterPrintHandler = null;
+  let loadHandler = null;
+  let documentReady = false;
+  const printWindow = {
+    document: {
+      readyState: 'loading',
+      open() {},
+      write() {},
+      close() {},
+      fonts: { ready: Promise.resolve() },
+      querySelectorAll(selector) {
+        if (selector === '.slide') return documentReady ? [{}] : [];
+        return [];
+      }
+    },
+    addEventListener(type, handler) {
+      if (type === 'load') {
+        loadHandler = handler;
+      } else if (type === 'afterprint') {
+        afterPrintHandler = handler;
+      }
+    },
+    focus() {},
+    print() {
+      printCalls += 1;
+    }
+  };
+
+  assert.equal(pdfExport.openStudioPdfPrintWindow({
+    html: '<html><head></head><body><div class="slide">A</div></body></html>',
+    slideCount: 1,
+    fallbackLoadTimeoutMs: 5,
+    openWindow() {
+      return printWindow;
+    },
+    onPrint() {
+      printSuccessCalls += 1;
+    }
+  }), true);
+
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(printCalls, 0);
+
+  documentReady = true;
+  printWindow.document.readyState = 'complete';
+  loadHandler();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(printCalls, 1);
+  assert.equal(printSuccessCalls, 0);
+  afterPrintHandler();
+  assert.equal(printSuccessCalls, 1);
+});
+
 test('openStudioPdfPrintWindow completes when the popup never emits afterprint', async () => {
   let printCalls = 0;
   let printSuccessCalls = 0;
