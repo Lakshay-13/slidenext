@@ -6562,11 +6562,7 @@
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
       const chromeNodePruner = typeof studioEditorChromeNodePruner === 'function'
         ? studioEditorChromeNodePruner
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.pruneStudioChromeNodes === 'function'
-          ? (...args) => SlideNextStudioEditorDom.pruneStudioChromeNodes(...args)
-          : null;
+        : null;
       if (typeof chromeNodePruner !== 'function') return false;
       chromeNodePruner(doc, {
         activeSlide,

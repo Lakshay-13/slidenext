@@ -2015,6 +2015,12 @@ test('editor composes chrome-node pruning through the shared DOM module', () => 
 
   assert.match(source, /const studioEditorChromeNodePruner =/);
   assert.match(source, /typeof studioEditorChromeNodePruner === 'function'/);
+  const pruneEditorChromeNodesSource = extractFunctionSource(
+    source,
+    'function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {',
+    '\n\n    function setActiveSlideById'
+  );
+  assert.doesNotMatch(pruneEditorChromeNodesSource, /SlideNextStudioEditorDom\.pruneStudioChromeNodes/);
 });
 
 test('pruneEditorChromeNodes delegates the document and chrome options to the shared DOM module', () => {
