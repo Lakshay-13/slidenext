@@ -234,6 +234,28 @@ test('launchPresentation delegates url preview chrome resolution to the shared p
   }]);
 });
 
+test('preview launch wrappers fail closed when the shared preview runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const openPresentationModalWithLoaderSource = extractFunctionSource(
+    fileContent,
+    'function openPresentationModalWithLoader(startSlideIdx) {',
+    '\n\n    function launchPresentation(url, startSlideIdx) {'
+  );
+  const launchPresentationSource = extractFunctionSource(
+    fileContent,
+    'function launchPresentation(url, startSlideIdx) {',
+    '\n\n    function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {'
+  );
+  const context = { document: {} };
+
+  vm.createContext(context);
+  vm.runInContext(openPresentationModalWithLoaderSource, context);
+  vm.runInContext(launchPresentationSource, context);
+
+  assert.equal(context.openPresentationModalWithLoader(1), false);
+  assert.equal(context.launchPresentation('/presentations/missing/index.html', 1), false);
+});
+
 test('launchPreview does not open preview flows when deck-ready state disables preview', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(

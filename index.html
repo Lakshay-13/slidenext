@@ -4131,7 +4131,13 @@
 
     // 2. Viewer Presentation Modal
     function openPresentationModalWithLoader(startSlideIdx) {
-      return SlideNextStudioPreview.openPresentationModalWithLoader({
+      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
+        ? SlideNextStudioPreview
+        : null;
+      if (!previewApi || typeof previewApi.openPresentationModalWithLoader !== 'function') {
+        return false;
+      }
+      return previewApi.openPresentationModalWithLoader({
         modalEl: document.getElementById('presentationModal'),
         iframeEl: document.getElementById('presentationFrame'),
         bodyEl: document.body,
@@ -4140,7 +4146,13 @@
     }
 
     function launchPresentation(url, startSlideIdx) {
-      SlideNextStudioPreview.launchPresentationUrl({
+      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
+        ? SlideNextStudioPreview
+        : null;
+      if (!previewApi || typeof previewApi.launchPresentationUrl !== 'function') {
+        return false;
+      }
+      return previewApi.launchPresentationUrl({
         document,
         startSlideIdx,
         url
@@ -4688,7 +4700,13 @@
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
-      SlideNextStudioPreview.launchPresentationHtml({
+      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
+        ? SlideNextStudioPreview
+        : null;
+      if (!previewApi || typeof previewApi.launchPresentationHtml !== 'function') {
+        return false;
+      }
+      return previewApi.launchPresentationHtml({
         document,
         startSlideIdx,
         html

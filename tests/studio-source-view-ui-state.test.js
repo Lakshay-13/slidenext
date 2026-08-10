@@ -233,6 +233,21 @@ test('applySourceViewModal delegates source application to the controller', () =
   assert.equal(applyCalls, 1);
 });
 
+test('launchPresentationHtml fails closed when the shared preview runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchPresentationHtmlSource = extractFunctionSource(
+    fileContent,
+    'function launchPresentationHtml(html, startSlideIdx) {',
+    '\n\n    function openSourceViewModal() {'
+  );
+  const context = { document: {} };
+
+  vm.createContext(context);
+  vm.runInContext(launchPresentationHtmlSource, context);
+
+  assert.equal(context.launchPresentationHtml('<html></html>', 1), false);
+});
+
 test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(
