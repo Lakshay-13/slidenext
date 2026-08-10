@@ -3216,6 +3216,12 @@
       ? (slideId, doc, options) => SlideNextStudioEditorDom.getStudioSlideIndexById(slideId, doc, options)
       : null;
 
+    const studioEditorHoverableElementDecorator = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.makeStudioElementsHoverable === 'function'
+      ? (root, options) => SlideNextStudioEditorDom.makeStudioElementsHoverable(root, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -5274,7 +5280,16 @@
 
     // Apply hoverable tags to editable nodes
     function makeElementsHoverable(root) {
-      return SlideNextStudioEditorDom.makeStudioElementsHoverable(root, getEditorDomOptions());
+      const hoverableElementDecorator = typeof studioEditorHoverableElementDecorator === 'function'
+        ? studioEditorHoverableElementDecorator
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.makeStudioElementsHoverable === 'function'
+          ? (...args) => SlideNextStudioEditorDom.makeStudioElementsHoverable(...args)
+          : null;
+      return typeof hoverableElementDecorator === 'function'
+        ? hoverableElementDecorator(root, getEditorDomOptions())
+        : [];
     }
 
     // Render visual Slide Organizer thumbnails

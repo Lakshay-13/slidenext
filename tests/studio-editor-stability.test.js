@@ -2418,6 +2418,74 @@ test('getSlideIndexById fails closed when the shared DOM module is unavailable',
   assert.equal(context.getSlideIndexById('slide-1'), -1);
 });
 
+test('editor composes hoverable-element decoration through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorHoverableElementDecorator =/);
+  assert.match(source, /typeof hoverableElementDecorator === 'function'/);
+});
+
+test('makeElementsHoverable delegates the root and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hoverableElementDecoratorSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorHoverableElementDecorator =',
+    'const studioEditorTransformRuntime ='
+  );
+  const makeElementsHoverableSource = extractFunctionSource(
+    fileContent,
+    'function makeElementsHoverable(root) {',
+    '\n\n    // Render visual Slide Organizer thumbnails'
+  );
+  const root = { id: 'iframe-document' };
+  const options = { selectableSelector: '[data-editor-id]' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      makeStudioElementsHoverable(rootValue, optionsValue) {
+        calls.push([rootValue, optionsValue]);
+        return ['element-1'];
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${hoverableElementDecoratorSource}\n${makeElementsHoverableSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.makeElementsHoverable(root))), ['element-1']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], root);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('makeElementsHoverable fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hoverableElementDecoratorSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorHoverableElementDecorator =',
+    'const studioEditorTransformRuntime ='
+  );
+  const makeElementsHoverableSource = extractFunctionSource(
+    fileContent,
+    'function makeElementsHoverable(root) {',
+    '\n\n    // Render visual Slide Organizer thumbnails'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${hoverableElementDecoratorSource}\n${makeElementsHoverableSource}`, context);
+
+  assert.deepEqual(JSON.parse(JSON.stringify(context.makeElementsHoverable({}))), []);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
