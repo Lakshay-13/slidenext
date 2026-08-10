@@ -10065,11 +10065,14 @@
         && typeof studioEditorHistoryController.updateButtons === 'function') {
         return studioEditorHistoryController.updateButtons();
       }
-      if (!SlideNextStudioHistory
-        || typeof SlideNextStudioHistory.syncStudioHistoryButtons !== 'function') return false;
+      const historyApi = typeof SlideNextStudioHistory !== 'undefined'
+        ? SlideNextStudioHistory
+        : null;
+      if (!historyApi
+        || typeof historyApi.syncStudioHistoryButtons !== 'function') return false;
       if (typeof updateHistoryButtons.sync !== 'function'
-        && typeof SlideNextStudioHistory.createStudioHistoryButtonStateSync === 'function') {
-        updateHistoryButtons.sync = SlideNextStudioHistory.createStudioHistoryButtonStateSync({
+        && typeof historyApi.createStudioHistoryButtonStateSync === 'function') {
+        updateHistoryButtons.sync = historyApi.createStudioHistoryButtonStateSync({
           getDocument: () => document,
           getUndoStack: getStudioUndoStack,
           getRedoStack: getStudioRedoStack
@@ -10078,7 +10081,7 @@
       if (typeof updateHistoryButtons.sync === 'function') {
         return updateHistoryButtons.sync();
       }
-      return SlideNextStudioHistory.syncStudioHistoryButtons({
+      return historyApi.syncStudioHistoryButtons({
         documentRef: document,
         undoStack: getStudioUndoStack(),
         redoStack: getStudioRedoStack()

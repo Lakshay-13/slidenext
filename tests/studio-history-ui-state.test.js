@@ -123,6 +123,21 @@ test('updateHistoryButtons delegates editor control rendering to shared history 
   assert.deepEqual(delegatedArgs.redoStack, ['entry-2']);
 });
 
+test('updateHistoryButtons safely no-ops without the shared history runtime', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const updateHistoryButtonsSource = extractFunctionSource(
+    fileContent,
+    'function updateHistoryButtons() {',
+    '\n\n    function editorUndo() {'
+  );
+
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(updateHistoryButtonsSource, context);
+
+  assert.equal(context.updateHistoryButtons(), false);
+});
+
 test('updateHistoryButtons caches the shared history button synchronizer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateHistoryButtonsSource = extractFunctionSource(
