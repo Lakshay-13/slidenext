@@ -2154,6 +2154,12 @@ test('editor composes slide-ID reads through the shared DOM module', () => {
 
   assert.match(source, /const studioEditorSlideIdReader =/);
   assert.match(source, /typeof slideIdReader === 'function'/);
+  const getEditorSlideIdSource = extractFunctionSource(
+    source,
+    'function getEditorSlideId(slide, options = {}) {',
+    '\n\n    function getSlides'
+  );
+  assert.doesNotMatch(getEditorSlideIdSource, /SlideNextStudioEditorDom\.getStudioSlideId/);
 });
 
 test('getEditorSlideId delegates the slide and DOM options to the shared DOM module', () => {

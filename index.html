@@ -5792,11 +5792,7 @@
     function getEditorSlideId(slide, options = {}) {
       const slideIdReader = typeof studioEditorSlideIdReader === 'function'
         ? studioEditorSlideIdReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getStudioSlideId === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getStudioSlideId(...args)
-          : null;
+        : null;
       return typeof slideIdReader === 'function'
         ? slideIdReader(slide, getEditorDomOptions(options))
         : '';
