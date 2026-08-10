@@ -6834,12 +6834,15 @@
       });
     }
 
+    const studioEditorElementDeselector = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.deselectStudioElement === 'function'
+      ? (selectionOptions) => SlideNextStudioEditorSelection.deselectStudioElement(selectionOptions)
+      : null;
+
     function deselectElement() {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.deselectStudioElement !== 'function') return false;
-      return selectionApi.deselectStudioElement({
+      if (typeof studioEditorElementDeselector !== 'function') return false;
+      return studioEditorElementDeselector({
         hideDragHud,
         commitSelectionState: commitEditorSelectionState
       });

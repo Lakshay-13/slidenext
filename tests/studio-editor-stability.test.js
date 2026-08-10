@@ -573,6 +573,15 @@ test('editor composes element selection through the shared selection module', ()
   assert.doesNotMatch(source, /selectElement\.selector/);
 });
 
+test('editor composes element deselection through the shared selection module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementDeselector =/);
+  assert.match(source, /deselectStudioElement/);
+  assert.match(source, /if \(typeof studioEditorElementDeselector !== 'function'\)/);
+  assert.doesNotMatch(source, /deselectElement\.deselector/);
+});
+
 test('editor composes select-all through the shared selection module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -639,8 +648,8 @@ test('deselectElement delegates selection clearing to the shared selection modul
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deselectElementSource = extractFunctionSource(
     fileContent,
-    'function deselectElement() {',
-    '\n\n    function selectAllElementsOnActiveSlide() {'
+    'const studioEditorElementDeselector =',
+    '\n\n    const studioEditorSelectAllElements ='
   );
   const calls = [];
   const context = {
@@ -667,8 +676,8 @@ test('deselectElement fails closed when the shared selection module is unavailab
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const deselectElementSource = extractFunctionSource(
     fileContent,
-    'function deselectElement() {',
-    '\n\n    function selectAllElementsOnActiveSlide() {'
+    'const studioEditorElementDeselector =',
+    '\n\n    const studioEditorSelectAllElements ='
   );
 
   const context = {
