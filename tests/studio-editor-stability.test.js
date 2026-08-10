@@ -1808,6 +1808,24 @@ test('clipboard payload construction uses the composed positioned-ancestor resol
   );
 });
 
+test('editor runtime wiring uses the composed positioned-ancestor resolver', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runtimeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorTransformRuntime =',
+    'const studioEditorTransformController ='
+  );
+
+  assert.match(
+    runtimeSource,
+    /getClosestPositionedAncestor: \(\.\.\.args\) => getEditorClosestPositionedAncestor\(\.\.\.args\)/
+  );
+  assert.doesNotMatch(
+    runtimeSource,
+    /getClosestPositionedAncestor: \(\.\.\.args\) => SlideNextStudioEditorDom/
+  );
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

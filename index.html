@@ -2831,11 +2831,7 @@
           getNormalizedSlideLayerOrder: (slide) => getNormalizedSlideLayerOrder(slide),
           sanitizeElement: (element) => sanitizeDuplicatedSubtree(element),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
-          getClosestPositionedAncestor: typeof SlideNextStudioEditorDom !== 'undefined'
-            && SlideNextStudioEditorDom
-            && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
-            ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
-            : null,
+          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
           buildPositionedLayoutItem: buildEditorPositionedLayoutItem
         })
       : null;
@@ -3228,8 +3224,7 @@
           isHidden: (...args) => isElementHidden(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
-          getClosestPositionedAncestor: (...args) => SlideNextStudioEditorDom
-            .getStudioClosestPositionedAncestor(...args),
+          getClosestPositionedAncestor: (...args) => getEditorClosestPositionedAncestor(...args),
           getSelectedElements: () => getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
           getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
