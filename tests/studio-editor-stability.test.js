@@ -1409,6 +1409,56 @@ test('getElementVisibilityState fails closed when the shared element state modul
   assert.equal(context.getElementVisibilityState({ id: 'element-1' }), null);
 });
 
+test('editor composes element lock writes through the shared element state module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementLockWriter =/);
+  assert.match(source, /setStudioElementLockedState/);
+  assert.match(source, /setLocked: \(\.\.\.args\) => setElementLockedState\(\.\.\.args\)/);
+  assert.match(source, /typeof studioEditorElementLockWriter !== 'function'/);
+  assert.doesNotMatch(source, /setElementLockedState\.writer/);
+});
+
+test('setElementLockedState delegates the element and preserves its void contract', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const lockWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementLockWriter =',
+    'const studioEditorLockVisibilityRuntime ='
+  );
+  const element = { id: 'element-1' };
+  const calls = [];
+  const context = {
+    SlideNextStudioElementState: {
+      setStudioElementLockedState(elementValue, lockedValue) {
+        calls.push([elementValue, lockedValue]);
+        return 'ignored';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(lockWriterSource, context);
+
+  assert.equal(context.setElementLockedState(element, true), undefined);
+  assert.deepEqual(calls, [[element, true]]);
+});
+
+test('setElementLockedState ignores writes when the shared element state module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const lockWriterSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementLockWriter =',
+    'const studioEditorLockVisibilityRuntime ='
+  );
+  const context = { SlideNextStudioElementState: null };
+
+  vm.createContext(context);
+  vm.runInContext(lockWriterSource, context);
+
+  assert.equal(context.setElementLockedState({ id: 'element-1' }, true), undefined);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

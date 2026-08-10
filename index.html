@@ -2614,6 +2614,17 @@
         : null;
     }
 
+    const studioEditorElementLockWriter = typeof SlideNextStudioElementState !== 'undefined'
+      && SlideNextStudioElementState
+      && typeof SlideNextStudioElementState.setStudioElementLockedState === 'function'
+      ? (element, locked) => SlideNextStudioElementState.setStudioElementLockedState(element, locked)
+      : null;
+
+    function setElementLockedState(element, locked) {
+      if (typeof studioEditorElementLockWriter !== 'function') return;
+      studioEditorElementLockWriter(element, locked);
+    }
+
     const studioEditorLockVisibilityRuntime = typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
       && SlideNextStudioEditorLockVisibilityRuntime
       && typeof SlideNextStudioEditorLockVisibilityRuntime.createStudioEditorLockVisibilityRuntime === 'function'
@@ -2641,7 +2652,7 @@
           getActiveSlide: (...args) => getActiveSlide(...args),
           isLocked: (...args) => isElementLocked(...args),
           isHidden: (...args) => isElementHidden(...args),
-          setLocked: (...args) => SlideNextStudioElementState.setStudioElementLockedState(...args),
+          setLocked: (...args) => setElementLockedState(...args),
           setHidden: (...args) => setElementHiddenState(...args),
           getVisibilityState: (...args) => getElementVisibilityState(...args),
           assignLockElementId: (...args) => assignEditorElementId(...args),
