@@ -851,6 +851,29 @@ test('isCurrentDeckHtmlPersisted creates the shared persistence-state adapter on
   assert.equal(checkerCalls, 2);
 });
 
+test('isCurrentDeckHtmlPersisted fails closed when all shared persistence checkers are unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentDeckHtmlPersistedSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentDeckHtmlPersisted(cleanHtml) {',
+    '\n\n    function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getCurrentEditorPersistedDeckState() {
+      throw new Error('persisted state should not be read without a checker');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+
+  assert.equal(
+    context.isCurrentDeckHtmlPersisted('<html>current</html>'),
+    false
+  );
+});
+
 test('isCurrentDeckStatePersisted reuses the shared persisted-save-request checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const isCurrentDeckStatePersistedSource = extractFunctionSource(

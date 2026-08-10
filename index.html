@@ -11955,7 +11955,15 @@
         })(cleanHtml);
       }
 
-      return SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml(
+      const isStudioPersistedDeckHtml = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml
+        : null;
+      if (!isStudioPersistedDeckHtml) return false;
+      return isStudioPersistedDeckHtml(
         cleanHtml,
         getCurrentEditorPersistedDeckState()
       );
