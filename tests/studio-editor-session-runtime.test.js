@@ -80,6 +80,10 @@ test('index wires session lifecycle composition through the runtime module', () 
     fileContent,
     /SlideNextStudioEditorSessionRuntime\.createStudioEditorSessionRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /deckContextApi: typeof SlideNextStudioDeckContext !== 'undefined'\s+\?\s+SlideNextStudioDeckContext\s+: null/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorSession\.createStudioEditorPresentationSessionStateController\(/

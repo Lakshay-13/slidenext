@@ -3673,7 +3673,9 @@
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
             : null,
-          deckContextApi: SlideNextStudioDeckContext,
+          deckContextApi: typeof SlideNextStudioDeckContext !== 'undefined'
+            ? SlideNextStudioDeckContext
+            : null,
           documentRef: document,
           getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
