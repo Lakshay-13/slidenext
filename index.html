@@ -6526,12 +6526,19 @@
       return studioEditorSelectionStateCommitter(nextSelectionState, options);
     }
 
+    const studioEditorSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide === 'function'
+      ? (selectedIds, doc, options) => SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
+          selectedIds,
+          doc,
+          options
+        )
+      : null;
+
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.restoreStudioSelectionByIdsOnActiveSlide !== 'function') return false;
-      const nextSelectionState = selectionApi.restoreStudioSelectionByIdsOnActiveSlide(
+      if (typeof studioEditorSelectionRestorer !== 'function') return false;
+      const nextSelectionState = studioEditorSelectionRestorer(
         selectedIds,
         doc,
         getEditorSelectionOptions({ doc })

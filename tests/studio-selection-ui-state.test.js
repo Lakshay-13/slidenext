@@ -39,6 +39,15 @@ test('editor composes selection state commits through the shared selection API',
   assert.doesNotMatch(source, /commitEditorSelectionState\.committer/);
 });
 
+test('editor composes active-slide selection restore through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionRestorer =/);
+  assert.match(source, /restoreStudioSelectionByIdsOnActiveSlide/);
+  assert.match(source, /if \(typeof studioEditorSelectionRestorer !== 'function'\)/);
+  assert.doesNotMatch(source, /restoreSelectionByIdsOnActiveSlide\.restorer/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -114,7 +123,7 @@ function loadCommitEditorSelectionState(fileContent, context) {
 function loadRestoreSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {',
+    'const studioEditorSelectionRestorer =',
     '\n\n    function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(helperSource, context);
