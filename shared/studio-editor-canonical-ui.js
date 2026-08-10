@@ -11,6 +11,18 @@
     const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
       ? options.resolveLiveCanonicalDeck
       : null;
+    const validateCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const isValidCanonicalDeck = (value) => {
+      if (!value) return false;
+      if (!validateCanonicalDeck) return true;
+      try {
+        return validateCanonicalDeck(value) === true;
+      } catch (error) {
+        return false;
+      }
+    };
     let liveCanonicalDeck = null;
 
     if (resolveLiveCanonicalDeck) {
@@ -24,10 +36,15 @@
       }
     }
 
-    if (liveCanonicalDeck) return liveCanonicalDeck;
-    return typeof options.buildCanonicalDeck === 'function'
-      ? options.buildCanonicalDeck(sourceDoc)
-      : null;
+    if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
+    if (typeof options.buildCanonicalDeck !== 'function') return null;
+    let rebuiltCanonicalDeck = null;
+    try {
+      rebuiltCanonicalDeck = options.buildCanonicalDeck(sourceDoc);
+    } catch (error) {
+      return null;
+    }
+    return isValidCanonicalDeck(rebuiltCanonicalDeck) ? rebuiltCanonicalDeck : null;
   }
 
   return {

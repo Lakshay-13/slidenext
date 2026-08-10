@@ -6060,6 +6060,9 @@
             : null,
           buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
             ? buildEditorCanonicalDeck
+            : null,
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
             : null
         });
       }

@@ -45,3 +45,37 @@ test('canonical UI reader falls back to the document builder when live state is 
   assert.equal(result, importedCanonicalDeck);
   assert.equal(buildCalls, 1);
 });
+
+test('canonical UI reader rejects malformed live state before rebuilding', () => {
+  const rebuiltCanonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  let buildCalls = 0;
+
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck({}, {
+    resolveLiveCanonicalDeck() {
+      return { invalid: true };
+    },
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return rebuiltCanonicalDeck;
+    },
+    isCanonicalDeck(value) {
+      return value === rebuiltCanonicalDeck;
+    }
+  });
+
+  assert.equal(result, rebuiltCanonicalDeck);
+  assert.equal(buildCalls, 1);
+});
+
+test('canonical UI reader fails closed for malformed rebuilt state', () => {
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck({}, {
+    buildCanonicalDeck() {
+      return { invalid: true };
+    },
+    isCanonicalDeck() {
+      return false;
+    }
+  });
+
+  assert.equal(result, null);
+});
