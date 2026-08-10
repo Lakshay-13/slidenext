@@ -315,8 +315,14 @@ async function writePresentationMetadataSidecar(metadataInfo, metadata) {
   if (!metadataInfo || !metadataInfo.metadataFile) {
     return false;
   }
-  await fs.writeFile(metadataInfo.metadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
-  return true;
+  const temporaryMetadataFile = `${metadataInfo.metadataFile}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`;
+  try {
+    await fs.writeFile(temporaryMetadataFile, `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
+    await fs.rename(temporaryMetadataFile, metadataInfo.metadataFile);
+    return true;
+  } finally {
+    await fs.rm(temporaryMetadataFile, { force: true }).catch(() => {});
+  }
 }
 
 function derivePresentationMetadataVersionFilename(versionFilename, targetFile, metadataFile) {
