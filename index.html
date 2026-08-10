@@ -6606,8 +6606,16 @@
       return studioEditorPreservedSelectionRestorer(selectedIds, doc).restored;
     }
 
+    const studioEditorSelectionOverlayEnsurer = typeof SlideNextStudioEditorOverlay !== 'undefined'
+      && SlideNextStudioEditorOverlay
+      && typeof SlideNextStudioEditorOverlay.ensureStudioSelectionOverlay === 'function'
+      ? (doc, slide, options) => SlideNextStudioEditorOverlay.ensureStudioSelectionOverlay(doc, slide, options)
+      : null;
+
     function ensureSelectionOverlay(doc, slide) {
-      return SlideNextStudioEditorOverlay.ensureStudioSelectionOverlay(doc, slide, getEditorOverlayOptions());
+      return typeof studioEditorSelectionOverlayEnsurer === 'function'
+        ? studioEditorSelectionOverlayEnsurer(doc, slide, getEditorOverlayOptions())
+        : null;
     }
 
     function hideGuides() {

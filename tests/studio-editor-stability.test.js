@@ -591,6 +591,45 @@ test('editor composes select-all through the shared selection module', () => {
   assert.doesNotMatch(source, /selectAllElementsOnActiveSlide\.selector/);
 });
 
+test('editor composes selection overlay creation through the shared overlay module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionOverlayEnsurer =/);
+  assert.match(source, /ensureStudioSelectionOverlay/);
+  assert.match(source, /typeof studioEditorSelectionOverlayEnsurer === 'function'/);
+  assert.doesNotMatch(source, /ensureSelectionOverlay\.ensurer/);
+});
+
+test('ensureSelectionOverlay passes the editor document, slide, and overlay options to the shared overlay module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const ensureOverlaySource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSelectionOverlayEnsurer =',
+    '\n\n    function hideGuides() {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const slide = { id: 'slide' };
+  const calls = [];
+  const overlay = { id: 'overlay' };
+  const context = {
+    SlideNextStudioEditorOverlay: {
+      ensureStudioSelectionOverlay(...args) {
+        calls.push(args);
+        return overlay;
+      }
+    },
+    getEditorOverlayOptions() {
+      return { marker: 'overlay-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(ensureOverlaySource, context);
+
+  assert.equal(context.ensureSelectionOverlay(iframeDoc, slide), overlay);
+  assert.deepEqual(calls, [[iframeDoc, slide, { marker: 'overlay-options' }]]);
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
