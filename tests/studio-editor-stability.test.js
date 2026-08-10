@@ -1728,6 +1728,21 @@ test('buildEditorPositionedLayoutItem fails closed when the shared transform mod
   assert.equal(context.buildEditorPositionedLayoutItem({ id: 'element-1' }, {}), null);
 });
 
+test('clipboard payload runtime composes positioned-item building through the editor adapter', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const runtimeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorClipboardPayloadRuntime =',
+    'const studioEditorClipboardPayloadController ='
+  );
+
+  assert.match(runtimeSource, /buildPositionedLayoutItem: buildEditorPositionedLayoutItem/);
+  assert.doesNotMatch(
+    runtimeSource,
+    /buildPositionedLayoutItem: typeof SlideNextStudioEditorTransform/
+  );
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

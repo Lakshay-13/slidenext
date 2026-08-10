@@ -2836,11 +2836,7 @@
             && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
             ? (...args) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(...args)
             : null,
-          buildPositionedLayoutItem: typeof SlideNextStudioEditorTransform !== 'undefined'
-            && SlideNextStudioEditorTransform
-            && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem === 'function'
-            ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(...args)
-            : null
+          buildPositionedLayoutItem: buildEditorPositionedLayoutItem
         })
       : null;
     const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
