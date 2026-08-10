@@ -2635,9 +2635,15 @@ test('isEligibleEditableElement fails closed when the shared DOM module is unava
 
 test('editor composes element-ID assignment through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const assignEditorElementIdSource = extractFunctionSource(
+    source,
+    'function assignEditorElementId(el, options = {}) {',
+    '\n\n    function getElementByEditorId'
+  );
 
   assert.match(source, /const studioEditorElementIdAssigner =/);
   assert.match(source, /typeof elementIdAssigner === 'function'/);
+  assert.doesNotMatch(assignEditorElementIdSource, /SlideNextStudioEditorDom\.assignStudioElementId/);
 });
 
 test('assignEditorElementId delegates the element and DOM options to the shared DOM module', () => {

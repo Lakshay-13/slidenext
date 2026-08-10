@@ -6604,11 +6604,7 @@
     function assignEditorElementId(el, options = {}) {
       const elementIdAssigner = typeof studioEditorElementIdAssigner === 'function'
         ? studioEditorElementIdAssigner
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.assignStudioElementId === 'function'
-          ? (...args) => SlideNextStudioEditorDom.assignStudioElementId(...args)
-          : null;
+        : null;
       return typeof elementIdAssigner === 'function'
         ? elementIdAssigner(el, getEditorDomOptions(options))
         : '';
