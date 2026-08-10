@@ -6571,22 +6571,29 @@
       return nextSelectionState.restored;
     }
 
+    const studioEditorPreservedSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.restoreStudioSelectionAfterSlideMutation === 'function'
+      ? (selectedIds, doc) => SlideNextStudioEditorSelection.restoreStudioSelectionAfterSlideMutation(
+          selectedIds,
+          doc,
+          {
+            ...getEditorSelectionOptions({ doc }),
+            applySelectionState: applyEditorSelectionState,
+            syncSelectionOverlay,
+            hideDragHud,
+            syncInspectorForSelection,
+            updateLayersList,
+            preserveSelection: () => {
+              setStudioPreserveSelectionOnNextActiveSlideSync(true);
+            }
+          }
+        )
+      : null;
+
     function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.restoreStudioSelectionAfterSlideMutation !== 'function') return false;
-      return selectionApi.restoreStudioSelectionAfterSlideMutation(selectedIds, doc, {
-        ...getEditorSelectionOptions({ doc }),
-        applySelectionState: applyEditorSelectionState,
-        syncSelectionOverlay,
-        hideDragHud,
-        syncInspectorForSelection,
-        updateLayersList,
-        preserveSelection: () => {
-          setStudioPreserveSelectionOnNextActiveSlideSync(true);
-        }
-      }).restored;
+      if (typeof studioEditorPreservedSelectionRestorer !== 'function') return false;
+      return studioEditorPreservedSelectionRestorer(selectedIds, doc).restored;
     }
 
     function ensureSelectionOverlay(doc, slide) {

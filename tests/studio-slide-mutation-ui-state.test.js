@@ -29,6 +29,15 @@ test('editor composes committed selection restore through the shared selection A
   assert.doesNotMatch(source, /restoreCommittedSelectionByIdsOnActiveSlide\.restorer/);
 });
 
+test('editor composes preserved selection restore through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorPreservedSelectionRestorer =/);
+  assert.match(source, /restoreStudioSelectionAfterSlideMutation/);
+  assert.match(source, /if \(typeof studioEditorPreservedSelectionRestorer !== 'function'\)/);
+  assert.doesNotMatch(source, /restoreSelectionAfterPreservedSlideMutation\.restorer/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -207,7 +216,7 @@ function installSlideRoutingController(context) {
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {',
+    'const studioEditorPreservedSelectionRestorer =',
     '\n\n    function ensureSelectionOverlay(doc, slide) {'
   );
   vm.runInContext(helperSource, context);
@@ -498,7 +507,7 @@ test('restoreSelectionAfterPreservedSlideMutation fails closed when the shared s
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreSelectionSource = extractFunctionSource(
     fileContent,
-    'function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {',
+    'const studioEditorPreservedSelectionRestorer =',
     '\n\n    function ensureSelectionOverlay(doc, slide) {'
   );
   const context = {
