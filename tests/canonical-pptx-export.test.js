@@ -137,6 +137,27 @@ test('canonical PPTX CLI reports missing local assets during preflight', async (
   assert.match(errors.join('\n'), /missing image asset/);
 });
 
+test('canonical PPTX CLI accepts a presentation metadata wrapper with a canonical deck', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-metadata-'));
+  const inputPath = path.join(tempDir, 'presentation.json');
+  const outputPath = path.join(tempDir, 'presentation.pptx');
+  fs.writeFileSync(inputPath, JSON.stringify({
+    id: 'metadata-deck',
+    title: 'Metadata deck',
+    canonicalDeck: {
+      layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+      slides: [{ id: 'slide-1', nodes: [] }]
+    }
+  }));
+
+  try {
+    assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+    assert.equal(fs.existsSync(outputPath), true);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () => {
   const result = pptxExport.createCanonicalPptxExport({
     metadata: {
