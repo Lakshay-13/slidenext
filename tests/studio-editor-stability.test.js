@@ -2792,9 +2792,15 @@ test('getElementByEditorId fails closed when the shared DOM module is unavailabl
 
 test('editor composes slide editable-element collection through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getSlideEditableElementsSource = extractFunctionSource(
+    source,
+    'function getSlideEditableElements(slide) {',
+    '\n\n    function getNormalizedSlideLayerOrder'
+  );
 
   assert.match(source, /const studioEditorSlideEditableElementsReader =/);
   assert.match(source, /typeof slideEditableElementsReader === 'function'/);
+  assert.doesNotMatch(getSlideEditableElementsSource, /SlideNextStudioEditorDom\.getStudioSlideEditableElements/);
 });
 
 test('getSlideEditableElements delegates the slide and DOM options to the shared DOM module', () => {
