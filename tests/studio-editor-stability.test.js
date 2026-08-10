@@ -3088,6 +3088,94 @@ test('resolveEditableTarget fails closed when the shared DOM module is unavailab
   assert.equal(context.resolveEditableTarget({}), null);
 });
 
+test('editor composes inline text-target resolution through the shared inline-edit module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorInlineTextEditTargetResolver =/);
+  assert.match(source, /typeof studioEditorInlineTextEditTargetResolver !== 'function'/);
+});
+
+test('resolveInlineTextEditTarget delegates through the shared inline-edit module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const inlineTextEditResolverSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorInlineTextEditTargetResolver =',
+    '\n\n    function resolveInlineTextEditTarget(node, slide) {'
+  );
+  const resolveInlineTextEditTargetSource = extractFunctionSource(
+    fileContent,
+    'function resolveInlineTextEditTarget(node, slide) {',
+    '\n\n    const studioEditorSelectionClassRefresher ='
+  );
+  const node = { id: 'event-target' };
+  const slide = { id: 'slide-1' };
+  const selectedElements = [{ id: 'selected-element' }];
+  const target = { id: 'text-target' };
+  let delegatedArgs = null;
+  const textTagNames = new Set(['p', 'span']);
+  const context = {
+    selectedElements,
+    SlideNextStudioEditorInlineEdit: {
+      resolveStudioInlineTextEditTarget(...args) {
+        delegatedArgs = args;
+        return target;
+      }
+    },
+    EDITOR_INLINE_EDIT_TEXT_TAGS: textTagNames,
+    getStudioSelectedElements() {
+      return selectedElements;
+    },
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    },
+    getLiveSelectedElements(elements) {
+      return elements;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${inlineTextEditResolverSource}\n${resolveInlineTextEditTargetSource}`, context);
+
+  assert.equal(context.resolveInlineTextEditTarget(node, slide), target);
+  assert.equal(delegatedArgs[0], node);
+  assert.equal(delegatedArgs[1], slide);
+  assert.equal(delegatedArgs[2].selectedElements, selectedElements);
+  assert.equal(delegatedArgs[2].textTagNames, textTagNames);
+});
+
+test('resolveInlineTextEditTarget fails closed when the shared inline-edit module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const inlineTextEditResolverSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorInlineTextEditTargetResolver =',
+    '\n\n    function resolveInlineTextEditTarget(node, slide) {'
+  );
+  const resolveInlineTextEditTargetSource = extractFunctionSource(
+    fileContent,
+    'function resolveInlineTextEditTarget(node, slide) {',
+    '\n\n    const studioEditorSelectionClassRefresher ='
+  );
+  const context = {
+    selectedElements: [],
+    SlideNextStudioEditorInlineEdit: null,
+    EDITOR_INLINE_EDIT_TEXT_TAGS: new Set(),
+    getStudioSelectedElements() {
+      return [];
+    },
+    getIframeDoc() {
+      return {};
+    },
+    getLiveSelectedElements(elements) {
+      return elements;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${inlineTextEditResolverSource}\n${resolveInlineTextEditTargetSource}`, context);
+
+  assert.equal(context.resolveInlineTextEditTarget({}, {}), null);
+});
+
 test('editor composes blank-slide creation through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

@@ -6713,14 +6713,21 @@
         : null;
     }
 
+    const studioEditorInlineTextEditTargetResolver = typeof SlideNextStudioEditorInlineEdit !== 'undefined'
+      && SlideNextStudioEditorInlineEdit
+      && typeof SlideNextStudioEditorInlineEdit.resolveStudioInlineTextEditTarget === 'function'
+      ? (node, slide, options) => SlideNextStudioEditorInlineEdit.resolveStudioInlineTextEditTarget(
+          node,
+          slide,
+          options
+        )
+      : null;
+
     function resolveInlineTextEditTarget(node, slide) {
-      const inlineEditApi = typeof SlideNextStudioEditorInlineEdit !== 'undefined'
-        ? SlideNextStudioEditorInlineEdit
-        : null;
-      if (!inlineEditApi || typeof inlineEditApi.resolveStudioInlineTextEditTarget !== 'function') {
+      if (typeof studioEditorInlineTextEditTargetResolver !== 'function') {
         return null;
       }
-      return inlineEditApi.resolveStudioInlineTextEditTarget(node, slide, {
+      return studioEditorInlineTextEditTargetResolver(node, slide, {
         selectedElements: getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
         textTagNames: EDITOR_INLINE_EDIT_TEXT_TAGS
       });
