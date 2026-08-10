@@ -48,6 +48,15 @@ test('editor composes active-slide selection restore through the shared selectio
   assert.doesNotMatch(source, /restoreSelectionByIdsOnActiveSlide\.restorer/);
 });
 
+test('editor composes committed selection ID reading through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorCommittedSelectionIdsReader =/);
+  assert.match(source, /getStudioCommittedSelectedElementIds/);
+  assert.match(source, /if \(typeof studioEditorCommittedSelectionIdsReader !== 'function'\)/);
+  assert.doesNotMatch(source, /getCommittedSelectedEditorElementIds\.reader/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
@@ -85,7 +94,7 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {',
+    'const studioEditorCommittedSelectionIdsReader =',
     '\n\n    function areEditorIdListsEqual(a = [], b = []) {'
   );
   vm.runInContext(helperSource, context);

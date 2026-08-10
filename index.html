@@ -6301,12 +6301,19 @@
       return selectionApi.getStudioSelectedElementIds(elements, getEditorSelectionOptions());
     }
 
+    const studioEditorCommittedSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds === 'function'
+      ? (elements, doc, options) => SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds(
+          elements,
+          doc,
+          options
+        )
+      : null;
+
     function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.getStudioCommittedSelectedElementIds !== 'function') return [];
-      return selectionApi.getStudioCommittedSelectedElementIds(
+      if (typeof studioEditorCommittedSelectionIdsReader !== 'function') return [];
+      return studioEditorCommittedSelectionIdsReader(
         getStudioSelectedElements(),
         doc,
         getEditorSelectionOptions({ doc })
