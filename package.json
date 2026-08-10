@@ -8,7 +8,8 @@
   },
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "export:pptx": "node scripts/export-canonical-pptx.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
