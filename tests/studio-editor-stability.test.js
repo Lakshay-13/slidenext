@@ -1826,6 +1826,83 @@ test('editor runtime wiring uses the composed positioned-ancestor resolver', () 
   );
 });
 
+test('editor composes active-slide lookup through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorActiveSlideResolver =/);
+  assert.match(source, /getStudioActiveSlide/);
+  assert.match(source, /typeof studioEditorActiveSlideResolver === 'function'/);
+  assert.doesNotMatch(source, /getActiveSlide\.resolver/);
+});
+
+test('getActiveSlide delegates the document and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const activeSlideSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorActiveSlideResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function getActiveSlide(doc = getIframeDoc()) {',
+    '\n\n    function getActiveSlideId'
+  );
+  const doc = { id: 'iframe-doc' };
+  const options = { editorElementIdAttr: 'data-editor-id' };
+  const calls = [];
+  const activeSlide = { id: 'slide-1' };
+  const context = {
+    SlideNextStudioEditorDom: {
+      getStudioActiveSlide(docValue, optionsValue) {
+        calls.push([docValue, optionsValue]);
+        return activeSlide;
+      }
+    },
+    getEditorDomOptions() {
+      return options;
+    },
+    getIframeDoc() {
+      return doc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${activeSlideSource}\n${getActiveSlideSource}`, context);
+
+  assert.equal(context.getActiveSlide(), activeSlide);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('getActiveSlide fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const activeSlideSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorActiveSlideResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getActiveSlideSource = extractFunctionSource(
+    fileContent,
+    'function getActiveSlide(doc = getIframeDoc()) {',
+    '\n\n    function getActiveSlideId'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    },
+    getIframeDoc() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${activeSlideSource}\n${getActiveSlideSource}`, context);
+
+  assert.equal(context.getActiveSlide(), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {

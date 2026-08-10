@@ -3168,6 +3168,12 @@
         : null;
     }
 
+    const studioEditorActiveSlideResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getStudioActiveSlide === 'function'
+      ? (doc, options) => SlideNextStudioEditorDom.getStudioActiveSlide(doc, options)
+      : null;
+
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
       && SlideNextStudioEditorTransformRuntime
       && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
@@ -6385,7 +6391,16 @@
     }
 
     function getActiveSlide(doc = getIframeDoc()) {
-      return SlideNextStudioEditorDom.getStudioActiveSlide(doc, getEditorDomOptions());
+      const activeSlideResolver = typeof studioEditorActiveSlideResolver === 'function'
+        ? studioEditorActiveSlideResolver
+        : typeof SlideNextStudioEditorDom !== 'undefined'
+          && SlideNextStudioEditorDom
+          && typeof SlideNextStudioEditorDom.getStudioActiveSlide === 'function'
+          ? (...args) => SlideNextStudioEditorDom.getStudioActiveSlide(...args)
+          : null;
+      return typeof activeSlideResolver === 'function'
+        ? activeSlideResolver(doc, getEditorDomOptions())
+        : null;
     }
 
     function getActiveSlideId(doc = getIframeDoc()) {
