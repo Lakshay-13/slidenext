@@ -676,6 +676,52 @@ test('hideGuides passes the editor document, active-slide resolver, and overlay 
   assert.deepEqual(calls[0].marker, 'overlay-options');
 });
 
+test('editor composes drag HUD hiding through the shared overlay module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorDragHudHider =/);
+  assert.match(source, /hideStudioDragHudForActiveSlide/);
+  assert.match(source, /typeof studioEditorDragHudHider === 'function'/);
+  assert.doesNotMatch(source, /hideDragHud\.hider/);
+});
+
+test('hideDragHud passes the editor document, active-slide resolver, and overlay options to the shared overlay module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const hideDragHudSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorDragHudHider =',
+    '\n\n    function updateDragHud(bounds) {'
+  );
+  const iframeDoc = { id: 'doc' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorOverlay: {
+      hideStudioDragHudForActiveSlide(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getActiveSlide() {
+      return { id: 'active-slide' };
+    },
+    getEditorOverlayOptions() {
+      return { marker: 'overlay-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(hideDragHudSource, context);
+
+  assert.equal(context.hideDragHud(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, iframeDoc);
+  assert.equal(typeof calls[0].getActiveSlide, 'function');
+  assert.deepEqual(calls[0].marker, 'overlay-options');
+});
+
 test('selectElement delegates selection orchestration to the shared selection module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectElementSource = extractFunctionSource(
