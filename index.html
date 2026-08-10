@@ -12438,7 +12438,15 @@
         })(presentationUrl, sessionToken);
       }
 
-      return SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale(presentationUrl, {
+      const isStudioPersistenceTaskStale = (
+        typeof SlideNextStudioEditorPersistence !== 'undefined'
+        && SlideNextStudioEditorPersistence
+        && typeof SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale === 'function'
+      )
+        ? SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale
+        : null;
+      if (!isStudioPersistenceTaskStale) return true;
+      return isStudioPersistenceTaskStale(presentationUrl, {
         currentPresentationUrl: getStudioCurrentPresentationUrl(),
         currentSessionToken: getStudioEditorSessionToken(),
         sessionToken

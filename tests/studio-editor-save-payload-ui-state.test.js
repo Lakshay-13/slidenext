@@ -1459,6 +1459,32 @@ test('isCurrentStudioPersistenceTaskStale creates the shared stale-task adapter 
   ]);
 });
 
+test('isCurrentStudioPersistenceTaskStale fails closed when the shared checker is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    getStudioCurrentPresentationUrl() {
+      throw new Error('current presentation should not be read without a stale checker');
+    },
+    getStudioEditorSessionToken() {
+      throw new Error('current session should not be read without a stale checker');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+
+  assert.equal(
+    context.isCurrentStudioPersistenceTaskStale('presentations/deck/index.html', 12),
+    true
+  );
+});
+
 test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-action runner when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
