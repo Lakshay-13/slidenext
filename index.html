@@ -5810,11 +5810,7 @@
     function getSlideById(slideId, doc = getIframeDoc()) {
       const slideByIdReader = typeof studioEditorSlideByIdReader === 'function'
         ? studioEditorSlideByIdReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getStudioSlideById === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getStudioSlideById(...args)
-          : null;
+        : null;
       return typeof slideByIdReader === 'function'
         ? slideByIdReader(slideId, doc, getEditorDomOptions())
         : null;

@@ -2309,6 +2309,12 @@ test('editor composes slide-by-ID lookup through the shared DOM module', () => {
 
   assert.match(source, /const studioEditorSlideByIdReader =/);
   assert.match(source, /typeof slideByIdReader === 'function'/);
+  const getSlideByIdSource = extractFunctionSource(
+    source,
+    'function getSlideById(slideId, doc = getIframeDoc()) {',
+    '\n\n    function getSlideIndexById'
+  );
+  assert.doesNotMatch(getSlideByIdSource, /SlideNextStudioEditorDom\.getStudioSlideById/);
 });
 
 test('getSlideById delegates the slide ID, document, and DOM options to the shared DOM module', () => {
