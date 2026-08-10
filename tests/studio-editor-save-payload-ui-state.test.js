@@ -2103,6 +2103,26 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
   assert.equal(delegatedArgs.resolveWithContent, context.getCurrentEditorPersistedDeckState.resolveWithContent);
 });
 
+test('resolveEditorCapturedPersistableDeckState fails closed when the shared resolver is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
+    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+
+  assert.equal(
+    context.resolveEditorCapturedPersistableDeckState('<html>persisted</html>'),
+    null
+  );
+});
+
 test('resolveEditorCapturedPersistableDeckState reuses the shared captured-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
