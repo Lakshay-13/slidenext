@@ -16,14 +16,14 @@
 
     function getState() {
       return {
-        selectedElements,
+        selectedElements: [...selectedElements],
         selectedElement
       };
     }
 
     function setState(nextState = {}) {
       selectedElements = Array.isArray(nextState.selectedElements)
-        ? nextState.selectedElements
+        ? [...nextState.selectedElements]
         : [];
       selectedElement = Object.prototype.hasOwnProperty.call(nextState, 'selectedElement')
         ? nextState.selectedElement
@@ -39,7 +39,7 @@
 
     return {
       getState,
-      getSelectedElements: () => selectedElements,
+      getSelectedElements: () => [...selectedElements],
       getSelectedElement: () => selectedElement,
       getPreserveSelectionOnNextActiveSlideSync: () => preserveSelectionOnNextActiveSlideSync,
       setPreserveSelectionOnNextActiveSlideSync: (nextValue) => {

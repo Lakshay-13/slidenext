@@ -35,6 +35,21 @@ test('selection state controller owns the current selection without changing ele
   });
 });
 
+test('selection state controller isolates its selection array from consumer mutation', () => {
+  const firstElement = { id: 'node-1' };
+  const secondElement = { id: 'node-2' };
+  const inputSelection = [firstElement];
+  const controller = selectionStateController.createStudioEditorSelectionStateController();
+
+  controller.setState({ selectedElements: inputSelection });
+  inputSelection.push(secondElement);
+  const exposedSelection = controller.getSelectedElements();
+  exposedSelection.length = 0;
+
+  assert.deepEqual(controller.getSelectedElements(), [firstElement]);
+  assert.equal(controller.getSelectedElement(), firstElement);
+});
+
 test('editor wiring routes selection state through the shared controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
