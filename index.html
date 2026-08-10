@@ -9821,8 +9821,11 @@
         if (!createStudioEditorHistorySaveAdapter) {
           return { didCapture: false, nextTimer: getStudioUndoDebounceTimer() };
         }
+        const historyApi = typeof SlideNextStudioHistory !== 'undefined'
+          ? SlideNextStudioHistory
+          : null;
         saveHistoryState.adapter = createStudioEditorHistorySaveAdapter({
-          historyApi: SlideNextStudioHistory,
+          historyApi,
           transactionApi: (
             typeof SlideNextStudioEditorTransaction !== 'undefined'
             && SlideNextStudioEditorTransaction

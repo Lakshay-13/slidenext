@@ -1329,6 +1329,42 @@ test('saveHistoryState preserves canonical sidecars through the shared handler',
   assert.deepEqual(liveCanonicalArgs, [canonicalDeck, null, null]);
 });
 
+test('saveHistoryState passes a null history API when the shared runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const saveHistoryStateSource = extractFunctionSource(
+    fileContent,
+    'function saveHistoryState(debounce = false, transaction = null) {',
+    '\n\n    function buildHistoryFrameHtml('
+  );
+  let capturedOptions = null;
+  const context = {
+    SlideNextStudioEditorHistoryState: {
+      createStudioEditorHistorySaveAdapter(options) {
+        capturedOptions = options;
+        return () => ({ didCapture: true });
+      }
+    },
+    getStudioUndoDebounceTimer() {
+      return null;
+    },
+    getStudioPendingEditorTransaction() {
+      return null;
+    },
+    setStudioPendingEditorTransaction() {},
+    setStudioPendingEditorCanonicalDeck() {},
+    setStudioUndoDebounceTimer() {},
+    captureState() {},
+    clearTimeout() {},
+    setTimeout() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(saveHistoryStateSource, context);
+
+  assert.deepEqual(context.saveHistoryState(), { didCapture: true });
+  assert.equal(capturedOptions.historyApi, null);
+});
+
 test('captureState fails closed when the shared history state capturer is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const captureStateSource = extractFunctionSource(
