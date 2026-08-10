@@ -234,6 +234,25 @@ test('resolveEditorStoredCanonicalDeck fails closed when the deck context helper
   assert.equal(result, null);
 });
 
+test('stored canonical resolvers fail closed when the deck context runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    getStudioCurrentPresentationMetadata() {
+      return null;
+    },
+    getStudioPersistedCanonicalDeck() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  loadResolveEditorStoredCanonicalDeck(fileContent, context);
+  loadResolveEditorStoredCanonicalBaseline(fileContent, context);
+
+  assert.equal(context.resolveEditorStoredCanonicalDeck({}), null);
+  assert.equal(context.resolveEditorStoredCanonicalBaseline(), null);
+});
+
 test('resolveEditorStoredCanonicalBaseline delegates precedence to the shared deck context when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const currentMetadataCanonicalDeck = {

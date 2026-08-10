@@ -5977,9 +5977,12 @@
     }
 
     function resolveEditorStoredCanonicalDeck(metadata) {
-      const resolveStoredCanonicalDeck = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck === 'function'
-        ? SlideNextStudioDeckContext.resolveStoredStudioCanonicalDeck
+      const deckContextApi = typeof SlideNextStudioDeckContext !== 'undefined'
+        ? SlideNextStudioDeckContext
+        : null;
+      const resolveStoredCanonicalDeck = deckContextApi
+        && typeof deckContextApi.resolveStoredStudioCanonicalDeck === 'function'
+        ? deckContextApi.resolveStoredStudioCanonicalDeck
         : null;
       if (!resolveStoredCanonicalDeck) return null;
       return resolveStoredCanonicalDeck(metadata) || null;
@@ -5992,9 +5995,12 @@
       const persistedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'persistedCanonicalDeck')
         ? options.persistedCanonicalDeck
         : getStudioPersistedCanonicalDeck();
-      const resolveStudioCanonicalBaseline = SlideNextStudioDeckContext
-        && typeof SlideNextStudioDeckContext.resolveStudioCanonicalBaseline === 'function'
-        ? SlideNextStudioDeckContext.resolveStudioCanonicalBaseline
+      const deckContextApi = typeof SlideNextStudioDeckContext !== 'undefined'
+        ? SlideNextStudioDeckContext
+        : null;
+      const resolveStudioCanonicalBaseline = deckContextApi
+        && typeof deckContextApi.resolveStudioCanonicalBaseline === 'function'
+        ? deckContextApi.resolveStudioCanonicalBaseline
         : null;
       if (!resolveStudioCanonicalBaseline) return null;
       return resolveStudioCanonicalBaseline({
