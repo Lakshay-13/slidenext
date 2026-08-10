@@ -1067,6 +1067,37 @@ test('updateCurrentPresentationSessionState creates the shared session update ad
   assert.equal(context.currentTitle, 'Second Deck');
 });
 
+test('updateCurrentPresentationSessionState safely no-ops without a session runtime', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    currentCategory: 'General',
+    currentPresentationMetadata: { id: 'seed' },
+    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
+    currentSlideIndex: 2,
+    currentTitle: 'Project Onboarding',
+    applyCurrentPresentationMetadata() {
+      throw new Error('metadata should not be applied without a normalized update');
+    }
+  };
+
+  vm.createContext(context);
+  const updateCurrentPresentationSessionStateSource = extractFunctionSource(
+    fileContent,
+    'function updateCurrentPresentationSessionState(nextState = {}) {',
+    '\n\n    function launchStudioEditor(url, title, category) {'
+  );
+  vm.runInContext(updateCurrentPresentationSessionStateSource, context);
+
+  assert.doesNotThrow(() => {
+    context.updateCurrentPresentationSessionState({
+      presentationTitle: 'Unavailable Runtime Deck',
+      presentationMetadata: { id: 'deck-1' }
+    });
+  });
+  assert.equal(context.currentTitle, 'Project Onboarding');
+  assert.deepEqual(context.currentPresentationMetadata, { id: 'seed' });
+});
+
 test('setStudioAutoSaveStatus renders saving and failure editor states', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setStudioAutoSaveStatusSource = extractFunctionSource(

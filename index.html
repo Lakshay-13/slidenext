@@ -4900,22 +4900,28 @@
         && typeof studioEditorSessionStateController.update === 'function') {
         return studioEditorSessionStateController.update(nextState);
       }
-      const createStudioEditorPresentationSessionStateUpdateAdapter = (
+      const sessionApi = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateUpdateAdapter === 'function'
+        && typeof SlideNextStudioEditorSession === 'object'
       )
-        ? SlideNextStudioEditorSession.createStudioEditorPresentationSessionStateUpdateAdapter
+        ? SlideNextStudioEditorSession
+        : null;
+      const createStudioEditorPresentationSessionStateUpdateAdapter = sessionApi
+        && typeof sessionApi.createStudioEditorPresentationSessionStateUpdateAdapter === 'function'
+        ? sessionApi.createStudioEditorPresentationSessionStateUpdateAdapter
         : null;
       if (createStudioEditorPresentationSessionStateUpdateAdapter
         && typeof updateCurrentPresentationSessionState.adapter !== 'function') {
         updateCurrentPresentationSessionState.adapter = createStudioEditorPresentationSessionStateUpdateAdapter({
-          sessionApi: SlideNextStudioEditorSession
+          sessionApi
         });
       }
       const sessionStateUpdate = typeof updateCurrentPresentationSessionState.adapter === 'function'
         ? updateCurrentPresentationSessionState.adapter(nextState)
-        : SlideNextStudioEditorSession.createStudioPresentationSessionStateUpdate(nextState);
+        : sessionApi && typeof sessionApi.createStudioPresentationSessionStateUpdate === 'function'
+          ? sessionApi.createStudioPresentationSessionStateUpdate(nextState)
+          : {};
       if (Object.prototype.hasOwnProperty.call(sessionStateUpdate, 'presentationUrl')) {
         setStudioCurrentPresentationUrl(sessionStateUpdate.presentationUrl);
       }
