@@ -902,6 +902,30 @@ test('resolveEditorCanonicalDeckOverride creates the shared canonical override a
   assert.equal(secondResult.marker, 2);
 });
 
+test('resolveEditorCanonicalDeckOverride returns null when the persistence runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getEditorCanonicalDeckValidator() {'
+  );
+  const context = {
+    getEditorCanonicalDeckValidator() {
+      return null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(
+    context.resolveEditorCanonicalDeckOverride({ id: 'override' }, {
+      buildCanonicalDeck: () => ({ kind: 'slidenext.deck', schemaVersion: 1, slides: [] })
+    }),
+    null
+  );
+});
+
 test('getEditorCanonicalDeckValidator returns the shared canonical deck validator when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(

@@ -6208,7 +6208,14 @@
         ? options.buildCanonicalDeck
         : null;
       const canonicalDeckValidator = getEditorCanonicalDeckValidator();
-      return SlideNextStudioEditorPersistence.resolveStudioCanonicalDeckOverride({
+      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+        ? SlideNextStudioEditorPersistence
+        : null;
+      if (!persistenceApi
+        || typeof persistenceApi.resolveStudioCanonicalDeckOverride !== 'function') {
+        return null;
+      }
+      return persistenceApi.resolveStudioCanonicalDeckOverride({
         canonicalDeck,
         buildCanonicalDeck,
         isCanonicalDeck: canonicalDeckValidator
