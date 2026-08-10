@@ -5783,11 +5783,7 @@
     function assignEditorSlideId(slide, options = {}) {
       const slideIdAssigner = typeof studioEditorSlideIdAssigner === 'function'
         ? studioEditorSlideIdAssigner
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.assignStudioSlideId === 'function'
-          ? (...args) => SlideNextStudioEditorDom.assignStudioSlideId(...args)
-          : null;
+        : null;
       return typeof slideIdAssigner === 'function'
         ? slideIdAssigner(slide, getEditorDomOptions(options))
         : '';
