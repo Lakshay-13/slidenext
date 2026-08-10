@@ -3351,6 +3351,29 @@ test('buildEditorElementSnapshot defaults selection state when live selection ru
   assert.equal(typeof receivedOptions.isSelectedElement, 'function');
 });
 
+test('getEditorLayerDisplayMetadata uses a neutral fallback when the shared metadata builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getEditorLayerDisplayMetadataSource = extractFunctionSource(
+    fileContent,
+    'function getEditorLayerDisplayMetadata(el) {',
+    '\n\n    function buildEditorElementSnapshot(el) {'
+  );
+  const context = {
+    SlideNextStudioElementSnapshot: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(getEditorLayerDisplayMetadataSource, context);
+
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.getEditorLayerDisplayMetadata({ label: 'element' }))),
+    {
+      typeIcon: 'description',
+      displayName: 'Element'
+    }
+  );
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(

@@ -6594,7 +6594,20 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
-      return SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata(el);
+      const resolveStudioLayerDisplayMetadata = (
+        typeof SlideNextStudioElementSnapshot !== 'undefined'
+        && SlideNextStudioElementSnapshot
+        && typeof SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata === 'function'
+      )
+        ? SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata
+        : null;
+      if (!resolveStudioLayerDisplayMetadata) {
+        return {
+          typeIcon: 'description',
+          displayName: 'Element'
+        };
+      }
+      return resolveStudioLayerDisplayMetadata(el);
     }
 
     function buildEditorElementSnapshot(el) {
