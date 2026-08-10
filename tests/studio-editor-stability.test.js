@@ -2055,6 +2055,75 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
   assert.equal(context.pruneEditorChromeNodes(), false);
 });
 
+test('editor composes slide-ID assignment through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSlideIdAssigner =/);
+  assert.match(source, /typeof slideIdAssigner === 'function'/);
+});
+
+test('assignEditorSlideId delegates the slide and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIdAssignerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIdAssigner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const assignEditorSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function assignEditorSlideId(slide, options = {}) {',
+    '\n\n    function getEditorSlideId'
+  );
+  const slide = { id: 'slide-node' };
+  const options = { editorSlideIdAttr: 'data-slide-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      assignStudioSlideId(slideValue, optionsValue) {
+        calls.push([slideValue, optionsValue]);
+        return 'slide-1';
+      }
+    },
+    getEditorDomOptions(optionsValue) {
+      assert.deepEqual(JSON.parse(JSON.stringify(optionsValue)), options);
+      return optionsValue;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIdAssignerSource}\n${assignEditorSlideIdSource}`, context);
+
+  assert.equal(context.assignEditorSlideId(slide, options), 'slide-1');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], slide);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
+});
+
+test('assignEditorSlideId fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slideIdAssignerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorSlideIdAssigner =',
+    'const studioEditorTransformRuntime ='
+  );
+  const assignEditorSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function assignEditorSlideId(slide, options = {}) {',
+    '\n\n    function getEditorSlideId'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${slideIdAssignerSource}\n${assignEditorSlideIdSource}`, context);
+
+  assert.equal(context.assignEditorSlideId({}), '');
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
