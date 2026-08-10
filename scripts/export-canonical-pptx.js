@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs/promises');
+const fsSync = require('node:fs');
 const path = require('node:path');
 
 const { createCanonicalPptxExport } = require('../shared/canonical-pptx-export.js');
@@ -20,7 +21,12 @@ async function main(argv = process.argv.slice(2)) {
   const resolvedOutputPath = path.resolve(outputPath);
   const deck = JSON.parse(await fs.readFile(resolvedInputPath, 'utf8'));
   const result = createCanonicalPptxExport(deck, {
-    assetBaseDir: path.dirname(resolvedInputPath)
+    assetBaseDir: path.dirname(resolvedInputPath),
+    assetExists(assetSource) {
+      if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
+      if (/^(?:data:|https?:\/\/)/i.test(assetSource)) return true;
+      return fsSync.existsSync(assetSource);
+    }
   });
 
   if (!result.pptx) {

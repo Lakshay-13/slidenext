@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const pptxExport = require('../shared/canonical-pptx-export.js');
+const canonicalPptxCli = require('../scripts/export-canonical-pptx.js');
 
 class FakeSlide {
   constructor() {
@@ -104,6 +105,36 @@ test('createCanonicalPptxExport writes a valid PPTX with the real generator', as
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('canonical PPTX CLI reports missing local assets during preflight', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-cli-'));
+  const inputPath = path.join(tempDir, 'deck.json');
+  const outputPath = path.join(tempDir, 'deck.pptx');
+  fs.writeFileSync(inputPath, JSON.stringify({
+    layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'missing-image',
+        type: 'image',
+        attributes: { src: 'assets/missing.png' },
+        layout: { x: 0, y: 0, width: 300, height: 200 }
+      }]
+    }]
+  }));
+  const errors = [];
+  const originalConsoleError = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+
+  try {
+    assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+  } finally {
+    console.error = originalConsoleError;
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+
+  assert.match(errors.join('\n'), /missing image asset/);
 });
 
 test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () => {
