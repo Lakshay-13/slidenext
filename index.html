@@ -6462,15 +6462,12 @@
     }
 
     function refreshSelectionClasses() {
-      const selectionApi = typeof SlideNextStudioEditorSelection !== 'undefined'
-        ? SlideNextStudioEditorSelection
-        : null;
-      if (!selectionApi || typeof selectionApi.refreshStudioSelectionClasses !== 'function') {
+      if (typeof studioEditorSelectionClassRefresher !== 'function') {
         clearStudioSelectionState();
         return false;
       }
       const doc = getIframeDoc();
-      const nextSelectionState = selectionApi.refreshStudioSelectionClasses(
+      const nextSelectionState = studioEditorSelectionClassRefresher(
         doc,
         getStudioSelectedElements(),
         getEditorSelectionOptions({ doc })
@@ -6478,6 +6475,16 @@
       setStudioSelectionState(nextSelectionState);
       return true;
     }
+
+    const studioEditorSelectionClassRefresher = typeof SlideNextStudioEditorSelection !== 'undefined'
+      && SlideNextStudioEditorSelection
+      && typeof SlideNextStudioEditorSelection.refreshStudioSelectionClasses === 'function'
+      ? (doc, selectedElements, options) => SlideNextStudioEditorSelection.refreshStudioSelectionClasses(
+          doc,
+          selectedElements,
+          options
+        )
+      : null;
 
     const studioEditorSelectionStateNormalizer = typeof SlideNextStudioEditorSelection !== 'undefined'
       && SlideNextStudioEditorSelection

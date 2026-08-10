@@ -21,6 +21,15 @@ test('editor composes selection state normalization through the shared selection
   assert.doesNotMatch(source, /applyEditorSelectionState\.normalizer/);
 });
 
+test('editor composes selection class refresh through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorSelectionClassRefresher =/);
+  assert.match(source, /refreshStudioSelectionClasses/);
+  assert.match(source, /if \(typeof studioEditorSelectionClassRefresher !== 'function'\)/);
+  assert.doesNotMatch(source, /refreshSelectionClasses\.refresher/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
