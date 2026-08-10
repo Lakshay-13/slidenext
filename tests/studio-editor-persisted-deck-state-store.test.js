@@ -46,6 +46,6 @@ test('editor routes persisted baseline access through the shared store', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-persisted-deck-state-store\.js/);
-  assert.match(source, /studioEditorPersistedDeckStateStore/);
+  assert.match(source, /studioEditorPersistedDeckBridge/);
   assert.doesNotMatch(source, /const studioEditorPersistedDeckStateController =/);
 });

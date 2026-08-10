@@ -23,7 +23,7 @@ test('persisted deck runtime composes the persisted deck state store', () => {
   assert.deepEqual(calls, [{}]);
 });
 
-test('index wires persisted deck state through the runtime module', () => {
+test('index wires persisted deck state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -32,7 +32,11 @@ test('index wires persisted deck state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorPersistedDeckRuntime\.createStudioEditorPersistedDeckRuntime\(/
+    /<script src="\/shared\/studio-editor-persisted-deck-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorPersistedDeckBridge\.createStudioEditorPersistedDeckBridge\(/
   );
   assert.doesNotMatch(
     fileContent,
