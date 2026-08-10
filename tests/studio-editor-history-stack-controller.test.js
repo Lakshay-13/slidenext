@@ -32,7 +32,7 @@ test('editor wiring routes history stacks through the shared controller', () => 
     /<script src="\/shared\/studio-editor-history-stack-controller\.js"><\/script>/
   );
   assert.match(fileContent, /studio-editor-history-store\.js/);
-  assert.match(fileContent, /studioEditorHistoryStateController/);
+  assert.match(fileContent, /studioEditorHistoryBridge/);
   assert.match(fileContent, /getUndoStack\(\)/);
   assert.match(fileContent, /getRedoStack\(\)/);
   assert.doesNotMatch(fileContent, /let undoStack = \[\]/);

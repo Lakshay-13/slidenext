@@ -76,7 +76,7 @@ test('editor routes history state access through the shared composition adapter'
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-history-store\.js/);
-  assert.match(source, /studioEditorHistoryStateController/);
+  assert.match(source, /studioEditorHistoryBridge/);
   assert.doesNotMatch(source, /const studioEditorHistoryStackController =/);
   assert.doesNotMatch(source, /const studioEditorHistoryPendingController =/);
   assert.doesNotMatch(source, /const studioEditorHistoryTimerController =/);

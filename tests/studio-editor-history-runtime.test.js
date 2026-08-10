@@ -24,7 +24,7 @@ test('history runtime composes the history state controller', () => {
   assert.deepEqual(calls, [{}]);
 });
 
-test('index wires history state through the runtime module', () => {
+test('index wires history state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -33,7 +33,11 @@ test('index wires history state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorHistoryRuntime\.createStudioEditorHistoryRuntime\(/
+    /<script src="\/shared\/studio-editor-history-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorHistoryBridge\.createStudioEditorHistoryBridge\(/
   );
   assert.doesNotMatch(
     fileContent,

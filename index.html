@@ -1505,6 +1505,7 @@
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
   <script src="/shared/studio-editor-history-store.js"></script>
   <script src="/shared/studio-editor-history-runtime.js"></script>
+  <script src="/shared/studio-editor-history-bridge.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-controller.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-runtime.js"></script>
@@ -1709,88 +1710,88 @@
         ? studioEditorStateBridge.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
-    const studioEditorHistoryRuntime = typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'
-      && SlideNextStudioEditorHistoryRuntime
-      && typeof SlideNextStudioEditorHistoryRuntime.createStudioEditorHistoryRuntime === 'function'
-      ? SlideNextStudioEditorHistoryRuntime.createStudioEditorHistoryRuntime({
+    const studioEditorHistoryBridge = typeof SlideNextStudioEditorHistoryBridge !== 'undefined'
+      && SlideNextStudioEditorHistoryBridge
+      && typeof SlideNextStudioEditorHistoryBridge.createStudioEditorHistoryBridge === 'function'
+      ? SlideNextStudioEditorHistoryBridge.createStudioEditorHistoryBridge({
+          runtimeApi: typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'
+            ? SlideNextStudioEditorHistoryRuntime
+            : null,
           historyStore: typeof SlideNextStudioEditorHistoryStore !== 'undefined'
             ? SlideNextStudioEditorHistoryStore
             : null
         })
       : null;
-    const studioEditorHistoryStateController = studioEditorHistoryRuntime
-      ? studioEditorHistoryRuntime.historyStateController
-      : null;
     function getStudioUndoStack() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.getUndoStack === 'function'
-        ? studioEditorHistoryStateController.getUndoStack()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.getUndoStack === 'function'
+        ? studioEditorHistoryBridge.getUndoStack()
         : [];
     }
     function getStudioRedoStack() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.getRedoStack === 'function'
-        ? studioEditorHistoryStateController.getRedoStack()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.getRedoStack === 'function'
+        ? studioEditorHistoryBridge.getRedoStack()
         : [];
     }
     function setStudioUndoStack(nextStack) {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.setUndoStack === 'function'
-        ? studioEditorHistoryStateController.setUndoStack(nextStack)
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.setUndoStack === 'function'
+        ? studioEditorHistoryBridge.setUndoStack(nextStack)
         : false;
     }
     function setStudioRedoStack(nextStack) {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.setRedoStack === 'function'
-        ? studioEditorHistoryStateController.setRedoStack(nextStack)
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.setRedoStack === 'function'
+        ? studioEditorHistoryBridge.setRedoStack(nextStack)
         : false;
     }
     function clearStudioHistoryStacks() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.clearHistoryStacks === 'function'
-        ? studioEditorHistoryStateController.clearHistoryStacks()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.clearHistoryStacks === 'function'
+        ? studioEditorHistoryBridge.clearHistoryStacks()
         : false;
     }
     function getStudioPendingEditorTransaction() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.getPendingEditorTransaction === 'function'
-        ? studioEditorHistoryStateController.getPendingEditorTransaction()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.getPendingEditorTransaction === 'function'
+        ? studioEditorHistoryBridge.getPendingEditorTransaction()
         : null;
     }
     function setStudioPendingEditorTransaction(nextTransaction) {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.setPendingEditorTransaction === 'function'
-        ? studioEditorHistoryStateController.setPendingEditorTransaction(nextTransaction)
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.setPendingEditorTransaction === 'function'
+        ? studioEditorHistoryBridge.setPendingEditorTransaction(nextTransaction)
         : false;
     }
     function clearStudioPendingEditorTransaction() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.clearPendingEditorTransaction === 'function'
-        ? studioEditorHistoryStateController.clearPendingEditorTransaction()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.clearPendingEditorTransaction === 'function'
+        ? studioEditorHistoryBridge.clearPendingEditorTransaction()
         : false;
     }
     function getStudioPendingEditorCanonicalDeck() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.getPendingEditorCanonicalDeck === 'function'
-        ? studioEditorHistoryStateController.getPendingEditorCanonicalDeck()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.getPendingEditorCanonicalDeck === 'function'
+        ? studioEditorHistoryBridge.getPendingEditorCanonicalDeck()
         : null;
     }
     function setStudioPendingEditorCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.setPendingEditorCanonicalDeck === 'function'
-        ? studioEditorHistoryStateController.setPendingEditorCanonicalDeck(nextCanonicalDeck)
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.setPendingEditorCanonicalDeck === 'function'
+        ? studioEditorHistoryBridge.setPendingEditorCanonicalDeck(nextCanonicalDeck)
         : false;
     }
     function getStudioUndoDebounceTimer() {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.getUndoDebounceTimer === 'function'
-        ? studioEditorHistoryStateController.getUndoDebounceTimer()
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.getUndoDebounceTimer === 'function'
+        ? studioEditorHistoryBridge.getUndoDebounceTimer()
         : null;
     }
     function setStudioUndoDebounceTimer(nextTimer) {
-      return studioEditorHistoryStateController
-        && typeof studioEditorHistoryStateController.setUndoDebounceTimer === 'function'
-        ? studioEditorHistoryStateController.setUndoDebounceTimer(nextTimer)
+      return studioEditorHistoryBridge
+        && typeof studioEditorHistoryBridge.setUndoDebounceTimer === 'function'
+        ? studioEditorHistoryBridge.setUndoDebounceTimer(nextTimer)
         : false;
     }
     const studioEditorPersistedDeckBridge = typeof SlideNextStudioEditorPersistedDeckBridge !== 'undefined'
