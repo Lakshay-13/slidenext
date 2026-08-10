@@ -24,6 +24,7 @@ async function main(argv = process.argv.slice(2)) {
   const deck = presentationMetadata.resolvePresentationCanonicalDeck(input) || input;
   const result = createCanonicalPptxExport(deck, {
     assetBaseDir: path.dirname(resolvedInputPath),
+    assetRootDir: process.cwd(),
     assetExists(assetSource) {
       if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
       if (/^(?:data:|https?:\/\/)/i.test(assetSource)) return true;
