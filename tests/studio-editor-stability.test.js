@@ -2623,6 +2623,82 @@ test('assignEditorElementId fails closed when the shared DOM module is unavailab
   assert.equal(context.assignEditorElementId({}), '');
 });
 
+test('editor composes editor-element lookup through the shared DOM module', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorElementByIdReader =/);
+  assert.match(source, /typeof elementByIdReader === 'function'/);
+});
+
+test('getElementByEditorId delegates the ID, document, and DOM options to the shared DOM module', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const elementByIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementByIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getElementByEditorIdSource = extractFunctionSource(
+    fileContent,
+    'function getElementByEditorId(editorId, doc = getIframeDoc()) {',
+    '\n\n    function getSlideEditableElements'
+  );
+  const doc = { id: 'iframe-doc' };
+  const element = { id: 'element-node' };
+  const options = { elementAttrName: 'data-editor-id' };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorDom: {
+      getElementByEditorId(editorId, docValue, optionsValue) {
+        calls.push([editorId, docValue, optionsValue]);
+        return element;
+      }
+    },
+    getIframeDoc() {
+      return doc;
+    },
+    getEditorDomOptions() {
+      return options;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${elementByIdReaderSource}\n${getElementByEditorIdSource}`, context);
+
+  assert.equal(context.getElementByEditorId('element-1'), element);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'element-1');
+  assert.equal(calls[0][1], doc);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0][2])), options);
+});
+
+test('getElementByEditorId fails closed when the shared DOM module is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const elementByIdReaderSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorElementByIdReader =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getElementByEditorIdSource = extractFunctionSource(
+    fileContent,
+    'function getElementByEditorId(editorId, doc = getIframeDoc()) {',
+    '\n\n    function getSlideEditableElements'
+  );
+  const context = {
+    SlideNextStudioEditorDom: null,
+    getIframeDoc() {
+      return {};
+    },
+    getEditorDomOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${elementByIdReaderSource}\n${getElementByEditorIdSource}`, context);
+
+  assert.equal(context.getElementByEditorId('element-1'), null);
+});
+
 function createClassList(initialValues = []) {
   const values = new Set(initialValues);
   return {
