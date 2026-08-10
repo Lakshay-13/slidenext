@@ -99,6 +99,43 @@ test('createStudioMutationFinalizer preserves an optional canonical deck history
   assert.deepEqual(historyArgs, [false, { id: 'tx-canonical' }, canonicalDeck]);
 });
 
+test('createStudioMutationFinalizer publishes canonical state before dependent UI refreshes', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    syncSelectionOverlay() {
+      calls.push('overlay');
+    },
+    generateThumbnails() {
+      calls.push('thumbnails');
+    },
+    updateLayersList() {
+      calls.push('layers');
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    }
+  });
+
+  finalizeMutation('Auto: Canonical Update', {
+    syncSelectionOverlay: true,
+    refreshLayersList: true,
+    transaction: { id: 'tx-canonical-order' },
+    canonicalDeck
+  });
+
+  assert.deepEqual(calls, [
+    ['history', false, { id: 'tx-canonical-order' }, canonicalDeck],
+    'overlay',
+    'thumbnails',
+    'layers',
+    'save'
+  ]);
+});
+
 test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
   const historyArgs = [];
   const isCanonicalDeck = (value) => (

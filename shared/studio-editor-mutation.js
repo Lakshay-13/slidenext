@@ -94,6 +94,22 @@
         buildCanonicalDeckBaseline,
         isCanonicalDeck
       });
+      const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(
+        resolvedMutationOptions,
+        'canonicalDeck'
+      );
+      const shouldPublishCanonicalDeckBeforeUi = hasCanonicalDeck
+        && !!resolvedMutationOptions.canonicalDeck;
+      const historyArgs = [
+        resolvedMutationOptions.debounceHistory === true,
+        resolvedMutationOptions.transaction || null
+      ];
+      if (hasCanonicalDeck) {
+        historyArgs.push(resolvedMutationOptions.canonicalDeck);
+      }
+      if (shouldPublishCanonicalDeckBeforeUi) {
+        saveHistoryState(...historyArgs);
+      }
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay();
       }
@@ -103,14 +119,9 @@
       if (resolvedMutationOptions.refreshLayersList) {
         updateLayersList();
       }
-      const historyArgs = [
-        resolvedMutationOptions.debounceHistory === true,
-        resolvedMutationOptions.transaction || null
-      ];
-      if (Object.prototype.hasOwnProperty.call(resolvedMutationOptions, 'canonicalDeck')) {
-        historyArgs.push(resolvedMutationOptions.canonicalDeck);
+      if (!shouldPublishCanonicalDeckBeforeUi) {
+        saveHistoryState(...historyArgs);
       }
-      saveHistoryState(...historyArgs);
       triggerAutoSave();
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
