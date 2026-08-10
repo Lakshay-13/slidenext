@@ -879,6 +879,12 @@
     });
   }
 
+  function hasSlideBackgroundPaintStyle(background, themeTokens = {}) {
+    const styles = parseStyle(resolveCssVariables(background && background.style, themeTokens));
+    const layoutProperties = new Set(['background-size', 'background-position', 'background-repeat']);
+    return Object.keys(styles).some(property => !layoutProperties.has(property));
+  }
+
   function getBackgroundAssetDiagnosticId(slide) {
     return `${slide && slide.id ? slide.id : 'unknown'}:background`;
   }
@@ -1520,9 +1526,11 @@
         backgroundImageAsset.asset,
         themeTokens
       );
+      const hasBackgroundPaintStyle = hasSlideBackgroundPaintStyle(background, themeTokens);
       const hasGradientBackground = background.style && /gradient\(/i.test(background.style);
       const gradientFallbackColor = resolveSlideBackgroundColor(background, themeTokens);
       if (background.style
+        && hasBackgroundPaintStyle
         && !hasGradientBackground
         && !resolveSlideBackgroundColor(background, themeTokens)
         && !supportsBackgroundStyle) {

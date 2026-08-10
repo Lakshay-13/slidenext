@@ -2100,6 +2100,22 @@ test('preflightCanonicalPptxExport reports unsupported non-solid slide backgroun
   );
 });
 
+test('preflightCanonicalPptxExport ignores slide background sizing metadata without paint', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      id: 'slide-1',
+      layout: {
+        background: {
+          style: 'background-size: cover; background-position: 50% 50%;'
+        }
+      },
+      nodes: []
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
 test('preflightCanonicalPptxExport accepts focal positioning for sized slide backgrounds', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     layout: { size: { width: 1000, height: 1000, unit: 'px' } },
