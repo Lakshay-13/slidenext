@@ -2098,6 +2098,32 @@ test('applyCurrentStudioVersionPersistenceSuccess creates the shared persistence
   assert.deepEqual(calls.map(([, options]) => options.id), [1, 2]);
 });
 
+test('applyCurrentStudioVersionPersistenceSuccess fails closed when the shared version-success handler is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionPersistenceSuccess(',
+    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
+  );
+  const context = {
+    SlideNextStudioEditorPersistence: {},
+    createCurrentStudioSessionReaderOptions() {
+      throw new Error('version handler options should not be built without a version-success handler');
+    },
+    loadVersions() {
+      throw new Error('versions should not refresh without a version-success handler');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+
+  assert.equal(
+    context.applyCurrentStudioVersionPersistenceSuccess({ id: 'version-success' }),
+    false
+  );
+});
+
 test('buildEditorSaveRequestBody reuses the local canonical override helper when capture state omits a canonical deck', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSaveRequestBodySource = extractFunctionSource(
