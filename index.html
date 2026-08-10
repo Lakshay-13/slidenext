@@ -5930,7 +5930,15 @@
         && typeof studioEditorDeckSnapshotController.buildFromDom === 'function') {
         return studioEditorDeckSnapshotController.buildFromDom(doc, options);
       }
-      return SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom(doc, {
+      const buildStudioDeckSnapshotFromDom = (
+        typeof SlideNextStudioDeckSnapshot !== 'undefined'
+        && SlideNextStudioDeckSnapshot
+        && typeof SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom === 'function'
+      )
+        ? SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom
+        : null;
+      if (!buildStudioDeckSnapshotFromDom) return null;
+      return buildStudioDeckSnapshotFromDom(doc, {
         includeLayers: !!options.includeLayers,
         getSlides,
         getActiveSlide,

@@ -3170,6 +3170,45 @@ test('buildEditorDeckSnapshot fails closed when only the legacy snapshot builder
   assert.deepEqual(calls, []);
 });
 
+test('buildEditorDeckSnapshotFromDom fails closed when the shared DOM snapshot builder is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorDeckSnapshotFromDomSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckSnapshotFromDom(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function buildCurrentPresentationMetadataSeed('
+  );
+  const context = {
+    SlideNextStudioDeckSnapshot: {},
+    studioEditorDeckSnapshotController: null,
+    getSlides() {
+      throw new Error('DOM snapshot dependencies should not run');
+    },
+    getActiveSlide() {
+      throw new Error('DOM snapshot dependencies should not run');
+    },
+    getEditorSlideId() {
+      throw new Error('DOM snapshot dependencies should not run');
+    },
+    getSlideEditableElements() {
+      throw new Error('DOM snapshot dependencies should not run');
+    },
+    getNormalizedSlideLayerOrder() {
+      throw new Error('DOM snapshot dependencies should not run');
+    },
+    buildEditorElementSnapshot() {
+      throw new Error('DOM snapshot dependencies should not run');
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorDeckSnapshotFromDomSource, context);
+
+  assert.equal(
+    context.buildEditorDeckSnapshotFromDom({ label: 'iframe-doc' }),
+    null
+  );
+});
+
 test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
