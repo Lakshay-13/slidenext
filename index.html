@@ -6613,11 +6613,7 @@
     function getElementByEditorId(editorId, doc = getIframeDoc()) {
       const elementByIdReader = typeof studioEditorElementByIdReader === 'function'
         ? studioEditorElementByIdReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getElementByEditorId === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getElementByEditorId(...args)
-          : null;
+        : null;
       return typeof elementByIdReader === 'function'
         ? elementByIdReader(editorId, doc, getEditorDomOptions())
         : null;

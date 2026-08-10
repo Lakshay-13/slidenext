@@ -2710,9 +2710,15 @@ test('assignEditorElementId fails closed when the shared DOM module is unavailab
 
 test('editor composes editor-element lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getElementByEditorIdSource = extractFunctionSource(
+    source,
+    'function getElementByEditorId(editorId, doc = getIframeDoc()) {',
+    '\n\n    function getSlideEditableElements'
+  );
 
   assert.match(source, /const studioEditorElementByIdReader =/);
   assert.match(source, /typeof elementByIdReader === 'function'/);
+  assert.doesNotMatch(getElementByEditorIdSource, /SlideNextStudioEditorDom\.getElementByEditorId/);
 });
 
 test('getElementByEditorId delegates the ID, document, and DOM options to the shared DOM module', () => {
