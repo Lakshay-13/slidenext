@@ -2866,9 +2866,15 @@ test('getSlideEditableElements fails closed when the shared DOM module is unavai
 
 test('editor composes normalized slide layer order through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const getNormalizedSlideLayerOrderSource = extractFunctionSource(
+    source,
+    'function getNormalizedSlideLayerOrder(slide) {',
+    '\n\n    function applySlideLayerOrder'
+  );
 
   assert.match(source, /const studioEditorNormalizedSlideLayerOrderReader =/);
   assert.match(source, /typeof normalizedSlideLayerOrderReader === 'function'/);
+  assert.doesNotMatch(getNormalizedSlideLayerOrderSource, /SlideNextStudioEditorDom\.getNormalizedStudioSlideLayerOrder/);
 });
 
 test('getNormalizedSlideLayerOrder delegates the slide and composed DOM options to the shared DOM module', () => {

@@ -6631,11 +6631,7 @@
     function getNormalizedSlideLayerOrder(slide) {
       const normalizedSlideLayerOrderReader = typeof studioEditorNormalizedSlideLayerOrderReader === 'function'
         ? studioEditorNormalizedSlideLayerOrderReader
-        : typeof SlideNextStudioEditorDom !== 'undefined'
-          && SlideNextStudioEditorDom
-          && typeof SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder === 'function'
-          ? (...args) => SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(...args)
-          : null;
+        : null;
       return typeof normalizedSlideLayerOrderReader === 'function'
         ? normalizedSlideLayerOrderReader(slide, {
             ...getEditorDomOptions(),
