@@ -27,7 +27,7 @@ test('session-state runtime composes the canonical identity store', () => {
   assert.deepEqual(calls, [controllerOptions]);
 });
 
-test('index wires canonical session state through the runtime module', () => {
+test('index wires canonical session state through the bridge module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(
@@ -36,7 +36,11 @@ test('index wires canonical session state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSessionStateRuntime\.createStudioEditorSessionStateRuntime\(/
+    /<script src="\/shared\/studio-editor-session-state-bridge\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorSessionStateBridge\.createStudioEditorSessionStateBridge\(/
   );
   assert.doesNotMatch(
     fileContent,
