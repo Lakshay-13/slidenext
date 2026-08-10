@@ -3804,6 +3804,11 @@
           'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'pre', 'code', 'blockquote', 'td', 'th',
           ...EDITOR_INLINE_TEXT_TAGS
         ]);
+    const studioEditorAdjacentTextElementResolver = typeof SlideNextStudioEditorTableNavigation !== 'undefined'
+      && SlideNextStudioEditorTableNavigation
+      && typeof SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
+      ? (element, options) => SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell(element, options)
+      : null;
     const RESIZE_HANDLE_DIRECTIONS = editorConfiguration
       && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
       ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
@@ -3839,11 +3844,7 @@
           deselectElement,
           getActiveSlide,
           resolveTextElement: resolveInlineTextEditTarget,
-          resolveAdjacentTextElement: typeof SlideNextStudioEditorTableNavigation !== 'undefined'
-            && SlideNextStudioEditorTableNavigation
-            && typeof SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell === 'function'
-            ? SlideNextStudioEditorTableNavigation.resolveStudioAdjacentTableCell
-            : null,
+          resolveAdjacentTextElement: studioEditorAdjacentTextElementResolver,
           getCanonicalVisibilityReader: (property, doc) => {
             const fallbackReader = property === 'hidden' ? isElementHidden : isElementLocked;
             return typeof getEditorCanonicalVisibilityReader === 'function'
