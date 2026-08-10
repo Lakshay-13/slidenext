@@ -7293,6 +7293,12 @@
     }
 
     function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
+      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
+        ? SlideNextStudioEditorNudge
+        : null;
+      if (!nudgeApi || typeof nudgeApi.buildStudioNudgeSelectionState !== 'function') {
+        return { selection: [], canNudge: false };
+      }
       const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
         ? isElementFreeformPositioned
         : typeof SlideNextStudioEditorTransform !== 'undefined'
@@ -7302,7 +7308,7 @@
           : () => false;
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
-      return SlideNextStudioEditorNudge.buildStudioNudgeSelectionState(elements, {
+      return nudgeApi.buildStudioNudgeSelectionState(elements, {
         isLocked: readLockedState,
         isHidden: readHiddenState,
         isFreeformPositioned: getEditorCanonicalFreeformReader(

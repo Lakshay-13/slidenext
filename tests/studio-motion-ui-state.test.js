@@ -168,6 +168,23 @@ test('getNudgeSelectionState prefers canonical hidden and locked state over stal
   assert.equal(result.canNudge, false);
 });
 
+test('getNudgeSelectionState fails closed when the shared nudge runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    selectedElements: [{ id: 'node-1' }],
+    getIframeDoc() {
+      return { id: 'iframe-doc' };
+    }
+  };
+
+  vm.createContext(context);
+  loadGetNudgeSelectionState(fileContent, context);
+
+  const result = context.getNudgeSelectionState();
+  assert.deepEqual(JSON.parse(JSON.stringify(result.selection)), []);
+  assert.equal(result.canNudge, false);
+});
+
 test('getTransformSelectionState prefers canonical hidden and locked state over stale DOM state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = { id: 'iframe-doc' };
