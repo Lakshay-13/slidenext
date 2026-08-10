@@ -5442,6 +5442,29 @@ test('capturePersistedDeckPlaybackState preserves explicit live active slide ids
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
+test('capturePersistedDeckPlaybackState fails closed when the shared persistence runtime is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
+    fileContent,
+    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
+    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
+  );
+  const context = {
+    EDITOR_SLIDE_ID_ATTR: 'data-slide-id'
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
+  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+
+  assert.equal(context.capturePersistedDeckPlaybackState(null), null);
+});
+
 test('capturePersistedDeckPlaybackState delegates fallback active slide resolution to the shared deck persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorFallbackActiveSlideIdSource = extractFunctionSource(

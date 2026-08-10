@@ -11512,7 +11512,18 @@
         });
       }
 
-      const playbackState = SlideNextDeckPersistence.capturePersistedDeckPlaybackState(doc, {
+      const captureDeckPlaybackState = (
+        typeof SlideNextDeckPersistence !== 'undefined'
+        && SlideNextDeckPersistence
+        && typeof SlideNextDeckPersistence.capturePersistedDeckPlaybackState === 'function'
+      )
+        ? SlideNextDeckPersistence.capturePersistedDeckPlaybackState
+        : null;
+      if (!captureDeckPlaybackState) {
+        return null;
+      }
+
+      const playbackState = captureDeckPlaybackState(doc, {
         getSlides,
         slideIdAttr: EDITOR_SLIDE_ID_ATTR
       });
