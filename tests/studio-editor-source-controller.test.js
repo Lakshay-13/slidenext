@@ -59,8 +59,9 @@ test('source history baseline capture falls back to rebuilding from the live doc
   const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
     getCurrentDocument: () => ({ id: 'live-frame' }),
     getCanonicalDeckBaseline: () => null,
-    buildCanonicalDeck: (documentRef) => {
+    buildCanonicalDeck: (documentRef, options) => {
       assert.deepEqual(documentRef, { id: 'live-frame' });
+      assert.deepEqual(options, { preferLiveCanonicalDeck: false });
       return rebuiltDeck;
     },
     saveHistoryState: (...args) => calls.push(args)

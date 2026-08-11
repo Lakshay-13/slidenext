@@ -69,7 +69,9 @@
       }
       if (!canonicalDeck && buildCanonicalDeck) {
         try {
-          canonicalDeck = buildCanonicalDeck(sourceDocument);
+          canonicalDeck = buildCanonicalDeck(sourceDocument, {
+            preferLiveCanonicalDeck: false
+          });
         } catch (error) {
           canonicalDeck = null;
         }
