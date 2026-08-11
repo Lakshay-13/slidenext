@@ -442,7 +442,7 @@ test('slide reorder wiring prefers live canonical state and keeps a legacy basel
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -464,7 +464,7 @@ test('slide insertion wiring prefers live canonical state and keeps a legacy bas
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -486,7 +486,7 @@ test('slide deletion wiring prefers live canonical state and keeps a legacy base
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -508,7 +508,7 @@ test('slide duplication wiring prefers live canonical state and keeps a legacy b
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
@@ -530,7 +530,7 @@ test('slide metadata wiring prefers live canonical state and keeps a legacy base
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorCanonicalDeck\(sourceDoc\)/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     controllerSource,
