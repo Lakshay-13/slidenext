@@ -115,6 +115,37 @@ test('element insertion controller selects flow mode for a flow-only canonical s
   assert.deepEqual(builderOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 
+test('element insertion controller honors an explicit layout mode override', () => {
+  const calls = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return {
+              layout: { mode: 'absolute' },
+              slides: [{ id: 'slide-1', layout: { mode: 'absolute' }, nodes: [] }]
+            };
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (_type, options) => {
+      calls.push(options.layoutMode);
+      return { element: { id: 'inserted' }, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+
+  assert.equal(controller.insert('h2', { layoutMode: 'flow' }), true);
+  assert.equal(controller.insert('h2', { layoutMode: 'freeform' }), true);
+  assert.equal(controller.insert('h2', { layoutMode: 'unsupported' }), true);
+  assert.deepEqual(calls, ['flow', 'absolute', 'absolute']);
+});
+
 test('element insertion controller refreshes insertion state when no active slide exists', () => {
   const calls = [];
   const doc = { id: 'doc' };

@@ -15,6 +15,15 @@
     });
   }
 
+  function normalizeInsertionLayoutMode(value) {
+    if (typeof value !== 'string') return '';
+    const normalizedValue = value.trim().toLowerCase();
+    if (normalizedValue === 'freeform') return 'absolute';
+    return normalizedValue === 'absolute' || normalizedValue === 'flow'
+      ? normalizedValue
+      : '';
+  }
+
   function resolveCanonicalInsertionLayoutMode(canonicalDeck, slideId) {
     if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return 'absolute';
     const slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId);
@@ -132,10 +141,8 @@
         if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
         return false;
       }
-      const insertionLayoutMode = resolveCanonicalInsertionLayoutMode(
-        canonicalDeckBeforeInsertion,
-        activeSlideId
-      );
+      const insertionLayoutMode = normalizeInsertionLayoutMode(normalizedInsertOptions.layoutMode)
+        || resolveCanonicalInsertionLayoutMode(canonicalDeckBeforeInsertion, activeSlideId);
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
