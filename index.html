@@ -6388,25 +6388,16 @@
       if (canonicalSlideApi
         && typeof canonicalSlideApi.findStudioCanonicalSlideById === 'function') {
         try {
-          const canonicalSlide = canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
+          return canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
             canonicalDeckApi
-          });
-          if (canonicalSlide) return canonicalSlide;
+          }) || null;
         } catch (error) {
-          // Preserve the legacy lookup when the shared resolver is unavailable.
-        }
-      }
-      if (canonicalDeckApi
-        && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
-        try {
-          const canonicalSlide = canonicalDeckApi.findCanonicalSlideById(canonicalDeck, slideId);
-          if (canonicalSlide) return canonicalSlide;
-        } catch (error) {
-          // Preserve the legacy lookup when the shared resolver is unavailable.
+          // Preserve the compatibility lookup when the shared resolver is unavailable.
         }
       }
       if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return null;
-      return canonicalDeck.slides.find((slide) => slide && slide.id === slideId) || null;
+      const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
+      return canonicalDeck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
     }
 
     function buildEditorMutationCanonicalDeck(sourceDoc) {

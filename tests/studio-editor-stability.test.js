@@ -889,7 +889,7 @@ test('editor composes marquee clearing through the shared overlay module', () =>
   assert.doesNotMatch(source, /clearMarqueeSelection\.clearer/);
 });
 
-test('editor canonical slide adapter delegates to the shared slide module and preserves fallback lookup', () => {
+test('editor canonical slide adapter delegates lookup to the shared slide module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -905,7 +905,7 @@ test('editor canonical slide adapter delegates to the shared slide module and pr
         calls.push([deck, slideId]);
         return deck === canonicalDeck && slideId === 'slide-1'
           ? canonicalSlide
-          : null;
+          : deck && deck.slides && deck.slides.find((slide) => slide && slide.id === slideId) || null;
       }
     }
   };
@@ -915,8 +915,12 @@ test('editor canonical slide adapter delegates to the shared slide module and pr
 
   assert.equal(context.findEditorCanonicalSlideById(canonicalDeck, 'slide-1'), canonicalSlide);
   assert.deepEqual(calls, [[canonicalDeck, 'slide-1']]);
+
+  const fallbackContext = {};
+  vm.createContext(fallbackContext);
+  vm.runInContext(helperSource, fallbackContext);
   assert.equal(
-    context.findEditorCanonicalSlideById({ slides: [{ id: 'legacy-slide' }] }, 'legacy-slide').id,
+    fallbackContext.findEditorCanonicalSlideById({ slides: [{ id: 'legacy-slide' }] }, 'legacy-slide').id,
     'legacy-slide'
   );
 });
