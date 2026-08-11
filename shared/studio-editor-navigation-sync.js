@@ -23,6 +23,9 @@
     const updateAssetLibraryState = typeof options.updateAssetLibraryState === 'function'
       ? options.updateAssetLibraryState
       : null;
+    const syncLayoutModeControl = typeof options.syncLayoutModeControl === 'function'
+      ? options.syncLayoutModeControl
+      : null;
 
     let observer = null;
     let syncTimer = null;
@@ -32,6 +35,7 @@
         && typeof activeSlideController.sync === 'function'
         ? activeSlideController.sync(doc, syncOptions)
         : false;
+      if (syncLayoutModeControl) syncLayoutModeControl(doc);
       if (updateTemplateActionState) updateTemplateActionState(doc);
       if (updateMasterSlideActionState) updateMasterSlideActionState(doc);
       if (updateAssetLibraryState) updateAssetLibraryState(doc);

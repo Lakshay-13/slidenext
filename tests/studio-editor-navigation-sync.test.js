@@ -14,6 +14,7 @@ test('navigation sync coordinates active-slide refresh and auxiliary action stat
       }
     },
     getDocument: () => doc,
+    syncLayoutModeControl: (nextDoc) => calls.push(['layout', nextDoc]),
     updateTemplateActionState: (nextDoc) => calls.push(['template', nextDoc]),
     updateMasterSlideActionState: (nextDoc) => calls.push(['master', nextDoc]),
     updateAssetLibraryState: (nextDoc) => calls.push(['assets', nextDoc])
@@ -22,6 +23,7 @@ test('navigation sync coordinates active-slide refresh and auxiliary action stat
   assert.equal(controller.sync(undefined, { preserveSelection: true }), true);
   assert.deepEqual(calls, [
     ['sync', doc, { preserveSelection: true }],
+    ['layout', doc],
     ['template', doc],
     ['master', doc],
     ['assets', doc]

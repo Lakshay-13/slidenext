@@ -788,7 +788,10 @@
       <!-- 2. CENTER STAGE: Canvas area centering the active slide viewport -->
       <main class="flex-1 bg-[#050505] flex flex-col overflow-hidden relative">
         <div class="h-10 border-b border-zinc-200 dark:border-white/5 bg-[#f9fafb] dark:bg-[#070707] flex items-center justify-between px-6 z-15 flex-shrink-0">
-          <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Canvas Workspace</span>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Canvas Workspace</span>
+            <span id="canvasLayoutModeLabel" data-layout-mode="unknown" title="The active slide layout mode is not available yet." class="px-2 py-0.5 rounded border border-white/10 text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Layout unavailable</span>
+          </div>
           <div class="flex items-center gap-2">
               <button id="zoomOutBtn" onclick="zoomOut()" disabled class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Zoom Out">
                 <span class="material-symbols-outlined text-[16px]">zoom_out</span>
@@ -1349,6 +1352,7 @@
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-layout-mode.js"></script>
+  <script src="/shared/studio-editor-layout-mode-view.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-element-insertion-controller.js"></script>
@@ -2378,6 +2382,7 @@
           getSlides: (doc) => getSlides(doc),
           getCurrentSlideIndex: getStudioCurrentSlideIndex,
           syncStudioChromeToActiveSlide: (...args) => syncStudioChromeToActiveSlide(...args),
+          syncLayoutModeControl: (...args) => syncStudioEditorLayoutModeControl(...args),
           getPreserveSelection: getStudioPreserveSelectionOnNextActiveSlideSync,
           setPreserveSelection: setStudioPreserveSelectionOnNextActiveSlideSync,
           updateCurrentPresentationSessionState: (...args) => updateCurrentPresentationSessionState(...args),
@@ -5590,6 +5595,38 @@
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.sync !== 'function') return false;
       return studioEditorNavigationSync.sync(doc, options);
+    }
+
+    function syncStudioEditorLayoutModeControl(doc = getIframeDoc()) {
+      const layoutModeView = typeof SlideNextStudioEditorLayoutModeView !== 'undefined'
+        ? SlideNextStudioEditorLayoutModeView
+        : null;
+      const layoutModeApi = typeof SlideNextStudioEditorLayoutMode !== 'undefined'
+        ? SlideNextStudioEditorLayoutMode
+        : null;
+      if (!layoutModeView
+        || typeof layoutModeView.syncStudioEditorLayoutModeLabel !== 'function'
+        || !layoutModeApi
+        || typeof layoutModeApi.resolveStudioCanonicalLayoutMode !== 'function') {
+        return false;
+      }
+
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = resolveEditorUiCanonicalDeck(doc);
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      const activeSlide = getActiveSlide(doc);
+      const activeSlideId = activeSlide ? getEditorSlideId(activeSlide) : '';
+      const mode = layoutModeApi.resolveStudioCanonicalLayoutMode(canonicalDeck, activeSlideId, {
+        fallbackMode: ''
+      });
+      return layoutModeView.syncStudioEditorLayoutModeLabel({
+        documentRef: document,
+        layoutModeApi,
+        mode
+      });
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {

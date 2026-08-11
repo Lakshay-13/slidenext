@@ -77,7 +77,8 @@
           getDocument: options.getDocument,
           updateTemplateActionState: options.updateTemplateActionState,
           updateMasterSlideActionState: options.updateMasterSlideActionState,
-          updateAssetLibraryState: options.updateAssetLibraryState
+          updateAssetLibraryState: options.updateAssetLibraryState,
+          syncLayoutModeControl: options.syncLayoutModeControl
         })
       : null;
     const thumbnailController = thumbnailApi
