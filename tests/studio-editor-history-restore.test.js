@@ -78,3 +78,37 @@ test('history restore rebuilds canonical state when the entry has no canonical d
     ['setCurrentPresentationCanonicalDeck', rebuiltCanonicalDeck]
   ]);
 });
+
+test('history restore fails closed when the canonical frame cannot be rendered', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry(entry, options) {
+        return { frameSetup: options.restoreFrameSetup(entry) };
+      },
+      restoreStudioHistoryFrameSetup() {
+        return { didRestoreDoc: false, restoredHtmlLength: 0 };
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    applyPersistedDeckState(state) {
+      calls.push(['applyPersistedDeckState', state]);
+    },
+    setEditorLiveCanonicalDeck(deck) {
+      calls.push(['setEditorLiveCanonicalDeck', deck]);
+    },
+    setCurrentPresentationCanonicalDeck(deck) {
+      calls.push(['setCurrentPresentationCanonicalDeck', deck]);
+    }
+  });
+
+  assert.equal(restoreHandler({ canonicalDeck }), false);
+  assert.deepEqual(calls, []);
+});

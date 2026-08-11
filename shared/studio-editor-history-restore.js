@@ -192,8 +192,9 @@
 
       applyEditorSelectionState({});
 
+      let restoreResult = null;
       if (typeof historyApi.restoreStudioHistoryEntry === 'function') {
-        historyApi.restoreStudioHistoryEntry(historyEntry, {
+        restoreResult = historyApi.restoreStudioHistoryEntry(historyEntry, {
           restoreFrameSetup: (nextHistoryEntry) => {
             const deckViewOptions = buildDeckViewOptions(nextHistoryEntry) || {};
             const deckHtmlOptions = deckViewOptions.deckHtmlOptions || {};
@@ -231,6 +232,11 @@
             });
           }
         });
+      }
+      const frameSetup = restoreResult && restoreResult.frameSetup;
+      if (frameSetup && frameSetup.didRestoreDoc === false) {
+        // Do not publish model state when the iframe still shows the old deck.
+        return false;
       }
       syncRestoredCanonicalState(historyEntry, iframeDoc);
       return undefined;
