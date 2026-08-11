@@ -73,3 +73,19 @@ test('resolveStudioCanonicalLayoutMode delegates slide lookup to the canonical d
     'slide-1'
   ]]);
 });
+
+test('resolveStudioCanonicalLayoutMode fails over to local lookup when the canonical resolver throws', () => {
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutMode({
+      layout: { mode: 'flow' },
+      slides: [{ id: 'slide-1', layout: { mode: 'flow' }, nodes: [] }]
+    }, ' slide-1 ', {
+      canonicalDeckApi: {
+        findCanonicalSlideById() {
+          throw new Error('resolver unavailable');
+        }
+      }
+    }),
+    'flow'
+  );
+});

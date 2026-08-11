@@ -37,9 +37,18 @@
     if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return fallbackMode;
 
     const slideLookupApi = options.canonicalDeckApi || canonicalDeckApi;
-    const slide = slideLookupApi && typeof slideLookupApi.findCanonicalSlideById === 'function'
-      ? slideLookupApi.findCanonicalSlideById(canonicalDeck, slideId)
-      : canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId);
+    let slide = null;
+    if (slideLookupApi && typeof slideLookupApi.findCanonicalSlideById === 'function') {
+      try {
+        slide = slideLookupApi.findCanonicalSlideById(canonicalDeck, slideId);
+      } catch (error) {
+        slide = null;
+      }
+    }
+    if (!slide) {
+      const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
+      slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === normalizedSlideId) || null;
+    }
     if (!slide) return fallbackMode;
     if (normalizeStudioLayoutMode(canonicalDeck.layout && canonicalDeck.layout.mode) === 'absolute') {
       return 'absolute';
