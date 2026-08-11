@@ -7,6 +7,8 @@ const path = require('node:path');
 
 const pptxExport = require('../shared/canonical-pptx-export.js');
 const canonicalPptxCli = require('../scripts/export-canonical-pptx.js');
+const pdfScript = require('../scripts/export-canonical-pdf.js');
+const legacyPptxExport = require('../scripts/export-legacy-html-pptx.js');
 
 class FakeSlide {
   constructor() {
@@ -200,6 +202,27 @@ test('canonical PPTX CLI accepts a presentation metadata wrapper with a canonica
     assert.equal(fs.existsSync(outputPath), true);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('legacy PPTX CLI exports the HTML sibling of a metadata-only sidecar', {
+  skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
+}, async () => {
+  const outputPath = path.join(os.tmpdir(), `slidenext-legacy-cli-${Date.now()}.pptx`);
+  const inputPath = path.join(
+    __dirname,
+    '..',
+    'presentations',
+    'onboarding-presentation',
+    'presentation.json'
+  );
+
+  try {
+    assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+    const buffer = fs.readFileSync(outputPath);
+    assert.equal(buffer.subarray(0, 2).toString(), 'PK');
+  } finally {
+    fs.rmSync(outputPath, { force: true });
   }
 });
 
