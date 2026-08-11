@@ -279,8 +279,8 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
       calls.push(['getDocument']);
       return doc;
     },
-    buildCanonicalDeck(nextDoc) {
-      calls.push(['buildCanonicalDeck', nextDoc]);
+    buildCanonicalDeck(nextDoc, options) {
+      calls.push(['buildCanonicalDeck', nextDoc, options]);
       return canonicalDeck;
     },
     getHistoryOptions() {
@@ -304,7 +304,7 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
 
   assert.deepEqual(calls, [
     ['getDocument'],
-    ['buildCanonicalDeck', doc],
+    ['buildCanonicalDeck', doc, { preferLiveCanonicalDeck: false }],
     ['getHistoryOptions'],
     ['getActiveSlideId', doc],
     ['getSelectedElementIds', doc]

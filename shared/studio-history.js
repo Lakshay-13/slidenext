@@ -186,7 +186,9 @@
     const nextDoc = doc || getDocument();
     let canonicalDeck = null;
     try {
-      canonicalDeck = buildCanonicalDeck(nextDoc);
+      canonicalDeck = buildCanonicalDeck(nextDoc, {
+        preferLiveCanonicalDeck: false
+      });
       if (!isValidStudioHistoryCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
         canonicalDeck = null;
       }
