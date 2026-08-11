@@ -181,6 +181,42 @@ test('duplicateStudioSlideNode preserves canonical duplication and mutation life
   ]);
 });
 
+test('duplicateStudioSlideNode fails closed before DOM insertion when canonical duplication is unavailable', () => {
+  const doc = { id: 'editor-doc' };
+  const duplicateSlide = { classList: { remove() {} } };
+  const sourceSlide = {
+    classList: { remove() {} },
+    cloneNode() {
+      return duplicateSlide;
+    }
+  };
+  const container = { id: 'slides-container' };
+  let saveCalls = 0;
+  let insertionCalls = 0;
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => [sourceSlide],
+    getActiveSlide: () => sourceSlide,
+    assignSlideId: () => 'slide-2',
+    buildCanonicalDuplicateSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildCanonicalDuplicateSlideDeck: () => null,
+    saveHistoryState: () => {
+      saveCalls += 1;
+    },
+    applyInsertion: () => {
+      insertionCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(saveCalls, 0);
+  assert.equal(insertionCalls, 0);
+});
+
 test('addStudioSlideNode preserves canonical insertion and mutation lifecycle ordering', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };

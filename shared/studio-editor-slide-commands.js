@@ -103,6 +103,7 @@
           importSlideToCanonicalSlide: options.importSlideToCanonicalSlide
         })
       : null;
+    if (canonicalDeckBeforeDuplication && !canonicalDeckAfterDuplication) return false;
 
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
