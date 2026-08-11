@@ -2231,6 +2231,12 @@
             getIframeDoc(),
             canonicalDeck ? { canonicalDeck } : {}
           ),
+          previewBuildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
+          previewCreateDeckViewHtmlOptions: (options) => createEditorPreviewDeckViewHtmlOptions(options),
+          resolveBuildStudioPreviewHtml: () => resolveStudioDeckViewMethod('buildStudioPreviewHtml'),
+          resolveBuildDeckPreviewHtml: () => resolveDeckHtmlMethod('buildDeckPreviewHtml'),
+          resolveInjectBaseHrefIntoHtml: () => resolveDeckHtmlMethod('injectBaseHrefIntoHtml'),
+          resolveBuildPresentationBaseHref: () => resolveDeckHtmlMethod('buildPresentationBaseHref'),
           previewBuildCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
             ? resolveEditorUiCanonicalDeck(getIframeDoc())
             : buildEditorCanonicalDeck(getIframeDoc()),
@@ -2278,18 +2284,8 @@
     const studioEditorPreviewController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.previewController
       : null;
-    const studioEditorPreviewHtmlBuilder = typeof SlideNextStudioEditorPreviewController !== 'undefined'
-      && SlideNextStudioEditorPreviewController
-      && typeof SlideNextStudioEditorPreviewController.createStudioEditorPreviewHtmlBuilder === 'function'
-      ? SlideNextStudioEditorPreviewController.createStudioEditorPreviewHtmlBuilder({
-          buildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
-          createDeckViewHtmlOptions: (options) => createEditorPreviewDeckViewHtmlOptions(options),
-          resolveBuildStudioPreviewHtml: () => resolveStudioDeckViewMethod('buildStudioPreviewHtml'),
-          resolveBuildDeckPreviewHtml: () => resolveDeckHtmlMethod('buildDeckPreviewHtml'),
-          resolveInjectBaseHrefIntoHtml: () => resolveDeckHtmlMethod('injectBaseHrefIntoHtml'),
-          resolveBuildPresentationBaseHref: () => resolveDeckHtmlMethod('buildPresentationBaseHref'),
-          resolvePresentationUrl: getStudioCurrentPresentationUrl
-        })
+    const studioEditorPreviewHtmlBuilder = studioEditorDeckViewRuntime
+      ? studioEditorDeckViewRuntime.previewHtmlBuilder
       : null;
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController

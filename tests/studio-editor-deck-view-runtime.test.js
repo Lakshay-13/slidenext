@@ -13,6 +13,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     exportController: { name: 'export' },
     deckSnapshotController: { name: 'snapshot' },
     previewController: { name: 'preview' },
+    previewHtmlBuilder: { name: 'preview-builder' },
     sourceController: { name: 'source' }
   };
   const callbacks = {
@@ -50,6 +51,12 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     resolvePresentationUrl() {},
     resolveActiveSlideIndex() {},
     previewBuildHtml() {},
+    previewBuildDeckViewHtml() {},
+    previewCreateDeckViewHtmlOptions() {},
+    resolveBuildStudioPreviewHtml() {},
+    resolveBuildDeckPreviewHtml() {},
+    resolveInjectBaseHrefIntoHtml() {},
+    resolveBuildPresentationBaseHref() {},
     previewBuildCanonicalDeck() {},
     previewIsCanonicalDeck() {},
     sourceApi: {},
@@ -73,30 +80,50 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
       return result;
     }
   });
+  const previewControllerApi = {
+    createStudioEditorPreviewController(options) {
+      calls.push(['preview', options]);
+      return controllers.previewController;
+    },
+    createStudioEditorPreviewHtmlBuilder(options) {
+      calls.push(['preview-builder', options]);
+      return controllers.previewHtmlBuilder;
+    }
+  };
 
   const result = deckViewRuntime.createStudioEditorDeckViewRuntime({
     exportApi: api('export', 'createStudioEditorExportController', controllers.exportController),
     snapshotControllerApi: api('snapshot', 'createStudioEditorDeckSnapshotController', controllers.deckSnapshotController),
-    previewControllerApi: api('preview', 'createStudioEditorPreviewController', controllers.previewController),
+    previewControllerApi,
     sourceControllerApi: api('source', 'createStudioEditorSourceController', controllers.sourceController),
     ...callbacks
   });
 
   assert.deepEqual(result, controllers);
-  assert.equal(calls[0][1].buildCanonicalDeck, callbacks.buildCanonicalDeck);
-  assert.equal(calls[0][1].buildMutationCanonicalDeck, callbacks.buildMutationCanonicalDeck);
-  assert.equal(calls[0][1].getPendingTransaction, callbacks.getPendingTransaction);
-  assert.equal(calls[0][1].resolvePdfBaseHref, callbacks.resolvePdfBaseHref);
-  assert.equal(calls[0][1].pptxExport, callbacks.pptxExport);
-  assert.equal(calls[1][1].snapshotApi, callbacks.snapshotApi);
-  assert.equal(calls[1][1].buildElementSnapshot, callbacks.buildElementSnapshot);
-  assert.equal(calls[2][1].buildPreviewHtml, callbacks.previewBuildHtml);
-  assert.equal(calls[2][1].isCanonicalDeck, callbacks.previewIsCanonicalDeck);
-  assert.equal(calls[3][1].buildCanonicalDeck, callbacks.sourceBuildCanonicalDeck);
-  assert.equal(calls[3][1].resolveSourceCss, callbacks.resolveSourceCss);
-  assert.equal(calls[3][1].saveHistoryState, callbacks.saveHistoryState);
-  assert.equal(calls[3][1].applySourceCss, callbacks.applySourceCss);
-  assert.equal(calls[3][1].afterApply, callbacks.afterApply);
+  const findCall = (name) => calls.find(([callName]) => callName === name)[1];
+  assert.equal(findCall('export').buildCanonicalDeck, callbacks.buildCanonicalDeck);
+  assert.equal(findCall('export').buildMutationCanonicalDeck, callbacks.buildMutationCanonicalDeck);
+  assert.equal(findCall('export').getPendingTransaction, callbacks.getPendingTransaction);
+  assert.equal(findCall('export').resolvePdfBaseHref, callbacks.resolvePdfBaseHref);
+  assert.equal(findCall('export').pptxExport, callbacks.pptxExport);
+  assert.equal(findCall('snapshot').snapshotApi, callbacks.snapshotApi);
+  assert.equal(findCall('snapshot').buildElementSnapshot, callbacks.buildElementSnapshot);
+  assert.equal(findCall('preview').buildPreviewHtml, callbacks.previewBuildHtml);
+  assert.equal(findCall('preview').isCanonicalDeck, callbacks.previewIsCanonicalDeck);
+  assert.equal(findCall('preview-builder').buildDeckViewHtml, callbacks.previewBuildDeckViewHtml);
+  assert.equal(
+    findCall('preview-builder').createDeckViewHtmlOptions,
+    callbacks.previewCreateDeckViewHtmlOptions
+  );
+  assert.equal(
+    findCall('preview-builder').resolveBuildPresentationBaseHref,
+    callbacks.resolveBuildPresentationBaseHref
+  );
+  assert.equal(findCall('source').buildCanonicalDeck, callbacks.sourceBuildCanonicalDeck);
+  assert.equal(findCall('source').resolveSourceCss, callbacks.resolveSourceCss);
+  assert.equal(findCall('source').saveHistoryState, callbacks.saveHistoryState);
+  assert.equal(findCall('source').applySourceCss, callbacks.applySourceCss);
+  assert.equal(findCall('source').afterApply, callbacks.afterApply);
 });
 
 test('index wires deck view composition through the runtime module', () => {
@@ -117,6 +144,10 @@ test('index wires deck view composition through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorPreviewController\.createStudioEditorPreviewController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorPreviewController\.createStudioEditorPreviewHtmlBuilder\(/
   );
   assert.doesNotMatch(
     fileContent,

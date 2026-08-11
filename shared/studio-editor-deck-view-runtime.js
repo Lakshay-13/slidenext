@@ -20,6 +20,10 @@
       && typeof options.previewControllerApi.createStudioEditorPreviewController === 'function'
       ? options.previewControllerApi
       : null;
+    const previewBuilderApi = options.previewControllerApi
+      && typeof options.previewControllerApi.createStudioEditorPreviewHtmlBuilder === 'function'
+      ? options.previewControllerApi
+      : null;
     const sourceControllerApi = options.sourceControllerApi
       && typeof options.sourceControllerApi.createStudioEditorSourceController === 'function'
       ? options.sourceControllerApi
@@ -75,6 +79,17 @@
           isCanonicalDeck: options.previewIsCanonicalDeck
         })
       : null;
+    const previewHtmlBuilder = previewBuilderApi
+      ? previewBuilderApi.createStudioEditorPreviewHtmlBuilder({
+          buildDeckViewHtml: options.previewBuildDeckViewHtml,
+          createDeckViewHtmlOptions: options.previewCreateDeckViewHtmlOptions,
+          resolveBuildStudioPreviewHtml: options.resolveBuildStudioPreviewHtml,
+          resolveBuildDeckPreviewHtml: options.resolveBuildDeckPreviewHtml,
+          resolveInjectBaseHrefIntoHtml: options.resolveInjectBaseHrefIntoHtml,
+          resolveBuildPresentationBaseHref: options.resolveBuildPresentationBaseHref,
+          resolvePresentationUrl: options.resolvePresentationUrl
+        })
+      : null;
     const sourceController = sourceControllerApi
       ? sourceControllerApi.createStudioEditorSourceController({
           previewApi: options.previewApi,
@@ -101,6 +116,7 @@
       exportController,
       deckSnapshotController,
       previewController,
+      previewHtmlBuilder,
       sourceController
     };
   }
