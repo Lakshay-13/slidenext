@@ -181,6 +181,42 @@ test('element insertion controller delegates canonical layout inference to the s
   ]);
 });
 
+test('element insertion controller delegates fallback slide lookup to the canonical deck API', () => {
+  const calls = [];
+  const canonicalDeck = {
+    layout: { mode: 'flow' },
+    slides: [{ id: 'slide-1', layout: { mode: 'flow' }, nodes: [] }]
+  };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalDeckApi: {
+      findCanonicalSlideById(deck, slideId) {
+        calls.push([deck, slideId]);
+        return deck.slides[0];
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return canonicalDeck;
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (_type, options) => {
+      calls.push(options.layoutMode);
+      return { element: { id: 'inserted' }, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+
+  assert.equal(controller.insert('h2'), true);
+  assert.deepEqual(calls, [[canonicalDeck, 'slide-1'], 'flow']);
+});
+
 test('element insertion controller refreshes insertion state when no active slide exists', () => {
   const calls = [];
   const doc = { id: 'doc' };

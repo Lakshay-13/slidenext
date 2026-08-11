@@ -24,9 +24,19 @@
       : '';
   }
 
-  function resolveCanonicalInsertionLayoutModeFallback(canonicalDeck, slideId) {
+  function resolveCanonicalInsertionLayoutModeFallback(canonicalDeck, slideId, canonicalDeckApi) {
     if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return 'absolute';
-    const slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId);
+    let slide = null;
+    if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
+      try {
+        slide = canonicalDeckApi.findCanonicalSlideById(canonicalDeck, slideId);
+      } catch (error) {
+        slide = null;
+      }
+    }
+    if (!slide) {
+      slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId) || null;
+    }
     if (!slide) return 'absolute';
     if (canonicalDeck.layout && canonicalDeck.layout.mode === 'absolute') return 'absolute';
     if (slide.layout && slide.layout.mode === 'absolute') return 'absolute';
@@ -149,7 +159,11 @@
         || (layoutModeApi
           && typeof layoutModeApi.resolveStudioCanonicalLayoutMode === 'function'
           ? layoutModeApi.resolveStudioCanonicalLayoutMode(canonicalDeckBeforeInsertion, activeSlideId)
-          : resolveCanonicalInsertionLayoutModeFallback(canonicalDeckBeforeInsertion, activeSlideId));
+          : resolveCanonicalInsertionLayoutModeFallback(
+              canonicalDeckBeforeInsertion,
+              activeSlideId,
+              canonicalDeckApi
+            ));
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
