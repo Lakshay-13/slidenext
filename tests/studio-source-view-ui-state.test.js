@@ -161,6 +161,28 @@ test('applyEditorSourceHtml wires canonical source editing through the shared pi
   assert.equal(delegatedSourceHtml, '<html>edited</html>');
 });
 
+test('source history restore propagates canonical frame restore failures', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const restoreEditorSourceHistoryEntrySource = extractFunctionSource(
+    fileContent,
+    'function restoreEditorSourceHistoryEntry(historyEntry) {',
+    '\n\n    function applySourceViewModal() {'
+  );
+  const calls = [];
+  const context = {
+    restoreFrameFromHistoryEntry(historyEntry) {
+      calls.push(historyEntry);
+      return false;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(restoreEditorSourceHistoryEntrySource, context);
+
+  assert.equal(context.restoreEditorSourceHistoryEntry({ id: 'failed-entry' }), false);
+  assert.deepEqual(calls, [{ id: 'failed-entry' }]);
+});
+
 test('source history capture prefers the current canonical deck before source replacement', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];

@@ -2281,10 +2281,7 @@
           resolveHistoryOptions: () => getEditorHistoryOptions(),
           saveHistoryState: (...args) => saveHistoryState(...args),
           sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
-          restoreHistoryEntry: (historyEntry) => {
-            restoreFrameFromHistoryEntry(historyEntry);
-            return true;
-          },
+          restoreHistoryEntry: restoreEditorSourceHistoryEntry,
           afterApply: (canonicalDeck) => {
             saveHistoryState(false, null, canonicalDeck);
             triggerAutoSave();
@@ -4819,6 +4816,10 @@
       return studioEditorSourceController
         ? studioEditorSourceController.applySourceHtml(sourceHtml)
         : { success: false, error: 'Source editor is unavailable' };
+    }
+
+    function restoreEditorSourceHistoryEntry(historyEntry) {
+      return restoreFrameFromHistoryEntry(historyEntry) !== false;
     }
 
     function applySourceViewModal() {
