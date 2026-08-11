@@ -626,6 +626,15 @@
     return null;
   }
 
+  function findCanonicalSlideById(deckLike, slideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedSlideId) return null;
+    return deck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
+  }
+
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -2053,6 +2062,7 @@
     mergeCanonicalDeckRebuildBaseline,
     isCanonicalDeck,
     findCanonicalNodeById,
+    findCanonicalSlideById,
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,

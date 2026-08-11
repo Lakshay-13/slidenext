@@ -46,3 +46,30 @@ test('resolveStudioCanonicalLayoutMode supports an explicit fallback for unavail
     'absolute'
   );
 });
+
+test('resolveStudioCanonicalLayoutMode delegates slide lookup to the canonical deck API', () => {
+  const calls = [];
+  const resolvedSlide = { id: 'slide-1', layout: { mode: 'flow' }, nodes: [] };
+
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutMode({
+      layout: { mode: 'flow' },
+      slides: [resolvedSlide]
+    }, 'slide-1', {
+      canonicalDeckApi: {
+        findCanonicalSlideById(deck, slideId) {
+          calls.push([deck, slideId]);
+          return resolvedSlide;
+        }
+      }
+    }),
+    'flow'
+  );
+  assert.deepEqual(calls, [[
+    {
+      layout: { mode: 'flow' },
+      slides: [resolvedSlide]
+    },
+    'slide-1'
+  ]]);
+});

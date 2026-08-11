@@ -80,6 +80,19 @@ test('createCanonicalNode preserves optional rendered bounds without adding them
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode.layout, 'bounds'), false);
 });
 
+test('findCanonicalSlideById resolves a normalized slide from canonical or legacy-shaped input', () => {
+  const canonical = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Intro' }]
+  });
+
+  assert.equal(canonicalDeck.findCanonicalSlideById(canonical, ' slide-1 '), canonical.slides[0]);
+  assert.equal(
+    canonicalDeck.findCanonicalSlideById({ slides: [{ id: 'slide-2', title: 'Body' }] }, 'slide-2').title,
+    'Body'
+  );
+  assert.equal(canonicalDeck.findCanonicalSlideById(canonical, 'missing'), null);
+});
+
 test('createCanonicalSlide preserves an explicit background asset reference without requiring one', () => {
   const slide = canonicalDeck.createCanonicalSlide({
     id: 'slide-1',
