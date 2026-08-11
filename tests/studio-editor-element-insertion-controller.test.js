@@ -146,6 +146,41 @@ test('element insertion controller honors an explicit layout mode override', () 
   assert.deepEqual(calls, ['flow', 'absolute', 'absolute']);
 });
 
+test('element insertion controller delegates canonical layout inference to the shared layout mode API', () => {
+  const calls = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    layoutModeApi: {
+      resolveStudioCanonicalLayoutMode(deck, slideId) {
+        calls.push([deck, slideId]);
+        return 'flow';
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (_type, options) => {
+      calls.push(options.layoutMode);
+      return { element: { id: 'inserted' }, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+
+  assert.equal(controller.insert('h2'), true);
+  assert.deepEqual(calls, [
+    [{ slides: [{ id: 'slide-1', nodes: [] }] }, 'slide-1'],
+    'flow'
+  ]);
+});
+
 test('element insertion controller refreshes insertion state when no active slide exists', () => {
   const calls = [];
   const doc = { id: 'doc' };

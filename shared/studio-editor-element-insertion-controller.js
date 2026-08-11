@@ -24,7 +24,7 @@
       : '';
   }
 
-  function resolveCanonicalInsertionLayoutMode(canonicalDeck, slideId) {
+  function resolveCanonicalInsertionLayoutModeFallback(canonicalDeck, slideId) {
     if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return 'absolute';
     const slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId);
     if (!slide) return 'absolute';
@@ -39,6 +39,10 @@
       ? options[name]
       : (root && root[globalName]) || null;
     const canonicalDeckApi = resolveDependency('canonicalDeckApi', 'SlideNextCanonicalDeck');
+    const layoutModeApi = resolveDependency(
+      'layoutModeApi',
+      'SlideNextStudioEditorLayoutMode'
+    );
     const canonicalInsertionApi = resolveDependency(
       'canonicalInsertionApi',
       'SlideNextStudioEditorCanonicalInsertion'
@@ -142,7 +146,10 @@
         return false;
       }
       const insertionLayoutMode = normalizeInsertionLayoutMode(normalizedInsertOptions.layoutMode)
-        || resolveCanonicalInsertionLayoutMode(canonicalDeckBeforeInsertion, activeSlideId);
+        || (layoutModeApi
+          && typeof layoutModeApi.resolveStudioCanonicalLayoutMode === 'function'
+          ? layoutModeApi.resolveStudioCanonicalLayoutMode(canonicalDeckBeforeInsertion, activeSlideId)
+          : resolveCanonicalInsertionLayoutModeFallback(canonicalDeckBeforeInsertion, activeSlideId));
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
