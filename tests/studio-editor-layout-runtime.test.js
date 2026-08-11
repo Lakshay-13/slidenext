@@ -98,6 +98,10 @@ test('index wires layout editing through the runtime module', () => {
     /SlideNextStudioEditorLayoutRuntime\.createStudioEditorLayoutRuntime\(/
   );
   assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-layout-conversion-view\.js"><\/script>/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorNudgeController\.createStudioEditorNudgeController\(/
