@@ -281,6 +281,37 @@ test('preflightStudioPdfExport reports missing canonical asset references withou
   assert.equal(report.warnings.length, 3);
 });
 
+test('preflightStudioPdfExport checks resolved asset sources when a resolver is provided', () => {
+  const calls = [];
+  const report = pdfExport.preflightStudioPdfExport({
+    assets: [{ id: 'hero', src: 'assets/hero.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'image-1', assetId: 'hero' }]
+    }]
+  }, {
+    assetExists(source, asset, owner, deck) {
+      calls.push({ source, assetId: asset.id, ownerId: owner.id, deck });
+      return false;
+    }
+  });
+
+  assert.deepEqual(report.missingAssets, [{
+    id: 'hero',
+    ownerType: 'node',
+    ownerId: 'image-1',
+    reason: 'unavailable-source'
+  }]);
+  assert.deepEqual(report.warnings, [
+    'PDF node image-1 references unavailable asset "hero"'
+  ]);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].source, 'assets/hero.png');
+  assert.equal(calls[0].assetId, 'hero');
+  assert.equal(calls[0].ownerId, 'image-1');
+  assert.equal(calls[0].deck.slides.length, 1);
+});
+
 test('preflightStudioPdfExport reports positioned nodes outside the canonical slide canvas', () => {
   const report = pdfExport.preflightStudioPdfExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

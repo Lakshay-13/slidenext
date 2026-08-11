@@ -267,10 +267,15 @@ app.post('/api/export/pdf', async (req, res) => {
     return res.status(400).json({ error: 'Cannot export an empty deck' });
   }
 
-  const preflight = canonicalPdfExport.preflightStudioPdfExport(resolvedCanonicalDeck);
+  const assetBaseDir = resolvePptxAssetBaseDir(
+    sourcePath || resolvedCanonicalDeck.metadata?.sourcePath
+  );
+  const preflight = canonicalPdfExport.preflightStudioPdfExport(resolvedCanonicalDeck, {
+    assetExists: canonicalPdfExport.createPdfAssetExists(assetBaseDir, workspaceDir)
+  });
   try {
     const buffer = await canonicalPdfExport.exportCanonicalPdfBuffer(resolvedCanonicalDeck, {
-      assetBaseDir: resolvePptxAssetBaseDir(sourcePath || resolvedCanonicalDeck.metadata?.sourcePath)
+      assetBaseDir
     });
     const downloadFilename = normalizePdfDownloadFilename(filename, resolvedCanonicalDeck.metadata?.title);
     res.setHeader('Content-Type', 'application/pdf');

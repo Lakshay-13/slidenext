@@ -114,6 +114,25 @@ function resolveContainedPath(rootDir, relativePath) {
     : resolvedPath;
 }
 
+function createPdfAssetExists(assetBaseDir = WORKSPACE_ROOT, assetRootDir = WORKSPACE_ROOT) {
+  const resolvedAssetRootDir = path.resolve(assetRootDir || WORKSPACE_ROOT);
+  const resolvedAssetBaseDir = path.resolve(assetBaseDir || resolvedAssetRootDir);
+  return (assetSource) => {
+    if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
+    const source = assetSource.trim();
+    if (/^(?:data:|https?:\/\/)/i.test(source)) return true;
+    const sourcePath = source.startsWith('/')
+      ? resolveContainedPath(resolvedAssetRootDir, source.replace(/^[/\\]+/, ''))
+      : resolveContainedPath(resolvedAssetBaseDir, source);
+    if (!sourcePath) return false;
+    try {
+      return fsSync.statSync(sourcePath).isFile();
+    } catch (error) {
+      return false;
+    }
+  };
+}
+
 function getContentType(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   return {
@@ -374,7 +393,10 @@ async function main(argv = process.argv.slice(2), options = {}) {
   const resolvedOutputPath = path.resolve(outputPath);
   const input = JSON.parse(await fs.readFile(resolvedInputPath, 'utf8'));
   const deck = resolveCanonicalDeck(input);
-  const preflight = pdfExport.preflightStudioPdfExport(deck);
+  const assetBaseDir = path.dirname(resolvedInputPath);
+  const preflight = pdfExport.preflightStudioPdfExport(deck, {
+    assetExists: createPdfAssetExists(assetBaseDir)
+  });
   if (preflight.warnings.length > 0) {
     console.error(`PDF export completed with ${preflight.warnings.length} warning(s):`);
     preflight.warnings.forEach((warning) => console.error(`- ${warning}`));
@@ -382,7 +404,7 @@ async function main(argv = process.argv.slice(2), options = {}) {
 
   const pdfBuffer = await exportCanonicalPdfBuffer(deck, {
     ...options,
-    assetBaseDir: path.dirname(resolvedInputPath)
+    assetBaseDir
   });
   await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
   await fs.writeFile(resolvedOutputPath, pdfBuffer);
@@ -408,6 +430,7 @@ module.exports = {
   validatePdfArtifact,
   createStudioPdfWarningDetailsHeader: pdfExport.createStudioPdfWarningDetailsHeader,
   preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
+  createPdfAssetExists,
   resolveCanonicalDeck,
   resolveChromeExecutable,
   runChromePdfExport,

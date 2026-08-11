@@ -55,6 +55,24 @@ test('canonical PDF artifact validation enforces the one-page-per-slide contract
   );
 });
 
+test('createPdfAssetExists resolves local asset paths within the export roots', async () => {
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-assets-'));
+  const assetDir = path.join(temporaryDir, 'assets');
+  const assetPath = path.join(assetDir, 'hero.png');
+  try {
+    await fs.mkdir(assetDir, { recursive: true });
+    await fs.writeFile(assetPath, 'asset', 'utf8');
+    const assetExists = pdfScript.createPdfAssetExists(temporaryDir, temporaryDir);
+
+    assert.equal(assetExists('assets/hero.png'), true);
+    assert.equal(assetExists('assets/missing.png'), false);
+    assert.equal(assetExists('../outside.png'), false);
+    assert.equal(assetExists('data:image/png;base64,AAAA'), true);
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
+
 test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
   const inputPath = path.join(temporaryDir, 'deck.json');

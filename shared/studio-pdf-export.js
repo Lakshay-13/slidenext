@@ -106,7 +106,7 @@
     };
   }
 
-  function preflightStudioPdfExport(canonicalDeck) {
+  function preflightStudioPdfExport(canonicalDeck, options = {}) {
     const slides = canonicalDeck && Array.isArray(canonicalDeck.slides)
       ? canonicalDeck.slides
       : [];
@@ -122,6 +122,9 @@
     const overflowNodes = [];
     const canvasSize = getStudioPdfCanvasSize(canonicalDeck);
     const seenReferences = new Set();
+    const assetExists = typeof options.assetExists === 'function'
+      ? options.assetExists
+      : null;
 
     const addAssetReference = (assetId, owner = {}) => {
       const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
@@ -139,6 +142,24 @@
           ownerType,
           ownerId
         });
+        return;
+      }
+
+      if (assetExists) {
+        let isAvailable = false;
+        try {
+          isAvailable = Boolean(assetExists(asset.src.trim(), asset, owner, canonicalDeck));
+        } catch (error) {
+          isAvailable = false;
+        }
+        if (!isAvailable) {
+          missingAssets.push({
+            id: normalizedAssetId,
+            ownerType,
+            ownerId,
+            reason: 'unavailable-source'
+          });
+        }
       }
     };
 
@@ -196,7 +217,9 @@
         const ownerLabel = reference.ownerType === 'slide-background'
           ? `slide ${reference.ownerId}`
           : `${reference.ownerType} ${reference.ownerId}`;
-        return `PDF ${ownerLabel} references missing asset "${reference.id}"`;
+        return reference.reason === 'unavailable-source'
+          ? `PDF ${ownerLabel} references unavailable asset "${reference.id}"`
+          : `PDF ${ownerLabel} references missing asset "${reference.id}"`;
       }),
       ...overflowNodes.map((node) => (
         `PDF node ${node.id} on slide ${node.slideId} extends beyond the slide canvas`

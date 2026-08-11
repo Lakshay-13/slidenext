@@ -84,6 +84,46 @@ test('PDF export route returns a real generalized PDF response', { skip: !requir
   assert.equal(buffer.subarray(0, 5).toString(), '%PDF-');
 });
 
+test('PDF export route reports missing local canonical assets without blocking export', { skip: !require('../scripts/export-canonical-pdf.js').resolveChromeExecutable() }, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/export/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      canonicalDeck: {
+        metadata: { title: 'Missing asset export' },
+        assets: [{
+          id: 'missing-hero',
+          src: '/presentations/computer-vision-presentation/assets/does-not-exist.png'
+        }],
+        layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+        slides: [{
+          id: 'slide-1',
+          nodes: [{
+            id: 'hero',
+            type: 'image',
+            assetId: 'missing-hero',
+            layout: { x: 0, y: 0, width: 500, height: 300 }
+          }]
+        }]
+      }
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '1');
+  const warningDetails = JSON.parse(decodeURIComponent(
+    response.headers.get('x-slidenext-pdf-warning-details') || ''
+  ));
+  assert.deepEqual(warningDetails.warnings, [
+    'PDF node hero references unavailable asset "missing-hero"'
+  ]);
+  assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 5).toString(), '%PDF-');
+});
+
 test('PPTX export route resolves root-relative presentation assets', async (t) => {
   const server = http.createServer(app);
   const port = await listenOnEphemeralPort(server);
