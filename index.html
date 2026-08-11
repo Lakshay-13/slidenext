@@ -9946,7 +9946,7 @@
           sourceDoc || getIframeDoc(),
           getStudioEditorSessionToken()
         ),
-        buildCanonicalDeckBaseline: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || getIframeDoc()),
+        buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions),
         finalizeMutation: finalizeEditorDeckMutation,
         updateActionState: updateThemeTokenActionState
       });

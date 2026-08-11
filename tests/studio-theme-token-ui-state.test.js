@@ -129,6 +129,10 @@ test('index routes theme-token mutations through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-theme-preset-controller\.js"/);
   assert.match(source, /themePresetController\.applyStudioThemeTokenPreset/);
+  assert.match(
+    source,
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc \|\| getIframeDoc\(\), buildOptions\)/
+  );
 });
 
 test('renderThemeTokenPresets forwards readiness to the shared theme view', () => {
