@@ -88,6 +88,9 @@
         alert,
         captureSlideMutationState,
         getSlideId,
+        buildCanonicalDeleteSlideBaseline: canonicalDeleteSlideBuilders
+          ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideBaseline
+          : null,
         buildCanonicalDeleteSlideDeck: canonicalDeleteSlideBuilders
           ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideDeck
           : null,

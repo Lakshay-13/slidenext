@@ -252,16 +252,28 @@
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
     const deletedSlideId = getSlideId(deletedSlide);
+    const buildCanonicalDeleteSlideBaseline = typeof options.buildCanonicalDeleteSlideBaseline === 'function'
+      ? options.buildCanonicalDeleteSlideBaseline
+      : null;
+    const canonicalDeckBeforeDeletion = buildCanonicalDeleteSlideBaseline
+      ? buildCanonicalDeleteSlideBaseline({
+          sourceDocument: iframeDoc
+        })
+      : null;
     const buildCanonicalDeleteSlideDeck = typeof options.buildCanonicalDeleteSlideDeck === 'function'
       ? options.buildCanonicalDeleteSlideDeck
       : null;
     const canonicalDeckAfterDeletion = buildCanonicalDeleteSlideDeck
       ? buildCanonicalDeleteSlideDeck({
+          ...(canonicalDeckBeforeDeletion
+            ? { canonicalDeckBeforeMutation: canonicalDeckBeforeDeletion }
+            : {}),
           sourceDocument: iframeDoc,
           deletedSlide,
           slideId: deletedSlideId
         })
       : null;
+    if (canonicalDeckBeforeDeletion && !canonicalDeckAfterDeletion) return false;
 
     const applyDeletion = typeof options.applyDeletion === 'function'
       ? options.applyDeletion

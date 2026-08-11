@@ -449,6 +449,34 @@ test('deleteStudioSlideNode preserves view state, canonical removal, and mutatio
   ]);
 });
 
+test('deleteStudioSlideNode fails closed before DOM removal when canonical deletion is unavailable', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1' };
+  const deletedSlide = { id: 'slide-2' };
+  let deletionCalls = 0;
+
+  const result = slideCommands.deleteStudioSlideNode(1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => [firstSlide, deletedSlide],
+    captureSlideMutationState: () => ({
+      preservedActiveSlideId: 'slide-2',
+      preservedSelectionIds: []
+    }),
+    getSlideId: (slide) => slide.id,
+    buildCanonicalDeleteSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    buildCanonicalDeleteSlideDeck: () => null,
+    applyDeletion: () => {
+      deletionCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(deletionCalls, 0);
+});
+
 test('deleteStudioSlideNode rejects deleting the final slide without mutation', () => {
   const calls = [];
 

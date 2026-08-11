@@ -17,6 +17,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
       createStudioCanonicalDeleteSlideMutationBuilders(options) {
         calls.push(['builders', options]);
         return {
+          buildCanonicalDeleteSlideBaseline: () => ({ id: 'baseline' }),
           buildCanonicalDeleteSlideDeck: () => ({ slides: [] })
         };
       }
@@ -48,6 +49,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
   assert.equal(typeof calls[1][2].alert, 'function');
   assert.equal(typeof calls[1][2].captureSlideMutationState, 'function');
   assert.equal(typeof calls[1][2].getSlideId, 'function');
+  assert.equal(typeof calls[1][2].buildCanonicalDeleteSlideBaseline, 'function');
   assert.deepEqual(calls[1][2].buildCanonicalDeleteSlideDeck(), { slides: [] });
   assert.equal(typeof calls[1][2].applyDeletion, 'function');
   assert.equal(typeof calls[1][2].finalizeMutation, 'function');
