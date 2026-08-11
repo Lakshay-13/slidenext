@@ -12,6 +12,7 @@ const presentationMetadata = require('./shared/presentation-metadata');
 const presentationCreation = require('./shared/presentation-creation');
 const canonicalPptxExport = require('./shared/canonical-pptx-export');
 const canonicalPdfExport = require('./scripts/export-canonical-pdf');
+const legacyPptxExport = require('./scripts/export-legacy-html-pptx');
 const { isPathWithin } = require('./shared/path-boundary');
 
 const app = express();
@@ -219,7 +220,31 @@ app.post('/api/export/pptx', async (req, res) => {
   const { canonicalDeck, filename, sourcePath } = req.body || {};
   const resolvedCanonicalDeck = await resolveExportCanonicalDeck(canonicalDeck, sourcePath);
   if (!resolvedCanonicalDeck) {
-    return res.status(400).json({ error: 'Invalid canonicalDeck' });
+    const legacySourcePath = canonicalPdfExport.resolveLegacyHtmlSourcePath(sourcePath);
+    if (!legacySourcePath) {
+      return res.status(400).json({ error: 'Invalid canonicalDeck' });
+    }
+
+    try {
+      const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
+      const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
+        assetBaseDir: path.dirname(legacySourcePath)
+      });
+      const buffer = result.buffer;
+      canonicalPptxExport.validatePptxArtifact(buffer);
+      const downloadFilename = normalizePptxDownloadFilename(filename);
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+      res.setHeader('X-SlideNext-Pptx-Warning-Count', String(result.warnings.length));
+      res.setHeader(
+        'X-SlideNext-Pptx-Warning-Details',
+        canonicalPptxExport.createPptxWarningDetailsHeader(result.warnings)
+      );
+      return res.send(buffer);
+    } catch (err) {
+      console.error('Error exporting legacy PPTX:', err);
+      return res.status(500).json({ error: `Failed to export PPTX: ${err.message}` });
+    }
   }
   if (resolvedCanonicalDeck.slides.length === 0) {
     return res.status(400).json({ error: 'Cannot export an empty deck' });

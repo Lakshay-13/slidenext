@@ -7,6 +7,7 @@ const path = require('node:path');
 const { app, workspaceDir } = require('../server.js');
 const presentationCreation = require('../shared/presentation-creation.js');
 const pdfScript = require('../scripts/export-canonical-pdf.js');
+const legacyPptxExport = require('../scripts/export-legacy-html-pptx.js');
 
 function listenOnEphemeralPort(server) {
   return new Promise((resolve, reject) => {
@@ -61,6 +62,32 @@ test('PPTX export route returns a real generalized PPTX response', async (t) => 
   assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '0');
   const buffer = Buffer.from(await response.arrayBuffer());
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
+});
+
+test('PPTX export route flattens an existing legacy HTML deck with an explicit warning', {
+  skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
+}, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/export/pptx`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sourcePath: 'presentations/onboarding-presentation/index.html',
+      filename: 'Legacy onboarding.pptx'
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type') || '', /application\/vnd\.openxmlformats/);
+  assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '1');
+  const warningDetails = JSON.parse(decodeURIComponent(
+    response.headers.get('x-slidenext-pptx-warning-details') || ''
+  ));
+  assert.deepEqual(warningDetails.warnings, [legacyPptxExport.LEGACY_PPTX_WARNING]);
+  assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
 });
 
 test('PDF export route returns a real generalized PDF response', { skip: !pdfScript.resolveChromeExecutable() }, async (t) => {
