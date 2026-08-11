@@ -2581,8 +2581,14 @@
           groupApi: typeof SlideNextStudioEditorGroupController !== 'undefined'
             ? SlideNextStudioEditorGroupController
             : null,
+          conversionApi: typeof SlideNextStudioEditorLayoutConversionController !== 'undefined'
+            ? SlideNextStudioEditorLayoutConversionController
+            : null,
           nudgeEngineApi: typeof SlideNextStudioEditorNudge !== 'undefined'
             ? SlideNextStudioEditorNudge
+            : null,
+          conversionEngineApi: typeof SlideNextStudioEditorLayoutConversion !== 'undefined'
+            ? SlideNextStudioEditorLayoutConversion
             : null,
           alignmentEngineApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
             ? SlideNextStudioEditorAlignment
@@ -2607,8 +2613,26 @@
           buildUngroupSelectionActionState: (...args) => buildUngroupSelectionActionState(...args),
           updateGroupActionState: (...args) => updateGroupActionState(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
+          getSelectedElements: () => getStudioSelectedElements(),
+          getActiveSlide: (...args) => getActiveSlide(...args),
           getSlideMetrics: (...args) => getSlideMetrics(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
+          getClosestPositionedAncestor: (...args) => getEditorClosestPositionedAncestor(...args),
+          buildPositionedLayoutItems: (...args) => buildEditorPositionedLayoutItems(...args),
+          isLocked: (element, sourceDoc) => getEditorCanonicalVisibilityReader(
+            'locked',
+            sourceDoc || getIframeDoc(),
+            isElementLocked
+          )(element),
+          isHidden: (element, sourceDoc) => getEditorCanonicalVisibilityReader(
+            'hidden',
+            sourceDoc || getIframeDoc(),
+            isElementHidden
+          )(element),
+          isFreeformPositioned: (element, sourceDoc) => getEditorCanonicalFreeformReader(
+            sourceDoc || getIframeDoc(),
+            isElementFreeformPositioned
+          )(element),
           getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
@@ -2617,11 +2641,18 @@
             getStudioEditorSessionToken()
           ),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
           applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
+          updateConversionActionState: () => {
+            syncSelectionOverlay();
+            syncInspectorForSelection();
+          },
           prepareGroup: (...args) => makeElementsHoverable(...args)
         })
       : null;
@@ -2633,6 +2664,9 @@
       : null;
     const studioEditorGroupController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.groupController
+      : null;
+    const studioEditorLayoutConversionController = studioEditorLayoutRuntime
+      ? studioEditorLayoutRuntime.conversionController
       : null;
 
     const studioEditorElementVisibilityStateReader = typeof SlideNextStudioElementState !== 'undefined'
@@ -9496,6 +9530,13 @@
       return studioEditorNudgeController
         && typeof studioEditorNudgeController.nudge === 'function'
         ? studioEditorNudgeController.nudge(dx, dy)
+        : false;
+    }
+
+    function convertSelectedElementsToFreeform() {
+      return studioEditorLayoutConversionController
+        && typeof studioEditorLayoutConversionController.convert === 'function'
+        ? studioEditorLayoutConversionController.convert()
         : false;
     }
 

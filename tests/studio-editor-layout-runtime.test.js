@@ -7,15 +7,17 @@ const layoutRuntime = require('../shared/studio-editor-layout-runtime.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
-test('layout runtime composes nudge, alignment, and grouping controllers', () => {
+test('layout runtime composes nudge, alignment, grouping, and conversion controllers', () => {
   const calls = [];
   const controllers = {
     nudgeController: { name: 'nudge' },
     alignmentController: { name: 'alignment' },
-    groupController: { name: 'group' }
+    groupController: { name: 'group' },
+    conversionController: { name: 'conversion' }
   };
   const callbacks = {
     nudgeEngineApi: {},
+    conversionEngineApi: {},
     alignmentEngineApi: {},
     canonicalLayoutApi: {},
     canonicalDeckApi: {},
@@ -41,7 +43,17 @@ test('layout runtime composes nudge, alignment, and grouping controllers', () =>
     applyUngroupMutation() {},
     commitSelectionState() {},
     finalizeDeckMutation() {},
-    prepareGroup() {}
+    prepareGroup() {},
+    transactionApi: {},
+    getSelectedElements() {},
+    getActiveSlide() {},
+    getClosestPositionedAncestor() {},
+    buildPositionedLayoutItems() {},
+    isLocked() {},
+    isHidden() {},
+    isFreeformPositioned() {},
+    buildCanonicalDeck() {},
+    updateConversionActionState() {}
   };
   const api = (name, factoryName, result) => ({
     [factoryName](options) {
@@ -54,6 +66,11 @@ test('layout runtime composes nudge, alignment, and grouping controllers', () =>
     nudgeApi: api('nudge', 'createStudioEditorNudgeController', controllers.nudgeController),
     alignmentApi: api('alignment', 'createStudioEditorAlignmentController', controllers.alignmentController),
     groupApi: api('group', 'createStudioEditorGroupController', controllers.groupController),
+    conversionApi: api(
+      'conversion',
+      'createStudioEditorLayoutConversionController',
+      controllers.conversionController
+    ),
     ...callbacks
   });
 
@@ -64,6 +81,9 @@ test('layout runtime composes nudge, alignment, and grouping controllers', () =>
   assert.equal(calls[1][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
   assert.equal(calls[2][1].canonicalGroupApi, callbacks.canonicalGroupApi);
   assert.equal(calls[2][1].applyUngroupMutation, callbacks.applyUngroupMutation);
+  assert.equal(calls[3][1].conversionApi, callbacks.conversionEngineApi);
+  assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
+  assert.equal(calls[3][1].buildPositionedLayoutItems, callbacks.buildPositionedLayoutItems);
 });
 
 test('index wires layout editing through the runtime module', () => {
@@ -77,6 +97,7 @@ test('index wires layout editing through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorLayoutRuntime\.createStudioEditorLayoutRuntime\(/
   );
+  assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorNudgeController\.createStudioEditorNudgeController\(/

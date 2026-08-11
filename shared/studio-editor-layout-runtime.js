@@ -20,6 +20,10 @@
       && typeof options.groupApi.createStudioEditorGroupController === 'function'
       ? options.groupApi
       : null;
+    const conversionApi = options.conversionApi
+      && typeof options.conversionApi.createStudioEditorLayoutConversionController === 'function'
+      ? options.conversionApi
+      : null;
 
     const nudgeController = nudgeApi
       ? nudgeApi.createStudioEditorNudgeController({
@@ -73,11 +77,36 @@
           prepareGroup: options.prepareGroup
         })
       : null;
+    const conversionController = conversionApi
+      ? conversionApi.createStudioEditorLayoutConversionController({
+          conversionApi: options.conversionEngineApi,
+          canonicalLayoutApi: options.canonicalLayoutApi,
+          canonicalDeckApi: options.canonicalDeckApi,
+          transactionApi: options.transactionApi,
+          getDocument: options.getIframeDoc,
+          getSelectedElements: options.getSelectedElements,
+          getActiveSlide: options.getActiveSlide,
+          getSlideMetrics: options.getSlideMetrics,
+          getClosestPositionedAncestor: options.getClosestPositionedAncestor,
+          getRectOnSlide: options.getRectOnSlide,
+          buildPositionedLayoutItems: options.buildPositionedLayoutItems,
+          isLocked: options.isLocked,
+          isHidden: options.isHidden,
+          isFreeformPositioned: options.isFreeformPositioned,
+          assignElementId: options.assignElementId,
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
+          finalizeDeckMutation: options.finalizeDeckMutation,
+          updateActionState: options.updateConversionActionState
+        })
+      : null;
 
     return {
       nudgeController,
       alignmentController,
-      groupController
+      groupController,
+      conversionController
     };
   }
 
