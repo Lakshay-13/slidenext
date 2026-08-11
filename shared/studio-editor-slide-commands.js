@@ -185,6 +185,7 @@
           insertionIndex: newIndex
         })
       : null;
+    if (canonicalDeckBeforeAddition && !canonicalDeckAfterAddition) return false;
 
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState

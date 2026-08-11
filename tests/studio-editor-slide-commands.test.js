@@ -306,6 +306,35 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
   ]);
 });
 
+test('addStudioSlideNode fails closed before DOM insertion when canonical addition is unavailable', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2' };
+  let saveCalls = 0;
+  let insertionCalls = 0;
+
+  const result = slideCommands.addStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => [{ id: 'slide-1' }],
+    createBlankSlide: () => newSlide,
+    buildCanonicalAddSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildCanonicalAddSlideDeck: () => null,
+    saveHistoryState: () => {
+      saveCalls += 1;
+    },
+    applyInsertion: () => {
+      insertionCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(saveCalls, 0);
+  assert.equal(insertionCalls, 0);
+});
+
 test('addStudioSlideNode stops before history when slide creation is unavailable', () => {
   const calls = [];
 
