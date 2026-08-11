@@ -6364,6 +6364,23 @@
         : null;
     }
 
+    function findEditorCanonicalSlideById(canonicalDeck, slideId) {
+      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
+        ? SlideNextCanonicalDeck
+        : null;
+      if (canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
+        try {
+          const canonicalSlide = canonicalDeckApi.findCanonicalSlideById(canonicalDeck, slideId);
+          if (canonicalSlide) return canonicalSlide;
+        } catch (error) {
+          // Preserve the legacy lookup when the shared resolver is unavailable.
+        }
+      }
+      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return null;
+      return canonicalDeck.slides.find((slide) => slide && slide.id === slideId) || null;
+    }
+
     function buildEditorMutationCanonicalDeck(sourceDoc) {
       if (!studioEditorCanonicalBridge
         || typeof studioEditorCanonicalBridge.buildMutationCanonicalDeck !== 'function') return null;
@@ -9011,10 +9028,7 @@
               const canUse = !!getActiveSlide(sourceDoc);
               const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(sourceDoc) : '';
-              const activeSlide = canonicalDeck
-                && Array.isArray(canonicalDeck.slides)
-                ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
-                : null;
+              const activeSlide = findEditorCanonicalSlideById(canonicalDeck, activeSlideId);
               return {
                 masterSlides: canonicalDeck && canonicalDeck.masterSlides,
                 activeMasterSlideId: activeSlide && activeSlide.masterSlideId,
@@ -9033,10 +9047,7 @@
       const canUse = !!getActiveSlide(doc);
       const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(doc) : '';
-      const activeSlide = canonicalDeck
-        && Array.isArray(canonicalDeck.slides)
-        ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
-        : null;
+      const activeSlide = findEditorCanonicalSlideById(canonicalDeck, activeSlideId);
       masterSlideView.syncStudioMasterSlideState({
         documentRef: document,
         masterSlides: canonicalDeck && canonicalDeck.masterSlides,
@@ -13158,10 +13169,7 @@
         const canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
           ? resolveEditorUiCanonicalDeck(doc)
           : buildEditorCanonicalDeck(doc);
-        const canonicalActiveSlide = canonicalDeck
-          && Array.isArray(canonicalDeck.slides)
-          ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId)
-          : null;
+        const canonicalActiveSlide = findEditorCanonicalSlideById(canonicalDeck, activeSlideId);
         return canonicalActiveSlide
           ? { ...actionState, canonicalActiveSlide }
           : actionState;

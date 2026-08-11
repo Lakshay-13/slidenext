@@ -889,6 +889,38 @@ test('editor composes marquee clearing through the shared overlay module', () =>
   assert.doesNotMatch(source, /clearMarqueeSelection\.clearer/);
 });
 
+test('editor canonical slide helper delegates to the shared resolver and preserves fallback lookup', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function findEditorCanonicalSlideById(canonicalDeck, slideId) {',
+    '\n\n    function buildEditorMutationCanonicalDeck(sourceDoc) {'
+  );
+  const canonicalSlide = { id: 'slide-1', masterSlideId: 'master-1' };
+  const canonicalDeck = { slides: [canonicalSlide] };
+  const calls = [];
+  const context = {
+    SlideNextCanonicalDeck: {
+      findCanonicalSlideById(deck, slideId) {
+        calls.push([deck, slideId]);
+        return deck === canonicalDeck && slideId === 'slide-1'
+          ? canonicalSlide
+          : null;
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(context.findEditorCanonicalSlideById(canonicalDeck, 'slide-1'), canonicalSlide);
+  assert.deepEqual(calls, [[canonicalDeck, 'slide-1']]);
+  assert.equal(
+    context.findEditorCanonicalSlideById({ slides: [{ id: 'legacy-slide' }] }, 'legacy-slide').id,
+    'legacy-slide'
+  );
+});
+
 test('clearMarqueeSelection passes overlay context to the shared overlay module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const clearMarqueeSource = extractFunctionSource(
