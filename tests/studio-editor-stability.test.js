@@ -542,6 +542,20 @@ test('slide metadata wiring prefers live canonical state and keeps a legacy base
   );
 });
 
+test('wallpaper wiring forwards canonical baseline rebuild options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const wallpaperSource = extractFunctionSource(
+    fileContent,
+    'function applyEditorWallpaperSlidesMutationWithTransaction',
+    'function applyEditorWallpaperMutationWithTransaction'
+  );
+
+  assert.match(
+    wallpaperSource,
+    /buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'[\s\S]*?\(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc \|\| sourceDocument, buildOptions\)/
+  );
+});
+
 test('deck mutation finalizer wiring rebuilds canonical state from the mutated DOM', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(

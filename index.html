@@ -9853,7 +9853,7 @@
         canonicalWallpaperApi,
         sourceDocument,
         buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorCanonicalDeck(sourceDoc || sourceDocument)
+          ? (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc || sourceDocument, buildOptions)
           : null,
         getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
           sourceDoc || sourceDocument,
