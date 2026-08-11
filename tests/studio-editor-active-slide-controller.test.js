@@ -117,6 +117,7 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
     layout: { background: { style: 'background: #112233;' } }
   };
   const wallpaperSlides = [];
+  const lookupCalls = [];
   const controller = activeSlideController.createStudioEditorActiveSlideController({
     activeSlideView: {
       syncStudioActiveSlideChrome(doc, options) {
@@ -144,6 +145,12 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
     buildEditorCanonicalDeck() {
       return { slides: [canonicalSlide] };
     },
+    canonicalDeckApi: {
+      findCanonicalSlideById(deck, slideId) {
+        lookupCalls.push([deck, slideId]);
+        return canonicalSlide;
+      }
+    },
     getSlideId(slide) {
       return slide.id;
     }
@@ -151,4 +158,8 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
 
   assert.equal(controller.sync({ id: 'iframe-document' }), true);
   assert.deepEqual(wallpaperSlides, [canonicalSlide, canonicalSlide, canonicalSlide]);
+  assert.deepEqual(lookupCalls, [[
+    { slides: [canonicalSlide] },
+    'slide-1'
+  ]]);
 });

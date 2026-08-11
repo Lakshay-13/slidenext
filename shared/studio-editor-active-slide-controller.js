@@ -26,6 +26,9 @@
     const deckSnapshotApi = options.deckSnapshotApi
       || (root && root.SlideNextStudioDeckSnapshot)
       || null;
+    const canonicalDeckApi = options.canonicalDeckApi
+      || (root && root.SlideNextCanonicalDeck)
+      || null;
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
@@ -157,7 +160,9 @@
           || (activeSlide.dataset && activeSlide.dataset.slideId) || '';
         canonicalWallpaperSlide = canonicalDeck
           && Array.isArray(canonicalDeck.slides)
-          ? canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId) || null
+          ? (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function'
+              ? canonicalDeckApi.findCanonicalSlideById(canonicalDeck, activeSlideId)
+              : canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId) || null)
           : null;
         return canonicalWallpaperSlide || activeSlide;
       };
