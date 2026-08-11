@@ -108,12 +108,28 @@
 
     function buildCanonicalInsertionContext(items) {
       const buildCanonicalInsertionSequence = getCanonicalInsertionSequence();
-      if (!buildCanonicalInsertionSequence) return null;
+      if (!buildCanonicalInsertionSequence && !getCanonicalDeckBaseline) return null;
       const doc = getIframeDoc();
       const activeSlide = getActiveSlide(doc);
       const slideId = getEditorSlideId(activeSlide);
       if (!doc || !slideId) return null;
-      return { buildCanonicalInsertionSequence, doc, slideId, items };
+      let canonicalDeckBefore = null;
+      if (getCanonicalDeckBaseline) {
+        try {
+          const candidate = getCanonicalDeckBaseline(doc);
+          if (isValidCanonicalDeck(candidate)) canonicalDeckBefore = candidate;
+        } catch (error) {
+          canonicalDeckBefore = null;
+        }
+      }
+      return {
+        buildCanonicalInsertionSequence,
+        canonicalDeckBefore,
+        hasCanonicalBaseline: !!canonicalDeckBefore,
+        doc,
+        slideId,
+        items
+      };
     }
 
     function buildCanonicalDeckForInsertion(context) {
@@ -121,8 +137,10 @@
         ? context.doc
         : getIframeDoc();
       const insertedItems = context && Array.isArray(context.items) ? context.items : [];
-      let liveCanonicalDeck = null;
-      if (getCanonicalDeckBaseline) {
+      let liveCanonicalDeck = context && context.canonicalDeckBefore
+        ? context.canonicalDeckBefore
+        : null;
+      if (!liveCanonicalDeck && getCanonicalDeckBaseline) {
         try {
           liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
         } catch (err) {
@@ -175,6 +193,27 @@
       });
     }
 
+    function removeInsertedElements(insertedElements = []) {
+      let didRemoveAll = true;
+      (Array.isArray(insertedElements) ? insertedElements : []).forEach((element) => {
+        if (!element) return;
+        try {
+          if (typeof element.remove === 'function') {
+            element.remove();
+            return;
+          }
+          if (element.parentNode && typeof element.parentNode.removeChild === 'function') {
+            element.parentNode.removeChild(element);
+            return;
+          }
+          didRemoveAll = false;
+        } catch (error) {
+          didRemoveAll = false;
+        }
+      });
+      return didRemoveAll;
+    }
+
     function tryBuildCanonicalDeckForInsertion(context) {
       try {
         return buildCanonicalDeckForInsertion(context);
@@ -217,6 +256,10 @@
         ...(insertionContext || {}),
         items: pasted
       });
+      if (insertionContext && insertionContext.hasCanonicalBaseline && !canonicalDeck) {
+        removeInsertedElements(pasted);
+        return finalizeClipboardActionResult(false);
+      }
       const didPaste = finalizeInsertedElements(
         pasted,
         'Auto: Pasted Element',
@@ -243,6 +286,10 @@
         ...(insertionContext || {}),
         items: duplicates
       });
+      if (insertionContext && insertionContext.hasCanonicalBaseline && !canonicalDeck) {
+        removeInsertedElements(duplicates);
+        return finalizeClipboardActionResult(false);
+      }
       return finalizeClipboardActionResult(finalizeInsertedElements(
         duplicates,
         'Auto: Duplicated Element',

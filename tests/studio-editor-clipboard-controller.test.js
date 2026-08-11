@@ -147,6 +147,63 @@ test('clipboard controller preserves transaction finalization when canonical rec
   ]]);
 });
 
+test('clipboard controller removes inserted nodes when a canonical-backed insertion cannot rebuild', () => {
+  const liveCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  };
+  let removed = 0;
+  let finalizeCalls = 0;
+  let clipboard = { items: [{ id: 'item-1' }], pasteCount: 0 };
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan() {
+        return {
+          canPaste: true,
+          items: [{ id: 'item-1' }],
+          nextPasteCount: 1,
+          nextClipboard: { items: [{ id: 'item-1' }], pasteCount: 1 }
+        };
+      }
+    },
+    canonicalDeckApi: {
+      isCanonicalDeck(value) {
+        return value === liveCanonicalDeck;
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionSequence() {
+            return null;
+          }
+        };
+      }
+    },
+    getClipboard: () => clipboard,
+    setClipboard: (value) => { clipboard = value; },
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    getCanonicalDeckBaseline: () => liveCanonicalDeck,
+    insertClipboardPayload: () => [{
+      remove() {
+        removed += 1;
+      }
+    }],
+    finalizeInsertedElements: () => {
+      finalizeCalls += 1;
+      return true;
+    },
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.equal(controller.paste(), false);
+  assert.equal(removed, 1);
+  assert.equal(finalizeCalls, 0);
+  assert.equal(clipboard.pasteCount, 0);
+});
+
 test('clipboard controller preserves paste history when canonical builder construction throws', () => {
   const calls = [];
   let clipboard = { items: [{ id: 'item-1' }], pasteCount: 0 };
