@@ -564,6 +564,29 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
   ]);
 });
 
+test('reorderStudioSlideNodes fails closed before DOM reorder when canonical reordering is unavailable', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1' };
+  const secondSlide = { id: 'slide-2' };
+  let reorderCalls = 0;
+
+  const result = slideCommands.reorderStudioSlideNodes(0, 1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => [firstSlide, secondSlide],
+    buildCanonicalReorderSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    buildCanonicalReorderSlideDeck: () => null,
+    applyReorder: () => {
+      reorderCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(reorderCalls, 0);
+});
+
 test('applyStudioSlideInsertionWithTransaction delegates the shared slide mutation and preserves options', () => {
   const container = { id: 'slides-container' };
   const slideNode = { id: 'slide-2' };

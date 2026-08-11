@@ -330,14 +330,26 @@
     const buildCanonicalReorderSlideDeck = typeof options.buildCanonicalReorderSlideDeck === 'function'
       ? options.buildCanonicalReorderSlideDeck
       : null;
+    const buildCanonicalReorderSlideBaseline = typeof options.buildCanonicalReorderSlideBaseline === 'function'
+      ? options.buildCanonicalReorderSlideBaseline
+      : null;
+    const canonicalDeckBeforeReorder = buildCanonicalReorderSlideBaseline
+      ? buildCanonicalReorderSlideBaseline({
+          sourceDocument: iframeDoc
+        })
+      : null;
     const canonicalDeckAfterReorder = buildCanonicalReorderSlideDeck
       ? buildCanonicalReorderSlideDeck({
+          ...(canonicalDeckBeforeReorder
+            ? { canonicalDeckBeforeMutation: canonicalDeckBeforeReorder }
+            : {}),
           sourceDocument: iframeDoc,
           sourceSlide: draggedNode,
           targetSlide: targetNode,
           getSlideId: options.getSlideId
         })
       : null;
+    if (canonicalDeckBeforeReorder && !canonicalDeckAfterReorder) return false;
 
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
       ? options.captureSlideMutationState
