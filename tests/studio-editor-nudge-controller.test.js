@@ -107,3 +107,40 @@ test('nudge controller fails closed before DOM mutation when canonical layout co
   assert.equal(controller.nudge(1, 0), false);
   assert.equal(applyCalls, 0);
 });
+
+test('nudge controller fails closed before DOM mutation when the canonical sidecar is null', () => {
+  let applyCalls = 0;
+  const controller = nudgeController.createStudioEditorNudgeController({
+    nudgeApi: {
+      buildStudioNudgedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      }
+    },
+    canonicalLayoutApi: {
+      buildStudioCanonicalLayoutBaseline() {
+        return { slides: [{ id: 'slide-1', nodes: [] }] };
+      },
+      createStudioCanonicalLayoutMutationBuilder() {
+        return () => null;
+      }
+    },
+    canonicalDeckApi: {},
+    buildMotionSelectionActionState: () => ({
+      canNudge: true,
+      doc: { id: 'doc' },
+      nudgeLayoutItems: [{ id: 'item-1' }],
+      slideBounds: { width: 1920, height: 1080 }
+    }),
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    applyPositionLayout: () => {
+      applyCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.nudge(1, 0), false);
+  assert.equal(applyCalls, 0);
+});

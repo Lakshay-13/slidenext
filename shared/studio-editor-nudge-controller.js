@@ -70,6 +70,21 @@
             getCanonicalDeckBaseline
           })
         : null;
+      let hasCanonicalBaseline = false;
+      if (canonicalLayoutBuilder
+        && canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function') {
+        try {
+          hasCanonicalBaseline = !!canonicalLayoutApi.buildStudioCanonicalLayoutBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline,
+            sourceDocument: doc
+          });
+        } catch (err) {
+          return false;
+        }
+      }
       let canonicalDeck = null;
       if (canonicalLayoutBuilder) {
         try {
@@ -83,6 +98,7 @@
           return false;
         }
       }
+      if (hasCanonicalBaseline && !canonicalDeck) return false;
       const applyStudioNudgedLayout = nudgeApi
         && typeof nudgeApi.applyStudioNudgedLayout === 'function'
         ? nudgeApi.applyStudioNudgedLayout
