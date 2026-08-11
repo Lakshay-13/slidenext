@@ -1,19 +1,15 @@
 (function (root, factory) {
-  const api = factory(root);
+  const defaultLayoutModeApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-layout-mode')
+    : root && root.SlideNextStudioEditorLayoutMode;
+  const api = factory(root, defaultLayoutModeApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorElementInsertionController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
-  function hasAbsoluteCanonicalNode(nodes = []) {
-    return (Array.isArray(nodes) ? nodes : []).some((node) => {
-      if (!node || typeof node !== 'object') return false;
-      if (node.layout && node.layout.mode === 'absolute') return true;
-      return hasAbsoluteCanonicalNode(node.children);
-    });
-  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, defaultLayoutModeApi) {
 
   function normalizeInsertionLayoutMode(value) {
     if (typeof value !== 'string') return '';
@@ -24,34 +20,16 @@
       : '';
   }
 
-  function resolveCanonicalInsertionLayoutModeFallback(canonicalDeck, slideId, canonicalDeckApi) {
-    if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return 'absolute';
-    let slide = null;
-    if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
-      try {
-        slide = canonicalDeckApi.findCanonicalSlideById(canonicalDeck, slideId);
-      } catch (error) {
-        slide = null;
-      }
-    }
-    if (!slide) {
-      slide = canonicalDeck.slides.find((candidate) => candidate && candidate.id === slideId) || null;
-    }
-    if (!slide) return 'absolute';
-    if (canonicalDeck.layout && canonicalDeck.layout.mode === 'absolute') return 'absolute';
-    if (slide.layout && slide.layout.mode === 'absolute') return 'absolute';
-    return hasAbsoluteCanonicalNode(slide.nodes) ? 'absolute' : 'flow';
-  }
-
   function createStudioEditorElementInsertionController(options = {}) {
     const hasOption = (name) => Object.prototype.hasOwnProperty.call(options, name);
-    const resolveDependency = (name, globalName) => hasOption(name)
+    const resolveDependency = (name, globalName, defaultValue = null) => hasOption(name)
       ? options[name]
-      : (root && root[globalName]) || null;
+      : (root && root[globalName]) || defaultValue;
     const canonicalDeckApi = resolveDependency('canonicalDeckApi', 'SlideNextCanonicalDeck');
     const layoutModeApi = resolveDependency(
       'layoutModeApi',
-      'SlideNextStudioEditorLayoutMode'
+      'SlideNextStudioEditorLayoutMode',
+      defaultLayoutModeApi
     );
     const canonicalInsertionApi = resolveDependency(
       'canonicalInsertionApi',
@@ -158,12 +136,12 @@
       const insertionLayoutMode = normalizeInsertionLayoutMode(normalizedInsertOptions.layoutMode)
         || (layoutModeApi
           && typeof layoutModeApi.resolveStudioCanonicalLayoutMode === 'function'
-          ? layoutModeApi.resolveStudioCanonicalLayoutMode(canonicalDeckBeforeInsertion, activeSlideId)
-          : resolveCanonicalInsertionLayoutModeFallback(
+          ? layoutModeApi.resolveStudioCanonicalLayoutMode(
               canonicalDeckBeforeInsertion,
               activeSlideId,
-              canonicalDeckApi
-            ));
+              { canonicalDeckApi }
+            )
+          : 'absolute');
       const childCount = activeSlide.children && Number.isFinite(activeSlide.children.length)
         ? activeSlide.children.length
         : 0;
