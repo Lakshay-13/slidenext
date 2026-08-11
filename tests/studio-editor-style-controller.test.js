@@ -103,6 +103,74 @@ test('style controller preserves transaction finalization when canonical style c
   assert.equal(Object.prototype.hasOwnProperty.call(calls[0][1], 'canonicalDeck'), false);
 });
 
+test('style controller rolls back a canonical-backed mutation when its sidecar fails', () => {
+  const doc = { id: 'doc' };
+  const element = { dataset: { editorId: 'node-1' } };
+  const transaction = { id: 'tx' };
+  const rollbackCalls = [];
+  let finalizeCalls = 0;
+  let syncCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        return {
+          canApply: true,
+          selection,
+          versionLabel: 'Auto: Styled Element'
+        };
+      }
+    },
+    canonicalStyleApi: {
+      createStudioCanonicalStyleMutationBuilders() {
+        return {
+          buildCanonicalStyleBaseline() {
+            return { id: 'before' };
+          },
+          buildCanonicalStyleMutation() {
+            return null;
+          }
+        };
+      }
+    },
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction, options) {
+        rollbackCalls.push({
+          currentTransaction,
+          direction,
+          element: options.getElementById('node-1')
+        });
+        return { didApply: true };
+      }
+    },
+    domApi: {
+      getElementByEditorId(elementId, currentDoc) {
+        assert.equal(elementId, 'node-1');
+        assert.equal(currentDoc, doc);
+        return element;
+      }
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => doc,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: () => ({
+      didApply: true,
+      displayValue: '32',
+      transaction
+    }),
+    syncInspectorForSelection: () => {
+      syncCalls += 1;
+    },
+    finalizeDeckMutation: () => {
+      finalizeCalls += 1;
+    }
+  });
+
+  assert.equal(controller.apply('size', '32'), false);
+  assert.deepEqual(rollbackCalls, [{ currentTransaction: transaction, direction: 'undo', element }]);
+  assert.equal(finalizeCalls, 0);
+  assert.equal(syncCalls, 2);
+});
+
 test('style controller fails closed before DOM mutation when canonical builder construction throws', () => {
   let styleCalls = 0;
   const controller = styleController.createStudioEditorStyleController({

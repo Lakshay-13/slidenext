@@ -26,6 +26,12 @@
           canonicalDeckApi: options.canonicalDeckApi
             || (root && root.SlideNextCanonicalDeck)
             || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
+          domApi: options.domApi
+            || (root && root.SlideNextStudioEditorDom)
+            || null,
           getSelectedElements: options.getSelectedElements,
           getIframeDoc: options.getIframeDoc,
           getActiveSlide: options.getActiveSlide,

@@ -23,6 +23,12 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
+    const domApi = options.domApi
+      || (root && root.SlideNextStudioEditorDom)
+      || null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
@@ -216,6 +222,29 @@
       label.textContent = `${displayValue}${suffix}`;
     }
 
+    function rollbackStyleMutation(transaction, doc) {
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        syncInspectorForSelection();
+        return false;
+      }
+      const getElementById = domApi
+        && typeof domApi.getElementByEditorId === 'function'
+        ? (elementId) => domApi.getElementByEditorId(elementId, doc)
+        : () => null;
+      let rollbackResult = null;
+      try {
+        rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById
+        });
+      } catch (error) {
+        rollbackResult = null;
+      }
+      syncInspectorForSelection();
+      return !!(rollbackResult && rollbackResult.didApply);
+    }
+
     function apply(prop, value) {
       if (!styleApi || typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
         return finalizeStyleActionResult(false);
@@ -293,9 +322,12 @@
             getElementId: getStyleElementId
           });
         } catch (err) {
-          // Preserve the style edit through transaction history when the sidecar fails.
           canonicalDeck = null;
         }
+      }
+      if (canonicalDeckBeforeMutation && !canonicalDeck) {
+        rollbackStyleMutation(transaction, doc);
+        return finalizeStyleActionResult(false);
       }
       if (finalizeDeckMutation) {
         finalizeDeckMutation(styleMutationPlan.versionLabel, {
