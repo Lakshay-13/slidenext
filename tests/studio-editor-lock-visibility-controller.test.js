@@ -147,6 +147,61 @@ test('visibility toggle fails closed when canonical builder construction throws'
   assert.equal(visibilityCalls, 0);
 });
 
+test('lock and visibility toggles fail closed when a canonical sidecar is null', () => {
+  let lockCalls = 0;
+  let visibilityCalls = 0;
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements) {
+        return {
+          didChange: true,
+          selection: elements,
+          shouldLock: true,
+          versionLabel: 'Auto: Locked Element'
+        };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements) {
+        return {
+          didChange: true,
+          selection: elements,
+          shouldHide: true,
+          versionLabel: 'Auto: Hid Element'
+        };
+      }
+    },
+    canonicalVisibilityApi: {
+      createStudioCanonicalVisibilityMutationBuilders() {
+        return {
+          buildCanonicalVisibilityBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          },
+          buildCanonicalVisibilityMutation() {
+            return null;
+          }
+        };
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyLockMutation: () => {
+      lockCalls += 1;
+      return { didApply: true, transaction: null };
+    },
+    applyVisibilityMutation: () => {
+      visibilityCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(lockCalls, 0);
+  assert.equal(visibilityCalls, 0);
+});
+
 test('lock and visibility mutation plans prefer canonical metadata over stale DOM state', () => {
   const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
   const canonicalDeckModel = canonicalDeck.createCanonicalDeck({

@@ -205,12 +205,23 @@
         && typeof canonicalVisibilityBuilders.buildCanonicalVisibilityMutation === 'function'
         ? canonicalVisibilityBuilders.buildCanonicalVisibilityMutation
         : null;
-      return buildMutation
-        ? buildMutation(selection, nextState, {
-            sourceDocument: doc,
-            getElementId
-          })
+      const buildBaseline = canonicalVisibilityBuilders
+        && typeof canonicalVisibilityBuilders.buildCanonicalVisibilityBaseline === 'function'
+        ? canonicalVisibilityBuilders.buildCanonicalVisibilityBaseline
         : null;
+      const canonicalDeckBeforeMutation = buildBaseline
+        ? buildBaseline({ sourceDocument: doc })
+        : null;
+      return {
+        canonicalDeck: buildMutation
+          ? buildMutation(selection, nextState, {
+              sourceDocument: doc,
+              canonicalDeckBeforeMutation,
+              getElementId
+            })
+          : null,
+        hasCanonicalBaseline: !!canonicalDeckBeforeMutation
+      };
     }
 
     function toggleLock() {
@@ -232,9 +243,9 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan || !lockMutationPlan.didChange) return false;
-      let canonicalDeck = null;
+      let canonicalVisibilityMutation = null;
       try {
-        canonicalDeck = buildCanonicalVisibilityMutation(
+        canonicalVisibilityMutation = buildCanonicalVisibilityMutation(
           lockMutationPlan.selection,
           { locked: lockMutationPlan.shouldLock },
           doc,
@@ -243,6 +254,11 @@
       } catch (error) {
         return false;
       }
+      if (canonicalVisibilityMutation.hasCanonicalBaseline
+        && !canonicalVisibilityMutation.canonicalDeck) {
+        return false;
+      }
+      const canonicalDeck = canonicalVisibilityMutation.canonicalDeck;
       const mutation = applyLockMutation(
         lockMutationPlan.selection,
         lockMutationPlan.shouldLock,
@@ -287,9 +303,9 @@
         }
       );
       if (!visibilityMutationPlan || !visibilityMutationPlan.didChange) return false;
-      let canonicalDeck = null;
+      let canonicalVisibilityMutation = null;
       try {
-        canonicalDeck = buildCanonicalVisibilityMutation(
+        canonicalVisibilityMutation = buildCanonicalVisibilityMutation(
           visibilityMutationPlan.selection,
           { hidden: visibilityMutationPlan.shouldHide },
           doc,
@@ -298,6 +314,11 @@
       } catch (error) {
         return false;
       }
+      if (canonicalVisibilityMutation.hasCanonicalBaseline
+        && !canonicalVisibilityMutation.canonicalDeck) {
+        return false;
+      }
+      const canonicalDeck = canonicalVisibilityMutation.canonicalDeck;
       const mutation = applyVisibilityMutation(
         visibilityMutationPlan.selection,
         visibilityMutationPlan.shouldHide,
