@@ -100,6 +100,81 @@ test('transform controller forwards the live canonical baseline reader', () => {
   assert.equal(builderOptions.getCanonicalDeckBaseline(), liveCanonicalDeck);
 });
 
+test('transform controller rolls back a DOM transaction when a canonical transform fails', () => {
+  const doc = { body: {} };
+  const canonicalBaseline = { kind: 'slidenext.deck', slides: [] };
+  const transaction = { kind: 'style-transaction' };
+  const element = { id: 'node-1' };
+  let finalizerOptions = null;
+  const rollbackCalls = [];
+  let syncOverlayCalls = 0;
+  let syncInspectorCalls = 0;
+  const controller = transformController.createStudioEditorTransformController({
+    transformApi: {
+      buildStudioTransformCanonicalLayoutUpdates() {
+        return [];
+      },
+      createStudioTransformSessionFinalizer(options) {
+        finalizerOptions = options;
+        return () => {};
+      }
+    },
+    canonicalTransformApi: {
+      createStudioCanonicalTransformMutationBuilders() {
+        return {
+          buildCanonicalTransformBaseline() {
+            return canonicalBaseline;
+          },
+          buildCanonicalTransformDeck() {
+            return null;
+          }
+        };
+      }
+    },
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction, options) {
+        rollbackCalls.push({ currentTransaction, direction, element: options.getElementById('node-1') });
+        return { didApply: true };
+      }
+    },
+    domApi: {
+      getElementByEditorId(elementId, currentDoc) {
+        assert.equal(elementId, 'node-1');
+        assert.equal(currentDoc, doc);
+        return element;
+      }
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions(options) {
+        options.onSessionStart({ id: 'start-bounds' });
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions() {
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    },
+    syncSelectionOverlay() {
+      syncOverlayCalls += 1;
+    },
+    syncInspectorForSelection() {
+      syncInspectorCalls += 1;
+    }
+  });
+
+  assert.equal(controller.setup(doc), true);
+  assert.equal(finalizerOptions.requireCanonicalDeck(), true);
+  assert.equal(finalizerOptions.onCanonicalFailure({ transaction }), true);
+  assert.deepEqual(rollbackCalls, [{ currentTransaction: transaction, direction: 'undo', element }]);
+  assert.equal(finalizerOptions.requireCanonicalDeck(), false);
+  assert.equal(syncOverlayCalls, 1);
+  assert.equal(syncInspectorCalls, 1);
+});
+
 test('transform controller continues setup when canonical baseline capture throws', () => {
   const calls = [];
   const controller = transformController.createStudioEditorTransformController({

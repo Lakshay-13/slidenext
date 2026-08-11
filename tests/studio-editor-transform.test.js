@@ -213,6 +213,38 @@ test('createStudioTransformSessionFinalizer preserves transaction history when c
   ]);
 });
 
+test('createStudioTransformSessionFinalizer can fail closed when canonical state is required', () => {
+  const calls = [];
+  const transaction = { type: 'style' };
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction() {
+      return transaction;
+    },
+    buildCanonicalDeck() {
+      return null;
+    },
+    requireCanonicalDeck() {
+      return true;
+    },
+    onCanonicalFailure(details) {
+      calls.push(['failure', details.transaction]);
+    },
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  finalizeSession({ id: 'move' }, { shouldPersist: true });
+
+  assert.deepEqual(calls, [['failure', transaction]]);
+});
+
 test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {
   const documentListeners = new Map();
   const bodyListeners = new Map();

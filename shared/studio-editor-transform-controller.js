@@ -213,6 +213,29 @@
           canonicalDeckBeforeTransform = null;
         }
       };
+      const rollbackCanonicalTransform = ({ transaction } = {}) => {
+        canonicalDeckBeforeTransform = null;
+        if (!transaction
+          || !transactionApi
+          || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+          return false;
+        }
+        const getElementById = domApi
+          && typeof domApi.getElementByEditorId === 'function'
+          ? (elementId) => domApi.getElementByEditorId(elementId, doc)
+          : () => null;
+        let rollbackResult = null;
+        try {
+          rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+            getElementById
+          });
+        } catch (error) {
+          rollbackResult = null;
+        }
+        syncSelectionOverlay();
+        syncInspectorForSelection();
+        return !!(rollbackResult && rollbackResult.didApply);
+      };
       const createTransformSessionFinalizer = transformApi
         && typeof transformApi.createStudioTransformSessionFinalizer === 'function'
         ? transformApi.createStudioTransformSessionFinalizer
@@ -229,6 +252,8 @@
             },
             buildTransaction: buildTransformTransaction,
             buildCanonicalDeck: buildCanonicalTransformDeck,
+            requireCanonicalDeck: () => !!canonicalDeckBeforeTransform,
+            onCanonicalFailure: rollbackCanonicalTransform,
             saveHistoryState,
             triggerAutoSave,
             triggerAutoVersion

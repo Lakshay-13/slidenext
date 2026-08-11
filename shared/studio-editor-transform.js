@@ -1094,6 +1094,12 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const requireCanonicalDeck = typeof options.requireCanonicalDeck === 'function'
+      ? options.requireCanonicalDeck
+      : () => false;
+    const onCanonicalFailure = typeof options.onCanonicalFailure === 'function'
+      ? options.onCanonicalFailure
+      : () => {};
 
     return function finalizeStudioTransformSession(finalizeResult, completionPlan = {}) {
       onSessionEnd(finalizeResult, completionPlan);
@@ -1107,6 +1113,20 @@
           // Preserve the move through transaction history when the sidecar fails.
           canonicalDeck = null;
         }
+      }
+      let canonicalDeckRequired = false;
+      try {
+        canonicalDeckRequired = requireCanonicalDeck(finalizeResult, completionPlan) === true;
+      } catch (err) {
+        canonicalDeckRequired = false;
+      }
+      if (canonicalDeckRequired && !canonicalDeck) {
+        try {
+          onCanonicalFailure({ finalizeResult, completionPlan, transaction });
+        } catch (err) {
+          // Keep a failed canonical sidecar from breaking the editor session.
+        }
+        return;
       }
       if (canonicalDeck) {
         saveHistoryState(false, transaction, canonicalDeck);
