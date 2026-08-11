@@ -203,6 +203,63 @@ test('group controller commits restored selection and finalizes ungrouping', () 
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
 });
 
+test('ungroup controller rolls back when the canonical ungroup sidecar is null', () => {
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const group = { dataset: { editorId: 'group-1' }, parentElement: slide };
+  const child = { dataset: { editorId: 'child-1' } };
+  const transaction = { kind: 'markup-transaction' };
+  const controller = groupController.createStudioEditorGroupController({
+    canonicalDeckApi: {
+      ungroupCanonicalNodes() {}
+    },
+    canonicalGroupApi: {
+      createStudioCanonicalUngroupMutationBuilders() {
+        return {
+          buildCanonicalUngroupBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          },
+          buildCanonicalUngroupDeck() {
+            return null;
+          }
+        };
+      }
+    },
+    deckImportApi: {
+      importElementToCanonicalNode() {
+        return { id: 'child-1' };
+      }
+    },
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    buildUngroupSelectionActionState: () => ({
+      canUngroup: true,
+      slide,
+      groups: [group]
+    }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    applyUngroupMutation: () => ({
+      didApply: true,
+      restoredElements: [child],
+      restoredGroups: [{ group, restoredElements: [child] }],
+      transaction
+    }),
+    transactionApi: {
+      applyStudioEditorTransaction(nextTransaction, direction) {
+        calls.push(['rollback', nextTransaction, direction]);
+        return { didApply: true };
+      }
+    },
+    getTransactionElementById: () => slide,
+    commitSelectionState: (state) => calls.push(['commit', state]),
+    finalizeDeckMutation: () => calls.push(['finalize'])
+  });
+
+  assert.equal(controller.ungroup(), false);
+  assert.deepEqual(calls[0], ['rollback', transaction, 'undo']);
+  assert.deepEqual(calls[1], ['commit', { selectedElements: [] }]);
+  assert.equal(calls.some((call) => call[0] === 'finalize'), false);
+});
+
 test('group controller refreshes state and fails closed when actions are unavailable', () => {
   const calls = [];
   const controller = groupController.createStudioEditorGroupController({

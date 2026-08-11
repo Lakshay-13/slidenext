@@ -266,8 +266,17 @@
         return false;
       }
 
+      const doc = getIframeDoc();
       const slideMetrics = getSlideMetrics(ungroupActionState.slide);
-      const getUngroupElementId = (element) => assignElementId(element);
+      const canonicalSlideId = getEditorSlideId(ungroupActionState.slide) || '';
+      const getUngroupElementId = (element) => {
+        const assignedId = assignElementId(element);
+        if (assignedId) return assignedId;
+        if (element === ungroupActionState.slide && canonicalSlideId) {
+          return `slide:${canonicalSlideId}`;
+        }
+        return element && element.dataset && element.dataset.editorId;
+      };
       let canonicalUngroupBuilders;
       try {
         canonicalUngroupBuilders = createCanonicalUngroupBuilders();
@@ -281,12 +290,12 @@
       } = canonicalUngroupBuilders;
       let canonicalDeckBeforeUngrouping = null;
       let canonicalGroupTargets = [];
+      let canonicalUngroupMutationRequired = false;
       if (buildCanonicalUngroupDeck
         && canonicalDeckApi
         && typeof canonicalDeckApi.ungroupCanonicalNodes === 'function'
         && importElementToCanonicalNode
         && (buildCanonicalDeckBaseline || buildCanonicalDeck)) {
-        const canonicalSlideId = getEditorSlideId(ungroupActionState.slide);
         const groupIds = new Set();
         let canBuildCanonicalSidecar = !!canonicalSlideId;
         canonicalGroupTargets = ungroupActionState.groups.map((group) => {
@@ -308,13 +317,15 @@
           canonicalDeckBeforeUngrouping = buildCanonicalUngroupBaseline
             ? buildCanonicalUngroupBaseline({
                 canonicalDeckApi,
-                buildCanonicalDeck
+                buildCanonicalDeck,
+                sourceDocument: doc
               })
             : null;
           canonicalGroupTargets = canonicalGroupTargets.map((target) => ({
             ...target,
             slideId: canonicalSlideId
           }));
+          canonicalUngroupMutationRequired = !!canonicalDeckBeforeUngrouping;
         } else {
           canonicalGroupTargets = [];
         }
@@ -333,14 +344,23 @@
         && canonicalGroupTargets.length === ungroupActionState.groups.length
         && Array.isArray(mutation.restoredGroups)
         && mutation.restoredGroups.length === canonicalGroupTargets.length) {
-        canonicalDeck = buildCanonicalUngroupDeck({
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeUngrouping,
-          importElementToCanonicalNode,
-          groupTargets: canonicalGroupTargets,
-          restoredGroups: mutation.restoredGroups,
-          getElementId: getUngroupElementId
-        });
+        try {
+          canonicalDeck = buildCanonicalUngroupDeck({
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeUngrouping,
+            importElementToCanonicalNode,
+            groupTargets: canonicalGroupTargets,
+            restoredGroups: mutation.restoredGroups,
+            getElementId: getUngroupElementId
+          });
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (canonicalUngroupMutationRequired && !canonicalDeck) {
+        rollbackGroupMutation(mutation.transaction, doc);
+        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        return false;
       }
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: mutation.restoredElements });
