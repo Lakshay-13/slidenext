@@ -86,6 +86,15 @@ test('legacy PDF helpers count slide classes and enforce workspace boundaries', 
   assert.equal(pdfScript.resolveLegacyHtmlSourcePath('../outside.html'), '');
 });
 
+test('legacy PDF CLI resolves the HTML sibling of a metadata-only sidecar', () => {
+  assert.equal(
+    pdfScript.resolveLegacyHtmlSiblingPath(
+      path.join(__dirname, '..', 'presentations', 'onboarding-presentation', 'presentation.json')
+    ).endsWith(path.join('onboarding-presentation', 'index.html')),
+    true
+  );
+});
+
 test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
   const inputPath = path.join(temporaryDir, 'deck.json');

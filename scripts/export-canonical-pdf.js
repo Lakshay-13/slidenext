@@ -160,6 +160,16 @@ function resolveLegacyHtmlSourcePath(sourcePath, workspaceRoot = WORKSPACE_ROOT)
   }
 }
 
+function resolveLegacyHtmlSiblingPath(inputPath) {
+  if (typeof inputPath !== 'string' || !inputPath.trim()) return '';
+  const siblingPath = path.join(path.dirname(path.resolve(inputPath)), 'index.html');
+  try {
+    return fsSync.statSync(siblingPath).isFile() ? siblingPath : '';
+  } catch (error) {
+    return '';
+  }
+}
+
 function buildLegacyPdfHtml(html, options = {}) {
   const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
     ? options.slideSelector
@@ -464,6 +474,28 @@ async function main(argv = process.argv.slice(2), options = {}) {
   const resolvedInputPath = path.resolve(inputPath);
   const resolvedOutputPath = path.resolve(outputPath);
   const input = JSON.parse(await fs.readFile(resolvedInputPath, 'utf8'));
+  const hasCanonicalDeckPayload = Boolean(
+    presentationMetadata.resolvePresentationCanonicalDeck(input)
+    || (input && typeof input === 'object' && (
+      Array.isArray(input.slides)
+      || (input.canonicalDeck && typeof input.canonicalDeck === 'object')
+    ))
+  );
+  if (!hasCanonicalDeckPayload) {
+    const legacySourcePath = resolveLegacyHtmlSiblingPath(resolvedInputPath);
+    if (legacySourcePath) {
+      const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
+      const pdfBuffer = await exportLegacyPdfBuffer(legacyHtml, {
+        ...options,
+        assetBaseDir: path.dirname(legacySourcePath)
+      });
+      await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
+      await fs.writeFile(resolvedOutputPath, pdfBuffer);
+      console.log(`Exported ${countPdfPages(pdfBuffer)} legacy slide(s) to ${resolvedOutputPath}`);
+      return 0;
+    }
+  }
+
   const deck = resolveCanonicalDeck(input);
   const assetBaseDir = path.dirname(resolvedInputPath);
   const preflight = pdfExport.preflightStudioPdfExport(deck, {
@@ -502,6 +534,7 @@ module.exports = {
   validatePdfArtifact,
   countLegacyHtmlSlides,
   resolveLegacyHtmlSourcePath,
+  resolveLegacyHtmlSiblingPath,
   buildLegacyPdfHtml,
   createStudioPdfWarningDetailsHeader: pdfExport.createStudioPdfWarningDetailsHeader,
   preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
