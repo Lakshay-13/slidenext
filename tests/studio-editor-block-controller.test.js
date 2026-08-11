@@ -393,8 +393,16 @@ test('block controller renders and inserts canonical block nodes through a marku
     }
   };
   const calls = [];
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalSlideById(deck, slideId) {
+      lookupCalls.push([deck, slideId]);
+      return canonicalDeck.findCanonicalSlideById(deck, slideId);
+    }
+  };
   const controller = blockController.createStudioEditorBlockController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     renderApi: {
       renderCanonicalNode(node) {
         return `<h2>${node.text}</h2>`;
@@ -423,4 +431,5 @@ test('block controller renders and inserts canonical block nodes through a marku
   assert.equal(calls[0].versionLabel, 'Auto: Inserted Block "hero"');
   assert.equal(calls[0].transaction.kind, 'markup-transaction');
   assert.equal(calls[0].nextDeck.slides[0].nodes[0].id, 'hero-heading');
+  assert.deepEqual(lookupCalls.map(([, slideId]) => slideId), ['slide-1', 'slide-1']);
 });

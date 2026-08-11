@@ -60,6 +60,19 @@
       ? options.onBlocksChanged
       : null;
 
+    function findCanonicalSlide(deck, slideId) {
+      if (!deck || !Array.isArray(deck.slides)) return null;
+      if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
+        try {
+          const resolvedSlide = canonicalDeckApi.findCanonicalSlideById(deck, slideId);
+          if (resolvedSlide) return resolvedSlide;
+        } catch (err) {
+          // Preserve the legacy in-memory lookup when the shared resolver is unavailable.
+        }
+      }
+      return deck.slides.find((slide) => slide && slide.id === slideId) || null;
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -235,7 +248,7 @@
       const slideId = getActiveSlideId();
       if (!canonicalDeck || !documentRef || !activeSlide || !slideId) return false;
 
-      const sourceSlide = canonicalDeck.slides.find((slide) => slide && slide.id === slideId);
+      const sourceSlide = findCanonicalSlide(canonicalDeck, slideId);
       let nextCanonicalDeck = null;
       try {
         nextCanonicalDeck = canonicalDeckApi.insertCanonicalBlockInstance(
@@ -247,8 +260,7 @@
       } catch (err) {
         return false;
       }
-      const nextSlide = nextCanonicalDeck
-        && nextCanonicalDeck.slides.find((slide) => slide && slide.id === slideId);
+      const nextSlide = findCanonicalSlide(nextCanonicalDeck, slideId);
       if (!sourceSlide || !nextSlide) return false;
 
       const insertedNodes = nextSlide.nodes.slice(sourceSlide.nodes.length);
