@@ -104,6 +104,23 @@
         : null;
     }
 
+    function removeInsertedElement(element) {
+      if (!element) return false;
+      try {
+        if (typeof element.remove === 'function') {
+          element.remove();
+          return true;
+        }
+        if (element.parentNode && typeof element.parentNode.removeChild === 'function') {
+          element.parentNode.removeChild(element);
+          return true;
+        }
+      } catch (err) {
+        return false;
+      }
+      return false;
+    }
+
     function insert(type, insertOptions = {}) {
       const normalizedInsertOptions = insertOptions && typeof insertOptions === 'object'
         ? insertOptions
@@ -181,6 +198,16 @@
           // Preserve the inserted element through transaction history when the sidecar fails.
           canonicalDeck = null;
         }
+      }
+
+      if (canonicalInsertionBuilders
+        && typeof canonicalInsertionBuilders.buildCanonicalInsertionDeck === 'function'
+        && canonicalDeckBeforeInsertion
+        && newElement
+        && !canonicalDeck) {
+        removeInsertedElement(newElement);
+        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        return false;
       }
 
       if (newElement) {

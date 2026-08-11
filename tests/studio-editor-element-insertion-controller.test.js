@@ -262,9 +262,14 @@ test('element insertion controller fails closed before DOM mutation when canonic
   assert.deepEqual(calls, [doc]);
 });
 
-test('element insertion controller preserves transaction finalization when canonical sidecar construction throws', () => {
+test('element insertion controller rolls back when canonical sidecar construction throws', () => {
   const calls = [];
-  const element = { id: 'element-1' };
+  const element = {
+    id: 'element-1',
+    remove() {
+      calls.push(['remove', element]);
+    }
+  };
   const transaction = { id: 'tx-1' };
   const controller = elementInsertionController.createStudioEditorElementInsertionController({
     canonicalInsertionApi: {
@@ -292,6 +297,37 @@ test('element insertion controller preserves transaction finalization when canon
     }
   });
 
-  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), false));
+  assert.deepEqual(calls, [['remove', element]]);
+});
+
+test('element insertion controller keeps legacy finalization without a canonical baseline', () => {
+  const calls = [];
+  const element = { id: 'element-1' };
+  const transaction = { id: 'tx-1' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return null;
+          },
+          buildCanonicalInsertionDeck() {
+            throw new Error('canonical insertion sidecar unavailable');
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: () => ({ element, transaction }),
+    finalizeInsertedElements: (...args) => {
+      calls.push(args);
+      return true;
+    }
+  });
+
+  assert.equal(controller.insert('h2'), true);
   assert.deepEqual(calls, [[[element], 'Auto: Added H2', transaction, null]]);
 });
