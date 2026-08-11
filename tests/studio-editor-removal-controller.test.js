@@ -86,3 +86,36 @@ test('removal controller fails closed before DOM mutation when canonical removal
   assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
   assert.equal(removeCalls, 0);
 });
+
+test('removal controller fails closed before DOM mutation when canonical removal sidecar is null', () => {
+  let removeCalls = 0;
+  const doc = { id: 'doc' };
+  const target = { dataset: { editorId: 'node-1' } };
+  const controller = removalController.createStudioEditorRemovalController({
+    canonicalRemovalApi: {
+      createStudioCanonicalRemovalMutationBuilders() {
+        return {
+          buildCanonicalRemovalBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          },
+          buildCanonicalRemovalMutation() {
+            return null;
+          }
+        };
+      }
+    },
+    buildRemovalSelectionActionState: () => ({
+      canRemove: true,
+      selection: [target]
+    }),
+    getIframeDoc: () => doc,
+    applyRemovalMutation: () => {
+      removeCalls += 1;
+      return { didRemove: true, transaction: null };
+    },
+    finalizeRemovalActionResult: (result, currentDoc) => ({ result, currentDoc })
+  });
+
+  assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
+  assert.equal(removeCalls, 0);
+});

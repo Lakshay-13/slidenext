@@ -56,6 +56,7 @@
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
       const getRemovalElementId = (element) => assignElementId(element);
       let canonicalDeck = null;
+      let canonicalDeckBeforeRemoval = null;
       try {
         const canonicalRemovalBuilders = canonicalRemovalApi
           && typeof canonicalRemovalApi.createStudioCanonicalRemovalMutationBuilders === 'function'
@@ -70,14 +71,25 @@
           && typeof canonicalRemovalBuilders.buildCanonicalRemovalMutation === 'function'
           ? canonicalRemovalBuilders.buildCanonicalRemovalMutation
           : null;
+        const buildCanonicalRemovalBaseline = canonicalRemovalBuilders
+          && typeof canonicalRemovalBuilders.buildCanonicalRemovalBaseline === 'function'
+          ? canonicalRemovalBuilders.buildCanonicalRemovalBaseline
+          : null;
+        if (buildCanonicalRemovalBaseline) {
+          canonicalDeckBeforeRemoval = buildCanonicalRemovalBaseline({ sourceDocument: doc });
+        }
         canonicalDeck = buildCanonicalRemovalMutation
           ? buildCanonicalRemovalMutation(removalActionState.selection, {
               sourceDocument: doc,
+              canonicalDeckBeforeMutation: canonicalDeckBeforeRemoval,
               getElementId: getRemovalElementId
             })
           : null;
       } catch (err) {
         // Do not remove DOM nodes without a canonical deletion sidecar.
+        return finalizeRemovalActionResult(false, doc);
+      }
+      if (canonicalDeckBeforeRemoval && !canonicalDeck) {
         return finalizeRemovalActionResult(false, doc);
       }
       const mutation = applyRemovalMutation(removalActionState.selection, {
