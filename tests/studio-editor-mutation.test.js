@@ -531,8 +531,8 @@ test('createStudioSlideMutationRestoreStateCapturer records a canonical baseline
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];
   const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
-    buildCanonicalDeck(doc) {
-      calls.push(['buildCanonicalDeck', doc]);
+    buildCanonicalDeck(doc, options) {
+      calls.push(['buildCanonicalDeck', doc, options]);
       return canonicalDeck;
     },
     saveHistoryState(...args) {
@@ -549,7 +549,7 @@ test('createStudioSlideMutationRestoreStateCapturer records a canonical baseline
   captureState(iframeDoc);
 
   assert.deepEqual(calls, [
-    ['buildCanonicalDeck', iframeDoc],
+    ['buildCanonicalDeck', iframeDoc, { preferLiveCanonicalDeck: false }],
     ['saveHistoryState', false, null, canonicalDeck]
   ]);
 });

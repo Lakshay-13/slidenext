@@ -227,7 +227,9 @@
 
     const captureHistoryBaseline = buildCanonicalDeck
       ? (iframeDoc) => {
-          const canonicalDeck = buildCanonicalDeck(iframeDoc);
+          const canonicalDeck = buildCanonicalDeck(iframeDoc, {
+            preferLiveCanonicalDeck: false
+          });
           if (canonicalDeck) {
             saveHistoryState(false, null, canonicalDeck);
           } else {
