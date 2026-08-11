@@ -170,28 +170,38 @@
       if (!slide || !layerOrderApi || typeof layerOrderApi.buildStudioLayerOrderMutationPlan !== 'function') {
         return false;
       }
-      const buildCanonicalLayerOrderMutation = canonicalLayoutApi
-        && typeof canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder === 'function'
-        ? canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder({
-            canonicalDeckApi,
-            buildCanonicalDeck,
-            buildCanonicalDeckBaseline,
-            getCanonicalDeckBaseline
-          })
-        : null;
+      let buildCanonicalLayerOrderMutation = null;
+      try {
+        buildCanonicalLayerOrderMutation = canonicalLayoutApi
+          && typeof canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder === 'function'
+          ? canonicalLayoutApi.createStudioCanonicalLayerOrderMutationBuilder({
+              canonicalDeckApi,
+              buildCanonicalDeck,
+              buildCanonicalDeckBaseline,
+              getCanonicalDeckBaseline
+            })
+          : null;
+      } catch (error) {
+        return false;
+      }
       const buildCanonicalLayoutBaseline = canonicalLayoutApi
         && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function'
         ? canonicalLayoutApi.buildStudioCanonicalLayoutBaseline
         : null;
-      const canonicalDeckBefore = buildCanonicalLayoutBaseline
-        ? buildCanonicalLayoutBaseline({
+      let canonicalDeckBefore = null;
+      if (buildCanonicalLayoutBaseline) {
+        try {
+          canonicalDeckBefore = buildCanonicalLayoutBaseline({
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
             getCanonicalDeckBaseline,
             sourceDocument: getIframeDoc()
-          })
-        : null;
+          });
+        } catch (error) {
+          return false;
+        }
+      }
       const initialOrder = getNormalizedSlideLayerOrder(slide);
       const readLockedState = resolveLockedReader(getIframeDoc());
       const reorderResult = layerOrderApi.buildStudioLayerOrderMutationPlan(targetElements, action, {
@@ -208,14 +218,32 @@
         { getElementId: getLayerOrderElementId }
       );
       if (!mutation || !mutation.didApply) return false;
-      const canonicalDeck = buildCanonicalLayerOrderMutation
-        ? buildCanonicalLayerOrderMutation({
-            orderedElements: initialOrder,
-            canonicalDeckApi,
-            canonicalDeckBeforeMutation: canonicalDeckBefore,
-            getElementId: getLayerOrderElementId
-          })
-        : null;
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = buildCanonicalLayerOrderMutation
+          ? buildCanonicalLayerOrderMutation({
+              orderedElements: initialOrder,
+              canonicalDeckApi,
+              canonicalDeckBeforeMutation: canonicalDeckBefore,
+              getElementId: getLayerOrderElementId
+            })
+          : null;
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      if (canonicalDeckBefore && !canonicalDeck) {
+        try {
+          applyLayerOrderMutation(
+            slide,
+            reorderResult.nextOrder,
+            initialOrder,
+            { getElementId: getLayerOrderElementId }
+          );
+        } catch (error) {
+          // Keep the action failed closed even if the inverse adapter rejects.
+        }
+        return false;
+      }
       if (typeof reorderOptions.onTransaction === 'function') {
         reorderOptions.onTransaction(mutation.transaction);
       }

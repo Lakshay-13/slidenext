@@ -62,6 +62,39 @@ test('layer order controller applies the planned order and forwards mutation cal
   assert.deepEqual(baselineOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 
+test('layer order controller restores the DOM order when canonical sidecar construction fails', () => {
+  const first = { id: 'first', isConnected: true };
+  const second = { id: 'second', isConnected: true };
+  const slide = { contains: () => true };
+  const appliedOrders = [];
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalLayoutApi: {
+      buildStudioCanonicalLayoutBaseline() {
+        return { id: 'canonical-before' };
+      },
+      createStudioCanonicalLayerOrderMutationBuilder() {
+        return () => null;
+      }
+    },
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan() {
+        return { didChange: true, nextOrder: [second, first] };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => ({ id: 'doc' }),
+    getNormalizedSlideLayerOrder: () => [first, second],
+    assignElementId: (element) => element.id,
+    applyLayerOrderMutation(_slide, _initialOrder, nextOrder) {
+      appliedOrders.push(nextOrder);
+      return { didApply: true, transaction: { id: 'tx' } };
+    }
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.deepEqual(appliedOrders, [[second, first], [first, second]]);
+});
+
 test('layer order controller fails closed for inactive slides and no-op plans', () => {
   const controller = layerOrderController.createStudioEditorLayerOrderController({
     getActiveSlide: () => null
