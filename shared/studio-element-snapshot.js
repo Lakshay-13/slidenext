@@ -35,6 +35,30 @@
     return deckModel.buildElementSnapshot(el, options);
   }
 
+  function createStudioEditorElementSnapshotBuilder(options = {}) {
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : () => '';
+    const isElementLocked = typeof options.isElementLocked === 'function'
+      ? options.isElementLocked
+      : () => false;
+    const isElementHidden = typeof options.isElementHidden === 'function'
+      ? options.isElementHidden
+      : () => false;
+    const isSelectedElement = typeof options.isSelectedElement === 'function'
+      ? options.isSelectedElement
+      : () => false;
+
+    return function buildEditorElementSnapshot(element) {
+      return buildStudioElementSnapshot(element, {
+        getElementId,
+        isElementLocked,
+        isElementHidden,
+        isSelectedElement
+      });
+    };
+  }
+
   function buildStudioLayerSnapshot(elements, options = {}) {
     if (!deckModel || typeof deckModel.buildLayerSnapshot !== 'function') {
       return [];
@@ -50,6 +74,7 @@
   return {
     resolveStudioLayerDisplayMetadata,
     buildStudioElementSnapshot,
+    createStudioEditorElementSnapshotBuilder,
     buildStudioLayerSnapshot
   };
 });

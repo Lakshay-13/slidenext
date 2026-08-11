@@ -6827,6 +6827,35 @@
     }
 
     function buildEditorElementSnapshot(el) {
+      if (typeof buildEditorElementSnapshot.builder !== 'function') {
+        const createStudioEditorElementSnapshotBuilder = (
+          typeof SlideNextStudioElementSnapshot !== 'undefined'
+          && SlideNextStudioElementSnapshot
+          && typeof SlideNextStudioElementSnapshot.createStudioEditorElementSnapshotBuilder === 'function'
+        )
+          ? SlideNextStudioElementSnapshot.createStudioEditorElementSnapshotBuilder
+          : null;
+        if (createStudioEditorElementSnapshotBuilder) {
+          const isStudioLiveSelectedElement = (
+            typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+            && SlideNextStudioEditorLiveSelection
+            && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
+          )
+            ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+            : null;
+          buildEditorElementSnapshot.builder = createStudioEditorElementSnapshotBuilder({
+            getElementId: assignEditorElementId,
+            isElementLocked,
+            isElementHidden,
+            isSelectedElement: candidate => isStudioLiveSelectedElement
+              ? isStudioLiveSelectedElement(getStudioSelectedElements(), candidate)
+              : false
+          });
+        }
+      }
+      if (typeof buildEditorElementSnapshot.builder === 'function') {
+        return buildEditorElementSnapshot.builder(el);
+      }
       const buildStudioElementSnapshot = (
         typeof SlideNextStudioElementSnapshot !== 'undefined'
         && SlideNextStudioElementSnapshot

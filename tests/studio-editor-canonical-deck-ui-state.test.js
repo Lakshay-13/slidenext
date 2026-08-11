@@ -3280,6 +3280,65 @@ test('buildEditorElementSnapshot uses a neutral fallback when the shared element
   );
 });
 
+test('buildEditorElementSnapshot caches the shared element snapshot policy builder', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorElementSnapshotSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorElementSnapshot(el) {',
+    '\n\n    function buildEditorLayerSnapshot(slide) {'
+  );
+  let createCalls = 0;
+  const builderCalls = [];
+  const selectedElements = [{ id: 'selected' }];
+  const context = {
+    SlideNextStudioElementSnapshot: {
+      createStudioEditorElementSnapshotBuilder(options) {
+        createCalls += 1;
+        return (element) => {
+          builderCalls.push([
+            element,
+            options.getElementId(element),
+            options.isElementLocked(element),
+            options.isElementHidden(element),
+            options.isSelectedElement(element)
+          ]);
+          return { id: element.id };
+        };
+      }
+    },
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement(elements, element) {
+        return !!(element && element.id === 'selected');
+      }
+    },
+    assignEditorElementId(element) {
+      return `editor-${element.id}`;
+    },
+    isElementLocked() {
+      return true;
+    },
+    isElementHidden() {
+      return false;
+    },
+    getStudioSelectedElements() {
+      return selectedElements;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorElementSnapshotSource, context);
+
+  const firstElement = { id: 'first' };
+  const secondElement = selectedElements[0];
+  assert.deepEqual(context.buildEditorElementSnapshot(firstElement), { id: 'first' });
+  assert.deepEqual(context.buildEditorElementSnapshot(secondElement), { id: 'selected' });
+  assert.equal(createCalls, 1);
+  assert.deepEqual(builderCalls, [
+    [firstElement, 'editor-first', true, false, false],
+    [secondElement, 'editor-selected', true, false, true]
+  ]);
+});
+
 test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snapshot builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorLayerSnapshotSource = extractFunctionSource(
