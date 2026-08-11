@@ -6365,9 +6365,23 @@
     }
 
     function findEditorCanonicalSlideById(canonicalDeck, slideId) {
+      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+        ? SlideNextStudioEditorCanonicalSlide
+        : null;
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
+      if (canonicalSlideApi
+        && typeof canonicalSlideApi.findStudioCanonicalSlideById === 'function') {
+        try {
+          const canonicalSlide = canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
+            canonicalDeckApi
+          });
+          if (canonicalSlide) return canonicalSlide;
+        } catch (error) {
+          // Preserve the legacy lookup when the shared resolver is unavailable.
+        }
+      }
       if (canonicalDeckApi
         && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
         try {

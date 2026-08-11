@@ -5,6 +5,31 @@ const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 
+test('findStudioCanonicalSlideById normalizes ids through the canonical deck resolver', () => {
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+
+  assert.equal(
+    canonicalSlide.findStudioCanonicalSlideById(deck, ' slide-1 '),
+    deck.slides[0]
+  );
+  assert.equal(canonicalSlide.findStudioCanonicalSlideById(deck, 'missing'), null);
+});
+
+test('findStudioCanonicalSlideById preserves a local fallback when the shared resolver misses', () => {
+  const slide = { id: 'legacy-slide' };
+  const deck = { slides: [slide] };
+  const canonicalDeckApi = {
+    findCanonicalSlideById() {
+      return null;
+    }
+  };
+
+  assert.equal(
+    canonicalSlide.findStudioCanonicalSlideById(deck, 'legacy-slide', { canonicalDeckApi }),
+    slide
+  );
+});
+
 test('buildStudioCanonicalDuplicateSlideBaseline builds from the source document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };

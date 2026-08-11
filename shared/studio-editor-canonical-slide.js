@@ -1,12 +1,30 @@
 (function (root, factory) {
-  const api = factory(root);
+  const canonicalDeck = typeof module === 'object' && module.exports
+    ? require('./canonical-deck')
+    : root && root.SlideNextCanonicalDeck;
+  const api = factory(root, canonicalDeck);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalSlide = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, canonicalDeck) {
+  function findStudioCanonicalSlideById(deckLike, slideId, options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi || canonicalDeck;
+    if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
+      try {
+        const canonicalSlide = canonicalDeckApi.findCanonicalSlideById(deckLike, slideId);
+        if (canonicalSlide) return canonicalSlide;
+      } catch (error) {
+        // Preserve the local lookup for legacy or partially available decks.
+      }
+    }
+    if (!deckLike || !Array.isArray(deckLike.slides)) return null;
+    const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
+    return deckLike.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
+  }
+
   function createStudioCanonicalSlideMutationBuilders(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -387,6 +405,7 @@
   }
 
   return {
+    findStudioCanonicalSlideById,
     buildStudioCanonicalAddSlideBaseline,
     buildStudioCanonicalAddSlideDeck,
     createStudioCanonicalAddSlideMutationBuilders,

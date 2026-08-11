@@ -889,7 +889,7 @@ test('editor composes marquee clearing through the shared overlay module', () =>
   assert.doesNotMatch(source, /clearMarqueeSelection\.clearer/);
 });
 
-test('editor canonical slide helper delegates to the shared resolver and preserves fallback lookup', () => {
+test('editor canonical slide adapter delegates to the shared slide module and preserves fallback lookup', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
@@ -900,8 +900,8 @@ test('editor canonical slide helper delegates to the shared resolver and preserv
   const canonicalDeck = { slides: [canonicalSlide] };
   const calls = [];
   const context = {
-    SlideNextCanonicalDeck: {
-      findCanonicalSlideById(deck, slideId) {
+    SlideNextStudioEditorCanonicalSlide: {
+      findStudioCanonicalSlideById(deck, slideId) {
         calls.push([deck, slideId]);
         return deck === canonicalDeck && slideId === 'slide-1'
           ? canonicalSlide
