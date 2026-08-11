@@ -229,7 +229,9 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
     nextItems: [{
       element,
       nextAbsLeft: 40,
-      nextAbsTop: 60
+      nextAbsTop: 60,
+      nextWidth: 320,
+      nextHeight: 72
     }],
     getElementId: (node) => node.dataset.editorId
   });
@@ -237,6 +239,8 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
   assert.equal(result.slides[0].nodes[0].layout.y, 60);
   assert.equal(result.slides[0].nodes[0].layout.mode, 'absolute');
+  assert.equal(result.slides[0].nodes[0].layout.width, 320);
+  assert.equal(result.slides[0].nodes[0].layout.height, 72);
   assert.equal(baselineBuildCount, 1);
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });

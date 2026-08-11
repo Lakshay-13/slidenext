@@ -153,13 +153,16 @@
       if (!nodeId || !Number.isFinite(item && item.nextAbsLeft) || !Number.isFinite(item && item.nextAbsTop)) {
         return null;
       }
+      const layout = {
+        mode: 'absolute',
+        x: item.nextAbsLeft,
+        y: item.nextAbsTop
+      };
+      if (Number.isFinite(item && item.nextWidth)) layout.width = item.nextWidth;
+      if (Number.isFinite(item && item.nextHeight)) layout.height = item.nextHeight;
       return {
         id: nodeId,
-        layout: {
-          mode: 'absolute',
-          x: item.nextAbsLeft,
-          y: item.nextAbsTop
-        }
+        layout
       };
     }).filter(Boolean);
     if (layoutUpdates.length === 0) return null;
