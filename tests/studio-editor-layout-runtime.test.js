@@ -38,6 +38,7 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
     buildCanonicalDeckBaseline() {},
     getCanonicalDeckBaseline() {},
     getEditorSlideId() {},
+    getTransactionElementById() {},
     applyPositionLayout() {},
     applyGroupMutation() {},
     applyUngroupMutation() {},
@@ -81,6 +82,7 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
   assert.equal(calls[1][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
   assert.equal(calls[2][1].canonicalGroupApi, callbacks.canonicalGroupApi);
   assert.equal(calls[2][1].applyUngroupMutation, callbacks.applyUngroupMutation);
+  assert.equal(calls[2][1].getTransactionElementById, callbacks.getTransactionElementById);
   assert.equal(calls[3][1].conversionApi, callbacks.conversionEngineApi);
   assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[3][1].buildPositionedLayoutItems, callbacks.buildPositionedLayoutItems);

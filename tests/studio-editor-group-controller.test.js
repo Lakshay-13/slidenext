@@ -103,6 +103,74 @@ test('group controller forwards canonical baselines and commits the canonical si
   assert.equal(finalizedOptions.canonicalDeck.id, 'canonical-sidecar');
 });
 
+test('group controller rolls back when the canonical group sidecar is null', () => {
+  const calls = [];
+  const slide = {
+    id: 'slide-1',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 100, bottom: 100 };
+    }
+  };
+  const first = { dataset: { editorId: 'node-1' } };
+  const second = { dataset: { editorId: 'node-2' } };
+  const group = { dataset: { editorId: 'group-1' } };
+  const transaction = { kind: 'markup-transaction' };
+  const controller = groupController.createStudioEditorGroupController({
+    canonicalDeckApi: {
+      groupCanonicalNodes() {}
+    },
+    canonicalGroupApi: {
+      createStudioCanonicalGroupMutationBuilders() {
+        return {
+          buildCanonicalGroupBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          },
+          buildCanonicalGroupDeck() {
+            return null;
+          }
+        };
+      }
+    },
+    deckImportApi: {
+      importElementToCanonicalNode() {
+        return { id: 'node' };
+      }
+    },
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent: slide,
+      selection: [first, second],
+      groupPlan: { bounds: { left: 10, top: 20 }, nextItems: [] }
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: () => [first, second],
+    applyGroupMutation: () => ({ didApply: true, group, transaction }),
+    transactionApi: {
+      applyStudioEditorTransaction(nextTransaction, direction, options) {
+        calls.push(['rollback', nextTransaction, direction, options]);
+        return { didApply: true };
+      }
+    },
+    getTransactionElementById: (elementId, doc) => {
+      calls.push(['resolve', elementId, doc]);
+      return slide;
+    },
+    commitSelectionState: (state) => calls.push(['commit', state]),
+    finalizeDeckMutation: () => calls.push(['finalize'])
+  });
+
+  assert.equal(controller.group(), false);
+  assert.equal(calls[0][0], 'rollback');
+  assert.equal(calls[0][1], transaction);
+  assert.equal(calls[0][2], 'undo');
+  assert.deepEqual(calls[1], ['commit', { selectedElements: [] }]);
+  assert.equal(calls.some((call) => call[0] === 'finalize'), false);
+});
+
 test('group controller commits restored selection and finalizes ungrouping', () => {
   const calls = [];
   const slide = { id: 'slide-1' };

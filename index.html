@@ -2650,6 +2650,14 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getTransactionElementById: (editorId, sourceDoc) => {
+            if (typeof editorId === 'string'
+              && editorId.startsWith('slide:')
+              && typeof getSlideById === 'function') {
+              return getSlideById(editorId.slice('slide:'.length), sourceDoc || getIframeDoc());
+            }
+            return getElementByEditorId(editorId, sourceDoc || getIframeDoc());
+          },
           getEditorSlideId: (...args) => getEditorSlideId(...args),
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction

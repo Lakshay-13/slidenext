@@ -58,6 +58,8 @@
       ? groupApi.createStudioEditorGroupController({
           canonicalDeckApi: options.canonicalDeckApi,
           canonicalGroupApi: options.canonicalGroupApi,
+          transactionApi: options.transactionApi,
+          getTransactionElementById: options.getTransactionElementById,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           deckImportApi: options.deckImportApi,

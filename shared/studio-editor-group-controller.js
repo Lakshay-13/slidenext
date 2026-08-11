@@ -17,6 +17,12 @@
     const deckImportApi = options.deckImportApi
       || (root && root.SlideNextDeckImport)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
+    const getTransactionElementById = typeof options.getTransactionElementById === 'function'
+      ? options.getTransactionElementById
+      : null;
     const buildGroupSelectionActionState = typeof options.buildGroupSelectionActionState === 'function'
       ? options.buildGroupSelectionActionState
       : null;
@@ -117,6 +123,31 @@
       };
     }
 
+    function rollbackGroupMutation(transaction, doc) {
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      let rollbackResult = null;
+      try {
+        rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => {
+            if (getTransactionElementById) return getTransactionElementById(elementId, doc);
+            return null;
+          },
+          applyMarkupState(element, markup) {
+            if (!element || typeof markup !== 'string') return false;
+            element.innerHTML = markup;
+            return true;
+          }
+        });
+      } catch (error) {
+        rollbackResult = null;
+      }
+      return !!(rollbackResult && rollbackResult.didApply);
+    }
+
     function group() {
       if (!buildGroupSelectionActionState) return false;
       const groupActionState = buildGroupSelectionActionState();
@@ -129,7 +160,13 @@
       const { slide, parent, groupPlan } = groupActionState;
       const slideMetrics = getSlideMetrics(slide);
       const parentBounds = getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
-      const getGroupElementId = (element) => assignElementId(element);
+      const canonicalSlideId = getEditorSlideId(slide) || '';
+      const getGroupElementId = (element) => {
+        const assignedId = assignElementId(element);
+        if (assignedId) return assignedId;
+        if (element === slide && canonicalSlideId) return `slide:${canonicalSlideId}`;
+        return element && element.dataset && element.dataset.editorId;
+      };
       const selectedSet = new Set(groupActionState.selection);
       const orderedSelection = getNormalizedSlideLayerOrder(slide)
         .filter((element) => selectedSet.has(element));
@@ -145,15 +182,14 @@
         buildCanonicalGroupBaseline
       } = canonicalGroupBuilders;
       let canonicalDeckBeforeGrouping = null;
-      let canonicalSlideId = '';
       let canonicalParentId = '';
       let canonicalSelectedNodeIds = [];
+      let canonicalGroupMutationRequired = false;
       if (buildCanonicalGroupDeck
         && canonicalDeckApi
         && typeof canonicalDeckApi.groupCanonicalNodes === 'function'
         && importElementToCanonicalNode
         && (buildCanonicalDeckBaseline || buildCanonicalDeck)) {
-        canonicalSlideId = getEditorSlideId(slide);
         canonicalParentId = parent === slide ? '' : getGroupElementId(parent);
         canonicalSelectedNodeIds = orderedSelection
           .map((element) => getGroupElementId(element))
@@ -186,16 +222,26 @@
         && canonicalDeckBeforeGrouping
         && canonicalSlideId
         && canonicalSelectedNodeIds.length > 1) {
-        canonicalDeck = buildCanonicalGroupDeck({
-          canonicalDeckApi,
-          canonicalDeckBeforeMutation: canonicalDeckBeforeGrouping,
-          importElementToCanonicalNode,
-          slideId: canonicalSlideId,
-          parentNodeId: canonicalParentId,
-          nodeIds: canonicalSelectedNodeIds,
-          groupElement: mutation.group,
-          getNodeId: (element) => assignElementId(element)
-        });
+        canonicalGroupMutationRequired = true;
+        try {
+          canonicalDeck = buildCanonicalGroupDeck({
+            canonicalDeckApi,
+            canonicalDeckBeforeMutation: canonicalDeckBeforeGrouping,
+            importElementToCanonicalNode,
+            slideId: canonicalSlideId,
+            parentNodeId: canonicalParentId,
+            nodeIds: canonicalSelectedNodeIds,
+            groupElement: mutation.group,
+            getNodeId: (element) => assignElementId(element)
+          });
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      if (canonicalGroupMutationRequired && !canonicalDeck) {
+        rollbackGroupMutation(mutation.transaction, doc);
+        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        return false;
       }
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: [mutation.group] });
