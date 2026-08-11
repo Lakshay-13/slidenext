@@ -73,6 +73,19 @@ test('createPdfAssetExists resolves local asset paths within the export roots', 
   }
 });
 
+test('legacy PDF helpers count slide classes and enforce workspace boundaries', () => {
+  const html = '<section class="slide active"></section><div class="slide"></div><div class="not-slide"></div>';
+  assert.equal(pdfScript.countLegacyHtmlSlides(html), 2);
+  assert.equal(pdfScript.countLegacyHtmlSlides(html, '.frame'), 0);
+  assert.equal(
+    pdfScript.resolveLegacyHtmlSourcePath('presentations/onboarding-presentation/index.html').endsWith(
+      path.join('presentations', 'onboarding-presentation', 'index.html')
+    ),
+    true
+  );
+  assert.equal(pdfScript.resolveLegacyHtmlSourcePath('../outside.html'), '');
+});
+
 test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
   const inputPath = path.join(temporaryDir, 'deck.json');

@@ -261,7 +261,29 @@ app.post('/api/export/pdf', async (req, res) => {
   const { canonicalDeck, filename, sourcePath } = req.body || {};
   const resolvedCanonicalDeck = await resolveExportCanonicalDeck(canonicalDeck, sourcePath);
   if (!resolvedCanonicalDeck) {
-    return res.status(400).json({ error: 'Invalid canonicalDeck' });
+    const legacySourcePath = canonicalPdfExport.resolveLegacyHtmlSourcePath(sourcePath);
+    if (!legacySourcePath) {
+      return res.status(400).json({ error: 'Invalid canonicalDeck' });
+    }
+
+    try {
+      const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
+      const buffer = await canonicalPdfExport.exportLegacyPdfBuffer(legacyHtml, {
+        assetBaseDir: path.dirname(legacySourcePath)
+      });
+      const downloadFilename = normalizePdfDownloadFilename(filename);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
+      res.setHeader('X-SlideNext-Pdf-Warning-Count', '0');
+      res.setHeader(
+        'X-SlideNext-Pdf-Warning-Details',
+        canonicalPdfExport.createStudioPdfWarningDetailsHeader([])
+      );
+      return res.send(buffer);
+    } catch (err) {
+      console.error('Error exporting legacy PDF:', err);
+      return res.status(500).json({ error: `Failed to export PDF: ${err.message}` });
+    }
   }
   if (resolvedCanonicalDeck.slides.length === 0) {
     return res.status(400).json({ error: 'Cannot export an empty deck' });

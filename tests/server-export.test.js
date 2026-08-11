@@ -6,6 +6,7 @@ const path = require('node:path');
 
 const { app, workspaceDir } = require('../server.js');
 const presentationCreation = require('../shared/presentation-creation.js');
+const pdfScript = require('../scripts/export-canonical-pdf.js');
 
 function listenOnEphemeralPort(server) {
   return new Promise((resolve, reject) => {
@@ -62,7 +63,7 @@ test('PPTX export route returns a real generalized PPTX response', async (t) => 
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
 });
 
-test('PDF export route returns a real generalized PDF response', { skip: !require('../scripts/export-canonical-pdf.js').resolveChromeExecutable() }, async (t) => {
+test('PDF export route returns a real generalized PDF response', { skip: !pdfScript.resolveChromeExecutable() }, async (t) => {
   const server = http.createServer(app);
   const port = await listenOnEphemeralPort(server);
   t.after(() => closeServer(server));
@@ -82,6 +83,33 @@ test('PDF export route returns a real generalized PDF response', { skip: !requir
   assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '0');
   const buffer = Buffer.from(await response.arrayBuffer());
   assert.equal(buffer.subarray(0, 5).toString(), '%PDF-');
+});
+
+test('PDF export route prints an existing legacy HTML deck without a canonical sidecar', { skip: !pdfScript.resolveChromeExecutable() }, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/export/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sourcePath: 'presentations/onboarding-presentation/index.html',
+      filename: 'Legacy onboarding.pdf'
+    })
+  });
+
+  assert.equal(response.status, 200);
+  assert.match(response.headers.get('content-type') || '', /application\/pdf/);
+  assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '0');
+  const buffer = Buffer.from(await response.arrayBuffer());
+  assert.equal(buffer.subarray(0, 5).toString(), '%PDF-');
+  assert.equal(
+    pdfScript.countPdfPages(buffer),
+    pdfScript.countLegacyHtmlSlides(
+      await fs.readFile(path.join(workspaceDir, 'presentations/onboarding-presentation/index.html'), 'utf8')
+    )
+  );
 });
 
 test('PDF export route reports missing local canonical assets without blocking export', { skip: !require('../scripts/export-canonical-pdf.js').resolveChromeExecutable() }, async (t) => {

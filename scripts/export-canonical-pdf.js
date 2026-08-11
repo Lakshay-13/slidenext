@@ -133,6 +133,46 @@ function createPdfAssetExists(assetBaseDir = WORKSPACE_ROOT, assetRootDir = WORK
   };
 }
 
+function countLegacyHtmlSlides(html, slideSelector = '.slide') {
+  if (typeof html !== 'string' || !html.trim()) return 0;
+  const selectorMatch = `${slideSelector}`.trim().match(/^\.([A-Za-z_][\w-]*)$/);
+  if (!selectorMatch) return 0;
+  const className = selectorMatch[1];
+  const classAttributePattern = /\bclass\s*=\s*(['"])(.*?)\1/gi;
+  let count = 0;
+  let match = classAttributePattern.exec(html);
+  while (match) {
+    if (match[2].split(/\s+/).includes(className)) count += 1;
+    match = classAttributePattern.exec(html);
+  }
+  return count;
+}
+
+function resolveLegacyHtmlSourcePath(sourcePath, workspaceRoot = WORKSPACE_ROOT) {
+  if (typeof sourcePath !== 'string' || !sourcePath.trim()) return '';
+  const normalizedSourcePath = sourcePath.trim().replace(/^[/\\]+/, '');
+  const resolvedPath = resolveContainedPath(workspaceRoot, normalizedSourcePath);
+  if (!resolvedPath) return '';
+  try {
+    return fsSync.statSync(resolvedPath).isFile() ? resolvedPath : '';
+  } catch (error) {
+    return '';
+  }
+}
+
+function buildLegacyPdfHtml(html, options = {}) {
+  const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
+    ? options.slideSelector
+    : '.slide';
+  return pdfExport.buildStudioPdfPrintHtml(html, {
+    pageWidth: options.pageWidth,
+    pageHeight: options.pageHeight,
+    slideSelector,
+    baseHref: options.baseHref,
+    slideCount: options.slideCount
+  });
+}
+
 function getContentType(filePath) {
   const extension = path.extname(filePath).toLowerCase();
   return {
@@ -382,6 +422,38 @@ async function exportCanonicalPdfBuffer(deck, options = {}) {
   }
 }
 
+async function exportLegacyPdfBuffer(html, options = {}) {
+  const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
+    ? options.slideSelector
+    : '.slide';
+  const slideCount = Number.isInteger(options.slideCount)
+    ? options.slideCount
+    : countLegacyHtmlSlides(html, slideSelector);
+  if (slideCount <= 0) {
+    throw new Error(`Legacy PDF source has no slides matching ${slideSelector}`);
+  }
+
+  const assetBaseDir = path.resolve(options.assetBaseDir || WORKSPACE_ROOT);
+  const exportServer = await startExportServer('', assetBaseDir);
+  try {
+    const printHtml = buildLegacyPdfHtml(html, {
+      ...options,
+      baseHref: exportServer.assetBaseUrl,
+      slideSelector,
+      slideCount
+    });
+    await fs.writeFile(path.join(exportServer.temporaryDir, 'index.html'), printHtml, 'utf8');
+    const pdfBuffer = await runChromePdfExport(
+      exportServer.url,
+      path.join(exportServer.temporaryDir, 'deck.pdf'),
+      options
+    );
+    return validatePdfArtifact(pdfBuffer, slideCount).buffer;
+  } finally {
+    await closeExportServer(exportServer.server, exportServer.temporaryDir);
+  }
+}
+
 async function main(argv = process.argv.slice(2), options = {}) {
   const [inputPath, outputPath] = argv;
   if (!inputPath || !outputPath) {
@@ -428,6 +500,9 @@ module.exports = {
   buildCanonicalPdfHtml,
   countPdfPages,
   validatePdfArtifact,
+  countLegacyHtmlSlides,
+  resolveLegacyHtmlSourcePath,
+  buildLegacyPdfHtml,
   createStudioPdfWarningDetailsHeader: pdfExport.createStudioPdfWarningDetailsHeader,
   preflightStudioPdfExport: pdfExport.preflightStudioPdfExport,
   createPdfAssetExists,
@@ -435,6 +510,7 @@ module.exports = {
   resolveChromeExecutable,
   runChromePdfExport,
   exportCanonicalPdfBuffer,
+  exportLegacyPdfBuffer,
   startExportServer,
   closeExportServer,
   main
