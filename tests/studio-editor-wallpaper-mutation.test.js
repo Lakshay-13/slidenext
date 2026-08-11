@@ -119,3 +119,34 @@ test('applyStudioWallpaperSlidesMutationWithTransaction fails closed when canoni
   assert.equal(applyCalls, 0);
   assert.equal(sourceSlide.style.background, 'white');
 });
+
+test('applyStudioWallpaperSlidesMutationWithTransaction fails closed before DOM mutation when the canonical sidecar is null', () => {
+  let applyCalls = 0;
+  const sourceSlide = {
+    dataset: { slideId: 'slide-1' },
+    style: { background: 'white' }
+  };
+
+  const result = wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction(
+    [sourceSlide],
+    'black',
+    {
+      canonicalWallpaperApi: {
+        createStudioCanonicalWallpaperMutationBuilders() {
+          return {
+            buildCanonicalWallpaperBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+            buildCanonicalWallpaperDeck: () => null
+          };
+        }
+      },
+      applyStudioWallpaperToSlides: () => {
+        applyCalls += 1;
+        return { didChange: true, transaction: null };
+      }
+    }
+  );
+
+  assert.deepEqual(result, { didChange: false, transaction: null });
+  assert.equal(applyCalls, 0);
+  assert.equal(sourceSlide.style.background, 'white');
+});

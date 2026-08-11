@@ -79,6 +79,12 @@
         transaction: null
       };
     }
+    if (canonicalDeckBeforeMutation && !canonicalDeck) {
+      return {
+        didChange: false,
+        transaction: null
+      };
+    }
 
     if (!applyStudioWallpaperToSlides) {
       return {
