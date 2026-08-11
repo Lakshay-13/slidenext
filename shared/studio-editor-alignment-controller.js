@@ -56,11 +56,27 @@
             getCanonicalDeckBaseline
           })
         : null;
+      const doc = getIframeDoc();
+      let hasCanonicalBaseline = false;
+      if (canonicalLayoutBuilder
+        && canonicalLayoutApi
+        && typeof canonicalLayoutApi.buildStudioCanonicalLayoutBaseline === 'function') {
+        try {
+          hasCanonicalBaseline = !!canonicalLayoutApi.buildStudioCanonicalLayoutBaseline({
+            canonicalDeckApi,
+            buildCanonicalDeckBaseline,
+            getCanonicalDeckBaseline,
+            sourceDocument: doc
+          });
+        } catch (err) {
+          return false;
+        }
+      }
       let canonicalDeck = null;
       if (canonicalLayoutBuilder) {
         try {
           canonicalDeck = canonicalLayoutBuilder({
-            sourceDocument: getIframeDoc(),
+            sourceDocument: doc,
             nextItems,
             getElementId: getAlignmentElementId
           });
@@ -69,6 +85,7 @@
           return false;
         }
       }
+      if (hasCanonicalBaseline && !canonicalDeck) return false;
       const mutation = applyPositionLayout(nextItems, {
         getElementId: getAlignmentElementId
       });

@@ -140,3 +140,41 @@ test('alignment controller fails closed before DOM mutation when canonical layou
   assert.equal(controller.distribute('horizontal'), false);
   assert.equal(applyCalls, 0);
 });
+
+test('alignment controller fails closed before DOM mutation when the canonical sidecar is null', () => {
+  let applyCalls = 0;
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    alignmentApi: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      }
+    },
+    canonicalLayoutApi: {
+      buildStudioCanonicalLayoutBaseline() {
+        return { slides: [{ id: 'slide-1', nodes: [] }] };
+      },
+      createStudioCanonicalLayoutMutationBuilder() {
+        return () => null;
+      }
+    },
+    canonicalDeckApi: {},
+    buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    buildAlignmentActionState: () => ({
+      alignmentActionState: {
+        canAlign: true,
+        selection: [{ id: 'one' }, { id: 'two' }]
+      }
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    applyPositionLayout: () => {
+      applyCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.align('left'), false);
+  assert.equal(applyCalls, 0);
+});
