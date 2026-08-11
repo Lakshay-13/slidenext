@@ -635,6 +635,14 @@
     return deck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
   }
 
+  function findCanonicalSlideIndexById(deckLike, slideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const slide = findCanonicalSlideById(deck, slideId);
+    return slide ? deck.slides.indexOf(slide) : -1;
+  }
+
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -2063,6 +2071,7 @@
     isCanonicalDeck,
     findCanonicalNodeById,
     findCanonicalSlideById,
+    findCanonicalSlideIndexById,
     reorderCanonicalSlides,
     removeCanonicalSlide,
     appendCanonicalSlide,

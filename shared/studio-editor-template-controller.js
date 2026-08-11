@@ -221,9 +221,13 @@
 
       const canonicalDeck = resolveCanonicalDeck();
       const activeSlideId = getActiveSlideId();
-      const activeSlideIndex = canonicalDeck && Array.isArray(canonicalDeck.slides)
-        ? canonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
-        : -1;
+      const activeSlideIndex = canonicalDeck
+        && canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalSlideIndexById === 'function'
+        ? canonicalDeckApi.findCanonicalSlideIndexById(canonicalDeck, activeSlideId)
+        : canonicalDeck && Array.isArray(canonicalDeck.slides)
+          ? canonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
+          : -1;
       if (!canonicalDeck || activeSlideIndex < 0) return false;
 
       const insertionIndex = activeSlideIndex + 1;

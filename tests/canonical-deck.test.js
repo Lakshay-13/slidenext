@@ -93,6 +93,18 @@ test('findCanonicalSlideById resolves a normalized slide from canonical or legac
   assert.equal(canonicalDeck.findCanonicalSlideById(canonical, 'missing'), null);
 });
 
+test('findCanonicalSlideIndexById resolves normalized indexes and missing slides', () => {
+  const canonical = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
+  });
+
+  assert.equal(canonicalDeck.findCanonicalSlideIndexById(canonical, ' slide-2 '), 1);
+  assert.equal(
+    canonicalDeck.findCanonicalSlideIndexById({ slides: [{ id: 'slide-3' }] }, 'missing'),
+    -1
+  );
+});
+
 test('createCanonicalSlide preserves an explicit background asset reference without requiring one', () => {
   const slide = canonicalDeck.createCanonicalSlide({
     id: 'slide-1',

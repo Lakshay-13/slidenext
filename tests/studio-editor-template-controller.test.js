@@ -238,8 +238,16 @@ test('template controller inserts a rendered template after the active slide thr
     }
   };
   const calls = [];
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalSlideIndexById(deck, slideId) {
+      lookupCalls.push([deck, slideId]);
+      return canonicalDeck.findCanonicalSlideIndexById(deck, slideId);
+    }
+  };
   const controller = templateController.createStudioEditorTemplateController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     renderApi: {
       renderCanonicalSlide(slide) {
         return `<section data-slide-id="${slide.id}"></section>`;
@@ -283,6 +291,7 @@ test('template controller inserts a rendered template after the active slide thr
   assert.equal(calls[3][1], 'Auto: Inserted Template "Hero Template"');
   assert.equal(calls[3][2].kind, 'slide-insert');
   assert.equal(calls[3][3].slides.length, 2);
+  assert.deepEqual(lookupCalls, [[sourceDeck, 'slide-1']]);
 });
 
 test('template controller removes a saved template and finalizes persistence hooks', () => {
