@@ -48,13 +48,6 @@
     const canonicalDeckBeforeMutation = buildCanonicalMetadataBaseline
       ? buildCanonicalMetadataBaseline({ sourceDocument: documentRef })
       : null;
-
-    const mutation = applyMetadata(activeSlide, value, {
-      transactionApi: options.transactionApi,
-      getElementId: options.getElementId
-    });
-    if (!mutation || !mutation.didApply) return false;
-
     const canonicalDeck = buildCanonicalMetadataDeck && canonicalMetadataKey
       ? buildCanonicalMetadataDeck(activeSlide, {
           [canonicalMetadataKey]: value
@@ -64,6 +57,13 @@
           getSlideId: options.getSlideId
         })
       : null;
+    if (canonicalDeckBeforeMutation && !canonicalDeck) return false;
+
+    const mutation = applyMetadata(activeSlide, value, {
+      transactionApi: options.transactionApi,
+      getElementId: options.getElementId
+    });
+    if (!mutation || !mutation.didApply) return false;
 
     finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
       refreshThumbnails: false,

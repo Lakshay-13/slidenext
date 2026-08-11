@@ -122,6 +122,31 @@ test('applyStudioSpeakerNotesEdit forwards an explicit canonical metadata sideca
   ]);
 });
 
+test('applyStudioSpeakerNotesEdit fails closed before metadata mutation when the canonical sidecar is unavailable', () => {
+  let mutationCalls = 0;
+  const result = actions.applyStudioSlideMetadataEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    metadataApi: {
+      applyStudioSpeakerNotes() {
+        mutationCalls += 1;
+        return { didApply: true, transaction: null };
+      }
+    },
+    metadataMethod: 'applyStudioSpeakerNotes',
+    canonicalMetadataKey: 'notes',
+    buildCanonicalMetadataBaseline: () => ({ id: 'before' }),
+    buildCanonicalMetadataDeck: () => null,
+    finalizeMutation: () => {
+      throw new Error('should not finalize');
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(mutationCalls, 0);
+});
+
 test('applyStudioSpeakerNotesEdit refuses to mutate without a persistence finalizer', () => {
   let mutationCalls = 0;
   const result = actions.applyStudioSpeakerNotesEdit('Ignored', {
