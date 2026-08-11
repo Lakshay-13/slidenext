@@ -113,11 +113,13 @@ test('buildStudioCanonicalLayoutBaseline prefers the shared canonical deck resol
 
 test('buildStudioCanonicalLayoutBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
+  let rebuildOptions = null;
   const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
     canonicalDeckApi: canonicalDeck,
     getCanonicalDeckBaseline: () => ({ invalid: true }),
-    buildCanonicalDeckBaseline() {
+    buildCanonicalDeckBaseline(_sourceDocument, options) {
       rebuildCalls += 1;
+      rebuildOptions = options;
       return { invalid: true };
     },
     sourceDocument: { id: 'editor-doc' }
@@ -125,6 +127,7 @@ test('buildStudioCanonicalLayoutBaseline rejects invalid compatibility baselines
 
   assert.equal(result, null);
   assert.equal(rebuildCalls, 1);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
 });
 
 test('buildStudioCanonicalLayoutBaseline uses structural validation without a canonical validator', () => {
