@@ -125,3 +125,23 @@ test('removal controller fails closed before DOM mutation when canonical removal
   assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
   assert.equal(removeCalls, 0);
 });
+
+test('removal controller fails closed before mutation when finalization is unavailable', () => {
+  let removeCalls = 0;
+  const doc = { id: 'doc' };
+  const controller = removalController.createStudioEditorRemovalController({
+    buildRemovalSelectionActionState: () => ({
+      canRemove: true,
+      selection: [{ id: 'node-1' }]
+    }),
+    getIframeDoc: () => doc,
+    applyRemovalMutation: () => {
+      removeCalls += 1;
+      return { didRemove: true, transaction: null };
+    },
+    finalizeRemovalActionResult: (result, currentDoc) => ({ result, currentDoc })
+  });
+
+  assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
+  assert.equal(removeCalls, 0);
+});

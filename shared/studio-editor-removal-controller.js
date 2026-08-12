@@ -54,6 +54,7 @@
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
+      if (!finalizeDeckMutation) return finalizeRemovalActionResult(false, doc);
       const getRemovalElementId = (element) => assignElementId(element);
       let canonicalDeck = null;
       let canonicalDeckBeforeRemoval = null;
@@ -100,12 +101,10 @@
       });
       if (!mutation || !mutation.didRemove) return finalizeRemovalActionResult(false, doc);
       if (deselectElement) deselectElement();
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation('Auto: Deleted Element', {
-          transaction: mutation.transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
-      }
+      finalizeDeckMutation('Auto: Deleted Element', {
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
       return true;
     }
 
