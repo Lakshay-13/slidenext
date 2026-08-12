@@ -2,14 +2,17 @@
   const deckHtml = typeof module === 'object' && module.exports
     ? require('./deck-html')
     : root && root.SlideNextDeckHtml;
-  const api = factory(deckHtml);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(deckHtml, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioDeckView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckHtml) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (deckHtml, historyResultApi) {
   const ACTIVE_THUMBNAIL_CARD_CLASS_NAME = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-[#7028d0] bg-[#7028d0]/5 shadow-[0_0_15px_rgba(112,40,208,0.1)]';
   const INACTIVE_THUMBNAIL_CARD_CLASS_NAME = 'glass-card p-3 border cursor-pointer relative group flex items-start gap-3 select-none transition-all border-white/5 bg-[#0a0a0a]/40 hover:border-white/20';
 
@@ -17,10 +20,11 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
-  function isStudioHistoryCaptureFailure(value) {
-    return value === false
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
-  }
 
   function createStudioCanonicalDeckResolver(doc, options = {}) {
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
