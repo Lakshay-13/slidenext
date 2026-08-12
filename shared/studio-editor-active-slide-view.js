@@ -1,12 +1,21 @@
 (function (root, factory) {
-  const api = factory();
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorActiveSlideView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+
   function syncStudioActiveSlideChrome(doc, options = {}) {
     const getCurrentSlideIndex = typeof options.getCurrentSlideIndex === 'function'
       ? options.getCurrentSlideIndex
@@ -77,10 +86,7 @@
       } else {
         historyResult = saveHistoryState(false);
       }
-      return historyResult !== false
-        && !(historyResult
-          && typeof historyResult === 'object'
-          && historyResult.didCapture === false);
+      return !isStudioHistoryCaptureFailure(historyResult);
     };
 
     const syncToDeckSnapshotFallback = (deckSnapshot) => {
