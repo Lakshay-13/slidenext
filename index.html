@@ -1421,6 +1421,7 @@
   <script src="/shared/studio-editor-template-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
+  <script src="/shared/studio-editor-master-slide-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
@@ -3238,10 +3239,13 @@
     const studioEditorTemplateController = studioEditorTemplateRuntime
       ? studioEditorTemplateRuntime.templateController
       : null;
-    const studioEditorMasterSlideRuntime = typeof SlideNextStudioEditorMasterSlideRuntime !== 'undefined'
-      && SlideNextStudioEditorMasterSlideRuntime
-      && typeof SlideNextStudioEditorMasterSlideRuntime.createStudioEditorMasterSlideRuntime === 'function'
-      ? SlideNextStudioEditorMasterSlideRuntime.createStudioEditorMasterSlideRuntime({
+    const studioEditorMasterSlideRuntime = typeof SlideNextStudioEditorMasterSlideShellRuntime !== 'undefined'
+      && SlideNextStudioEditorMasterSlideShellRuntime
+      && typeof SlideNextStudioEditorMasterSlideShellRuntime.createStudioEditorMasterSlideShellRuntime === 'function'
+      ? SlideNextStudioEditorMasterSlideShellRuntime.createStudioEditorMasterSlideShellRuntime({
+          masterSlideRuntimeApi: typeof SlideNextStudioEditorMasterSlideRuntime !== 'undefined'
+            ? SlideNextStudioEditorMasterSlideRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
             ? SlideNextStudioEditorMasterSlideController
             : null,
