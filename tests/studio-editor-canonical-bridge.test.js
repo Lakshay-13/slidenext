@@ -110,6 +110,22 @@ test('canonical bridge uses the document getter and normalizes build options', (
   ]);
 });
 
+test('canonical bridge fails closed when the document getter throws', () => {
+  let builderCalls = 0;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    getDocument() {
+      throw new Error('frame unavailable');
+    },
+    canonicalDeckBuilder() {
+      builderCalls += 1;
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  assert.equal(bridge.buildCanonicalDeck(), null);
+  assert.equal(builderCalls, 0);
+});
+
 test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
   const documentRef = { id: 'frame' };
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };

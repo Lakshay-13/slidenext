@@ -122,8 +122,16 @@
       return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
     }
 
-    function buildCanonicalDeck(documentRef = getDocument(), buildOptions = {}) {
+    function buildCanonicalDeck(documentRef, buildOptions = {}) {
       if (!canonicalDeckBuilder) return null;
+      let resolvedDocument = documentRef;
+      if (typeof resolvedDocument === 'undefined') {
+        try {
+          resolvedDocument = getDocument();
+        } catch (error) {
+          return null;
+        }
+      }
       const normalizedOptions = arguments.length > 1
         && arguments[1]
         && typeof arguments[1] === 'object'
@@ -133,7 +141,7 @@
       if (normalizedOptions.preferLiveCanonicalDeck === false
         && !Object.prototype.hasOwnProperty.call(normalizedOptions, 'canonicalDeckBaseline')
         && getCanonicalDeckBaseline) {
-        const canonicalDeckBaseline = readCanonicalDeckBaseline(documentRef);
+        const canonicalDeckBaseline = readCanonicalDeckBaseline(resolvedDocument);
         if (canonicalDeckBaseline) {
           resolvedOptions = {
             ...normalizedOptions,
@@ -142,7 +150,7 @@
         }
       }
       try {
-        const canonicalDeck = canonicalDeckBuilder(documentRef, resolvedOptions);
+        const canonicalDeck = canonicalDeckBuilder(resolvedDocument, resolvedOptions);
         return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
       } catch (err) {
         // Keep legacy HTML editing available when canonical import cannot proceed.
