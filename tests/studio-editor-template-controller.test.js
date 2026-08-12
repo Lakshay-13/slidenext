@@ -221,6 +221,24 @@ test('template controller reports rejected canonical save without publishing tem
   assert.equal(templatesChanged, 0);
 });
 
+test('template controller does not publish a saved template when history capture fails', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }] }]
+  });
+  let templatesChanged = 0;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState: () => false,
+    onTemplatesChanged: () => { templatesChanged += 1; }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'rejected-template' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(sourceDeck, 'templates'), false);
+  assert.equal(templatesChanged, 0);
+});
+
 test('template controller inserts a rendered template after the active slide through a transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{
