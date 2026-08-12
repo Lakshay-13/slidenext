@@ -1457,6 +1457,7 @@
   <script src="/shared/studio-editor-slide-mutation.js"></script>
   <script src="/shared/studio-editor-position-layout-mutation.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
+  <script src="/shared/studio-editor-frame-accessors.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-deletion-controller.js"></script>
@@ -3984,6 +3985,36 @@
       && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
       ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
       : ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
+    const studioEditorFrameAccessorsApi = typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
+      ? SlideNextStudioEditorFrameAccessors
+      : null;
+    const studioEditorFrameAccessors = studioEditorFrameAccessorsApi
+      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors === 'function'
+      ? studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors({
+          documentRef: document,
+          domOptions: {
+            slideAttrName: EDITOR_SLIDE_ID_ATTR,
+            elementAttrName: EDITOR_ELEMENT_ID_ATTR,
+            slideSelector: '.slide',
+            selectableSelector: EDITOR_SELECTABLE_SELECTOR,
+            parentTargetSelector: EDITOR_PARENT_TARGET_SELECTOR,
+            inlineTextTags: EDITOR_INLINE_TEXT_TAGS,
+            blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer']
+          },
+          overlayOptions: {
+            selectionOverlayId: 'editorSelectionOverlay',
+            guidesLayerId: 'editorGuidesLayer',
+            dragHudId: 'editorDragHud',
+            resizeHandleDirections: RESIZE_HANDLE_DIRECTIONS,
+            resizeHandleClassName: 'editor-resize-handle',
+            resizeHandleDirectionAttr: 'data-dir',
+            guideLineClassName: 'editor-guide-line',
+            guideLineVerticalClassName: 'vertical',
+            guideLineHorizontalClassName: 'horizontal',
+            visibleClassName: 'visible'
+          }
+        })
+      : null;
     const studioEditorFrameRuntimeOptionsApi = typeof SlideNextStudioEditorFrameRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorFrameRuntimeOptions
       : null;
@@ -4995,6 +5026,9 @@
 
     // 3. Studio Presentation Workspace Mode
     function getStudioFrame() {
+      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
+        return studioEditorFrameAccessors.getFrame();
+      }
       return document.getElementById('studioFrame');
     }
 
@@ -6077,16 +6111,27 @@
     }
 
     function getIframeDoc() {
+      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
+        return studioEditorFrameAccessors.getDocument();
+      }
       const iframe = getStudioFrame();
-      return iframe ? (iframe.contentDocument || iframe.contentWindow.document) : null;
+      return iframe
+        ? iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document) || null
+        : null;
     }
 
     function getIframeWindow() {
+      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
+        return studioEditorFrameAccessors.getWindow();
+      }
       const iframe = getStudioFrame();
       return iframe ? iframe.contentWindow || null : null;
     }
 
     function getEditorDomOptions(options = {}) {
+      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
+        return studioEditorFrameAccessors.getDomOptions(options);
+      }
       return {
         slideAttrName: EDITOR_SLIDE_ID_ATTR,
         elementAttrName: EDITOR_ELEMENT_ID_ATTR,
@@ -6100,6 +6145,9 @@
     }
 
     function getEditorOverlayOptions(options = {}) {
+      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
+        return studioEditorFrameAccessors.getOverlayOptions(options);
+      }
       return {
         selectionOverlayId: 'editorSelectionOverlay',
         guidesLayerId: 'editorGuidesLayer',
