@@ -47,7 +47,11 @@ test('index wires clipboard selection through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorClipboardSelectionRuntime\.createStudioEditorClipboardSelectionRuntime\(/
+    /<script src="\/shared\/studio-editor-clipboard-selection-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorClipboardSelectionShellRuntime\.createStudioEditorClipboardSelectionShellRuntime\(/
   );
   assert.match(
     fileContent,
