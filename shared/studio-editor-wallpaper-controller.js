@@ -7,6 +7,14 @@
     root.SlideNextStudioEditorWallpaperController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  function invokeStudioWallpaperFinalizer(finalizeMutation, ...args) {
+    try {
+      return finalizeMutation(...args);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function applyStudioPresetWallpaper(options = {}) {
     const resolveActionState = typeof options.resolveActionState === 'function'
       ? options.resolveActionState
@@ -53,8 +61,13 @@
 
     const versionLabel = options.isCustomInput ? '' : 'Auto: Changed Background';
     const finalizeResult = mutation.canonicalDeck
-      ? finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck)
-      : finalizeMutation(versionLabel, mutation.transaction);
+      ? invokeStudioWallpaperFinalizer(
+          finalizeMutation,
+          versionLabel,
+          mutation.transaction,
+          mutation.canonicalDeck
+        )
+      : invokeStudioWallpaperFinalizer(finalizeMutation, versionLabel, mutation.transaction);
     if (finalizeResult === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       return false;
@@ -112,8 +125,13 @@
 
     const versionLabel = 'Auto: Applied Background to All Slides';
     const finalizeResult = mutation.canonicalDeck
-      ? finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck)
-      : finalizeMutation(versionLabel, mutation.transaction);
+      ? invokeStudioWallpaperFinalizer(
+          finalizeMutation,
+          versionLabel,
+          mutation.transaction,
+          mutation.canonicalDeck
+        )
+      : invokeStudioWallpaperFinalizer(finalizeMutation, versionLabel, mutation.transaction);
     if (finalizeResult === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       return false;

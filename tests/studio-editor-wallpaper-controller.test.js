@@ -65,7 +65,7 @@ test('wallpaper controller fails closed before mutating without a finalizer', ()
   assert.equal(mutationCalls, 0);
 });
 
-test('wallpaper controller rolls back rejected active-slide persistence before setting pending version state', () => {
+test('wallpaper controller rolls back thrown active-slide persistence before setting pending version state', () => {
   const calls = [];
   const transaction = { id: 'tx-rejected' };
   const documentRef = { id: 'iframe-doc' };
@@ -77,7 +77,9 @@ test('wallpaper controller rolls back rejected active-slide persistence before s
     }),
     getIframeDocument: () => documentRef,
     applyMutation: () => ({ didChange: true, transaction }),
-    finalizeMutation: () => false,
+    finalizeMutation: () => {
+      throw new Error('active wallpaper finalization failed');
+    },
     rollbackMutation: (...args) => calls.push(args),
     setPendingCustomWallpaperVersion: () => calls.push(['pending'])
   });
