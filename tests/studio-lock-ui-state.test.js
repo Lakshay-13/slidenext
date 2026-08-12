@@ -394,6 +394,7 @@ test('updateLockActionState delegates toolbar state assembly to the shared lock 
   const doc = { activeSlide: {} };
   assert.equal(context.updateLockActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
+  assert.match(updateLockActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].isLocked, context.isElementLocked);

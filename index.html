@@ -7960,7 +7960,7 @@
         : isElementLocked;
       return lockState.syncStudioLockToolbarState({
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
