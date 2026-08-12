@@ -1418,6 +1418,7 @@
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-template-runtime.js"></script>
+  <script src="/shared/studio-editor-template-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
@@ -3189,10 +3190,13 @@
     const studioEditorBlockController = studioEditorBlockRuntime
       ? studioEditorBlockRuntime.blockController
       : null;
-    const studioEditorTemplateRuntime = typeof SlideNextStudioEditorTemplateRuntime !== 'undefined'
-      && SlideNextStudioEditorTemplateRuntime
-      && typeof SlideNextStudioEditorTemplateRuntime.createStudioEditorTemplateRuntime === 'function'
-      ? SlideNextStudioEditorTemplateRuntime.createStudioEditorTemplateRuntime({
+    const studioEditorTemplateRuntime = typeof SlideNextStudioEditorTemplateShellRuntime !== 'undefined'
+      && SlideNextStudioEditorTemplateShellRuntime
+      && typeof SlideNextStudioEditorTemplateShellRuntime.createStudioEditorTemplateShellRuntime === 'function'
+      ? SlideNextStudioEditorTemplateShellRuntime.createStudioEditorTemplateShellRuntime({
+          templateRuntimeApi: typeof SlideNextStudioEditorTemplateRuntime !== 'undefined'
+            ? SlideNextStudioEditorTemplateRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorTemplateController !== 'undefined'
             ? SlideNextStudioEditorTemplateController
             : null,

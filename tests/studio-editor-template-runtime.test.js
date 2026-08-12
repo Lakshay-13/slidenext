@@ -63,7 +63,11 @@ test('index wires template persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorTemplateRuntime\.createStudioEditorTemplateRuntime\(/
+    /<script src="\/shared\/studio-editor-template-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorTemplateShellRuntime\.createStudioEditorTemplateShellRuntime\(/
   );
   assert.match(
     fileContent,
