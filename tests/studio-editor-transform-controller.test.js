@@ -53,6 +53,7 @@ test('transform controller delegates modern transform and marquee setup with sha
 
 test('transform controller forwards the live canonical baseline reader', () => {
   let builderOptions = null;
+  let forwardedBuildOptions = null;
   const liveCanonicalDeck = { kind: 'live-deck' };
   const controller = transformController.createStudioEditorTransformController({
     transformApi: {
@@ -92,12 +93,25 @@ test('transform controller forwards the live canonical baseline reader', () => {
     },
     getCanonicalDeckBaseline() {
       return liveCanonicalDeck;
+    },
+    buildCanonicalDeckBaseline(sourceDocument, buildOptions) {
+      forwardedBuildOptions = { sourceDocument, buildOptions };
+      return { kind: 'rebuilt-deck' };
     }
   });
 
   assert.equal(controller.setup({ body: {} }), true);
   assert.equal(typeof builderOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(builderOptions.getCanonicalDeckBaseline(), liveCanonicalDeck);
+  const sourceDocument = { id: 'fallback-doc' };
+  assert.deepEqual(
+    builderOptions.buildCanonicalDeckBaseline(sourceDocument, { preferLiveCanonicalDeck: false }),
+    { kind: 'rebuilt-deck' }
+  );
+  assert.deepEqual(forwardedBuildOptions, {
+    sourceDocument,
+    buildOptions: { preferLiveCanonicalDeck: false }
+  });
 });
 
 test('transform controller rolls back a DOM transaction when a canonical transform fails', () => {

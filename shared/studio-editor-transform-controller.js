@@ -163,10 +163,10 @@
       return canonicalTransformApi.createStudioCanonicalTransformMutationBuilders({
         canonicalDeckApi,
         buildCanonicalDeck: buildCanonicalDeck
-          ? (sourceDocument) => buildCanonicalDeck(sourceDocument)
+          ? (sourceDocument, buildOptions) => buildCanonicalDeck(sourceDocument, buildOptions)
           : null,
         buildCanonicalDeckBaseline: buildCanonicalDeckBaseline
-          ? (sourceDocument) => buildCanonicalDeckBaseline(sourceDocument)
+          ? (sourceDocument, buildOptions) => buildCanonicalDeckBaseline(sourceDocument, buildOptions)
           : null,
         getCanonicalDeckBaseline: getCanonicalDeckBaseline
           ? (sourceDocument) => getCanonicalDeckBaseline(sourceDocument)
