@@ -42,6 +42,13 @@ function buildRuntimeSmokeDeck() {
   };
 }
 
+const SHIPPED_LEGACY_DECKS = [
+  'ai-tools-presentation',
+  'computer-vision-presentation',
+  'onboarding-presentation',
+  'pinns-presentation'
+];
+
 test('PPTX export route returns a real generalized PPTX response', async (t) => {
   const server = http.createServer(app);
   const port = await listenOnEphemeralPort(server);
@@ -137,6 +144,38 @@ test('PDF export route prints an existing legacy HTML deck without a canonical s
       await fs.readFile(path.join(workspaceDir, 'presentations/onboarding-presentation/index.html'), 'utf8')
     )
   );
+});
+
+test('PDF export route preserves one page per slide for every shipped legacy deck', {
+  skip: !pdfScript.resolveChromeExecutable()
+}, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  for (const deckSlug of SHIPPED_LEGACY_DECKS) {
+    const htmlPath = path.join(workspaceDir, 'presentations', deckSlug, 'index.html');
+    const html = await fs.readFile(htmlPath, 'utf8');
+    const response = await fetch(`http://127.0.0.1:${port}/api/export/pdf`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourcePath: `presentations/${deckSlug}/index.html`,
+        filename: `${deckSlug}.pdf`
+      })
+    });
+
+    assert.equal(response.status, 200, deckSlug);
+    assert.match(response.headers.get('content-type') || '', /application\/pdf/, deckSlug);
+    assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '0', deckSlug);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    assert.equal(buffer.subarray(0, 5).toString(), '%PDF-', deckSlug);
+    assert.equal(
+      pdfScript.countPdfPages(buffer),
+      pdfScript.countLegacyHtmlSlides(html),
+      deckSlug
+    );
+  }
 });
 
 test('PDF export route reports missing local canonical assets without blocking export', { skip: !require('../scripts/export-canonical-pdf.js').resolveChromeExecutable() }, async (t) => {
