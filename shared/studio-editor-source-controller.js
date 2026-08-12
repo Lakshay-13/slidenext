@@ -1,12 +1,21 @@
 (function (root, factory) {
-  const api = factory(root);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(root, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorSourceController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+
   function resolveSourceBuilderOption(value, fallback = null) {
     try {
       const resolved = typeof value === 'function' ? value() : value;
@@ -84,10 +93,7 @@
           historyCaptureResult = saveHistoryState(false);
         }
       }
-      return historyCaptureResult !== false
-        && !(historyCaptureResult
-          && typeof historyCaptureResult === 'object'
-          && historyCaptureResult.didCapture === false);
+      return !isStudioHistoryCaptureFailure(historyCaptureResult);
     };
   }
 
