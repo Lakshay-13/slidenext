@@ -1499,6 +1499,7 @@
   <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
+  <script src="/shared/studio-editor-toolbar-accessors.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-lifecycle-controller.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
@@ -4109,6 +4110,14 @@
     const studioEditorDeckReadyController = studioEditorDeckReadyRuntime
       ? studioEditorDeckReadyRuntime.deckReadyController
       : null;
+    const studioEditorToolbarAccessors = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
+      && SlideNextStudioEditorToolbarAccessors
+      && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors === 'function'
+      ? SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
+          gridSnapController: studioEditorGridSnapController,
+          themeController: studioEditorThemeController
+        })
+      : null;
 
     const editorPresetsApi = typeof SlideNextStudioEditorPresets !== 'undefined'
       ? SlideNextStudioEditorPresets
@@ -4200,6 +4209,9 @@
     }
 
     function updateGridSnapActionState() {
+      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
+        return studioEditorToolbarAccessors.updateGridSnapActionState();
+      }
       return studioEditorGridSnapController
         && typeof studioEditorGridSnapController.sync === 'function'
         ? studioEditorGridSnapController.sync()
@@ -4207,6 +4219,9 @@
     }
 
     function toggleGridSnap() {
+      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
+        return studioEditorToolbarAccessors.toggleGridSnap();
+      }
       return studioEditorGridSnapController
         && typeof studioEditorGridSnapController.toggle === 'function'
         ? studioEditorGridSnapController.toggle()
@@ -4215,12 +4230,18 @@
 
     // Theme Toggle Functionality
     function toggleGlobalTheme() {
+      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
+        return studioEditorToolbarAccessors.toggleGlobalTheme();
+      }
       if (!studioEditorThemeController
         || typeof studioEditorThemeController.toggleGlobalTheme !== 'function') return false;
       return studioEditorThemeController.toggleGlobalTheme();
     }
 
     function syncIframeTheme() {
+      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
+        return studioEditorToolbarAccessors.syncIframeTheme();
+      }
       if (!studioEditorThemeController
         || typeof studioEditorThemeController.syncIframeTheme !== 'function') return false;
       return studioEditorThemeController.syncIframeTheme();
