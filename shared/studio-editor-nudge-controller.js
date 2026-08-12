@@ -45,6 +45,15 @@
       ? options.rollbackPositionMutation
       : null;
 
+    function rollbackMutation(transaction, doc) {
+      if (!rollbackPositionMutation) return;
+      try {
+        rollbackPositionMutation(transaction, doc);
+      } catch (error) {
+        // A rollback failure must not break the editor event handler.
+      }
+    }
+
     function nudge(dx, dy, sourceDoc) {
       if (!buildMotionSelectionActionState) return false;
 
@@ -113,15 +122,20 @@
       });
       if (!mutation || !mutation.didApply) return false;
 
-      const finalizeResult = finalizeDeckMutation('Auto: Nudged Element', {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
+      let finalizeResult = false;
+      try {
+        finalizeResult = finalizeDeckMutation('Auto: Nudged Element', {
+          syncSelectionOverlay: true,
+          refreshThumbnails: false,
+          debounceHistory: true,
+          transaction: mutation.transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {})
+        });
+      } catch (error) {
+        finalizeResult = false;
+      }
       if (finalizeResult === false) {
-        if (rollbackPositionMutation) rollbackPositionMutation(mutation.transaction, doc);
+        rollbackMutation(mutation.transaction, doc);
         return false;
       }
       return true;

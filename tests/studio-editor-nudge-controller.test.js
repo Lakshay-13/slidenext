@@ -131,6 +131,37 @@ test('nudge controller rolls back when finalization rejects the position mutatio
   assert.deepEqual(rollbackCalls, [[transaction, { id: 'doc' }]]);
 });
 
+test('nudge controller rolls back when finalization throws', () => {
+  const transaction = { id: 'position-tx' };
+  const rollbackCalls = [];
+  const controller = nudgeController.createStudioEditorNudgeController({
+    nudgeApi: {
+      buildStudioNudgedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      }
+    },
+    buildMotionSelectionActionState: () => ({
+      canNudge: true,
+      doc: { id: 'doc' },
+      nudgeLayoutItems: [{ id: 'item-1' }],
+      slideBounds: { width: 1920, height: 1080 }
+    }),
+    applyPositionLayout: () => ({ didApply: true, transaction }),
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    },
+    rollbackPositionMutation: (...args) => rollbackCalls.push(args)
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.nudge(1, 0), false);
+  });
+  assert.deepEqual(rollbackCalls, [[transaction, { id: 'doc' }]]);
+});
+
 test('nudge controller fails closed before DOM mutation when canonical layout construction throws', () => {
   let applyCalls = 0;
   const controller = nudgeController.createStudioEditorNudgeController({
