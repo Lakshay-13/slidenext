@@ -1534,6 +1534,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-store.js"></script>
   <script src="/shared/studio-editor-persisted-deck-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-bridge.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-accessors.js"></script>
   <script src="/shared/studio-editor-autosave-timer-store.js"></script>
   <script src="/shared/studio-editor-autosave-timer-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
@@ -1851,40 +1852,41 @@
             : null
         })
       : null;
+    const studioEditorPersistedDeckAccessors = typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckAccessors
+      && typeof SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckAccessors === 'function'
+      ? SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckAccessors({
+          bridge: studioEditorPersistedDeckBridge
+        })
+      : null;
     function getStudioPersistedDeckHtml() {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.getDeckHtml === 'function'
-        ? studioEditorPersistedDeckBridge.getDeckHtml()
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.getDeckHtml()
         : '';
     }
     function getStudioPersistedCanonicalDeck() {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.getCanonicalDeck === 'function'
-        ? studioEditorPersistedDeckBridge.getCanonicalDeck()
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.getCanonicalDeck()
         : null;
     }
     function getStudioPersistedPlaybackState() {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.getPlaybackState === 'function'
-        ? studioEditorPersistedDeckBridge.getPlaybackState()
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.getPlaybackState()
         : null;
     }
     function setStudioPersistedDeckHtml(nextDeckHtml) {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.setDeckHtml === 'function'
-        ? studioEditorPersistedDeckBridge.setDeckHtml(nextDeckHtml)
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.setDeckHtml(nextDeckHtml)
         : false;
     }
     function setStudioPersistedCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.setCanonicalDeck === 'function'
-        ? studioEditorPersistedDeckBridge.setCanonicalDeck(nextCanonicalDeck)
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.setCanonicalDeck(nextCanonicalDeck)
         : false;
     }
     function setStudioPersistedPlaybackState(nextPlaybackState) {
-      return studioEditorPersistedDeckBridge
-        && typeof studioEditorPersistedDeckBridge.setPlaybackState === 'function'
-        ? studioEditorPersistedDeckBridge.setPlaybackState(nextPlaybackState)
+      return studioEditorPersistedDeckAccessors
+        ? studioEditorPersistedDeckAccessors.setPlaybackState(nextPlaybackState)
         : false;
     }
     const studioEditorTimerStateBridge = typeof SlideNextStudioEditorTimerStateBridge !== 'undefined'
