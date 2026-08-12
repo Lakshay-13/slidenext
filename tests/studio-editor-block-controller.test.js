@@ -473,3 +473,53 @@ test('block controller renders and inserts canonical block nodes through a marku
   assert.equal(calls[0].nextDeck.slides[0].nodes[0].id, 'hero-heading');
   assert.deepEqual(lookupCalls.map(([, slideId]) => slideId), ['slide-1', 'slide-1']);
 });
+
+test('block controller removes inserted nodes when history capture fails', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{
+      id: 'hero',
+      nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }]
+    }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const slide = {
+    children: [],
+    appendChild(element) {
+      element.parentNode = this;
+      this.children.push(element);
+    },
+    removeChild(element) {
+      const index = this.children.indexOf(element);
+      if (index < 0) throw new Error('missing child');
+      this.children.splice(index, 1);
+      element.parentNode = null;
+    }
+  };
+  const documentRef = {
+    createElement() {
+      const element = { dataset: {}, children: [] };
+      return {
+        content: { firstElementChild: element },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalNode() {
+        return '<h2>Hero</h2>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => documentRef,
+    getActiveSlide: () => slide,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState: () => false
+  });
+
+  assert.equal(controller.insertBlock('hero'), false);
+  assert.deepEqual(slide.children, []);
+});

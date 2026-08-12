@@ -243,6 +243,24 @@
       }
     }
 
+    function removeInsertedElements(insertedElements, fallbackParent) {
+      insertedElements.slice().reverse().forEach((element) => {
+        if (!element) return;
+        if (typeof element.remove === 'function') {
+          element.remove();
+          return;
+        }
+        const parent = element.parentNode || fallbackParent;
+        if (parent && typeof parent.removeChild === 'function') {
+          try {
+            parent.removeChild(element);
+          } catch (err) {
+            // The element may already have been detached by a host callback.
+          }
+        }
+      });
+    }
+
     function insertBlock(blockId, insertionOptions = {}) {
       if (!canonicalDeckApi
         || typeof canonicalDeckApi.insertCanonicalBlockInstance !== 'function') {
@@ -290,7 +308,10 @@
       if (finalizeInsertedElements) {
         return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);
       }
-      if (saveHistoryState) saveHistoryState(false, transaction, nextCanonicalDeck);
+      if (saveHistoryState && saveHistoryState(false, transaction, nextCanonicalDeck) === false) {
+        removeInsertedElements(insertedElements, activeSlide);
+        return false;
+      }
       if (triggerAutoSave) triggerAutoSave();
       if (triggerAutoVersion) triggerAutoVersion(versionLabel);
       return true;
