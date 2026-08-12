@@ -337,12 +337,16 @@
         || typeof previewApi.applyStudioSourceView !== 'function') {
         return false;
       }
-      return previewApi.applyStudioSourceView({
-        canOpenSourceView: true,
-        document: documentRef,
-        onApplySourceHtml: applySourceHtml,
-        onApplySourceCss: applySourceCss
-      });
+      try {
+        return previewApi.applyStudioSourceView({
+          canOpenSourceView: true,
+          document: documentRef,
+          onApplySourceHtml: applySourceHtml,
+          onApplySourceCss: applySourceCss
+        });
+      } catch (error) {
+        return false;
+      }
     }
 
     function close() {

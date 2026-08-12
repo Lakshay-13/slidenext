@@ -407,3 +407,15 @@ test('source controller contains resolver and source adapter failures', () => {
     error: 'Source HTML could not be applied'
   });
 });
+
+test('source controller contains preview apply failures', () => {
+  const { controller } = createController({
+    previewApi: {
+      applyStudioSourceView() {
+        throw new Error('preview adapter failed');
+      }
+    }
+  });
+
+  assert.equal(controller.apply(), false);
+});
