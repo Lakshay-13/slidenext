@@ -138,10 +138,15 @@
 
     function commitDeck(nextCanonicalDeck, versionLabel = '', commitOptions = {}) {
       if (finalizeMutation) {
-        const finalizeResult = finalizeMutation(versionLabel, {
-          refreshThumbnails: false,
-          canonicalDeck: nextCanonicalDeck
-        });
+        let finalizeResult = false;
+        try {
+          finalizeResult = finalizeMutation(versionLabel, {
+            refreshThumbnails: false,
+            canonicalDeck: nextCanonicalDeck
+          });
+        } catch (error) {
+          finalizeResult = false;
+        }
         if (finalizeResult === false) {
           if (typeof commitOptions.onRejected === 'function') {
             commitOptions.onRejected();

@@ -286,6 +286,28 @@ test('removeAsset reports rejected persistence without publishing the library ch
   assert.equal(changedAssets, 0);
 });
 
+test('asset controller contains thrown canonical finalization without publishing asset state', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'unused', name: 'Unused', src: 'unused.png' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let changedAssets = 0;
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    finalizeMutation: () => {
+      throw new Error('history finalization failed');
+    },
+    onAssetsChanged: () => { changedAssets += 1; }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.removeAsset('unused'), false);
+  });
+  assert.deepEqual(deck.assets.map((asset) => asset.id), ['unused']);
+  assert.equal(changedAssets, 0);
+});
+
 test('applyAsset binds the selected image, updates its DOM source, and commits the deck', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }],
