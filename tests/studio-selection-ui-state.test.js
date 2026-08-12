@@ -66,6 +66,47 @@ test('editor composes live selection ID reading through the shared selection API
   assert.doesNotMatch(source, /getSelectedEditorElementIds\.reader/);
 });
 
+test('editor resolves stored selection IDs against the current active-slide DOM', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('function resolveStudioSelectedElementsFromState(');
+  const end = fileContent.indexOf('\n    function setStudioSelectionState(', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+
+  const staleElement = { id: 'stale-node' };
+  const currentElement = { id: 'current-node', isConnected: true };
+  const activeSlide = {
+    contains(element) {
+      return element === currentElement;
+    }
+  };
+  const context = {
+    studioEditorStateBridge: {
+      getSelectedElements() {
+        return [staleElement];
+      },
+      getSelectedElementIds() {
+        return ['node-1'];
+      }
+    },
+    getIframeDoc() {
+      return { id: 'current-doc' };
+    },
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getElementByEditorId(editorId) {
+      return editorId === 'node-1' ? currentElement : null;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(fileContent.slice(start, end), context);
+
+  assert.deepEqual(context.getStudioSelectedElements(), [currentElement]);
+  assert.equal(context.getStudioSelectedElement(), currentElement);
+});
+
 test('editor composes selection option building through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
