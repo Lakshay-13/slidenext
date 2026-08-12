@@ -190,6 +190,32 @@ test('createStudioMutationFinalizer fails before UI work when canonical history 
   assert.deepEqual(calls, [['history', false, null, canonicalDeck]]);
 });
 
+test('createStudioMutationFinalizer fails before UI work when history capture throws', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    syncSelectionOverlay() {
+      calls.push('overlay');
+    },
+    generateThumbnails() {
+      calls.push('thumbnails');
+    },
+    saveHistoryState() {
+      calls.push('history');
+      throw new Error('history unavailable');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Rejected Update', {
+    syncSelectionOverlay: true,
+    canonicalDeck
+  }), false);
+  assert.deepEqual(calls, ['history']);
+});
+
 test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
   const historyArgs = [];
   const isCanonicalDeck = (value) => (

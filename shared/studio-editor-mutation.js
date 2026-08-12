@@ -116,8 +116,15 @@
       if (hasCanonicalDeck) {
         historyArgs.push(resolvedMutationOptions.canonicalDeck);
       }
+      const captureHistory = () => {
+        try {
+          return saveHistoryState(...historyArgs);
+        } catch (err) {
+          return false;
+        }
+      };
       if (shouldPublishCanonicalDeckBeforeUi) {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(...historyArgs))) return false;
+        if (isStudioHistoryCaptureFailure(captureHistory())) return false;
       }
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay(resolvedMutationOptions.doc);
@@ -129,7 +136,7 @@
         updateLayersList(resolvedMutationOptions.doc);
       }
       if (!shouldPublishCanonicalDeckBeforeUi) {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(...historyArgs))) return false;
+        if (isStudioHistoryCaptureFailure(captureHistory())) return false;
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
