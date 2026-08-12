@@ -1359,6 +1359,7 @@
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
+  <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-layout-mode.js"></script>
@@ -2868,10 +2869,13 @@
     const studioEditorRemovalController = studioEditorRemovalRuntime
       ? studioEditorRemovalRuntime.removalController
       : null;
-    const studioEditorLayerOrderRuntime = typeof SlideNextStudioEditorLayerOrderRuntime !== 'undefined'
-      && SlideNextStudioEditorLayerOrderRuntime
-      && typeof SlideNextStudioEditorLayerOrderRuntime.createStudioEditorLayerOrderRuntime === 'function'
-      ? SlideNextStudioEditorLayerOrderRuntime.createStudioEditorLayerOrderRuntime({
+    const studioEditorLayerOrderRuntime = typeof SlideNextStudioEditorLayerOrderShellRuntime !== 'undefined'
+      && SlideNextStudioEditorLayerOrderShellRuntime
+      && typeof SlideNextStudioEditorLayerOrderShellRuntime.createStudioEditorLayerOrderShellRuntime === 'function'
+      ? SlideNextStudioEditorLayerOrderShellRuntime.createStudioEditorLayerOrderShellRuntime({
+          layerOrderRuntimeApi: typeof SlideNextStudioEditorLayerOrderRuntime !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
             ? SlideNextStudioEditorLayerOrderController
             : null,
