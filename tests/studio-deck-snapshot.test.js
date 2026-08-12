@@ -760,3 +760,25 @@ test('buildStudioDeckSnapshot falls back to the DOM snapshot when the canonical 
     ]
   });
 });
+
+test('buildStudioDeckSnapshot falls back to the DOM snapshot when canonical construction throws', () => {
+  const doc = { label: 'doc' };
+  const result = deckSnapshot.buildStudioDeckSnapshot(doc, {
+    buildCanonicalDeck() {
+      throw new Error('canonical model unavailable');
+    },
+    buildDomSnapshot(nextDoc) {
+      return {
+        activeSlideId: `dom-slide:${nextDoc.label}`,
+        activeSlideIndex: 1,
+        slides: [{ id: 'dom-slide', index: 1 }]
+      };
+    }
+  });
+
+  assert.deepEqual(result, {
+    activeSlideId: 'dom-slide:doc',
+    activeSlideIndex: 1,
+    slides: [{ id: 'dom-slide', index: 1 }]
+  });
+});

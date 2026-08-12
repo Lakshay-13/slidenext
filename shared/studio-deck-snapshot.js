@@ -239,7 +239,14 @@
     const buildDomSnapshot = typeof options.buildDomSnapshot === 'function'
       ? options.buildDomSnapshot
       : (sourceDoc) => buildStudioDeckSnapshotFromDom(sourceDoc, options.domSnapshotOptions || options);
-    const canonicalDeck = buildCanonicalDeck ? buildCanonicalDeck(doc) : null;
+    let canonicalDeck = null;
+    if (buildCanonicalDeck) {
+      try {
+        canonicalDeck = buildCanonicalDeck(doc);
+      } catch (err) {
+        canonicalDeck = null;
+      }
+    }
 
     if (!isCanonicalDeckLike(canonicalDeck) || !deckModel || typeof deckModel.buildDeckSnapshotFromCanonicalDeck !== 'function') {
       return buildDomSnapshot(doc);
