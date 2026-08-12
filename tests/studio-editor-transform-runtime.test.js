@@ -100,4 +100,8 @@ test('index wires transform behavior through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorTransformController\.createStudioEditorTransformController\(/
   );
+  assert.match(
+    fileContent,
+    /getSelectedElements: \(doc\) => getLiveSelectedElements\(getStudioSelectedElements\(doc\), doc\),/
+  );
 });

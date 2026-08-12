@@ -242,3 +242,32 @@ test('transform controller forwards canonical hidden state to transform and marq
   assert.equal(transformHiddenReader({ id: 'node-1' }), true);
   assert.equal(marqueeHiddenReader({ id: 'node-1' }), true);
 });
+
+test('transform controller binds marquee selection reads to the setup document', () => {
+  const doc = { body: {} };
+  const selectedElements = [{ id: 'selected' }];
+  let marqueeOptions = null;
+  const controller = transformController.createStudioEditorTransformController({
+    getSelectedElements(currentDoc) {
+      assert.equal(currentDoc, doc);
+      return selectedElements;
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions() {
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions(options) {
+        marqueeOptions = options;
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    }
+  });
+
+  assert.equal(controller.setup(doc), true);
+  assert.deepEqual(marqueeOptions.getSelectedElements(), selectedElements);
+});

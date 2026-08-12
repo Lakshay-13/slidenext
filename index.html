@@ -3450,7 +3450,7 @@
           getRectOnSlide: (...args) => getRectOnSlide(...args),
           ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
           getClosestPositionedAncestor: (...args) => getEditorClosestPositionedAncestor(...args),
-          getSelectedElements: () => getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
+          getSelectedElements: (doc) => getLiveSelectedElements(getStudioSelectedElements(doc), doc),
           getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           updateDragHud: (...args) => updateDragHud(...args),

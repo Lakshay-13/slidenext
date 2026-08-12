@@ -325,7 +325,7 @@
               getPointerOnSlide,
               getMarqueeElements,
               getMarqueeSelection: null,
-              getSelectedElements,
+              getSelectedElements: () => getSelectedElements(doc),
               captureTarget: doc && doc.body,
               dragStartThresholdPx,
               isHidden: (element) => readHiddenState(element, doc),
