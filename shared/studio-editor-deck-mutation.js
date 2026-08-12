@@ -27,6 +27,14 @@
         }
       };
 
+  function invokeStudioEditorDeckMutationFinalizer(finalizeMutation, ...args) {
+    try {
+      return finalizeMutation(...args);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function createStudioEditorDeckMutationFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -187,7 +195,7 @@
       syncSelectionUi(mutationOptions.doc);
     }
     if (!finalizeMutation) return false;
-    const result = finalizeMutation(versionLabel, {
+    const result = invokeStudioEditorDeckMutationFinalizer(finalizeMutation, versionLabel, {
       refreshThumbnails: false,
       ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {}),
       ...(mutationOptions.canonicalDeck ? { canonicalDeck: mutationOptions.canonicalDeck } : {})
@@ -228,7 +236,7 @@
     if (typeof options.commitSelectionState === 'function') {
       options.commitSelectionState(nextSelectionState);
     }
-    const finalizeResult = finalizeMutation(versionLabel, {
+    const finalizeResult = invokeStudioEditorDeckMutationFinalizer(finalizeMutation, versionLabel, {
       transaction,
       ...(canonicalDeck ? { canonicalDeck } : {})
     });
@@ -265,7 +273,7 @@
       });
     }
     if (finalizeMutation) {
-      const result = finalizeMutation(versionLabel, {
+      const result = invokeStudioEditorDeckMutationFinalizer(finalizeMutation, versionLabel, {
         refreshThumbnails: false,
         refreshLayersList: true,
         transaction,
@@ -324,7 +332,7 @@
       });
     }
     if (typeof options.finalizeMutation === 'function') {
-      return options.finalizeMutation(versionLabel, {
+      return invokeStudioEditorDeckMutationFinalizer(options.finalizeMutation, versionLabel, {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });

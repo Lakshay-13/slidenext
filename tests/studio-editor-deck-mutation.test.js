@@ -212,6 +212,18 @@ test('finalizeStudioEditorSelectionToggleMutation propagates explicit persistenc
   assert.equal(result, false);
 });
 
+test('finalizeStudioEditorSelectionToggleMutation contains thrown persistence failures', () => {
+  assert.equal(deckMutation.finalizeStudioEditorSelectionToggleMutation(
+    'Auto: Locked Element',
+    {},
+    {
+      finalizeMutation: () => {
+        throw new Error('selection finalization failed');
+      }
+    }
+  ), false);
+});
+
 test('finalizeStudioEditorInsertedElements selects before persisting inserted content', () => {
   const calls = [];
   const insertedElements = [{ id: 'node-1' }];
@@ -264,6 +276,23 @@ test('finalizeStudioEditorInsertedElements propagates rejected persistence', () 
   assert.equal(result, false);
 });
 
+test('finalizeStudioEditorInsertedElements contains thrown persistence failures', () => {
+  assert.equal(deckMutation.finalizeStudioEditorInsertedElements(
+    [{ id: 'node-1' }],
+    'Auto: Pasted Element',
+    null,
+    null,
+    {
+      selectionApi: {
+        selectAllStudioElements: (elements) => ({ selectedElements: elements })
+      },
+      finalizeMutation: () => {
+        throw new Error('inserted element finalization failed');
+      }
+    }
+  ), false);
+});
+
 test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
@@ -309,6 +338,18 @@ test('finalizeStudioEditorLayerOrderMutation propagates fallback history rejecti
       throw new Error('autosave should not run');
     }
   }), false);
+});
+
+test('finalizeStudioEditorLayerOrderMutation contains thrown persistence failures', () => {
+  assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation(
+    'Auto: Layer Order',
+    {},
+    {
+      finalizeMutation: () => {
+        throw new Error('layer finalization failed');
+      }
+    }
+  ), false);
 });
 
 test('finalizeStudioEditorLayerOrderMutation converts thrown fallback history to rejection', () => {
@@ -382,6 +423,19 @@ test('finalizeStudioEditorWallpaperMutation converts thrown fallback history to 
       },
       triggerAutoSave: () => {
         throw new Error('autosave should not run');
+      }
+    }
+  ), false);
+});
+
+test('finalizeStudioEditorWallpaperMutation contains thrown persistence failures', () => {
+  assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Background',
+    { id: 'tx-wallpaper' },
+    null,
+    {
+      finalizeMutation: () => {
+        throw new Error('wallpaper finalization failed');
       }
     }
   ), false);
