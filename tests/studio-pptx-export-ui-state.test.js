@@ -96,7 +96,13 @@ test('exportPptx posts the canonical deck and downloads the server response', as
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const statuses = [];
-  const button = { disabled: false };
+  const button = {
+    disabled: false,
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
   const context = {
     currentPresentationUrl: '/presentations/demo/index.html',
     currentTitle: 'Demo deck',
@@ -119,6 +125,7 @@ test('exportPptx posts the canonical deck and downloads the server response', as
     SlideNextStudioPptxExport: {
       exportStudioPptx(options) {
         calls.push(['exportStudioPptx', options]);
+        assert.deepEqual(button.attributes, { 'aria-busy': 'true', 'aria-disabled': 'true' });
         options.onProgress({ phase: 'response', completed: 2, total: 4, percent: 50 });
         return Promise.resolve({ success: true, filename: 'Demo_deck.pptx', warningCount: 2 });
       }
@@ -132,6 +139,7 @@ test('exportPptx posts the canonical deck and downloads the server response', as
 
   assert.equal(await context.exportPptx(), true);
   assert.equal(button.disabled, false);
+  assert.deepEqual(button.attributes, { 'aria-busy': 'false', 'aria-disabled': 'false' });
   assert.deepEqual(statuses, [
     ['exporting', undefined],
     ['exporting', { phase: 'response', completed: 2, total: 4, percent: 50 }],

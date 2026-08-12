@@ -50,7 +50,13 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];
   const statusCalls = [];
-  const exportButton = { disabled: false };
+  const exportButton = {
+    disabled: false,
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
   const context = {
     SlideNextStudioPdfExport: {
       openStudioPdfPrintWindow(options) {
@@ -92,12 +98,19 @@ test('exportPdf delegates a ready deck to the shared browser print exporter', ()
   ]);
   assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-printing', 'pdf-exported']);
   assert.equal(exportButton.disabled, false);
+  assert.deepEqual(exportButton.attributes, { 'aria-busy': 'false', 'aria-disabled': 'false' });
 });
 
 test('exportPdf keeps the button disabled until the async print flow completes', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const statusCalls = [];
-  const exportButton = { disabled: false };
+  const exportButton = {
+    disabled: false,
+    attributes: {},
+    setAttribute(name, value) {
+      this.attributes[name] = value;
+    }
+  };
   let printOptions;
   const context = {
     SlideNextStudioPdfExport: {
@@ -129,11 +142,13 @@ test('exportPdf keeps the button disabled until the async print flow completes',
 
   assert.equal(context.exportPdf(), true);
   assert.equal(exportButton.disabled, true);
+  assert.deepEqual(exportButton.attributes, { 'aria-busy': 'true', 'aria-disabled': 'true' });
   assert.deepEqual(statusCalls, ['exporting-pdf']);
 
   printOptions.onPrint();
 
   assert.equal(exportButton.disabled, false);
+  assert.deepEqual(exportButton.attributes, { 'aria-busy': 'false', 'aria-disabled': 'false' });
   assert.deepEqual(statusCalls, ['exporting-pdf', 'pdf-exported']);
 });
 

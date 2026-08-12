@@ -26,6 +26,15 @@
     }
   }
 
+  function setStudioExportButtonState(button, busy, disabled) {
+    if (!button) return;
+    button.disabled = disabled;
+    if (typeof button.setAttribute === 'function') {
+      button.setAttribute('aria-busy', busy ? 'true' : 'false');
+      button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    }
+  }
+
   function resolveStudioExportCanonicalDeck(options = {}) {
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
@@ -191,14 +200,16 @@
         ? documentRef.getElementById('exportPdfBtn')
         : null;
       const restoreExportButton = () => {
-        if (exportButton) {
-          exportButton.disabled = !resolveReadyState().canUseDeckActions;
-        }
+        setStudioExportButtonState(
+          exportButton,
+          false,
+          !resolveReadyState().canUseDeckActions
+        );
       };
 
       if (typeof pdfExport.exportStudioPdf === 'function') {
         return (async () => {
-          if (exportButton) exportButton.disabled = true;
+          setStudioExportButtonState(exportButton, true, true);
           setStatus('exporting-pdf');
           try {
             const result = await pdfExport.exportStudioPdf({
@@ -233,7 +244,7 @@
       if (!html) return failPdfExport();
 
       let printFlowAccepted = false;
-      if (exportButton) exportButton.disabled = true;
+      setStudioExportButtonState(exportButton, true, true);
       setStatus('exporting-pdf');
       try {
         let pageDimensions = {};
@@ -350,7 +361,7 @@
       const exportButton = documentRef && typeof documentRef.getElementById === 'function'
         ? documentRef.getElementById('exportPptxBtn')
         : null;
-      if (exportButton) exportButton.disabled = true;
+      setStudioExportButtonState(exportButton, true, true);
       setStatus('exporting');
 
       try {
@@ -386,9 +397,11 @@
         else setStatus('export-failed');
         return false;
       } finally {
-        if (exportButton) {
-          exportButton.disabled = !resolveReadyState().canUseDeckActions;
-        }
+        setStudioExportButtonState(
+          exportButton,
+          false,
+          !resolveReadyState().canUseDeckActions
+        );
       }
     };
   }
