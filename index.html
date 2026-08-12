@@ -8082,7 +8082,7 @@
         : isElementHidden;
       return visibilityState.syncStudioVisibilityToolbarState({
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         isHidden: readHiddenState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
