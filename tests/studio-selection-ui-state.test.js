@@ -407,6 +407,42 @@ test('getCommittedSelectedEditorElementIds delegates to shared selection', () =>
   assert.deepEqual(delegatedArgs[2], { doc: iframeDoc, selectionOptions: true });
 });
 
+test('getCommittedSelectedEditorElementIds resolves stored IDs within the active slide', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const activeSlide = {
+    contains(element) {
+      return element && element.slide === 'active';
+    }
+  };
+  const context = {
+    studioEditorStateBridge: {
+      getSelectedElementIds() {
+        return ['active-node', 'off-slide-node', 'missing-node'];
+      }
+    },
+    studioEditorElementByIdReader() {},
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getElementByEditorId(id) {
+      if (id === 'active-node') return { slide: 'active' };
+      if (id === 'off-slide-node') return { slide: 'other' };
+      return null;
+    },
+    SlideNextStudioEditorSelection: {
+      getStudioCommittedSelectedElementIds() {
+        throw new Error('legacy DOM selection path should not run');
+      }
+    }
+  };
+
+  vm.createContext(context);
+  loadGetCommittedSelectedEditorElementIds(fileContent, context);
+
+  assert.deepEqual(context.getCommittedSelectedEditorElementIds(iframeDoc), ['active-node']);
+});
+
 test('getCommittedSelectedEditorElementIds fails closed when the shared selection API is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {
