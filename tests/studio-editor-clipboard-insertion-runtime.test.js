@@ -49,7 +49,11 @@ test('index wires clipboard insertion through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorClipboardInsertionRuntime\.createStudioEditorClipboardInsertionRuntime\(/
+    /<script src="\/shared\/studio-editor-clipboard-insertion-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorClipboardInsertionShellRuntime\.createStudioEditorClipboardInsertionShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
