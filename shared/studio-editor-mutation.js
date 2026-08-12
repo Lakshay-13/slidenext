@@ -197,11 +197,11 @@
 
     return function finalizeStudioSlideMutation(versionLabel, transaction = null, canonicalDeck = null) {
       if (canonicalDeck) {
-        saveHistoryState(false, transaction, canonicalDeck);
+        if (saveHistoryState(false, transaction, canonicalDeck) === false) return false;
       } else {
-        saveHistoryState(false, transaction);
+        if (saveHistoryState(false, transaction) === false) return false;
       }
-      triggerAutoSave();
+      if (triggerAutoSave() === false) return false;
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
       }

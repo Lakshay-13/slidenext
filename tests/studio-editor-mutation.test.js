@@ -569,6 +569,20 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
   assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
 });
 
+test('createStudioSlideMutationPersistenceFinalizer propagates rejected history', () => {
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState: () => false,
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    },
+    triggerAutoVersion: () => {
+      throw new Error('versioning should not run');
+    }
+  });
+
+  assert.equal(finalizeSlideMutation('Auto: Rejected', { id: 'tx' }), false);
+});
+
 test('createStudioSlideMutationRestoreStateCapturer preserves view state after saving history', () => {
   const iframeDoc = { id: 'editor-doc' };
   const calls = [];

@@ -56,6 +56,17 @@ test('createStudioEditorSlideMutationPersistenceFinalizer preserves the local fa
   ]);
 });
 
+test('createStudioEditorSlideMutationPersistenceFinalizer propagates rejected fallback history', () => {
+  const finalize = slideMutation.createStudioEditorSlideMutationPersistenceFinalizer({
+    saveHistoryState: () => false,
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  });
+
+  assert.equal(finalize('Auto: Rejected', { kind: 'transaction' }), false);
+});
+
 test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide and selection fallback', () => {
   const calls = [];
   const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
