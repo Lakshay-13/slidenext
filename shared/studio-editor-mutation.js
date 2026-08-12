@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorMutation = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
   function isStudioCanonicalDeckLike(value) {
     return !!value
       && typeof value === 'object'
@@ -26,10 +29,11 @@
     }
   }
 
-  function isStudioHistoryCaptureFailure(value) {
-    return value === false
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
-  }
 
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
