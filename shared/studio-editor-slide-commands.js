@@ -376,10 +376,24 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : () => {};
-    if (canonicalDeckAfterReorder) {
-      finalizeMutation('Auto: Reordered Slides', mutation.transaction, canonicalDeckAfterReorder);
-    } else {
-      finalizeMutation('Auto: Reordered Slides', mutation.transaction);
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    const finalized = canonicalDeckAfterReorder
+      ? finalizeMutation('Auto: Reordered Slides', mutation.transaction, canonicalDeckAfterReorder)
+      : finalizeMutation('Auto: Reordered Slides', mutation.transaction);
+    if (finalized === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (typeof options.generateThumbnails === 'function') {
+        options.generateThumbnails();
+      }
+      if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
+        options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
+          preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
+          fallbackIndex: Math.min(fromIndex, Math.max(0, getSlides(iframeDoc).length - 1))
+        });
+      }
+      return false;
     }
     return true;
   }

@@ -44,6 +44,7 @@ test('slide reorder controller assembles canonical and persistence dependencies'
     applyReorder: () => ({ didApply: true }),
     generateThumbnails: () => calls.push(['thumbnails']),
     restoreDeckViewAfterSlideMutation: () => calls.push(['restore']),
+    rollbackMutation: () => calls.push(['rollback']),
     finalizeMutation: () => calls.push(['finalize'])
   });
 
@@ -64,6 +65,7 @@ test('slide reorder controller assembles canonical and persistence dependencies'
     calls[1][3].buildCanonicalReorderSlideBaseline(),
     canonicalBuilders.buildCanonicalReorderSlideBaseline()
   );
+  assert.equal(typeof calls[1][3].rollbackMutation, 'function');
 });
 
 test('slide reorder controller fails closed without a reorder command', () => {

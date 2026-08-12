@@ -587,6 +587,56 @@ test('reorderStudioSlideNodes fails closed before DOM reorder when canonical reo
   assert.equal(reorderCalls, 0);
 });
 
+test('reorderStudioSlideNodes rolls back DOM and view state when persistence rejects', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1', nextSibling: null };
+  const secondSlide = { id: 'slide-2', nextSibling: null };
+  let slides = [firstSlide, secondSlide];
+  const calls = [];
+
+  const result = slideCommands.reorderStudioSlideNodes(0, 1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    buildCanonicalReorderSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    buildCanonicalReorderSlideDeck: () => ({ slides: [{ id: 'slide-2' }, { id: 'slide-1' }] }),
+    captureSlideMutationState: () => ({
+      preservedActiveSlideId: 'slide-1',
+      preservedSelectionIds: ['element-1']
+    }),
+    applyReorder: () => {
+      slides = [secondSlide, firstSlide];
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    finalizeMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(sourceDoc, doc);
+      slides = [firstSlide, secondSlide];
+      calls.push('rollbackMutation');
+    },
+    generateThumbnails: () => calls.push('generateThumbnails'),
+    restoreDeckViewAfterSlideMutation: (sourceDoc, selectionIds, options) => {
+      assert.equal(sourceDoc, doc);
+      assert.deepEqual(selectionIds, ['element-1']);
+      assert.equal(options.preservedActiveSlideId, 'slide-1');
+      assert.equal(options.fallbackIndex, calls.includes('rollbackMutation') ? 0 : 1);
+      calls.push('restoreDeckViewAfterSlideMutation');
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(slides, [firstSlide, secondSlide]);
+  assert.deepEqual(calls, [
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation',
+    'rollbackMutation',
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation'
+  ]);
+});
+
 test('applyStudioSlideInsertionWithTransaction delegates the shared slide mutation and preserves options', () => {
   const container = { id: 'slides-container' };
   const slideNode = { id: 'slide-2' };

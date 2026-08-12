@@ -35,7 +35,8 @@
       buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
       getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
       generateThumbnails: options.generateThumbnails,
-      finalizeMutation: options.finalizeMutation
+      finalizeMutation: options.finalizeMutation,
+      rollbackMutation: options.rollbackMutation
     };
     const slideReorderController = reorderApi
       ? reorderApi.createStudioEditorSlideReorderController({

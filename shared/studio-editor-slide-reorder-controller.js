@@ -57,6 +57,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
 
     function reorder(fromIdx, toIdx) {
       if (!reorderStudioSlideNodes) return false;
@@ -91,7 +94,8 @@
         applyReorder,
         generateThumbnails,
         restoreDeckViewAfterSlideMutation,
-        finalizeMutation
+        finalizeMutation,
+        rollbackMutation
       });
     }
 

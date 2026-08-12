@@ -111,6 +111,16 @@ function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadRollbackEditorSlideMutation(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {',
+    '\n\n    // Swap node indices in iframe and re-render'
+  );
+  context.SlideNextStudioEditorTransaction = studioTransaction;
+  vm.runInContext(helperSource, context);
+}
+
 function installSlideReorderController(context) {
   context.studioEditorSlideReorderController = reorderController.createStudioEditorSlideReorderController({
     slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
@@ -269,6 +279,39 @@ test('finalizeSlideMutationPersistence saves, autosaves, and versions slide chan
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Added Slide']
   ]);
+});
+
+test('rollbackEditorSlideMutation restores the slide container markup transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const container = { id: 'slidesContainer', innerHTML: '<div>after</div>' };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return container;
+    }
+  };
+  const context = {
+    getIframeDoc: () => iframeDoc,
+    makeElementsHoverable(element) {
+      element.hoverable = true;
+    },
+    getElementByEditorId() {
+      return null;
+    }
+  };
+  vm.createContext(context);
+  loadRollbackEditorSlideMutation(fileContent, context);
+
+  const transaction = studioTransaction.createStudioMarkupTransaction([{
+    element: container,
+    elementId: 'slides-container',
+    before: '<div>before</div>',
+    after: '<div>after</div>'
+  }]);
+
+  assert.equal(context.rollbackEditorSlideMutation(transaction, iframeDoc), true);
+  assert.equal(container.innerHTML, '<div>before</div>');
+  assert.equal(container.hoverable, true);
 });
 
 test('finalizeSlideMutationPersistence delegates lifecycle ordering to the shared mutation module', () => {

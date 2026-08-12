@@ -35,6 +35,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     alert() {},
     applyDeletion() {},
     restoreDeckViewAfterSlideMutation() {},
+    rollbackMutation() {},
     getActiveSlide() {},
     sanitizeDuplicatedSubtree() {},
     assignSlideId() {},
@@ -60,6 +61,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.deepEqual(result, controllers);
   assert.equal(calls[0][1].canonicalDeckApi, callbacks.canonicalDeckApi);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
+  assert.equal(calls[0][1].rollbackMutation, callbacks.rollbackMutation);
   assert.equal(calls[1][1].createBlankSlide, callbacks.createBlankSlide);
   assert.equal(calls[1][1].setActiveSlide, callbacks.setActiveSlide);
   assert.equal(calls[2][1].applyDeletion, callbacks.applyDeletion);

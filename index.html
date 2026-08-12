@@ -2533,6 +2533,7 @@
           alert: typeof alert === 'function' ? alert : null,
           applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
+          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           sanitizeDuplicatedSubtree: (...args) => sanitizeDuplicatedSubtree(...args),
           assignSlideId: (...args) => assignEditorSlideId(...args),
@@ -5626,6 +5627,43 @@
         containerElementId: options.containerElementId,
         getElementId: options.getElementId
       });
+    }
+
+    function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      try {
+        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => {
+            const resolvedDoc = sourceDoc || getIframeDoc();
+            if (elementId === 'slides-container') {
+              return resolvedDoc && typeof resolvedDoc.getElementById === 'function'
+                ? resolvedDoc.getElementById('slidesContainer')
+                : null;
+            }
+            return typeof getElementByEditorId === 'function'
+              ? getElementByEditorId(elementId, resolvedDoc)
+              : null;
+          },
+          applyMarkupState: (element, markup) => {
+            if (!element || typeof markup !== 'string') return false;
+            element.innerHTML = markup;
+            if (typeof makeElementsHoverable === 'function') {
+              makeElementsHoverable(element);
+            }
+            return true;
+          }
+        });
+        return !!(rollbackResult && rollbackResult.didApply);
+      } catch (error) {
+        return false;
+      }
     }
 
     // Swap node indices in iframe and re-render
