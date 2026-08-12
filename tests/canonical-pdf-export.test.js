@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fsSync = require('node:fs');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
@@ -110,6 +111,39 @@ test('legacy PDF CLI accepts a direct HTML deck path', { skip: !pdfScript.resolv
     const pdfBuffer = await fs.readFile(outputPath);
     assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
     assert.equal(pdfScript.countPdfPages(pdfBuffer), 1);
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
+
+test('legacy PDF CLI preserves one page per slide for every bundled deck', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
+  const presentationsDir = path.join(__dirname, '..', 'presentations');
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-bundled-pdf-'));
+  const entries = await fs.readdir(presentationsDir, { withFileTypes: true });
+  const deckPaths = entries
+    .filter(entry => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map(entry => path.join(presentationsDir, entry.name, 'index.html'))
+    .filter(inputPath => {
+      try {
+        return fsSync.statSync(inputPath).isFile();
+      } catch (error) {
+        return false;
+      }
+    });
+
+  try {
+    assert.ok(deckPaths.length > 0);
+    for (const inputPath of deckPaths) {
+      const html = await fs.readFile(inputPath, 'utf8');
+      const expectedSlideCount = pdfScript.countLegacyHtmlSlides(html);
+      const outputPath = path.join(temporaryDir, `${path.basename(path.dirname(inputPath))}.pdf`);
+
+      assert.ok(expectedSlideCount > 0, `${inputPath} has no legacy slides`);
+      assert.equal(await pdfScript.main([inputPath, outputPath]), 0);
+      const pdfBuffer = await fs.readFile(outputPath);
+      assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-', inputPath);
+      assert.equal(pdfScript.countPdfPages(pdfBuffer), expectedSlideCount, inputPath);
+    }
   } finally {
     await fs.rm(temporaryDir, { recursive: true, force: true });
   }
