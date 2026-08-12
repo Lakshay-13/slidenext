@@ -35,6 +35,17 @@
     }
   }
 
+  function getStudioSlideCommandDocument(options = {}) {
+    const getIframeDoc = typeof options.getIframeDoc === 'function'
+      ? options.getIframeDoc
+      : () => null;
+    try {
+      return getIframeDoc() || null;
+    } catch (err) {
+      return null;
+    }
+  }
+
   function prepareStudioSlideDuplication(sourceSlide, options = {}) {
     if (!sourceSlide || typeof sourceSlide.cloneNode !== 'function') {
       return null;
@@ -69,10 +80,7 @@
   }
 
   function duplicateStudioSlideNode(options = {}) {
-    const getIframeDoc = typeof options.getIframeDoc === 'function'
-      ? options.getIframeDoc
-      : () => null;
-    const iframeDoc = getIframeDoc();
+    const iframeDoc = getStudioSlideCommandDocument(options);
     const resolveInsertionActionState = typeof options.resolveInsertionActionState === 'function'
       ? options.resolveInsertionActionState
       : () => ({ canDuplicateSlide: false });
@@ -190,10 +198,7 @@
   }
 
   function addStudioSlideNode(options = {}) {
-    const getIframeDoc = typeof options.getIframeDoc === 'function'
-      ? options.getIframeDoc
-      : () => null;
-    const iframeDoc = getIframeDoc();
+    const iframeDoc = getStudioSlideCommandDocument(options);
     const resolveInsertionActionState = typeof options.resolveInsertionActionState === 'function'
       ? options.resolveInsertionActionState
       : () => ({ canAddSlide: false });
@@ -310,10 +315,7 @@
   }
 
   function deleteStudioSlideNode(index, options = {}) {
-    const getIframeDoc = typeof options.getIframeDoc === 'function'
-      ? options.getIframeDoc
-      : () => null;
-    const iframeDoc = getIframeDoc();
+    const iframeDoc = getStudioSlideCommandDocument(options);
     if (!iframeDoc) return false;
 
     const getSlideContainer = typeof options.getSlideContainer === 'function'
@@ -418,10 +420,7 @@
   }
 
   function reorderStudioSlideNodes(fromIndex, toIndex, options = {}) {
-    const getIframeDoc = typeof options.getIframeDoc === 'function'
-      ? options.getIframeDoc
-      : () => null;
-    const iframeDoc = getIframeDoc();
+    const iframeDoc = getStudioSlideCommandDocument(options);
     if (!iframeDoc) return false;
 
     const getSlideContainer = typeof options.getSlideContainer === 'function'

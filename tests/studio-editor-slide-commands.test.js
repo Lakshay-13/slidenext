@@ -4,6 +4,19 @@ const assert = require('node:assert/strict');
 const slideCommands = require('../shared/studio-editor-slide-commands.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+test('slide mutations fail closed when the editor document accessor throws', () => {
+  const options = {
+    getIframeDoc() {
+      throw new Error('editor document unavailable');
+    }
+  };
+
+  assert.equal(slideCommands.duplicateStudioSlideNode(options), false);
+  assert.equal(slideCommands.addStudioSlideNode(options), false);
+  assert.equal(slideCommands.deleteStudioSlideNode(0, options), false);
+  assert.equal(slideCommands.reorderStudioSlideNodes(0, 1, options), false);
+});
+
 test('prepareStudioSlideDuplication sanitizes, re-identifies, and decorates a cloned slide', () => {
   const duplicateSlide = {
     classList: {
