@@ -161,7 +161,11 @@
       if (typeof replaceSourceCss !== 'function') {
         return { success: false, error: 'Source CSS editor is unavailable' };
       }
-      return applySourceHtml(replaceSourceCss(buildSourceHtml(), sourceCss));
+      try {
+        return applySourceHtml(replaceSourceCss(buildSourceHtml(), sourceCss));
+      } catch (error) {
+        return { success: false, error: 'Source CSS could not be applied' };
+      }
     };
   }
 

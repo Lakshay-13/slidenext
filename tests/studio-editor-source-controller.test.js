@@ -185,6 +185,23 @@ test('source CSS applier fails closed when source replacement is unavailable', (
   assert.equal(buildCalls, 0);
 });
 
+test('source CSS applier converts source pipeline exceptions into a controlled failure', () => {
+  const applySourceCss = sourceController.createStudioEditorSourceCssApplier({
+    buildSourceHtml() {
+      throw new Error('source builder failed');
+    },
+    resolveReplaceSourceCss: () => () => '<html>updated</html>',
+    applySourceHtml() {
+      throw new Error('apply failed');
+    }
+  });
+
+  assert.deepEqual(applySourceCss('.slide { color: blue; }'), {
+    success: false,
+    error: 'Source CSS could not be applied'
+  });
+});
+
 function createController(overrides = {}) {
   const calls = [];
   const previewApi = {
