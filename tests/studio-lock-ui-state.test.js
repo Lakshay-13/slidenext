@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const studioElementState = require('../shared/studio-element-state.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -64,6 +65,15 @@ function loadLockMutationHelper(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadLockVisibilityRollbackHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorLockVisibilityMutation(transaction, sourceDoc = getIframeDoc()) {',
+    'function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function installLockVisibilityController(context) {
   context.studioEditorLockVisibilityController = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: context.SlideNextStudioEditorLockState,
@@ -86,7 +96,8 @@ function installLockVisibilityController(context) {
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     applyLockMutation: context.applyEditorLockMutationWithTransaction,
     applyVisibilityMutation: context.applyEditorVisibilityMutationWithTransaction,
-    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation
+    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation,
+    rollbackSelectionToggleMutation: context.rollbackEditorLockVisibilityMutation
   });
 }
 
@@ -859,4 +870,32 @@ test('toggleSelectedElementsLockState delegates lock application to the shared l
     refreshThumbnails: false,
     transaction: { type: 'dataset' }
   }]);
+});
+
+test('rollbackEditorLockVisibilityMutation reverses a rejected lock transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'iframe-doc' };
+  const target = { dataset: { editorId: 'node-1', editorLocked: 'true' } };
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioElementState: studioElementState,
+    getIframeDoc() {
+      return documentRef;
+    },
+    getElementByEditorId(editorId, sourceDoc) {
+      return editorId === 'node-1' && sourceDoc === documentRef ? target : null;
+    }
+  };
+
+  vm.createContext(context);
+  loadLockVisibilityRollbackHelper(fileContent, context);
+  const mutation = studioTransaction.createStudioDatasetTransaction([{
+    element: target,
+    property: 'editorLocked',
+    before: null,
+    after: 'true'
+  }]);
+
+  assert.equal(context.rollbackEditorLockVisibilityMutation(mutation, documentRef), true);
+  assert.equal(target.dataset.editorLocked, undefined);
 });

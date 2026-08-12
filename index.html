@@ -2789,7 +2789,8 @@
           ),
           applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
-          finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args)
+          finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
+          rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
         })
       : null;
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
@@ -8831,6 +8832,42 @@
         getVisibilityState,
         getElementId
       });
+    }
+
+    function rollbackEditorLockVisibilityMutation(transaction, sourceDoc = getIframeDoc()) {
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      const elementStateApi = typeof SlideNextStudioElementState !== 'undefined'
+        ? SlideNextStudioElementState
+        : null;
+      const applyVisibilityState = elementStateApi
+        && typeof elementStateApi.applyStudioElementVisibilityState === 'function'
+        ? (element, state) => elementStateApi.applyStudioElementVisibilityState(element, state)
+        : null;
+      try {
+        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => {
+            if (typeof elementId === 'string'
+              && elementId.startsWith('slide:')
+              && typeof getSlideById === 'function') {
+              return getSlideById(elementId.slice('slide:'.length), sourceDoc || getIframeDoc());
+            }
+            return typeof getElementByEditorId === 'function'
+              ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
+              : null;
+          },
+          ...(applyVisibilityState ? { applyVisibilityState } : {})
+        });
+        return !!(rollbackResult && rollbackResult.didApply);
+      } catch (error) {
+        return false;
+      }
     }
 
     function toggleSelectedElementsVisibility(options = {}) {

@@ -65,6 +65,15 @@ function loadVisibilityMutationHelper(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadLockVisibilityRollbackHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorLockVisibilityMutation(transaction, sourceDoc = getIframeDoc()) {',
+    'function toggleSelectedElementsVisibility(options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function installLockVisibilityController(context) {
   context.studioEditorLockVisibilityController = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: context.SlideNextStudioEditorLockState,
@@ -88,7 +97,8 @@ function installLockVisibilityController(context) {
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     applyLockMutation: context.applyEditorLockMutationWithTransaction,
     applyVisibilityMutation: context.applyEditorVisibilityMutationWithTransaction,
-    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation
+    finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation,
+    rollbackSelectionToggleMutation: context.rollbackEditorLockVisibilityMutation
   });
 }
 
@@ -851,4 +861,61 @@ test('toggleSelectedElementsVisibility delegates visibility application to the s
     refreshThumbnails: false,
     transaction: { type: 'visibility' }
   }]);
+});
+
+test('rollbackEditorLockVisibilityMutation reverses a rejected visibility transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'iframe-doc' };
+  const classes = new Set();
+  const attributes = {};
+  const target = {
+    dataset: { editorId: 'node-1' },
+    style: {
+      display: '',
+      removeProperty(property) {
+        this[property] = '';
+      }
+    },
+    hidden: false,
+    classList: {
+      contains: (name) => classes.has(name),
+      add: (name) => classes.add(name),
+      remove: (name) => classes.delete(name)
+    },
+    getAttribute: (name) => Object.prototype.hasOwnProperty.call(attributes, name)
+      ? attributes[name]
+      : null,
+    setAttribute: (name, value) => {
+      attributes[name] = String(value);
+    },
+    removeAttribute: (name) => {
+      delete attributes[name];
+    }
+  };
+  const before = studioElementState.getStudioElementVisibilityState(target);
+  studioElementState.setStudioElementHiddenState(target, true);
+  const after = studioElementState.getStudioElementVisibilityState(target);
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    SlideNextStudioElementState: studioElementState,
+    getIframeDoc() {
+      return documentRef;
+    },
+    getElementByEditorId(editorId, sourceDoc) {
+      return editorId === 'node-1' && sourceDoc === documentRef ? target : null;
+    }
+  };
+
+  vm.createContext(context);
+  loadLockVisibilityRollbackHelper(fileContent, context);
+  const mutation = studioTransaction.createStudioVisibilityTransaction([{
+    element: target,
+    before,
+    after
+  }]);
+
+  assert.equal(context.rollbackEditorLockVisibilityMutation(mutation, documentRef), true);
+  assert.equal(target.hidden, false);
+  assert.equal(target.dataset.editorHidden, undefined);
+  assert.equal(target.style.display, '');
 });

@@ -43,7 +43,8 @@
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyLockMutation: options.applyLockMutation,
           applyVisibilityMutation: options.applyVisibilityMutation,
-          finalizeSelectionToggleMutation: options.finalizeSelectionToggleMutation
+          finalizeSelectionToggleMutation: options.finalizeSelectionToggleMutation,
+          rollbackSelectionToggleMutation: options.rollbackSelectionToggleMutation
         })
       : null;
 

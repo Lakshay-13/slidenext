@@ -162,6 +162,49 @@ test('lock and visibility toggles do not mutate when finalization is unavailable
   assert.equal(visibilityCalls, 0);
 });
 
+test('lock and visibility toggles roll back when finalization rejects the mutation', () => {
+  const documentRef = { id: 'doc' };
+  const rollbackCalls = [];
+  const lockTransaction = { id: 'lock-tx' };
+  const visibilityTransaction = { id: 'visibility-tx' };
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements) {
+        return {
+          didChange: true,
+          selection: elements,
+          shouldLock: true,
+          versionLabel: 'Lock'
+        };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements) {
+        return {
+          didChange: true,
+          selection: elements,
+          shouldHide: true,
+          versionLabel: 'Hide'
+        };
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyLockMutation: () => ({ didApply: true, transaction: lockTransaction }),
+    applyVisibilityMutation: () => ({ didApply: true, transaction: visibilityTransaction }),
+    finalizeSelectionToggleMutation: () => false,
+    rollbackSelectionToggleMutation: (...args) => rollbackCalls.push(args)
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.deepEqual(rollbackCalls, [
+    [lockTransaction, documentRef],
+    [visibilityTransaction, documentRef]
+  ]);
+});
+
 test('lock toggle fails closed when canonical builder construction throws', () => {
   let lockCalls = 0;
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({

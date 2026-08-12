@@ -79,6 +79,9 @@
     const finalizeSelectionToggleMutation = typeof options.finalizeSelectionToggleMutation === 'function'
       ? options.finalizeSelectionToggleMutation
       : null;
+    const rollbackSelectionToggleMutation = typeof options.rollbackSelectionToggleMutation === 'function'
+      ? options.rollbackSelectionToggleMutation
+      : null;
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
@@ -270,11 +273,18 @@
         }
       );
       if (!mutation || !mutation.didApply) return false;
-      return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
+      const finalizeResult = finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
         doc,
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
+      if (finalizeResult === false) {
+        if (rollbackSelectionToggleMutation) {
+          rollbackSelectionToggleMutation(mutation.transaction, doc);
+        }
+        return false;
+      }
+      return finalizeResult;
     }
 
     function toggleVisibility(options = {}) {
@@ -332,12 +342,19 @@
         }
       );
       if (!mutation || !mutation.didApply) return false;
-      return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
+      const finalizeResult = finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
         ...options,
         doc,
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
+      if (finalizeResult === false) {
+        if (rollbackSelectionToggleMutation) {
+          rollbackSelectionToggleMutation(mutation.transaction, doc);
+        }
+        return false;
+      }
+      return finalizeResult;
     }
 
     return {

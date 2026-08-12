@@ -36,7 +36,8 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
     getCanonicalDeckBaseline: () => ({}),
     applyLockMutation: () => ({}),
     applyVisibilityMutation: () => ({}),
-    finalizeSelectionToggleMutation: () => {}
+    finalizeSelectionToggleMutation: () => {},
+    rollbackSelectionToggleMutation: () => {}
   };
 
   assert.deepEqual(
@@ -49,6 +50,7 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].applyLockMutation, options.applyLockMutation);
   assert.equal(calls[0].finalizeSelectionToggleMutation, options.finalizeSelectionToggleMutation);
+  assert.equal(calls[0].rollbackSelectionToggleMutation, options.rollbackSelectionToggleMutation);
 });
 
 test('index wires lock and visibility through the runtime module', () => {
@@ -65,5 +67,10 @@ test('index wires lock and visibility through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorLockVisibilityController\.createStudioEditorLockVisibilityController\(/
+  );
+  assert.match(fileContent, /function rollbackEditorLockVisibilityMutation\(/);
+  assert.match(
+    fileContent,
+    /rollbackSelectionToggleMutation: \(\.\.\.args\) => rollbackEditorLockVisibilityMutation\(\.\.\.args\)/
   );
 });
