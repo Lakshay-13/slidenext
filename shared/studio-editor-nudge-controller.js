@@ -59,6 +59,7 @@
       if (!buildNudgedLayout) return false;
       const nudgeResult = buildNudgedLayout(nudgeLayoutItems, { dx, dy }, slideBounds);
       if (!nudgeResult || !nudgeResult.didChange) return false;
+      if (!finalizeDeckMutation) return false;
 
       const getNudgeElementId = (element) => assignElementId(element);
       const canonicalLayoutBuilder = canonicalLayoutApi
