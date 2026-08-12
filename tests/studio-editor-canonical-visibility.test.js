@@ -133,6 +133,25 @@ test('buildStudioCanonicalVisibilityBaseline fails closed when a compatibility r
   assert.equal(result, null);
 });
 
+test('buildStudioCanonicalVisibilityBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalVisibilityDeck applies hidden and locked patches without mutating the source', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalVisibility.buildStudioCanonicalVisibilityDeck(
