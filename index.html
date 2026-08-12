@@ -7642,14 +7642,26 @@
 
     function selectElement(el, options = {}) {
       if (typeof studioEditorElementSelector !== 'function') return false;
+      const doc = Object.prototype.hasOwnProperty.call(options, 'doc')
+        ? options.doc
+        : getIframeDoc();
       return studioEditorElementSelector({
         element: el,
-        selectedElements: getStudioSelectedElements(),
+        selectedElements: getStudioSelectedElements(doc),
         additive: options.additive,
         toggle: options.toggle,
         resolveEditableTarget,
-        getSelectionOptions: getEditorSelectionOptions,
-        commitSelectionState: commitEditorSelectionState
+        getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions({
+          ...selectionOptions,
+          doc
+        }),
+        commitSelectionState: (nextSelectionState, selectionOptions = {}) => commitEditorSelectionState(
+          nextSelectionState,
+          {
+            ...selectionOptions,
+            doc
+          }
+        )
       });
     }
 

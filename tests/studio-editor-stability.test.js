@@ -1282,7 +1282,9 @@ test('selectElement delegates selection orchestration to the shared selection mo
     '\n\n    function deselectElement() {'
   );
   const selectedElements = [{ id: 'node-1' }];
+  const iframeDoc = { id: 'iframe-doc' };
   const calls = [];
+  let committedArgs = null;
   const context = {
     SlideNextStudioEditorSelection: {
       selectStudioElement(options) {
@@ -1291,22 +1293,37 @@ test('selectElement delegates selection orchestration to the shared selection mo
       }
     },
     selectedElements,
-    resolveEditableTarget() {},
-    getEditorSelectionOptions() {
-      return { marker: 'selection-options' };
+    getStudioSelectedElements(currentDoc) {
+      assert.equal(currentDoc, iframeDoc);
+      return selectedElements;
     },
-    commitEditorSelectionState() {}
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    resolveEditableTarget() {},
+    getEditorSelectionOptions(options) {
+      return { marker: 'selection-options', doc: options.doc };
+    },
+    commitEditorSelectionState(...args) {
+      committedArgs = args;
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(selectElementSource, context);
 
-  assert.equal(context.selectElement({ id: 'raw-node' }, { additive: true, toggle: false }), 'delegated');
+  assert.equal(
+    context.selectElement({ id: 'raw-node' }, { additive: true, toggle: false, doc: iframeDoc }),
+    'delegated'
+  );
   assert.equal(calls.length, 1);
   assert.equal(calls[0].element.id, 'raw-node');
   assert.equal(calls[0].selectedElements, selectedElements);
   assert.equal(calls[0].additive, true);
   assert.equal(calls[0].toggle, false);
+  assert.equal(calls[0].getSelectionOptions().doc, iframeDoc);
+  calls[0].commitSelectionState({ selectedElements: [] });
+  assert.equal(committedArgs[1].doc, iframeDoc);
 });
 
 test('selectElement fails closed when the shared selection module is unavailable', () => {

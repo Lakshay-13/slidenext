@@ -116,7 +116,10 @@
         consumeClickSuppression,
         shouldIgnoreTarget,
         resolveEditableTarget,
-        selectElement,
+          selectElement: (element, selectionOptions = {}) => selectElement(element, {
+            ...selectionOptions,
+            doc
+          }),
         deselectElement
       });
 
