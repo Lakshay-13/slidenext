@@ -48,6 +48,7 @@
           getPreserveSelection: options.getPreserveSelection,
           setPreserveSelection: options.setPreserveSelection,
           updateCurrentPresentationSessionState: options.updateCurrentPresentationSessionState,
+          setCurrentSlideId: options.setCurrentSlideId,
           updateActiveThumbnailCardState: options.updateActiveThumbnailCardState,
           updateInsertionActionState: options.updateInsertionActionState,
           updateZoomActionState: options.updateZoomActionState,

@@ -23,6 +23,7 @@ test('active-slide controller composes shared chrome dependencies and preserves 
     }
   };
   let currentSlideIndex = 0;
+  let currentSlideId = '';
   let preserveSelection = false;
   const controller = activeSlideController.createStudioEditorActiveSlideController({
     activeSlideView,
@@ -42,6 +43,9 @@ test('active-slide controller composes shared chrome dependencies and preserves 
     updateCurrentPresentationSessionState(nextState) {
       currentSlideIndex = nextState.slideIndex;
     },
+    setCurrentSlideId(nextValue) {
+      currentSlideId = nextValue;
+    },
     updateInsertionActionState: (doc) => calls.push(['insert', doc]),
     updateZoomActionState: (doc) => calls.push(['zoom', doc]),
     updateWallpaperActionState: (doc) => calls.push(['wallpaper', doc]),
@@ -56,6 +60,7 @@ test('active-slide controller composes shared chrome dependencies and preserves 
   assert.equal(calls[0][1], iframeDoc);
   assert.equal(calls[0][2].captureHistory, true);
   assert.equal(currentSlideIndex, 2);
+  assert.equal(currentSlideId, '');
   assert.equal(calls[1][0], 'insert');
   assert.equal(calls[2][0], 'zoom');
   assert.equal(calls[3][0], 'wallpaper');

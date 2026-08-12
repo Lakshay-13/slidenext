@@ -51,6 +51,7 @@ test('editor wiring routes active slide index consumers through the shared contr
   assert.match(fileContent, /studio-editor-slide-index-store\.js/);
   assert.match(fileContent, /studioEditorStateBridge/);
   assert.match(fileContent, /getCurrentSlideIndex: getStudioCurrentSlideIndex/);
+  assert.match(fileContent, /setCurrentSlideId: setStudioCurrentSlideId/);
   assert.doesNotMatch(fileContent, /const studioEditorSlideIndexController =/);
   assert.doesNotMatch(fileContent, /let currentSlideIndex = 0/);
   assert.doesNotMatch(fileContent, /currentSlideIndex = sessionStateUpdate\.slideIndex/);

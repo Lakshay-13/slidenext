@@ -6,6 +6,7 @@ const activeSlideView = require('../shared/studio-editor-active-slide-view.js');
 test('syncStudioActiveSlideChrome coordinates live slide chrome and history', () => {
   let currentSlideIndex = 0;
   let preserveSelectionRequest = true;
+  let currentSlideId = '';
   const calls = [];
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -52,6 +53,10 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
       currentSlideIndex = nextState.slideIndex;
       calls.push(['session', currentSlideIndex]);
     },
+    setCurrentSlideId(nextValue) {
+      currentSlideId = nextValue;
+      calls.push(['slide-id', nextValue]);
+    },
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
     }
@@ -59,10 +64,12 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
 
   assert.equal(didSync, true);
   assert.equal(currentSlideIndex, 2);
+  assert.equal(currentSlideId, 'slide-3');
   assert.equal(preserveSelectionRequest, false);
   assert.deepEqual(calls.map(call => call[0]), [
     'sync-live',
     'session',
+    'slide-id',
     'gradient',
     'tabs',
     'solid',
@@ -96,6 +103,9 @@ test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exi
       currentSlideIndex = nextState.slideIndex;
       calls.push(['session', currentSlideIndex]);
     },
+    setCurrentSlideId(nextValue) {
+      calls.push(['slide-id', nextValue]);
+    },
     updateActiveThumbnailCardState(slideId) {
       calls.push(['thumbnail', slideId]);
     },
@@ -121,6 +131,7 @@ test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exi
   assert.equal(calls[0][0], 'resolve');
   assert.deepEqual(calls.slice(1).map(call => call[0]), [
     'session',
+    'slide-id',
     'thumbnail',
     'count',
     'actions',
@@ -148,6 +159,29 @@ test('syncStudioActiveSlideChrome refreshes speaker notes for the active slide',
 
   assert.equal(didSync, true);
   assert.deepEqual(calls, [{ id: 'slide-1' }]);
+});
+
+test('syncStudioActiveSlideChrome publishes the resolved DOM slide ID', () => {
+  let slideId = '';
+
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    getCurrentSlideIndex: () => 0,
+    syncStudioActiveSlideView() {
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'dom-id' };
+    },
+    getSlideId(slide) {
+      return slide.id;
+    },
+    setCurrentSlideId(nextValue) {
+      slideId = nextValue;
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.equal(slideId, 'dom-id');
 });
 
 test('syncStudioActiveSlideChrome refreshes slide section for the active slide', () => {

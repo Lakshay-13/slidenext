@@ -18,6 +18,9 @@
     const updateCurrentPresentationSessionState = typeof options.updateCurrentPresentationSessionState === 'function'
       ? options.updateCurrentPresentationSessionState
       : () => {};
+    const setCurrentSlideId = typeof options.setCurrentSlideId === 'function'
+      ? options.setCurrentSlideId
+      : () => {};
     const updateActiveThumbnailCardState = typeof options.updateActiveThumbnailCardState === 'function'
       ? options.updateActiveThumbnailCardState
       : () => {};
@@ -78,8 +81,9 @@
         ? deckSnapshot.slides.length
         : 0;
       if (slideCount === 0) {
-        syncSpeakerNotesControl(null);
+      syncSpeakerNotesControl(null);
         syncSlideSectionControl(null);
+        setCurrentSlideId('');
         updateCurrentPresentationSessionState({ slideIndex: 0 });
         updateActiveThumbnailCardState('');
         setSlideCountLabel('0 / 0');
@@ -95,6 +99,7 @@
       syncSpeakerNotesControl(activeSlideSnapshot);
       syncSlideSectionControl(activeSlideSnapshot);
       updateCurrentPresentationSessionState({ slideIndex: activeIndex });
+      setCurrentSlideId(activeSlideId);
       updateActiveThumbnailCardState(activeSlideId);
       setSlideCountLabel(`${activeIndex + 1} / ${slideCount}`);
       refreshActionStateChrome(doc);
@@ -117,6 +122,7 @@
       setCurrentSlideIndex: (nextIndex) => {
         updateCurrentPresentationSessionState({ slideIndex: nextIndex });
       },
+      setCurrentSlideId,
       updateActiveThumbnailCardState,
       setSlideCountLabel,
       deselectElement: options.deselectElement,
@@ -140,6 +146,23 @@
       ? canonicalSlides[resolveActiveSlideIndex(canonicalDeckSnapshot, getCurrentSlideIndex())] || null
       : null;
     const activeSlideMetadata = canonicalActiveSlide || activeSlide;
+    let activeSlideId = canonicalActiveSlide && canonicalActiveSlide.id
+      ? canonicalActiveSlide.id
+      : '';
+    if (activeSlide) {
+      if (typeof options.getSlideId === 'function') {
+        try {
+          activeSlideId = options.getSlideId(activeSlide) || activeSlideId;
+        } catch (error) {
+          // Preserve the canonical snapshot ID when the DOM reader fails.
+        }
+      } else {
+        activeSlideId = activeSlide.id
+          || (activeSlide.dataset && activeSlide.dataset.slideId)
+          || activeSlideId;
+      }
+    }
+    setCurrentSlideId(activeSlideId);
     syncSpeakerNotesControl(activeSlideMetadata);
     syncSlideSectionControl(activeSlideMetadata);
     const syncCustomGradientControls = typeof options.syncCustomGradientControls === 'function'

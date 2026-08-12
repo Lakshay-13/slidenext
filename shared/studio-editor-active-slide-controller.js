@@ -44,6 +44,9 @@
     const updateCurrentPresentationSessionState = typeof options.updateCurrentPresentationSessionState === 'function'
       ? options.updateCurrentPresentationSessionState
       : () => {};
+    const setCurrentSlideId = typeof options.setCurrentSlideId === 'function'
+      ? options.setCurrentSlideId
+      : () => {};
     const updateActiveThumbnailCardState = typeof options.updateActiveThumbnailCardState === 'function'
       ? options.updateActiveThumbnailCardState
       : () => {};
@@ -173,6 +176,7 @@
         getPreserveSelectionOnNextActiveSlideSync: getPreserveSelection,
         setPreserveSelectionOnNextActiveSlideSync: setPreserveSelection,
         updateCurrentPresentationSessionState,
+        setCurrentSlideId,
         updateActiveThumbnailCardState,
         setSlideCountLabel,
         refreshActionStateChrome: (nextDoc) => {
