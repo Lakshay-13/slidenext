@@ -8960,7 +8960,7 @@
         if (typeof updateClipboardActionState.sync !== 'function') {
           updateClipboardActionState.sync = clipboardApi.createStudioClipboardToolbarStateSync({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getClipboard: () => getStudioEditorClipboard(),
             getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
               ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
@@ -8978,7 +8978,7 @@
         : isElementLocked;
       return clipboardApi.syncStudioClipboardToolbarState({
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         clipboard: getStudioEditorClipboard(),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
