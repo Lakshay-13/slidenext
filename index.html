@@ -1548,6 +1548,7 @@
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-version-rename-state-bridge.js"></script>
+  <script src="/shared/studio-editor-version-rename-state-accessors.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-store.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-runtime.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-bridge.js"></script>
@@ -2104,11 +2105,36 @@
           stateStore: studioEditorVersionRenameStateStore
         })
       : null;
+    const studioEditorVersionRenameStateAccessors = typeof SlideNextStudioEditorVersionRenameStateAccessors !== 'undefined'
+      && SlideNextStudioEditorVersionRenameStateAccessors
+      && typeof SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateAccessors === 'function'
+      ? SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateAccessors({
+          bridge: studioEditorVersionRenameStateBridge,
+          getFallbackState: () => ({
+            filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+            context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+          }),
+          setFallbackState: (nextState = {}) => {
+            if (typeof renamingFilename !== 'undefined') {
+              renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
+            }
+            if (typeof renamingVersionContext !== 'undefined') {
+              renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
+                ? nextState.context
+                : null;
+            }
+            return {
+              filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+              context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+            };
+          }
+        })
+      : null;
     function getStudioRenameVersionState() {
-      if (typeof studioEditorVersionRenameStateBridge !== 'undefined'
-        && studioEditorVersionRenameStateBridge
-        && typeof studioEditorVersionRenameStateBridge.getState === 'function') {
-        return studioEditorVersionRenameStateBridge.getState();
+      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
+        && studioEditorVersionRenameStateAccessors
+        && typeof studioEditorVersionRenameStateAccessors.getState === 'function') {
+        return studioEditorVersionRenameStateAccessors.getState();
       }
       return {
         filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
@@ -2116,10 +2142,10 @@
       };
     }
     function setStudioRenameVersionState(nextState = {}) {
-      if (typeof studioEditorVersionRenameStateBridge !== 'undefined'
-        && studioEditorVersionRenameStateBridge
-        && typeof studioEditorVersionRenameStateBridge.setState === 'function') {
-        return studioEditorVersionRenameStateBridge.setState(nextState);
+      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
+        && studioEditorVersionRenameStateAccessors
+        && typeof studioEditorVersionRenameStateAccessors.setState === 'function') {
+        return studioEditorVersionRenameStateAccessors.setState(nextState);
       }
       if (typeof renamingFilename !== 'undefined') {
         renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
@@ -2132,10 +2158,10 @@
       return getStudioRenameVersionState();
     }
     function clearStudioRenameVersionState() {
-      if (typeof studioEditorVersionRenameStateBridge !== 'undefined'
-        && studioEditorVersionRenameStateBridge
-        && typeof studioEditorVersionRenameStateBridge.clear === 'function') {
-        return studioEditorVersionRenameStateBridge.clear();
+      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
+        && studioEditorVersionRenameStateAccessors
+        && typeof studioEditorVersionRenameStateAccessors.clear === 'function') {
+        return studioEditorVersionRenameStateAccessors.clear();
       }
       return setStudioRenameVersionState();
     }
