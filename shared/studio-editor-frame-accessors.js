@@ -52,5 +52,20 @@
     };
   }
 
-  return { createStudioEditorFrameAccessors };
+  function createStudioEditorFrameGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorFrameAccessors(options);
+
+    return {
+      getStudioFrame: () => accessors.getFrame(),
+      getIframeDoc: () => accessors.getDocument(),
+      getIframeWindow: () => accessors.getWindow(),
+      getEditorDomOptions: (overrides = {}) => accessors.getDomOptions(overrides),
+      getEditorOverlayOptions: (overrides = {}) => accessors.getOverlayOptions(overrides)
+    };
+  }
+
+  return {
+    createStudioEditorFrameAccessors,
+    createStudioEditorFrameGlobalApi
+  };
 });

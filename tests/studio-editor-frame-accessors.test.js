@@ -65,6 +65,29 @@ test('frame accessors merge DOM and overlay option overrides without mutating de
   assert.equal(accessors.getOverlayOptions().visibleClassName, 'visible');
 });
 
+test('frame global api preserves the editor shell function names', () => {
+  const frame = { id: 'frame' };
+  const iframeDocument = { id: 'document' };
+  const iframeWindow = { id: 'window' };
+  const accessors = {
+    getFrame: () => frame,
+    getDocument: () => iframeDocument,
+    getWindow: () => iframeWindow,
+    getDomOptions: (overrides) => ({ kind: 'dom', ...overrides }),
+    getOverlayOptions: (overrides) => ({ kind: 'overlay', ...overrides })
+  };
+  const globalApi = accessorsApi.createStudioEditorFrameGlobalApi({ accessors });
+
+  assert.equal(globalApi.getStudioFrame(), frame);
+  assert.equal(globalApi.getIframeDoc(), iframeDocument);
+  assert.equal(globalApi.getIframeWindow(), iframeWindow);
+  assert.deepEqual(globalApi.getEditorDomOptions({ value: 1 }), { kind: 'dom', value: 1 });
+  assert.deepEqual(globalApi.getEditorOverlayOptions({ value: 2 }), {
+    kind: 'overlay',
+    value: 2
+  });
+});
+
 test('frame accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -73,6 +96,11 @@ test('frame accessors publish the global consumed by the editor shell', () => {
   assert.equal(
     typeof context.globalThis.SlideNextStudioEditorFrameAccessors
       .createStudioEditorFrameAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorFrameAccessors
+      .createStudioEditorFrameGlobalApi,
     'function'
   );
 });
@@ -86,4 +114,9 @@ test('editor loads and consumes the frame accessor module', () => {
   );
   assert.match(fileContent, /createStudioEditorFrameAccessors\(/);
   assert.match(fileContent, /studioEditorFrameAccessors/);
+  assert.match(fileContent, /studioEditorFrameGlobalApi/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorFrameGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioFrame\(\)/);
+  assert.doesNotMatch(fileContent, /function getIframeDoc\(\)/);
+  assert.doesNotMatch(fileContent, /function getEditorDomOptions\(options = \{\}\)/);
 });

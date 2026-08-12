@@ -3850,6 +3850,13 @@
           }
         })
       : null;
+    const studioEditorFrameGlobalApi = studioEditorFrameAccessorsApi
+      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi === 'function'
+      ? studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi({
+          accessors: studioEditorFrameAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorFrameGlobalApi);
     const studioEditorFrameRuntimeOptionsApi = typeof SlideNextStudioEditorFrameRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorFrameRuntimeOptions
       : null;
@@ -4908,13 +4915,6 @@
     });
 
     // 3. Studio Presentation Workspace Mode
-    function getStudioFrame() {
-      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
-        return studioEditorFrameAccessors.getFrame();
-      }
-      return document.getElementById('studioFrame');
-    }
-
     function createCurrentStudioSessionStateReaders() {
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
@@ -6079,59 +6079,6 @@
         && typeof studioEditorSlideDeletionController.remove === 'function'
         ? studioEditorSlideDeletionController.remove(idx)
         : false;
-    }
-
-    function getIframeDoc() {
-      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
-        return studioEditorFrameAccessors.getDocument();
-      }
-      const iframe = getStudioFrame();
-      return iframe
-        ? iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document) || null
-        : null;
-    }
-
-    function getIframeWindow() {
-      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
-        return studioEditorFrameAccessors.getWindow();
-      }
-      const iframe = getStudioFrame();
-      return iframe ? iframe.contentWindow || null : null;
-    }
-
-    function getEditorDomOptions(options = {}) {
-      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
-        return studioEditorFrameAccessors.getDomOptions(options);
-      }
-      return {
-        slideAttrName: EDITOR_SLIDE_ID_ATTR,
-        elementAttrName: EDITOR_ELEMENT_ID_ATTR,
-        slideSelector: '.slide',
-        selectableSelector: EDITOR_SELECTABLE_SELECTOR,
-        parentTargetSelector: EDITOR_PARENT_TARGET_SELECTOR,
-        inlineTextTags: EDITOR_INLINE_TEXT_TAGS,
-        blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer'],
-        ...options
-      };
-    }
-
-    function getEditorOverlayOptions(options = {}) {
-      if (typeof studioEditorFrameAccessors !== 'undefined' && studioEditorFrameAccessors) {
-        return studioEditorFrameAccessors.getOverlayOptions(options);
-      }
-      return {
-        selectionOverlayId: 'editorSelectionOverlay',
-        guidesLayerId: 'editorGuidesLayer',
-        dragHudId: 'editorDragHud',
-        resizeHandleDirections: RESIZE_HANDLE_DIRECTIONS,
-        resizeHandleClassName: 'editor-resize-handle',
-        resizeHandleDirectionAttr: 'data-dir',
-        guideLineClassName: 'editor-guide-line',
-        guideLineVerticalClassName: 'vertical',
-        guideLineHorizontalClassName: 'horizontal',
-        visibleClassName: 'visible',
-        ...options
-      };
     }
 
     const studioEditorSelectionOptionsBuilder = typeof SlideNextStudioEditorSelection !== 'undefined'
