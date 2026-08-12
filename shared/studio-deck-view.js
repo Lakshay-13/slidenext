@@ -991,8 +991,8 @@
       setSlideActiveState(slide, slideIndex === index);
     });
 
-    syncStudioChromeToActiveSlide(doc, { captureHistory, preserveSelection });
-    return true;
+    const syncResult = syncStudioChromeToActiveSlide(doc, { captureHistory, preserveSelection });
+    return syncResult !== false;
   }
 
   function resetStudioDeckSidebarUiState(options = {}) {

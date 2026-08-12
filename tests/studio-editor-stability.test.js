@@ -3824,6 +3824,26 @@ test('restoreStudioDeckViewAfterSlideMutation prefers the preserved active slide
   });
 });
 
+test('setStudioDeckActiveSlide propagates active-slide sync failures', () => {
+  const slides = [{ id: 'slide-1' }, { id: 'slide-2' }];
+  const container = { style: {} };
+  const result = deckView.setStudioDeckActiveSlide(1, {
+    doc: { id: 'iframe-doc' },
+    getSlides: () => slides,
+    getSlidesContainer: () => container,
+    setSlideActiveState(slide, isActive) {
+      slide.isActive = isActive;
+    },
+    syncStudioChromeToActiveSlide() {
+      return false;
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(container.style.transform, 'translateX(-100vw)');
+  assert.deepEqual(slides.map((slide) => slide.isActive), [false, true]);
+});
+
 test('syncStudioActiveSlideView preserves selection only when explicitly requested', () => {
   const activeSlide = {
     classList: createClassList(['slide-active'])

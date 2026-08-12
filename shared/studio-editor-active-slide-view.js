@@ -61,6 +61,7 @@
       : () => {};
 
     const captureSlideNavigationHistory = (sourceDoc) => {
+      let historyResult;
       if (buildEditorCanonicalDeck) {
         let canonicalDeck = null;
         try {
@@ -69,11 +70,17 @@
           canonicalDeck = null;
         }
         if (canonicalDeck) {
-          saveHistoryState(false, null, canonicalDeck);
-          return;
+          historyResult = saveHistoryState(false, null, canonicalDeck);
+        } else {
+          historyResult = saveHistoryState(false);
         }
+      } else {
+        historyResult = saveHistoryState(false);
       }
-      saveHistoryState(false);
+      return historyResult !== false
+        && !(historyResult
+          && typeof historyResult === 'object'
+          && historyResult.didCapture === false);
     };
 
     const syncToDeckSnapshotFallback = (deckSnapshot) => {
@@ -106,7 +113,7 @@
       syncSelectionChrome(preserveSelection);
       clearPreserveSelectionRequest();
       if (options.captureHistory && activeSlideSnapshot && previousIndex !== getCurrentSlideIndex()) {
-        captureSlideNavigationHistory(doc);
+        if (!captureSlideNavigationHistory(doc)) return false;
       }
       return !!activeSlideSnapshot;
     };
@@ -181,7 +188,7 @@
     syncSelectionChrome(preserveSelection);
     clearPreserveSelectionRequest();
     if (options.captureHistory && previousIndex !== getCurrentSlideIndex()) {
-      captureSlideNavigationHistory(doc);
+      if (!captureSlideNavigationHistory(doc)) return false;
     }
     return true;
   }

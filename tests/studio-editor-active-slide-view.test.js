@@ -141,6 +141,30 @@ test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exi
   ]);
 });
 
+test('syncStudioActiveSlideChrome propagates failed navigation history capture', () => {
+  let currentSlideIndex = 0;
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    captureHistory: true,
+    getCurrentSlideIndex: () => currentSlideIndex,
+    updateCurrentPresentationSessionState(nextState) {
+      currentSlideIndex = nextState.slideIndex;
+    },
+    syncStudioActiveSlideView(doc, options) {
+      options.setCurrentSlideIndex(1);
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'slide-2' };
+    },
+    saveHistoryState() {
+      return { didCapture: false };
+    }
+  });
+
+  assert.equal(didSync, false);
+  assert.equal(currentSlideIndex, 1);
+});
+
 test('syncStudioActiveSlideChrome refreshes speaker notes for the active slide', () => {
   const calls = [];
 
