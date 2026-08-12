@@ -8691,12 +8691,12 @@
         )
       : null;
 
-    function syncSelectionUiAfterMutation() {
+    function syncSelectionUiAfterMutation(doc = getIframeDoc()) {
       if (typeof studioEditorSelectionUiMutationSynchronizer !== 'function') {
-        return getStudioSelectedElements();
+        return getStudioSelectedElements(doc);
       }
-      return studioEditorSelectionUiMutationSynchronizer(getStudioSelectedElements(), {
-        refreshSelectionClasses,
+      return studioEditorSelectionUiMutationSynchronizer(getStudioSelectedElements(doc), {
+        refreshSelectionClasses: () => refreshSelectionClasses(doc),
         syncSelectionOverlay,
         syncInspectorForSelection,
         updateLayersList

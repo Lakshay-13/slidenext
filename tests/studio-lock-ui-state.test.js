@@ -95,9 +95,13 @@ test('syncSelectionUiAfterMutation refreshes selection classes before syncing se
   assert.match(fileContent, /const studioEditorSelectionUiMutationSynchronizer =/);
   assert.match(fileContent, /typeof studioEditorSelectionUiMutationSynchronizer !== 'function'/);
   const selectedElements = [{ id: 'node-1' }];
+  const documentRef = { id: 'editor-document' };
   const calls = [];
   const context = {
     selectedElements,
+    getIframeDoc() {
+      return documentRef;
+    },
     SlideNextStudioEditorSelection: {
       syncStudioSelectionUiAfterMutation(selection, options) {
         options.refreshSelectionClasses();
@@ -125,12 +129,53 @@ test('syncSelectionUiAfterMutation refreshes selection classes before syncing se
   ]);
 });
 
+test('syncSelectionUiAfterMutation forwards an explicit document to selection refresh callbacks', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const defaultDocument = { id: 'default-document' };
+  const requestedDocument = { id: 'requested-document' };
+  const selectedElements = [{ id: 'node-1' }];
+  let selectedDocument = null;
+  let refreshedDocument = null;
+  const context = {
+    selectedElements,
+    getIframeDoc() {
+      return defaultDocument;
+    },
+    SlideNextStudioEditorSelection: {
+      syncStudioSelectionUiAfterMutation(selection, options) {
+        options.refreshSelectionClasses();
+        return selection;
+      }
+    },
+    refreshSelectionClasses(doc) {
+      refreshedDocument = doc;
+    },
+    syncInspectorForSelection() {},
+    syncSelectionOverlay() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadSyncSelectionUiAfterMutation(fileContent, context);
+  context.getStudioSelectedElements = (doc) => {
+    selectedDocument = doc;
+    return selectedElements;
+  };
+
+  assert.deepEqual(context.syncSelectionUiAfterMutation(requestedDocument), selectedElements);
+  assert.equal(selectedDocument, requestedDocument);
+  assert.equal(refreshedDocument, requestedDocument);
+});
+
 test('syncSelectionUiAfterMutation fails closed when the shared selection API is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectedElements = [{ id: 'node-1' }];
   const context = {
     selectedElements,
-    SlideNextStudioEditorSelection: null
+    SlideNextStudioEditorSelection: null,
+    getIframeDoc() {
+      return null;
+    }
   };
 
   vm.createContext(context);
@@ -160,6 +205,24 @@ test('finalizeSelectionToggleMutation syncs selection chrome and delegates persi
     ['finalizeEditorDeckMutation', 'Auto: Locked Element']
   ]);
   assert.equal(calls[1][2].refreshThumbnails, false);
+});
+
+test('finalizeSelectionToggleMutation forwards the mutation document to selection UI sync', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'editor-document' };
+  const calls = [];
+  const context = {
+    finalizeEditorDeckMutation() {},
+    syncSelectionUiAfterMutation(doc) {
+      calls.push(doc);
+    }
+  };
+
+  vm.createContext(context);
+  loadFinalizeSelectionToggleMutation(fileContent, context);
+
+  assert.equal(context.finalizeSelectionToggleMutation('Auto: Locked Element', { doc: documentRef }), true);
+  assert.deepEqual(calls, [documentRef]);
 });
 
 test('updateLockActionState enables the lock control only when the iframe has a live active slide', () => {
