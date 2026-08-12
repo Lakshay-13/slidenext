@@ -6917,19 +6917,23 @@
         return studioEditorPersistenceController.read();
       }
       if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function') {
+        const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+          ? SlideNextStudioEditorPersistence
+          : null;
+        const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+          ? SlideNextStudioEditorPersistenceState
+          : null;
         const createStudioEditorPersistedDeckStateReaderAdapter = (
-          typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-          && SlideNextStudioEditorPersistenceState
-          && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
+          persistenceStateApi
+          && typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
         )
-          ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter
+          ? persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter
           : null;
         const createStudioPersistedDeckStateReader = (
-          typeof SlideNextStudioEditorPersistence !== 'undefined'
-          && SlideNextStudioEditorPersistence
-          && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader === 'function'
+          persistenceApi
+          && typeof persistenceApi.createStudioPersistedDeckStateReader === 'function'
         )
-          ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateReader
+          ? persistenceApi.createStudioPersistedDeckStateReader
           : null;
         const createReader = createStudioEditorPersistedDeckStateReaderAdapter || createStudioPersistedDeckStateReader;
         if (createReader) {
@@ -6939,9 +6943,7 @@
             getPersistedPlaybackState: getStudioPersistedPlaybackState
           };
           if (createStudioEditorPersistedDeckStateReaderAdapter) {
-            readerOptions.persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null;
+            readerOptions.persistenceApi = persistenceApi;
           }
           getCurrentEditorPersistedDeckState.stateReader = createReader(readerOptions);
         }
