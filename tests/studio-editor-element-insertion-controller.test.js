@@ -387,7 +387,7 @@ test('element insertion controller rolls back the legacy fallback when history r
     getIframeDoc: () => documentRef,
     getActiveSlide: () => ({ children: [] }),
     applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     },

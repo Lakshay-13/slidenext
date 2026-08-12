@@ -11,6 +11,11 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root, defaultLayoutModeApi) {
 
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function normalizeInsertionLayoutMode(value) {
     if (typeof value !== 'string') return '';
     const normalizedValue = value.trim().toLowerCase();
@@ -237,19 +242,19 @@
         if (generateThumbnails) generateThumbnails();
         if (saveHistoryState) {
           if (transaction && canonicalDeck) {
-            if (saveHistoryState(false, transaction, canonicalDeck) === false) {
+            if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
             }
           } else if (transaction) {
-            if (saveHistoryState(false, transaction) === false) {
+            if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
             }
           } else {
-            if (saveHistoryState() === false) {
+            if (isStudioHistoryCaptureFailure(saveHistoryState())) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
