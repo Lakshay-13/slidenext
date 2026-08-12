@@ -97,7 +97,18 @@
       getStudioCurrentSlideIndex: () => accessors.getSlideIndex(),
       setStudioCurrentSlideIndex: (nextValue) => accessors.setSlideIndex(nextValue),
       getStudioCurrentSlideId: () => accessors.getSlideId(),
-      setStudioCurrentSlideId: (nextValue) => accessors.setSlideId(nextValue)
+      setStudioCurrentSlideId: (nextValue) => accessors.setSlideId(nextValue),
+      resolveStudioSelectedElementsFromState: (storedElements = [], doc) => accessors
+        .resolveSelectedElementsFromState(storedElements, doc),
+      getStudioSelectedElements: (doc) => accessors.getSelectedElements(doc),
+      getStudioSelectedElement: () => accessors.getSelectedElement(),
+      getStudioSelectedElementIds: () => accessors.getSelectedElementIds(),
+      setStudioSelectionState: (nextState = {}) => accessors.setSelectionState(nextState),
+      clearStudioSelectionState: () => accessors.clearSelectionState(),
+      getStudioPreserveSelectionOnNextActiveSlideSync: () => accessors
+        .getPreserveSelectionOnNextActiveSlideSync(),
+      setStudioPreserveSelectionOnNextActiveSlideSync: (nextValue) => accessors
+        .setPreserveSelectionOnNextActiveSlideSync(nextValue)
     };
   }
 

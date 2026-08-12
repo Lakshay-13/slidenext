@@ -113,6 +113,44 @@ test('state global api preserves metadata, label, and slide-index shell names', 
   assert.deepEqual(calls, [['metadata', { title: 'Next' }]]);
 });
 
+test('state global api preserves selection shell names', () => {
+  const selected = { id: 'node-1' };
+  const calls = [];
+  const accessors = {
+    resolveSelectedElementsFromState: (storedElements, doc) => [storedElements, doc],
+    getSelectedElements: (doc) => [doc, selected],
+    getSelectedElement: () => selected,
+    getSelectedElementIds: () => ['node-1'],
+    setSelectionState: (value) => {
+      calls.push(['set', value]);
+      return value;
+    },
+    clearSelectionState: () => {
+      calls.push(['clear']);
+      return true;
+    },
+    getPreserveSelectionOnNextActiveSlideSync: () => true,
+    setPreserveSelectionOnNextActiveSlideSync: (value) => value
+  };
+  const globalApi = accessorsApi.createStudioEditorStateGlobalApi({ accessors });
+  const doc = { id: 'frame-doc' };
+
+  assert.deepEqual(globalApi.resolveStudioSelectedElementsFromState([selected], doc), [[selected], doc]);
+  assert.deepEqual(globalApi.getStudioSelectedElements(doc), [doc, selected]);
+  assert.equal(globalApi.getStudioSelectedElement(), selected);
+  assert.deepEqual(globalApi.getStudioSelectedElementIds(), ['node-1']);
+  assert.deepEqual(globalApi.setStudioSelectionState({ selectedElements: [selected] }), {
+    selectedElements: [selected]
+  });
+  assert.equal(globalApi.clearStudioSelectionState(), true);
+  assert.equal(globalApi.getStudioPreserveSelectionOnNextActiveSlideSync(), true);
+  assert.equal(globalApi.setStudioPreserveSelectionOnNextActiveSlideSync(false), false);
+  assert.deepEqual(calls, [
+    ['set', { selectedElements: [selected] }],
+    ['clear']
+  ]);
+});
+
 test('state accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -143,4 +181,6 @@ test('editor loads state accessors after the state bridge', () => {
   assert.doesNotMatch(fileContent, /function getStudioCurrentPresentationMetadata\(\)/);
   assert.doesNotMatch(fileContent, /function getStudioPresentationTitle\(\)/);
   assert.doesNotMatch(fileContent, /function getStudioCurrentSlideIndex\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioSelectedElements\(/);
+  assert.doesNotMatch(fileContent, /function setStudioSelectionState\(/);
 });

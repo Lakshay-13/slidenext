@@ -1790,46 +1790,6 @@
         })
       : {};
     Object.assign(globalThis, studioEditorStateGlobalApi);
-    function resolveStudioSelectedElementsFromState(storedElements = [], doc = getIframeDoc()) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.resolveSelectedElementsFromState(storedElements, doc)
-        : null;
-    }
-    function getStudioSelectedElements(doc = getIframeDoc()) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getSelectedElements(doc)
-        : [];
-    }
-    function getStudioSelectedElement() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getSelectedElement()
-        : null;
-    }
-    function getStudioSelectedElementIds() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getSelectedElementIds()
-        : [];
-    }
-    function setStudioSelectionState(nextState = {}) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setSelectionState(nextState)
-        : false;
-    }
-    function clearStudioSelectionState() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.clearSelectionState()
-        : false;
-    }
-    function getStudioPreserveSelectionOnNextActiveSlideSync() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getPreserveSelectionOnNextActiveSlideSync()
-        : false;
-    }
-    function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setPreserveSelectionOnNextActiveSlideSync(nextValue)
-        : false;
-    }
     const studioEditorHistoryBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.historyBridge
       : null;

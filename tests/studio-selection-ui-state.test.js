@@ -69,10 +69,7 @@ test('editor composes live selection ID reading through the shared selection API
 
 test('editor resolves stored selection IDs against the current active-slide DOM', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('function resolveStudioSelectedElementsFromState(');
-  const end = fileContent.indexOf('\n    function setStudioSelectionState(', start);
-  assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
+  assert.match(fileContent, /createStudioEditorStateGlobalApi/);
 
   const staleElement = { id: 'stale-node' };
   const currentElement = { id: 'current-node', isConnected: true };
@@ -109,11 +106,15 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
     getElementByEditorId
   };
 
-  vm.createContext(context);
-  vm.runInContext(fileContent.slice(start, end), context);
-
   const currentDoc = { id: 'current-doc' };
-  assert.deepEqual(context.getStudioSelectedElements(currentDoc), [currentElement]);
+  const globalApi = studioStateAccessors.createStudioEditorStateGlobalApi({
+    accessors: stateAccessors
+  });
+  assert.deepEqual(
+    globalApi.resolveStudioSelectedElementsFromState([staleElement], currentDoc),
+    [currentElement]
+  );
+  assert.deepEqual(globalApi.getStudioSelectedElements(currentDoc), [currentElement]);
 });
 
 test('editor composes selection option building through the shared selection API', () => {
