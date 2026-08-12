@@ -71,14 +71,24 @@
       : createStudioCanonicalDeckResolver(doc, {
           buildCanonicalDeck: canonicalStateOptions.buildCanonicalDeck
         });
+    const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
+      ? options.resolveLiveCanonicalDeck
+      : null;
     const resolveLiveActiveSlideId = canonicalStateOptions.resolveLiveActiveSlideId;
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
     const resolvedCanonicalDeck = !doc
       ? resolveCanonicalDeck(doc)
-      : (liveActiveSlideId ? null : resolveCanonicalDeck(doc));
+      : (liveActiveSlideId
+        ? (resolveLiveCanonicalDeck ? resolveLiveCanonicalDeck(doc) : null)
+        : resolveCanonicalDeck(doc));
+    const canonicalDeckResolver = liveActiveSlideId
+      && resolveLiveCanonicalDeck
+      && resolvedCanonicalDeck
+      ? () => resolvedCanonicalDeck
+      : resolveCanonicalDeck;
 
     return {
-      resolveCanonicalDeck,
+      resolveCanonicalDeck: canonicalDeckResolver,
       liveActiveSlideId,
       resolvedCanonicalDeck
     };

@@ -4599,6 +4599,20 @@
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
           buildCanonicalDeck: options.buildCanonicalDeck,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
+          resolveLiveCanonicalDeck: typeof options.resolveLiveCanonicalDeck === 'function'
+            ? options.resolveLiveCanonicalDeck
+            : (sourceDoc) => typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(
+                  sourceDoc || doc || getIframeDoc(),
+                  typeof getStudioEditorSessionToken === 'function'
+                    ? getStudioEditorSessionToken()
+                    : null
+                )
+              : typeof options.buildCanonicalDeck === 'function'
+                ? options.buildCanonicalDeck(sourceDoc || doc || getIframeDoc())
+                : typeof buildEditorCanonicalDeck === 'function'
+                  ? buildEditorCanonicalDeck(sourceDoc || doc || getIframeDoc())
+                  : null,
           fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
         });
@@ -4618,7 +4632,21 @@
       if (resolveStudioCanonicalDeckViewState) {
         return resolveStudioCanonicalDeckViewState(doc, {
           buildCanonicalDeck,
-          resolveLiveActiveSlideId
+          resolveLiveActiveSlideId,
+          resolveLiveCanonicalDeck: typeof options.resolveLiveCanonicalDeck === 'function'
+            ? options.resolveLiveCanonicalDeck
+            : (sourceDoc) => typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(
+                  sourceDoc || doc || getIframeDoc(),
+                  typeof getStudioEditorSessionToken === 'function'
+                    ? getStudioEditorSessionToken()
+                    : null
+                )
+              : typeof options.buildCanonicalDeck === 'function'
+                ? options.buildCanonicalDeck(sourceDoc || doc || getIframeDoc())
+                : typeof buildEditorCanonicalDeck === 'function'
+                  ? buildEditorCanonicalDeck(sourceDoc || doc || getIframeDoc())
+                  : null
         });
       }
       const liveActiveSlideId = resolveLiveActiveSlideId(doc);

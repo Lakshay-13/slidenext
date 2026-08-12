@@ -446,12 +446,16 @@ test('createStudioCanonicalDeckResolver caches the first canonical deck build fo
   assert.equal(firstDeck, secondDeck);
 });
 
-test('resolveStudioCanonicalDeckViewState eagerly resolves the canonical deck only when no live active slide is available', () => {
+test('resolveStudioCanonicalDeckViewState uses an explicit canonical deck during live editing', () => {
   const doc = { label: 'iframe-doc' };
   let resolveCanonicalDeckCalls = 0;
 
   const withLiveSlide = deckView.resolveStudioCanonicalDeckViewState(doc, {
     resolveCanonicalDeck() {
+      resolveCanonicalDeckCalls += 1;
+      return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+    },
+    resolveLiveCanonicalDeck() {
       resolveCanonicalDeckCalls += 1;
       return { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
     },
@@ -462,8 +466,12 @@ test('resolveStudioCanonicalDeckViewState eagerly resolves the canonical deck on
   });
 
   assert.equal(withLiveSlide.liveActiveSlideId, 'slide-live');
-  assert.equal(withLiveSlide.resolvedCanonicalDeck, null);
-  assert.equal(resolveCanonicalDeckCalls, 0);
+  assert.deepEqual(withLiveSlide.resolvedCanonicalDeck, {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  });
+  assert.equal(resolveCanonicalDeckCalls, 1);
 
   const withoutLiveSlide = deckView.resolveStudioCanonicalDeckViewState(doc, {
     resolveCanonicalDeck() {
@@ -482,7 +490,7 @@ test('resolveStudioCanonicalDeckViewState eagerly resolves the canonical deck on
     schemaVersion: 1,
     slides: []
   });
-  assert.equal(resolveCanonicalDeckCalls, 1);
+  assert.equal(resolveCanonicalDeckCalls, 2);
 });
 
 test('createStudioDeckViewBuildOptions reuses shared canonical view state for fallback html and render options', () => {

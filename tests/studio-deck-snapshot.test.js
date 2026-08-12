@@ -339,6 +339,32 @@ test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the
   assert.equal(fallbackCalls, 0);
 });
 
+test('createStudioDeckSnapshotBuildOptions uses an explicit live canonical deck during editing', () => {
+  const doc = { label: 'doc' };
+  const canonicalDeck = {
+    slides: [{ id: 'slide-live', title: 'Live', nodes: [] }]
+  };
+  let liveCanonicalDeckCalls = 0;
+
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+    buildCanonicalDeck() {
+      throw new Error('DOM rebuild should not be needed');
+    },
+    resolveLiveCanonicalDeck(sourceDoc) {
+      liveCanonicalDeckCalls += 1;
+      assert.equal(sourceDoc, doc);
+      return canonicalDeck;
+    },
+    resolveLiveActiveSlideId() {
+      return 'slide-live';
+    }
+  });
+
+  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(result.buildCanonicalDeck(doc), canonicalDeck);
+  assert.equal(liveCanonicalDeckCalls, 1);
+});
+
 test('createStudioDeckSnapshotBuildOptions can derive canonical view state from lower-level builders', () => {
   const doc = { label: 'doc' };
   const canonicalDeck = {

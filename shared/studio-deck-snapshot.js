@@ -72,7 +72,8 @@
       return deckView.resolveStudioCanonicalDeckViewState(doc, {
         buildCanonicalDeck: options.buildCanonicalDeck,
         resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
-        resolveCanonicalDeck: options.resolveCanonicalDeck
+        resolveCanonicalDeck: options.resolveCanonicalDeck,
+        resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck
       });
     }
 
@@ -113,10 +114,17 @@
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
     const resolvedCanonicalDeck = !doc
       ? resolveCanonicalDeck(doc)
-      : (liveActiveSlideId ? null : resolveCanonicalDeck(doc));
+      : (liveActiveSlideId && typeof options.resolveLiveCanonicalDeck === 'function'
+        ? options.resolveLiveCanonicalDeck(doc)
+        : liveActiveSlideId ? null : resolveCanonicalDeck(doc));
+    const canonicalDeckResolver = liveActiveSlideId
+      && typeof options.resolveLiveCanonicalDeck === 'function'
+      && resolvedCanonicalDeck
+      ? () => resolvedCanonicalDeck
+      : resolveCanonicalDeck;
 
     return {
-      resolveCanonicalDeck,
+      resolveCanonicalDeck: canonicalDeckResolver,
       liveActiveSlideId,
       resolvedCanonicalDeck
     };

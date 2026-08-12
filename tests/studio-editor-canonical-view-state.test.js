@@ -90,6 +90,22 @@ test('canonical view state resolver fails closed to the live slide callback with
   assert.equal(result.resolveCanonicalDeck(), null);
 });
 
+test('canonical view state resolver exposes the live canonical deck during active editing', () => {
+  const doc = { id: 'editor-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-live' }] };
+  const result = canonicalViewState.resolveStudioEditorCanonicalDeckViewState(doc, {
+    resolveLiveActiveSlideId: () => 'slide-live',
+    resolveLiveCanonicalDeck: (sourceDoc) => {
+      assert.equal(sourceDoc, doc);
+      return canonicalDeck;
+    }
+  });
+
+  assert.equal(result.liveActiveSlideId, 'slide-live');
+  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(result.resolveCanonicalDeck(doc), canonicalDeck);
+});
+
 test('editor deck view shared options delegate canonical and playback callbacks', () => {
   const doc = { id: 'editor-doc' };
   const buildCanonicalDeck = () => ({ slides: [] });

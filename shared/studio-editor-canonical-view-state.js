@@ -82,14 +82,26 @@
     if (deckViewApi && typeof deckViewApi.resolveStudioCanonicalDeckViewState === 'function') {
       return deckViewApi.resolveStudioCanonicalDeckViewState(doc, {
         buildCanonicalDeck,
-        resolveLiveActiveSlideId
+        resolveLiveActiveSlideId,
+        ...(typeof options.resolveLiveCanonicalDeck === 'function'
+          ? { resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck }
+          : {})
       });
     }
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
+    const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
+      ? options.resolveLiveCanonicalDeck
+      : null;
     return {
-      resolveCanonicalDeck: () => null,
+      resolveCanonicalDeck: resolveLiveCanonicalDeck || (() => null),
       liveActiveSlideId,
-      resolvedCanonicalDeck: null
+      resolvedCanonicalDeck: !doc
+        ? resolveLiveCanonicalDeck
+          ? resolveLiveCanonicalDeck(doc)
+          : null
+        : liveActiveSlideId && resolveLiveCanonicalDeck
+          ? resolveLiveCanonicalDeck(doc)
+          : null
     };
   }
 
