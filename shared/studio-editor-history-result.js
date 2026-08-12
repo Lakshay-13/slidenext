@@ -12,7 +12,17 @@
       || (!!value && typeof value === 'object' && value.didCapture === false);
   }
 
+  function captureStudioHistoryState(saveHistoryState, ...args) {
+    if (typeof saveHistoryState !== 'function') return false;
+    try {
+      return saveHistoryState(...args);
+    } catch (error) {
+      return false;
+    }
+  }
+
   return {
-    isStudioHistoryCaptureFailure
+    isStudioHistoryCaptureFailure,
+    captureStudioHistoryState
   };
 });

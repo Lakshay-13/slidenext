@@ -12,6 +12,25 @@ test('isStudioHistoryCaptureFailure normalizes supported rejection shapes', () =
   assert.equal(historyResult.isStudioHistoryCaptureFailure(null), false);
 });
 
+test('captureStudioHistoryState returns callback results and converts exceptions to failure', () => {
+  const calls = [];
+  assert.deepEqual(
+    historyResult.captureStudioHistoryState((...args) => {
+      calls.push(args);
+      return { didCapture: true };
+    }, false, { id: 'transaction' }),
+    { didCapture: true }
+  );
+  assert.deepEqual(calls, [[false, { id: 'transaction' }]]);
+  assert.equal(
+    historyResult.captureStudioHistoryState(() => {
+      throw new Error('history unavailable');
+    }),
+    false
+  );
+  assert.equal(historyResult.captureStudioHistoryState(null), false);
+});
+
 test('index loads the shared history result contract before its consumers', () => {
   const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   const helperIndex = indexHtml.indexOf('/shared/studio-editor-history-result.js');

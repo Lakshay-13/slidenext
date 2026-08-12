@@ -26,6 +26,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function normalizeStudioTransformDragStartThreshold(value) {
     return Number.isFinite(value)
@@ -1140,14 +1151,9 @@
         }
         return;
       }
-      let historyCaptureResult = null;
-      try {
-        historyCaptureResult = canonicalDeck
-          ? saveHistoryState(false, transaction, canonicalDeck)
-          : saveHistoryState(false, transaction);
-      } catch (err) {
-        historyCaptureResult = false;
-      }
+      const historyCaptureResult = canonicalDeck
+        ? captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+        : captureStudioHistoryState(saveHistoryState, false, transaction);
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         try {
           onHistoryFailure({ finalizeResult, completionPlan, transaction, canonicalDeck });

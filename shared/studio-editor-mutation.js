@@ -34,6 +34,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
@@ -116,15 +127,10 @@
       if (hasCanonicalDeck) {
         historyArgs.push(resolvedMutationOptions.canonicalDeck);
       }
-      const captureHistory = () => {
-        try {
-          return saveHistoryState(...historyArgs);
-        } catch (err) {
+      if (shouldPublishCanonicalDeckBeforeUi) {
+        if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, ...historyArgs))) {
           return false;
         }
-      };
-      if (shouldPublishCanonicalDeckBeforeUi) {
-        if (isStudioHistoryCaptureFailure(captureHistory())) return false;
       }
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay(resolvedMutationOptions.doc);
@@ -136,7 +142,9 @@
         updateLayersList(resolvedMutationOptions.doc);
       }
       if (!shouldPublishCanonicalDeckBeforeUi) {
-        if (isStudioHistoryCaptureFailure(captureHistory())) return false;
+        if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, ...historyArgs))) {
+          return false;
+        }
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
