@@ -160,6 +160,19 @@ test('finalizeStudioEditorDeckMutation propagates fallback history rejection', (
   }), false);
 });
 
+test('finalizeStudioEditorDeckMutation converts thrown fallback history to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorDeckMutation('Auto: Rejected', {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };
@@ -298,6 +311,20 @@ test('finalizeStudioEditorLayerOrderMutation propagates fallback history rejecti
   }), false);
 });
 
+test('finalizeStudioEditorLayerOrderMutation converts thrown fallback history to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Rejected', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
@@ -337,6 +364,22 @@ test('finalizeStudioEditorWallpaperMutation propagates fallback history rejectio
     { kind: 'slidenext.deck', slides: [] },
     {
       saveHistoryState: () => ({ didCapture: false }),
+      triggerAutoSave: () => {
+        throw new Error('autosave should not run');
+      }
+    }
+  ), false);
+});
+
+test('finalizeStudioEditorWallpaperMutation converts thrown fallback history to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Rejected',
+    { id: 'tx' },
+    { kind: 'slidenext.deck', slides: [] },
+    {
+      saveHistoryState: () => {
+        throw new Error('history unavailable');
+      },
       triggerAutoSave: () => {
         throw new Error('autosave should not run');
       }
