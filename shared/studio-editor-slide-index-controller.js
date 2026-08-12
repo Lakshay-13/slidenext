@@ -7,15 +7,17 @@
     root.SlideNextStudioEditorSlideIndexController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function normalizeSlideIndex(value, fallback = 0) {
+    return Number.isInteger(value) && value >= 0 ? value : fallback;
+  }
+
   function createStudioEditorSlideIndexController(options = {}) {
-    let slideIndex = Number.isInteger(options.initialSlideIndex)
-      ? options.initialSlideIndex
-      : 0;
+    let slideIndex = normalizeSlideIndex(options.initialSlideIndex);
 
     return {
       getSlideIndex: () => slideIndex,
       setSlideIndex: (nextValue) => {
-        slideIndex = nextValue;
+        slideIndex = normalizeSlideIndex(nextValue, slideIndex);
         return slideIndex;
       }
     };
