@@ -198,13 +198,21 @@
       : null;
     if (canonicalDeckBeforeAddition && !canonicalDeckAfterAddition) return false;
 
-    const saveHistoryState = typeof options.saveHistoryState === 'function'
-      ? options.saveHistoryState
-      : () => {};
-    if (canonicalDeckBeforeAddition) {
-      saveHistoryState(false, null, canonicalDeckBeforeAddition);
-    } else {
-      saveHistoryState();
+    const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
+      ? options.captureSlideMutationState
+      : null;
+    const slideMutationState = captureSlideMutationState
+      ? captureSlideMutationState(iframeDoc)
+      : { preservedActiveSlideId: '', preservedSelectionIds: [] };
+    if (!captureSlideMutationState) {
+      const saveHistoryState = typeof options.saveHistoryState === 'function'
+        ? options.saveHistoryState
+        : () => {};
+      if (canonicalDeckBeforeAddition) {
+        saveHistoryState(false, null, canonicalDeckBeforeAddition);
+      } else {
+        saveHistoryState();
+      }
     }
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
@@ -221,10 +229,27 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : () => {};
-    if (canonicalDeckAfterAddition) {
-      finalizeMutation('Auto: Added Slide', mutation.transaction, canonicalDeckAfterAddition);
-    } else {
-      finalizeMutation('Auto: Added Slide', mutation.transaction);
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    const finalized = canonicalDeckAfterAddition
+      ? finalizeMutation('Auto: Added Slide', mutation.transaction, canonicalDeckAfterAddition)
+      : finalizeMutation('Auto: Added Slide', mutation.transaction);
+    if (finalized === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (typeof options.generateThumbnails === 'function') {
+        options.generateThumbnails();
+      }
+      if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
+        const preservedState = slideMutationState && typeof slideMutationState === 'object'
+          ? slideMutationState
+          : { preservedActiveSlideId: '', preservedSelectionIds: [] };
+        options.restoreDeckViewAfterSlideMutation(iframeDoc, preservedState.preservedSelectionIds || [], {
+          preservedActiveSlideId: preservedState.preservedActiveSlideId || '',
+          fallbackIndex: Math.max(0, Math.min(newIndex - 1, getSlides(iframeDoc).length - 1))
+        });
+      }
+      return false;
     }
     return true;
   }

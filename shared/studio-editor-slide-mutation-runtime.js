@@ -52,8 +52,11 @@
           resolveInsertionActionState: options.resolveInsertionActionState,
           createBlankSlide: options.createBlankSlide,
           saveHistoryState: options.saveHistoryState,
+          captureSlideMutationState: options.captureSlideMutationState,
           applyInsertion: options.applyInsertion,
-          setActiveSlide: options.setActiveSlide
+          setActiveSlide: options.setActiveSlide,
+          restoreDeckViewAfterSlideMutation: options.restoreDeckViewAfterSlideMutation,
+          rollbackMutation: options.rollbackMutation
         })
       : null;
     const slideDeletionController = deletionApi

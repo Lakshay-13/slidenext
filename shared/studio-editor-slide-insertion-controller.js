@@ -54,6 +54,9 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
+    const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
+      ? options.captureSlideMutationState
+      : null;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
@@ -63,8 +66,14 @@
     const setActiveSlide = typeof options.setActiveSlide === 'function'
       ? options.setActiveSlide
       : null;
+    const restoreDeckViewAfterSlideMutation = typeof options.restoreDeckViewAfterSlideMutation === 'function'
+      ? options.restoreDeckViewAfterSlideMutation
+      : null;
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
+      : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
       : null;
 
     function add() {
@@ -104,10 +113,13 @@
           ? canonicalAddSlideBuilders.buildCanonicalAddSlideDeck
           : null,
         saveHistoryState,
+        captureSlideMutationState,
         applyInsertion,
         generateThumbnails,
         setActiveSlide,
-        finalizeMutation
+        restoreDeckViewAfterSlideMutation,
+        finalizeMutation,
+        rollbackMutation
       });
     }
 

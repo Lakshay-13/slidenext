@@ -35,9 +35,12 @@ test('slide insertion controller assembles canonical and editor mutation depende
     buildCanonicalDeckBaseline: () => ({ id: 'baseline-fallback' }),
     getSlideId: (slide) => slide.id,
     saveHistoryState: () => {},
+    captureSlideMutationState: () => ({ preservedActiveSlideId: 'slide-1' }),
     applyInsertion: () => ({ didApply: true }),
     generateThumbnails: () => {},
     setActiveSlide: () => {},
+    restoreDeckViewAfterSlideMutation: () => {},
+    rollbackMutation: () => {},
     finalizeMutation: () => {}
   });
 
@@ -56,6 +59,9 @@ test('slide insertion controller assembles canonical and editor mutation depende
   assert.deepEqual(options.buildCanonicalAddSlideBaseline(), { id: 'baseline' });
   assert.deepEqual(options.buildCanonicalAddSlideDeck(), { slides: [] });
   assert.equal(typeof options.applyInsertion, 'function');
+  assert.equal(typeof options.captureSlideMutationState, 'function');
+  assert.equal(typeof options.restoreDeckViewAfterSlideMutation, 'function');
+  assert.equal(typeof options.rollbackMutation, 'function');
   assert.equal(typeof options.finalizeMutation, 'function');
 });
 

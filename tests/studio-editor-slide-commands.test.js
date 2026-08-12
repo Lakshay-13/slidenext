@@ -413,6 +413,59 @@ test('addStudioSlideNode stops before history when slide creation is unavailable
   assert.deepEqual(calls, ['createBlankSlide']);
 });
 
+test('addStudioSlideNode rolls back DOM and active slide when persistence rejects', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1' };
+  const newSlide = { id: 'slide-2' };
+  let slides = [firstSlide];
+  const calls = [];
+
+  const result = slideCommands.addStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    createBlankSlide: () => newSlide,
+    buildCanonicalAddSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildCanonicalAddSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    captureSlideMutationState: () => ({
+      preservedActiveSlideId: 'slide-1',
+      preservedSelectionIds: ['element-1']
+    }),
+    applyInsertion: () => {
+      slides = [firstSlide, newSlide];
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    generateThumbnails: () => calls.push('generateThumbnails'),
+    setActiveSlide: (index) => calls.push(['setActiveSlide', index]),
+    finalizeMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(sourceDoc, doc);
+      slides = [firstSlide];
+      calls.push('rollbackMutation');
+    },
+    restoreDeckViewAfterSlideMutation: (sourceDoc, selectionIds, options) => {
+      assert.equal(sourceDoc, doc);
+      assert.deepEqual(selectionIds, ['element-1']);
+      assert.equal(options.preservedActiveSlideId, 'slide-1');
+      assert.equal(options.fallbackIndex, 0);
+      calls.push('restoreDeckViewAfterSlideMutation');
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(slides, [firstSlide]);
+  assert.deepEqual(calls, [
+    'generateThumbnails',
+    ['setActiveSlide', 1],
+    'rollbackMutation',
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation'
+  ]);
+});
+
 test('deleteStudioSlideNode preserves view state, canonical removal, and mutation lifecycle ordering', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
