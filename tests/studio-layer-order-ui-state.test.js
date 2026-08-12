@@ -74,7 +74,7 @@ function loadRefreshLayerOrderUi(fileContent, context) {
 function loadBuildLayerOrderSelectionActionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function buildLayerOrderSelectionActionState(elements = selectedElements, options = {}) {',
+    'function buildLayerOrderSelectionActionState(elements, options = {}) {',
     '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);

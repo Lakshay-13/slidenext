@@ -74,11 +74,14 @@
       : () => () => false;
 
     return function buildStudioEditorLayerOrderActionState(
-      elements = getSelectedElements(),
+      elements,
       actionOptions = {}
     ) {
       const hasDocOverride = Object.prototype.hasOwnProperty.call(actionOptions, 'doc');
       const resolvedDoc = hasDocOverride ? actionOptions.doc : getDocument();
+      const resolvedElements = typeof elements === 'undefined'
+        ? getSelectedElements(resolvedDoc)
+        : elements;
       const hasSlideOverride = Object.prototype.hasOwnProperty.call(actionOptions, 'slide');
       const resolvedSlide = hasSlideOverride
         ? actionOptions.slide
@@ -90,7 +93,7 @@
         ? actionOptions.canMutateDeck
         : () => !!resolvedSlide;
 
-      return buildStudioLayerOrderActionState(elements, {
+      return buildStudioLayerOrderActionState(resolvedElements, {
         orderedElements,
         isLocked: typeof actionOptions.isLocked === 'function'
           ? actionOptions.isLocked

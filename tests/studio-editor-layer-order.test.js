@@ -90,13 +90,16 @@ test('createStudioLayerOrderActionStateBuilder preserves explicit ordering and d
   const orderedElements = [first, second];
   const buildActionState = layerOrder.createStudioLayerOrderActionStateBuilder({
     getDocument: () => ({ id: 'fallback-doc' }),
-    getSelectedElements: () => [first],
+    getSelectedElements: (currentDoc) => {
+      assert.equal(currentDoc, doc);
+      return [first];
+    },
     getActiveSlide: () => ({ id: 'fallback-slide' }),
     getNormalizedSlideLayerOrder: () => [],
     getLockedState: () => () => false
   });
 
-  const result = buildActionState([first], {
+  const result = buildActionState(undefined, {
     doc,
     slide,
     orderedElements,

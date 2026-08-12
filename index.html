@@ -8544,7 +8544,7 @@
       return styleApi.syncStudioStyleToolbarState(toolbarOptions);
     }
 
-    function buildLayerOrderSelectionActionState(elements = getStudioSelectedElements(), options = {}) {
+    function buildLayerOrderSelectionActionState(elements, options = {}) {
       const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
         ? SlideNextStudioEditorLayerOrder
         : null;
@@ -8568,7 +8568,7 @@
         if (typeof buildLayerOrderSelectionActionState.builder !== 'function') {
           buildLayerOrderSelectionActionState.builder = layerOrderApi.createStudioLayerOrderActionStateBuilder({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getNormalizedSlideLayerOrder,
             getLockedState: () => isElementLocked
@@ -8581,6 +8581,9 @@
 
       const hasDocOverride = Object.prototype.hasOwnProperty.call(options, 'doc');
       const resolvedDoc = hasDocOverride ? options.doc : getIframeDoc();
+      const resolvedElements = typeof elements === 'undefined'
+        ? getStudioSelectedElements(resolvedDoc)
+        : elements;
       const hasSlideOverride = Object.prototype.hasOwnProperty.call(options, 'slide');
       const resolvedSlide = hasSlideOverride ? options.slide : getActiveSlide(resolvedDoc);
       const orderedElements = Array.isArray(options.orderedElements)
@@ -8590,7 +8593,7 @@
         ? options.canMutateDeck
         : () => !!resolvedSlide;
 
-      return layerOrderApi.buildStudioLayerOrderActionState(elements, {
+      return layerOrderApi.buildStudioLayerOrderActionState(resolvedElements, {
         orderedElements,
         isLocked: typeof options.isLocked === 'function' ? options.isLocked : isElementLocked,
         canMutateDeck
