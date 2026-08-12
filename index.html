@@ -11731,8 +11731,8 @@
         }
       };
       const sharedBuildFromDocumentOptions = {
-        resolveCanonicalDeck: (shouldReportCanonicalDeck) => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-          || (shouldReportCanonicalDeck
+        resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
+          || (typeof buildEditorCanonicalDeck === 'function'
             ? buildEditorCanonicalDeck(doc)
             : null),
         resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
@@ -11822,9 +11822,8 @@
         return buildStudioPersistableDeckHtmlFromDocument(doc, sharedBuildFromDocumentOptions);
       }
 
-      const shouldReportCanonicalDeck = typeof buildOptions.onCanonicalDeckResolved === 'function';
       const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-        || (shouldReportCanonicalDeck
+        || (typeof buildEditorCanonicalDeck === 'function'
           ? buildEditorCanonicalDeck(doc)
           : null);
       const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
