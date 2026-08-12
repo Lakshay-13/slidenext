@@ -1343,6 +1343,7 @@
   <script src="/shared/studio-editor-canonical-ui.js"></script>
   <script src="/shared/studio-editor-canonical-runtime-options.js"></script>
   <script src="/shared/studio-editor-canonical-runtime.js"></script>
+  <script src="/shared/studio-editor-canonical-shell-runtime.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
   <script src="/shared/deck-import.js"></script>
@@ -3611,12 +3612,15 @@
         })
       : null;
     const studioEditorCanonicalRuntime = studioEditorCanonicalRuntimeOptions
-      && typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
-      && SlideNextStudioEditorCanonicalRuntime
-      && typeof SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime === 'function'
-      ? SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime(
-          studioEditorCanonicalRuntimeOptions
-        )
+      && typeof SlideNextStudioEditorCanonicalShellRuntime !== 'undefined'
+      && SlideNextStudioEditorCanonicalShellRuntime
+      && typeof SlideNextStudioEditorCanonicalShellRuntime.createStudioEditorCanonicalShellRuntime === 'function'
+      ? SlideNextStudioEditorCanonicalShellRuntime.createStudioEditorCanonicalShellRuntime({
+          canonicalRuntimeApi: typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
+            ? SlideNextStudioEditorCanonicalRuntime
+            : null,
+          runtimeOptions: studioEditorCanonicalRuntimeOptions
+        })
       : null;
     const studioEditorCanonicalState = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalState
