@@ -8125,7 +8125,10 @@
 
       const resolvedDoc = doc || getIframeDoc();
       const slide = getActiveSlide(resolvedDoc);
-      const nudgeSelectionState = getNudgeSelectionState(undefined, resolvedDoc);
+      const nudgeSelectionState = getNudgeSelectionState(
+        getStudioSelectedElements(resolvedDoc),
+        resolvedDoc
+      );
       const slideMetrics = slide ? getSlideMetrics(slide) : null;
       const buildStudioNudgeActionState = (
         typeof SlideNextStudioEditorNudge !== 'undefined'

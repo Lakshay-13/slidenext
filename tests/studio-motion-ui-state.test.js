@@ -344,6 +344,10 @@ test('buildMotionSelectionActionState resolves nudge geometry from the current d
   assert.equal(motionActionState.nudgeLayoutItems, nudgeLayoutItems);
   assert.equal(motionActionState.canResolveNudgeLayout, true);
   assert.equal(motionActionState.canNudge, true);
+  assert.match(
+    fileContent,
+    /getNudgeSelectionState\(\s*getStudioSelectedElements\(resolvedDoc\),\s*resolvedDoc\s*\)/
+  );
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['getActiveSlide', doc],
