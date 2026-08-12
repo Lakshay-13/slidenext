@@ -1508,6 +1508,7 @@
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-shell-controller.js"></script>
   <script src="/shared/studio-editor-launch-source.js"></script>
+  <script src="/shared/studio-editor-launch-controller.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
@@ -3878,6 +3879,25 @@
     const studioEditorShellController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.shellController
       : null;
+    const studioEditorLaunchController = typeof SlideNextStudioEditorLaunchController !== 'undefined'
+      && SlideNextStudioEditorLaunchController
+      && typeof SlideNextStudioEditorLaunchController.createStudioEditorLaunchController === 'function'
+      ? SlideNextStudioEditorLaunchController.createStudioEditorLaunchController({
+          documentRef: document,
+          localStorageRef: localStorage,
+          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
+          getCurrentSessionToken: getStudioEditorSessionToken,
+          createFrameLoadHandler: (...args) => createCurrentStudioFrameLoadHandler(...args),
+          shouldHandleFrameLoad: (...args) => shouldHandleCurrentStudioFrameLoad(...args),
+          initStudioFrame: (...args) => initStudioFrame(...args),
+          applyZoom: (...args) => applyZoom(...args),
+          loadVersions: (...args) => loadVersions(...args),
+          loadPresentationMetadata: (...args) => loadCurrentPresentationMetadata(...args),
+          resolveLaunchSource: (...args) => resolveCurrentStudioEditorLaunchSource(...args),
+          shellController: studioEditorShellController,
+          setFrameSource: (...args) => setCurrentStudioEditorFrameSource(...args)
+        })
+      : null;
     const studioEditorPresentationMetadataController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.presentationMetadataController
       : null;
@@ -5453,6 +5473,20 @@
         resetStudioVersionUiState({ isLoading: true });
         resetStudioSaveButtonState();
         updateDeckReadyToolbarActionState();
+      }
+
+      if (typeof studioEditorLaunchController !== 'undefined'
+        && studioEditorLaunchController
+        && typeof studioEditorLaunchController.launch === 'function') {
+        return studioEditorLaunchController.launch({
+          presentationUrl: url,
+          presentationTitle: title,
+          editor,
+          iframe,
+          sessionToken: editorSessionToken,
+          frameLoadSessionStateReaders,
+          isEditorActive
+        });
       }
       
       // Configure load triggers BEFORE setting src
