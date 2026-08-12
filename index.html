@@ -1514,6 +1514,7 @@
   <script src="/shared/studio-editor-session-state.js"></script>
   <script src="/shared/studio-editor-session-state-runtime.js"></script>
   <script src="/shared/studio-editor-session-state-bridge.js"></script>
+  <script src="/shared/studio-editor-session-state-accessors.js"></script>
   <script src="/shared/studio-editor-slide-index-controller.js"></script>
   <script src="/shared/studio-editor-slide-index-store.js"></script>
   <script src="/shared/studio-editor-selection-state-controller.js"></script>
@@ -1617,28 +1618,35 @@
             : null
         })
       : null;
+    const studioEditorSessionStateAccessors = typeof SlideNextStudioEditorSessionStateAccessors !== 'undefined'
+      && SlideNextStudioEditorSessionStateAccessors
+      && typeof SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateAccessors === 'function'
+      ? SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateAccessors({
+          bridge: studioEditorSessionStateBridge
+        })
+      : null;
     function getStudioCurrentPresentationUrl() {
-      return studioEditorSessionStateBridge
-        && typeof studioEditorSessionStateBridge.getPresentationUrl === 'function'
-        ? studioEditorSessionStateBridge.getPresentationUrl()
+      return typeof studioEditorSessionStateAccessors !== 'undefined'
+        && studioEditorSessionStateAccessors
+        ? studioEditorSessionStateAccessors.getPresentationUrl()
         : '';
     }
     function setStudioCurrentPresentationUrl(nextUrl) {
-      return studioEditorSessionStateBridge
-        && typeof studioEditorSessionStateBridge.setPresentationUrl === 'function'
-        ? studioEditorSessionStateBridge.setPresentationUrl(nextUrl)
+      return typeof studioEditorSessionStateAccessors !== 'undefined'
+        && studioEditorSessionStateAccessors
+        ? studioEditorSessionStateAccessors.setPresentationUrl(nextUrl)
         : '';
     }
     function getStudioEditorSessionToken() {
-      return studioEditorSessionStateBridge
-        && typeof studioEditorSessionStateBridge.getSessionToken === 'function'
-        ? studioEditorSessionStateBridge.getSessionToken()
+      return typeof studioEditorSessionStateAccessors !== 'undefined'
+        && studioEditorSessionStateAccessors
+        ? studioEditorSessionStateAccessors.getSessionToken()
         : 0;
     }
     function advanceStudioEditorSessionToken() {
-      return studioEditorSessionStateBridge
-        && typeof studioEditorSessionStateBridge.advanceSessionToken === 'function'
-        ? studioEditorSessionStateBridge.advanceSessionToken()
+      return typeof studioEditorSessionStateAccessors !== 'undefined'
+        && studioEditorSessionStateAccessors
+        ? studioEditorSessionStateAccessors.advanceSessionToken()
         : 0;
     }
     const studioEditorStateBridge = typeof SlideNextStudioEditorStateBridge !== 'undefined'
