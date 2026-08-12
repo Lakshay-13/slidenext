@@ -155,6 +155,7 @@
         if (updateGroupActionState) updateGroupActionState();
         return false;
       }
+      if (!finalizeDeckMutation) return false;
 
       const doc = getIframeDoc();
       const { slide, parent, groupPlan } = groupActionState;
@@ -265,6 +266,7 @@
         if (updateGroupActionState) updateGroupActionState();
         return false;
       }
+      if (!finalizeDeckMutation) return false;
 
       const doc = getIframeDoc();
       const slideMetrics = getSlideMetrics(ungroupActionState.slide);

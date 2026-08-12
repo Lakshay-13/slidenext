@@ -273,6 +273,39 @@ test('group controller refreshes state and fails closed when actions are unavail
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('group and ungroup controllers fail closed before mutation when finalization is unavailable', () => {
+  let groupCalls = 0;
+  let ungroupCalls = 0;
+  const slide = { id: 'slide-1' };
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent: slide,
+      selection: [{ id: 'first' }, { id: 'second' }],
+      groupPlan: { bounds: { left: 10, top: 20 }, nextItems: [] }
+    }),
+    buildUngroupSelectionActionState: () => ({
+      canUngroup: true,
+      slide,
+      groups: [{ id: 'group-1', parentElement: slide }]
+    }),
+    applyGroupMutation: () => {
+      groupCalls += 1;
+      return { didApply: true, group: null, transaction: null };
+    },
+    applyUngroupMutation: () => {
+      ungroupCalls += 1;
+      return { didApply: true, restoredElements: [], restoredGroups: [], transaction: null };
+    }
+  });
+
+  assert.equal(controller.group(), false);
+  assert.equal(controller.ungroup(), false);
+  assert.equal(groupCalls, 0);
+  assert.equal(ungroupCalls, 0);
+});
+
 test('group controller fails closed when canonical builder construction throws', () => {
   let groupCalls = 0;
   const slide = { id: 'slide-1' };
