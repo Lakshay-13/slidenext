@@ -127,6 +127,10 @@ test('index wires frame editing composition through the runtime module', () => {
     fileContent,
     /resolveAdjacentTextElement: studioEditorAdjacentTextElementResolver/
   );
+  assert.match(
+    fileContent,
+    /getSelectedElements: \(doc\) => getLiveSelectedElements\(getStudioSelectedElements\(doc\), doc\),/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorFrameInteractions\.createStudioEditorFrameInteractions\(/

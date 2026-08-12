@@ -3996,7 +3996,7 @@
             syncSelectionOverlay();
             syncInspectorForSelection();
           },
-          getSelectedElements: (doc) => getLiveSelectedElements(getStudioSelectedElements(), doc),
+          getSelectedElements: (doc) => getLiveSelectedElements(getStudioSelectedElements(doc), doc),
           canMutateDeck: (doc) => !!getActiveSlide(doc),
           editorUndo,
           editorRedo,
