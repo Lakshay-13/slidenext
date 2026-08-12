@@ -61,6 +61,9 @@ test('setStudioAutoSaveStatus exposes live status semantics and busy state', () 
     title: '',
     setAttribute(name, value) {
       attributes[name] = value;
+    },
+    removeAttribute(name) {
+      delete attributes[name];
     }
   };
   const documentRef = {
@@ -121,7 +124,17 @@ test('setStudioAutoSaveStatus surfaces PDF preflight warnings separately from PP
 });
 
 test('setStudioAutoSaveStatus preserves export failure details in the status tooltip', () => {
-  const statusEl = { innerHTML: '', title: '' };
+  const attributes = {};
+  const statusEl = {
+    innerHTML: '',
+    title: '',
+    setAttribute(name, value) {
+      attributes[name] = value;
+    },
+    removeAttribute(name) {
+      delete attributes[name];
+    }
+  };
   const documentRef = {
     getElementById(id) {
       return id === 'autoSaveStatus' ? statusEl : null;
@@ -135,6 +148,10 @@ test('setStudioAutoSaveStatus preserves export failure details in the status too
   }), true);
   assert.match(statusEl.innerHTML, /PPTX Export Failed/);
   assert.equal(statusEl.title, 'Cannot export an empty deck');
+  assert.equal(attributes['aria-label'], 'Cannot export an empty deck');
+
+  assert.equal(statusView.setStudioAutoSaveStatus({ documentRef, state: 'saved' }), true);
+  assert.equal(Object.hasOwn(attributes, 'aria-label'), false);
 });
 
 test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progress', () => {
