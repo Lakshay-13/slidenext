@@ -50,7 +50,11 @@ test('index wires clipboard payload construction through the runtime module', ()
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorClipboardPayloadRuntime\.createStudioEditorClipboardPayloadRuntime\(/
+    /<script src="\/shared\/studio-editor-clipboard-payload-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorClipboardPayloadShellRuntime\.createStudioEditorClipboardPayloadShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,

@@ -1375,6 +1375,7 @@
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-payload-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
@@ -2996,10 +2997,13 @@
     const studioEditorClipboardController = studioEditorClipboardRuntime
       ? studioEditorClipboardRuntime.clipboardController
       : null;
-    const studioEditorClipboardPayloadRuntime = typeof SlideNextStudioEditorClipboardPayloadRuntime !== 'undefined'
-      && SlideNextStudioEditorClipboardPayloadRuntime
-      && typeof SlideNextStudioEditorClipboardPayloadRuntime.createStudioEditorClipboardPayloadRuntime === 'function'
-      ? SlideNextStudioEditorClipboardPayloadRuntime.createStudioEditorClipboardPayloadRuntime({
+    const studioEditorClipboardPayloadRuntime = typeof SlideNextStudioEditorClipboardPayloadShellRuntime !== 'undefined'
+      && SlideNextStudioEditorClipboardPayloadShellRuntime
+      && typeof SlideNextStudioEditorClipboardPayloadShellRuntime.createStudioEditorClipboardPayloadShellRuntime === 'function'
+      ? SlideNextStudioEditorClipboardPayloadShellRuntime.createStudioEditorClipboardPayloadShellRuntime({
+          payloadRuntimeApi: typeof SlideNextStudioEditorClipboardPayloadRuntime !== 'undefined'
+            ? SlideNextStudioEditorClipboardPayloadRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
             ? SlideNextStudioEditorClipboardPayloadController
             : null,
