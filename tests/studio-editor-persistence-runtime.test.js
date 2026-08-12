@@ -77,7 +77,11 @@ test('index wires persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorPersistenceRuntime\.createStudioEditorPersistenceRuntime\(/
+    /<script src="\/shared\/studio-editor-persistence-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorPersistenceShellRuntime\.createStudioEditorPersistenceShellRuntime\(/
   );
   assert.match(
     fileContent,

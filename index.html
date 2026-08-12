@@ -1498,6 +1498,7 @@
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
+  <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
@@ -3826,12 +3827,15 @@
         })
       : null;
     const studioEditorPersistenceRuntime = studioEditorPersistenceRuntimeOptions
-      && typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
-      && SlideNextStudioEditorPersistenceRuntime
-      && typeof SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime === 'function'
-      ? SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime(
-          studioEditorPersistenceRuntimeOptions
-        )
+      && typeof SlideNextStudioEditorPersistenceShellRuntime !== 'undefined'
+      && SlideNextStudioEditorPersistenceShellRuntime
+      && typeof SlideNextStudioEditorPersistenceShellRuntime.createStudioEditorPersistenceShellRuntime === 'function'
+      ? SlideNextStudioEditorPersistenceShellRuntime.createStudioEditorPersistenceShellRuntime({
+          persistenceRuntimeApi: typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
+            ? SlideNextStudioEditorPersistenceRuntime
+            : null,
+          runtimeOptions: studioEditorPersistenceRuntimeOptions
+        })
       : null;
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
