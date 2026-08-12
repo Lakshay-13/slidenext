@@ -41,6 +41,29 @@ test('persisted deck accessors preserve safe fallbacks without a bridge', () => 
   assert.equal(accessors.setPlaybackState({}), false);
 });
 
+test('persisted deck global api preserves the editor shell function names', () => {
+  const accessors = {
+    getDeckHtml: () => '<html>old</html>',
+    getCanonicalDeck: () => ({ kind: 'slidenext.deck' }),
+    getPlaybackState: () => ({ activeSlideIds: ['slide-1'] }),
+    setDeckHtml: (value) => value,
+    setCanonicalDeck: (value) => value,
+    setPlaybackState: (value) => value
+  };
+  const globalApi = accessorsApi.createStudioEditorPersistedDeckGlobalApi({ accessors });
+
+  assert.equal(globalApi.getStudioPersistedDeckHtml(), '<html>old</html>');
+  assert.deepEqual(globalApi.getStudioPersistedCanonicalDeck(), { kind: 'slidenext.deck' });
+  assert.deepEqual(globalApi.getStudioPersistedPlaybackState(), {
+    activeSlideIds: ['slide-1']
+  });
+  assert.equal(globalApi.setStudioPersistedDeckHtml('<html>new</html>'), '<html>new</html>');
+  assert.deepEqual(globalApi.setStudioPersistedCanonicalDeck({ id: 'next' }), { id: 'next' });
+  assert.deepEqual(globalApi.setStudioPersistedPlaybackState({ activeSlideIds: ['slide-2'] }), {
+    activeSlideIds: ['slide-2']
+  });
+});
+
 test('persisted deck accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -54,6 +77,11 @@ test('persisted deck accessors publish the global consumed by the editor shell',
       .createStudioEditorPersistedDeckAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorPersistedDeckAccessors
+      .createStudioEditorPersistedDeckGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads persisted deck accessors after the persisted deck bridge', () => {
@@ -65,4 +93,7 @@ test('editor loads persisted deck accessors after the persisted deck bridge', ()
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.persistedDeckAccessors/);
   assert.match(fileContent, /studioEditorPersistedDeckAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedDeckGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioPersistedDeckHtml\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioPersistedCanonicalDeck\(\)/);
 });

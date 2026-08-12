@@ -5,6 +5,12 @@ const path = require('node:path');
 const persistedStateController = require('../shared/studio-editor-persisted-deck-state-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const PERSISTED_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-persisted-deck-accessors.js'
+);
 
 test('persisted deck state controller owns the HTML, canonical deck, and playback baseline', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
@@ -41,9 +47,12 @@ test('editor wiring routes persisted baselines through the shared controller', (
   );
   assert.match(fileContent, /studio-editor-persisted-deck-state-store\.js/);
   assert.match(fileContent, /studioEditorPersistedDeckBridge/);
-  assert.match(fileContent, /getStudioPersistedDeckHtml\(\)/);
-  assert.match(fileContent, /getStudioPersistedCanonicalDeck\(\)/);
-  assert.match(fileContent, /getStudioPersistedPlaybackState\(\)/);
+  assert.match(fileContent, /studioEditorPersistedDeckGlobalApi/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedDeckGlobalApi\)/);
+  const accessorSource = fs.readFileSync(PERSISTED_ACCESSORS_PATH, 'utf8');
+  assert.match(accessorSource, /getStudioPersistedDeckHtml: \(\) => accessors\.getDeckHtml\(\)/);
+  assert.match(accessorSource, /getStudioPersistedCanonicalDeck: \(\) => accessors\.getCanonicalDeck\(\)/);
+  assert.match(accessorSource, /getStudioPersistedPlaybackState: \(\) => accessors\.getPlaybackState\(\)/);
   assert.doesNotMatch(fileContent, /let lastPersistedDeckHtml = ''/);
   assert.doesNotMatch(fileContent, /let lastPersistedCanonicalDeck = null/);
   assert.doesNotMatch(fileContent, /let persistedDeckPlaybackState = null/);

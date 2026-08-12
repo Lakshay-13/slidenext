@@ -33,5 +33,23 @@
     };
   }
 
-  return { createStudioEditorPersistedDeckAccessors };
+  function createStudioEditorPersistedDeckGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorPersistedDeckAccessors(options);
+
+    return {
+      getStudioPersistedDeckHtml: () => accessors.getDeckHtml(),
+      getStudioPersistedCanonicalDeck: () => accessors.getCanonicalDeck(),
+      getStudioPersistedPlaybackState: () => accessors.getPlaybackState(),
+      setStudioPersistedDeckHtml: (nextDeckHtml) => accessors.setDeckHtml(nextDeckHtml),
+      setStudioPersistedCanonicalDeck: (nextCanonicalDeck) => accessors
+        .setCanonicalDeck(nextCanonicalDeck),
+      setStudioPersistedPlaybackState: (nextPlaybackState) => accessors
+        .setPlaybackState(nextPlaybackState)
+    };
+  }
+
+  return {
+    createStudioEditorPersistedDeckAccessors,
+    createStudioEditorPersistedDeckGlobalApi
+  };
 });

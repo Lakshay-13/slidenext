@@ -1810,36 +1810,14 @@
     const studioEditorPersistedDeckAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.persistedDeckAccessors
       : null;
-    function getStudioPersistedDeckHtml() {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.getDeckHtml()
-        : '';
-    }
-    function getStudioPersistedCanonicalDeck() {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.getCanonicalDeck()
-        : null;
-    }
-    function getStudioPersistedPlaybackState() {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.getPlaybackState()
-        : null;
-    }
-    function setStudioPersistedDeckHtml(nextDeckHtml) {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.setDeckHtml(nextDeckHtml)
-        : false;
-    }
-    function setStudioPersistedCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.setCanonicalDeck(nextCanonicalDeck)
-        : false;
-    }
-    function setStudioPersistedPlaybackState(nextPlaybackState) {
-      return studioEditorPersistedDeckAccessors
-        ? studioEditorPersistedDeckAccessors.setPlaybackState(nextPlaybackState)
-        : false;
-    }
+    const studioEditorPersistedDeckGlobalApi = typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckAccessors
+      && typeof SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckGlobalApi({
+          accessors: studioEditorPersistedDeckAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistedDeckGlobalApi);
     const studioEditorTimerStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.timerStateBridge
       : null;
