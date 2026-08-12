@@ -20,6 +20,40 @@ test('editor and preview iframes have accessible names', () => {
   assert.match(fileContent, /<iframe id="studioFrame"[^>]*title="Presentation editor canvas"/);
   assert.match(fileContent, /id="studioFrameLoading"[^>]*aria-busy="true"/);
   assert.match(fileContent, /id="studioFrameLoadingText">Loading presentation\.\.\.</);
+  assert.match(fileContent, /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/);
+});
+
+test('retryStudioEditorFrame reuses the current presentation session', async () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const retrySource = extractFunctionSource(
+    fileContent,
+    'async function retryStudioEditorFrame() {',
+    '\n\n    async function launchStudioEditor('
+  );
+  const calls = [];
+  const context = {
+    currentPresentationUrl: '/presentations/demo/index.html',
+    currentTitle: 'Demo deck',
+    currentCategory: '',
+    launchStudioEditor(...args) {
+      calls.push(args);
+      return Promise.resolve(true);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(retrySource, context);
+
+  assert.equal(await context.retryStudioEditorFrame(), true);
+  assert.deepEqual(calls, [[
+    '/presentations/demo/index.html',
+    'Demo deck',
+    'General'
+  ]]);
+
+  context.currentPresentationUrl = '';
+  assert.equal(await context.retryStudioEditorFrame(), false);
+  assert.equal(calls.length, 1);
 });
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {

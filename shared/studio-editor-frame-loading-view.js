@@ -24,6 +24,9 @@
     const iconEl = documentRef && typeof documentRef.getElementById === 'function'
       ? documentRef.getElementById('studioFrameLoadingIcon')
       : null;
+    const retryEl = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('studioFrameLoadingRetryBtn')
+      : null;
     if (textEl) {
       textEl.textContent = isReady
         ? 'Presentation ready'
@@ -36,6 +39,21 @@
         iconEl.classList.add('animate-spin');
       } else if (state !== 'loading' && typeof iconEl.classList.remove === 'function') {
         iconEl.classList.remove('animate-spin');
+      }
+    }
+    if (retryEl) {
+      const isRetryable = state === 'error';
+      if (retryEl.classList) {
+        if (isRetryable && typeof retryEl.classList.remove === 'function') {
+          retryEl.classList.remove('hidden');
+        } else if (!isRetryable && typeof retryEl.classList.add === 'function') {
+          retryEl.classList.add('hidden');
+        }
+      }
+      retryEl.disabled = !isRetryable;
+      if (typeof retryEl.setAttribute === 'function') {
+        retryEl.setAttribute('aria-hidden', isRetryable ? 'false' : 'true');
+        retryEl.setAttribute('aria-disabled', isRetryable ? 'false' : 'true');
       }
     }
     if (loadingEl.classList) {
