@@ -45,7 +45,11 @@ test('index wires theme behavior through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorThemeRuntime\.createStudioEditorThemeRuntime\(/
+    /<script src="\/shared\/studio-editor-theme-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorThemeShellRuntime\.createStudioEditorThemeShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
