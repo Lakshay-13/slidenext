@@ -238,7 +238,7 @@
         isLocked,
         getLockElementId
       );
-      const lockMutationPlan = lockStateApi.buildStudioLockMutationPlan(getSelectedElements(), {
+      const lockMutationPlan = lockStateApi.buildStudioLockMutationPlan(getSelectedElements(doc), {
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
@@ -296,7 +296,7 @@
         getVisibilityElementId
       );
       const visibilityMutationPlan = visibilityStateApi.buildStudioVisibilityMutationPlan(
-        getSelectedElements(),
+        getSelectedElements(doc),
         {
           isHidden: readHiddenState,
           canMutateDeck: () => !!getActiveSlide(doc)

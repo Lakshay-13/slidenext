@@ -75,6 +75,39 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
 });
 
+test('lock and visibility toggles read selection from the active iframe document', () => {
+  const documentRef = { id: 'active-document' };
+  const selected = [{ id: 'node-1' }];
+  const receivedDocuments = [];
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements) {
+        assert.deepEqual(elements, selected);
+        return { didChange: true, selection: elements, shouldLock: true, versionLabel: 'Lock' };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements) {
+        assert.deepEqual(elements, selected);
+        return { didChange: true, selection: elements, shouldHide: true, versionLabel: 'Hide' };
+      }
+    },
+    getSelectedElements(doc) {
+      receivedDocuments.push(doc);
+      return selected;
+    },
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyLockMutation: () => ({ didApply: true, transaction: null }),
+    applyVisibilityMutation: () => ({ didApply: true, transaction: null }),
+    finalizeSelectionToggleMutation: () => true
+  });
+
+  assert.equal(controller.toggleLock(), true);
+  assert.equal(controller.toggleVisibility(), true);
+  assert.deepEqual(receivedDocuments, [documentRef, documentRef]);
+});
+
 test('lock and visibility controller fails closed when plans or finalization are unavailable', () => {
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: { buildStudioLockMutationPlan: () => ({ didChange: false }) },
