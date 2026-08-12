@@ -35,6 +35,27 @@ test('createStudioEditorDeckMutationFinalizer reuses configured mutation depende
   assert.deepEqual(calls[0].mutationOptions, { transaction: { id: 'tx' } });
 });
 
+test('createStudioEditorDeckMutationFinalizer preserves positional canonical decks', () => {
+  const calls = [];
+  const mutationApi = {
+    finalizeStudioMutation(options) {
+      calls.push(options);
+      return options.versionLabel;
+    }
+  };
+  const finalizer = deckMutation.createStudioEditorDeckMutationFinalizer({
+    mutationApi,
+    isCanonicalDeck: () => true
+  });
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+
+  assert.equal(finalizer('Auto: Saved Block', { id: 'tx' }, canonicalDeck), 'Auto: Saved Block');
+  assert.deepEqual(calls[0].mutationOptions, {
+    transaction: { id: 'tx' },
+    canonicalDeck
+  });
+});
+
 test('finalizeStudioEditorDeckMutation delegates shared mutation finalization', () => {
   const calls = [];
   const mutationApi = {

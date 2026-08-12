@@ -39,8 +39,18 @@
       ? options.triggerAutoVersion
       : null;
 
-    return function finalizeConfiguredStudioEditorDeckMutation(versionLabel, mutationOptions = {}) {
-      return finalizeStudioEditorDeckMutation(versionLabel, mutationOptions, {
+    return function finalizeConfiguredStudioEditorDeckMutation(
+      versionLabel,
+      mutationOptions = {},
+      canonicalDeck
+    ) {
+      const resolvedMutationOptions = arguments.length > 2
+        ? {
+            transaction: mutationOptions || null,
+            ...(canonicalDeck !== undefined ? { canonicalDeck } : {})
+          }
+        : mutationOptions;
+      return finalizeStudioEditorDeckMutation(versionLabel, resolvedMutationOptions, {
         mutationApi,
         buildCanonicalDeckBaseline,
         isCanonicalDeck,
