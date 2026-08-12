@@ -188,7 +188,7 @@
           if (!preserveSelection) {
             deselectElement();
           } else {
-            updateLayersList();
+            updateLayersList(doc);
           }
         },
         buildEditorDeckSnapshot,

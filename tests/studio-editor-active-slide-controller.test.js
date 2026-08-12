@@ -49,7 +49,7 @@ test('active-slide controller composes shared chrome dependencies and preserves 
     updateInsertionActionState: (doc) => calls.push(['insert', doc]),
     updateZoomActionState: (doc) => calls.push(['zoom', doc]),
     updateWallpaperActionState: (doc) => calls.push(['wallpaper', doc]),
-    updateLayersList: () => calls.push(['layers']),
+    updateLayersList: (doc) => calls.push(['layers', doc]),
     getWallpaperTab: () => 'solid',
     setWallpaperTab: () => {}
   });
@@ -65,6 +65,7 @@ test('active-slide controller composes shared chrome dependencies and preserves 
   assert.equal(calls[2][0], 'zoom');
   assert.equal(calls[3][0], 'wallpaper');
   assert.equal(calls[4][0], 'layers');
+  assert.equal(calls[4][1], iframeDoc);
 });
 
 test('active-slide controller synchronizes wallpaper state and fails closed without a view', () => {
