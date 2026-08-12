@@ -1381,6 +1381,7 @@
   <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-removal-controller.js"></script>
@@ -2955,10 +2956,13 @@
     const studioEditorStyleController = studioEditorStyleRuntime
       ? studioEditorStyleRuntime.styleController
       : null;
-    const studioEditorClipboardRuntime = typeof SlideNextStudioEditorClipboardRuntime !== 'undefined'
-      && SlideNextStudioEditorClipboardRuntime
-      && typeof SlideNextStudioEditorClipboardRuntime.createStudioEditorClipboardRuntime === 'function'
-      ? SlideNextStudioEditorClipboardRuntime.createStudioEditorClipboardRuntime({
+    const studioEditorClipboardRuntime = typeof SlideNextStudioEditorClipboardShellRuntime !== 'undefined'
+      && SlideNextStudioEditorClipboardShellRuntime
+      && typeof SlideNextStudioEditorClipboardShellRuntime.createStudioEditorClipboardShellRuntime === 'function'
+      ? SlideNextStudioEditorClipboardShellRuntime.createStudioEditorClipboardShellRuntime({
+          clipboardRuntimeApi: typeof SlideNextStudioEditorClipboardRuntime !== 'undefined'
+            ? SlideNextStudioEditorClipboardRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorClipboardController !== 'undefined'
             ? SlideNextStudioEditorClipboardController
             : null,

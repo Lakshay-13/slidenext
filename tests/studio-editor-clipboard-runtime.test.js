@@ -54,7 +54,11 @@ test('index wires the primary clipboard controller through the runtime module', 
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorClipboardRuntime\.createStudioEditorClipboardRuntime\(/
+    /<script src="\/shared\/studio-editor-clipboard-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorClipboardShellRuntime\.createStudioEditorClipboardShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
