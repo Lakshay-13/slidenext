@@ -448,7 +448,7 @@ test('assignMasterSlide restores the active slide when history capture fails', (
     getActiveSlideId: () => 'slide-1',
     getDocument: () => createMasterSlideDocument(parent),
     getSlides: () => [parent.current],
-    saveHistoryState: () => false
+    saveHistoryState: () => ({ didCapture: false })
   });
 
   assert.equal(controller.assignMasterSlide('master-1'), false);
