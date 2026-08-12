@@ -7224,15 +7224,14 @@
       });
     }
 
-    function refreshSelectionClasses() {
+    function refreshSelectionClasses(doc = getIframeDoc()) {
       if (typeof studioEditorSelectionClassRefresher !== 'function') {
         clearStudioSelectionState();
         return false;
       }
-      const doc = getIframeDoc();
       const nextSelectionState = studioEditorSelectionClassRefresher(
         doc,
-        getStudioSelectedElements(),
+        getStudioSelectedElements(doc),
         getEditorSelectionOptions({ doc })
       );
       setStudioSelectionState(nextSelectionState);

@@ -190,7 +190,7 @@ function loadRefreshSelectionClasses(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'function refreshSelectionClasses() {',
+    'function refreshSelectionClasses(doc = getIframeDoc()) {',
     '\n\n    function applyEditorSelectionState(nextState = {}) {'
   );
   vm.runInContext(helperSource, context);
@@ -340,13 +340,60 @@ test('refreshSelectionClasses delegates shared class refresh and updates local s
   assert.equal(context.selectedElement, refreshedElement);
 });
 
+test('refreshSelectionClasses resolves selection against the requested document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'current-doc' };
+  const otherDoc = { id: 'other-doc' };
+  const currentElement = { id: 'current-node' };
+  const otherElement = { id: 'other-node' };
+  const requestedDocs = [];
+  const context = {
+    selectedElements: [],
+    selectedElement: null,
+    SlideNextStudioEditorSelection: {
+      refreshStudioSelectionClasses(doc, selectedElements) {
+        assert.equal(doc, otherDoc);
+        assert.deepEqual(selectedElements, [otherElement]);
+        return {
+          selectedElements,
+          selectedElement: selectedElements[0]
+        };
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getStudioSelectedElements(doc) {
+      requestedDocs.push(doc);
+      return doc === otherDoc ? [otherElement] : [currentElement];
+    },
+    getEditorSelectionOptions(options) {
+      return { doc: options.doc };
+    }
+  };
+
+  vm.createContext(context);
+  loadRefreshSelectionClasses(fileContent, context);
+  context.getStudioSelectedElements = (doc) => {
+    requestedDocs.push(doc);
+    return doc === otherDoc ? [otherElement] : [currentElement];
+  };
+
+  assert.equal(context.refreshSelectionClasses(otherDoc), true);
+  assert.deepEqual(requestedDocs, [otherDoc]);
+  assert.equal(context.selectedElement, otherElement);
+});
+
 test('refreshSelectionClasses clears local selection when the shared class refresh is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const staleElement = { id: 'stale' };
   const context = {
     selectedElements: [staleElement],
     selectedElement: staleElement,
-    SlideNextStudioEditorSelection: null
+    SlideNextStudioEditorSelection: null,
+    getIframeDoc() {
+      return null;
+    }
   };
 
   vm.createContext(context);
