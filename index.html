@@ -1425,6 +1425,7 @@
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
+  <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -3281,10 +3282,13 @@
     const studioEditorMasterSlideController = studioEditorMasterSlideRuntime
       ? studioEditorMasterSlideRuntime.masterSlideController
       : null;
-    const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetRuntime !== 'undefined'
-      && SlideNextStudioEditorAssetRuntime
-      && typeof SlideNextStudioEditorAssetRuntime.createStudioEditorAssetRuntime === 'function'
-      ? SlideNextStudioEditorAssetRuntime.createStudioEditorAssetRuntime({
+    const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
+      && SlideNextStudioEditorAssetShellRuntime
+      && typeof SlideNextStudioEditorAssetShellRuntime.createStudioEditorAssetShellRuntime === 'function'
+      ? SlideNextStudioEditorAssetShellRuntime.createStudioEditorAssetShellRuntime({
+          assetRuntimeApi: typeof SlideNextStudioEditorAssetRuntime !== 'undefined'
+            ? SlideNextStudioEditorAssetRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorAssetController !== 'undefined'
             ? SlideNextStudioEditorAssetController
             : null,

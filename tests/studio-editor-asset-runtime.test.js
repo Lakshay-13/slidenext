@@ -59,7 +59,11 @@ test('index wires asset persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorAssetRuntime\.createStudioEditorAssetRuntime\(/
+    /<script src="\/shared\/studio-editor-asset-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorAssetShellRuntime\.createStudioEditorAssetShellRuntime\(/
   );
   assert.match(
     fileContent,
