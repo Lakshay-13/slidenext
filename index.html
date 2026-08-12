@@ -1491,6 +1491,7 @@
   <script src="/shared/presentation-library-view.js"></script>
   <script src="/shared/presentation-dashboard-controller.js"></script>
   <script src="/shared/presentation-dashboard-runtime.js"></script>
+  <script src="/shared/presentation-dashboard-accessors.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
@@ -2225,6 +2226,14 @@
       : null;
     const presentationCreationController = presentationDashboardRuntime
       ? presentationDashboardRuntime.creationController
+      : null;
+    const presentationDashboardAccessors = typeof SlideNextPresentationDashboardAccessors !== 'undefined'
+      && SlideNextPresentationDashboardAccessors
+      && typeof SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors === 'function'
+      ? SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors({
+          dashboardController: presentationDashboardController,
+          creationController: presentationCreationController
+        })
       : null;
     const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
       && SlideNextStudioEditorDeckViewRuntime
@@ -4219,30 +4228,45 @@
 
     // 1. Fetch Presentations from Backend
     function setPresentationLibraryLoadingState() {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.setLoadingState();
+      }
       return presentationDashboardController
         ? presentationDashboardController.setLoadingState()
         : false;
     }
 
     async function loadPresentations() {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.load();
+      }
       return presentationDashboardController
         ? presentationDashboardController.load()
         : [];
     }
 
     function openCreatePresentationModal() {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.openCreate();
+      }
       return presentationCreationController
         ? presentationCreationController.open()
         : false;
     }
 
     function closeCreatePresentationModal() {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.closeCreate();
+      }
       return presentationCreationController
         ? presentationCreationController.close()
         : false;
     }
 
     async function submitCreatePresentation(event) {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.submitCreate(event);
+      }
       return presentationCreationController
         ? presentationCreationController.submit(event)
         : null;
@@ -4250,6 +4274,9 @@
 
     // Filter by category selection
     function filterCategory(cat) {
+      if (typeof presentationDashboardAccessors !== 'undefined' && presentationDashboardAccessors) {
+        return presentationDashboardAccessors.filter(cat);
+      }
       return presentationDashboardController
         ? presentationDashboardController.filter(cat)
         : '';
