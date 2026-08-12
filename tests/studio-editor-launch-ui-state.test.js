@@ -13,6 +13,13 @@ const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
+test('editor and preview iframes have accessible names', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(fileContent, /<iframe id="presentationFrame"[^>]*title="Presentation preview"/);
+  assert.match(fileContent, /<iframe id="studioFrame"[^>]*title="Presentation editor canvas"/);
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const historyAwareSource = historyStackFixture.extractHistoryStackAwareFunctionSource(
     fileContent,
