@@ -54,6 +54,33 @@ test('setStudioAutoSaveStatus renders PDF resource progress', () => {
   assert.match(statusEl.innerHTML, /Exporting PDF 42%/);
 });
 
+test('setStudioAutoSaveStatus exposes live status semantics and busy state', () => {
+  const attributes = {};
+  const statusEl = {
+    innerHTML: '',
+    title: '',
+    setAttribute(name, value) {
+      attributes[name] = value;
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({ documentRef, state: 'exporting-pdf' }), true);
+  assert.deepEqual(attributes, {
+    role: 'status',
+    'aria-live': 'polite',
+    'aria-atomic': 'true',
+    'aria-busy': 'true'
+  });
+
+  assert.equal(statusView.setStudioAutoSaveStatus({ documentRef, state: 'pdf-exported' }), true);
+  assert.equal(attributes['aria-busy'], 'false');
+});
+
 test('setStudioAutoSaveStatus surfaces the PPTX warning count when provided', () => {
   const statusEl = { innerHTML: '' };
   const documentRef = {

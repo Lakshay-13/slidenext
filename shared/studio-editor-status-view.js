@@ -15,6 +15,13 @@
     if (!statusEl) return false;
 
     const state = options.state;
+    const isBusy = ['loading', 'saving', 'exporting', 'exporting-pdf', 'pdf-printing'].includes(state);
+    if (typeof statusEl.setAttribute === 'function') {
+      statusEl.setAttribute('role', 'status');
+      statusEl.setAttribute('aria-live', 'polite');
+      statusEl.setAttribute('aria-atomic', 'true');
+      statusEl.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+    }
     const progressPercent = Number.isFinite(options.progressPercent)
       ? Math.max(0, Math.min(100, Math.round(options.progressPercent)))
       : null;
