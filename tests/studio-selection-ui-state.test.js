@@ -444,6 +444,10 @@ test('getCommittedSelectedEditorElementIds delegates to shared selection', () =>
   loadGetCommittedSelectedEditorElementIds(fileContent, context);
 
   assert.deepEqual(context.getCommittedSelectedEditorElementIds(iframeDoc), ['node-1']);
+  assert.match(
+    fileContent,
+    /studioEditorCommittedSelectionIdsReader\(\s*getStudioSelectedElements\(doc\),\s*doc,/
+  );
   assert.equal(delegatedArgs[0], selectedElements);
   assert.equal(delegatedArgs[1], iframeDoc);
   assert.deepEqual(delegatedArgs[2], { doc: iframeDoc, selectionOptions: true });

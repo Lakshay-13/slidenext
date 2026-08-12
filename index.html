@@ -6987,7 +6987,7 @@
       }
       if (typeof studioEditorCommittedSelectionIdsReader !== 'function') return [];
       return studioEditorCommittedSelectionIdsReader(
-        getStudioSelectedElements(),
+        getStudioSelectedElements(doc),
         doc,
         getEditorSelectionOptions({ doc })
       );
