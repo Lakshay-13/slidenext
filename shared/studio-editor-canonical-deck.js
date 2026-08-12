@@ -60,16 +60,20 @@
       : null;
 
     return function buildStudioEditorCanonicalDeck(doc = null, buildOptions = {}) {
-      const canonicalDeckOverride = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeckOverride')
-        ? buildOptions.canonicalDeckOverride
+      const normalizedBuildOptions = buildOptions && typeof buildOptions === 'object'
+        && !Array.isArray(buildOptions)
+        ? buildOptions
+        : {};
+      const canonicalDeckOverride = Object.prototype.hasOwnProperty.call(normalizedBuildOptions, 'canonicalDeckOverride')
+        ? normalizedBuildOptions.canonicalDeckOverride
         : null;
       if (isValidCanonicalDeck(canonicalDeckOverride)) {
         return canonicalDeckOverride;
       }
 
-      if (buildOptions.preferLiveCanonicalDeck !== false && doc) {
+      if (normalizedBuildOptions.preferLiveCanonicalDeck !== false && doc) {
         try {
-          const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, buildOptions);
+          const liveCanonicalDeck = resolveLiveCanonicalDeck(doc, normalizedBuildOptions);
           if (isValidCanonicalDeck(liveCanonicalDeck)) {
             return liveCanonicalDeck;
           }
@@ -94,8 +98,8 @@
       } catch (error) {
         // Keep DOM/import fallback available when stored state is unavailable.
       }
-      const canonicalDeckBaseline = isValidCanonicalDeck(buildOptions.canonicalDeckBaseline)
-        ? buildOptions.canonicalDeckBaseline
+      const canonicalDeckBaseline = isValidCanonicalDeck(normalizedBuildOptions.canonicalDeckBaseline)
+        ? normalizedBuildOptions.canonicalDeckBaseline
         : storedCanonicalDeck;
       if (buildStudioCanonicalDeck) {
         try {

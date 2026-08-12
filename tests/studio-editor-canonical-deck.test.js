@@ -76,6 +76,18 @@ test('canonical deck builder rejects array-shaped fake decks by default', () => 
   assert.equal(builder({ id: 'document' }), null);
 });
 
+test('canonical deck builder normalizes null build options instead of throwing', () => {
+  const rebuiltDeck = createDeck('rebuilt');
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    buildStudioCanonicalDeck() {
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(builder({ id: 'document' }, null), rebuiltDeck);
+  assert.equal(builder({ id: 'document' }, []), rebuiltDeck);
+});
+
 test('canonical deck builder rejects invalid overrides and live models before falling back', () => {
   const invalidOverride = { slides: [] };
   const invalidLiveDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
