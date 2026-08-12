@@ -120,6 +120,15 @@
     return sources;
   }
 
+  function extractStudioPdfSrcsetSources(value) {
+    if (typeof value !== 'string' || !value.trim()) return [];
+    return value
+      .split(',')
+      .map((candidate) => candidate.trim().split(/\s+/)[0] || '')
+      .filter((source) => source && !source.startsWith('#'))
+      .filter((source, index, sources) => sources.indexOf(source) === index);
+  }
+
   function readStudioPdfOpeningTagAttribute(html, attributeName) {
     if (typeof html !== 'string' || !html.trim() || !attributeName) return '';
     const openingTag = html.match(/^<[a-z][^>]*>/i);
@@ -136,11 +145,17 @@
     const nodeType = typeof node.type === 'string' ? node.type.toLowerCase() : '';
     const nodeTagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
     if (nodeType !== 'image' && nodeTagName !== 'img') return [];
-    return [
+    const directSources = [
       attributes.src,
       node.src,
       readStudioPdfOpeningTagAttribute(node.html, 'src')
-    ]
+    ];
+    const srcsetSources = [
+      attributes.srcset,
+      node.srcset,
+      readStudioPdfOpeningTagAttribute(node.html, 'srcset')
+    ].flatMap((srcset) => extractStudioPdfSrcsetSources(srcset));
+    return directSources.concat(srcsetSources)
       .filter((source) => typeof source === 'string' && source.trim())
       .map((source) => source.trim())
       .filter((source, index, sources) => sources.indexOf(source) === index);

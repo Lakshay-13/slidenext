@@ -321,7 +321,10 @@ test('preflightStudioPdfExport checks direct image and background sources', () =
       nodes: [{
         id: 'image-1',
         type: 'image',
-        attributes: { src: 'images/node.png' }
+        attributes: {
+          src: 'images/node.png',
+          srcset: 'images/node-small.png 1x, images/node-large.png 2x'
+        }
       }, {
         id: 'panel-1',
         style: 'background-image: url(\'images/panel.png\');'
@@ -343,6 +346,18 @@ test('preflightStudioPdfExport checks direct image and background sources', () =
     },
     {
       id: 'images/node.png',
+      ownerType: 'node',
+      ownerId: 'image-1',
+      reason: 'unavailable-source'
+    },
+    {
+      id: 'images/node-small.png',
+      ownerType: 'node',
+      ownerId: 'image-1',
+      reason: 'unavailable-source'
+    },
+    {
+      id: 'images/node-large.png',
       ownerType: 'node',
       ownerId: 'image-1',
       reason: 'unavailable-source'
@@ -370,6 +385,16 @@ test('preflightStudioPdfExport checks direct image and background sources', () =
       owner: { type: 'node', id: 'image-1' }
     },
     {
+      source: 'images/node-small.png',
+      asset: { id: 'images/node-small.png', src: 'images/node-small.png', type: 'image' },
+      owner: { type: 'node', id: 'image-1' }
+    },
+    {
+      source: 'images/node-large.png',
+      asset: { id: 'images/node-large.png', src: 'images/node-large.png', type: 'image' },
+      owner: { type: 'node', id: 'image-1' }
+    },
+    {
       source: 'images/panel.png',
       asset: { id: 'images/panel.png', src: 'images/panel.png', type: 'image' },
       owner: { type: 'node-background', id: 'panel-1' }
@@ -378,6 +403,8 @@ test('preflightStudioPdfExport checks direct image and background sources', () =
   assert.deepEqual(report.warnings, [
     'PDF slide slide-1 references unavailable asset "images/slide.png"',
     'PDF node image-1 references unavailable asset "images/node.png"',
+    'PDF node image-1 references unavailable asset "images/node-small.png"',
+    'PDF node image-1 references unavailable asset "images/node-large.png"',
     'PDF node-background panel-1 references unavailable asset "images/panel.png"'
   ]);
 });
