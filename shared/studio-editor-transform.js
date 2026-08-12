@@ -1109,6 +1109,9 @@
     const onCanonicalFailure = typeof options.onCanonicalFailure === 'function'
       ? options.onCanonicalFailure
       : () => {};
+    const onHistoryFailure = typeof options.onHistoryFailure === 'function'
+      ? options.onHistoryFailure
+      : () => {};
 
     return function finalizeStudioTransformSession(finalizeResult, completionPlan = {}) {
       onSessionEnd(finalizeResult, completionPlan);
@@ -1140,7 +1143,14 @@
       const historyCaptureResult = canonicalDeck
         ? saveHistoryState(false, transaction, canonicalDeck)
         : saveHistoryState(false, transaction);
-      if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
+      if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
+        try {
+          onHistoryFailure({ finalizeResult, completionPlan, transaction, canonicalDeck });
+        } catch (err) {
+          // Preserve the failed-history result even if rollback cannot complete.
+        }
+        return false;
+      }
       triggerAutoSave();
       triggerAutoVersion(completionPlan.versionLabel);
       return true;

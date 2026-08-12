@@ -175,6 +175,9 @@ test('createStudioTransformSessionFinalizer stops persistence hooks when history
       calls.push('history');
       return { didCapture: false };
     },
+    onHistoryFailure() {
+      calls.push('rollback');
+    },
     triggerAutoSave() {
       calls.push('save');
     },
@@ -187,7 +190,7 @@ test('createStudioTransformSessionFinalizer stops persistence hooks when history
     shouldPersist: true,
     versionLabel: 'Auto: Moved Element'
   }), false);
-  assert.deepEqual(calls, ['end', 'transaction', 'history']);
+  assert.deepEqual(calls, ['end', 'transaction', 'history', 'rollback']);
 });
 
 test('createStudioTransformSessionFinalizer forwards an optional canonical deck sidecar', () => {

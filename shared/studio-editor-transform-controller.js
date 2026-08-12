@@ -254,6 +254,7 @@
             buildCanonicalDeck: buildCanonicalTransformDeck,
             requireCanonicalDeck: () => !!canonicalDeckBeforeTransform,
             onCanonicalFailure: rollbackCanonicalTransform,
+            onHistoryFailure: rollbackCanonicalTransform,
             saveHistoryState,
             triggerAutoSave,
             triggerAutoVersion

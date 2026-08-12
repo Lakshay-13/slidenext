@@ -182,6 +182,7 @@ test('transform controller rolls back a DOM transaction when a canonical transfo
 
   assert.equal(controller.setup(doc), true);
   assert.equal(finalizerOptions.requireCanonicalDeck(), true);
+  assert.equal(finalizerOptions.onHistoryFailure, finalizerOptions.onCanonicalFailure);
   assert.equal(finalizerOptions.onCanonicalFailure({ transaction }), true);
   assert.deepEqual(rollbackCalls, [{ currentTransaction: transaction, direction: 'undo', element }]);
   assert.equal(finalizerOptions.requireCanonicalDeck(), false);
