@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (err) {
+          return false;
+        }
+      };
 
   function createStudioEditorMasterSlideController(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi
@@ -213,7 +224,9 @@
         }
       } else {
         if (saveHistoryState
-          && isStudioHistoryCaptureFailure(saveHistoryState(false, null, nextCanonicalDeck))) {
+          && isStudioHistoryCaptureFailure(
+            captureStudioHistoryState(saveHistoryState, false, null, nextCanonicalDeck)
+          )) {
           if (typeof onRejected === 'function') onRejected();
           return null;
         }
