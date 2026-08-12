@@ -1540,6 +1540,7 @@
   <script src="/shared/studio-editor-auto-version-timer-store.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-runtime.js"></script>
   <script src="/shared/studio-editor-timer-state-bridge.js"></script>
+  <script src="/shared/studio-editor-timer-state-accessors.js"></script>
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-runtime.js"></script>
   <script src="/shared/studio-editor-save-button-state-bridge.js"></script>
@@ -1907,46 +1908,46 @@
             : null
         })
       : null;
+    const studioEditorTimerStateAccessors = typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
+      && SlideNextStudioEditorTimerStateAccessors
+      && typeof SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateAccessors === 'function'
+      ? SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateAccessors({
+          bridge: studioEditorTimerStateBridge
+        })
+      : null;
     function getStudioAutoSaveDebounceTimer() {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.getAutoSaveDebounceTimer === 'function'
-        ? studioEditorTimerStateBridge.getAutoSaveDebounceTimer()
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.getAutoSaveDebounceTimer()
         : null;
     }
     function setStudioAutoSaveDebounceTimer(nextTimer) {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.setAutoSaveDebounceTimer === 'function'
-        ? studioEditorTimerStateBridge.setAutoSaveDebounceTimer(nextTimer)
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.setAutoSaveDebounceTimer(nextTimer)
         : false;
     }
     function getStudioAutoVersionTimers() {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.getAutoVersionTimers === 'function'
-        ? studioEditorTimerStateBridge.getAutoVersionTimers()
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.getAutoVersionTimers()
         : {};
     }
     function setStudioAutoVersionTimers(nextTimers) {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.setAutoVersionTimers === 'function'
-        ? studioEditorTimerStateBridge.setAutoVersionTimers(nextTimers)
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.setAutoVersionTimers(nextTimers)
         : false;
     }
     function getStudioAutoVersionTimer(timerKey) {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.getAutoVersionTimer === 'function'
-        ? studioEditorTimerStateBridge.getAutoVersionTimer(timerKey)
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.getAutoVersionTimer(timerKey)
         : undefined;
     }
     function setStudioAutoVersionTimer(timerKey, timerId) {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.setAutoVersionTimer === 'function'
-        ? studioEditorTimerStateBridge.setAutoVersionTimer(timerKey, timerId)
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.setAutoVersionTimer(timerKey, timerId)
         : false;
     }
     function clearStudioAutoVersionTimer(timerKey) {
-      return studioEditorTimerStateBridge
-        && typeof studioEditorTimerStateBridge.clearAutoVersionTimer === 'function'
-        ? studioEditorTimerStateBridge.clearAutoVersionTimer(timerKey)
+      return studioEditorTimerStateAccessors
+        ? studioEditorTimerStateAccessors.clearAutoVersionTimer(timerKey)
         : undefined;
     }
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionRuntime !== 'undefined'
