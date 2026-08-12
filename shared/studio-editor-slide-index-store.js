@@ -21,7 +21,8 @@
     return controllerApi.createStudioEditorSlideIndexController({
       initialSlideIndex: Number.isInteger(options.initialSlideIndex)
         ? options.initialSlideIndex
-        : 0
+        : 0,
+      initialSlideId: options.initialSlideId
     });
   }
 
@@ -40,7 +41,19 @@
         : false;
     }
 
-    return { getSlideIndex, setSlideIndex };
+    function getSlideId() {
+      return controller && typeof controller.getSlideId === 'function'
+        ? controller.getSlideId()
+        : '';
+    }
+
+    function setSlideId(nextValue) {
+      return controller && typeof controller.setSlideId === 'function'
+        ? controller.setSlideId(nextValue)
+        : false;
+    }
+
+    return { getSlideIndex, setSlideIndex, getSlideId, setSlideId };
   }
 
   return { createStudioEditorSlideIndexStore };

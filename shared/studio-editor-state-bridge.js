@@ -75,6 +75,8 @@
       setCategory: (nextCategory) => write(presentationLabelStateStore, 'setCategory', nextCategory, false),
       getSlideIndex: () => read(slideIndexStore, 'getSlideIndex', 0),
       setSlideIndex: (nextValue) => write(slideIndexStore, 'setSlideIndex', nextValue, false),
+      getSlideId: () => read(slideIndexStore, 'getSlideId', ''),
+      setSlideId: (nextValue) => write(slideIndexStore, 'setSlideId', nextValue, false),
       getSelectedElements: () => read(selectionStateStore, 'getSelectedElements', []),
       getSelectedElement: () => read(selectionStateStore, 'getSelectedElement', null),
       getSelectedElementIds: () => read(selectionStateStore, 'getSelectedElementIds', []),

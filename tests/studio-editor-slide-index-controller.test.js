@@ -16,6 +16,17 @@ test('slide index controller owns the active slide index', () => {
   assert.equal(controller.getSlideIndex(), 7);
 });
 
+test('slide index controller owns and normalizes the active slide ID', () => {
+  const controller = slideIndexController.createStudioEditorSlideIndexController({
+    initialSlideId: '  slide-1  '
+  });
+
+  assert.equal(controller.getSlideId(), 'slide-1');
+  assert.equal(controller.setSlideId('  slide-2  '), 'slide-2');
+  assert.equal(controller.setSlideId(null), '');
+  assert.equal(controller.getSlideId(), '');
+});
+
 test('slide index controller rejects invalid navigation state without changing the current index', () => {
   const controller = slideIndexController.createStudioEditorSlideIndexController({
     initialSlideIndex: 2.5

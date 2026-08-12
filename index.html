@@ -1699,6 +1699,18 @@
         ? studioEditorStateBridge.setSlideIndex(nextValue)
         : false;
     }
+    function getStudioCurrentSlideId() {
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSlideId === 'function'
+        ? studioEditorStateBridge.getSlideId()
+        : '';
+    }
+    function setStudioCurrentSlideId(nextValue) {
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.setSlideId === 'function'
+        ? studioEditorStateBridge.setSlideId(nextValue)
+        : false;
+    }
     function getStudioSelectedElements() {
       return studioEditorStateBridge
         && typeof studioEditorStateBridge.getSelectedElements === 'function'

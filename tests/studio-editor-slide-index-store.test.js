@@ -17,13 +17,17 @@ test('slide index store delegates the active slide index and preserves its initi
       setSlideIndex: (value) => {
         currentIndex = value;
         return currentIndex;
-      }
+      },
+      getSlideId: () => 'slide-1',
+      setSlideId: (value) => value.trim()
     }
   });
 
   assert.equal(store.getSlideIndex(), 3);
   assert.equal(store.setSlideIndex(7), 7);
   assert.equal(store.getSlideIndex(), 7);
+  assert.equal(store.getSlideId(), 'slide-1');
+  assert.equal(store.setSlideId(' slide-2 '), 'slide-2');
 });
 
 test('slide index store keeps safe fallbacks when the controller is unavailable', () => {
@@ -31,6 +35,8 @@ test('slide index store keeps safe fallbacks when the controller is unavailable'
 
   assert.equal(store.getSlideIndex(), 0);
   assert.equal(store.setSlideIndex(4), false);
+  assert.equal(store.getSlideId(), '');
+  assert.equal(store.setSlideId('slide-1'), false);
 });
 
 test('slide index store publishes the global consumed by the editor shell', () => {
