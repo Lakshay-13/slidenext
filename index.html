@@ -3978,7 +3978,10 @@
           isElementLocked,
           isElementHidden,
           onInlineEditStart: ({ element }, iframeDoc) => {
-            commitEditorSelectionState({ selectedElements: [element] });
+            commitEditorSelectionState(
+              { selectedElements: [element] },
+              { doc: iframeDoc }
+            );
             const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
               ? SlideNextStudioEditorOverlay
               : null;

@@ -131,6 +131,10 @@ test('index wires frame editing composition through the runtime module', () => {
     fileContent,
     /getSelectedElements: \(doc\) => getLiveSelectedElements\(getStudioSelectedElements\(doc\), doc\),/
   );
+  assert.match(
+    fileContent,
+    /onInlineEditStart: \(\{ element \}, iframeDoc\) => \{\s+commitEditorSelectionState\(\s+\{ selectedElements: \[element\] \},\s+\{ doc: iframeDoc \}\s+\);/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorFrameInteractions\.createStudioEditorFrameInteractions\(/
