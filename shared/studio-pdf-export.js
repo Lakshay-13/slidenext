@@ -106,6 +106,77 @@
     };
   }
 
+  function extractStudioPdfUrlSources(value) {
+    if (typeof value !== 'string' || !value.includes('url(')) return [];
+    const sources = [];
+    const urlPattern = /url\(\s*(?:'([^']*)'|"([^"]*)"|([^)]*))\s*\)/gi;
+    let match;
+    while ((match = urlPattern.exec(value))) {
+      const source = (match[1] || match[2] || match[3] || '').trim();
+      if (source && !source.startsWith('#') && !sources.includes(source)) {
+        sources.push(source);
+      }
+    }
+    return sources;
+  }
+
+  function readStudioPdfOpeningTagAttribute(html, attributeName) {
+    if (typeof html !== 'string' || !html.trim() || !attributeName) return '';
+    const openingTag = html.match(/^<[a-z][^>]*>/i);
+    if (!openingTag) return '';
+    const attributePattern = new RegExp(
+      `\\s${attributeName}=(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`,
+      'i'
+    );
+    const match = attributePattern.exec(openingTag[0]);
+    return match ? (match[1] || match[2] || match[3] || '').trim() : '';
+  }
+
+  function getStudioPdfNodeDirectImageSources(node, attributes) {
+    const nodeType = typeof node.type === 'string' ? node.type.toLowerCase() : '';
+    const nodeTagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    if (nodeType !== 'image' && nodeTagName !== 'img') return [];
+    return [
+      attributes.src,
+      node.src,
+      readStudioPdfOpeningTagAttribute(node.html, 'src')
+    ]
+      .filter((source) => typeof source === 'string' && source.trim())
+      .map((source) => source.trim())
+      .filter((source, index, sources) => sources.indexOf(source) === index);
+  }
+
+  function getStudioPdfNodeStyleText(node, attributes) {
+    const attributeStyle = typeof attributes.style === 'string' ? attributes.style.trim() : '';
+    if (attributeStyle) return attributeStyle;
+    const nodeStyle = typeof node.style === 'string' ? node.style.trim() : '';
+    if (nodeStyle) return nodeStyle;
+    return readStudioPdfOpeningTagAttribute(node.html, 'style');
+  }
+
+  function hasStudioPdfBackgroundProperty(styleText) {
+    return typeof styleText === 'string'
+      && /(?:^|;)\s*background(?:-[a-z-]+)?\s*:/i.test(styleText);
+  }
+
+  function getStudioPdfSlideBackgroundSources(slide, background) {
+    const sourceAttributes = slide.source && typeof slide.source.attributes === 'object'
+      ? slide.source.attributes
+      : {};
+    const sourceStyle = typeof sourceAttributes.style === 'string'
+      ? sourceAttributes.style.trim()
+      : '';
+    if (hasStudioPdfBackgroundProperty(sourceStyle)) {
+      return extractStudioPdfUrlSources(sourceStyle);
+    }
+
+    const backgroundStyle = typeof background.style === 'string' ? background.style.trim() : '';
+    if (hasStudioPdfBackgroundProperty(backgroundStyle)) {
+      return extractStudioPdfUrlSources(backgroundStyle);
+    }
+    return extractStudioPdfUrlSources(background.image);
+  }
+
   function preflightStudioPdfExport(canonicalDeck, options = {}) {
     const slides = canonicalDeck && Array.isArray(canonicalDeck.slides)
       ? canonicalDeck.slides
@@ -163,6 +234,36 @@
       }
     };
 
+    const addDirectSourceReference = (source, owner = {}) => {
+      const normalizedSource = typeof source === 'string' ? source.trim() : '';
+      if (!normalizedSource || !assetExists) return;
+      const ownerType = owner.type || 'node';
+      const ownerId = owner.id || 'unknown';
+      const referenceKey = `${ownerType}:${ownerId}:source:${normalizedSource}`;
+      if (seenReferences.has(referenceKey)) return;
+      seenReferences.add(referenceKey);
+
+      let isAvailable = false;
+      try {
+        isAvailable = Boolean(assetExists(
+          normalizedSource,
+          { id: normalizedSource, src: normalizedSource, type: 'image' },
+          owner,
+          canonicalDeck
+        ));
+      } catch (error) {
+        isAvailable = false;
+      }
+      if (!isAvailable) {
+        missingAssets.push({
+          id: normalizedSource,
+          ownerType,
+          ownerId,
+          reason: 'unavailable-source'
+        });
+      }
+    };
+
     const visitNode = (node, slideId, origin = { x: 0, y: 0 }) => {
       if (!node || typeof node !== 'object') return;
       const nodeId = typeof node.id === 'string' && node.id.trim() ? node.id.trim() : 'unknown';
@@ -191,6 +292,22 @@
         attributes['data-background-asset-id'] || attributes['data-background-asset'],
         { type: 'node-background', id: nodeId }
       );
+      const hasResolvedNodeAsset = typeof node.assetId === 'string'
+        && assetById.get(node.assetId.trim())
+        && typeof assetById.get(node.assetId.trim()).src === 'string'
+        && assetById.get(node.assetId.trim()).src.trim();
+      if (!hasResolvedNodeAsset) {
+        getStudioPdfNodeDirectImageSources(node, attributes)
+          .forEach((source) => addDirectSourceReference(source, { type: 'node', id: nodeId }));
+      }
+      const hasResolvedNodeBackgroundAsset = typeof node.backgroundAssetId === 'string'
+        && assetById.get(node.backgroundAssetId.trim())
+        && typeof assetById.get(node.backgroundAssetId.trim()).src === 'string'
+        && assetById.get(node.backgroundAssetId.trim()).src.trim();
+      if (!hasResolvedNodeBackgroundAsset) {
+        extractStudioPdfUrlSources(getStudioPdfNodeStyleText(node, attributes))
+          .forEach((source) => addDirectSourceReference(source, { type: 'node-background', id: nodeId }));
+      }
       (Array.isArray(node.children) ? node.children : []).forEach((child) => {
         visitNode(child, slideId, bounds || origin);
       });
@@ -207,6 +324,8 @@
         ? slide.layout.background
         : {};
       addAssetReference(background.assetId, { type: 'slide-background', id: slideId });
+      getStudioPdfSlideBackgroundSources(slide, background)
+        .forEach((source) => addDirectSourceReference(source, { type: 'slide-background', id: slideId }));
       (Array.isArray(slide.nodes) ? slide.nodes : []).forEach((node) => {
         visitNode(node, slideId);
       });

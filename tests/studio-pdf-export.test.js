@@ -312,6 +312,76 @@ test('preflightStudioPdfExport checks resolved asset sources when a resolver is 
   assert.equal(calls[0].deck.slides.length, 1);
 });
 
+test('preflightStudioPdfExport checks direct image and background sources', () => {
+  const calls = [];
+  const report = pdfExport.preflightStudioPdfExport({
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { image: 'url("images/slide.png")' } },
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { src: 'images/node.png' }
+      }, {
+        id: 'panel-1',
+        style: 'background-image: url(\'images/panel.png\');'
+      }]
+    }]
+  }, {
+    assetExists(source, asset, owner) {
+      calls.push({ source, asset, owner });
+      return false;
+    }
+  });
+
+  assert.deepEqual(report.missingAssets, [
+    {
+      id: 'images/slide.png',
+      ownerType: 'slide-background',
+      ownerId: 'slide-1',
+      reason: 'unavailable-source'
+    },
+    {
+      id: 'images/node.png',
+      ownerType: 'node',
+      ownerId: 'image-1',
+      reason: 'unavailable-source'
+    },
+    {
+      id: 'images/panel.png',
+      ownerType: 'node-background',
+      ownerId: 'panel-1',
+      reason: 'unavailable-source'
+    }
+  ]);
+  assert.deepEqual(calls.map(({ source, asset, owner }) => ({
+    source,
+    asset: { id: asset.id, src: asset.src, type: asset.type },
+    owner
+  })), [
+    {
+      source: 'images/slide.png',
+      asset: { id: 'images/slide.png', src: 'images/slide.png', type: 'image' },
+      owner: { type: 'slide-background', id: 'slide-1' }
+    },
+    {
+      source: 'images/node.png',
+      asset: { id: 'images/node.png', src: 'images/node.png', type: 'image' },
+      owner: { type: 'node', id: 'image-1' }
+    },
+    {
+      source: 'images/panel.png',
+      asset: { id: 'images/panel.png', src: 'images/panel.png', type: 'image' },
+      owner: { type: 'node-background', id: 'panel-1' }
+    }
+  ]);
+  assert.deepEqual(report.warnings, [
+    'PDF slide slide-1 references unavailable asset "images/slide.png"',
+    'PDF node image-1 references unavailable asset "images/node.png"',
+    'PDF node-background panel-1 references unavailable asset "images/panel.png"'
+  ]);
+});
+
 test('preflightStudioPdfExport reports positioned nodes outside the canonical slide canvas', () => {
   const report = pdfExport.preflightStudioPdfExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },
