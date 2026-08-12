@@ -217,6 +217,30 @@ test('duplicateStudioSlideNode fails closed before DOM insertion when canonical 
   assert.equal(insertionCalls, 0);
 });
 
+test('duplicateStudioSlideNode stops before DOM insertion when history baseline capture fails', () => {
+  const sourceSlide = { classList: { remove() {} }, cloneNode: () => ({ classList: { remove() {} } }) };
+  const calls = [];
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc: () => ({}),
+    resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [sourceSlide],
+    getActiveSlide: () => sourceSlide,
+    assignSlideId: () => 'slide-2',
+    buildCanonicalDuplicateSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildCanonicalDuplicateSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    saveHistoryState: () => false,
+    applyInsertion: () => {
+      calls.push('applyInsertion');
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, []);
+});
+
 test('duplicateStudioSlideNode rolls back DOM and active slide when persistence rejects', () => {
   const doc = { id: 'editor-doc' };
   const sourceSlide = {
@@ -384,6 +408,28 @@ test('addStudioSlideNode fails closed before DOM insertion when canonical additi
   assert.equal(result, false);
   assert.equal(saveCalls, 0);
   assert.equal(insertionCalls, 0);
+});
+
+test('addStudioSlideNode stops before DOM insertion when history baseline capture fails', () => {
+  const calls = [];
+
+  const result = slideCommands.addStudioSlideNode({
+    getIframeDoc: () => ({}),
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [{ id: 'slide-1' }],
+    createBlankSlide: () => ({ id: 'slide-2' }),
+    buildCanonicalAddSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
+    buildCanonicalAddSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    saveHistoryState: () => false,
+    applyInsertion: () => {
+      calls.push('applyInsertion');
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, []);
 });
 
 test('addStudioSlideNode stops before history when slide creation is unavailable', () => {

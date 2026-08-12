@@ -108,11 +108,13 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
+    let historyCaptureResult;
     if (canonicalDeckBeforeDuplication) {
-      saveHistoryState(false, null, canonicalDeckBeforeDuplication);
+      historyCaptureResult = saveHistoryState(false, null, canonicalDeckBeforeDuplication);
     } else {
-      saveHistoryState();
+      historyCaptureResult = saveHistoryState();
     }
+    if (historyCaptureResult === false) return false;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
@@ -208,10 +210,14 @@
       const saveHistoryState = typeof options.saveHistoryState === 'function'
         ? options.saveHistoryState
         : () => {};
+      let historyCaptureResult;
       if (canonicalDeckBeforeAddition) {
-        saveHistoryState(false, null, canonicalDeckBeforeAddition);
+        historyCaptureResult = saveHistoryState(false, null, canonicalDeckBeforeAddition);
       } else {
-        saveHistoryState();
+        historyCaptureResult = saveHistoryState();
+      }
+      if (historyCaptureResult === false) {
+        return false;
       }
     }
     const applyInsertion = typeof options.applyInsertion === 'function'
