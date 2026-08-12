@@ -249,13 +249,21 @@
       : (element) => element && element.dataset && element.dataset.editorId;
 
     return function resolveStudioEditorCanonicalNode(element, canonicalDeck = null) {
-      if (!canonicalDeckApi || !element || !canonicalDeck || !getElementId(element)) {
+      if (!canonicalDeckApi || !element || !canonicalDeck) {
         return null;
       }
-      return createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
-        canonicalDeckApi,
-        getElementId
-      })(element);
+      let elementId = '';
+      try {
+        elementId = getElementId(element);
+      } catch (error) {
+        return null;
+      }
+      if (!elementId) return null;
+      try {
+        return canonicalDeckApi.findCanonicalNodeById(canonicalDeck, elementId);
+      } catch (error) {
+        return null;
+      }
     };
   }
 
