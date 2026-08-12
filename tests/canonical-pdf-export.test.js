@@ -95,6 +95,26 @@ test('legacy PDF CLI resolves the HTML sibling of a metadata-only sidecar', () =
   );
 });
 
+test('legacy PDF CLI accepts a direct HTML deck path', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-direct-html-pdf-'));
+  const inputPath = path.join(temporaryDir, 'deck.html');
+  const outputPath = path.join(temporaryDir, 'deck.pdf');
+  await fs.writeFile(
+    inputPath,
+    '<!doctype html><html><head><style>.slide{width:640px;height:360px;page-break-after:always}</style></head><body><section class="slide">Direct HTML</section></body></html>',
+    'utf8'
+  );
+
+  try {
+    assert.equal(await pdfScript.main([inputPath, outputPath]), 0);
+    const pdfBuffer = await fs.readFile(outputPath);
+    assert.equal(pdfBuffer.subarray(0, 5).toString(), '%PDF-');
+    assert.equal(pdfScript.countPdfPages(pdfBuffer), 1);
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
+
 test('canonical PDF CLI produces a real multi-page PDF with headless Chrome', { skip: !pdfScript.resolveChromeExecutable() }, async () => {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-test-'));
   const inputPath = path.join(temporaryDir, 'deck.json');
