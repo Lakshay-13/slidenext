@@ -280,11 +280,16 @@ test('applyAsset binds the selected image, updates its DOM source, and commits t
       this.attributes[name] = value;
     }
   };
+  const documentRef = { id: 'iframe-document' };
   let inspectorSyncs = 0;
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
     getCanonicalDeck: () => deck,
-    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getActiveSlideId(currentDocument) {
+      assert.equal(currentDocument, documentRef);
+      return 'slide-1';
+    },
     getSelectedImage: () => selectedImage,
     syncInspectorForSelection: () => { inspectorSyncs += 1; },
     saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }

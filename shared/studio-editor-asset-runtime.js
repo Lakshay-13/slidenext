@@ -22,6 +22,7 @@
             || null,
           getCanonicalDeck: options.getCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
+          getDocument: options.getDocument,
           getActiveSlideId: options.getActiveSlideId,
           getSelectedImage: options.getSelectedImage,
           getElementId: options.getElementId,

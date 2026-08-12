@@ -3207,7 +3207,8 @@
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          getDocument: () => getIframeDoc(),
+          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
           getSelectedImage: () => {
             const selectedElements = getStudioSelectedElements();
             const candidate = Array.isArray(selectedElements) && selectedElements.length === 1

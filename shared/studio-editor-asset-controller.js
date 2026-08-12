@@ -23,6 +23,10 @@
     const getActiveSlideId = typeof options.getActiveSlideId === 'function'
       ? options.getActiveSlideId
       : () => '';
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const resolveActiveSlideId = () => getActiveSlideId(getDocument());
     const getSelectedImage = typeof options.getSelectedImage === 'function'
       ? options.getSelectedImage
       : () => null;
@@ -220,7 +224,7 @@
       try {
         nextCanonicalDeck = canonicalDeckApi.updateCanonicalNodeAsset(
           canonicalDeck,
-          getActiveSlideId(),
+          resolveActiveSlideId(),
           getElementId(selectedImage),
           assetId
         );
