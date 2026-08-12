@@ -9188,13 +9188,14 @@
           updateBlockActionState.sync = blockView.createStudioBlockStateSync({
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
+              const selectedElements = getStudioSelectedElements(sourceDoc);
               const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-                ? selectionHasLockedElements(getStudioSelectedElements())
+                ? selectionHasLockedElements(selectedElements)
                 : typeof isElementLocked === 'function'
-                  ? getStudioSelectedElements().some((element) => isElementLocked(element))
+                  ? selectedElements.some((element) => isElementLocked(element))
                   : false;
               const canSave = !!getActiveSlide(sourceDoc)
-                && getStudioSelectedElements().length > 0
+                && selectedElements.length > 0
                 && !hasLockedSelection;
               const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
               return {
@@ -9211,13 +9212,14 @@
           return updateBlockActionState.sync(doc);
         }
       }
+      const selectedElements = getStudioSelectedElements(doc);
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-        ? selectionHasLockedElements(getStudioSelectedElements())
+        ? selectionHasLockedElements(selectedElements)
         : typeof isElementLocked === 'function'
-          ? getStudioSelectedElements().some((element) => isElementLocked(element))
+          ? selectedElements.some((element) => isElementLocked(element))
           : false;
       const canSave = !!getActiveSlide(doc)
-        && getStudioSelectedElements().length > 0
+        && selectedElements.length > 0
         && !hasLockedSelection;
       const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
       blockView.syncStudioBlockState({

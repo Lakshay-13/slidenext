@@ -229,7 +229,8 @@ test('updateBlockActionState caches the shared block state synchronizer when ava
     getActiveSlide(currentDoc) {
       return currentDoc.activeSlide;
     },
-    getStudioSelectedElements() {
+    getStudioSelectedElements(currentDoc) {
+      assert.equal(currentDoc, doc);
       return [{ id: 'selected' }];
     },
     selectionHasLockedElements() {
