@@ -1726,12 +1726,12 @@
           && element.isConnected !== false
           && activeSlide.contains(element));
     }
-    function getStudioSelectedElements() {
+    function getStudioSelectedElements(doc = getIframeDoc()) {
       const storedElements = studioEditorStateBridge
         && typeof studioEditorStateBridge.getSelectedElements === 'function'
         ? studioEditorStateBridge.getSelectedElements()
         : [];
-      const resolvedElements = resolveStudioSelectedElementsFromState(storedElements);
+      const resolvedElements = resolveStudioSelectedElementsFromState(storedElements, doc);
       return resolvedElements === null ? storedElements : resolvedElements;
     }
     function getStudioSelectedElement() {

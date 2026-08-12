@@ -90,9 +90,10 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
       }
     },
     getIframeDoc() {
-      return { id: 'current-doc' };
+      throw new Error('the caller-provided document should be used');
     },
-    getActiveSlide() {
+    getActiveSlide(doc) {
+      assert.equal(doc.id, 'current-doc');
       return activeSlide;
     },
     getElementByEditorId(editorId) {
@@ -103,8 +104,8 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
   vm.createContext(context);
   vm.runInContext(fileContent.slice(start, end), context);
 
-  assert.deepEqual(context.getStudioSelectedElements(), [currentElement]);
-  assert.equal(context.getStudioSelectedElement(), currentElement);
+  const currentDoc = { id: 'current-doc' };
+  assert.deepEqual(context.getStudioSelectedElements(currentDoc), [currentElement]);
 });
 
 test('editor composes selection option building through the shared selection API', () => {
