@@ -5712,6 +5712,7 @@
       const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
         ? SlideNextStudioEditorPersistence
         : null;
+      let initialHistoryCaptureFailed = false;
       if (!editorStyleApi
         || typeof editorStyleApi.ensureStudioEditorStyle !== 'function'
         || !frameBootstrapApi
@@ -5743,16 +5744,21 @@
         observeDeckActiveSlideState,
         captureInitialHistoryState: () => {
           let initialPersistedDeckState = null;
+          let historyCaptureResult = null;
           try {
             initialPersistedDeckState = captureEditorPersistableDeckState(iframeDoc);
           } catch (error) {
             initialPersistedDeckState = null;
           }
           if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
-            saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+            historyCaptureResult = saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
           } else {
-            saveHistoryState(false);
+            historyCaptureResult = saveHistoryState(false);
           }
+          initialHistoryCaptureFailed = historyCaptureResult === false
+            || (!!historyCaptureResult
+              && typeof historyCaptureResult === 'object'
+              && historyCaptureResult.didCapture === false);
           if (persistenceApi
             && typeof persistenceApi.createStudioPersistedDeckStateActionContext === 'function') {
             applyCurrentStudioPersistenceSuccess(
@@ -5778,7 +5784,7 @@
         }
       });
       updateDeckReadyToolbarActionState();
-      setStudioAutoSaveStatus('saved');
+      setStudioAutoSaveStatus(initialHistoryCaptureFailed ? 'history-failed' : 'saved');
       syncInspectorForSelection();
     }
 

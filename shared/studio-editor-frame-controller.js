@@ -8,6 +8,8 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function createStudioEditorFrameController(options = {}) {
+    const isHistoryCaptureFailure = (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
     const getIframeDocument = typeof options.getIframeDocument === 'function'
       ? options.getIframeDocument
       : () => null;
@@ -75,10 +77,13 @@
     const syncInspectorForSelection = typeof options.syncInspectorForSelection === 'function'
       ? options.syncInspectorForSelection
       : () => {};
+    let initialHistoryCaptureFailed = false;
 
     function captureInitialHistoryState(iframeDoc) {
       if (captureInitialHistoryStateOverride) {
-        return captureInitialHistoryStateOverride(iframeDoc);
+        const result = captureInitialHistoryStateOverride(iframeDoc);
+        initialHistoryCaptureFailed = isHistoryCaptureFailure(result);
+        return result;
       }
       if (!capturePersistableDeckState) return undefined;
 
@@ -88,13 +93,15 @@
       } catch (error) {
         initialPersistedDeckState = null;
       }
+      let historyCaptureResult = null;
       if (saveHistoryState) {
         if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
-          saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+          historyCaptureResult = saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
         } else {
-          saveHistoryState(false);
+          historyCaptureResult = saveHistoryState(false);
         }
       }
+      initialHistoryCaptureFailed = isHistoryCaptureFailure(historyCaptureResult);
       if (applyPersistenceSuccess
         && persistenceApi
         && typeof persistenceApi.createStudioPersistedDeckStateActionContext === 'function') {
@@ -122,6 +129,7 @@
     }
 
     function init() {
+      initialHistoryCaptureFailed = false;
       resetLiveCanonicalDeck();
       const iframeDoc = getIframeDocument();
       if (!iframeDoc) return false;
@@ -160,7 +168,7 @@
         });
       }
       updateDeckReadyToolbarActionState();
-      setStudioAutoSaveStatus('saved');
+      setStudioAutoSaveStatus(initialHistoryCaptureFailed ? 'history-failed' : 'saved');
       syncInspectorForSelection();
       return true;
     }

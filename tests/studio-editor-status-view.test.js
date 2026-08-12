@@ -17,6 +17,7 @@ test('setStudioAutoSaveStatus renders loading, export, failure, and saved states
     ['autosave-failed', 'AutoSave Failed'],
     ['save-version-failed', 'Save Version Failed'],
     ['network-error', 'Network Error'],
+    ['history-failed', 'Undo History Unavailable'],
     ['exporting', 'Exporting PPTX'],
     ['export-failed', 'PPTX Export Failed'],
     ['exported', 'PPTX Exported'],

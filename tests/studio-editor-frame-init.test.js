@@ -1137,6 +1137,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial persistence 
     },
     saveHistoryState(...args) {
       calls.push(['saveHistoryState', ...args]);
+      return false;
     },
     SlideNextStudioEditorPersistence: {
       createStudioPersistedDeckStateActionContext(state, presentationUrl, options) {
@@ -1171,7 +1172,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial persistence 
       presentationUrl: '/presentations/legacy/index.html'
     }],
     'ready',
-    ['status', 'saved'],
+    ['status', 'history-failed'],
     'inspector'
   ]);
 });

@@ -191,6 +191,7 @@ test('frame controller keeps bootstrap alive when initial persistence capture fa
     },
     saveHistoryState(...args) {
       calls.push(['saveHistoryState', ...args]);
+      return false;
     },
     frameBootstrapApi: {
       runStudioFrameBootstrap(doc, options) {
@@ -213,7 +214,31 @@ test('frame controller keeps bootstrap alive when initial persistence capture fa
   assert.deepEqual(calls, [
     ['saveHistoryState', false],
     'ready',
-    ['status', 'saved'],
+    ['status', 'history-failed'],
     'inspector'
   ]);
+});
+
+test('frame controller surfaces object-form initial history capture failures', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    capturePersistableDeckState: () => ({ cleanHtml: '<html></html>' }),
+    saveHistoryState() {
+      return { didCapture: false };
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.captureInitialHistoryState(doc);
+      }
+    },
+    setStudioAutoSaveStatus(status) {
+      calls.push(status);
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, ['history-failed']);
 });
