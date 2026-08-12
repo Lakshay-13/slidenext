@@ -1286,3 +1286,46 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
   assert.equal(delegatedOptions.selectionHasLockedElements, context.selectionHasLockedElements);
   assert.equal(delegatedOptions.finalizeLayerOrderMutation, context.finalizeLayerOrderMutation);
 });
+
+test('changeLayerZIndexByRef resolves selected elements from the iframe document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('function changeLayerZIndexByRef(event, action) {');
+  const end = fileContent.indexOf('\n\n    // Presentation Live Preview', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+
+  const iframeDoc = { id: 'iframe-document' };
+  const selectedElements = [{ id: 'selected' }];
+  let delegatedOptions = null;
+  const context = {
+    SlideNextStudioEditorLiveSelection: {},
+    SlideNextStudioEditorLayerController: {
+      changeStudioLayerZIndexByRef(options) {
+        delegatedOptions = options;
+        return 'delegated-change';
+      }
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    getStudioSelectedElements(doc) {
+      assert.equal(doc, iframeDoc);
+      return selectedElements;
+    },
+    resolveLayerRowElement() {},
+    refreshLayerOrderUi() {},
+    isElementLocked() {},
+    reorderSlideLayers() {},
+    syncLayerOrderZIndexInput() {},
+    finalizeLayerOrderMutation() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(fileContent.slice(start, end), context);
+
+  const event = { target: { id: 'layer-row' } };
+  assert.equal(context.changeLayerZIndexByRef(event, 'front'), 'delegated-change');
+  assert.equal(delegatedOptions.event, event);
+  assert.equal(delegatedOptions.action, 'front');
+  assert.deepEqual(delegatedOptions.selectedElements, selectedElements);
+});

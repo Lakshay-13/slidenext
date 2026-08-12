@@ -469,6 +469,9 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
       }
     },
     selectedElements: [],
+    getIframeDoc() {
+      return { id: 'iframe-document' };
+    },
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return true;
@@ -552,6 +555,9 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
       }
     },
     selectedElements: [],
+    getIframeDoc() {
+      return { id: 'iframe-document' };
+    },
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return false;
@@ -634,6 +640,9 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
       }
     },
     selectedElements: [],
+    getIframeDoc() {
+      return { id: 'iframe-document' };
+    },
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
       return false;
@@ -729,6 +738,9 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
         calls.push(['getElementById', id]);
         return id === 'elZIndex' ? zIndexInput : null;
       }
+    },
+    getIframeDoc() {
+      return { id: 'iframe-document' };
     },
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
@@ -836,6 +848,9 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
         calls.push(['getElementById', id]);
         return null;
       }
+    },
+    getIframeDoc() {
+      return { id: 'iframe-document' };
     },
     isElementLocked(element) {
       calls.push(['isElementLocked', element]);
