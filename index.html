@@ -1413,6 +1413,7 @@
   <script src="/shared/studio-editor-block-view.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-block-runtime.js"></script>
+  <script src="/shared/studio-editor-block-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
@@ -3136,10 +3137,13 @@
     const studioEditorElementInsertionController = studioEditorElementInsertionRuntime
       ? studioEditorElementInsertionRuntime.elementInsertionController
       : null;
-    const studioEditorBlockRuntime = typeof SlideNextStudioEditorBlockRuntime !== 'undefined'
-      && SlideNextStudioEditorBlockRuntime
-      && typeof SlideNextStudioEditorBlockRuntime.createStudioEditorBlockRuntime === 'function'
-      ? SlideNextStudioEditorBlockRuntime.createStudioEditorBlockRuntime({
+    const studioEditorBlockRuntime = typeof SlideNextStudioEditorBlockShellRuntime !== 'undefined'
+      && SlideNextStudioEditorBlockShellRuntime
+      && typeof SlideNextStudioEditorBlockShellRuntime.createStudioEditorBlockShellRuntime === 'function'
+      ? SlideNextStudioEditorBlockShellRuntime.createStudioEditorBlockShellRuntime({
+          blockRuntimeApi: typeof SlideNextStudioEditorBlockRuntime !== 'undefined'
+            ? SlideNextStudioEditorBlockRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorBlockController !== 'undefined'
             ? SlideNextStudioEditorBlockController
             : null,
