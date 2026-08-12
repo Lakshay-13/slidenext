@@ -6809,21 +6809,23 @@
     }
 
     function resolveEditorFallbackCanonicalDeck(doc = getIframeDoc(), canonicalDeck = null) {
+      const buildCanonicalDeck = canonicalDeck
+        ? () => buildEditorCanonicalDeck(doc)
+        : null;
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
         && typeof studioEditorPersistenceController.resolveFallbackCanonicalDeck === 'function') {
         const resolvedCanonicalDeck = studioEditorPersistenceController.resolveFallbackCanonicalDeck(
           canonicalDeck,
-          {
-            buildCanonicalDeck: canonicalDeck
-              ? () => buildEditorCanonicalDeck(doc)
-              : null
-          }
+          { buildCanonicalDeck }
         );
         if (resolvedCanonicalDeck !== null && typeof resolvedCanonicalDeck !== 'undefined') {
           return resolvedCanonicalDeck;
         }
       }
+      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+        ? SlideNextStudioEditorPersistence
+        : null;
       const createStudioEditorFallbackCanonicalDeckAdapter = (
         typeof SlideNextStudioEditorPersistenceState !== 'undefined'
         && SlideNextStudioEditorPersistenceState
@@ -6832,37 +6834,30 @@
         ? SlideNextStudioEditorPersistenceState.createStudioEditorFallbackCanonicalDeckAdapter
         : null;
       if (createStudioEditorFallbackCanonicalDeckAdapter) {
+        const isCanonicalDeck = getEditorCanonicalDeckValidator();
         if (typeof resolveEditorFallbackCanonicalDeck.adapter !== 'function') {
           resolveEditorFallbackCanonicalDeck.adapter = createStudioEditorFallbackCanonicalDeckAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
+            persistenceApi,
             resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
-            isCanonicalDeck: getEditorCanonicalDeckValidator()
+            isCanonicalDeck
           });
         }
         return typeof resolveEditorFallbackCanonicalDeck.adapter === 'function'
-          ? resolveEditorFallbackCanonicalDeck.adapter(canonicalDeck, {
-              buildCanonicalDeck: canonicalDeck
-                ? () => buildEditorCanonicalDeck(doc)
-                : null
-            })
+          ? resolveEditorFallbackCanonicalDeck.adapter(canonicalDeck, { buildCanonicalDeck })
           : null;
       }
       const createStudioFallbackCanonicalDeckResolver = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioFallbackCanonicalDeckResolver === 'function'
+        persistenceApi
+        && typeof persistenceApi.createStudioFallbackCanonicalDeckResolver === 'function'
       )
-        ? SlideNextStudioEditorPersistence.createStudioFallbackCanonicalDeckResolver
+        ? persistenceApi.createStudioFallbackCanonicalDeckResolver
         : null;
       if (createStudioFallbackCanonicalDeckResolver) {
+        const isCanonicalDeck = getEditorCanonicalDeckValidator();
         return createStudioFallbackCanonicalDeckResolver({
-          buildCanonicalDeck: canonicalDeck
-            ? () => buildEditorCanonicalDeck(doc)
-            : null,
+          buildCanonicalDeck,
           resolveCanonicalDeckOverride: resolveEditorCanonicalDeckOverride,
-          isCanonicalDeck: getEditorCanonicalDeckValidator()
+          isCanonicalDeck
         })(canonicalDeck);
       }
       return null;
