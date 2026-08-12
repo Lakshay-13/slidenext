@@ -1,12 +1,21 @@
 (function (root, factory) {
-  const api = factory(root);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(root, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorMasterSlideController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+
   function createStudioEditorMasterSlideController(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
@@ -57,11 +66,6 @@
     const onMasterSlidesChanged = typeof options.onMasterSlidesChanged === 'function'
       ? options.onMasterSlidesChanged
       : null;
-    const didHistoryCaptureFail = (result) => result === false
-      || (result
-        && typeof result === 'object'
-        && result.didCapture === false);
-
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -209,7 +213,7 @@
         }
       } else {
         if (saveHistoryState
-          && didHistoryCaptureFail(saveHistoryState(false, null, nextCanonicalDeck))) {
+          && isStudioHistoryCaptureFailure(saveHistoryState(false, null, nextCanonicalDeck))) {
           if (typeof onRejected === 'function') onRejected();
           return null;
         }
