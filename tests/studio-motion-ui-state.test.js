@@ -667,7 +667,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
 
@@ -741,7 +741,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
 
@@ -788,7 +788,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
 
@@ -911,7 +911,7 @@ test('nudgeSelectedElements forwards an immutable canonical layout sidecar', () 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
   const movedElement = {
@@ -983,7 +983,7 @@ test('nudgeSelectedElements delegates position application to the shared nudge m
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
   const movedElement = {
@@ -1033,7 +1033,7 @@ test('nudgeSelectedElements forwards a reversible style transaction to history',
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function nudgeSelectedElements(dx, dy) {',
+    'function nudgeSelectedElements(dx, dy, doc) {',
     '\n\n    // Element dragging + resize on an open canvas'
   );
   const movedElement = {

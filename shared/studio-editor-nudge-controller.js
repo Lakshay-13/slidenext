@@ -42,10 +42,10 @@
       ? options.finalizeDeckMutation
       : null;
 
-    function nudge(dx, dy) {
+    function nudge(dx, dy, sourceDoc) {
       if (!buildMotionSelectionActionState) return false;
 
-      const motionActionState = buildMotionSelectionActionState();
+      const motionActionState = buildMotionSelectionActionState(sourceDoc);
       const { doc, nudgeLayoutItems, slideBounds } = motionActionState || {};
       if (!motionActionState || !motionActionState.canNudge) {
         if (updateMotionActionState) updateMotionActionState(doc);

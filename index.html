@@ -9709,10 +9709,10 @@
       });
     }
 
-    function nudgeSelectedElements(dx, dy) {
+    function nudgeSelectedElements(dx, dy, doc) {
       return studioEditorNudgeController
         && typeof studioEditorNudgeController.nudge === 'function'
-        ? studioEditorNudgeController.nudge(dx, dy)
+        ? studioEditorNudgeController.nudge(dx, dy, doc)
         : false;
     }
 

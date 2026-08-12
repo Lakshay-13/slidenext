@@ -151,7 +151,7 @@
         copySelectedElements,
         pasteClipboardElements,
         duplicateSelectedElements,
-        nudgeSelectedElements,
+        nudgeSelectedElements: (dx, dy) => nudgeSelectedElements(dx, dy, doc),
         navigateSlide
       });
       if (typeof eventsApi.attachStudioFrameInteractionHandlers === 'function') {

@@ -498,7 +498,7 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
-    '\n\n    function nudgeSelectedElements(dx, dy) {'
+    '\n\n    function nudgeSelectedElements(dx, dy, doc) {'
   );
   const insertedElement = { id: 'node-2' };
   const markupTransaction = studioTransaction.createStudioMarkupTransaction([{
@@ -578,7 +578,7 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
-    '\n\n    function nudgeSelectedElements(dx, dy) {'
+    '\n\n    function nudgeSelectedElements(dx, dy, doc) {'
   );
   const sourceDeck = canonicalDeckModel.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Original' }] }]
@@ -1364,7 +1364,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
-    '\n\n    function nudgeSelectedElements(dx, dy) {'
+    '\n\n    function nudgeSelectedElements(dx, dy, doc) {'
   );
 
   const calls = [];
@@ -1418,7 +1418,7 @@ test('duplicateSelectedElements returns false and refreshes clipboard controls w
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function duplicateSelectedElements() {',
-    '\n\n    function nudgeSelectedElements(dx, dy) {'
+    '\n\n    function nudgeSelectedElements(dx, dy, doc) {'
   );
 
   const liveTarget = { isConnected: true };

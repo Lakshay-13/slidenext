@@ -4,6 +4,8 @@ const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 
 test('nudge controller assembles canonical layout and transaction dependencies', () => {
   const calls = [];
+  const sourceDocument = { id: 'source-doc' };
+  let receivedDocument = null;
   const liveCanonicalDeck = { slides: ['live'] };
   const controller = nudgeController.createStudioEditorNudgeController({
     nudgeApi: {
@@ -26,12 +28,15 @@ test('nudge controller assembles canonical layout and transaction dependencies',
       }
     },
     canonicalDeckApi: { id: 'deck-api' },
-    buildMotionSelectionActionState: () => ({
+    buildMotionSelectionActionState: (doc) => {
+      receivedDocument = doc;
+      return {
       canNudge: true,
       doc: { id: 'doc' },
       nudgeLayoutItems: [{ id: 'item-1' }],
       slideBounds: { width: 1920, height: 1080 }
-    }),
+      };
+    },
     assignElementId: () => 'node-1',
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
@@ -43,7 +48,8 @@ test('nudge controller assembles canonical layout and transaction dependencies',
     finalizeDeckMutation: (label, options) => calls.push(['finalize', label, options])
   });
 
-  assert.equal(controller.nudge(2, -1), true);
+  assert.equal(controller.nudge(2, -1, sourceDocument), true);
+  assert.equal(receivedDocument, sourceDocument);
   assert.equal(calls[0][0], 'build');
   assert.deepEqual(calls[0][2], { dx: 2, dy: -1 });
   assert.deepEqual(calls[0][3], { width: 1920, height: 1080 });
