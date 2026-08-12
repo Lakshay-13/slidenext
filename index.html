@@ -1468,6 +1468,7 @@
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation-runtime.js"></script>
+  <script src="/shared/studio-editor-slide-mutation-shell-runtime.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-global-shortcuts.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
@@ -2503,10 +2504,13 @@
     const studioEditorThumbnailController = studioEditorNavigationRuntime
       ? studioEditorNavigationRuntime.thumbnailController
       : null;
-    const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationRuntime !== 'undefined'
-      && SlideNextStudioEditorSlideMutationRuntime
-      && typeof SlideNextStudioEditorSlideMutationRuntime.createStudioEditorSlideMutationRuntime === 'function'
-      ? SlideNextStudioEditorSlideMutationRuntime.createStudioEditorSlideMutationRuntime({
+    const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationShellRuntime !== 'undefined'
+      && SlideNextStudioEditorSlideMutationShellRuntime
+      && typeof SlideNextStudioEditorSlideMutationShellRuntime.createStudioEditorSlideMutationShellRuntime === 'function'
+      ? SlideNextStudioEditorSlideMutationShellRuntime.createStudioEditorSlideMutationShellRuntime({
+          mutationRuntimeApi: typeof SlideNextStudioEditorSlideMutationRuntime !== 'undefined'
+            ? SlideNextStudioEditorSlideMutationRuntime
+            : null,
           reorderApi: typeof SlideNextStudioEditorSlideReorderController !== 'undefined'
             ? SlideNextStudioEditorSlideReorderController
             : null,

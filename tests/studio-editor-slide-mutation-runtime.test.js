@@ -84,7 +84,11 @@ test('index wires structural slide mutations through the runtime module', () => 
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSlideMutationRuntime\.createStudioEditorSlideMutationRuntime\(/
+    /<script src="\/shared\/studio-editor-slide-mutation-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorSlideMutationShellRuntime\.createStudioEditorSlideMutationShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
