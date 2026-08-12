@@ -288,7 +288,7 @@
               getSlideEditableElements,
               isHidden: (element) => readHiddenState(element, doc),
               getRectOnSlide,
-              ensureOverlay: (slide) => ensureOverlay(slide),
+              ensureOverlay: (slide) => ensureOverlay(slide, doc),
               itemOptions: {
                 getClosestPositionedAncestor,
                 getRectOnSlide,

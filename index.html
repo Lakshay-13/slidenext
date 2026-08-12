@@ -3448,7 +3448,7 @@
           isFreeformPositioned: (...args) => isElementFreeformPositioned(...args),
           isHidden: (...args) => isElementHidden(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
-          ensureOverlay: (slide) => ensureSelectionOverlay(getIframeDoc(), slide),
+          ensureOverlay: (slide, doc) => ensureSelectionOverlay(doc || getIframeDoc(), slide),
           getClosestPositionedAncestor: (...args) => getEditorClosestPositionedAncestor(...args),
           getSelectedElements: (doc) => getLiveSelectedElements(getStudioSelectedElements(doc), doc),
           getMarqueeElements: (slide) => getNormalizedSlideLayerOrder(slide),

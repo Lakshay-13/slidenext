@@ -104,4 +104,8 @@ test('index wires transform behavior through the runtime module', () => {
     fileContent,
     /getSelectedElements: \(doc\) => getLiveSelectedElements\(getStudioSelectedElements\(doc\), doc\),/
   );
+  assert.match(
+    fileContent,
+    /ensureOverlay: \(slide, doc\) => ensureSelectionOverlay\(doc \|\| getIframeDoc\(\), slide\),/
+  );
 });

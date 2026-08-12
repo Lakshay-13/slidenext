@@ -271,3 +271,33 @@ test('transform controller binds marquee selection reads to the setup document',
   assert.equal(controller.setup(doc), true);
   assert.deepEqual(marqueeOptions.getSelectedElements(), selectedElements);
 });
+
+test('transform controller binds overlay creation to the setup document', () => {
+  const doc = { body: {} };
+  const slide = { id: 'slide-1' };
+  let transformOptions = null;
+  const controller = transformController.createStudioEditorTransformController({
+    ensureOverlay(currentSlide, currentDoc) {
+      assert.equal(currentSlide, slide);
+      assert.equal(currentDoc, doc);
+      return 'overlay';
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions(options) {
+        transformOptions = options;
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions() {
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    }
+  });
+
+  assert.equal(controller.setup(doc), true);
+  assert.equal(transformOptions.ensureOverlay(slide), 'overlay');
+});
