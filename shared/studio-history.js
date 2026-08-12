@@ -414,12 +414,23 @@
         };
       }
 
-      const nextHistoryState = captureHistoryState(
-        currentUndoStack,
-        currentRedoStack,
-        historyEntry,
-        getHistoryStateOptions()
-      );
+      let nextHistoryState;
+      try {
+        nextHistoryState = captureHistoryState(
+          currentUndoStack,
+          currentRedoStack,
+          historyEntry,
+          getHistoryStateOptions()
+        );
+      } catch (error) {
+        afterCapture();
+        return {
+          undoStack: currentUndoStack,
+          redoStack: currentRedoStack,
+          historyEntry: null,
+          didCapture: false
+        };
+      }
       if (!nextHistoryState.didCapture) {
         afterCapture();
         return {

@@ -1126,6 +1126,35 @@ test('createStudioHistoryStateCapturer invokes afterCapture after a skipped capt
   assert.equal(afterCaptureCalls, 1);
 });
 
+test('createStudioHistoryStateCapturer clears pending state when capture throws', () => {
+  let afterCaptureCalls = 0;
+  const capturer = studioHistory.createStudioHistoryStateCapturer({
+    createHistoryEntry() {
+      return { html: '<html></html>' };
+    },
+    getUndoStack() {
+      return ['undo-entry'];
+    },
+    getRedoStack() {
+      return ['redo-entry'];
+    },
+    captureHistoryState() {
+      throw new Error('canonical history capture failed');
+    },
+    afterCapture() {
+      afterCaptureCalls += 1;
+    }
+  });
+
+  assert.deepEqual(capturer(), {
+    didCapture: false,
+    undoStack: ['undo-entry'],
+    redoStack: ['redo-entry'],
+    historyEntry: null
+  });
+  assert.equal(afterCaptureCalls, 1);
+});
+
 test('createStudioHistoryButtonUpdater applies the computed history button state to the provided controls', () => {
   const undoButton = { disabled: false };
   const redoButton = { disabled: true };
