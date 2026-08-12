@@ -1352,6 +1352,8 @@ test('deselectElement delegates selection clearing to the shared selection modul
     '\n\n    const studioEditorSelectAllElements ='
   );
   const calls = [];
+  const iframeDoc = { id: 'iframe-doc' };
+  let committedArgs = null;
   const context = {
     SlideNextStudioEditorSelection: {
       deselectStudioElement(options) {
@@ -1397,6 +1399,8 @@ test('selectAllElementsOnActiveSlide delegates selection orchestration to the sh
     '\n\n    function isElementLocked(el) {'
   );
   const calls = [];
+  const iframeDoc = { id: 'iframe-doc' };
+  let committedArgs = null;
   const context = {
     SlideNextStudioEditorSelection: {
       selectAllStudioElementsOnActiveSlide(options) {
@@ -1404,21 +1408,34 @@ test('selectAllElementsOnActiveSlide delegates selection orchestration to the sh
         return 'delegated';
       }
     },
-    getActiveSlide() {},
+    getActiveSlide(currentDoc) {
+      assert.equal(currentDoc, iframeDoc);
+    },
     getNormalizedSlideLayerOrder() {},
-    getEditorSelectionOptions() {},
-    commitEditorSelectionState() {}
+    getEditorSelectionOptions(options) {
+      return { doc: options.doc };
+    },
+    commitEditorSelectionState(...args) {
+      committedArgs = args;
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(selectAllSource, context);
 
-  assert.equal(context.selectAllElementsOnActiveSlide(), 'delegated');
+  assert.equal(context.selectAllElementsOnActiveSlide(iframeDoc), 'delegated');
   assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, iframeDoc);
   assert.equal(typeof calls[0].getActiveSlide, 'function');
   assert.equal(typeof calls[0].getElements, 'function');
   assert.equal(typeof calls[0].getSelectionOptions, 'function');
   assert.equal(typeof calls[0].commitSelectionState, 'function');
+  assert.equal(calls[0].getSelectionOptions().doc, iframeDoc);
+  calls[0].commitSelectionState({ selectedElements: [] });
+  assert.equal(committedArgs[1].doc, iframeDoc);
 });
 
 test('selectAllElementsOnActiveSlide fails closed when the shared selection module is unavailable', () => {
@@ -1430,7 +1447,10 @@ test('selectAllElementsOnActiveSlide fails closed when the shared selection modu
   );
 
   const context = {
-    SlideNextStudioEditorSelection: null
+    SlideNextStudioEditorSelection: null,
+    getIframeDoc() {
+      return null;
+    }
   };
   vm.createContext(context);
   vm.runInContext(selectAllSource, context);

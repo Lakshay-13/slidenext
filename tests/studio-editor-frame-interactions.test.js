@@ -9,6 +9,7 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   let selectedDocument = null;
   let resolvedTextElementArgs = null;
   let selectedElementArgs = null;
+  let selectAllDocument = null;
   const resolveAdjacentTextElement = () => 'next-cell';
   const resolveTextElement = (...args) => {
     resolvedTextElementArgs = args;
@@ -17,6 +18,10 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   const selectElement = (...args) => {
     selectedElementArgs = args;
     return 'selected';
+  };
+  const selectAllElementsOnActiveSlide = (currentDoc) => {
+    selectAllDocument = currentDoc;
+    return 'selected-all';
   };
   const controller = frameInteractions.createStudioEditorFrameInteractions({
     eventsApi: {
@@ -38,6 +43,7 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
       }
     },
     selectElement,
+    selectAllElementsOnActiveSlide,
     getActiveSlide: () => ({ id: 'slide-1' }),
     resolveTextElement,
     getSelectedElements: (currentDoc) => {
@@ -55,6 +61,8 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   assert.equal(calls[3][2].keydownHandler, 'keydown-handler');
   assert.equal(calls[0][1].selectElement('node', { additive: true }), 'selected');
   assert.deepEqual(selectedElementArgs, ['node', { additive: true, doc }]);
+  assert.equal(calls[2][1].selectAllElementsOnActiveSlide(), 'selected-all');
+  assert.equal(selectAllDocument, doc);
   assert.deepEqual(calls[1][2].getActiveSlide(), { id: 'slide-1' });
   assert.equal(calls[1][2].resolveTextElement('node', 'slide'), 'text-element');
   assert.deepEqual(resolvedTextElementArgs, ['node', 'slide', doc]);

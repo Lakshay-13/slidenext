@@ -144,7 +144,7 @@
         canMutateDeck: () => !!canMutateDeck(doc),
         editorUndo,
         editorRedo,
-        selectAllElementsOnActiveSlide,
+        selectAllElementsOnActiveSlide: () => selectAllElementsOnActiveSlide(doc),
         arrangeElementLayer,
         deselectElement,
         removeSelectedElement,

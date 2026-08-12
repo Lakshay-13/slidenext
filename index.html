@@ -7685,13 +7685,23 @@
       ? (selectionOptions) => SlideNextStudioEditorSelection.selectAllStudioElementsOnActiveSlide(selectionOptions)
       : null;
 
-    function selectAllElementsOnActiveSlide() {
+    function selectAllElementsOnActiveSlide(doc = getIframeDoc()) {
       if (typeof studioEditorSelectAllElements !== 'function') return false;
       return studioEditorSelectAllElements({
         getActiveSlide,
         getElements: getNormalizedSlideLayerOrder,
-        getSelectionOptions: getEditorSelectionOptions,
-        commitSelectionState: commitEditorSelectionState
+        getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions({
+          ...selectionOptions,
+          doc
+        }),
+        commitSelectionState: (nextSelectionState, selectionOptions = {}) => commitEditorSelectionState(
+          nextSelectionState,
+          {
+            ...selectionOptions,
+            doc
+          }
+        ),
+        doc
       });
     }
 
