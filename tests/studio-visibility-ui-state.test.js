@@ -505,7 +505,7 @@ test('toggleSelectedElementsVisibility returns true after hiding live targets an
     ['isElementHidden', liveTarget],
     ['setElementHiddenState', liveTarget, true],
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['doc', 'refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Hid Element']

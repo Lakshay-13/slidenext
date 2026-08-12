@@ -125,7 +125,7 @@ test('syncSelectionUiAfterMutation refreshes selection classes before syncing se
   assert.equal(result, selectedElements);
   assert.deepEqual(calls, [
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUiAfterMutation', selectedElements, ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']]
+    ['syncStudioSelectionUiAfterMutation', selectedElements, ['doc', 'refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']]
   ]);
 });
 
@@ -634,7 +634,7 @@ test('toggleSelectedElementsLockState returns true after locking live targets an
     ['isElementLocked', liveTarget],
     ['setStudioElementLockedState', liveTarget, true],
     ['refreshSelectionClasses'],
-    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
+    ['syncStudioSelectionUiAfterMutation', [liveTarget], ['doc', 'refreshSelectionClasses', 'syncInspectorForSelection', 'syncSelectionOverlay', 'updateLayersList']],
     ['saveHistoryState'],
     ['triggerAutoSave'],
     ['triggerAutoVersion', 'Auto: Locked Element']

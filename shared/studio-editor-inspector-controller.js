@@ -100,13 +100,13 @@
       ? options.resolveCanonicalNode
       : null;
 
-    return function syncStudioInspectorSelectionFromEditor() {
+    return function syncStudioInspectorSelectionFromEditor(documentOverride = null) {
       if (!liveSelectionApi) return false;
 
       let currentDocument = null;
       let liveSelectionState;
       try {
-        currentDocument = getCurrentDocument();
+        currentDocument = documentOverride || getCurrentDocument();
         liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(
           getSelectedElements(currentDocument)
         );

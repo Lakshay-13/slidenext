@@ -297,6 +297,7 @@
     });
     refreshSelectionClasses(selectionDocument);
     syncStudioSelectionUi(selectedElements, {
+      doc: selectionDocument,
       syncSelectionOverlay,
       hideDragHud,
       hideDragHudOnClear: options.hideDragHudOnClear,
@@ -311,6 +312,9 @@
   }
 
   function syncStudioSelectionUi(selectedElements = [], options = {}) {
+    const selectionDocument = Object.prototype.hasOwnProperty.call(options, 'doc')
+      ? options.doc
+      : selectedElements.find((element) => element && element.ownerDocument)?.ownerDocument;
     const syncSelectionOverlay = typeof options.syncSelectionOverlay === 'function'
       ? options.syncSelectionOverlay
       : () => {};
@@ -324,12 +328,12 @@
       ? options.updateLayersList
       : () => {};
 
-    syncSelectionOverlay();
+    syncSelectionOverlay(selectionDocument);
     if (options.hideDragHudOnClear && selectedElements.length === 0) {
       hideDragHud();
     }
-    syncInspectorForSelection();
-    updateLayersList();
+    syncInspectorForSelection(selectionDocument);
+    updateLayersList(selectionDocument);
   }
 
   function syncStudioSelectionUiAfterMutation(selectedElements = [], options = {}) {
@@ -340,7 +344,10 @@
       ? options.doc
       : selectedElements.find((element) => element && element.ownerDocument)?.ownerDocument;
     refreshSelectionClasses(selectionDocument);
-    syncStudioSelectionUi(selectedElements, options);
+    syncStudioSelectionUi(selectedElements, {
+      ...options,
+      doc: selectionDocument
+    });
     return selectedElements;
   }
 
@@ -354,7 +361,10 @@
       selectedElements: nextSelectionState.selectedElements,
       selectedElement: nextSelectionState.selectedElement
     });
-    syncStudioSelectionUi(nextSelectionState.selectedElements, options);
+    syncStudioSelectionUi(nextSelectionState.selectedElements, {
+      ...options,
+      doc
+    });
 
     return nextSelectionState;
   }

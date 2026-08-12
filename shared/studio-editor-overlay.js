@@ -298,14 +298,14 @@
       ? options.getTransformSelectionState
       : () => ({ canTransform: false });
 
-    return function syncStudioSelectionOverlayFromEditor() {
+    return function syncStudioSelectionOverlayFromEditor(documentOverride = null) {
       if (!overlayStateApi) return false;
 
       let documentRef;
       let overlayOptions;
       let isHidden;
       try {
-        documentRef = getCurrentDocument();
+        documentRef = documentOverride || getCurrentDocument();
         overlayOptions = getOverlayOptions({ documentRef }) || {};
         isHidden = getHiddenStateReader(documentRef);
       } catch (error) {

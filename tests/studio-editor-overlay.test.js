@@ -263,6 +263,31 @@ test('createStudioSelectionOverlaySynchronizer fails closed without overlay stat
   assert.equal(synchronizer(), false);
 });
 
+test('createStudioSelectionOverlaySynchronizer uses an explicit editor document override', () => {
+  const fallbackDocument = { id: 'fallback-document' };
+  const explicitDocument = { id: 'explicit-document' };
+  const calls = [];
+  const synchronizer = overlayView.createStudioSelectionOverlaySynchronizer({
+    overlayApi: {
+      syncStudioSelectionOverlayForActiveSlide(options) {
+        calls.push(options.documentRef);
+        return true;
+      }
+    },
+    overlayStateApi: {
+      buildStudioSelectionOverlayState() {}
+    },
+    getCurrentDocument: () => fallbackDocument,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    getSelectedElements: () => [],
+    getOverlayOptions: () => ({}),
+    getHiddenStateReader: () => () => false
+  });
+
+  assert.equal(synchronizer(explicitDocument), true);
+  assert.deepEqual(calls, [explicitDocument]);
+});
+
 test('renderStudioGuidesForActiveSlide resolves the current slide before rendering guides', () => {
   const guideLine = { style: {} };
   const guidesLayer = {

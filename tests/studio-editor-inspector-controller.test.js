@@ -176,3 +176,32 @@ test('createStudioInspectorSelectionSynchronizer fails closed without live selec
 
   assert.equal(sync(), false);
 });
+
+test('createStudioInspectorSelectionSynchronizer uses an explicit editor document override', () => {
+  const fallbackDocument = { id: 'fallback-document' };
+  const explicitDocument = { id: 'explicit-document' };
+  const selectedElement = { dataset: { editorId: 'node-1' } };
+  let resolvedDocument = null;
+  const sync = inspectorController.createStudioInspectorSelectionSynchronizer({
+    liveSelectionApi: {
+      buildStudioLiveSelectionState(elements) {
+        assert.deepEqual(elements, [selectedElement]);
+        return { hasSelection: true, primaryElement: selectedElement };
+      }
+    },
+    inspectorView: {},
+    getCurrentDocument: () => fallbackDocument,
+    getSelectedElements: (doc) => {
+      resolvedDocument = doc;
+      return [selectedElement];
+    },
+    inspectorApi: {
+      syncStudioInspectorForSelection() {
+        return true;
+      }
+    }
+  });
+
+  assert.equal(sync(explicitDocument), true);
+  assert.equal(resolvedDocument, explicitDocument);
+});

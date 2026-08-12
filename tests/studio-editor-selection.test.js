@@ -133,6 +133,7 @@ test('selection UI refreshes preserve the explicit editor document', () => {
   const documentRef = { id: 'iframe-document' };
   const selectedElement = { id: 'node-1', ownerDocument: documentRef };
   const receivedDocuments = [];
+  const receivedUiDocuments = [];
 
   studioSelection.commitStudioSelectionState({
     selectedElements: [selectedElement],
@@ -141,15 +142,41 @@ test('selection UI refreshes preserve the explicit editor document', () => {
     doc: documentRef,
     refreshSelectionClasses(doc) {
       receivedDocuments.push(doc);
+    },
+    syncSelectionOverlay(doc) {
+      receivedUiDocuments.push(['overlay', doc]);
+    },
+    syncInspectorForSelection(doc) {
+      receivedUiDocuments.push(['inspector', doc]);
+    },
+    updateLayersList(doc) {
+      receivedUiDocuments.push(['layers', doc]);
     }
   });
   studioSelection.syncStudioSelectionUiAfterMutation([selectedElement], {
     refreshSelectionClasses(doc) {
       receivedDocuments.push(doc);
+    },
+    syncSelectionOverlay(doc) {
+      receivedUiDocuments.push(['overlay', doc]);
+    },
+    syncInspectorForSelection(doc) {
+      receivedUiDocuments.push(['inspector', doc]);
+    },
+    updateLayersList(doc) {
+      receivedUiDocuments.push(['layers', doc]);
     }
   });
 
   assert.deepEqual(receivedDocuments, [documentRef, documentRef]);
+  assert.deepEqual(receivedUiDocuments, [
+    ['overlay', documentRef],
+    ['inspector', documentRef],
+    ['layers', documentRef],
+    ['overlay', documentRef],
+    ['inspector', documentRef],
+    ['layers', documentRef]
+  ]);
 });
 
 test('selectStudioElement resolves the target and commits additive selection state', () => {

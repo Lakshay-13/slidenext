@@ -7594,8 +7594,9 @@
       : null;
 
     function syncSelectionOverlay() {
+      const doc = arguments.length > 0 ? arguments[0] : null;
       return typeof studioEditorSelectionOverlaySynchronizer === 'function'
-        ? studioEditorSelectionOverlaySynchronizer()
+        ? studioEditorSelectionOverlaySynchronizer(doc)
         : false;
     }
 
@@ -7659,9 +7660,10 @@
       : null;
 
     function syncInspectorForSelection() {
-      updateLayoutConversionActionState();
+      const doc = arguments.length > 0 ? arguments[0] : null;
+      updateLayoutConversionActionState(doc);
       return typeof studioEditorInspectorSelectionSynchronizer === 'function'
-        ? studioEditorInspectorSelectionSynchronizer()
+        ? studioEditorInspectorSelectionSynchronizer(doc)
         : false;
     }
 
@@ -8738,10 +8740,11 @@
         return getStudioSelectedElements(doc);
       }
       return studioEditorSelectionUiMutationSynchronizer(getStudioSelectedElements(doc), {
+        doc,
         refreshSelectionClasses: () => refreshSelectionClasses(doc),
-        syncSelectionOverlay,
-        syncInspectorForSelection,
-        updateLayersList
+        syncSelectionOverlay: (sourceDoc) => syncSelectionOverlay(sourceDoc || doc),
+        syncInspectorForSelection: (sourceDoc) => syncInspectorForSelection(sourceDoc || doc),
+        updateLayersList: (sourceDoc) => updateLayersList(sourceDoc || doc)
       });
     }
 
@@ -14271,7 +14274,7 @@
 
     // Slide Elements / Layers List Inspector Panel
     function updateLayersList() {
-      const iframeDoc = getIframeDoc();
+      const iframeDoc = arguments.length > 0 && arguments[0] ? arguments[0] : getIframeDoc();
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
