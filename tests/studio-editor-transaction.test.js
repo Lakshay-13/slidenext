@@ -97,6 +97,20 @@ test('applyStudioPositionLayoutWithTransaction applies a direct layout when no d
   assert.deepEqual(first.style, { left: '40px', top: '50px' });
 });
 
+test('applyStudioPositionLayoutWithTransaction preserves missing coordinates', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  const second = { style: { left: '30px', top: '40px' } };
+
+  const result = transaction.applyStudioPositionLayoutWithTransaction([
+    { element: first, nextLeft: 40 },
+    { element: second, nextLeft: 'invalid', nextTop: undefined }
+  ]);
+
+  assert.deepEqual(result, { didApply: true, transaction: null });
+  assert.deepEqual(first.style, { left: '40px', top: '20px' });
+  assert.deepEqual(second.style, { left: '30px', top: '40px' });
+});
+
 test('applyStudioEditorTransaction applies before and after style patches', () => {
   const element = createStyleElement('node-1', { left: '10px', top: '20px' });
   const styleTransaction = transaction.createStudioStyleTransaction([{
