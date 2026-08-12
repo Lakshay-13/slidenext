@@ -762,6 +762,9 @@
     const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
       ? options.canonicalDeck
       : null;
+    const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
+      ? options.getLiveCanonicalDeck
+      : null;
     const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
       ? options.capturePersistableDeckState
       : null;
@@ -773,9 +776,19 @@
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : (canonicalDeck) => canonicalDeck || null;
-    const resolvedCanonicalDeck = capturedDeckState && capturedDeckState.canonicalDeck
-      ? capturedDeckState.canonicalDeck
-      : resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState);
+    let liveCanonicalDeck = null;
+    if (!providedCanonicalDeck && getLiveCanonicalDeck) {
+      try {
+        liveCanonicalDeck = getLiveCanonicalDeck();
+      } catch (err) {
+        liveCanonicalDeck = null;
+      }
+    }
+    const resolvedCanonicalDeck = providedCanonicalDeck
+      ? resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState)
+      : liveCanonicalDeck
+        || (capturedDeckState && capturedDeckState.canonicalDeck)
+        || resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState);
     const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
       ? options.buildPersistableDeckHtml
       : () => cleanHtml;

@@ -1815,6 +1815,34 @@ test('createStudioSaveRequestBodyBuilder reuses call-time overrides before build
   ]);
 });
 
+test('createStudioSaveRequestBodyBuilder prefers live canonical state over captured DOM state', () => {
+  const liveCanonicalDeck = {
+    metadata: { title: 'Live Deck' },
+    slides: [{ id: 'slide-live' }]
+  };
+  const capturedCanonicalDeck = {
+    metadata: { title: 'Captured DOM Deck' },
+    slides: [{ id: 'slide-captured' }]
+  };
+  const builder = editorPersistence.createStudioSaveRequestBodyBuilder({
+    getPresentationUrl: () => '/presentations/live/index.html',
+    getLiveCanonicalDeck: () => liveCanonicalDeck,
+    capturePersistableDeckState: () => ({
+      cleanHtml: '<html>captured</html>',
+      canonicalDeck: capturedCanonicalDeck
+    }),
+    buildSaveRequestBody: (_presentationUrl, cleanHtml, options) => ({
+      cleanHtml,
+      canonicalDeck: options.canonicalDeck
+    })
+  });
+
+  assert.deepEqual(builder(null, null), {
+    cleanHtml: '<html>captured</html>',
+    canonicalDeck: liveCanonicalDeck
+  });
+});
+
 test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical deck builder when an override is malformed', () => {
   const fallbackCanonicalDeck = {
     metadata: {
