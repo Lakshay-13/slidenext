@@ -158,6 +158,25 @@ test('buildStudioCanonicalStyleBaseline fails closed when a compatibility rebuil
   assert.equal(result, null);
 });
 
+test('buildStudioCanonicalStyleBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index edits to the model', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();
