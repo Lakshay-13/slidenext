@@ -231,7 +231,7 @@ app.post('/api/export/pptx', async (req, res) => {
         assetBaseDir: path.dirname(legacySourcePath)
       });
       const buffer = result.buffer;
-      canonicalPptxExport.validatePptxArtifact(buffer);
+      canonicalPptxExport.validatePptxArtifact(buffer, result.slideCount);
       const downloadFilename = normalizePptxDownloadFilename(filename);
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
       res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
@@ -266,7 +266,7 @@ app.post('/api/export/pptx', async (req, res) => {
     }
 
     const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
-    canonicalPptxExport.validatePptxArtifact(buffer);
+    canonicalPptxExport.validatePptxArtifact(buffer, resolvedCanonicalDeck.slides.length);
     const downloadFilename = normalizePptxDownloadFilename(filename, resolvedCanonicalDeck.metadata?.title);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);

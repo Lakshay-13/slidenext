@@ -52,12 +52,32 @@
     }));
   }
 
-  function validatePptxArtifact(value) {
-    const bytes = value instanceof Uint8Array
+  function normalizePptxArtifactBytes(value) {
+    return value instanceof Uint8Array
       ? value
       : (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer)
         ? new Uint8Array(value)
         : null;
+  }
+
+  function countPptxSlides(value) {
+    const bytes = normalizePptxArtifactBytes(value);
+    if (!bytes) return 0;
+
+    let source = '';
+    if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
+      source = Buffer.from(bytes).toString('latin1');
+    } else if (typeof TextDecoder === 'function') {
+      source = new TextDecoder('latin1').decode(bytes);
+    } else {
+      source = Array.from(bytes, byte => String.fromCharCode(byte)).join('');
+    }
+    const slideEntries = source.match(/ppt\/slides\/slide\d+\.xml/g) || [];
+    return new Set(slideEntries).size;
+  }
+
+  function validatePptxArtifact(value, expectedSlideCount = null) {
+    const bytes = normalizePptxArtifactBytes(value);
     if (!bytes || bytes.length < 4) {
       throw new Error('PPTX export did not produce a binary artifact');
     }
@@ -68,6 +88,12 @@
         || (bytes[2] === 0x07 && bytes[3] === 0x08));
     if (!hasZipSignature) {
       throw new Error('PPTX export did not produce a valid ZIP artifact');
+    }
+    if (Number.isInteger(expectedSlideCount) && expectedSlideCount >= 0) {
+      const slideCount = countPptxSlides(bytes);
+      if (slideCount !== expectedSlideCount) {
+        throw new Error(`PPTX slide count mismatch: expected ${expectedSlideCount}, found ${slideCount}`);
+      }
     }
     return bytes;
   }
@@ -1928,6 +1954,7 @@
     DEFAULT_SOURCE_WIDTH,
     DEFAULT_SOURCE_HEIGHT,
     createPptxWarningDetailsHeader,
+    countPptxSlides,
     validatePptxArtifact,
     normalizePptxExportOptions,
     resolvePptxExportOptions,

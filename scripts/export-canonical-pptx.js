@@ -33,7 +33,7 @@ async function main(argv = process.argv.slice(2)) {
     });
     await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
     await fs.writeFile(resolvedOutputPath, result.buffer);
-    validatePptxArtifact(await fs.readFile(resolvedOutputPath));
+    validatePptxArtifact(await fs.readFile(resolvedOutputPath), result.slideCount);
     console.error(`PPTX export completed with ${result.warnings.length} warning(s):`);
     result.warnings.forEach(warning => console.error(`- ${warning}`));
     console.log(`Exported ${result.slideCount} legacy slide(s) to ${resolvedOutputPath}`);
@@ -56,7 +56,7 @@ async function main(argv = process.argv.slice(2)) {
       });
       await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
       await fs.writeFile(resolvedOutputPath, result.buffer);
-      validatePptxArtifact(await fs.readFile(resolvedOutputPath));
+      validatePptxArtifact(await fs.readFile(resolvedOutputPath), result.slideCount);
       console.error(`PPTX export completed with ${result.warnings.length} warning(s):`);
       result.warnings.forEach(warning => console.error(`- ${warning}`));
       console.log(`Exported ${result.slideCount} legacy slide(s) to ${resolvedOutputPath}`);
@@ -81,7 +81,7 @@ async function main(argv = process.argv.slice(2)) {
 
   await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
   await result.pptx.writeFile({ fileName: resolvedOutputPath });
-  validatePptxArtifact(await fs.readFile(resolvedOutputPath));
+  validatePptxArtifact(await fs.readFile(resolvedOutputPath), result.slideCount);
 
   if (result.diagnostics.warnings.length > 0) {
     console.error(`PPTX export completed with ${result.diagnostics.warnings.length} warning(s):`);

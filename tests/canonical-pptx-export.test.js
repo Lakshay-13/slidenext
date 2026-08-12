@@ -98,6 +98,12 @@ test('createCanonicalPptxExport writes a valid PPTX with the real generator', as
   const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
   assert.ok(Buffer.isBuffer(buffer));
   assert.equal(pptxExport.validatePptxArtifact(buffer).length, buffer.length);
+  assert.equal(pptxExport.countPptxSlides(buffer), 1);
+  assert.equal(pptxExport.validatePptxArtifact(buffer, 1).length, buffer.length);
+  assert.throws(
+    () => pptxExport.validatePptxArtifact(buffer, 2),
+    /PPTX slide count mismatch: expected 2, found 1/
+  );
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-'));
