@@ -50,6 +50,24 @@ test('toolbar accessors preserve safe fallbacks without controllers', () => {
   assert.equal(accessors.syncIframeTheme(), false);
 });
 
+test('toolbar global api preserves the editor shell function names', () => {
+  const calls = [];
+  const accessors = {
+    updateGridSnapActionState: () => calls.push('grid-sync'),
+    toggleGridSnap: () => calls.push('grid-toggle'),
+    toggleGlobalTheme: () => calls.push('theme-toggle'),
+    syncIframeTheme: () => calls.push('theme-sync')
+  };
+  const globalApi = accessorsApi.createStudioEditorToolbarGlobalApi({ accessors });
+
+  globalApi.updateGridSnapActionState();
+  globalApi.toggleGridSnap();
+  globalApi.toggleGlobalTheme();
+  globalApi.syncIframeTheme();
+
+  assert.deepEqual(calls, ['grid-sync', 'grid-toggle', 'theme-toggle', 'theme-sync']);
+});
+
 test('toolbar accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -58,6 +76,11 @@ test('toolbar accessors publish the global consumed by the editor shell', () => 
   assert.equal(
     typeof context.globalThis.SlideNextStudioEditorToolbarAccessors
       .createStudioEditorToolbarAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorToolbarAccessors
+      .createStudioEditorToolbarGlobalApi,
     'function'
   );
 });
@@ -71,4 +94,10 @@ test('editor loads toolbar accessors after the theme runtime', () => {
   );
   assert.match(fileContent, /createStudioEditorToolbarAccessors\(/);
   assert.match(fileContent, /studioEditorToolbarAccessors/);
+  assert.match(fileContent, /createStudioEditorToolbarGlobalApi\(/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorToolbarGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function updateGridSnapActionState\(\)/);
+  assert.doesNotMatch(fileContent, /function toggleGridSnap\(\)/);
+  assert.doesNotMatch(fileContent, /function toggleGlobalTheme\(\)/);
+  assert.doesNotMatch(fileContent, /function syncIframeTheme\(\)/);
 });

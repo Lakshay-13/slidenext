@@ -8,6 +8,7 @@ const frameInteractions = require('../shared/studio-editor-frame-interactions.js
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
+const toolbarAccessorsApi = require('../shared/studio-editor-toolbar-accessors.js');
 const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
@@ -1383,13 +1384,6 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial history save
 });
 
 test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const syncIframeThemeSource = extractFunctionSource(
-    fileContent,
-    'function syncIframeTheme() {',
-    '\n\n    // 1. Fetch Presentations from Backend'
-  );
-
   const appendedStyles = [];
   const iframeDoc = {
     createElement(tagName) {
@@ -1445,10 +1439,12 @@ test('syncIframeTheme uses the shared iframe accessor and injects the light them
     getIframeDocument: context.getIframeDoc
   });
 
-  vm.createContext(context);
-  vm.runInContext(syncIframeThemeSource, context);
-
-  context.syncIframeTheme();
+  const globalApi = toolbarAccessorsApi.createStudioEditorToolbarGlobalApi({
+    accessors: toolbarAccessorsApi.createStudioEditorToolbarAccessors({
+      themeController: context.studioEditorThemeController
+    })
+  });
+  globalApi.syncIframeTheme();
 
   assert.deepEqual(appendedStyles[0], ['removeClass', 'dark']);
   assert.equal(appendedStyles[1][0], 'appendChild');

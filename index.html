@@ -4025,6 +4025,18 @@
           themeController: studioEditorThemeController
         })
       : null;
+    const studioEditorToolbarGlobalApi = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
+      && SlideNextStudioEditorToolbarAccessors
+      && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarGlobalApi === 'function'
+      ? SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarGlobalApi({
+          accessors: studioEditorToolbarAccessors
+            || SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
+              gridSnapController: studioEditorGridSnapController,
+              themeController: studioEditorThemeController
+            })
+        })
+      : {};
+    Object.assign(globalThis, studioEditorToolbarGlobalApi);
 
     const editorPresetsApi = typeof SlideNextStudioEditorPresets !== 'undefined'
       ? SlideNextStudioEditorPresets
@@ -4113,45 +4125,6 @@
         nudgeSelectedElements,
         navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
       });
-    }
-
-    function updateGridSnapActionState() {
-      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
-        return studioEditorToolbarAccessors.updateGridSnapActionState();
-      }
-      return studioEditorGridSnapController
-        && typeof studioEditorGridSnapController.sync === 'function'
-        ? studioEditorGridSnapController.sync()
-        : false;
-    }
-
-    function toggleGridSnap() {
-      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
-        return studioEditorToolbarAccessors.toggleGridSnap();
-      }
-      return studioEditorGridSnapController
-        && typeof studioEditorGridSnapController.toggle === 'function'
-        ? studioEditorGridSnapController.toggle()
-        : false;
-    }
-
-    // Theme Toggle Functionality
-    function toggleGlobalTheme() {
-      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
-        return studioEditorToolbarAccessors.toggleGlobalTheme();
-      }
-      if (!studioEditorThemeController
-        || typeof studioEditorThemeController.toggleGlobalTheme !== 'function') return false;
-      return studioEditorThemeController.toggleGlobalTheme();
-    }
-
-    function syncIframeTheme() {
-      if (typeof studioEditorToolbarAccessors !== 'undefined' && studioEditorToolbarAccessors) {
-        return studioEditorToolbarAccessors.syncIframeTheme();
-      }
-      if (!studioEditorThemeController
-        || typeof studioEditorThemeController.syncIframeTheme !== 'function') return false;
-      return studioEditorThemeController.syncIframeTheme();
     }
 
     // 1. Fetch Presentations from Backend

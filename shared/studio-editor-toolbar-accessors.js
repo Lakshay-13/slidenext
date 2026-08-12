@@ -27,5 +27,19 @@
     };
   }
 
-  return { createStudioEditorToolbarAccessors };
+  function createStudioEditorToolbarGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorToolbarAccessors(options);
+
+    return {
+      updateGridSnapActionState: () => accessors.updateGridSnapActionState(),
+      toggleGridSnap: () => accessors.toggleGridSnap(),
+      toggleGlobalTheme: () => accessors.toggleGlobalTheme(),
+      syncIframeTheme: () => accessors.syncIframeTheme()
+    };
+  }
+
+  return {
+    createStudioEditorToolbarAccessors,
+    createStudioEditorToolbarGlobalApi
+  };
 });
