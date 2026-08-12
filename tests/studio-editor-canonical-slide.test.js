@@ -141,6 +141,25 @@ test('buildStudioCanonicalDuplicateSlideBaseline falls back when the live canoni
   assert.equal(didBuildFromDocument, true);
 });
 
+test('buildStudioCanonicalDuplicateSlideBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalDuplicateSlideBaseline rejects invalid compatibility baselines', () => {
   let rebuildCalls = 0;
   const result = canonicalSlide.buildStudioCanonicalDuplicateSlideBaseline({
