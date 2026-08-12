@@ -17,11 +17,13 @@ test('index loads the shared history result contract before its consumers', () =
   const helperIndex = indexHtml.indexOf('/shared/studio-editor-history-result.js');
   const transformIndex = indexHtml.indexOf('/shared/studio-editor-transform.js');
   const mutationIndex = indexHtml.indexOf('/shared/studio-editor-mutation.js');
+  const deckMutationIndex = indexHtml.indexOf('/shared/studio-editor-deck-mutation.js');
   const frameControllerIndex = indexHtml.indexOf('/shared/studio-editor-frame-controller.js');
 
   assert.ok(helperIndex >= 0);
   assert.ok(helperIndex < transformIndex);
   assert.ok(helperIndex < mutationIndex);
+  assert.ok(helperIndex < deckMutationIndex);
   assert.ok(helperIndex < frameControllerIndex);
   assert.equal((indexHtml.match(/\/shared\/studio-editor-history-result\.js/g) || []).length, 1);
 });
