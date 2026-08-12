@@ -1544,6 +1544,7 @@
   <script src="/shared/studio-editor-save-button-state-store.js"></script>
   <script src="/shared/studio-editor-save-button-state-runtime.js"></script>
   <script src="/shared/studio-editor-save-button-state-bridge.js"></script>
+  <script src="/shared/studio-editor-save-button-state-accessors.js"></script>
   <script src="/shared/studio-editor-version-rename-state-store.js"></script>
   <script src="/shared/studio-editor-version-rename-state-runtime.js"></script>
   <script src="/shared/studio-editor-version-rename-state-bridge.js"></script>
@@ -2071,10 +2072,17 @@
           stateStore: studioEditorSaveButtonStateStore
         })
       : null;
+    const studioEditorSaveButtonStateAccessors = typeof SlideNextStudioEditorSaveButtonStateAccessors !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateAccessors
+      && typeof SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateAccessors === 'function'
+      ? SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateAccessors({
+          bridge: studioEditorSaveButtonStateBridge
+        })
+      : null;
     function getStudioSaveButtonState() {
-      return studioEditorSaveButtonStateBridge
-        && typeof studioEditorSaveButtonStateBridge.getState === 'function'
-        ? studioEditorSaveButtonStateBridge.getState()
+      return typeof studioEditorSaveButtonStateAccessors !== 'undefined'
+        && studioEditorSaveButtonStateAccessors
+        ? studioEditorSaveButtonStateAccessors.getState()
         : 'idle';
     }
     const studioEditorVersionRenameStateRuntime = typeof SlideNextStudioEditorVersionRenameStateRuntime !== 'undefined'
@@ -13620,11 +13628,11 @@
       const normalizedState = state === 'saving-version'
         ? 'saving-version'
         : 'idle';
-      if (typeof studioEditorSaveButtonStateBridge !== 'undefined'
-        && studioEditorSaveButtonStateBridge
-        && typeof studioEditorSaveButtonStateBridge.setState === 'function') {
-        studioEditorSaveButtonStateBridge.setState(normalizedState);
-      } else {
+      const persistedState = typeof studioEditorSaveButtonStateAccessors !== 'undefined'
+        && studioEditorSaveButtonStateAccessors
+        ? studioEditorSaveButtonStateAccessors.setState(normalizedState)
+        : false;
+      if (persistedState === false) {
         currentStudioSaveButtonState = normalizedState;
       }
       const statusView = typeof SlideNextStudioEditorStatusView !== 'undefined'
