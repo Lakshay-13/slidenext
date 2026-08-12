@@ -7536,7 +7536,7 @@
           getOverlayOptions: (options = {}) => getEditorOverlayOptions(options),
           getHiddenStateReader: (doc) => getEditorCanonicalVisibilityReader('hidden', doc),
           getSelectionBounds: (elements) => getSelectionBounds(elements),
-          getTransformSelectionState: () => getTransformSelectionState(),
+          getTransformSelectionState: (doc) => getTransformSelectionState(getStudioSelectedElements(doc), doc),
           hideGuides: () => hideGuides(),
           hideDragHud: () => hideDragHud()
         })
@@ -7735,8 +7735,7 @@
       );
     }
 
-    function getTransformSelectionState(elements = getStudioSelectedElements()) {
-      const doc = getIframeDoc();
+    function getTransformSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       const selectionStateBuilder = typeof studioEditorTransformSelectionStateBuilder === 'function'
         ? studioEditorTransformSelectionStateBuilder
         : typeof SlideNextStudioEditorTransform !== 'undefined'

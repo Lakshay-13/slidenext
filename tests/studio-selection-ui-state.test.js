@@ -631,7 +631,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   const getLiveSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
-    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements()) {'
+    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {'
   );
 
   const activeElement = { id: 'active', isConnected: true, onActiveSlide: true };
@@ -679,7 +679,7 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
   const getLiveSelectedElementsSource = extractFunctionSource(
     fileContent,
     'function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
-    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements()) {'
+    '\n\n    function getTransformSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {'
   );
   const context = {
     selectedElements: [{ id: 'stale' }],

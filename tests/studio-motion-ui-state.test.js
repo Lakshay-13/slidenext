@@ -67,7 +67,7 @@ function loadCanonicalVisibilityReader(fileContent, context) {
 function loadGetTransformSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function getTransformSelectionState(elements = selectedElements) {',
+    'function getTransformSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function selectionHasLockedElements(elements = selectedElements) {'
   );
   vm.runInContext(helperSource, context);

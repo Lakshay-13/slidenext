@@ -12,6 +12,10 @@ test('editor composes selection overlay synchronization through the shared contr
 
   assert.match(source, /const studioEditorSelectionOverlaySynchronizer =/);
   assert.match(source, /createStudioSelectionOverlaySynchronizer\(/);
+  assert.match(
+    source,
+    /getTransformSelectionState: \(doc\) => getTransformSelectionState\(getStudioSelectedElements\(doc\), doc\),/
+  );
   assert.match(source, /return typeof studioEditorSelectionOverlaySynchronizer === 'function'/);
   assert.doesNotMatch(source, /syncSelectionOverlay\.synchronizer/);
 });
@@ -105,6 +109,7 @@ test('hideStudioSelectionOverlay ensures and hides the selection chrome for inli
 
 test('syncStudioSelectionOverlay applies bounds and transform handle state', () => {
   const overlay = createOverlay();
+  const documentRef = { id: 'iframe-document' };
   const slide = {
     querySelector(selector) {
       assert.equal(selector, '#editorSelectionOverlay');
@@ -112,7 +117,7 @@ test('syncStudioSelectionOverlay applies bounds and transform handle state', () 
     }
   };
 
-  const result = overlayView.syncStudioSelectionOverlay({}, slide, {
+  const result = overlayView.syncStudioSelectionOverlay(documentRef, slide, {
     selectedElements: ['element'],
     buildSelectionOverlayState() {
       return {
@@ -124,7 +129,8 @@ test('syncStudioSelectionOverlay applies bounds and transform handle state', () 
       assert.deepEqual(elements, ['element']);
       return { left: 4, top: 8, width: 12, height: 16 };
     },
-    getTransformSelectionState() {
+    getTransformSelectionState(currentDocument) {
+      assert.equal(currentDocument, documentRef);
       return { canTransform: false };
     }
   });
@@ -228,7 +234,10 @@ test('createStudioSelectionOverlaySynchronizer assembles editor overlay state', 
       return hiddenReader;
     },
     getSelectionBounds: () => ({ left: 1, top: 2, width: 3, height: 4 }),
-    getTransformSelectionState: () => ({ canTransform: true }),
+    getTransformSelectionState: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return { canTransform: true };
+    },
     hideGuides: () => calls.push('hide-guides'),
     hideDragHud: () => calls.push('hide-drag-hud')
   });

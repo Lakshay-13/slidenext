@@ -246,7 +246,7 @@
     overlay.style.width = `${bounds.width}px`;
     overlay.style.height = `${bounds.height}px`;
     const transformState = typeof options.getTransformSelectionState === 'function'
-      ? options.getTransformSelectionState()
+      ? options.getTransformSelectionState(doc)
       : { canTransform: false };
     const canTransform = !!transformState.canTransform;
     overlay.style.pointerEvents = canTransform ? 'auto' : 'none';
