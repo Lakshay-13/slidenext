@@ -223,6 +223,31 @@ test('style controller fails closed before DOM mutation when canonical builder c
   assert.equal(styleCalls, 0);
 });
 
+test('style controller fails closed before mutation when finalization is unavailable', () => {
+  let styleCalls = 0;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        return {
+          canApply: true,
+          selection,
+          versionLabel: 'Auto: Styled Element'
+        };
+      }
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: () => {
+      styleCalls += 1;
+      return { didApply: true, displayValue: '32', transaction: null };
+    }
+  });
+
+  assert.equal(controller.apply('size', '32'), false);
+  assert.equal(styleCalls, 0);
+});
+
 test('style controller refreshes inspector and fails closed for unavailable edits', () => {
   let syncCalls = 0;
   const controller = styleController.createStudioEditorStyleController({

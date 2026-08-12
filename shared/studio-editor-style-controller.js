@@ -263,6 +263,9 @@
       if (!styleMutationPlan || !styleMutationPlan.canApply) {
         return finalizeStyleActionResult(false);
       }
+      if (!finalizeDeckMutation) {
+        return finalizeStyleActionResult(false);
+      }
       let canonicalStyleBuilders = null;
       let canonicalDeckBeforeMutation = null;
       try {
@@ -329,15 +332,13 @@
         rollbackStyleMutation(transaction, doc);
         return finalizeStyleActionResult(false);
       }
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation(styleMutationPlan.versionLabel, {
-          syncSelectionOverlay: true,
-          refreshLayersList: prop === 'zIndex',
-          debounceHistory: true,
-          transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
-      }
+      finalizeDeckMutation(styleMutationPlan.versionLabel, {
+        syncSelectionOverlay: true,
+        refreshLayersList: prop === 'zIndex',
+        debounceHistory: true,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
       return true;
     }
 
