@@ -112,7 +112,9 @@
             }
             if (buildCanonicalDeckBaseline) {
               try {
-                const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+                const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument, {
+                  preferLiveCanonicalDeck: false
+                });
                 return isValidCanonicalDeck(rebuiltCanonicalDeck)
                   ? rebuiltCanonicalDeck
                   : null;

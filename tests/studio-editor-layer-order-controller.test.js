@@ -373,6 +373,42 @@ test('layer order controller rebuilds the canonical lock baseline when live stat
   assert.equal(receivedLockState, true);
 });
 
+test('layer order controller disables live reuse for compatibility lock rebuilds', () => {
+  const first = { id: 'node-1', isConnected: true };
+  const slide = { contains: () => true };
+  const documentRef = { id: 'doc' };
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let rebuildOptions = null;
+  let receivedLockState = null;
+  const controller = layerOrderController.createStudioEditorLayerOrderController({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {},
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(sourceDocument, options) {
+      assert.equal(sourceDocument, documentRef);
+      rebuildOptions = options;
+      return rebuiltDeck;
+    },
+    layerOrderApi: {
+      buildStudioLayerOrderMutationPlan(_elements, _action, options) {
+        receivedLockState = options.isLocked(first);
+        return { didChange: false };
+      }
+    },
+    getActiveSlide: () => slide,
+    getIframeDoc: () => documentRef,
+    getNormalizedSlideLayerOrder: () => [first],
+    assignElementId: (element) => element.id,
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.reorder('front', [first]), false);
+  assert.equal(receivedLockState, true);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('layer order controller rejects invalid compatibility baselines', () => {
   const first = { id: 'node-1', isConnected: true };
   const slide = { contains: () => true };
