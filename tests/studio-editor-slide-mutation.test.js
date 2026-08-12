@@ -58,7 +58,7 @@ test('createStudioEditorSlideMutationPersistenceFinalizer preserves the local fa
 
 test('createStudioEditorSlideMutationPersistenceFinalizer propagates rejected fallback history', () => {
   const finalize = slideMutation.createStudioEditorSlideMutationPersistenceFinalizer({
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     }
@@ -93,7 +93,7 @@ test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide
 
 test('createStudioEditorSlideMutationRestoreStateCapturer reports rejected fallback history', () => {
   const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     getActiveSlideId() {
       throw new Error('active slide state should not be read');
     },

@@ -7,6 +7,11 @@
     root.SlideNextStudioEditorSlideMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function createStudioEditorSlideMutationPersistenceFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -36,9 +41,9 @@
 
     return (versionLabel, transaction = null, canonicalDeck = null) => {
       if (canonicalDeck) {
-        if (saveHistoryState(false, transaction, canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) return false;
       } else {
-        if (saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) return false;
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
@@ -108,7 +113,7 @@
       const historyCaptureResult = canonicalDeck
         ? saveHistoryState(false, null, canonicalDeck)
         : saveHistoryState();
-      if (historyCaptureResult === false) {
+      if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         return {
           historyCaptureFailed: true,
           preservedActiveSlideId: '',
