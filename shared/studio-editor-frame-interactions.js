@@ -124,7 +124,7 @@
         && typeof inlineTextEditApi.attachStudioInlineTextEditHandlers === 'function') {
         inlineTextEditApi.attachStudioInlineTextEditHandlers(doc, {
           getActiveSlide: () => getActiveSlide(doc),
-          resolveTextElement,
+          resolveTextElement: (node, slide) => resolveTextElement(node, slide, doc),
           resolveAdjacentTextElement,
           canEdit: (element) => !!getActiveSlide(doc)
             && !readElementVisibility('locked', element, doc, isElementLocked)

@@ -7,7 +7,12 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   const calls = [];
   const doc = { activeElement: { id: 'active' } };
   let selectedDocument = null;
+  let resolvedTextElementArgs = null;
   const resolveAdjacentTextElement = () => 'next-cell';
+  const resolveTextElement = (...args) => {
+    resolvedTextElementArgs = args;
+    return 'text-element';
+  };
   const controller = frameInteractions.createStudioEditorFrameInteractions({
     eventsApi: {
       createStudioFrameClickHandler(options) {
@@ -28,6 +33,7 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
       }
     },
     getActiveSlide: () => ({ id: 'slide-1' }),
+    resolveTextElement,
     getSelectedElements: (currentDoc) => {
       selectedDocument = currentDoc;
       return ['element-1'];
@@ -42,6 +48,8 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   assert.equal(calls[3][2].clickHandler, 'click-handler');
   assert.equal(calls[3][2].keydownHandler, 'keydown-handler');
   assert.deepEqual(calls[1][2].getActiveSlide(), { id: 'slide-1' });
+  assert.equal(calls[1][2].resolveTextElement('node', 'slide'), 'text-element');
+  assert.deepEqual(resolvedTextElementArgs, ['node', 'slide', doc]);
   assert.equal(calls[1][2].resolveAdjacentTextElement, resolveAdjacentTextElement);
   assert.deepEqual(calls[2][1].getSelectedElements(), ['element-1']);
   assert.equal(selectedDocument, doc);

@@ -3187,15 +3187,16 @@ test('resolveInlineTextEditTarget delegates through the shared inline-edit modul
   const inlineTextEditResolverSource = extractFunctionSource(
     fileContent,
     'const studioEditorInlineTextEditTargetResolver =',
-    '\n\n    function resolveInlineTextEditTarget(node, slide) {'
+    '\n\n    function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {'
   );
   const resolveInlineTextEditTargetSource = extractFunctionSource(
     fileContent,
-    'function resolveInlineTextEditTarget(node, slide) {',
+    'function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {',
     '\n\n    const studioEditorSelectionClassRefresher ='
   );
   const node = { id: 'event-target' };
   const slide = { id: 'slide-1' };
+  const iframeDoc = { id: 'iframe-doc' };
   const selectedElements = [{ id: 'selected-element' }];
   const target = { id: 'text-target' };
   let delegatedArgs = null;
@@ -3209,13 +3210,15 @@ test('resolveInlineTextEditTarget delegates through the shared inline-edit modul
       }
     },
     EDITOR_INLINE_EDIT_TEXT_TAGS: textTagNames,
-    getStudioSelectedElements() {
+    getStudioSelectedElements(currentDoc) {
+      assert.equal(currentDoc, iframeDoc);
       return selectedElements;
     },
     getIframeDoc() {
-      return { id: 'iframe-doc' };
+      return iframeDoc;
     },
-    getLiveSelectedElements(elements) {
+    getLiveSelectedElements(elements, currentDoc) {
+      assert.equal(currentDoc, iframeDoc);
       return elements;
     }
   };
@@ -3223,7 +3226,7 @@ test('resolveInlineTextEditTarget delegates through the shared inline-edit modul
   vm.createContext(context);
   vm.runInContext(`${inlineTextEditResolverSource}\n${resolveInlineTextEditTargetSource}`, context);
 
-  assert.equal(context.resolveInlineTextEditTarget(node, slide), target);
+  assert.equal(context.resolveInlineTextEditTarget(node, slide, iframeDoc), target);
   assert.equal(delegatedArgs[0], node);
   assert.equal(delegatedArgs[1], slide);
   assert.equal(delegatedArgs[2].selectedElements, selectedElements);
@@ -3235,11 +3238,11 @@ test('resolveInlineTextEditTarget fails closed when the shared inline-edit modul
   const inlineTextEditResolverSource = extractFunctionSource(
     fileContent,
     'const studioEditorInlineTextEditTargetResolver =',
-    '\n\n    function resolveInlineTextEditTarget(node, slide) {'
+    '\n\n    function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {'
   );
   const resolveInlineTextEditTargetSource = extractFunctionSource(
     fileContent,
-    'function resolveInlineTextEditTarget(node, slide) {',
+    'function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {',
     '\n\n    const studioEditorSelectionClassRefresher ='
   );
   const context = {

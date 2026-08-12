@@ -7205,12 +7205,12 @@
         )
       : null;
 
-    function resolveInlineTextEditTarget(node, slide) {
+    function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {
       if (typeof studioEditorInlineTextEditTargetResolver !== 'function') {
         return null;
       }
       return studioEditorInlineTextEditTargetResolver(node, slide, {
-        selectedElements: getLiveSelectedElements(getStudioSelectedElements(), getIframeDoc()),
+        selectedElements: getLiveSelectedElements(getStudioSelectedElements(doc), doc),
         textTagNames: EDITOR_INLINE_EDIT_TEXT_TAGS
       });
     }
