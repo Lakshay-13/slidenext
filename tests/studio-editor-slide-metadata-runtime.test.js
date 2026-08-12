@@ -56,7 +56,11 @@ test('index wires slide metadata through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSlideMetadataRuntime\.createStudioEditorSlideMetadataRuntime\(/
+    /<script src="\/shared\/studio-editor-slide-metadata-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorSlideMetadataShellRuntime\.createStudioEditorSlideMetadataShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
