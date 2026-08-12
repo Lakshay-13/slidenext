@@ -1505,6 +1505,7 @@
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-style-runtime.js"></script>
+  <script src="/shared/studio-editor-style-shell-runtime.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
@@ -2905,10 +2906,13 @@
     const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
       ? studioEditorLayerOrderRuntime.layerOrderController
       : null;
-    const studioEditorStyleRuntime = typeof SlideNextStudioEditorStyleRuntime !== 'undefined'
-      && SlideNextStudioEditorStyleRuntime
-      && typeof SlideNextStudioEditorStyleRuntime.createStudioEditorStyleRuntime === 'function'
-      ? SlideNextStudioEditorStyleRuntime.createStudioEditorStyleRuntime({
+    const studioEditorStyleRuntime = typeof SlideNextStudioEditorStyleShellRuntime !== 'undefined'
+      && SlideNextStudioEditorStyleShellRuntime
+      && typeof SlideNextStudioEditorStyleShellRuntime.createStudioEditorStyleShellRuntime === 'function'
+      ? SlideNextStudioEditorStyleShellRuntime.createStudioEditorStyleShellRuntime({
+          styleRuntimeApi: typeof SlideNextStudioEditorStyleRuntime !== 'undefined'
+            ? SlideNextStudioEditorStyleRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorStyleController !== 'undefined'
             ? SlideNextStudioEditorStyleController
             : null,
