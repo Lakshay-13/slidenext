@@ -84,7 +84,10 @@
           historyCaptureResult = saveHistoryState(false);
         }
       }
-      return historyCaptureResult !== false;
+      return historyCaptureResult !== false
+        && !(historyCaptureResult
+          && typeof historyCaptureResult === 'object'
+          && historyCaptureResult.didCapture === false);
     };
   }
 

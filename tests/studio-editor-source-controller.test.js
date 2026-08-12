@@ -81,6 +81,16 @@ test('source history baseline capture fails before source replacement when persi
   assert.equal(capture(), false);
 });
 
+test('source history baseline capture rejects object-form persistence failures', () => {
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: () => ({ kind: 'slidenext.deck', slides: [] }),
+    saveHistoryState: () => ({ didCapture: false })
+  });
+
+  assert.equal(capture(), false);
+});
+
 test('source CSS resolver prefers canonical custom CSS', () => {
   const calls = [];
   const resolveSourceCss = sourceController.createStudioEditorSourceCssResolver({
