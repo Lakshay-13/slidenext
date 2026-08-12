@@ -45,6 +45,14 @@ test('index wires zoom behavior through the runtime module', () => {
 
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-zoom-runtime-options\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorZoomRuntimeOptionsApi\.createStudioEditorZoomRuntimeOptions\(/
+  );
+  assert.match(
+    fileContent,
     /<script src="\/shared\/studio-editor-zoom-runtime\.js"><\/script>/
   );
   assert.match(

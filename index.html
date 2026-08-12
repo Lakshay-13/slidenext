@@ -1427,6 +1427,7 @@
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-zoom-controller.js"></script>
+  <script src="/shared/studio-editor-zoom-runtime-options.js"></script>
   <script src="/shared/studio-editor-zoom-runtime.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
@@ -3861,24 +3862,25 @@
       }
       return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
     }
-    const studioEditorZoomRuntime = typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
-      && SlideNextStudioEditorZoomRuntime
-      && typeof SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime === 'function'
-      ? SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime({
-          controllerApi: typeof SlideNextStudioEditorZoomController !== 'undefined'
-            ? SlideNextStudioEditorZoomController
-            : null,
-          zoomApi: typeof SlideNextStudioEditorZoom !== 'undefined'
-            ? SlideNextStudioEditorZoom
-            : null,
-          rulerViewApi: typeof SlideNextStudioEditorRulerView !== 'undefined'
-            ? SlideNextStudioEditorRulerView
-            : null,
+    const studioEditorZoomRuntimeOptionsApi = typeof SlideNextStudioEditorZoomRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorZoomRuntimeOptions
+      : null;
+    const studioEditorZoomRuntimeOptions = studioEditorZoomRuntimeOptionsApi
+      && typeof studioEditorZoomRuntimeOptionsApi.createStudioEditorZoomRuntimeOptions === 'function'
+      ? studioEditorZoomRuntimeOptionsApi.createStudioEditorZoomRuntimeOptions({
           documentRef: document,
           localStorageRef: localStorage,
           initialZoomFactor: 1.0,
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
+      : null;
+    const studioEditorZoomRuntime = studioEditorZoomRuntimeOptions
+      && typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
+      && SlideNextStudioEditorZoomRuntime
+      && typeof SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime === 'function'
+      ? SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime(
+          studioEditorZoomRuntimeOptions
+        )
       : null;
     const studioEditorZoomController = studioEditorZoomRuntime
       ? studioEditorZoomRuntime.zoomController
