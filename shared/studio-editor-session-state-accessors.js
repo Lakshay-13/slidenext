@@ -31,5 +31,19 @@
     };
   }
 
-  return { createStudioEditorSessionStateAccessors };
+  function createStudioEditorSessionStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorSessionStateAccessors(options);
+
+    return {
+      getStudioCurrentPresentationUrl: () => accessors.getPresentationUrl(),
+      setStudioCurrentPresentationUrl: (nextUrl) => accessors.setPresentationUrl(nextUrl),
+      getStudioEditorSessionToken: () => accessors.getSessionToken(),
+      advanceStudioEditorSessionToken: () => accessors.advanceSessionToken()
+    };
+  }
+
+  return {
+    createStudioEditorSessionStateAccessors,
+    createStudioEditorSessionStateGlobalApi
+  };
 });

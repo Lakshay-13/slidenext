@@ -1768,30 +1768,14 @@
     const studioEditorSessionStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.sessionStateAccessors
       : null;
-    function getStudioCurrentPresentationUrl() {
-      return typeof studioEditorSessionStateAccessors !== 'undefined'
-        && studioEditorSessionStateAccessors
-        ? studioEditorSessionStateAccessors.getPresentationUrl()
-        : '';
-    }
-    function setStudioCurrentPresentationUrl(nextUrl) {
-      return typeof studioEditorSessionStateAccessors !== 'undefined'
-        && studioEditorSessionStateAccessors
-        ? studioEditorSessionStateAccessors.setPresentationUrl(nextUrl)
-        : '';
-    }
-    function getStudioEditorSessionToken() {
-      return typeof studioEditorSessionStateAccessors !== 'undefined'
-        && studioEditorSessionStateAccessors
-        ? studioEditorSessionStateAccessors.getSessionToken()
-        : 0;
-    }
-    function advanceStudioEditorSessionToken() {
-      return typeof studioEditorSessionStateAccessors !== 'undefined'
-        && studioEditorSessionStateAccessors
-        ? studioEditorSessionStateAccessors.advanceSessionToken()
-        : 0;
-    }
+    const studioEditorSessionStateGlobalApi = typeof SlideNextStudioEditorSessionStateAccessors !== 'undefined'
+      && SlideNextStudioEditorSessionStateAccessors
+      && typeof SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateGlobalApi === 'function'
+      ? SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateGlobalApi({
+          accessors: studioEditorSessionStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorSessionStateGlobalApi);
     const studioEditorStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.stateBridge
       : null;

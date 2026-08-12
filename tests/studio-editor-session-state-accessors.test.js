@@ -33,6 +33,29 @@ test('session accessors preserve safe fallbacks without a bridge', () => {
   assert.equal(accessors.advanceSessionToken(), 0);
 });
 
+test('session state global api preserves the editor shell function names', () => {
+  const calls = [];
+  const accessors = {
+    getPresentationUrl: () => 'presentations/demo/index.html',
+    setPresentationUrl: (value) => {
+      calls.push(['set-url', value]);
+      return value;
+    },
+    getSessionToken: () => 4,
+    advanceSessionToken: () => 5
+  };
+  const globalApi = accessorsApi.createStudioEditorSessionStateGlobalApi({ accessors });
+
+  assert.equal(globalApi.getStudioCurrentPresentationUrl(), 'presentations/demo/index.html');
+  assert.equal(
+    globalApi.setStudioCurrentPresentationUrl('presentations/next/index.html'),
+    'presentations/next/index.html'
+  );
+  assert.equal(globalApi.getStudioEditorSessionToken(), 4);
+  assert.equal(globalApi.advanceStudioEditorSessionToken(), 5);
+  assert.deepEqual(calls, [['set-url', 'presentations/next/index.html']]);
+});
+
 test('session accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -46,6 +69,11 @@ test('session accessors publish the global consumed by the editor shell', () => 
       .createStudioEditorSessionStateAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorSessionStateAccessors
+      .createStudioEditorSessionStateGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads session accessors after the session state bridge', () => {
@@ -57,4 +85,7 @@ test('editor loads session accessors after the session state bridge', () => {
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.sessionStateAccessors/);
   assert.match(fileContent, /studioEditorSessionStateAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorSessionStateGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioCurrentPresentationUrl\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioEditorSessionToken\(\)/);
 });
