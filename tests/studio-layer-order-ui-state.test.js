@@ -99,6 +99,15 @@ function loadLayerOrderMutationHelper(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadLayerOrderRollbackHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {',
+    'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function installLayerOrderController(context) {
   context.studioEditorLayerOrderController = layerOrderController.createStudioEditorLayerOrderController({
     layerOrderApi: context.SlideNextStudioEditorLayerOrder,
@@ -110,7 +119,8 @@ function installLayerOrderController(context) {
     isElementLocked: context.isElementLocked,
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyLayerOrderMutation: context.applyEditorLayerOrderMutationWithTransaction
+    applyLayerOrderMutation: context.applyEditorLayerOrderMutationWithTransaction,
+    rollbackLayerOrderMutation: context.rollbackEditorLayerOrderMutation
   });
 }
 
@@ -1329,4 +1339,33 @@ test('changeLayerZIndexByRef resolves selected elements from the iframe document
   assert.equal(delegatedOptions.event, event);
   assert.equal(delegatedOptions.action, 'front');
   assert.deepEqual(delegatedOptions.selectedElements, selectedElements);
+});
+
+test('rollbackEditorLayerOrderMutation reverses a rejected z-index transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'iframe-doc' };
+  const target = {
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '1' }
+  };
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    getIframeDoc() {
+      return documentRef;
+    },
+    getElementByEditorId(editorId, sourceDoc) {
+      return editorId === 'node-1' && sourceDoc === documentRef ? target : null;
+    }
+  };
+
+  vm.createContext(context);
+  loadLayerOrderRollbackHelper(fileContent, context);
+  const mutation = studioTransaction.createStudioStyleTransaction([{
+    element: target,
+    before: { zIndex: '0' },
+    after: { zIndex: '1' }
+  }]);
+
+  assert.equal(context.rollbackEditorLayerOrderMutation(mutation, documentRef), true);
+  assert.equal(target.style.zIndex, '0');
 });

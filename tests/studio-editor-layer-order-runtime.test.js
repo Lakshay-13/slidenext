@@ -27,7 +27,8 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
     assignElementId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
-    applyLayerOrderMutation: () => ({})
+    applyLayerOrderMutation: () => ({}),
+    rollbackLayerOrderMutation: () => ({})
   };
 
   assert.deepEqual(
@@ -39,6 +40,7 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
   assert.equal(calls[0].getNormalizedSlideLayerOrder, options.getNormalizedSlideLayerOrder);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].applyLayerOrderMutation, options.applyLayerOrderMutation);
+  assert.equal(calls[0].rollbackLayerOrderMutation, options.rollbackLayerOrderMutation);
 });
 
 test('index wires layer order through the runtime module', () => {
@@ -59,5 +61,10 @@ test('index wires layer order through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorLayerOrderController\.createStudioEditorLayerOrderController\(/
+  );
+  assert.match(fileContent, /function rollbackEditorLayerOrderMutation\(/);
+  assert.match(
+    fileContent,
+    /rollbackLayerOrderMutation: \(\.\.\.args\) => rollbackEditorLayerOrderMutation\(\.\.\.args\)/
   );
 });

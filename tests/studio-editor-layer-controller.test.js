@@ -444,6 +444,68 @@ test('arrangeStudioElementLayer forwards the editor document to successful layer
   ]]);
 });
 
+test('arrangeStudioElementLayer rolls back when layer persistence rejects the reorder', () => {
+  const documentRef = { id: 'editor-doc' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-arrange-rejected' };
+  const calls = [];
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'front',
+    getDocument: () => documentRef,
+    getSelectedElements: () => [target],
+    selectionHasLockedElements: () => false,
+    reorderSlideLayers: (_action, _elements, options) => {
+      options.onTransaction(transaction);
+      return true;
+    },
+    syncLayerOrderZIndexInput: (element) => calls.push(['sync', element]),
+    finalizeLayerOrderMutation: () => false,
+    rollbackLayerOrderMutation: (...args) => calls.push(['rollback', ...args])
+  }), false);
+
+  assert.deepEqual(calls, [
+    ['sync', target],
+    ['rollback', transaction, documentRef],
+    ['sync', target]
+  ]);
+});
+
+test('changeStudioLayerZIndexByRef rolls back when layer persistence rejects the reorder', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-z-index-rejected' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest() {
+        return row;
+      }
+    },
+    preventDefault() {},
+    stopPropagation() {}
+  };
+
+  assert.equal(layerController.changeStudioLayerZIndexByRef({
+    event,
+    action: 'forward',
+    resolveLayerRowElement: () => target,
+    isElementLocked: () => false,
+    reorderSlideLayers: (_action, _elements, options) => {
+      options.onTransaction(transaction);
+      return true;
+    },
+    syncLayerOrderZIndexInput: (element) => calls.push(['sync', element]),
+    finalizeLayerOrderMutation: () => false,
+    rollbackLayerOrderMutation: (...args) => calls.push(['rollback', ...args])
+  }), false);
+
+  assert.deepEqual(calls, [
+    ['rollback', transaction, null],
+    ['sync', target]
+  ]);
+});
+
 test('refreshStudioLayerOrderUi preserves layer refresh ordering and result values', () => {
   const calls = [];
   assert.equal(layerController.refreshStudioLayerOrderUi({

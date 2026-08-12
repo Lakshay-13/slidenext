@@ -169,11 +169,20 @@
       options.syncLayerOrderZIndexInput(element);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+      const finalizeResult = options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {}),
         ...(targetDocument ? { doc: targetDocument } : {})
       });
+      if (finalizeResult === false) {
+        if (typeof options.rollbackLayerOrderMutation === 'function') {
+          options.rollbackLayerOrderMutation(transaction, targetDocument);
+        }
+        if (typeof options.syncLayerOrderZIndexInput === 'function') {
+          options.syncLayerOrderZIndexInput(element);
+        }
+        return false;
+      }
     }
     return true;
   }
@@ -220,11 +229,20 @@
       options.syncLayerOrderZIndexInput(targets[0]);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+      const finalizeResult = options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {}),
         ...(resolvedDoc ? { doc: resolvedDoc } : {})
       });
+      if (finalizeResult === false) {
+        if (typeof options.rollbackLayerOrderMutation === 'function') {
+          options.rollbackLayerOrderMutation(transaction, resolvedDoc);
+        }
+        if (typeof options.syncLayerOrderZIndexInput === 'function') {
+          options.syncLayerOrderZIndexInput(targets[0]);
+        }
+        return false;
+      }
     }
     return true;
   }

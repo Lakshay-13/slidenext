@@ -2852,7 +2852,8 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args)
+          applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args),
+          rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
         })
       : null;
     const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
@@ -7183,6 +7184,27 @@
           ? options.applyLayerOrder
           : applySlideLayerOrder
       });
+    }
+
+    function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      try {
+        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => typeof getElementByEditorId === 'function'
+            ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
+            : null
+        });
+        return !!(rollbackResult && rollbackResult.didApply);
+      } catch (error) {
+        return false;
+      }
     }
 
     function reorderSlideLayers(action, targetElements = getStudioSelectedElements(), options = {}) {

@@ -30,7 +30,8 @@
           assignElementId: options.assignElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
-          applyLayerOrderMutation: options.applyLayerOrderMutation
+          applyLayerOrderMutation: options.applyLayerOrderMutation,
+          rollbackLayerOrderMutation: options.rollbackLayerOrderMutation
         })
       : null;
 
