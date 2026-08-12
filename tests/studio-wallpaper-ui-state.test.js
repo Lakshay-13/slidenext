@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const deckView = require('../shared/studio-deck-view.js');
+const studioTransaction = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -26,6 +27,15 @@ function installWallpaperStateAccessors(context) {
     return nextValue;
   };
   context.getStudioCustomGradientType = () => context.customGradientType;
+}
+
+function loadWallpaperRollbackHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorWallpaperMutation(transaction, sourceDoc = getIframeDoc()) {',
+    'function applyPresetWallpaper(val, isCustomInput = false) {'
+  );
+  vm.runInContext(helperSource, context);
 }
 
 function createControls() {
@@ -616,4 +626,32 @@ test('wallpaper mutation helpers no-op when wallpaper readiness or required cont
   assert.equal(siblingSlide.style.background, 'white');
   assert.equal(finalizeCalls, 0);
   assert.equal(alertCalls, 0);
+});
+
+test('rollbackEditorWallpaperMutation reverses a rejected slide background transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'iframe-doc' };
+  const target = {
+    style: { background: 'black' }
+  };
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    getIframeDoc() {
+      return documentRef;
+    },
+    getSlideById(slideId, sourceDoc) {
+      return slideId === 'slide-1' && sourceDoc === documentRef ? target : null;
+    }
+  };
+
+  vm.createContext(context);
+  loadWallpaperRollbackHelper(fileContent, context);
+  const mutation = studioTransaction.createStudioStyleTransaction([{
+    elementId: 'slide:slide-1',
+    before: { background: 'white' },
+    after: { background: 'black' }
+  }]);
+
+  assert.equal(context.rollbackEditorWallpaperMutation(mutation, documentRef), true);
+  assert.equal(target.style.background, 'white');
 });

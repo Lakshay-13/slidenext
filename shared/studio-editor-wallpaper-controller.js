@@ -35,7 +35,13 @@
     const applyMutation = typeof options.applyMutation === 'function'
       ? options.applyMutation
       : null;
-    if (!applyMutation) return false;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    if (!applyMutation || !finalizeMutation) return false;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : () => '';
@@ -45,18 +51,16 @@
     });
     if (!mutation || !mutation.didChange) return false;
 
+    const versionLabel = options.isCustomInput ? '' : 'Auto: Changed Background';
+    const finalizeResult = mutation.canonicalDeck
+      ? finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck)
+      : finalizeMutation(versionLabel, mutation.transaction);
+    if (finalizeResult === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      return false;
+    }
     if (typeof options.setPendingCustomWallpaperVersion === 'function') {
       options.setPendingCustomWallpaperVersion(!!options.isCustomInput);
-    }
-    const finalizeMutation = typeof options.finalizeMutation === 'function'
-      ? options.finalizeMutation
-      : null;
-    if (!finalizeMutation) return false;
-    const versionLabel = options.isCustomInput ? '' : 'Auto: Changed Background';
-    if (mutation.canonicalDeck) {
-      finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck);
-    } else {
-      finalizeMutation(versionLabel, mutation.transaction);
     }
     return true;
   }
@@ -92,6 +96,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
     if (!getSlides || !applyMutation || !finalizeMutation) return false;
 
     const getSlideId = typeof options.getSlideId === 'function'
@@ -104,10 +111,12 @@
     if (!mutation || !mutation.didChange) return false;
 
     const versionLabel = 'Auto: Applied Background to All Slides';
-    if (mutation.canonicalDeck) {
-      finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck);
-    } else {
-      finalizeMutation(versionLabel, mutation.transaction);
+    const finalizeResult = mutation.canonicalDeck
+      ? finalizeMutation(versionLabel, mutation.transaction, mutation.canonicalDeck)
+      : finalizeMutation(versionLabel, mutation.transaction);
+    if (finalizeResult === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      return false;
     }
 
     const alertRef = typeof options.alertRef === 'function'

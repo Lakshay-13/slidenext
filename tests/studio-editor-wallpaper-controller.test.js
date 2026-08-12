@@ -43,9 +43,47 @@ test('wallpaper controller applies a changed active-slide paint and finalizes it
 
   assert.equal(result, true);
   assert.equal(calls[0][0], 'ready');
-  assert.deepEqual(calls.slice(1).map(([name]) => name), ['mutation', 'pending', 'finalize']);
+  assert.deepEqual(calls.slice(1).map(([name]) => name), ['mutation', 'finalize', 'pending']);
   assert.deepEqual(calls[1].slice(1), [activeSlide, '#ffffff', 'slide-1']);
-  assert.deepEqual(calls[3].slice(1), ['Auto: Changed Background', mutation.transaction, mutation.canonicalDeck]);
+  assert.deepEqual(calls[2].slice(1), ['Auto: Changed Background', mutation.transaction, mutation.canonicalDeck]);
+  assert.deepEqual(calls[3].slice(1), [false]);
+});
+
+test('wallpaper controller fails closed before mutating without a finalizer', () => {
+  let mutationCalls = 0;
+  assert.equal(controller.applyStudioPresetWallpaper({
+    background: '#ffffff',
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    applyMutation() {
+      mutationCalls += 1;
+      return { didChange: true };
+    }
+  }), false);
+  assert.equal(mutationCalls, 0);
+});
+
+test('wallpaper controller rolls back rejected active-slide persistence before setting pending version state', () => {
+  const calls = [];
+  const transaction = { id: 'tx-rejected' };
+  const documentRef = { id: 'iframe-doc' };
+  const result = controller.applyStudioPresetWallpaper({
+    background: '#ffffff',
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    getIframeDocument: () => documentRef,
+    applyMutation: () => ({ didChange: true, transaction }),
+    finalizeMutation: () => false,
+    rollbackMutation: (...args) => calls.push(args),
+    setPendingCustomWallpaperVersion: () => calls.push(['pending'])
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, [[transaction, documentRef]]);
 });
 
 test('wallpaper controller skips unchanged paints and unavailable decks', () => {
@@ -124,9 +162,35 @@ test('wallpaper controller applies the active paint to all slides and alerts aft
   assert.match(calls[3][1], /all slides/);
 });
 
+test('wallpaper controller rolls back rejected all-slide persistence before alerting', () => {
+  const transaction = { id: 'tx-all-rejected' };
+  const documentRef = { id: 'iframe-doc' };
+  const calls = [];
+  const result = controller.applyStudioWallpaperToAllSlides({
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    getIframeDocument: () => documentRef,
+    wallpaperView: {
+      resolveStudioActiveSlideBackgroundPaint: () => '#111111'
+    },
+    getSlides: () => [{ id: 'slide-1' }],
+    applyMutation: () => ({ didChange: true, transaction }),
+    finalizeMutation: () => false,
+    rollbackMutation: (...args) => calls.push(args),
+    alertRef: () => calls.push(['alert'])
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, [[transaction, documentRef]]);
+});
+
 test('index routes normal preset wallpaper actions through the shared controller seam', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-wallpaper-controller\.js"/);
   assert.match(source, /wallpaperController\.applyStudioPresetWallpaper/);
   assert.match(source, /wallpaperController\.applyStudioWallpaperToAllSlides/);
+  assert.match(source, /function rollbackEditorWallpaperMutation\(/);
+  assert.match(source, /rollbackMutation: rollbackEditorWallpaperMutation/);
 });

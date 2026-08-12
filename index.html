@@ -10225,6 +10225,34 @@
       return applyEditorWallpaperSlidesMutationWithTransaction([activeSlide], background, options);
     }
 
+    function rollbackEditorWallpaperMutation(transaction, sourceDoc = getIframeDoc()) {
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      try {
+        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => {
+            if (typeof elementId === 'string'
+              && elementId.startsWith('slide:')
+              && typeof getSlideById === 'function') {
+              return getSlideById(elementId.slice('slide:'.length), sourceDoc || getIframeDoc());
+            }
+            return typeof getElementByEditorId === 'function'
+              ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
+              : null;
+          }
+        });
+        return !!(rollbackResult && rollbackResult.didApply);
+      } catch (error) {
+        return false;
+      }
+    }
+
     function applyPresetWallpaper(val, isCustomInput = false) {
       const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'
         ? SlideNextStudioEditorWallpaperController
@@ -10244,7 +10272,8 @@
             ? getEditorSlideId(slide)
             : '',
           setPendingCustomWallpaperVersion,
-          finalizeMutation: finalizeWallpaperMutation
+          finalizeMutation: finalizeWallpaperMutation,
+          rollbackMutation: rollbackEditorWallpaperMutation
         });
       }
       const iframeDoc = getIframeDoc();
@@ -10272,13 +10301,15 @@
         getSlideId: () => activeSlideId
       });
       if (!mutation.didChange) return false;
-      setStudioPendingCustomWallpaperVersion(!!isCustomInput);
       const versionLabel = isCustomInput ? '' : 'Auto: Changed Background';
-      if (mutation.canonicalDeck) {
-        finalizeWallpaperMutation(versionLabel, mutation.transaction, mutation.canonicalDeck);
-      } else {
-        finalizeWallpaperMutation(versionLabel, mutation.transaction);
+      const finalizeResult = mutation.canonicalDeck
+        ? finalizeWallpaperMutation(versionLabel, mutation.transaction, mutation.canonicalDeck)
+        : finalizeWallpaperMutation(versionLabel, mutation.transaction);
+      if (finalizeResult === false) {
+        rollbackEditorWallpaperMutation(mutation.transaction, iframeDoc);
+        return false;
       }
+      setStudioPendingCustomWallpaperVersion(!!isCustomInput);
       return true;
     }
 
@@ -10422,6 +10453,7 @@
             ? getEditorSlideId(slide)
             : '',
           finalizeMutation: finalizeWallpaperMutation,
+          rollbackMutation: rollbackEditorWallpaperMutation,
           alertRef: typeof alert === 'function' ? alert : null
         });
       }
@@ -10450,16 +10482,18 @@
           : ''
       });
       if (!mutation.didChange) return false;
-      if (mutation.canonicalDeck) {
-        finalizeWallpaperMutation(
+      const finalizeResult = mutation.canonicalDeck
+        ? finalizeWallpaperMutation(
           'Auto: Applied Background to All Slides',
           mutation.transaction,
           mutation.canonicalDeck
-        );
-      } else {
-        finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
+        )
+        : finalizeWallpaperMutation('Auto: Applied Background to All Slides', mutation.transaction);
+      if (finalizeResult === false) {
+        rollbackEditorWallpaperMutation(mutation.transaction, iframeDoc);
+        return false;
       }
-      
+
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;
     }
