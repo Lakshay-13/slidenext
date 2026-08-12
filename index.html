@@ -2369,10 +2369,15 @@
           restoreHistoryEntry: restoreEditorSourceHistoryEntry,
           afterApply: (canonicalDeck) => {
             const historyCaptureResult = saveHistoryState(false, null, canonicalDeck);
-            if (historyCaptureResult === false
-              || (historyCaptureResult
-                && typeof historyCaptureResult === 'object'
-                && historyCaptureResult.didCapture === false)) return false;
+            const historyCaptureFailed = typeof SlideNextStudioEditorHistoryResult !== 'undefined'
+              && SlideNextStudioEditorHistoryResult
+              && typeof SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure === 'function'
+              ? SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure(historyCaptureResult)
+              : historyCaptureResult === false
+                || (!!historyCaptureResult
+                  && typeof historyCaptureResult === 'object'
+                  && historyCaptureResult.didCapture === false);
+            if (historyCaptureFailed) return false;
             if (triggerAutoSave() === false) return false;
             return true;
           }
