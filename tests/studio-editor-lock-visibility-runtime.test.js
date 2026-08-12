@@ -62,7 +62,11 @@ test('index wires lock and visibility through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorLockVisibilityRuntime\.createStudioEditorLockVisibilityRuntime\(/
+    /<script src="\/shared\/studio-editor-lock-visibility-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorLockVisibilityShellRuntime\.createStudioEditorLockVisibilityShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,

@@ -1390,6 +1390,7 @@
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
   <script src="/shared/studio-editor-lock-visibility-runtime.js"></script>
+  <script src="/shared/studio-editor-lock-visibility-shell-runtime.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-layout-conversion.js"></script>
@@ -2782,10 +2783,13 @@
       studioEditorElementLockWriter(element, locked);
     }
 
-    const studioEditorLockVisibilityRuntime = typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
-      && SlideNextStudioEditorLockVisibilityRuntime
-      && typeof SlideNextStudioEditorLockVisibilityRuntime.createStudioEditorLockVisibilityRuntime === 'function'
-      ? SlideNextStudioEditorLockVisibilityRuntime.createStudioEditorLockVisibilityRuntime({
+    const studioEditorLockVisibilityRuntime = typeof SlideNextStudioEditorLockVisibilityShellRuntime !== 'undefined'
+      && SlideNextStudioEditorLockVisibilityShellRuntime
+      && typeof SlideNextStudioEditorLockVisibilityShellRuntime.createStudioEditorLockVisibilityShellRuntime === 'function'
+      ? SlideNextStudioEditorLockVisibilityShellRuntime.createStudioEditorLockVisibilityShellRuntime({
+          lockVisibilityRuntimeApi: typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
+            ? SlideNextStudioEditorLockVisibilityRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
             ? SlideNextStudioEditorLockVisibilityController
             : null,
