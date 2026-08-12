@@ -1603,6 +1603,7 @@
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
+  <script src="/shared/studio-editor-deck-view-shell-runtime.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
@@ -2204,10 +2205,13 @@
           creationController: presentationCreationController
         })
       : null;
-    const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
-      && SlideNextStudioEditorDeckViewRuntime
-      && typeof SlideNextStudioEditorDeckViewRuntime.createStudioEditorDeckViewRuntime === 'function'
-      ? SlideNextStudioEditorDeckViewRuntime.createStudioEditorDeckViewRuntime({
+    const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewShellRuntime !== 'undefined'
+      && SlideNextStudioEditorDeckViewShellRuntime
+      && typeof SlideNextStudioEditorDeckViewShellRuntime.createStudioEditorDeckViewShellRuntime === 'function'
+      ? SlideNextStudioEditorDeckViewShellRuntime.createStudioEditorDeckViewShellRuntime({
+          deckViewRuntimeApi: typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
+            ? SlideNextStudioEditorDeckViewRuntime
+            : null,
           exportApi: typeof SlideNextStudioEditorExportController !== 'undefined'
             ? SlideNextStudioEditorExportController
             : null,
