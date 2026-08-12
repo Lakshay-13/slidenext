@@ -30,6 +30,7 @@
     const getSelectedImage = typeof options.getSelectedImage === 'function'
       ? options.getSelectedImage
       : () => null;
+    const resolveSelectedImage = () => getSelectedImage(getDocument());
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -175,7 +176,7 @@
         || typeof canonicalDeckApi.updateCanonicalNodeAsset !== 'function') {
         return false;
       }
-      const selectedImage = getSelectedImage();
+      const selectedImage = resolveSelectedImage();
       if (!selectedImage) return false;
       const canonicalDeck = resolveCanonicalDeck();
       const hasCanonicalVisibilityReader = canonicalDeck

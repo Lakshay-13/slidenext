@@ -3209,8 +3209,8 @@
           ),
           getDocument: () => getIframeDoc(),
           getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
-          getSelectedImage: () => {
-            const selectedElements = getStudioSelectedElements();
+          getSelectedImage: (doc) => {
+            const selectedElements = getStudioSelectedElements(doc);
             const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
               ? selectedElements[0]
               : null;

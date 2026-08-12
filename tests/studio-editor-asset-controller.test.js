@@ -290,7 +290,10 @@ test('applyAsset binds the selected image, updates its DOM source, and commits t
       assert.equal(currentDocument, documentRef);
       return 'slide-1';
     },
-    getSelectedImage: () => selectedImage,
+    getSelectedImage(currentDocument) {
+      assert.equal(currentDocument, documentRef);
+      return selectedImage;
+    },
     syncInspectorForSelection: () => { inspectorSyncs += 1; },
     saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }
   });

@@ -65,6 +65,10 @@ test('index wires asset persistence through the runtime module', () => {
     fileContent,
     /getActiveSlideId: \(doc\) => getActiveSlideId\(doc \|\| getIframeDoc\(\)\),/
   );
+  assert.match(
+    fileContent,
+    /getSelectedImage: \(doc\) => \{\s+const selectedElements = getStudioSelectedElements\(doc\);/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorAssetController\.createStudioEditorAssetController\(/
