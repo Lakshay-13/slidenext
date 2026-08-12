@@ -1600,6 +1600,7 @@
   <script src="/shared/studio-editor-source-controller.js"></script>
   <script src="/shared/studio-editor-source-accessors.js"></script>
   <script src="/shared/studio-editor-source-runtime.js"></script>
+  <script src="/shared/studio-editor-source-shell-runtime.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
@@ -2354,10 +2355,13 @@
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController
       : null;
-    const studioEditorSourceRuntime = typeof SlideNextStudioEditorSourceRuntime !== 'undefined'
-      && SlideNextStudioEditorSourceRuntime
-      && typeof SlideNextStudioEditorSourceRuntime.createStudioEditorSourceRuntime === 'function'
-      ? SlideNextStudioEditorSourceRuntime.createStudioEditorSourceRuntime({
+    const studioEditorSourceRuntime = typeof SlideNextStudioEditorSourceShellRuntime !== 'undefined'
+      && SlideNextStudioEditorSourceShellRuntime
+      && typeof SlideNextStudioEditorSourceShellRuntime.createStudioEditorSourceShellRuntime === 'function'
+      ? SlideNextStudioEditorSourceShellRuntime.createStudioEditorSourceShellRuntime({
+          sourceRuntimeApi: typeof SlideNextStudioEditorSourceRuntime !== 'undefined'
+            ? SlideNextStudioEditorSourceRuntime
+            : null,
           sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
             ? SlideNextStudioEditorSourceController
             : null,
