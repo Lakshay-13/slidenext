@@ -33,7 +33,8 @@
     );
     const selectionStateStore = createStore(
       resolveApi(options.selectionApi, 'SlideNextStudioEditorSelectionStateStore'),
-      'createStudioEditorSelectionStateStore'
+      'createStudioEditorSelectionStateStore',
+      { getElementId: options.getElementId }
     );
 
     return {

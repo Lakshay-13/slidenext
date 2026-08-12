@@ -50,6 +50,23 @@ test('selection state controller isolates its selection array from consumer muta
   assert.equal(controller.getSelectedElement(), firstElement);
 });
 
+test('selection state controller keeps stable IDs when live element references are unavailable', () => {
+  const firstElement = { dataset: { editorId: 'node-1' } };
+  const controller = selectionStateController.createStudioEditorSelectionStateController({
+    initialSelectedElements: [firstElement]
+  });
+
+  assert.deepEqual(controller.getSelectedElementIds(), ['node-1']);
+  controller.setState({ selectedElementIds: ['node-2', 'node-2', ''] });
+  assert.deepEqual(controller.getSelectedElements(), []);
+  assert.deepEqual(controller.getSelectedElementIds(), ['node-2']);
+  assert.deepEqual(controller.clear(), {
+    selectedElements: [],
+    selectedElement: null
+  });
+  assert.deepEqual(controller.getSelectedElementIds(), []);
+});
+
 test('editor wiring routes selection state through the shared controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

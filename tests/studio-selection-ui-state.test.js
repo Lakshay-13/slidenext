@@ -342,6 +342,31 @@ test('getSelectedEditorElementIds delegates to shared selection', () => {
   assert.deepEqual(delegatedArgs[1], { selectionOptions: true });
 });
 
+test('getSelectedEditorElementIds prefers stored IDs when no element collection is supplied', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    selectedElements: [{ id: 'live-node' }],
+    studioEditorStateBridge: {
+      getSelectedElementIds() {
+        return ['stored-node'];
+      }
+    },
+    SlideNextStudioEditorSelection: {
+      getStudioSelectedElementIds() {
+        throw new Error('explicit DOM selection path should not run');
+      }
+    },
+    getEditorSelectionOptions() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  loadGetSelectedEditorElementIds(fileContent, context);
+
+  assert.deepEqual(context.getSelectedEditorElementIds(), ['stored-node']);
+});
+
 test('getSelectedEditorElementIds fails closed when the shared selection API is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {

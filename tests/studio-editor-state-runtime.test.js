@@ -21,6 +21,7 @@ test('state runtime composes metadata, label, slide, and selection stores', () =
       return result;
     }
   });
+  const getElementId = (element) => element.id;
 
   assert.deepEqual(
     stateRuntime.createStudioEditorStateRuntime({
@@ -43,7 +44,8 @@ test('state runtime composes metadata, label, slide, and selection stores', () =
         'selection',
         'createStudioEditorSelectionStateStore',
         stores.selectionStateStore
-      )
+      ),
+      getElementId
     }),
     stores
   );
@@ -54,6 +56,7 @@ test('state runtime composes metadata, label, slide, and selection stores', () =
     'selection'
   ]);
   assert.deepEqual(calls[2][1], { initialSlideIndex: 0 });
+  assert.equal(calls[3][1].getElementId, getElementId);
 });
 
 test('index wires basic editor state through the bridge module', () => {

@@ -16,6 +16,7 @@ test('selection store delegates state without changing element references', () =
     getState: () => ({ selectedElements: [firstElement], selectedElement: firstElement }),
     getSelectedElements: () => [firstElement],
     getSelectedElement: () => firstElement,
+    getSelectedElementIds: () => ['node-1'],
     getPreserveSelectionOnNextActiveSlideSync: () => true,
     setPreserveSelectionOnNextActiveSlideSync: (value) => !!value,
     setState: (value) => value,
@@ -27,6 +28,7 @@ test('selection store delegates state without changing element references', () =
 
   assert.equal(store.getSelectedElements()[0], firstElement);
   assert.equal(store.getSelectedElement(), firstElement);
+  assert.deepEqual(store.getSelectedElementIds(), ['node-1']);
   assert.equal(store.getPreserveSelectionOnNextActiveSlideSync(), true);
   assert.deepEqual(store.setState({ selectedElements: [secondElement] }), {
     selectedElements: [secondElement]
@@ -41,6 +43,7 @@ test('selection store keeps safe fallbacks when the controller is unavailable', 
   assert.deepEqual(store.getState(), { selectedElements: [], selectedElement: null });
   assert.deepEqual(store.getSelectedElements(), []);
   assert.equal(store.getSelectedElement(), null);
+  assert.deepEqual(store.getSelectedElementIds(), []);
   assert.equal(store.getPreserveSelectionOnNextActiveSlideSync(), false);
   assert.equal(store.setState({}), false);
   assert.equal(store.clear(), false);

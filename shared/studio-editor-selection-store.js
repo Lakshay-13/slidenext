@@ -18,7 +18,9 @@
       return null;
     }
 
-    return controllerApi.createStudioEditorSelectionStateController({});
+    return controllerApi.createStudioEditorSelectionStateController({
+      getElementId: options.getElementId
+    });
   }
 
   function createStudioEditorSelectionStateStore(options = {}) {
@@ -40,6 +42,12 @@
       return controller && typeof controller.getSelectedElement === 'function'
         ? controller.getSelectedElement()
         : null;
+    }
+
+    function getSelectedElementIds() {
+      return controller && typeof controller.getSelectedElementIds === 'function'
+        ? controller.getSelectedElementIds()
+        : [];
     }
 
     function getPreserveSelectionOnNextActiveSlideSync() {
@@ -70,6 +78,7 @@
       getState,
       getSelectedElements,
       getSelectedElement,
+      getSelectedElementIds,
       getPreserveSelectionOnNextActiveSlideSync,
       setPreserveSelectionOnNextActiveSlideSync,
       setState,

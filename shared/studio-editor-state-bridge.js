@@ -25,7 +25,8 @@
             || null,
           selectionApi: options.selectionApi
             || (root && root.SlideNextStudioEditorSelectionStateStore)
-            || null
+            || null,
+          getElementId: options.getElementId
         })
       : null;
     const presentationMetadataStateStore = runtime
@@ -76,6 +77,7 @@
       setSlideIndex: (nextValue) => write(slideIndexStore, 'setSlideIndex', nextValue, false),
       getSelectedElements: () => read(selectionStateStore, 'getSelectedElements', []),
       getSelectedElement: () => read(selectionStateStore, 'getSelectedElement', null),
+      getSelectedElementIds: () => read(selectionStateStore, 'getSelectedElementIds', []),
       setSelectionState: (nextState) => write(selectionStateStore, 'setState', nextState, false),
       clearSelectionState: () => read(selectionStateStore, 'clear', false),
       getPreserveSelectionOnNextActiveSlideSync: () => read(

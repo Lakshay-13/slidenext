@@ -26,6 +26,7 @@ test('editor state bridge composes stores and delegates editor state access', ()
     selectionStateStore: {
       getSelectedElements: () => ['one', 'two'],
       getSelectedElement: () => 'one',
+      getSelectedElementIds: () => ['node-1', 'node-2'],
       setState: (value) => value,
       clear: () => true,
       getPreserveSelectionOnNextActiveSlideSync: () => true,
@@ -60,6 +61,7 @@ test('editor state bridge composes stores and delegates editor state access', ()
   assert.equal(bridge.setSlideIndex(3), 3);
   assert.deepEqual(bridge.getSelectedElements(), ['one', 'two']);
   assert.equal(bridge.getSelectedElement(), 'one');
+  assert.deepEqual(bridge.getSelectedElementIds(), ['node-1', 'node-2']);
   assert.deepEqual(bridge.setSelectionState({ selectedElements: ['three'] }), {
     selectedElements: ['three']
   });
@@ -82,6 +84,7 @@ test('editor state bridge preserves existing safe fallbacks without a runtime', 
   assert.equal(bridge.setSlideIndex(1), false);
   assert.deepEqual(bridge.getSelectedElements(), []);
   assert.equal(bridge.getSelectedElement(), null);
+  assert.deepEqual(bridge.getSelectedElementIds(), []);
   assert.equal(bridge.setSelectionState({}), false);
   assert.equal(bridge.clearSelectionState(), false);
   assert.equal(bridge.getPreserveSelectionOnNextActiveSlideSync(), false);

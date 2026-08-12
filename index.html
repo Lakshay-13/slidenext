@@ -1645,7 +1645,10 @@
             : null,
           selectionApi: typeof SlideNextStudioEditorSelectionStateStore !== 'undefined'
             ? SlideNextStudioEditorSelectionStateStore
-            : null
+            : null,
+          getElementId: (element) => typeof assignEditorElementId === 'function'
+            ? assignEditorElementId(element)
+            : ''
         })
       : null;
     function getStudioCurrentPresentationMetadata() {
@@ -1707,6 +1710,12 @@
         && typeof studioEditorStateBridge.getSelectedElement === 'function'
         ? studioEditorStateBridge.getSelectedElement()
         : null;
+    }
+    function getStudioSelectedElementIds() {
+      return studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSelectedElementIds === 'function'
+        ? studioEditorStateBridge.getSelectedElementIds()
+        : [];
     }
     function setStudioSelectionState(nextState = {}) {
       return studioEditorStateBridge
@@ -6913,6 +6922,12 @@
       : null;
 
     function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {
+      if (arguments.length === 0
+        && typeof studioEditorStateBridge !== 'undefined'
+        && studioEditorStateBridge
+        && typeof studioEditorStateBridge.getSelectedElementIds === 'function') {
+        return studioEditorStateBridge.getSelectedElementIds();
+      }
       if (typeof studioEditorSelectionIdsReader !== 'function') return [];
       return studioEditorSelectionIdsReader(elements, getEditorSelectionOptions());
     }
