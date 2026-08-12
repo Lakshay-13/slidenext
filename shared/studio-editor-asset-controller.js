@@ -117,12 +117,18 @@
         : null;
     }
 
-    function commitDeck(nextCanonicalDeck, versionLabel = '') {
+    function commitDeck(nextCanonicalDeck, versionLabel = '', commitOptions = {}) {
       if (finalizeMutation) {
-        finalizeMutation(versionLabel, {
+        const finalizeResult = finalizeMutation(versionLabel, {
           refreshThumbnails: false,
           canonicalDeck: nextCanonicalDeck
         });
+        if (finalizeResult === false) {
+          if (typeof commitOptions.onRejected === 'function') {
+            commitOptions.onRejected();
+          }
+          return null;
+        }
       } else {
         if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
         if (triggerAutoSave) triggerAutoSave();
@@ -239,17 +245,40 @@
         (candidate) => candidate && candidate.id === normalizedAssetId
       );
       if (normalizedAssetId && !asset) return false;
+      const previousSrc = typeof selectedImage.getAttribute === 'function'
+        ? selectedImage.getAttribute('src')
+        : Object.prototype.hasOwnProperty.call(selectedImage, 'src')
+          ? selectedImage.src
+          : null;
       if (asset && typeof selectedImage.setAttribute === 'function') {
         selectedImage.setAttribute('src', asset.src);
       }
       if (asset) selectedImage.src = asset.src;
-      if (syncInspectorForSelection) syncInspectorForSelection();
-      commitDeck(
+      const restorePreviousSrc = () => {
+        if (previousSrc === null
+          && typeof selectedImage.removeAttribute === 'function') {
+          selectedImage.removeAttribute('src');
+        } else if (previousSrc !== null
+          && previousSrc !== undefined
+          && typeof selectedImage.setAttribute === 'function') {
+          selectedImage.setAttribute('src', previousSrc);
+        }
+        if (previousSrc !== null && previousSrc !== undefined) {
+          selectedImage.src = previousSrc;
+        }
+      };
+      const committedDeck = commitDeck(
         nextCanonicalDeck,
         asset
           ? `Auto: Applied Asset "${asset.name || asset.id}"`
-          : 'Auto: Cleared Image Asset'
+          : 'Auto: Cleared Image Asset',
+        { onRejected: restorePreviousSrc }
       );
+      if (!committedDeck) {
+        if (syncInspectorForSelection) syncInspectorForSelection();
+        return false;
+      }
+      if (syncInspectorForSelection) syncInspectorForSelection();
       return true;
     }
 
