@@ -6870,29 +6870,31 @@
         return studioEditorPersistenceController.getPersistedActiveSlideId(playbackState);
       }
       if (typeof getPersistedActiveSlideId.reader !== 'function') {
+        const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+          ? SlideNextStudioEditorPersistence
+          : null;
+        const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+          ? SlideNextStudioEditorPersistenceState
+          : null;
         const createStudioEditorPersistedActiveSlideIdAdapter = (
-          typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-          && SlideNextStudioEditorPersistenceState
-          && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedActiveSlideIdAdapter === 'function'
+          persistenceStateApi
+          && typeof persistenceStateApi.createStudioEditorPersistedActiveSlideIdAdapter === 'function'
         )
-          ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedActiveSlideIdAdapter
+          ? persistenceStateApi.createStudioEditorPersistedActiveSlideIdAdapter
           : null;
         const createStudioPersistedActiveSlideIdReader = (
-          typeof SlideNextStudioEditorPersistence !== 'undefined'
-          && SlideNextStudioEditorPersistence
-          && typeof SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader === 'function'
+          persistenceApi
+          && typeof persistenceApi.createStudioPersistedActiveSlideIdReader === 'function'
         )
-          ? SlideNextStudioEditorPersistence.createStudioPersistedActiveSlideIdReader
+          ? persistenceApi.createStudioPersistedActiveSlideIdReader
           : null;
         const createReader = createStudioEditorPersistedActiveSlideIdAdapter || createStudioPersistedActiveSlideIdReader;
         if (!createReader) return '';
         const readerOptions = {
-          getPlaybackState: getStudioPersistedPlaybackState,
+          getPlaybackState: getStudioPersistedPlaybackState
         };
         if (createStudioEditorPersistedActiveSlideIdAdapter) {
-          readerOptions.persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null;
+          readerOptions.persistenceApi = persistenceApi;
         } else {
           readerOptions.resolvePersistedDeckActiveSlideId = (
             typeof SlideNextDeckPersistence !== 'undefined'
