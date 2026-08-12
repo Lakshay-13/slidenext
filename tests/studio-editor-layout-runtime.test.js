@@ -100,7 +100,11 @@ test('index wires layout editing through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorLayoutRuntime\.createStudioEditorLayoutRuntime\(/
+    /<script src="\/shared\/studio-editor-layout-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorLayoutShellRuntime\.createStudioEditorLayoutShellRuntime\(/
   );
   assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);
   assert.match(fileContent, /function rollbackEditorPositionLayoutMutation\(/);

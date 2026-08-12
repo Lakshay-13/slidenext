@@ -1424,6 +1424,7 @@
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
+  <script src="/shared/studio-editor-layout-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
@@ -2646,10 +2647,13 @@
     const studioEditorSlideRoutingController = studioEditorSlideRoutingRuntime
       ? studioEditorSlideRoutingRuntime.slideRoutingController
       : null;
-    const studioEditorLayoutRuntime = typeof SlideNextStudioEditorLayoutRuntime !== 'undefined'
-      && SlideNextStudioEditorLayoutRuntime
-      && typeof SlideNextStudioEditorLayoutRuntime.createStudioEditorLayoutRuntime === 'function'
-      ? SlideNextStudioEditorLayoutRuntime.createStudioEditorLayoutRuntime({
+    const studioEditorLayoutRuntime = typeof SlideNextStudioEditorLayoutShellRuntime !== 'undefined'
+      && SlideNextStudioEditorLayoutShellRuntime
+      && typeof SlideNextStudioEditorLayoutShellRuntime.createStudioEditorLayoutShellRuntime === 'function'
+      ? SlideNextStudioEditorLayoutShellRuntime.createStudioEditorLayoutShellRuntime({
+          layoutRuntimeApi: typeof SlideNextStudioEditorLayoutRuntime !== 'undefined'
+            ? SlideNextStudioEditorLayoutRuntime
+            : null,
           nudgeApi: typeof SlideNextStudioEditorNudgeController !== 'undefined'
             ? SlideNextStudioEditorNudgeController
             : null,
