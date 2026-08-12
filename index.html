@@ -1384,6 +1384,7 @@
   <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-removal-controller.js"></script>
   <script src="/shared/studio-editor-removal-runtime.js"></script>
+  <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -2832,10 +2833,13 @@
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
       ? studioEditorLockVisibilityRuntime.lockVisibilityController
       : null;
-    const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalRuntime !== 'undefined'
-      && SlideNextStudioEditorRemovalRuntime
-      && typeof SlideNextStudioEditorRemovalRuntime.createStudioEditorRemovalRuntime === 'function'
-      ? SlideNextStudioEditorRemovalRuntime.createStudioEditorRemovalRuntime({
+    const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
+      && SlideNextStudioEditorRemovalShellRuntime
+      && typeof SlideNextStudioEditorRemovalShellRuntime.createStudioEditorRemovalShellRuntime === 'function'
+      ? SlideNextStudioEditorRemovalShellRuntime.createStudioEditorRemovalShellRuntime({
+          removalRuntimeApi: typeof SlideNextStudioEditorRemovalRuntime !== 'undefined'
+            ? SlideNextStudioEditorRemovalRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorRemovalController !== 'undefined'
             ? SlideNextStudioEditorRemovalController
             : null,
