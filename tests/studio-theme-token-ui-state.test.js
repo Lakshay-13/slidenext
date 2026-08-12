@@ -98,6 +98,49 @@ test('applyStudioThemeTokenPreset refuses unavailable decks without mutating sta
   assert.equal(applyCalls, 0);
 });
 
+test('applyStudioThemeTokenPreset restores CSS tokens when persistence rejects', () => {
+  const values = { '--color-primary': 'blue' };
+  const iframeDoc = {
+    documentElement: {
+      style: {
+        getPropertyValue(name) {
+          return values[name] || '';
+        },
+        setProperty(name, value) {
+          values[name] = value;
+        },
+        removeProperty(name) {
+          delete values[name];
+        }
+      }
+    }
+  };
+  const canonicalThemeApi = {
+    buildStudioCanonicalThemeBaseline: () => ({ kind: 'slidenext.deck', slides: [] }),
+    buildStudioCanonicalThemeDeck: () => ({ kind: 'slidenext.deck', slides: [] }),
+    applyStudioCanonicalThemeTokenUpdates(documentRef, tokenUpdates) {
+      Object.entries(tokenUpdates).forEach(([name, value]) => {
+        if (value) documentRef.documentElement.style.setProperty(name, value);
+        else documentRef.documentElement.style.removeProperty(name);
+      });
+      return true;
+    }
+  };
+
+  assert.equal(themePresetController.applyStudioThemeTokenPreset({
+    presetId: 'aurora',
+    presetData: {
+      aurora: { name: 'Aurora', tokens: { '--color-primary': 'green' } }
+    },
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getIframeDocument: () => iframeDoc,
+    canonicalThemeApi,
+    canonicalDeckApi: {},
+    finalizeMutation: () => false
+  }), false);
+  assert.equal(values['--color-primary'], 'blue');
+});
+
 test('applyStudioThemeTokenPreset fails closed when canonical setup throws', () => {
   let applyCalls = 0;
   const result = themePresetController.applyStudioThemeTokenPreset({

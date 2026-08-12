@@ -59,6 +59,17 @@
       return false;
     }
     if (!canonicalDeck) return false;
+    const rootStyle = iframeDoc.documentElement
+      && iframeDoc.documentElement.style
+      && typeof iframeDoc.documentElement.style.getPropertyValue === 'function'
+      ? iframeDoc.documentElement.style
+      : null;
+    const previousTokenValues = rootStyle
+      ? Object.keys(preset.tokens).reduce((values, tokenName) => {
+          values[tokenName] = rootStyle.getPropertyValue(tokenName);
+          return values;
+        }, {})
+      : null;
     if (!canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, preset.tokens)) {
       return false;
     }
@@ -72,7 +83,13 @@
           refreshThumbnails: true
         })
       : false;
-    if (finalized === false) return false;
+    if (finalized === false) {
+      if (previousTokenValues
+        && typeof canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates === 'function') {
+        canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, previousTokenValues);
+      }
+      return false;
+    }
 
     if (typeof options.updateActionState === 'function') {
       options.updateActionState(iframeDoc);
