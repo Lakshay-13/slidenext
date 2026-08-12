@@ -86,7 +86,11 @@ test('index wires session lifecycle composition through the runtime module', () 
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSessionRuntime\.createStudioEditorSessionRuntime\(/
+    /<script src="\/shared\/studio-editor-session-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorSessionShellRuntime\.createStudioEditorSessionShellRuntime\(/
   );
   assert.match(
     fileContent,

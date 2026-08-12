@@ -1531,6 +1531,7 @@
   <script src="/shared/studio-editor-launch-controller.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
+  <script src="/shared/studio-editor-session-shell-runtime.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -3884,12 +3885,15 @@
         })
       : null;
     const studioEditorSessionRuntime = studioEditorSessionRuntimeOptions
-      && typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
-      && SlideNextStudioEditorSessionRuntime
-      && typeof SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime === 'function'
-      ? SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime(
-          studioEditorSessionRuntimeOptions
-        )
+      && typeof SlideNextStudioEditorSessionShellRuntime !== 'undefined'
+      && SlideNextStudioEditorSessionShellRuntime
+      && typeof SlideNextStudioEditorSessionShellRuntime.createStudioEditorSessionShellRuntime === 'function'
+      ? SlideNextStudioEditorSessionShellRuntime.createStudioEditorSessionShellRuntime({
+          sessionRuntimeApi: typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
+            ? SlideNextStudioEditorSessionRuntime
+            : null,
+          runtimeOptions: studioEditorSessionRuntimeOptions
+        })
       : null;
     const studioEditorSessionStateController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionStateController
