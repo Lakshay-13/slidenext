@@ -62,14 +62,26 @@
           }
         };
 
-    return function buildStudioEditorMutationCanonicalDeck(sourceDoc) {
+    return function buildStudioEditorMutationCanonicalDeck(sourceDoc, requestedOptions = {}) {
       if (!buildCanonicalDeck) return null;
+      const normalizedOptions = requestedOptions
+        && typeof requestedOptions === 'object'
+        && !Array.isArray(requestedOptions)
+        ? requestedOptions
+        : {};
       const buildOptions = {
+        ...normalizedOptions,
         preferLiveCanonicalDeck: false
       };
-      const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
-      if (canonicalDeckBaseline) {
-        buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
+      const hasValidProvidedBaseline = Object.prototype.hasOwnProperty.call(
+        buildOptions,
+        'canonicalDeckBaseline'
+      ) && isValidCanonicalDeck(buildOptions.canonicalDeckBaseline);
+      if (!hasValidProvidedBaseline) {
+        const canonicalDeckBaseline = readCanonicalDeckBaseline(sourceDoc);
+        if (canonicalDeckBaseline) {
+          buildOptions.canonicalDeckBaseline = canonicalDeckBaseline;
+        }
       }
       try {
         const rebuiltCanonicalDeck = buildCanonicalDeck(sourceDoc, buildOptions);

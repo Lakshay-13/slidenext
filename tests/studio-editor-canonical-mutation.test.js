@@ -59,6 +59,37 @@ test('mutation canonical builder forwards the pre-mutation baseline when availab
   });
 });
 
+test('mutation canonical builder preserves explicit rebuild options and baselines', () => {
+  const documentRef = { id: 'post-mutation-document' };
+  const explicitBaseline = { kind: 'slidenext.deck', slides: [{ id: 'explicit' }] };
+  let captured = null;
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      canonicalStateApi: canonicalState,
+      buildCanonicalDeck(sourceDoc, options) {
+        captured = { sourceDoc, options };
+        return explicitBaseline;
+      },
+      getCanonicalDeckBaseline() {
+        throw new Error('the explicit baseline should be preserved');
+      }
+    });
+
+  assert.equal(buildMutationDeck(documentRef, {
+    canonicalDeckBaseline: explicitBaseline,
+    customRebuildOption: 'preserve-me',
+    preferLiveCanonicalDeck: true
+  }), explicitBaseline);
+  assert.deepEqual(captured, {
+    sourceDoc: documentRef,
+    options: {
+      canonicalDeckBaseline: explicitBaseline,
+      customRebuildOption: 'preserve-me',
+      preferLiveCanonicalDeck: false
+    }
+  });
+});
+
 test('mutation canonical builder delegates baseline resolution to canonical state', () => {
   const documentRef = { id: 'post-mutation-document' };
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };

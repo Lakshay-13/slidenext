@@ -110,6 +110,28 @@ test('canonical bridge uses the document getter and normalizes build options', (
   ]);
 });
 
+test('canonical bridge forwards mutation rebuild options', () => {
+  const sourceDocument = { id: 'mutation-document' };
+  const captured = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    mutationCanonicalDeckBuilder(sourceDoc, buildOptions) {
+      captured.push([sourceDoc, buildOptions]);
+      return canonicalDeck;
+    },
+    isCanonicalDeck: (value) => value === canonicalDeck
+  });
+
+  assert.equal(bridge.buildMutationCanonicalDeck(sourceDocument, {
+    canonicalDeckBaseline: canonicalDeck,
+    customRebuildOption: true
+  }), canonicalDeck);
+  assert.deepEqual(captured, [[sourceDocument, {
+    canonicalDeckBaseline: canonicalDeck,
+    customRebuildOption: true
+  }]]);
+});
+
 test('canonical bridge fails closed when the document getter throws', () => {
   let builderCalls = 0;
   const bridge = canonicalBridge.createStudioEditorCanonicalBridge({

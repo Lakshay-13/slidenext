@@ -2276,7 +2276,7 @@
               ? buildEditorCanonicalDeck
               : null,
           buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
-            ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc())
+            ? (sourceDoc, buildOptions) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions)
             : null,
           getPendingTransaction: getStudioPendingEditorTransaction,
           getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
@@ -3964,8 +3964,9 @@
           mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
             ? SlideNextStudioEditorMutation
             : null,
-          buildCanonicalDeckBaseline: (sourceDoc) => buildEditorMutationCanonicalDeck(
-            sourceDoc || getIframeDoc()
+          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorMutationCanonicalDeck(
+            sourceDoc || getIframeDoc(),
+            buildOptions
           ),
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
@@ -6870,10 +6871,10 @@
       return canonicalDeck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
     }
 
-    function buildEditorMutationCanonicalDeck(sourceDoc) {
+    function buildEditorMutationCanonicalDeck(sourceDoc, buildOptions = {}) {
       if (!studioEditorCanonicalBridge
         || typeof studioEditorCanonicalBridge.buildMutationCanonicalDeck !== 'function') return null;
-      return studioEditorCanonicalBridge.buildMutationCanonicalDeck(sourceDoc);
+      return studioEditorCanonicalBridge.buildMutationCanonicalDeck(sourceDoc, buildOptions);
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
@@ -9369,7 +9370,7 @@
           ? SlideNextStudioEditorMutation
           : null,
         buildCanonicalDeckBaseline: typeof buildEditorMutationCanonicalDeck === 'function'
-          ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc())
+          ? (sourceDoc, buildOptions) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions)
           : null,
         isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
           ? getEditorCanonicalDeckValidator()

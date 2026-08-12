@@ -158,10 +158,15 @@
       }
     }
 
-    function buildMutationCanonicalDeck(sourceDoc) {
+    function buildMutationCanonicalDeck(sourceDoc, buildOptions = {}) {
       if (!mutationCanonicalDeckBuilder) return null;
+      const normalizedOptions = buildOptions
+        && typeof buildOptions === 'object'
+        && !Array.isArray(buildOptions)
+        ? buildOptions
+        : {};
       try {
-        const canonicalDeck = mutationCanonicalDeckBuilder(sourceDoc);
+        const canonicalDeck = mutationCanonicalDeckBuilder(sourceDoc, normalizedOptions);
         return isValidCanonicalDeck(canonicalDeck) ? canonicalDeck : null;
       } catch (err) {
         return null;

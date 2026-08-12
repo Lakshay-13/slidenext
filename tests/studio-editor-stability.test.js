@@ -176,13 +176,13 @@ test('DOM mutation canonical builder bypasses live canonical state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
     fileContent,
-    'function buildEditorMutationCanonicalDeck(sourceDoc) {',
+    'function buildEditorMutationCanonicalDeck(sourceDoc, buildOptions = {}) {',
     '\n\n    function resolveEditorCanonicalDeckOverride'
   );
 
   assert.match(
     helperSource,
-    /studioEditorCanonicalBridge\.buildMutationCanonicalDeck\(sourceDoc\)/
+    /studioEditorCanonicalBridge\.buildMutationCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.match(
     fileContent,
@@ -602,11 +602,11 @@ test('deck mutation finalizer wiring rebuilds canonical state from the mutated D
 
   assert.match(
     controllerSource,
-    /buildCanonicalDeckBaseline: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(/
+    /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorMutationCanonicalDeck\(/
   );
   assert.match(
     controllerSource,
-    /buildEditorMutationCanonicalDeck\(\s*sourceDoc \|\| getIframeDoc\(\)\s*\)/
+    /buildEditorMutationCanonicalDeck\(\s*sourceDoc \|\| getIframeDoc\(\),\s*buildOptions\s*\)/
   );
   assert.doesNotMatch(
     controllerSource,
@@ -930,7 +930,7 @@ test('editor canonical slide adapter delegates lookup to the shared slide module
   const helperSource = extractFunctionSource(
     fileContent,
     'function findEditorCanonicalSlideById(canonicalDeck, slideId) {',
-    '\n\n    function buildEditorMutationCanonicalDeck(sourceDoc) {'
+    '\n\n    function buildEditorMutationCanonicalDeck(sourceDoc, buildOptions = {}) {'
   );
   const canonicalSlide = { id: 'slide-1', masterSlideId: 'master-1' };
   const canonicalDeck = { slides: [canonicalSlide] };
