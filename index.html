@@ -1551,6 +1551,7 @@
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
+  <script src="/shared/studio-editor-history-options.js"></script>
   <script src="/shared/studio-editor-history-state.js"></script>
   <script src="/shared/studio-editor-history-controller.js"></script>
   <script src="/shared/studio-editor-history-controller-runtime.js"></script>
@@ -6047,6 +6048,28 @@
     }
 
     function getEditorHistoryOptions(options = {}) {
+      const historyOptionsApi = typeof SlideNextStudioEditorHistoryOptions !== 'undefined'
+        ? SlideNextStudioEditorHistoryOptions
+        : null;
+      if (historyOptionsApi
+        && typeof historyOptionsApi.createStudioEditorHistoryOptionsResolver === 'function') {
+        if (typeof getEditorHistoryOptions.resolver !== 'function') {
+          getEditorHistoryOptions.resolver = historyOptionsApi.createStudioEditorHistoryOptionsResolver({
+            getDeckSanitizerOptions: getEditorDeckSanitizerOptions,
+            resolveMetadataPersistenceOptions: (nextOptions) => resolveEditorMetadataPersistenceOptions(nextOptions),
+            deckImportApi: typeof SlideNextDeckImport !== 'undefined' ? SlideNextDeckImport : null,
+            deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null,
+            getActiveSlideId,
+            getSelectedElementIds: (doc) => typeof getCommittedSelectedEditorElementIds === 'function'
+              ? getCommittedSelectedEditorElementIds(doc)
+              : getSelectedEditorElementIds(),
+            areIdListsEqual: areEditorIdListsEqual
+          });
+        }
+        if (typeof getEditorHistoryOptions.resolver === 'function') {
+          return getEditorHistoryOptions.resolver(options);
+        }
+      }
       const deckSanitizerOptions = getEditorDeckSanitizerOptions(options);
       const chromeNodeIds = deckSanitizerOptions.chromeNodeIds;
       const removableClassNames = deckSanitizerOptions.transientClassNames;
