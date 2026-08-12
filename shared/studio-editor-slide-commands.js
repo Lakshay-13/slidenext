@@ -1,16 +1,20 @@
 (function (root, factory) {
-  const api = factory();
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorSlideCommands = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function isStudioHistoryCaptureFailure(value) {
-    return value === false
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
-  }
 
   function prepareStudioSlideDuplication(sourceSlide, options = {}) {
     if (!sourceSlide || typeof sourceSlide.cloneNode !== 'function') {
