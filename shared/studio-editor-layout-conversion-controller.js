@@ -188,13 +188,16 @@
         return false;
       }
 
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation('Auto: Converted to Freeform', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
+      const finalizeResult = finalizeDeckMutation('Auto: Converted to Freeform', {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+      if (finalizeResult === false) {
+        restoreStyles(plan.items);
+        if (updateActionState) updateActionState(doc);
+        return false;
       }
       if (updateActionState) updateActionState(doc);
       return true;
