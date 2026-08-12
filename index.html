@@ -1369,6 +1369,7 @@
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-element-insertion-controller.js"></script>
   <script src="/shared/studio-editor-element-insertion-runtime.js"></script>
+  <script src="/shared/studio-editor-element-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -3093,10 +3094,13 @@
     const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
       ? studioEditorClipboardSelectionRuntime.selectionController
       : null;
-    const studioEditorElementInsertionRuntime = typeof SlideNextStudioEditorElementInsertionRuntime !== 'undefined'
-      && SlideNextStudioEditorElementInsertionRuntime
-      && typeof SlideNextStudioEditorElementInsertionRuntime.createStudioEditorElementInsertionRuntime === 'function'
-      ? SlideNextStudioEditorElementInsertionRuntime.createStudioEditorElementInsertionRuntime({
+    const studioEditorElementInsertionRuntime = typeof SlideNextStudioEditorElementInsertionShellRuntime !== 'undefined'
+      && SlideNextStudioEditorElementInsertionShellRuntime
+      && typeof SlideNextStudioEditorElementInsertionShellRuntime.createStudioEditorElementInsertionShellRuntime === 'function'
+      ? SlideNextStudioEditorElementInsertionShellRuntime.createStudioEditorElementInsertionShellRuntime({
+          insertionRuntimeApi: typeof SlideNextStudioEditorElementInsertionRuntime !== 'undefined'
+            ? SlideNextStudioEditorElementInsertionRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
             ? SlideNextStudioEditorElementInsertionController
             : null,

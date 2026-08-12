@@ -58,7 +58,11 @@ test('index wires element insertion through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorElementInsertionRuntime\.createStudioEditorElementInsertionRuntime\(/
+    /<script src="\/shared\/studio-editor-element-insertion-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorElementInsertionShellRuntime\.createStudioEditorElementInsertionShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
