@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
+const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
 const presentationMetadataFixture = require('./helpers/studio-presentation-metadata-fixture.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
@@ -80,8 +81,15 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
       return element === currentElement;
     }
   };
-  const context = {
-    studioEditorStateBridge: {
+  const getActiveSlide = (doc) => {
+    assert.equal(doc.id, 'current-doc');
+    return activeSlide;
+  };
+  const getElementByEditorId = (editorId) => (
+    editorId === 'node-1' ? currentElement : null
+  );
+  const stateAccessors = studioStateAccessors.createStudioEditorStateAccessors({
+    bridge: {
       getSelectedElements() {
         return [staleElement];
       },
@@ -89,16 +97,16 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
         return ['node-1'];
       }
     },
+    getActiveSlide,
+    getElementById: getElementByEditorId
+  });
+  const context = {
+    studioEditorStateAccessors: stateAccessors,
     getIframeDoc() {
       throw new Error('the caller-provided document should be used');
     },
-    getActiveSlide(doc) {
-      assert.equal(doc.id, 'current-doc');
-      return activeSlide;
-    },
-    getElementByEditorId(editorId) {
-      return editorId === 'node-1' ? currentElement : null;
-    }
+    getActiveSlide,
+    getElementByEditorId
   };
 
   vm.createContext(context);

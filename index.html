@@ -1522,6 +1522,7 @@
   <script src="/shared/studio-editor-version-rename-state-controller.js"></script>
   <script src="/shared/studio-editor-state-runtime.js"></script>
   <script src="/shared/studio-editor-state-bridge.js"></script>
+  <script src="/shared/studio-editor-state-accessors.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1658,120 +1659,104 @@
             : ''
         })
       : null;
+    const studioEditorStateAccessors = typeof SlideNextStudioEditorStateAccessors !== 'undefined'
+      && SlideNextStudioEditorStateAccessors
+      && typeof SlideNextStudioEditorStateAccessors.createStudioEditorStateAccessors === 'function'
+      ? SlideNextStudioEditorStateAccessors.createStudioEditorStateAccessors({
+          bridge: studioEditorStateBridge,
+          getDocument: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
+          getElementById: (editorId, doc) => getElementByEditorId(editorId, doc)
+        })
+      : null;
     function getStudioCurrentPresentationMetadata() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getPresentationMetadata === 'function'
-        ? studioEditorStateBridge.getPresentationMetadata()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getPresentationMetadata()
         : null;
     }
     function setStudioCurrentPresentationMetadata(nextMetadata) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setPresentationMetadata === 'function'
-        ? studioEditorStateBridge.setPresentationMetadata(nextMetadata)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setPresentationMetadata(nextMetadata)
         : null;
     }
     function getStudioPresentationTitle() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getTitle === 'function'
-        ? studioEditorStateBridge.getTitle()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getTitle()
         : '';
     }
     function setStudioPresentationTitle(nextTitle) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setTitle === 'function'
-        ? studioEditorStateBridge.setTitle(nextTitle)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setTitle(nextTitle)
         : false;
     }
     function getStudioPresentationCategory() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getCategory === 'function'
-        ? studioEditorStateBridge.getCategory()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getCategory()
         : '';
     }
     function setStudioPresentationCategory(nextCategory) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setCategory === 'function'
-        ? studioEditorStateBridge.setCategory(nextCategory)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setCategory(nextCategory)
         : false;
     }
     function getStudioCurrentSlideIndex() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getSlideIndex === 'function'
-        ? studioEditorStateBridge.getSlideIndex()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getSlideIndex()
         : 0;
     }
     function setStudioCurrentSlideIndex(nextValue) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setSlideIndex === 'function'
-        ? studioEditorStateBridge.setSlideIndex(nextValue)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setSlideIndex(nextValue)
         : false;
     }
     function getStudioCurrentSlideId() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getSlideId === 'function'
-        ? studioEditorStateBridge.getSlideId()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getSlideId()
         : '';
     }
     function setStudioCurrentSlideId(nextValue) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setSlideId === 'function'
-        ? studioEditorStateBridge.setSlideId(nextValue)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setSlideId(nextValue)
         : false;
     }
     function resolveStudioSelectedElementsFromState(storedElements = [], doc = getIframeDoc()) {
-      if (!studioEditorStateBridge
-        || typeof studioEditorStateBridge.getSelectedElementIds !== 'function') {
-        return null;
-      }
-      const selectedIds = studioEditorStateBridge.getSelectedElementIds();
-      if (!Array.isArray(selectedIds) || selectedIds.length === 0) return [];
-      const activeSlide = getActiveSlide(doc);
-      if (!activeSlide || typeof activeSlide.contains !== 'function') return storedElements;
-      return selectedIds
-        .map((editorId) => getElementByEditorId(editorId, doc))
-        .filter((element) => element
-          && element.isConnected !== false
-          && activeSlide.contains(element));
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.resolveSelectedElementsFromState(storedElements, doc)
+        : null;
     }
     function getStudioSelectedElements(doc = getIframeDoc()) {
-      const storedElements = studioEditorStateBridge
-        && typeof studioEditorStateBridge.getSelectedElements === 'function'
-        ? studioEditorStateBridge.getSelectedElements()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getSelectedElements(doc)
         : [];
-      const resolvedElements = resolveStudioSelectedElementsFromState(storedElements, doc);
-      return resolvedElements === null ? storedElements : resolvedElements;
     }
     function getStudioSelectedElement() {
-      return getStudioSelectedElements()[0] || null;
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getSelectedElement()
+        : null;
     }
     function getStudioSelectedElementIds() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getSelectedElementIds === 'function'
-        ? studioEditorStateBridge.getSelectedElementIds()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getSelectedElementIds()
         : [];
     }
     function setStudioSelectionState(nextState = {}) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setSelectionState === 'function'
-        ? studioEditorStateBridge.setSelectionState(nextState)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setSelectionState(nextState)
         : false;
     }
     function clearStudioSelectionState() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.clearSelectionState === 'function'
-        ? studioEditorStateBridge.clearSelectionState()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.clearSelectionState()
         : false;
     }
     function getStudioPreserveSelectionOnNextActiveSlideSync() {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.getPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorStateBridge.getPreserveSelectionOnNextActiveSlideSync()
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.getPreserveSelectionOnNextActiveSlideSync()
         : false;
     }
     function setStudioPreserveSelectionOnNextActiveSlideSync(nextValue) {
-      return studioEditorStateBridge
-        && typeof studioEditorStateBridge.setPreserveSelectionOnNextActiveSlideSync === 'function'
-        ? studioEditorStateBridge.setPreserveSelectionOnNextActiveSlideSync(nextValue)
+      return studioEditorStateAccessors
+        ? studioEditorStateAccessors.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
     const studioEditorHistoryBridge = typeof SlideNextStudioEditorHistoryBridge !== 'undefined'
