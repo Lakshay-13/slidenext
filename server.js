@@ -666,6 +666,7 @@ app.post('/api/restore', async (req, res) => {
     await fs.writeFile(targetFile, backupContent, 'utf8');
     console.log(`Restored target file to backup version: ${versionFilename}`);
 
+    let canonicalSidecarPersistenceError = null;
     try {
       const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
       if (metadataInfo) {
@@ -700,7 +701,16 @@ app.post('/api/restore', async (req, res) => {
         }
       }
     } catch (metadataErr) {
+      canonicalSidecarPersistenceError = metadataErr;
       console.warn('Failed to restore canonical deck sidecar:', metadataErr.message);
+    }
+
+    if (canonicalSidecarPersistenceError) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to restore canonical deck sidecar',
+        htmlRestored: true
+      });
     }
 
     res.json({ success: true, message: 'Restore completed successfully' });
