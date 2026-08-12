@@ -313,6 +313,49 @@ test('template controller inserts a rendered template after the active slide thr
   assert.deepEqual(lookupCalls, [[sourceDeck, 'slide-1']]);
 });
 
+test('template controller does not insert when the history baseline is rejected', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{
+      id: 'hero-template',
+      slide: { nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }] }
+    }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const container = { insertBefore() { throw new Error('insertion should not run'); } };
+  let insertionCalls = 0;
+  const documentRef = {
+    createElement() {
+      return {
+        content: { firstElementChild: {} },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getSlideContainer: () => container,
+    getSlides: () => [],
+    applyInsertion() {
+      insertionCalls += 1;
+      return { didApply: true };
+    },
+    saveHistoryState: () => false
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.equal(insertionCalls, 0);
+});
+
 test('template controller rolls back an inserted slide when persistence rejects', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{

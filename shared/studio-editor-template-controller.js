@@ -268,7 +268,9 @@
         }
       }
 
-      if (saveHistoryState) saveHistoryState(false, null, canonicalDeck);
+      if (saveHistoryState && saveHistoryState(false, null, canonicalDeck) === false) {
+        return false;
+      }
       const mutation = applyInsertion(container, slideElement, {
         beforeNode: slides[insertionIndex] || null,
         ...(getElementId ? { getElementId } : {})
