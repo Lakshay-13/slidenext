@@ -32,6 +32,7 @@
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
+    const resolveActiveSlideId = () => getActiveSlideId(getDocument());
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
       : () => null;
@@ -141,7 +142,7 @@
       }
 
       const canonicalDeck = resolveCanonicalDeck();
-      const slideId = getActiveSlideId();
+      const slideId = resolveActiveSlideId();
       const nodeIds = getSelectedNodeIds();
       let nextCanonicalDeck = null;
       try {
@@ -245,7 +246,7 @@
       const canonicalDeck = resolveCanonicalDeck();
       const documentRef = getDocument();
       const activeSlide = getActiveSlide(documentRef);
-      const slideId = getActiveSlideId();
+      const slideId = resolveActiveSlideId();
       if (!canonicalDeck || !documentRef || !activeSlide || !slideId) return false;
 
       const sourceSlide = findCanonicalSlide(canonicalDeck, slideId);

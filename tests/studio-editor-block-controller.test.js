@@ -411,7 +411,10 @@ test('block controller renders and inserts canonical block nodes through a marku
     getCanonicalDeck: () => sourceDeck,
     getDocument: () => documentRef,
     getActiveSlide: () => slide,
-    getActiveSlideId: () => 'slide-1',
+    getActiveSlideId(currentDocument) {
+      assert.equal(currentDocument, documentRef);
+      return 'slide-1';
+    },
     createMarkupTransactionCapture() {
       return {
         createTransaction() {
