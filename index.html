@@ -1429,6 +1429,7 @@
   <script src="/shared/studio-editor-zoom-controller.js"></script>
   <script src="/shared/studio-editor-zoom-runtime-options.js"></script>
   <script src="/shared/studio-editor-zoom-runtime.js"></script>
+  <script src="/shared/studio-editor-zoom-accessors.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
@@ -3939,6 +3940,13 @@
       : null;
     const studioEditorZoomController = studioEditorZoomRuntime
       ? studioEditorZoomRuntime.zoomController
+      : null;
+    const studioEditorZoomAccessors = typeof SlideNextStudioEditorZoomAccessors !== 'undefined'
+      && SlideNextStudioEditorZoomAccessors
+      && typeof SlideNextStudioEditorZoomAccessors.createStudioEditorZoomAccessors === 'function'
+      ? SlideNextStudioEditorZoomAccessors.createStudioEditorZoomAccessors({
+          zoomController: studioEditorZoomController
+        })
       : null;
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
@@ -10659,6 +10667,9 @@
     }
 
     function syncCanvasRulers() {
+      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
+        return studioEditorZoomAccessors.syncCanvasRulers();
+      }
       if (!studioEditorZoomController
         || typeof studioEditorZoomController.syncRulers !== 'function') return false;
       return studioEditorZoomController.syncRulers();
@@ -10666,24 +10677,37 @@
 
     // 4. Zoom Engine (Center workspace stage)
     function applyZoom(scaleVal) {
+      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
+        studioEditorZoomAccessors.applyZoom(scaleVal);
+        return;
+      }
       if (!studioEditorZoomController
         || typeof studioEditorZoomController.apply !== 'function') return;
       studioEditorZoomController.apply(scaleVal);
     }
 
     function zoomIn() {
+      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
+        return studioEditorZoomAccessors.zoomIn();
+      }
       if (!studioEditorZoomController
         || typeof studioEditorZoomController.zoomIn !== 'function') return false;
       return studioEditorZoomController.zoomIn(applyZoom);
     }
 
     function zoomOut() {
+      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
+        return studioEditorZoomAccessors.zoomOut();
+      }
       if (!studioEditorZoomController
         || typeof studioEditorZoomController.zoomOut !== 'function') return false;
       return studioEditorZoomController.zoomOut(applyZoom);
     }
 
     function zoomSelectChange(val) {
+      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
+        return studioEditorZoomAccessors.zoomSelectChange(val);
+      }
       if (!studioEditorZoomController
         || typeof studioEditorZoomController.zoomSelectChange !== 'function') return false;
       return studioEditorZoomController.zoomSelectChange(val, applyZoom);
