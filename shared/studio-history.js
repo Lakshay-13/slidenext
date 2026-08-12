@@ -908,12 +908,47 @@
     const onApplied = typeof options.onApplied === 'function'
       ? options.onApplied
       : null;
-    return onApplied
-      ? onApplied(transactionResult, historyEntry)
-      : {
-          didRestoreTransaction: true,
-          transactionResult
-        };
+    if (!onApplied) {
+      return {
+        didRestoreTransaction: true,
+        transactionResult
+      };
+    }
+
+    const rollbackAppliedTransaction = () => {
+      const rollbackDirection = historyStep.direction === 'undo'
+        ? 'redo'
+        : historyStep.direction === 'redo'
+          ? 'undo'
+          : '';
+      if (rollbackDirection) {
+        try {
+          transactionApi.applyStudioEditorTransaction(
+            transaction,
+            rollbackDirection,
+            {
+              getElementById,
+              applyVisibilityState,
+              applyMarkupState
+            }
+          );
+        } catch (rollbackError) {
+          // Preserve the failed restore result even if rollback cannot complete.
+        }
+      }
+    };
+
+    try {
+      const appliedResult = onApplied(transactionResult, historyEntry);
+      if (appliedResult === false) {
+        rollbackAppliedTransaction();
+        return null;
+      }
+      return appliedResult;
+    } catch (err) {
+      rollbackAppliedTransaction();
+      return null;
+    }
   }
 
   function restoreStudioHistoryActiveSlide(historyEntry, options = {}) {

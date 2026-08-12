@@ -1118,6 +1118,56 @@ test('restoreStudioHistoryTransaction fails closed when replay throws', () => {
   });
 });
 
+test('restoreStudioHistoryTransaction rolls back when post-apply synchronization throws', () => {
+  const calls = [];
+  const historyEntry = { canonicalDeck: { slides: [{ id: 'slide-1' }] } };
+  const historyStep = {
+    direction: 'undo',
+    transaction: { kind: 'slidenext.editor.transaction', operations: [] }
+  };
+
+  const result = studioHistory.restoreStudioHistoryTransaction(historyEntry, historyStep, {
+    transactionApi: {
+      applyStudioEditorTransaction(transaction, direction) {
+        calls.push([transaction, direction]);
+        return { didApply: true };
+      }
+    },
+    onApplied() {
+      throw new Error('canonical synchronization failed');
+    }
+  });
+
+  assert.equal(result, null);
+  assert.deepEqual(calls, [
+    [historyStep.transaction, 'undo'],
+    [historyStep.transaction, 'redo']
+  ]);
+});
+
+test('restoreStudioHistoryTransaction rolls back when post-apply synchronization rejects', () => {
+  const calls = [];
+  const historyStep = {
+    direction: 'redo',
+    transaction: { kind: 'slidenext.editor.transaction', operations: [] }
+  };
+
+  const result = studioHistory.restoreStudioHistoryTransaction({}, historyStep, {
+    transactionApi: {
+      applyStudioEditorTransaction(transaction, direction) {
+        calls.push(direction);
+        return { didApply: true };
+      }
+    },
+    onApplied() {
+      return false;
+    }
+  });
+
+  assert.equal(result, null);
+  assert.deepEqual(calls, ['redo', 'undo']);
+});
+
 test('createStudioHistoryStateCapturer leaves history state unchanged when no entry is available or capture is skipped', () => {
   const missingEntryCapturer = studioHistory.createStudioHistoryStateCapturer({
     createHistoryEntry() {
