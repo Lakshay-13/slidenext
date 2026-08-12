@@ -102,6 +102,33 @@ test('applyStudioSpeakerNotesEdit rolls back metadata when persistence rejects',
   assert.deepEqual(calls, ['rollback', 'sync']);
 });
 
+test('applyStudioSpeakerNotesEdit rolls back metadata when finalization throws', () => {
+  const calls = [];
+  const transaction = { kind: 'notes' };
+  const result = actions.applyStudioSpeakerNotesEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        return { didApply: true, transaction };
+      }
+    },
+    finalizeMutation: () => {
+      throw new Error('history finalization failed');
+    },
+    rollbackMutation: (nextTransaction, doc) => {
+      assert.equal(nextTransaction, transaction);
+      assert.equal(doc.id, 'frame');
+      calls.push('rollback');
+    },
+    syncChrome: () => calls.push('sync')
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, ['rollback', 'sync']);
+});
+
 test('applyStudioSpeakerNotesEdit forwards an explicit canonical metadata sidecar', () => {
   const calls = [];
   const canonicalDeckBeforeMutation = { id: 'before' };

@@ -68,11 +68,16 @@
     });
     if (!mutation || !mutation.didApply) return false;
 
-    const finalizeResult = finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
-      refreshThumbnails: false,
-      transaction: mutation.transaction || null,
-      ...(canonicalDeck ? { canonicalDeck } : {})
-    });
+    let finalizeResult = false;
+    try {
+      finalizeResult = finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
+        refreshThumbnails: false,
+        transaction: mutation.transaction || null,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+    } catch (error) {
+      finalizeResult = false;
+    }
     if (finalizeResult === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction || null, documentRef);
       if (typeof options.syncChrome === 'function') {
