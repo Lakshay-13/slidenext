@@ -8618,7 +8618,7 @@
         return layerController.syncStudioLayerOrderActionState({
           documentRef: document,
           doc,
-          selectedElements: getStudioSelectedElements(),
+          selectedElements: getStudioSelectedElements(doc),
           layerOrderApi,
           styleApi,
           getActiveSlide,
@@ -8641,7 +8641,7 @@
       const orderedElements = slide ? getNormalizedSlideLayerOrder(slide) : [];
       return layerOrderApi.syncStudioLayerOrderToolbarState({
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         orderedElements,
         isLocked: readLockedState,
         canMutateDeck,
