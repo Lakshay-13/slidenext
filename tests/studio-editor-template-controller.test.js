@@ -297,6 +297,76 @@ test('template controller inserts a rendered template after the active slide thr
   assert.deepEqual(lookupCalls, [[sourceDeck, 'slide-1']]);
 });
 
+test('template controller rolls back an inserted slide when persistence rejects', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{
+      id: 'hero-template',
+      name: 'Hero Template',
+      slide: { nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }] }
+    }],
+    slides: [{ id: 'slide-1', title: 'Current' }, { id: 'slide-3', title: 'Next' }]
+  });
+  const currentSlide = { id: 'current-slide' };
+  const nextSlide = { id: 'next-slide' };
+  const insertedSlide = { id: 'inserted-slide' };
+  const container = {
+    children: [nextSlide],
+    insertBefore(element, beforeNode) {
+      const index = this.children.indexOf(beforeNode);
+      this.children.splice(index < 0 ? this.children.length : index, 0, element);
+    }
+  };
+  const documentRef = {
+    createElement(tagName) {
+      if (tagName !== 'template') return null;
+      return {
+        content: { firstElementChild: insertedSlide },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getSlideContainer: () => container,
+    getSlides: () => [currentSlide, nextSlide],
+    applyInsertion(target, element, options) {
+      target.insertBefore(element, options.beforeNode);
+      return { didApply: true, transaction: { kind: 'slide-insert' } };
+    },
+    generateThumbnails: () => calls.push('thumbnails'),
+    setActiveSlide: (index) => calls.push(['active', index]),
+    saveHistoryState: () => {},
+    finalizeMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { kind: 'slide-insert' });
+      assert.equal(sourceDoc, documentRef);
+      container.children = [nextSlide];
+      calls.push('rollback');
+    }
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.deepEqual(container.children, [nextSlide]);
+  assert.deepEqual(calls, [
+    'thumbnails',
+    ['active', 1],
+    'rollback',
+    'thumbnails',
+    ['active', 0]
+  ]);
+});
+
 test('template controller removes a saved template and finalizes persistence hooks', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [

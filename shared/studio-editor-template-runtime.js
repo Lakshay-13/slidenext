@@ -38,6 +38,7 @@
           triggerAutoSave: options.triggerAutoSave,
           triggerAutoVersion: options.triggerAutoVersion,
           finalizeMutation: options.finalizeMutation,
+          rollbackMutation: options.rollbackMutation,
           onTemplatesChanged: options.onTemplatesChanged
         })
       : null;

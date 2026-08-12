@@ -3155,6 +3155,7 @@
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
+          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
           onTemplatesChanged: () => updateTemplateActionState()
         })
       : null;

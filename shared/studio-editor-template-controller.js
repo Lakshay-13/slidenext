@@ -56,6 +56,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
@@ -272,7 +275,13 @@
         : null;
       const versionLabel = `Auto: Inserted Template${template && template.name ? ` "${template.name}"` : ''}`;
       if (finalizeMutation) {
-        finalizeMutation(versionLabel, mutation.transaction, nextCanonicalDeck);
+        const finalizeResult = finalizeMutation(versionLabel, mutation.transaction, nextCanonicalDeck);
+        if (finalizeResult === false) {
+          if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
+          if (generateThumbnails) generateThumbnails();
+          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          return false;
+        }
       } else {
         if (saveHistoryState) saveHistoryState(false, mutation.transaction, nextCanonicalDeck);
         if (triggerAutoSave) triggerAutoSave();

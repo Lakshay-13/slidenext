@@ -35,6 +35,7 @@ test('template runtime composes controller dependencies without changing them', 
     triggerAutoSave: () => {},
     triggerAutoVersion: () => {},
     finalizeMutation: () => {},
+    rollbackMutation: () => {},
     onTemplatesChanged: () => {}
   };
 
@@ -49,6 +50,7 @@ test('template runtime composes controller dependencies without changing them', 
   assert.equal(calls[0].getSlideContainer, options.getSlideContainer);
   assert.equal(calls[0].applyInsertion, options.applyInsertion);
   assert.equal(calls[0].finalizeMutation, options.finalizeMutation);
+  assert.equal(calls[0].rollbackMutation, options.rollbackMutation);
   assert.equal(calls[0].onTemplatesChanged, options.onTemplatesChanged);
 });
 
