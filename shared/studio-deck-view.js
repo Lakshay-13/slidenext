@@ -17,6 +17,11 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function createStudioCanonicalDeckResolver(doc, options = {}) {
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
@@ -1083,7 +1088,7 @@
     const historyCaptureResult = canonicalDeck
       ? saveHistoryState(false, null, canonicalDeck)
       : saveHistoryState();
-    if (historyCaptureResult === false) {
+    if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
       return {
         historyCaptureFailed: true,
         preservedActiveSlideId: '',

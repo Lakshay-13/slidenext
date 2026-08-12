@@ -199,7 +199,7 @@ test('captureStudioDeckViewBeforeSlideMutation reports a failed history baseline
   let viewStateReads = 0;
 
   const result = deckView.captureStudioDeckViewBeforeSlideMutation({
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     getActiveSlideId() {
       viewStateReads += 1;
       return 'slide-2';
