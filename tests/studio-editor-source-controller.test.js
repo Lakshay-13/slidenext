@@ -91,6 +91,18 @@ test('source history baseline capture rejects object-form persistence failures',
   assert.equal(capture(), false);
 });
 
+test('source history baseline capture rejects thrown persistence failures', () => {
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: () => ({ kind: 'slidenext.deck', slides: [] }),
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    }
+  });
+
+  assert.equal(capture(), false);
+});
+
 test('source CSS resolver prefers canonical custom CSS', () => {
   const calls = [];
   const resolveSourceCss = sourceController.createStudioEditorSourceCssResolver({

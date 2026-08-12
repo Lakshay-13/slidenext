@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function resolveSourceBuilderOption(value, fallback = null) {
     try {
@@ -88,9 +99,9 @@
       let historyCaptureResult;
       if (saveHistoryState) {
         if (canonicalDeck) {
-          historyCaptureResult = saveHistoryState(false, null, canonicalDeck);
+          historyCaptureResult = captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
         } else {
-          historyCaptureResult = saveHistoryState(false);
+          historyCaptureResult = captureStudioHistoryState(saveHistoryState, false);
         }
       }
       return !isStudioHistoryCaptureFailure(historyCaptureResult);
