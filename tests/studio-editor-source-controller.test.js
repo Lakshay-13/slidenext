@@ -307,6 +307,44 @@ test('source controller forwards the pre-apply history capture callback', () => 
   assert.equal(calls[0][2].captureHistoryEntry, captureHistoryEntry);
 });
 
+test('source controller commits canonical history and autosave by default', () => {
+  const canonicalDeck = { slides: [{ id: 'slide-1' }] };
+  let historyArgs = null;
+  let autoSaveCalls = 0;
+  const { calls, controller } = createController({
+    afterApply: undefined,
+    saveHistoryState(...args) {
+      historyArgs = args;
+      return { didCapture: true };
+    },
+    triggerAutoSave() {
+      autoSaveCalls += 1;
+    }
+  });
+
+  controller.applySourceHtml('<html></html>');
+  assert.equal(calls[0][2].afterApply(canonicalDeck), true);
+  assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
+  assert.equal(autoSaveCalls, 1);
+});
+
+test('source controller rejects the default commit when history capture throws', () => {
+  let autoSaveCalls = 0;
+  const { calls, controller } = createController({
+    afterApply: undefined,
+    saveHistoryState() {
+      throw new Error('history unavailable');
+    },
+    triggerAutoSave() {
+      autoSaveCalls += 1;
+    }
+  });
+
+  controller.applySourceHtml('<html></html>');
+  assert.equal(calls[0][2].afterApply({ slides: [] }), false);
+  assert.equal(autoSaveCalls, 0);
+});
+
 test('source controller reports source engine unavailability without throwing', () => {
   const { controller } = createController({ sourceApi: null });
 

@@ -76,7 +76,6 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
-
     return function captureSourceHistoryBaseline() {
       const sourceDocument = getCurrentDocument();
       let canonicalDeck = null;
@@ -206,6 +205,9 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
+    const triggerAutoSave = typeof options.triggerAutoSave === 'function'
+      ? options.triggerAutoSave
+      : null;
     const DOMParserConstructor = options.DOMParser
       || (root && root.DOMParser)
       || null;
@@ -228,7 +230,19 @@
       : null;
     const afterApply = typeof options.afterApply === 'function'
       ? options.afterApply
-      : null;
+      : (canonicalDeck) => {
+          if (saveHistoryState) {
+            const historyCaptureResult = captureStudioHistoryState(
+              saveHistoryState,
+              false,
+              null,
+              canonicalDeck
+            );
+            if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
+          }
+          if (triggerAutoSave && triggerAutoSave() === false) return false;
+          return true;
+        };
     let sourceMode = 'html';
 
     function canUseDeckActions() {

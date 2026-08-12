@@ -2365,22 +2365,9 @@
           ),
           resolveHistoryOptions: () => getEditorHistoryOptions(),
           saveHistoryState: (...args) => saveHistoryState(...args),
+          triggerAutoSave: () => triggerAutoSave(),
           sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           restoreHistoryEntry: restoreEditorSourceHistoryEntry,
-          afterApply: (canonicalDeck) => {
-            const historyCaptureResult = saveHistoryState(false, null, canonicalDeck);
-            const historyCaptureFailed = typeof SlideNextStudioEditorHistoryResult !== 'undefined'
-              && SlideNextStudioEditorHistoryResult
-              && typeof SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure === 'function'
-              ? SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure(historyCaptureResult)
-              : historyCaptureResult === false
-                || (!!historyCaptureResult
-                  && typeof historyCaptureResult === 'object'
-                  && historyCaptureResult.didCapture === false);
-            if (historyCaptureFailed) return false;
-            if (triggerAutoSave() === false) return false;
-            return true;
-          }
         })
       : null;
 
