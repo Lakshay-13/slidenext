@@ -211,6 +211,25 @@ test('buildStudioCanonicalInsertionBaseline fails closed when a compatibility re
   assert.equal(result, null);
 });
 
+test('buildStudioCanonicalInsertionBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('createStudioCanonicalInsertionMutationBuilders preserves an explicit baseline', () => {
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
