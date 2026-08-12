@@ -9002,7 +9002,7 @@
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => {
               const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
-              const selectedElements = getStudioSelectedElements();
+              const selectedElements = getStudioSelectedElements(sourceDoc);
               const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
                 ? selectedElements[0]
                 : null;
@@ -9049,7 +9049,7 @@
           return updateAssetLibraryState.sync(doc);
         }
       }
-      const selectedElements = getStudioSelectedElements();
+      const selectedElements = getStudioSelectedElements(doc);
       const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
         ? selectedElements[0]
         : null;

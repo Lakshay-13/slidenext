@@ -532,7 +532,8 @@ test('updateAssetLibraryState caches the shared asset state synchronizer when av
     buildEditorCanonicalDeck() {
       return { assets: [{ id: 'hero' }] };
     },
-    getStudioSelectedElements() {
+    getStudioSelectedElements(currentDoc) {
+      assert.equal(currentDoc, doc);
       return [];
     },
     isElementLocked() {
