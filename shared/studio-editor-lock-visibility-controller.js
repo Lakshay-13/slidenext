@@ -243,6 +243,7 @@
         canMutateDeck: () => !!getActiveSlide(doc)
       });
       if (!lockMutationPlan || !lockMutationPlan.didChange) return false;
+      if (!finalizeSelectionToggleMutation) return false;
       let canonicalVisibilityMutation = null;
       try {
         canonicalVisibilityMutation = buildCanonicalVisibilityMutation(
@@ -269,7 +270,6 @@
         }
       );
       if (!mutation || !mutation.didApply) return false;
-      if (!finalizeSelectionToggleMutation) return false;
       return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
         doc,
         transaction: mutation.transaction,
@@ -304,6 +304,7 @@
         }
       );
       if (!visibilityMutationPlan || !visibilityMutationPlan.didChange) return false;
+      if (!finalizeSelectionToggleMutation) return false;
       let canonicalVisibilityMutation = null;
       try {
         canonicalVisibilityMutation = buildCanonicalVisibilityMutation(
@@ -331,7 +332,6 @@
         }
       );
       if (!mutation || !mutation.didApply) return false;
-      if (!finalizeSelectionToggleMutation) return false;
       return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
         ...options,
         doc,

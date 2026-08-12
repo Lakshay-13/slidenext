@@ -123,6 +123,45 @@ test('lock and visibility controller fails closed when plans or finalization are
   assert.equal(controller.toggleVisibility(), false);
 });
 
+test('lock and visibility toggles do not mutate when finalization is unavailable', () => {
+  let lockCalls = 0;
+  let visibilityCalls = 0;
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan: (elements) => ({
+        didChange: true,
+        selection: elements,
+        shouldLock: true,
+        versionLabel: 'Lock'
+      })
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan: (elements) => ({
+        didChange: true,
+        selection: elements,
+        shouldHide: true,
+        versionLabel: 'Hide'
+      })
+    },
+    getSelectedElements: () => [{ id: 'node-1' }],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyLockMutation: () => {
+      lockCalls += 1;
+      return { didApply: true, transaction: null };
+    },
+    applyVisibilityMutation: () => {
+      visibilityCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.equal(lockCalls, 0);
+  assert.equal(visibilityCalls, 0);
+});
+
 test('lock toggle fails closed when canonical builder construction throws', () => {
   let lockCalls = 0;
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
