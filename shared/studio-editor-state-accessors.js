@@ -84,5 +84,25 @@
     };
   }
 
-  return { createStudioEditorStateAccessors };
+  function createStudioEditorStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorStateAccessors(options);
+
+    return {
+      getStudioCurrentPresentationMetadata: () => accessors.getPresentationMetadata(),
+      setStudioCurrentPresentationMetadata: (nextMetadata) => accessors.setPresentationMetadata(nextMetadata),
+      getStudioPresentationTitle: () => accessors.getTitle(),
+      setStudioPresentationTitle: (nextTitle) => accessors.setTitle(nextTitle),
+      getStudioPresentationCategory: () => accessors.getCategory(),
+      setStudioPresentationCategory: (nextCategory) => accessors.setCategory(nextCategory),
+      getStudioCurrentSlideIndex: () => accessors.getSlideIndex(),
+      setStudioCurrentSlideIndex: (nextValue) => accessors.setSlideIndex(nextValue),
+      getStudioCurrentSlideId: () => accessors.getSlideId(),
+      setStudioCurrentSlideId: (nextValue) => accessors.setSlideId(nextValue)
+    };
+  }
+
+  return {
+    createStudioEditorStateAccessors,
+    createStudioEditorStateGlobalApi
+  };
 });

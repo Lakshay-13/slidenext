@@ -1782,56 +1782,14 @@
     const studioEditorStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.stateAccessors
       : null;
-    function getStudioCurrentPresentationMetadata() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getPresentationMetadata()
-        : null;
-    }
-    function setStudioCurrentPresentationMetadata(nextMetadata) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setPresentationMetadata(nextMetadata)
-        : null;
-    }
-    function getStudioPresentationTitle() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getTitle()
-        : '';
-    }
-    function setStudioPresentationTitle(nextTitle) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setTitle(nextTitle)
-        : false;
-    }
-    function getStudioPresentationCategory() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getCategory()
-        : '';
-    }
-    function setStudioPresentationCategory(nextCategory) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setCategory(nextCategory)
-        : false;
-    }
-    function getStudioCurrentSlideIndex() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getSlideIndex()
-        : 0;
-    }
-    function setStudioCurrentSlideIndex(nextValue) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setSlideIndex(nextValue)
-        : false;
-    }
-    function getStudioCurrentSlideId() {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.getSlideId()
-        : '';
-    }
-    function setStudioCurrentSlideId(nextValue) {
-      return studioEditorStateAccessors
-        ? studioEditorStateAccessors.setSlideId(nextValue)
-        : false;
-    }
+    const studioEditorStateGlobalApi = typeof SlideNextStudioEditorStateAccessors !== 'undefined'
+      && SlideNextStudioEditorStateAccessors
+      && typeof SlideNextStudioEditorStateAccessors.createStudioEditorStateGlobalApi === 'function'
+      ? SlideNextStudioEditorStateAccessors.createStudioEditorStateGlobalApi({
+          accessors: studioEditorStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorStateGlobalApi);
     function resolveStudioSelectedElementsFromState(storedElements = [], doc = getIframeDoc()) {
       return studioEditorStateAccessors
         ? studioEditorStateAccessors.resolveSelectedElementsFromState(storedElements, doc)
