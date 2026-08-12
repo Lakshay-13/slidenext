@@ -76,14 +76,15 @@
           canonicalDeck = null;
         }
       }
+      let historyCaptureResult;
       if (saveHistoryState) {
         if (canonicalDeck) {
-          saveHistoryState(false, null, canonicalDeck);
+          historyCaptureResult = saveHistoryState(false, null, canonicalDeck);
         } else {
-          saveHistoryState(false);
+          historyCaptureResult = saveHistoryState(false);
         }
       }
-      return true;
+      return historyCaptureResult !== false;
     };
   }
 

@@ -71,6 +71,16 @@ test('source history baseline capture falls back to rebuilding from the live doc
   assert.deepEqual(calls, [[false, null, rebuiltDeck]]);
 });
 
+test('source history baseline capture fails before source replacement when persistence rejects', () => {
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: () => ({ kind: 'slidenext.deck', slides: [] }),
+    saveHistoryState: () => false
+  });
+
+  assert.equal(capture(), false);
+});
+
 test('source CSS resolver prefers canonical custom CSS', () => {
   const calls = [];
   const resolveSourceCss = sourceController.createStudioEditorSourceCssResolver({
