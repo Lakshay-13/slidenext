@@ -49,6 +49,10 @@ test('index wires clipboard selection through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorClipboardSelectionRuntime\.createStudioEditorClipboardSelectionRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorClipboardSelectionController\.createStudioEditorClipboardSelectionController\(/

@@ -3007,7 +3007,7 @@
             : null,
           getIframeDoc: () => getIframeDoc(),
           getActiveSlide: (doc) => getActiveSlide(doc),
-          getSelectedElements: () => getStudioSelectedElements(),
+          getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getClipboard: () => getStudioEditorClipboard(),
           isElementLocked: (...args) => isElementLocked(...args),
           getCanonicalVisibilityReader: (...args) => getEditorCanonicalVisibilityReader(...args),

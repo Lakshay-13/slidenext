@@ -26,7 +26,10 @@ test('clipboard selection controller delegates shared selection planning with ca
       assert.equal(currentDocument, documentRef);
       return { id: 'slide-1' };
     },
-    getSelectedElements: () => elements,
+    getSelectedElements: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return elements;
+    },
     getClipboard: () => clipboard,
     isElementLocked: () => false,
     getCanonicalVisibilityReader: (kind, currentDocument, fallback) => {
@@ -69,6 +72,10 @@ test('clipboard selection controller preserves the legacy shared-plan fallback',
       }
     },
     getActiveSlide: () => ({ id: 'slide-1' }),
+    getSelectedElements: (currentDocument) => {
+      assert.deepEqual(currentDocument, { id: 'editor-document' });
+      return [{ id: 'element-1' }];
+    },
     buildPayload: () => payloadItems
   });
 

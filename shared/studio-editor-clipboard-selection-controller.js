@@ -45,7 +45,7 @@
         ? clipboardApi.buildStudioClipboardSelectionMutationPlan
         : null;
       if (buildSharedSelectionPlan) {
-        return buildSharedSelectionPlan(getSelectedElements(), getClipboard(), {
+        return buildSharedSelectionPlan(getSelectedElements(resolvedDoc), getClipboard(), {
           isLocked: readLockedState,
           canMutateDeck: () => !!getActiveSlide(resolvedDoc),
           buildPayloadItems(selection) {
@@ -66,7 +66,7 @@
       }
 
       const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(
-        getSelectedElements(),
+        getSelectedElements(resolvedDoc),
         getClipboard(),
         {
           isLocked: readLockedState,
