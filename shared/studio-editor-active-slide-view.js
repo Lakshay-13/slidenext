@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function syncStudioActiveSlideChrome(doc, options = {}) {
     const getCurrentSlideIndex = typeof options.getCurrentSlideIndex === 'function'
@@ -79,12 +90,12 @@
           canonicalDeck = null;
         }
         if (canonicalDeck) {
-          historyResult = saveHistoryState(false, null, canonicalDeck);
+          historyResult = captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
         } else {
-          historyResult = saveHistoryState(false);
+          historyResult = captureStudioHistoryState(saveHistoryState, false);
         }
       } else {
-        historyResult = saveHistoryState(false);
+        historyResult = captureStudioHistoryState(saveHistoryState, false);
       }
       return !isStudioHistoryCaptureFailure(historyResult);
     };
