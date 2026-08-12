@@ -157,6 +157,34 @@ test('convert restores flow styles when finalization rejects the mutation', () =
   assert.deepEqual(updates, [{ id: 'doc' }]);
 });
 
+test('convert restores flow styles when finalization throws', () => {
+  const element = {
+    style: { position: '', margin: '8px', left: '', top: '', width: '50%', height: '' }
+  };
+  const updates = [];
+  const controller = controllerApi.createStudioEditorLayoutConversionController({
+    conversionApi: { buildStudioFlowToFreeformPlan: () => createPlan(element) },
+    transactionApi: { createStudioStyleTransaction: () => ({ kind: 'style' }) },
+    getDocument: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    },
+    updateActionState: (doc) => updates.push(doc)
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.convert(), false));
+  assert.deepEqual(element.style, {
+    position: '',
+    margin: '8px',
+    left: '',
+    top: '',
+    width: '50%',
+    height: ''
+  });
+  assert.deepEqual(updates, [{ id: 'doc' }]);
+});
+
 test('convert does not mutate when the planner rejects the selection', () => {
   const element = {
     style: { position: '', margin: '8px' }

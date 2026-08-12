@@ -188,12 +188,17 @@
         return false;
       }
 
-      const finalizeResult = finalizeDeckMutation('Auto: Converted to Freeform', {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
+      let finalizeResult = false;
+      try {
+        finalizeResult = finalizeDeckMutation('Auto: Converted to Freeform', {
+          syncSelectionOverlay: true,
+          refreshThumbnails: false,
+          transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {})
+        });
+      } catch (error) {
+        finalizeResult = false;
+      }
       if (finalizeResult === false) {
         restoreStyles(plan.items);
         if (updateActionState) updateActionState(doc);
