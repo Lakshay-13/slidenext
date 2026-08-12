@@ -441,6 +441,7 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
   const doc = { activeSlide: {} };
   assert.equal(context.updateStyleActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
+  assert.match(updateStyleActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].controlConfigs, undefined);

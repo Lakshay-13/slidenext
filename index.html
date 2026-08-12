@@ -8537,7 +8537,7 @@
         : isElementLocked;
       const toolbarOptions = {
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       };
