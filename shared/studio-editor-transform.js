@@ -2,14 +2,17 @@
   const interactionOptions = typeof module === 'object' && module.exports
     ? require('./studio-editor-interaction-options')
     : root && root.SlideNextStudioEditorInteractionOptions;
-  const api = factory(interactionOptions);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(interactionOptions, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorTransform = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (interactionOptions) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (interactionOptions, historyResultApi) {
   const STUDIO_RESIZE_WIDTH_TAGS = new Set(['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
   const DEFAULT_DRAG_START_THRESHOLD_PX = interactionOptions
@@ -18,10 +21,11 @@
     : 4;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
-  function isStudioHistoryCaptureFailure(value) {
-    return value === false
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
-  }
 
   function normalizeStudioTransformDragStartThreshold(value) {
     return Number.isFinite(value)
