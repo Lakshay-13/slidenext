@@ -306,6 +306,18 @@ test('canonical node reader adapter resolves through the supplied deck API and f
     }
   });
   assert.equal(throwingReader(element), null);
+
+  const throwingIdReader = canonicalState.createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, {
+    canonicalDeckApi: {
+      findCanonicalNodeById() {
+        throw new Error('lookup should not run');
+      }
+    },
+    getElementId() {
+      throw new Error('id resolution failed');
+    }
+  });
+  assert.equal(throwingIdReader(element), null);
 });
 
 test('canonical node resolver delegates safe lookups through the supplied deck API', () => {

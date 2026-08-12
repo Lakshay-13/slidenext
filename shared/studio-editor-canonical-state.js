@@ -223,19 +223,9 @@
   }
 
   function createStudioEditorCanonicalNodeReaderFromApi(canonicalDeck, options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi
-      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
-      ? options.canonicalDeckApi
-      : null;
-    const getElementId = typeof options.getElementId === 'function'
-      ? options.getElementId
-      : (element) => element && element.dataset && element.dataset.editorId;
-
-    if (!canonicalDeckApi) return () => null;
+    const resolveCanonicalNode = createStudioEditorCanonicalNodeResolver(options);
     return createStudioEditorCanonicalNodeReader(canonicalDeck, {
-      resolveCanonicalNode(element, deck) {
-        return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
-      }
+      resolveCanonicalNode
     });
   }
 
@@ -462,44 +452,26 @@
   }
 
   function createStudioEditorCanonicalLockReaderFromApi(canonicalDeck, options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi
-      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
-      ? options.canonicalDeckApi
-      : null;
-    const getElementId = typeof options.getElementId === 'function'
-      ? options.getElementId
-      : (element) => element && element.dataset && element.dataset.editorId;
     const fallbackReader = typeof options.fallbackReader === 'function'
       ? options.fallbackReader
       : () => false;
 
-    if (!canonicalDeckApi) return fallbackReader;
+    const resolveCanonicalNode = createStudioEditorCanonicalNodeResolver(options);
     return createStudioEditorCanonicalLockReader(canonicalDeck, {
-      resolveCanonicalNode(element, deck) {
-        return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
-      },
+      resolveCanonicalNode,
       fallbackReader
     });
   }
 
   function createStudioEditorCanonicalVisibilityReaderFromApi(canonicalDeck, options = {}) {
-    const canonicalDeckApi = options.canonicalDeckApi
-      && typeof options.canonicalDeckApi.findCanonicalNodeById === 'function'
-      ? options.canonicalDeckApi
-      : null;
-    const getElementId = typeof options.getElementId === 'function'
-      ? options.getElementId
-      : (element) => element && element.dataset && element.dataset.editorId;
     const fallbackReader = typeof options.fallbackReader === 'function'
       ? options.fallbackReader
       : () => false;
 
-    if (!canonicalDeckApi) return fallbackReader;
+    const resolveCanonicalNode = createStudioEditorCanonicalNodeResolver(options);
     return createStudioEditorCanonicalVisibilityReader(canonicalDeck, {
       property: options.property,
-      resolveCanonicalNode(element, deck) {
-        return canonicalDeckApi.findCanonicalNodeById(deck, getElementId(element));
-      },
+      resolveCanonicalNode,
       fallbackReader
     });
   }
