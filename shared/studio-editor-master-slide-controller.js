@@ -204,7 +204,10 @@
           return null;
         }
       } else {
-        if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
+        if (saveHistoryState && saveHistoryState(false, null, nextCanonicalDeck) === false) {
+          if (typeof onRejected === 'function') onRejected();
+          return null;
+        }
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }

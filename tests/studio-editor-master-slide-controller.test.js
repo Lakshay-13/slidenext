@@ -434,6 +434,27 @@ test('assignMasterSlide restores the active slide when persistence rejects', () 
   assert.equal(masterSlidesChanged, 0);
 });
 
+test('assignMasterSlide restores the active slide when history capture fails', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'body' }] }]
+  });
+  const originalSlide = {};
+  const parent = createReplaceableSlide(originalSlide);
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => createMasterSlideDocument(parent),
+    getSlides: () => [parent.current],
+    saveHistoryState: () => false
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), false);
+  assert.equal(parent.current, originalSlide);
+});
+
 test('removeMasterSlide detaches the active slide and rerenders it without the removed layout', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
