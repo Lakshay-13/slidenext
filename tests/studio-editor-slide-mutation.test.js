@@ -91,6 +91,24 @@ test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide
   assert.deepEqual(calls, ['history', ['active', doc], ['selection', doc]]);
 });
 
+test('createStudioEditorSlideMutationRestoreStateCapturer reports rejected fallback history', () => {
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    saveHistoryState: () => false,
+    getActiveSlideId() {
+      throw new Error('active slide state should not be read');
+    },
+    getSelectedElementIds() {
+      throw new Error('selection state should not be read');
+    }
+  });
+
+  assert.deepEqual(capture({ id: 'doc' }), {
+    historyCaptureFailed: true,
+    preservedActiveSlideId: '',
+    preservedSelectionIds: []
+  });
+});
+
 test('createStudioEditorSlideMutationRestoreStateCapturer uses a canonical baseline without shared adapters', () => {
   const doc = { id: 'doc' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
