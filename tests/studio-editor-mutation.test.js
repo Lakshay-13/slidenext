@@ -737,6 +737,17 @@ test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering'
   ]);
 });
 
+test('finalizeStudioLayerOrderMutation propagates rejected fallback history', () => {
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Rejected Layer Order',
+    transaction: { id: 'tx' },
+    saveHistoryState: () => false,
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioWallpaperMutation delegates or preserves wallpaper persistence ordering', () => {
   const transaction = { id: 'tx-wallpaper' };
   const delegatedCalls = [];
@@ -796,6 +807,19 @@ test('finalizeStudioWallpaperMutation forwards an optional canonical deck sideca
       canonicalDeck
     }
   });
+});
+
+test('finalizeStudioWallpaperMutation propagates rejected fallback history', () => {
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Rejected Background',
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] },
+    saveHistoryState: () => false,
+    generateThumbnails() {},
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
 });
 
 test('finalizeStudioWallpaperMutation preserves a canonical sidecar in the fallback path', () => {

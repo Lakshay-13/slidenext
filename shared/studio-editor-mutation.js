@@ -279,13 +279,13 @@
 
     if (typeof options.saveHistoryState === 'function') {
       if (hasCanonicalDeck) {
-        options.saveHistoryState(false, transaction, options.canonicalDeck);
+        if (options.saveHistoryState(false, transaction, options.canonicalDeck) === false) return false;
       } else {
-        options.saveHistoryState(false, transaction);
+        if (options.saveHistoryState(false, transaction) === false) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      options.triggerAutoSave();
+      if (options.triggerAutoSave() === false) return false;
     }
     if (typeof options.updateLayersList === 'function') {
       options.updateLayersList();
@@ -314,13 +314,13 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        options.saveHistoryState(false, transaction, canonicalDeck);
+        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
       } else {
-        options.saveHistoryState(false, transaction);
+        if (options.saveHistoryState(false, transaction) === false) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      options.triggerAutoSave();
+      if (options.triggerAutoSave() === false) return false;
     }
     if (versionLabel && typeof options.triggerAutoVersion === 'function') {
       options.triggerAutoVersion(versionLabel);
