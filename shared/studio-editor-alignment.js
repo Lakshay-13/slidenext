@@ -191,9 +191,18 @@
       };
     }
 
-    const sortedItems = [...layoutItems].sort((first, second) => axis === 'horizontal'
-      ? first.absLeft - second.absLeft
-      : first.absTop - second.absTop);
+    const sortedItems = layoutItems
+      .map((item, index) => ({ item, index }))
+      .sort((first, second) => {
+        const firstPosition = axis === 'horizontal'
+          ? first.item.absLeft
+          : first.item.absTop;
+        const secondPosition = axis === 'horizontal'
+          ? second.item.absLeft
+          : second.item.absTop;
+        return (firstPosition - secondPosition) || (first.index - second.index);
+      })
+      .map(({ item }) => item);
     const firstItem = sortedItems[0];
     const lastItem = sortedItems[sortedItems.length - 1];
     const start = axis === 'horizontal' ? firstItem.absLeft : firstItem.absTop;

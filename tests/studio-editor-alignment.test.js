@@ -179,6 +179,23 @@ test('buildStudioDistributedLayout equalizes vertical gaps and requires at least
   });
 });
 
+test('buildStudioDistributedLayout preserves selection order for equal-position ties', () => {
+  const items = [
+    { id: 'selected-first', absLeft: 100, absTop: 40, width: 40, height: 20, parentLeft: 0, parentTop: 0 },
+    { id: 'selected-second', absLeft: 100, absTop: 80, width: 40, height: 20, parentLeft: 0, parentTop: 0 },
+    { id: 'last', absLeft: 400, absTop: 120, width: 40, height: 20, parentLeft: 0, parentTop: 0 }
+  ];
+
+  const result = alignment.buildStudioDistributedLayout(items, 'horizontal');
+  const byId = Object.fromEntries(result.nextItems.map((item) => [item.id, item]));
+
+  assert.deepEqual([
+    byId['selected-first'].nextAbsLeft,
+    byId['selected-second'].nextAbsLeft,
+    byId.last.nextAbsLeft
+  ], [100, 250, 400]);
+});
+
 test('renderStudioAlignmentToolbarState separates alignment and distribution readiness', () => {
   const ids = [
     'alignSelectionLeftBtn',
