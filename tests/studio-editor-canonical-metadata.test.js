@@ -174,6 +174,25 @@ test('buildStudioCanonicalMetadataBaseline falls back when the live canonical de
   assert.equal(didBuildFromDocument, true);
 });
 
+test('buildStudioCanonicalMetadataBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = metadata.buildStudioCanonicalMetadataBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalMetadataBaseline fails closed when a compatibility rebuild throws', () => {
   const result = metadata.buildStudioCanonicalMetadataBaseline({
     canonicalDeckApi: canonicalDeck,
