@@ -77,12 +77,17 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
-    const finalized = finalizeMutation
-      ? finalizeMutation(`Auto: Applied ${preset.name} Theme`, {
-          canonicalDeck,
-          refreshThumbnails: true
-        })
-      : false;
+    let finalized = false;
+    if (finalizeMutation) {
+      try {
+        finalized = finalizeMutation(`Auto: Applied ${preset.name} Theme`, {
+            canonicalDeck,
+            refreshThumbnails: true
+          });
+      } catch (err) {
+        finalized = false;
+      }
+    }
     if (finalized === false) {
       if (previousTokenValues
         && typeof canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates === 'function') {
