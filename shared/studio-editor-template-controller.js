@@ -154,7 +154,12 @@
 
     function commitDeck(nextCanonicalDeck, versionLabel = '') {
       if (finalizeMutation) {
-        const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        let finalizeResult = false;
+        try {
+          finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        } catch (err) {
+          return null;
+        }
         if (finalizeResult === false) return null;
       } else {
         if (saveHistoryState

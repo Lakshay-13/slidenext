@@ -590,6 +590,26 @@ test('template controller reports rejected canonical removal without publishing 
   assert.equal(templatesChanged, 0);
 });
 
+test('template controller contains thrown canonical finalization without publishing template state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Hero' }]
+  });
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    finalizeMutation: () => {
+      throw new Error('template finalization failed');
+    },
+    onTemplatesChanged: () => calls.push('templates')
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'hero-template', name: 'Hero Template' }), null);
+  assert.equal(sourceDeck.templates, undefined);
+  assert.deepEqual(calls, []);
+});
+
 test('template controller fails closed when removing a template canonical mutation throws', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{ id: 'hero-template', name: 'Hero Template' }],
