@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function createStudioEditorSlideMutationPersistenceFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
@@ -44,11 +55,10 @@
     }
 
     return (versionLabel, transaction = null, canonicalDeck = null) => {
-      if (canonicalDeck) {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) return false;
-      } else {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) return false;
-      }
+      const historyCaptureResult = canonicalDeck
+        ? captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+        : captureStudioHistoryState(saveHistoryState, false, transaction);
+      if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
@@ -115,8 +125,8 @@
         }
       }
       const historyCaptureResult = canonicalDeck
-        ? saveHistoryState(false, null, canonicalDeck)
-        : saveHistoryState();
+        ? captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck)
+        : captureStudioHistoryState(saveHistoryState);
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         return {
           historyCaptureFailed: true,

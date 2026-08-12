@@ -67,6 +67,19 @@ test('createStudioEditorSlideMutationPersistenceFinalizer propagates rejected fa
   assert.equal(finalize('Auto: Rejected', { kind: 'transaction' }), false);
 });
 
+test('createStudioEditorSlideMutationPersistenceFinalizer converts thrown fallback history to rejection', () => {
+  const finalize = slideMutation.createStudioEditorSlideMutationPersistenceFinalizer({
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  });
+
+  assert.equal(finalize('Auto: Rejected', { kind: 'transaction' }), false);
+});
+
 test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide and selection fallback', () => {
   const calls = [];
   const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
@@ -94,6 +107,26 @@ test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide
 test('createStudioEditorSlideMutationRestoreStateCapturer reports rejected fallback history', () => {
   const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
     saveHistoryState: () => ({ didCapture: false }),
+    getActiveSlideId() {
+      throw new Error('active slide state should not be read');
+    },
+    getSelectedElementIds() {
+      throw new Error('selection state should not be read');
+    }
+  });
+
+  assert.deepEqual(capture({ id: 'doc' }), {
+    historyCaptureFailed: true,
+    preservedActiveSlideId: '',
+    preservedSelectionIds: []
+  });
+});
+
+test('createStudioEditorSlideMutationRestoreStateCapturer reports thrown fallback history', () => {
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
     getActiveSlideId() {
       throw new Error('active slide state should not be read');
     },
