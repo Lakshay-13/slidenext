@@ -790,6 +790,10 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
     getActiveSlideId() {
       return 'slide-2';
     },
+    getCommittedSelectedEditorElementIds(doc) {
+      context.selectedDocument = doc;
+      return ['committed-node-1'];
+    },
     getSelectedEditorElementIds() {
       return ['node-1'];
     },
@@ -825,6 +829,9 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   assert.equal(typeof options.getActiveSlideId, 'function');
   assert.equal(typeof options.getSelectedElementIds, 'function');
   assert.equal(typeof options.areIdListsEqual, 'function');
+  const documentRef = { id: 'history-document' };
+  assert.deepEqual(options.getSelectedElementIds(documentRef), ['committed-node-1']);
+  assert.equal(context.selectedDocument, documentRef);
 });
 
 test('getEditorHistoryOptions threads sanitizer overrides and explicit persistence options into the frame sanitizer', () => {

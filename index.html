@@ -6089,7 +6089,9 @@
         editorSlideIdAttr,
         sanitizeFrameRoot,
         getActiveSlideId,
-        getSelectedElementIds: () => getSelectedEditorElementIds(),
+        getSelectedElementIds: (doc) => typeof getCommittedSelectedEditorElementIds === 'function'
+          ? getCommittedSelectedEditorElementIds(doc)
+          : getSelectedEditorElementIds(),
         areIdListsEqual: areEditorIdListsEqual,
         ...historyOptions
       };
