@@ -2821,7 +2821,9 @@
           ),
           applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
-          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
+          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
+          restoreSelection: (...args) => restoreCommittedSelectionByIdsOnActiveSlide(...args)
         })
       : null;
     const studioEditorRemovalController = studioEditorRemovalRuntime

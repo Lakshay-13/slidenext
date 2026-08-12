@@ -27,7 +27,9 @@ test('removal runtime composes canonical and mutation dependencies', () => {
     getCanonicalDeckBaseline: () => ({}),
     applyRemovalMutation: () => ({}),
     deselectElement: () => {},
-    finalizeDeckMutation: () => {}
+    finalizeDeckMutation: () => {},
+    rollbackMutation: () => {},
+    restoreSelection: () => {}
   };
 
   assert.deepEqual(
@@ -40,6 +42,8 @@ test('removal runtime composes canonical and mutation dependencies', () => {
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].applyRemovalMutation, options.applyRemovalMutation);
   assert.equal(calls[0].finalizeDeckMutation, options.finalizeDeckMutation);
+  assert.equal(calls[0].rollbackMutation, options.rollbackMutation);
+  assert.equal(calls[0].restoreSelection, options.restoreSelection);
 });
 
 test('index wires removal through the runtime module', () => {

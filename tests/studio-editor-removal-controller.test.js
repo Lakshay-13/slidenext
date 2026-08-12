@@ -145,3 +145,46 @@ test('removal controller fails closed before mutation when finalization is unava
   assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
   assert.equal(removeCalls, 0);
 });
+
+test('removal controller rolls back and restores selection when persistence rejects', () => {
+  const calls = [];
+  const doc = { id: 'doc' };
+  const target = { dataset: { editorId: 'node-1' } };
+  const controller = removalController.createStudioEditorRemovalController({
+    canonicalRemovalApi: {
+      createStudioCanonicalRemovalMutationBuilders() {
+        return {
+          buildCanonicalRemovalMutation: () => ({ slides: [] })
+        };
+      }
+    },
+    buildRemovalSelectionActionState: () => ({
+      canRemove: true,
+      selection: [target]
+    }),
+    getIframeDoc: () => doc,
+    assignElementId: (element) => element.dataset.editorId,
+    applyRemovalMutation: () => ({ didRemove: true, transaction: { type: 'markup' } }),
+    deselectElement: () => calls.push('deselect'),
+    finalizeDeckMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(sourceDoc, doc);
+      calls.push('rollback');
+    },
+    restoreSelection: (selectedIds, sourceDoc) => {
+      assert.deepEqual(selectedIds, ['node-1']);
+      assert.equal(sourceDoc, doc);
+      calls.push('restoreSelection');
+    },
+    finalizeRemovalActionResult: (result, sourceDoc) => {
+      assert.equal(result, false);
+      assert.equal(sourceDoc, doc);
+      calls.push('finalizeAction');
+      return false;
+    }
+  });
+
+  assert.equal(controller.remove(), false);
+  assert.deepEqual(calls, ['deselect', 'rollback', 'restoreSelection', 'finalizeAction']);
+});

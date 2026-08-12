@@ -45,6 +45,12 @@
     const deselectElement = typeof options.deselectElement === 'function'
       ? options.deselectElement
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    const restoreSelection = typeof options.restoreSelection === 'function'
+      ? options.restoreSelection
+      : null;
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
       : null;
@@ -93,6 +99,11 @@
       if (canonicalDeckBeforeRemoval && !canonicalDeck) {
         return finalizeRemovalActionResult(false, doc);
       }
+      const selectedElementIds = restoreSelection
+        ? removalActionState.selection
+            .map((element) => getRemovalElementId(element))
+            .filter((elementId) => typeof elementId === 'string' && elementId.trim())
+        : [];
       const mutation = applyRemovalMutation(removalActionState.selection, {
         getElementId: getRemovalElementId,
         removeElement(element) {
@@ -101,10 +112,15 @@
       });
       if (!mutation || !mutation.didRemove) return finalizeRemovalActionResult(false, doc);
       if (deselectElement) deselectElement();
-      finalizeDeckMutation('Auto: Deleted Element', {
+      const finalizeResult = finalizeDeckMutation('Auto: Deleted Element', {
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
+      if (finalizeResult === false) {
+        if (rollbackMutation) rollbackMutation(mutation.transaction, doc);
+        if (restoreSelection) restoreSelection(selectedElementIds, doc);
+        return finalizeRemovalActionResult(false, doc);
+      }
       return true;
     }
 

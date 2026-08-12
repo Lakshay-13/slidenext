@@ -28,7 +28,9 @@
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyRemovalMutation: options.applyRemovalMutation,
           deselectElement: options.deselectElement,
-          finalizeDeckMutation: options.finalizeDeckMutation
+          finalizeDeckMutation: options.finalizeDeckMutation,
+          rollbackMutation: options.rollbackMutation,
+          restoreSelection: options.restoreSelection
         })
       : null;
 

@@ -80,7 +80,9 @@ function installRemovalController(context) {
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     applyRemovalMutation: context.applyEditorRemovalMutationWithTransaction,
     deselectElement: context.deselectElement,
-    finalizeDeckMutation: context.finalizeEditorDeckMutation
+    finalizeDeckMutation: context.finalizeEditorDeckMutation,
+    rollbackMutation: context.rollbackEditorSlideMutation,
+    restoreSelection: context.restoreCommittedSelectionByIdsOnActiveSlide
   });
 }
 
