@@ -18,6 +18,11 @@
     : 4;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function normalizeStudioTransformDragStartThreshold(value) {
     return Number.isFinite(value)
       ? Math.max(0, value)
@@ -1131,7 +1136,7 @@
       const historyCaptureResult = canonicalDeck
         ? saveHistoryState(false, transaction, canonicalDeck)
         : saveHistoryState(false, transaction);
-      if (historyCaptureResult === false) return false;
+      if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
       triggerAutoSave();
       triggerAutoVersion(completionPlan.versionLabel);
       return true;

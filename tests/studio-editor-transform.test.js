@@ -173,7 +173,7 @@ test('createStudioTransformSessionFinalizer stops persistence hooks when history
     },
     saveHistoryState() {
       calls.push('history');
-      return false;
+      return { didCapture: false };
     },
     triggerAutoSave() {
       calls.push('save');
