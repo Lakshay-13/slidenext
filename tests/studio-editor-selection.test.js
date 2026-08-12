@@ -129,6 +129,29 @@ test('syncStudioSelectionUiAfterMutation refreshes classes before selection chro
   ]);
 });
 
+test('selection UI refreshes preserve the explicit editor document', () => {
+  const documentRef = { id: 'iframe-document' };
+  const selectedElement = { id: 'node-1', ownerDocument: documentRef };
+  const receivedDocuments = [];
+
+  studioSelection.commitStudioSelectionState({
+    selectedElements: [selectedElement],
+    selectedElement
+  }, {
+    doc: documentRef,
+    refreshSelectionClasses(doc) {
+      receivedDocuments.push(doc);
+    }
+  });
+  studioSelection.syncStudioSelectionUiAfterMutation([selectedElement], {
+    refreshSelectionClasses(doc) {
+      receivedDocuments.push(doc);
+    }
+  });
+
+  assert.deepEqual(receivedDocuments, [documentRef, documentRef]);
+});
+
 test('selectStudioElement resolves the target and commits additive selection state', () => {
   const currentSelection = [{ id: 'node-1' }];
   const target = { id: 'node-2' };

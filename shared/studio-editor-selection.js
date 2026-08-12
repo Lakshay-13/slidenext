@@ -269,6 +269,9 @@
     const normalizedSelectionState = normalizeStudioSelectionState(nextSelectionState, options);
     const selectedElements = normalizedSelectionState.selectedElements;
     const selectedElement = normalizedSelectionState.selectedElement;
+    const selectionDocument = Object.prototype.hasOwnProperty.call(options, 'doc')
+      ? options.doc
+      : selectedElements.find((element) => element && element.ownerDocument)?.ownerDocument;
     const applySelectionState = typeof options.applySelectionState === 'function'
       ? options.applySelectionState
       : () => {};
@@ -292,7 +295,7 @@
       selectedElements,
       selectedElement
     });
-    refreshSelectionClasses();
+    refreshSelectionClasses(selectionDocument);
     syncStudioSelectionUi(selectedElements, {
       syncSelectionOverlay,
       hideDragHud,
@@ -333,7 +336,10 @@
     const refreshSelectionClasses = typeof options.refreshSelectionClasses === 'function'
       ? options.refreshSelectionClasses
       : () => {};
-    refreshSelectionClasses();
+    const selectionDocument = Object.prototype.hasOwnProperty.call(options, 'doc')
+      ? options.doc
+      : selectedElements.find((element) => element && element.ownerDocument)?.ownerDocument;
+    refreshSelectionClasses(selectionDocument);
     syncStudioSelectionUi(selectedElements, options);
     return selectedElements;
   }
