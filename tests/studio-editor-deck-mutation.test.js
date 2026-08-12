@@ -153,7 +153,7 @@ test('finalizeStudioEditorDeckMutation propagates fallback history rejection', (
   assert.equal(deckMutation.finalizeStudioEditorDeckMutation('Auto: Rejected', {
     canonicalDeck: { kind: 'slidenext.deck', slides: [] }
   }, {
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     }
@@ -291,7 +291,7 @@ test('finalizeStudioEditorLayerOrderMutation propagates fallback history rejecti
     transaction: { id: 'tx' },
     canonicalDeck: { kind: 'slidenext.deck', slides: [] }
   }, {
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     }
@@ -336,7 +336,7 @@ test('finalizeStudioEditorWallpaperMutation propagates fallback history rejectio
     { id: 'tx' },
     { kind: 'slidenext.deck', slides: [] },
     {
-      saveHistoryState: () => false,
+      saveHistoryState: () => ({ didCapture: false }),
       triggerAutoSave: () => {
         throw new Error('autosave should not run');
       }

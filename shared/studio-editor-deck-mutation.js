@@ -7,6 +7,11 @@
     root.SlideNextStudioEditorDeckMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function createStudioEditorDeckMutationFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -137,7 +142,7 @@
     if (Object.prototype.hasOwnProperty.call(resolvedMutationOptions, 'canonicalDeck')) {
       historyArgs.push(resolvedMutationOptions.canonicalDeck);
     }
-    if (saveHistoryState(...historyArgs) === false) return false;
+    if (isStudioHistoryCaptureFailure(saveHistoryState(...historyArgs))) return false;
     if (triggerAutoSave() === false) return false;
     if (versionLabel) {
       triggerAutoVersion(versionLabel);
@@ -258,9 +263,9 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, canonicalDeck))) return false;
       } else {
-        if (options.saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
@@ -310,9 +315,9 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, canonicalDeck))) return false;
       } else {
-        if (options.saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
