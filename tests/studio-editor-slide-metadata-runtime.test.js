@@ -30,6 +30,7 @@ test('slide metadata runtime composes metadata controller dependencies', () => {
     getActiveSlide: () => null,
     getElementId: () => '',
     finalizeMutation: () => {},
+    rollbackMutation: () => {},
     syncChrome: () => {}
   };
 
@@ -43,6 +44,7 @@ test('slide metadata runtime composes metadata controller dependencies', () => {
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].finalizeMutation, options.finalizeMutation);
+  assert.equal(calls[0].rollbackMutation, options.rollbackMutation);
 });
 
 test('index wires slide metadata through the runtime module', () => {

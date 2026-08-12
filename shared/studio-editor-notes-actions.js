@@ -34,6 +34,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
     if (!activeSlide || !applyMetadata || !finalizeMutation) return false;
 
     const buildCanonicalMetadataBaseline = typeof options.buildCanonicalMetadataBaseline === 'function'
@@ -65,11 +68,18 @@
     });
     if (!mutation || !mutation.didApply) return false;
 
-    finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
+    const finalizeResult = finalizeMutation(options.versionLabel || 'Auto: Updated Speaker Notes', {
       refreshThumbnails: false,
       transaction: mutation.transaction || null,
       ...(canonicalDeck ? { canonicalDeck } : {})
     });
+    if (finalizeResult === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction || null, documentRef);
+      if (typeof options.syncChrome === 'function') {
+        options.syncChrome(documentRef);
+      }
+      return false;
+    }
     if (typeof options.syncChrome === 'function') {
       options.syncChrome(documentRef);
     }

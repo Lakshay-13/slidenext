@@ -314,6 +314,36 @@ test('rollbackEditorSlideMutation restores the slide container markup transactio
   assert.equal(container.hoverable, true);
 });
 
+test('rollbackEditorSlideMutation resolves slide-prefixed metadata transactions', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const slide = { dataset: { speakerNotes: 'after' } };
+  const iframeDoc = { id: 'iframe-doc' };
+  const context = {
+    getIframeDoc: () => iframeDoc,
+    getSlideById(id, doc) {
+      assert.equal(id, 'slide-1');
+      assert.equal(doc, iframeDoc);
+      return slide;
+    },
+    getElementByEditorId() {
+      return null;
+    }
+  };
+  vm.createContext(context);
+  loadRollbackEditorSlideMutation(fileContent, context);
+
+  const transaction = studioTransaction.createStudioDatasetTransaction([{
+    element: slide,
+    elementId: 'slide:slide-1',
+    property: 'speakerNotes',
+    before: 'before',
+    after: 'after'
+  }]);
+
+  assert.equal(context.rollbackEditorSlideMutation(transaction, iframeDoc), true);
+  assert.equal(slide.dataset.speakerNotes, 'before');
+});
+
 test('finalizeSlideMutationPersistence delegates lifecycle ordering to the shared mutation module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { kind: 'slidenext.editor.transaction' };

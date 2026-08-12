@@ -2594,6 +2594,7 @@
             return slideId ? `slide:${slideId}` : '';
           },
           finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
+          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
           syncChrome: (...args) => syncStudioChromeToActiveSlide(...args)
         })
       : null;
@@ -5649,6 +5650,11 @@
               return resolvedDoc && typeof resolvedDoc.getElementById === 'function'
                 ? resolvedDoc.getElementById('slidesContainer')
                 : null;
+            }
+            if (typeof elementId === 'string'
+              && elementId.startsWith('slide:')
+              && typeof getSlideById === 'function') {
+              return getSlideById(elementId.slice('slide:'.length), resolvedDoc);
             }
             return typeof getElementByEditorId === 'function'
               ? getElementByEditorId(elementId, resolvedDoc)

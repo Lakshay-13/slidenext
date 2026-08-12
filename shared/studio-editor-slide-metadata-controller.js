@@ -54,6 +54,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
     const syncChrome = typeof options.syncChrome === 'function'
       ? options.syncChrome
       : null;
@@ -77,6 +80,7 @@
         getElementId,
         ...(metadataOptions.versionLabel ? { versionLabel: metadataOptions.versionLabel } : {}),
         finalizeMutation,
+        rollbackMutation,
         syncChrome
       });
     }

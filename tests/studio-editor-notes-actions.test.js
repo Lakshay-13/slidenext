@@ -77,6 +77,31 @@ test('applyStudioSpeakerNotesEdit does not mutate when the deck is unavailable',
   assert.equal(mutationCalls, 0);
 });
 
+test('applyStudioSpeakerNotesEdit rolls back metadata when persistence rejects', () => {
+  const calls = [];
+  const transaction = { kind: 'notes' };
+  const result = actions.applyStudioSpeakerNotesEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        return { didApply: true, transaction };
+      }
+    },
+    finalizeMutation: () => false,
+    rollbackMutation: (nextTransaction, doc) => {
+      assert.equal(nextTransaction, transaction);
+      assert.equal(doc.id, 'frame');
+      calls.push('rollback');
+    },
+    syncChrome: () => calls.push('sync')
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, ['rollback', 'sync']);
+});
+
 test('applyStudioSpeakerNotesEdit forwards an explicit canonical metadata sidecar', () => {
   const calls = [];
   const canonicalDeckBeforeMutation = { id: 'before' };

@@ -58,6 +58,7 @@
         ? canonicalMetadataBuilders.buildCanonicalMetadataDeck
         : null,
       finalizeMutation: options.finalizeMutation,
+      rollbackMutation: options.rollbackMutation,
       syncChrome: options.syncChrome
     });
   }

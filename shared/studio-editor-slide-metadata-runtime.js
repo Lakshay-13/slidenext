@@ -39,6 +39,7 @@
           getActiveSlide: options.getActiveSlide,
           getElementId: options.getElementId,
           finalizeMutation: options.finalizeMutation,
+          rollbackMutation: options.rollbackMutation,
           syncChrome: options.syncChrome
         })
       : null;
