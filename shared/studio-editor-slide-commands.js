@@ -7,6 +7,11 @@
     root.SlideNextStudioEditorSlideCommands = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function prepareStudioSlideDuplication(sourceSlide, options = {}) {
     if (!sourceSlide || typeof sourceSlide.cloneNode !== 'function') {
       return null;
@@ -114,7 +119,7 @@
     } else {
       historyCaptureResult = saveHistoryState();
     }
-    if (historyCaptureResult === false) return false;
+    if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
@@ -217,7 +222,7 @@
       } else {
         historyCaptureResult = saveHistoryState();
       }
-      if (historyCaptureResult === false) {
+      if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         return false;
       }
     }
