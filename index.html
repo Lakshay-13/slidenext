@@ -1934,12 +1934,14 @@
     const studioEditorSaveButtonStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.saveButtonStateAccessors
       : null;
-    function getStudioSaveButtonState() {
-      return typeof studioEditorSaveButtonStateAccessors !== 'undefined'
-        && studioEditorSaveButtonStateAccessors
-        ? studioEditorSaveButtonStateAccessors.getState()
-        : 'idle';
-    }
+    const studioEditorSaveButtonStateGlobalApi = typeof SlideNextStudioEditorSaveButtonStateAccessors !== 'undefined'
+      && SlideNextStudioEditorSaveButtonStateAccessors
+      && typeof SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateGlobalApi === 'function'
+      ? SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateGlobalApi({
+          accessors: studioEditorSaveButtonStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorSaveButtonStateGlobalApi);
     const studioEditorVersionRenameStateRuntime = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.versionRenameStateRuntime
       : null;

@@ -23,5 +23,16 @@
     };
   }
 
-  return { createStudioEditorSaveButtonStateAccessors };
+  function createStudioEditorSaveButtonStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorSaveButtonStateAccessors(options);
+
+    return {
+      getStudioSaveButtonState: () => accessors.getState()
+    };
+  }
+
+  return {
+    createStudioEditorSaveButtonStateAccessors,
+    createStudioEditorSaveButtonStateGlobalApi
+  };
 });

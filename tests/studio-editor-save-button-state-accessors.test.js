@@ -27,6 +27,16 @@ test('save button state accessors preserve the idle fallback without a bridge', 
   assert.equal(accessors.setState('saving-version'), false);
 });
 
+test('save button global api preserves the editor shell getter name', () => {
+  const globalApi = accessorsApi.createStudioEditorSaveButtonStateGlobalApi({
+    accessors: {
+      getState: () => 'saving-version'
+    }
+  });
+
+  assert.equal(globalApi.getStudioSaveButtonState(), 'saving-version');
+});
+
 test('save button state accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -40,6 +50,11 @@ test('save button state accessors publish the global consumed by the editor shel
       .createStudioEditorSaveButtonStateAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorSaveButtonStateAccessors
+      .createStudioEditorSaveButtonStateGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads save button accessors after the save button bridge', () => {
@@ -51,4 +66,6 @@ test('editor loads save button accessors after the save button bridge', () => {
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.saveButtonStateAccessors/);
   assert.match(fileContent, /studioEditorSaveButtonStateAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorSaveButtonStateGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioSaveButtonState\(\)/);
 });
