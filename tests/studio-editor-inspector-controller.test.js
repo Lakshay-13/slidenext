@@ -12,6 +12,7 @@ test('editor composes inspector selection synchronization through the shared con
 
   assert.match(source, /const studioEditorInspectorSelectionSynchronizer =/);
   assert.match(source, /createStudioInspectorSelectionSynchronizer\(/);
+  assert.match(source, /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/);
   assert.match(source, /return typeof studioEditorInspectorSelectionSynchronizer === 'function'/);
   assert.doesNotMatch(source, /syncInspectorForSelection\.synchronizer/);
 });
@@ -117,6 +118,7 @@ test('syncStudioInspectorForSelection refreshes action state before rendering se
 test('createStudioInspectorSelectionSynchronizer assembles live and canonical selection state', () => {
   const selectedElement = { dataset: { editorId: 'node-1' } };
   const documentRef = { id: 'editor-document' };
+  const currentDocument = { id: 'iframe-document' };
   const canonicalDeck = { slides: [{ id: 'slide-1' }] };
   const canonicalNode = { id: 'node-1' };
   const calls = [];
@@ -134,9 +136,13 @@ test('createStudioInspectorSelectionSynchronizer assembles live and canonical se
     },
     inspectorView: {},
     documentRef,
-    getSelectedElements: () => [selectedElement],
-    getCurrentDocument: () => ({ id: 'iframe-document' }),
+    getSelectedElements: (doc) => {
+      assert.equal(doc, currentDocument);
+      return [selectedElement];
+    },
+    getCurrentDocument: () => currentDocument,
     buildCanonicalDeck: (doc) => {
+      assert.equal(doc, currentDocument);
       calls.push(['build', doc]);
       return canonicalDeck;
     },

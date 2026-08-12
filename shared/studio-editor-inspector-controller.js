@@ -103,9 +103,13 @@
     return function syncStudioInspectorSelectionFromEditor() {
       if (!liveSelectionApi) return false;
 
+      let currentDocument = null;
       let liveSelectionState;
       try {
-        liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(getSelectedElements());
+        currentDocument = getCurrentDocument();
+        liveSelectionState = liveSelectionApi.buildStudioLiveSelectionState(
+          getSelectedElements(currentDocument)
+        );
       } catch (error) {
         return false;
       }
@@ -118,7 +122,7 @@
       let canonicalDeck = null;
       if (primaryElementId && buildCanonicalDeck) {
         try {
-          canonicalDeck = buildCanonicalDeck(getCurrentDocument());
+          canonicalDeck = buildCanonicalDeck(currentDocument);
         } catch (error) {
           canonicalDeck = null;
         }

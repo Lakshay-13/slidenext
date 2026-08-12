@@ -7560,7 +7560,7 @@
             ? SlideNextStudioEditorInspectorView
             : null,
           documentRef: typeof document !== 'undefined' ? document : null,
-          getSelectedElements: () => getStudioSelectedElements(),
+          getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
           buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
             ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
