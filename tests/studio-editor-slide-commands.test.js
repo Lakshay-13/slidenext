@@ -243,7 +243,7 @@ test('duplicateStudioSlideNode stops before DOM insertion when history baseline 
   assert.deepEqual(calls, []);
 });
 
-test('duplicateStudioSlideNode rolls back DOM and active slide when persistence rejects', () => {
+test('duplicateStudioSlideNode rolls back DOM and active slide when persistence throws', () => {
   const doc = { id: 'editor-doc' };
   const sourceSlide = {
     id: 'slide-1',
@@ -274,7 +274,9 @@ test('duplicateStudioSlideNode rolls back DOM and active slide when persistence 
     },
     generateThumbnails: () => calls.push('generateThumbnails'),
     setActiveSlide: (index) => calls.push(['setActiveSlide', index]),
-    finalizeMutation: () => false,
+    finalizeMutation: () => {
+      throw new Error('duplicate slide finalization failed');
+    },
     rollbackMutation: (transaction, sourceDoc) => {
       assert.deepEqual(transaction, { type: 'markup' });
       assert.equal(sourceDoc, doc);

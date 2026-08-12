@@ -27,6 +27,14 @@
         }
       };
 
+  function invokeStudioSlideCommandFinalizer(finalizeMutation, ...args) {
+    try {
+      return finalizeMutation(...args);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function prepareStudioSlideDuplication(sourceSlide, options = {}) {
     if (!sourceSlide || typeof sourceSlide.cloneNode !== 'function') {
       return null;
@@ -161,8 +169,13 @@
       ? options.rollbackMutation
       : null;
     const finalized = canonicalDeckAfterDuplication
-      ? finalizeMutation('Auto: Duplicated Slide', mutation.transaction, canonicalDeckAfterDuplication)
-      : finalizeMutation('Auto: Duplicated Slide', mutation.transaction);
+      ? invokeStudioSlideCommandFinalizer(
+          finalizeMutation,
+          'Auto: Duplicated Slide',
+          mutation.transaction,
+          canonicalDeckAfterDuplication
+        )
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Duplicated Slide', mutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
@@ -270,8 +283,13 @@
       ? options.rollbackMutation
       : null;
     const finalized = canonicalDeckAfterAddition
-      ? finalizeMutation('Auto: Added Slide', mutation.transaction, canonicalDeckAfterAddition)
-      : finalizeMutation('Auto: Added Slide', mutation.transaction);
+      ? invokeStudioSlideCommandFinalizer(
+          finalizeMutation,
+          'Auto: Added Slide',
+          mutation.transaction,
+          canonicalDeckAfterAddition
+        )
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Added Slide', mutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
@@ -376,8 +394,13 @@
       ? options.rollbackMutation
       : null;
     const finalized = canonicalDeckAfterDeletion
-      ? finalizeMutation('Auto: Deleted Slide', mutation.transaction, canonicalDeckAfterDeletion)
-      : finalizeMutation('Auto: Deleted Slide', mutation.transaction);
+      ? invokeStudioSlideCommandFinalizer(
+          finalizeMutation,
+          'Auto: Deleted Slide',
+          mutation.transaction,
+          canonicalDeckAfterDeletion
+        )
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Deleted Slide', mutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
@@ -469,8 +492,13 @@
       ? options.rollbackMutation
       : null;
     const finalized = canonicalDeckAfterReorder
-      ? finalizeMutation('Auto: Reordered Slides', mutation.transaction, canonicalDeckAfterReorder)
-      : finalizeMutation('Auto: Reordered Slides', mutation.transaction);
+      ? invokeStudioSlideCommandFinalizer(
+          finalizeMutation,
+          'Auto: Reordered Slides',
+          mutation.transaction,
+          canonicalDeckAfterReorder
+        )
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Reordered Slides', mutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
