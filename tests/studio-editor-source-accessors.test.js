@@ -1,0 +1,100 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const accessorsApi = require('../shared/studio-editor-source-accessors.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const ACCESSORS_PATH = path.join(__dirname, '..', 'shared', 'studio-editor-source-accessors.js');
+
+test('source accessors delegate the source modal action contract', () => {
+  const calls = [];
+  const controller = {
+    open: () => {
+      calls.push('open');
+      return true;
+    },
+    setMode: (mode) => {
+      calls.push(['mode', mode]);
+      return true;
+    },
+    applySourceHtml: (html) => {
+      calls.push(['source', html]);
+      return { success: true };
+    },
+    apply: () => {
+      calls.push('apply');
+      return true;
+    },
+    close: () => {
+      calls.push('close');
+      return true;
+    },
+    reset: () => {
+      calls.push('reset');
+      return true;
+    },
+    resetPresentation: () => {
+      calls.push('reset-presentation');
+      return true;
+    }
+  };
+  const accessors = accessorsApi.createStudioEditorSourceAccessors({ controller });
+
+  assert.equal(accessors.open(), true);
+  assert.equal(accessors.setMode('css'), true);
+  assert.deepEqual(accessors.applySourceHtml('<html>edited</html>'), { success: true });
+  assert.equal(accessors.apply(), true);
+  assert.equal(accessors.close(), true);
+  assert.equal(accessors.reset(), true);
+  assert.equal(accessors.resetPresentation(), true);
+  assert.deepEqual(calls, [
+    'open',
+    ['mode', 'css'],
+    ['source', '<html>edited</html>'],
+    'apply',
+    'close',
+    'reset',
+    'reset-presentation'
+  ]);
+});
+
+test('source accessors preserve source editor fallbacks without a controller', () => {
+  const accessors = accessorsApi.createStudioEditorSourceAccessors();
+
+  assert.equal(accessors.open(), false);
+  assert.equal(accessors.setMode(), false);
+  assert.deepEqual(accessors.applySourceHtml(), {
+    success: false,
+    error: 'Source editor is unavailable'
+  });
+  assert.equal(accessors.apply(), false);
+  assert.equal(accessors.close(), false);
+  assert.equal(accessors.reset(), false);
+  assert.equal(accessors.resetPresentation(), false);
+});
+
+test('source accessors publish the global consumed by the editor shell', () => {
+  const context = { globalThis: {} };
+  vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
+
+  assert.equal(typeof context.globalThis.SlideNextStudioEditorSourceAccessors, 'object');
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorSourceAccessors
+      .createStudioEditorSourceAccessors,
+    'function'
+  );
+});
+
+test('editor loads source accessors after the source controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-source-accessors\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorSourceAccessors\(/);
+  assert.match(fileContent, /studioEditorSourceAccessors/);
+});

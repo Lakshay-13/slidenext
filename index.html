@@ -1591,6 +1591,7 @@
   <script src="/shared/studio-editor-source.js"></script>
   <script src="/shared/studio-editor-source-mode.js"></script>
   <script src="/shared/studio-editor-source-controller.js"></script>
+  <script src="/shared/studio-editor-source-accessors.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
@@ -2373,6 +2374,13 @@
       : null;
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController
+      : null;
+    const studioEditorSourceAccessors = typeof SlideNextStudioEditorSourceAccessors !== 'undefined'
+      && SlideNextStudioEditorSourceAccessors
+      && typeof SlideNextStudioEditorSourceAccessors.createStudioEditorSourceAccessors === 'function'
+      ? SlideNextStudioEditorSourceAccessors.createStudioEditorSourceAccessors({
+          controller: studioEditorSourceController
+        })
       : null;
     const studioEditorSourceHtmlBuilder = typeof SlideNextStudioEditorSourceController !== 'undefined'
       && SlideNextStudioEditorSourceController
@@ -4832,19 +4840,31 @@
     }
 
     function openSourceViewModal() {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.open();
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.open()
         : false;
     }
 
     function setSourceViewMode(mode = 'html') {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.setMode(mode);
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.setMode(mode)
         : false;
     }
 
     function applyEditorSourceHtml(sourceHtml = '') {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.applySourceHtml(sourceHtml);
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.applySourceHtml(sourceHtml)
         : { success: false, error: 'Source editor is unavailable' };
     }
@@ -4854,25 +4874,41 @@
     }
 
     function applySourceViewModal() {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.apply();
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.apply()
         : false;
     }
 
     function closeSourceViewModal() {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.close();
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.close()
         : false;
     }
 
     function resetStudioSourceViewUiState() {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.reset();
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.reset()
         : false;
     }
 
     function resetStudioPresentationUiState() {
-      return studioEditorSourceController
+      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
+        return studioEditorSourceAccessors.resetPresentation();
+      }
+      return typeof studioEditorSourceController !== 'undefined'
+        && studioEditorSourceController
         ? studioEditorSourceController.resetPresentation()
         : false;
     }
