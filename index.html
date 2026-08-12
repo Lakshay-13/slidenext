@@ -1491,6 +1491,7 @@
   <script src="/shared/studio-editor-interactions.js"></script>
   <script src="/shared/studio-editor-transform-controller.js"></script>
   <script src="/shared/studio-editor-transform-runtime.js"></script>
+  <script src="/shared/studio-editor-transform-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
@@ -3496,39 +3497,12 @@
       ? (doc, options) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, options)
       : null;
 
-    const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
-      && SlideNextStudioEditorTransformRuntime
-      && typeof SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime === 'function'
-      ? SlideNextStudioEditorTransformRuntime.createStudioEditorTransformRuntime({
-          controllerApi: typeof SlideNextStudioEditorTransformController !== 'undefined'
-            ? SlideNextStudioEditorTransformController
-            : null,
-          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
-            ? SlideNextStudioEditorTransform
-            : null,
-          canonicalTransformApi: typeof SlideNextStudioEditorCanonicalTransform !== 'undefined'
-            ? SlideNextStudioEditorCanonicalTransform
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-            ? SlideNextStudioEditorDom
-            : null,
-          interactionOptionsApi: typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
-            ? SlideNextStudioEditorInteractionOptions
-            : null,
-          interactionsApi: typeof SlideNextStudioEditorInteractions !== 'undefined'
-            ? SlideNextStudioEditorInteractions
-            : null,
-          eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
-            ? SlideNextStudioEditorEvents
-            : null,
-          selectionBoundsApi: typeof SlideNextStudioEditorSelectionBounds !== 'undefined'
-            ? SlideNextStudioEditorSelectionBounds
+    const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformShellRuntime !== 'undefined'
+      && SlideNextStudioEditorTransformShellRuntime
+      && typeof SlideNextStudioEditorTransformShellRuntime.createStudioEditorTransformShellRuntime === 'function'
+      ? SlideNextStudioEditorTransformShellRuntime.createStudioEditorTransformShellRuntime({
+          transformRuntimeApi: typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
+            ? SlideNextStudioEditorTransformRuntime
             : null,
           getActiveSlide: (...args) => getActiveSlide(...args),
           getTransformSelectionState: (...args) => getTransformSelectionState(...args),
