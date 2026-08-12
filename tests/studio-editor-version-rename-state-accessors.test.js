@@ -54,6 +54,28 @@ test('version rename accessors preserve the legacy fallback state contract', () 
   assert.deepEqual(accessors.clear(), { filename: '', context: null });
 });
 
+test('version rename global api preserves the editor shell function names', () => {
+  const accessors = {
+    getState: () => ({ filename: 'draft.html', context: { id: 'one' } }),
+    setState: (value) => value,
+    clear: () => ({ filename: '', context: null })
+  };
+  const globalApi = accessorsApi.createStudioEditorVersionRenameStateGlobalApi({ accessors });
+
+  assert.deepEqual(globalApi.getStudioRenameVersionState(), {
+    filename: 'draft.html',
+    context: { id: 'one' }
+  });
+  assert.deepEqual(globalApi.setStudioRenameVersionState({ filename: 'next.html', context: null }), {
+    filename: 'next.html',
+    context: null
+  });
+  assert.deepEqual(globalApi.clearStudioRenameVersionState(), {
+    filename: '',
+    context: null
+  });
+});
+
 test('version rename accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -67,6 +89,11 @@ test('version rename accessors publish the global consumed by the editor shell',
       .createStudioEditorVersionRenameStateAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorVersionRenameStateAccessors
+      .createStudioEditorVersionRenameStateGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads version rename accessors after the rename state bridge', () => {
@@ -78,4 +105,7 @@ test('editor loads version rename accessors after the rename state bridge', () =
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.versionRenameStateAccessors/);
   assert.match(fileContent, /studioEditorVersionRenameStateAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorVersionRenameStateGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioRenameVersionState\(\)/);
+  assert.doesNotMatch(fileContent, /function setStudioRenameVersionState\(nextState = \{\}\)/);
 });

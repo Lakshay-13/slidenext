@@ -5,6 +5,12 @@ const path = require('node:path');
 const renameStateController = require('../shared/studio-editor-version-rename-state-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const RENAME_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-version-rename-state-accessors.js'
+);
 
 test('version rename state controller owns filename and context state', () => {
   const initialContext = { presentationUrl: '/presentations/demo/index.html' };
@@ -35,8 +41,15 @@ test('editor routes version rename state through the controller', () => {
 
   assert.match(source, /studio-editor-version-rename-state-store\.js/);
   assert.match(source, /studioEditorVersionRenameStateStore/);
+  assert.match(source, /studioEditorVersionRenameStateGlobalApi/);
+  assert.match(source, /Object\.assign\(globalThis, studioEditorVersionRenameStateGlobalApi\)/);
+  const renameAccessors = fs.readFileSync(RENAME_ACCESSORS_PATH, 'utf8');
+  assert.match(renameAccessors, /getStudioRenameVersionState: \(\) => accessors\.getState\(\)/);
+  assert.match(renameAccessors, /setStudioRenameVersionState: \(nextState = \{\}\) => accessors\.setState\(nextState\)/);
+  assert.match(renameAccessors, /clearStudioRenameVersionState: \(\) => accessors\.clear\(\)/);
   assert.match(source, /setStudioRenameVersionState\(/);
   assert.match(source, /getStudioRenameVersionState\(\)/);
+  assert.doesNotMatch(source, /function getStudioRenameVersionState\(\)/);
   assert.doesNotMatch(source, /const studioEditorVersionRenameStateController =/);
   assert.doesNotMatch(source, /let renamingFilename = ''/);
   assert.doesNotMatch(source, /let renamingVersionContext = null/);

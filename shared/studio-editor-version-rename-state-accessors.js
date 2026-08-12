@@ -37,5 +37,18 @@
     return { bridge, getState, setState, clear };
   }
 
-  return { createStudioEditorVersionRenameStateAccessors };
+  function createStudioEditorVersionRenameStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorVersionRenameStateAccessors(options);
+
+    return {
+      getStudioRenameVersionState: () => accessors.getState(),
+      setStudioRenameVersionState: (nextState = {}) => accessors.setState(nextState),
+      clearStudioRenameVersionState: () => accessors.clear()
+    };
+  }
+
+  return {
+    createStudioEditorVersionRenameStateAccessors,
+    createStudioEditorVersionRenameStateGlobalApi
+  };
 });

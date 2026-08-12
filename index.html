@@ -1922,41 +1922,14 @@
     const studioEditorVersionRenameStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.versionRenameStateAccessors
       : null;
-    function getStudioRenameVersionState() {
-      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
-        && studioEditorVersionRenameStateAccessors
-        && typeof studioEditorVersionRenameStateAccessors.getState === 'function') {
-        return studioEditorVersionRenameStateAccessors.getState();
-      }
-      return {
-        filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
-        context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
-      };
-    }
-    function setStudioRenameVersionState(nextState = {}) {
-      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
-        && studioEditorVersionRenameStateAccessors
-        && typeof studioEditorVersionRenameStateAccessors.setState === 'function') {
-        return studioEditorVersionRenameStateAccessors.setState(nextState);
-      }
-      if (typeof renamingFilename !== 'undefined') {
-        renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
-      }
-      if (typeof renamingVersionContext !== 'undefined') {
-        renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
-          ? nextState.context
-          : null;
-      }
-      return getStudioRenameVersionState();
-    }
-    function clearStudioRenameVersionState() {
-      if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'
-        && studioEditorVersionRenameStateAccessors
-        && typeof studioEditorVersionRenameStateAccessors.clear === 'function') {
-        return studioEditorVersionRenameStateAccessors.clear();
-      }
-      return setStudioRenameVersionState();
-    }
+    const studioEditorVersionRenameStateGlobalApi = typeof SlideNextStudioEditorVersionRenameStateAccessors !== 'undefined'
+      && SlideNextStudioEditorVersionRenameStateAccessors
+      && typeof SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateGlobalApi === 'function'
+      ? SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateGlobalApi({
+          accessors: studioEditorVersionRenameStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorVersionRenameStateGlobalApi);
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
       : null;
