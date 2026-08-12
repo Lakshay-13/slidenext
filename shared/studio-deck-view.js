@@ -25,6 +25,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function createStudioCanonicalDeckResolver(doc, options = {}) {
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
@@ -1090,8 +1101,8 @@
       }
     }
     const historyCaptureResult = canonicalDeck
-      ? saveHistoryState(false, null, canonicalDeck)
-      : saveHistoryState();
+      ? captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck)
+      : captureStudioHistoryState(saveHistoryState);
     if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
       return {
         historyCaptureFailed: true,

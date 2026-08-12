@@ -218,6 +218,31 @@ test('captureStudioDeckViewBeforeSlideMutation reports a failed history baseline
   assert.equal(viewStateReads, 0);
 });
 
+test('captureStudioDeckViewBeforeSlideMutation reports thrown history failures without reading view state', () => {
+  let viewStateReads = 0;
+
+  const result = deckView.captureStudioDeckViewBeforeSlideMutation({
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
+    getActiveSlideId() {
+      viewStateReads += 1;
+      return 'slide-2';
+    },
+    getCommittedSelectedElementIds() {
+      viewStateReads += 1;
+      return ['element-1'];
+    }
+  });
+
+  assert.deepEqual(result, {
+    historyCaptureFailed: true,
+    preservedActiveSlideId: '',
+    preservedSelectionIds: []
+  });
+  assert.equal(viewStateReads, 0);
+});
+
 test('captureStudioDeckViewBeforeSlideMutation falls back when canonical baseline building fails', () => {
   const calls = [];
 
