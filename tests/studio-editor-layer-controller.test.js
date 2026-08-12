@@ -471,6 +471,37 @@ test('arrangeStudioElementLayer rolls back when layer persistence rejects the re
   ]);
 });
 
+test('arrangeStudioElementLayer rolls back when layer persistence throws', () => {
+  const documentRef = { id: 'editor-doc' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-arrange-throws' };
+  const calls = [];
+
+  assert.doesNotThrow(() => {
+    assert.equal(layerController.arrangeStudioElementLayer({
+      action: 'front',
+      getDocument: () => documentRef,
+      getSelectedElements: () => [target],
+      selectionHasLockedElements: () => false,
+      reorderSlideLayers: (_action, _elements, options) => {
+        options.onTransaction(transaction);
+        return true;
+      },
+      syncLayerOrderZIndexInput: (element) => calls.push(['sync', element]),
+      finalizeLayerOrderMutation: () => {
+        throw new Error('history finalization failed');
+      },
+      rollbackLayerOrderMutation: (...args) => calls.push(['rollback', ...args])
+    }), false);
+  });
+
+  assert.deepEqual(calls, [
+    ['sync', target],
+    ['rollback', transaction, documentRef],
+    ['sync', target]
+  ]);
+});
+
 test('changeStudioLayerZIndexByRef rolls back when layer persistence rejects the reorder', () => {
   const row = { id: 'row-1' };
   const target = { id: 'node-1' };
@@ -499,6 +530,45 @@ test('changeStudioLayerZIndexByRef rolls back when layer persistence rejects the
     finalizeLayerOrderMutation: () => false,
     rollbackLayerOrderMutation: (...args) => calls.push(['rollback', ...args])
   }), false);
+
+  assert.deepEqual(calls, [
+    ['rollback', transaction, null],
+    ['sync', target]
+  ]);
+});
+
+test('changeStudioLayerZIndexByRef rolls back when layer persistence throws', () => {
+  const row = { id: 'row-1' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-z-index-throws' };
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest() {
+        return row;
+      }
+    },
+    preventDefault() {},
+    stopPropagation() {}
+  };
+
+  assert.doesNotThrow(() => {
+    assert.equal(layerController.changeStudioLayerZIndexByRef({
+      event,
+      action: 'forward',
+      resolveLayerRowElement: () => target,
+      isElementLocked: () => false,
+      reorderSlideLayers: (_action, _elements, options) => {
+        options.onTransaction(transaction);
+        return true;
+      },
+      syncLayerOrderZIndexInput: (element) => calls.push(['sync', element]),
+      finalizeLayerOrderMutation: () => {
+        throw new Error('history finalization failed');
+      },
+      rollbackLayerOrderMutation: (...args) => calls.push(['rollback', ...args])
+    }), false);
+  });
 
   assert.deepEqual(calls, [
     ['rollback', transaction, null],

@@ -19,6 +19,15 @@
     return getElementByEditorId(editorId);
   }
 
+  function finalizeStudioLayerOrderMutation(finalizeMutation, versionLabel, options = {}) {
+    if (typeof finalizeMutation !== 'function') return false;
+    try {
+      return finalizeMutation(versionLabel, options);
+    } catch (error) {
+      return false;
+    }
+  }
+
   function selectStudioLayerElementByRef(options = {}) {
     const event = options.event;
     if (!event) return false;
@@ -169,11 +178,15 @@
       options.syncLayerOrderZIndexInput(element);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      const finalizeResult = options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+      const finalizeResult = finalizeStudioLayerOrderMutation(
+        options.finalizeLayerOrderMutation,
+        'Auto: Rearranged Layers',
+        {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {}),
         ...(targetDocument ? { doc: targetDocument } : {})
-      });
+        }
+      );
       if (finalizeResult === false) {
         if (typeof options.rollbackLayerOrderMutation === 'function') {
           options.rollbackLayerOrderMutation(transaction, targetDocument);
@@ -229,11 +242,15 @@
       options.syncLayerOrderZIndexInput(targets[0]);
     }
     if (typeof options.finalizeLayerOrderMutation === 'function') {
-      const finalizeResult = options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
+      const finalizeResult = finalizeStudioLayerOrderMutation(
+        options.finalizeLayerOrderMutation,
+        'Auto: Rearranged Layers',
+        {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {}),
         ...(resolvedDoc ? { doc: resolvedDoc } : {})
-      });
+        }
+      );
       if (finalizeResult === false) {
         if (typeof options.rollbackLayerOrderMutation === 'function') {
           options.rollbackLayerOrderMutation(transaction, resolvedDoc);
