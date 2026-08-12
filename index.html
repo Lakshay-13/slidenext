@@ -3951,7 +3951,7 @@
           commitSelectionState: commitEditorSelectionState,
           getOverlayOptions: getEditorOverlayOptions,
           onInlineEditCommit: ({ text }) => {
-            applySelectedElementStyle('text', text);
+            return applySelectedElementStyle('text', text);
           },
           onInlineEditEnd: () => {
             syncSelectionOverlay();

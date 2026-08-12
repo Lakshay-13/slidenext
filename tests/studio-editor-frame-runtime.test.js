@@ -160,3 +160,14 @@ test('index wires frame editing composition through the runtime module', () => {
     /SlideNextStudioEditorFrameController\.createStudioEditorFrameController\(/
   );
 });
+
+test('index propagates inline text mutation failures to the edit controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const callbackStart = fileContent.indexOf('onInlineEditCommit: ({ text }) => {');
+  assert.notEqual(callbackStart, -1);
+  const callbackEnd = fileContent.indexOf('\n          },', callbackStart);
+  assert.notEqual(callbackEnd, -1);
+  const callbackSource = fileContent.slice(callbackStart, callbackEnd);
+
+  assert.match(callbackSource, /return applySelectedElementStyle\('text', text\);/);
+});
