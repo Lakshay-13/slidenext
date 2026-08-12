@@ -306,6 +306,62 @@ test('group and ungroup controllers fail closed before mutation when finalizatio
   assert.equal(ungroupCalls, 0);
 });
 
+test('group and ungroup controllers roll back when finalization rejects the mutation', () => {
+  const calls = [];
+  const slide = {
+    id: 'slide-1',
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 100, bottom: 100 };
+    }
+  };
+  const group = { id: 'group-1', parentElement: slide };
+  const transaction = { id: 'markup-tx' };
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent: slide,
+      selection: [{ id: 'first' }, { id: 'second' }],
+      groupPlan: { bounds: { left: 10, top: 20 }, nextItems: [] }
+    }),
+    buildUngroupSelectionActionState: () => ({
+      canUngroup: true,
+      slide,
+      groups: [group]
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getSlideMetrics: () => ({ scaleX: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: () => [],
+    applyGroupMutation: () => ({ didApply: true, group, transaction }),
+    applyUngroupMutation: () => ({
+      didApply: true,
+      restoredElements: [{ id: 'child' }],
+      restoredGroups: [],
+      transaction
+    }),
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction) {
+        calls.push(['rollback', currentTransaction, direction]);
+        return { didApply: true };
+      }
+    },
+    commitSelectionState: (state) => calls.push(['selection', state]),
+    finalizeDeckMutation: () => false
+  });
+
+  assert.equal(controller.group(), false);
+  assert.equal(controller.ungroup(), false);
+  assert.deepEqual(calls, [
+    ['selection', { selectedElements: [group] }],
+    ['rollback', transaction, 'undo'],
+    ['selection', { selectedElements: [] }],
+    ['selection', { selectedElements: [{ id: 'child' }] }],
+    ['rollback', transaction, 'undo'],
+    ['selection', { selectedElements: [] }]
+  ]);
+});
+
 test('group controller fails closed when canonical builder construction throws', () => {
   let groupCalls = 0;
   const slide = { id: 'slide-1' };

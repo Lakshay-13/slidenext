@@ -247,14 +247,17 @@
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: [mutation.group] });
       }
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation('Auto: Grouped Elements', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          debounceHistory: true,
-          transaction: mutation.transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
+      const finalizeResult = finalizeDeckMutation('Auto: Grouped Elements', {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true,
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+      if (finalizeResult === false) {
+        rollbackGroupMutation(mutation.transaction, doc);
+        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        return false;
       }
       return true;
     }
@@ -367,14 +370,17 @@
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: mutation.restoredElements });
       }
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation('Auto: Ungrouped Elements', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          debounceHistory: true,
-          transaction: mutation.transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
+      const finalizeResult = finalizeDeckMutation('Auto: Ungrouped Elements', {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true,
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+      if (finalizeResult === false) {
+        rollbackGroupMutation(mutation.transaction, doc);
+        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        return false;
       }
       return true;
     }
