@@ -17,6 +17,12 @@
       && Array.isArray(value.slides);
   }
 
+  function normalizeStudioEditorCanonicalLayoutMode(value) {
+    if (typeof value !== 'string') return '';
+    const normalizedValue = value.trim().toLowerCase();
+    return normalizedValue === 'freeform' ? 'absolute' : normalizedValue;
+  }
+
   function createStudioEditorCanonicalState(options = {}) {
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
@@ -271,7 +277,9 @@
     if (!canonicalDeck) return fallbackReader;
     return function readCanonicalFreeformState(element) {
       const canonicalNode = readCanonicalNode(element);
-      const mode = canonicalNode && canonicalNode.layout && canonicalNode.layout.mode;
+      const mode = normalizeStudioEditorCanonicalLayoutMode(
+        canonicalNode && canonicalNode.layout && canonicalNode.layout.mode
+      );
       if (mode === 'absolute') return true;
       if (mode === 'flow') return false;
       if (typeof mode === 'string' && mode.trim()) return false;
