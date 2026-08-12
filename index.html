@@ -7981,7 +7981,7 @@
         if (typeof buildRemovalSelectionActionState.builder !== 'function') {
           buildRemovalSelectionActionState.builder = removalApi.createStudioRemovalActionStateBuilder({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getLockedState(sourceDoc) {
               const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'

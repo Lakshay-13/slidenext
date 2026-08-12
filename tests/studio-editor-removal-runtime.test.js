@@ -53,6 +53,10 @@ test('index wires removal through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorRemovalRuntime\.createStudioEditorRemovalRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorRemovalController\.createStudioEditorRemovalController\(/

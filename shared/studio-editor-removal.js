@@ -50,7 +50,7 @@
 
     return function buildStudioEditorRemovalActionState(doc = null) {
       const resolvedDoc = doc || getDocument();
-      return buildStudioRemovalActionState(getSelectedElements(), {
+      return buildStudioRemovalActionState(getSelectedElements(resolvedDoc), {
         isLocked: getLockedState(resolvedDoc),
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });
