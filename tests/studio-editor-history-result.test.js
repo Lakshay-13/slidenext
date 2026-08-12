@@ -29,6 +29,7 @@ test('index loads the shared history result contract before its consumers', () =
   const templateControllerIndex = indexHtml.indexOf('/shared/studio-editor-template-controller.js');
   const activeSlideViewIndex = indexHtml.indexOf('/shared/studio-editor-active-slide-view.js');
   const historyControllerIndex = indexHtml.indexOf('/shared/studio-editor-history-controller.js');
+  const historyModuleIndex = indexHtml.indexOf('/shared/studio-history.js');
   const frameControllerIndex = indexHtml.indexOf('/shared/studio-editor-frame-controller.js');
 
   assert.ok(helperIndex >= 0);
@@ -46,6 +47,7 @@ test('index loads the shared history result contract before its consumers', () =
   assert.ok(helperIndex < templateControllerIndex);
   assert.ok(helperIndex < activeSlideViewIndex);
   assert.ok(helperIndex < historyControllerIndex);
+  assert.ok(helperIndex < historyModuleIndex);
   assert.ok(helperIndex < frameControllerIndex);
   assert.equal((indexHtml.match(/\/shared\/studio-editor-history-result\.js/g) || []).length, 1);
 });

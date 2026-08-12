@@ -1,12 +1,21 @@
 (function (root, factory) {
-  const api = factory();
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioHistory = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+
   function isStudioHistoryCanonicalDeckLike(value) {
     return !!value
       && typeof value === 'object'
@@ -496,10 +505,7 @@
 
     return function runHistoryStep() {
       const flushResult = flushPendingHistory();
-      const flushFailed = flushResult === false
-        || (flushResult
-          && typeof flushResult === 'object'
-          && flushResult.didCapture === false);
+      const flushFailed = isStudioHistoryCaptureFailure(flushResult);
       if (flushFailed && hasPendingHistory) {
         let pendingHistory = true;
         try {
@@ -850,7 +856,7 @@
         scheduleOptions
       );
       setTimer(nextCaptureState.nextTimer);
-      if (!debounce && nextCaptureState && nextCaptureState.didCapture === false) {
+      if (!debounce && nextCaptureState && isStudioHistoryCaptureFailure(nextCaptureState)) {
         if (canRestoreLiveCanonicalDeck) {
           setLiveCanonicalDeck(previousLiveCanonicalDeck);
         }
