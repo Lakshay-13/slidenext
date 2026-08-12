@@ -221,9 +221,13 @@
 
     return function finalizeStudioSlideMutation(versionLabel, transaction = null, canonicalDeck = null) {
       if (canonicalDeck) {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+        )) return false;
       } else {
-        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(saveHistoryState, false, transaction)
+        )) return false;
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
@@ -256,19 +260,19 @@
             preferLiveCanonicalDeck: false
           });
           if (canonicalDeck) {
-            return saveHistoryState(false, null, canonicalDeck);
+            return captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
           } else {
-            return saveHistoryState();
+            return captureStudioHistoryState(saveHistoryState);
           }
         }
-      : saveHistoryState;
+      : (...args) => captureStudioHistoryState(saveHistoryState, ...args);
 
     if (captureStudioDeckViewBeforeSlideMutation) {
       return (iframeDoc) => captureStudioDeckViewBeforeSlideMutation({
         doc: iframeDoc,
         saveHistoryState: buildCanonicalDeck
           ? () => captureHistoryBaseline(iframeDoc)
-          : saveHistoryState,
+          : captureHistoryBaseline,
         getActiveSlideId,
         getCommittedSelectedElementIds
       });
@@ -304,9 +308,18 @@
 
     if (typeof options.saveHistoryState === 'function') {
       if (hasCanonicalDeck) {
-        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, options.canonicalDeck))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(
+            options.saveHistoryState,
+            false,
+            transaction,
+            options.canonicalDeck
+          )
+        )) return false;
       } else {
-        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(options.saveHistoryState, false, transaction)
+        )) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
@@ -339,9 +352,13 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, canonicalDeck))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(options.saveHistoryState, false, transaction, canonicalDeck)
+        )) return false;
       } else {
-        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
+        if (isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(options.saveHistoryState, false, transaction)
+        )) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
