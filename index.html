@@ -1503,6 +1503,7 @@
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
   <script src="/shared/studio-editor-shell-controller.js"></script>
   <script src="/shared/studio-editor-launch-source.js"></script>
+  <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
@@ -3756,31 +3757,12 @@
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
       : null;
-    const studioEditorSessionRuntime = typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
-      && SlideNextStudioEditorSessionRuntime
-      && typeof SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime === 'function'
-      ? SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime({
-          sessionApi: typeof SlideNextStudioEditorSession !== 'undefined'
-            ? SlideNextStudioEditorSession
-            : null,
-          sessionResetApi: typeof SlideNextStudioEditorSessionResetController !== 'undefined'
-            ? SlideNextStudioEditorSessionResetController
-            : null,
-          sessionUiApi: typeof SlideNextStudioEditorSessionUiController !== 'undefined'
-            ? SlideNextStudioEditorSessionUiController
-            : null,
-          shellApi: typeof SlideNextStudioEditorShellController !== 'undefined'
-            ? SlideNextStudioEditorShellController
-            : null,
-          presentationMetadataApi: typeof SlideNextStudioEditorPresentationMetadataController !== 'undefined'
-            ? SlideNextStudioEditorPresentationMetadataController
-            : null,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          deckContextApi: typeof SlideNextStudioDeckContext !== 'undefined'
-            ? SlideNextStudioDeckContext
-            : null,
+    const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorSessionRuntimeOptions
+      : null;
+    const studioEditorSessionRuntimeOptions = studioEditorSessionRuntimeOptionsApi
+      && typeof studioEditorSessionRuntimeOptionsApi.createStudioEditorSessionRuntimeOptions === 'function'
+      ? studioEditorSessionRuntimeOptionsApi.createStudioEditorSessionRuntimeOptions({
           documentRef: document,
           getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
@@ -3817,6 +3799,14 @@
           generateThumbnails,
           syncStudioChromeToActiveSlide
         })
+      : null;
+    const studioEditorSessionRuntime = studioEditorSessionRuntimeOptions
+      && typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
+      && SlideNextStudioEditorSessionRuntime
+      && typeof SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime === 'function'
+      ? SlideNextStudioEditorSessionRuntime.createStudioEditorSessionRuntime(
+          studioEditorSessionRuntimeOptions
+        )
       : null;
     const studioEditorSessionStateController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionStateController

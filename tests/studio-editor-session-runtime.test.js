@@ -74,6 +74,14 @@ test('index wires session lifecycle composition through the runtime module', () 
 
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-session-runtime-options\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorSessionRuntimeOptionsApi\.createStudioEditorSessionRuntimeOptions\(/
+  );
+  assert.match(
+    fileContent,
     /<script src="\/shared\/studio-editor-session-runtime\.js"><\/script>/
   );
   assert.match(
@@ -82,7 +90,7 @@ test('index wires session lifecycle composition through the runtime module', () 
   );
   assert.match(
     fileContent,
-    /deckContextApi: typeof SlideNextStudioDeckContext !== 'undefined'\s+\?\s+SlideNextStudioDeckContext\s+: null/
+    /resolveLoadOptions: \(sessionToken\) => createCurrentStudioPresentationMetadataLoadOptions\(sessionToken\)/
   );
   assert.doesNotMatch(
     fileContent,
