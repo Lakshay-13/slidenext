@@ -58,6 +58,17 @@
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
+    const captureHistoryState = historyResultApi
+      && typeof historyResultApi.captureStudioHistoryState === 'function'
+      ? historyResultApi.captureStudioHistoryState
+      : (saveHistory, ...args) => {
+          if (typeof saveHistory !== 'function') return false;
+          try {
+            return saveHistory(...args);
+          } catch (error) {
+            return false;
+          }
+        };
     const persistenceApi = options.persistenceApi || null;
     const applyPersistenceSuccess = typeof options.applyPersistenceSuccess === 'function'
       ? options.applyPersistenceSuccess
@@ -101,14 +112,15 @@
       }
       let historyCaptureResult = null;
       if (saveHistoryState) {
-        try {
-          if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
-            historyCaptureResult = saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
-          } else {
-            historyCaptureResult = saveHistoryState(false);
-          }
-        } catch (error) {
-          historyCaptureResult = false;
+        if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
+          historyCaptureResult = captureHistoryState(
+            saveHistoryState,
+            false,
+            null,
+            initialPersistedDeckState.canonicalDeck
+          );
+        } else {
+          historyCaptureResult = captureHistoryState(saveHistoryState, false);
         }
       }
       initialHistoryCaptureFailed = isHistoryCaptureFailure(historyCaptureResult);
