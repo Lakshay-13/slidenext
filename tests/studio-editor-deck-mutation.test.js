@@ -148,6 +148,17 @@ test('finalizeStudioEditorDeckMutation forwards the mutation document in its fal
   ]);
 });
 
+test('finalizeStudioEditorDeckMutation propagates fallback history rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorDeckMutation('Auto: Rejected', {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState: () => false,
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };
@@ -274,6 +285,18 @@ test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history 
   ]);
 });
 
+test('finalizeStudioEditorLayerOrderMutation propagates fallback history rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Rejected', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState: () => false,
+    triggerAutoSave: () => {
+      throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
@@ -304,4 +327,18 @@ test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback
     ['save'],
     ['version', 'Auto: Changed Background']
   ]);
+});
+
+test('finalizeStudioEditorWallpaperMutation propagates fallback history rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Rejected',
+    { id: 'tx' },
+    { kind: 'slidenext.deck', slides: [] },
+    {
+      saveHistoryState: () => false,
+      triggerAutoSave: () => {
+        throw new Error('autosave should not run');
+      }
+    }
+  ), false);
 });

@@ -135,8 +135,8 @@
     if (Object.prototype.hasOwnProperty.call(resolvedMutationOptions, 'canonicalDeck')) {
       historyArgs.push(resolvedMutationOptions.canonicalDeck);
     }
-    saveHistoryState(...historyArgs);
-    triggerAutoSave();
+    if (saveHistoryState(...historyArgs) === false) return false;
+    if (triggerAutoSave() === false) return false;
     if (versionLabel) {
       triggerAutoVersion(versionLabel);
     }
@@ -256,13 +256,13 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        options.saveHistoryState(false, transaction, canonicalDeck);
+        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
       } else {
-        options.saveHistoryState(false, transaction);
+        if (options.saveHistoryState(false, transaction) === false) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      options.triggerAutoSave();
+      if (options.triggerAutoSave() === false) return false;
     }
     if (typeof options.updateLayersList === 'function') {
       options.updateLayersList();
@@ -308,13 +308,13 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        options.saveHistoryState(false, transaction, canonicalDeck);
+        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
       } else {
-        options.saveHistoryState(false, transaction);
+        if (options.saveHistoryState(false, transaction) === false) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      options.triggerAutoSave();
+      if (options.triggerAutoSave() === false) return false;
     }
     if (versionLabel && typeof options.triggerAutoVersion === 'function') {
       options.triggerAutoVersion(versionLabel);
