@@ -7023,13 +7023,20 @@
         return studioEditorPersistenceController.resolvePersistedDeckStateWithContent(persistedDeckState);
       }
       if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') {
-        const hasPersistedDeckStateReaderAdapter = (
-          typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-          && SlideNextStudioEditorPersistenceState
-          && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
-        );
+        const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+          ? SlideNextStudioEditorPersistence
+          : null;
+        const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+          ? SlideNextStudioEditorPersistenceState
+          : null;
+        const createStudioEditorPersistedDeckStateReaderAdapter = (
+          persistenceStateApi
+          && typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
+        )
+          ? persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter
+          : null;
         if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function'
-          && hasPersistedDeckStateReaderAdapter) {
+          && createStudioEditorPersistedDeckStateReaderAdapter) {
           getCurrentEditorPersistedDeckState();
         }
         if (getCurrentEditorPersistedDeckState.stateReader
@@ -7040,11 +7047,10 @@
           );
         } else {
           const createStudioPersistedDeckStateContentResolver = (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver === 'function'
+            persistenceApi
+            && typeof persistenceApi.createStudioPersistedDeckStateContentResolver === 'function'
           )
-            ? SlideNextStudioEditorPersistence.createStudioPersistedDeckStateContentResolver
+            ? persistenceApi.createStudioPersistedDeckStateContentResolver
             : null;
           if (!createStudioPersistedDeckStateContentResolver) return null;
           resolveEditorPersistedDeckStateWithContent.contentResolver = createStudioPersistedDeckStateContentResolver({
