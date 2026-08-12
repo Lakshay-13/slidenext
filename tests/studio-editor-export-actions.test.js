@@ -71,6 +71,26 @@ test('PDF export rejects malformed canonical decks before opening print flow', (
   assert.deepEqual(statuses, ['pdf-export-failed']);
 });
 
+test('PDF export forwards server failure details to the status callback', async () => {
+  const statuses = [];
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      async exportStudioPdf() {
+        return { success: false, error: 'Cannot export an empty deck' };
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(await exportPdf(), false);
+  assert.deepEqual(statuses, [
+    ['exporting-pdf'],
+    ['pdf-export-failed', 'Cannot export an empty deck']
+  ]);
+});
+
 test('PDF export forwards resource progress through the existing status callback', () => {
   const statuses = [];
   let printOptions = null;
@@ -300,6 +320,26 @@ test('PPTX export rejects malformed canonical decks before invoking exporter', a
   assert.equal(await exportPptx(), false);
   assert.equal(exportCalls, 0);
   assert.deepEqual(statuses, ['export-failed']);
+});
+
+test('PPTX export forwards exporter failure details to the status callback', async () => {
+  const statuses = [];
+  const exportPptx = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pptxExport: {
+      async exportStudioPptx() {
+        return { success: false, error: 'PptxGenJS is unavailable' };
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(await exportPptx(), false);
+  assert.deepEqual(statuses, [
+    ['exporting'],
+    ['export-failed', 'PptxGenJS is unavailable']
+  ]);
 });
 
 test('PDF and PPTX exports use structural canonical validation without an injected validator', async () => {

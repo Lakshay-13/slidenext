@@ -24,11 +24,14 @@
     const warnings = Array.isArray(options.warnings)
       ? options.warnings.filter(warning => typeof warning === 'string' && warning.trim())
       : [];
+    const errorMessage = typeof options.error === 'string' && options.error.trim()
+      ? options.error.trim()
+      : '';
     const isPptxWarningState = options.state === 'exported-with-warnings';
     const isPdfWarningState = options.state === 'pdf-exported-with-warnings';
     statusEl.title = (isPptxWarningState || isPdfWarningState) && warnings.length > 0
       ? `${isPdfWarningState ? 'PDF' : 'PPTX'} warnings:\n${warnings.map(warning => `- ${warning}`).join('\n')}${options.warningsTruncated === true ? '\n- Additional warnings not shown' : ''}`
-      : '';
+      : errorMessage;
     if (state === 'loading') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Loading deck...</span>`;
     } else if (state === 'saving') {
@@ -72,12 +75,18 @@
     const progress = options.warningCount && typeof options.warningCount === 'object'
       ? options.warningCount
       : null;
+    const error = typeof options.warningCount === 'string'
+      ? options.warningCount
+      : options.error;
     return setStudioAutoSaveStatus({
       ...options,
-      warningCount: progress ? 0 : options.warningCount,
+      warningCount: progress || typeof options.warningCount === 'string'
+        ? 0
+        : options.warningCount,
       warnings: progress ? [] : options.warnings,
       warningsTruncated: progress ? false : options.warningsTruncated,
-      progressPercent: progress ? progress.percent : options.progressPercent
+      progressPercent: progress ? progress.percent : options.progressPercent,
+      error
     });
   }
 
@@ -119,12 +128,14 @@
       warningsTruncated = false
     ) {
       try {
+        const error = typeof warningCount === 'string' ? warningCount : '';
         return setStatus({
           documentRef: getDocument(),
           state,
-          warningCount,
+          warningCount: error ? 0 : warningCount,
           warnings,
-          warningsTruncated
+          warningsTruncated,
+          error
         });
       } catch (error) {
         return false;

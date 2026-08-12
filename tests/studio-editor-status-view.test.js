@@ -93,6 +93,23 @@ test('setStudioAutoSaveStatus surfaces PDF preflight warnings separately from PP
   assert.match(statusEl.title, /missing asset/);
 });
 
+test('setStudioAutoSaveStatus preserves export failure details in the status tooltip', () => {
+  const statusEl = { innerHTML: '', title: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({
+    documentRef,
+    state: 'export-failed',
+    error: 'Cannot export an empty deck'
+  }), true);
+  assert.match(statusEl.innerHTML, /PPTX Export Failed/);
+  assert.equal(statusEl.title, 'Cannot export an empty deck');
+});
+
 test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progress', () => {
   const statusEl = { innerHTML: '', title: '' };
   const documentRef = {
@@ -117,6 +134,13 @@ test('setStudioAutoSaveStatusWithWarningCount normalizes warnings and PDF progre
     warningCount: { percent: 60 }
   }), true);
   assert.match(statusEl.innerHTML, /Exporting PDF 60%/);
+
+  assert.equal(statusView.setStudioAutoSaveStatusWithWarningCount({
+    documentRef,
+    state: 'pdf-export-failed',
+    warningCount: 'PDF export request failed (HTTP 503)'
+  }), true);
+  assert.equal(statusEl.title, 'PDF export request failed (HTTP 503)');
 });
 
 test('createStudioAutoSaveStatusSync resolves the document and progress through callbacks', () => {
@@ -152,6 +176,26 @@ test('createStudioAutoSaveStatusWithWarningCountSync fails closed when status re
   });
 
   assert.equal(syncStatus('exported-with-warnings', 2, ['Missing asset'], true), false);
+});
+
+test('createStudioAutoSaveStatusWithWarningCountSync forwards string export errors separately from warnings', () => {
+  const calls = [];
+  const syncStatus = statusView.createStudioAutoSaveStatusWithWarningCountSync({
+    setStatus(options) {
+      calls.push(options);
+      return true;
+    }
+  });
+
+  assert.equal(syncStatus('export-failed', 'PPTX export request failed'), true);
+  assert.deepEqual(calls, [{
+    documentRef: null,
+    state: 'export-failed',
+    warningCount: 0,
+    warnings: [],
+    warningsTruncated: false,
+    error: 'PPTX export request failed'
+  }]);
 });
 
 test('createStudioSaveButtonStateSync resolves the document through callbacks', () => {

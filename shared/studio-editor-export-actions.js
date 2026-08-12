@@ -137,12 +137,20 @@
       ? options.setStatus
       : () => {};
 
+    const getErrorMessage = (error) => error && typeof error.message === 'string' && error.message.trim()
+      ? error.message.trim()
+      : typeof error === 'string' && error.trim()
+        ? error.trim()
+        : '';
+
     return function exportPdf() {
       const actionState = resolveReadyState();
       if (!actionState || !actionState.canUseDeckActions) return false;
 
-      const failPdfExport = () => {
-        setStatus('pdf-export-failed');
+      const failPdfExport = (error) => {
+        const message = getErrorMessage(error);
+        if (message) setStatus('pdf-export-failed', message);
+        else setStatus('pdf-export-failed');
         return false;
       };
       if (!pdfExport
@@ -200,7 +208,7 @@
                 setStatus('exporting-pdf', progress);
               }
             });
-            if (!result || !result.success) return failPdfExport();
+            if (!result || !result.success) return failPdfExport(result && result.error);
             setStatus(
               result.warningCount > 0 ? 'pdf-exported-with-warnings' : 'pdf-exported',
               result.warningCount,
@@ -209,7 +217,7 @@
             );
             return true;
           } catch (error) {
-            return failPdfExport();
+            return failPdfExport(error);
           } finally {
             restoreExportButton();
           }
@@ -220,7 +228,7 @@
       try {
         html = buildPreviewHtml(canonicalDeck);
       } catch (error) {
-        return failPdfExport();
+        return failPdfExport(error);
       }
       if (!html) return failPdfExport();
 
@@ -310,6 +318,11 @@
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
+    const getErrorMessage = (error) => error && typeof error.message === 'string' && error.message.trim()
+      ? error.message.trim()
+      : typeof error === 'string' && error.trim()
+        ? error.trim()
+        : '';
     const sourcePath = typeof options.sourcePath === 'string' ? options.sourcePath : '';
     const filename = typeof options.filename === 'string' && options.filename.trim()
       ? options.filename
@@ -355,7 +368,9 @@
           }
         });
         if (!result || !result.success) {
-          setStatus('export-failed');
+          const message = getErrorMessage(result && result.error);
+          if (message) setStatus('export-failed', message);
+          else setStatus('export-failed');
           return false;
         }
         setStatus(
@@ -366,7 +381,9 @@
         );
         return true;
       } catch (error) {
-        setStatus('export-failed');
+        const message = getErrorMessage(error);
+        if (message) setStatus('export-failed', message);
+        else setStatus('export-failed');
         return false;
       } finally {
         if (exportButton) {
