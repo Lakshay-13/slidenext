@@ -107,6 +107,29 @@ test('convert fails closed before DOM mutation when canonical sidecar constructi
   });
 });
 
+test('convert fails closed before DOM mutation when finalization is unavailable', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { position: '', margin: '8px', left: '', top: '', width: '50%', height: '' }
+  };
+  const controller = controllerApi.createStudioEditorLayoutConversionController({
+    conversionApi: { buildStudioFlowToFreeformPlan: () => createPlan(element) },
+    transactionApi: { createStudioStyleTransaction: () => ({ kind: 'style' }) },
+    getDocument: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' })
+  });
+
+  assert.equal(controller.convert(), false);
+  assert.deepEqual(element.style, {
+    position: '',
+    margin: '8px',
+    left: '',
+    top: '',
+    width: '50%',
+    height: ''
+  });
+});
+
 test('convert does not mutate when the planner rejects the selection', () => {
   const element = {
     style: { position: '', margin: '8px' }

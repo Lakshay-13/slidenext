@@ -148,6 +148,10 @@
         if (updateActionState) updateActionState(doc);
         return false;
       }
+      if (!finalizeDeckMutation) {
+        if (updateActionState) updateActionState(doc);
+        return false;
+      }
 
       let transaction = null;
       try {
