@@ -2032,6 +2032,43 @@ test('getActiveSlideId delegates the document and DOM options to the shared DOM 
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
 });
 
+test('getActiveSlideId prefers the stored slide ID when no document is supplied', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const activeSlideIdSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorTransformRuntime ='
+  );
+  const getActiveSlideIdSource = extractFunctionSource(
+    fileContent,
+    'function getActiveSlideId(doc = getIframeDoc()) {',
+    '\n\n    function applyActiveSlideMetadataEdit'
+  );
+  const context = {
+    studioEditorStateBridge: {
+      getSlideId() {
+        return ' state-slide ';
+      }
+    },
+    SlideNextStudioEditorDom: {
+      getStudioActiveSlideId() {
+        throw new Error('DOM active-slide reader should not run');
+      }
+    },
+    getEditorDomOptions() {
+      return {};
+    },
+    getIframeDoc() {
+      return {};
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(`${activeSlideIdSource}\n${getActiveSlideIdSource}`, context);
+
+  assert.equal(context.getActiveSlideId(), 'state-slide');
+});
+
 test('getActiveSlideId fails closed when the shared DOM module is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const activeSlideIdSource = extractFunctionSource(
