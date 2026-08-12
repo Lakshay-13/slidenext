@@ -516,7 +516,7 @@ test('syncLayerOrderZIndexInput prefers the live canonical deck before rebuildin
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const zIndexInput = { value: '' };
   const liveCanonicalTarget = { id: 'node-1', layout: { zIndex: 19 } };
-  const doc = { id: 'live-doc' };
+  const targetDocument = { id: 'target-document' };
   let buildCalls = 0;
   const context = {
     SlideNextStudioEditorLayerOrder: layerOrder,
@@ -527,13 +527,13 @@ test('syncLayerOrderZIndexInput prefers the live canonical deck before rebuildin
       }
     },
     getIframeDoc() {
-      return doc;
+      throw new Error('target document should avoid the global iframe fallback');
     },
     getStudioEditorSessionToken() {
       return 41;
     },
     resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
-      assert.equal(sourceDoc, doc);
+      assert.equal(sourceDoc, targetDocument);
       assert.equal(sessionToken, 41);
       return { slides: [{ nodes: [liveCanonicalTarget] }] };
     },
@@ -548,6 +548,7 @@ test('syncLayerOrderZIndexInput prefers the live canonical deck before rebuildin
 
   assert.equal(context.syncLayerOrderZIndexInput({
     dataset: { editorId: 'node-1' },
+    ownerDocument: targetDocument,
     style: { zIndex: '12' }
   }), zIndexInput);
   assert.equal(zIndexInput.value, '19');

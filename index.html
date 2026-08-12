@@ -9984,16 +9984,17 @@
         return null;
       }
       const targetId = target && target.dataset && target.dataset.editorId;
+      const targetDocument = target && target.ownerDocument ? target.ownerDocument : null;
       let canonicalDeck = null;
       if (targetId && typeof resolveEditorUiCanonicalDeck === 'function') {
         try {
-          canonicalDeck = resolveEditorUiCanonicalDeck(getIframeDoc());
+          canonicalDeck = resolveEditorUiCanonicalDeck(targetDocument || getIframeDoc());
         } catch (err) {
           canonicalDeck = null;
         }
       } else if (targetId && typeof buildEditorCanonicalDeck === 'function') {
         try {
-          canonicalDeck = buildEditorCanonicalDeck(getIframeDoc());
+          canonicalDeck = buildEditorCanonicalDeck(targetDocument || getIframeDoc());
         } catch (err) {
           canonicalDeck = null;
         }
