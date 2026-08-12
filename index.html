@@ -1475,6 +1475,7 @@
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
+  <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
@@ -3670,19 +3671,12 @@
     const studioEditorHistoryController = studioEditorHistoryControllerRuntime
       ? studioEditorHistoryControllerRuntime.historyController
       : null;
-    const studioEditorPersistenceRuntime = typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
-      && SlideNextStudioEditorPersistenceRuntime
-      && typeof SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime === 'function'
-      ? SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime({
-          controllerApi: typeof SlideNextStudioEditorPersistenceController !== 'undefined'
-            ? SlideNextStudioEditorPersistenceController
-            : null,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
+    const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorPersistenceRuntimeOptions
+      : null;
+    const studioEditorPersistenceRuntimeOptions = studioEditorPersistenceRuntimeOptionsApi
+      && typeof studioEditorPersistenceRuntimeOptionsApi.createStudioEditorPersistenceRuntimeOptions === 'function'
+      ? studioEditorPersistenceRuntimeOptionsApi.createStudioEditorPersistenceRuntimeOptions({
           resolveCanonicalDeck(canonicalDeck) {
             return typeof resolveEditorStoredCanonicalDeck === 'function'
               ? resolveEditorStoredCanonicalDeck({ canonicalDeck }) || null
@@ -3741,9 +3735,6 @@
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
           getPersistedPlaybackState: getStudioPersistedPlaybackState,
-          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
-            ? SlideNextDeckPersistence
-            : null,
           getSlides,
           slideIdAttr: EDITOR_SLIDE_ID_ATTR,
           resolveFallbackActiveSlideId: (doc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
@@ -3753,6 +3744,14 @@
             })
           )
         })
+      : null;
+    const studioEditorPersistenceRuntime = studioEditorPersistenceRuntimeOptions
+      && typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
+      && SlideNextStudioEditorPersistenceRuntime
+      && typeof SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime === 'function'
+      ? SlideNextStudioEditorPersistenceRuntime.createStudioEditorPersistenceRuntime(
+          studioEditorPersistenceRuntimeOptions
+        )
       : null;
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
