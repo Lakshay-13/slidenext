@@ -787,6 +787,17 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
   assert.equal(scheduledCalls[0][1], false);
 });
 
+test('createStudioHistorySaveHandler reports an immediate history capture failure', () => {
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    captureState() {
+      return { didCapture: false, historyEntry: null };
+    },
+    setTimer() {}
+  });
+
+  assert.equal(saveHistoryState(false, { id: 'transaction' }), false);
+});
+
 test('scheduleStudioHistoryCapture cancels a pending debounce before an immediate capture', () => {
   const clearedTimers = [];
   let captureCalls = 0;

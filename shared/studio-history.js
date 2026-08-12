@@ -673,10 +673,18 @@
       if (hasCurrentTimer) {
         clearScheduledCapture(currentTimer);
       }
-      captureFn();
+      let captureResult;
+      try {
+        captureResult = captureFn();
+      } catch (error) {
+        captureResult = false;
+      }
       return {
         nextTimer: null,
-        didCapture: true
+        didCapture: captureResult !== false
+          && !(captureResult
+            && typeof captureResult === 'object'
+            && captureResult.historyEntry === null)
       };
     }
 
@@ -807,6 +815,9 @@
         scheduleOptions
       );
       setTimer(nextCaptureState.nextTimer);
+      if (!debounce && nextCaptureState && nextCaptureState.didCapture === false) {
+        return false;
+      }
       return nextCaptureState;
     };
   }
