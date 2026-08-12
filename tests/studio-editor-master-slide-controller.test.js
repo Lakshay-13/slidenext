@@ -434,6 +434,33 @@ test('assignMasterSlide restores the active slide when persistence rejects', () 
   assert.equal(masterSlidesChanged, 0);
 });
 
+test('assignMasterSlide restores the active slide when canonical finalization throws', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'body' }] }]
+  });
+  const originalSlide = {};
+  const parent = createReplaceableSlide(originalSlide);
+  let masterSlidesChanged = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => createMasterSlideDocument(parent),
+    getSlides: () => [parent.current],
+    finalizeMutation: () => {
+      throw new Error('master finalization failed');
+    },
+    onMasterSlidesChanged: () => { masterSlidesChanged += 1; }
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), false);
+  assert.equal(parent.current, originalSlide);
+  assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[0], 'masterSlideId'), false);
+  assert.equal(masterSlidesChanged, 0);
+});
+
 test('assignMasterSlide restores the active slide when history capture fails', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],

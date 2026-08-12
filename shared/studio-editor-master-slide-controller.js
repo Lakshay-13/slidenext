@@ -217,7 +217,13 @@
 
     function commitDeck(nextCanonicalDeck, versionLabel = '', onRejected = null) {
       if (finalizeMutation) {
-        const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        let finalizeResult = false;
+        try {
+          finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        } catch (err) {
+          if (typeof onRejected === 'function') onRejected();
+          return null;
+        }
         if (finalizeResult === false) {
           if (typeof onRejected === 'function') onRejected();
           return null;
