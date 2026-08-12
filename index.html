@@ -5821,7 +5821,12 @@
       if (typeof studioEditorFrameController !== 'undefined'
         && studioEditorFrameController
         && typeof studioEditorFrameController.init === 'function') {
-        const didInitialize = studioEditorFrameController.init();
+        let didInitialize = false;
+        try {
+          didInitialize = studioEditorFrameController.init();
+        } catch (error) {
+          didInitialize = false;
+        }
         if (typeof setStudioFrameLoadingState === 'function') {
           setStudioFrameLoadingState(didInitialize ? 'ready' : 'error');
         }
@@ -5868,14 +5873,15 @@
         studioEditorFrameInteractions.attach(iframeDoc);
       }
 
-      frameBootstrapApi.runStudioFrameBootstrap(iframeDoc, {
-        setupIframeDragging,
-        generateThumbnails,
-        syncStudioChromeToActiveSlide,
-        setActiveSlide,
-        bindDeckNavigationSync,
-        observeDeckActiveSlideState,
-        captureInitialHistoryState: () => {
+      try {
+        frameBootstrapApi.runStudioFrameBootstrap(iframeDoc, {
+          setupIframeDragging,
+          generateThumbnails,
+          syncStudioChromeToActiveSlide,
+          setActiveSlide,
+          bindDeckNavigationSync,
+          observeDeckActiveSlideState,
+          captureInitialHistoryState: () => {
           let initialPersistedDeckState = null;
           let historyCaptureResult = null;
           try {
@@ -5922,8 +5928,12 @@
               getStudioEditorSessionToken()
             );
           }
-        }
-      });
+          }
+        });
+      } catch (error) {
+        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
+        return false;
+      }
       updateDeckReadyToolbarActionState();
       setStudioAutoSaveStatus(initialHistoryCaptureFailed ? 'history-failed' : 'saved');
       syncInspectorForSelection();

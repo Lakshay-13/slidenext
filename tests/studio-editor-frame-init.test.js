@@ -920,6 +920,68 @@ test('initStudioFrame fails closed when legacy bootstrap runtimes are unavailabl
   assert.deepEqual(frameLoadingStates, ['error']);
 });
 
+test('initStudioFrame exposes an error state when the frame controller throws', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+  const frameLoadingStates = [];
+  const context = {
+    studioEditorFrameController: {
+      init() {
+        throw new Error('frame bootstrap failed');
+      }
+    },
+    setStudioFrameLoadingState(state) {
+      frameLoadingStates.push(state);
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  assert.equal(context.initStudioFrame(), false);
+  assert.deepEqual(frameLoadingStates, ['error']);
+});
+
+test('initStudioFrame exposes an error state when legacy bootstrap throws', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+  const iframeDoc = { addEventListener() {} };
+  const frameLoadingStates = [];
+  const context = {
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    SlideNextStudioEditorStyle: {
+      ensureStudioEditorStyle() {}
+    },
+    SlideNextStudioFrameBootstrap: {
+      runStudioFrameBootstrap() {
+        throw new Error('legacy bootstrap failed');
+      }
+    },
+    studioEditorFrameInteractions: null,
+    setStudioFrameLoadingState(state) {
+      frameLoadingStates.push(state);
+    },
+    syncIframeTheme() {},
+    makeElementsHoverable() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  assert.equal(context.initStudioFrame(), false);
+  assert.deepEqual(frameLoadingStates, ['error']);
+});
+
 test('initStudioFrame reuses the resolved canonical deck when capturing the initial persisted state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
