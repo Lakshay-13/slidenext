@@ -404,8 +404,8 @@ test('arrangeStudioElementLayer forwards the editor document to selection callba
       assert.equal(currentDoc, documentRef);
       return true;
     },
-    refreshLayerOrderUi() {
-      calls.push(['refreshLayerOrderUi']);
+    refreshLayerOrderUi(options) {
+      calls.push(['refreshLayerOrderUi', options]);
       return false;
     }
   }), false);
@@ -414,8 +414,34 @@ test('arrangeStudioElementLayer forwards the editor document to selection callba
     ['getDocument'],
     ['getSelectedElements', documentRef],
     ['selectionHasLockedElements', selectedElements, documentRef],
-    ['refreshLayerOrderUi']
+    ['refreshLayerOrderUi', { doc: documentRef }]
   ]);
+});
+
+test('arrangeStudioElementLayer forwards the editor document to successful layer persistence', () => {
+  const documentRef = { id: 'editor-doc' };
+  const target = { id: 'node-1' };
+  const transaction = { id: 'tx-arrange-document' };
+  const calls = [];
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'front',
+    getDocument: () => documentRef,
+    getSelectedElements: () => [target],
+    selectionHasLockedElements: () => false,
+    reorderSlideLayers: (action, elements, options) => {
+      options.onTransaction(transaction);
+      return true;
+    },
+    finalizeLayerOrderMutation(label, options) {
+      calls.push([label, options]);
+    }
+  }), true);
+
+  assert.deepEqual(calls, [[
+    'Auto: Rearranged Layers',
+    { transaction, doc: documentRef }
+  ]]);
 });
 
 test('refreshStudioLayerOrderUi preserves layer refresh ordering and result values', () => {
@@ -438,6 +464,28 @@ test('refreshStudioLayerOrderUi preserves layer refresh ordering and result valu
     }
   }), false);
   assert.deepEqual(calls, ['layers', 'controls', 'controls']);
+});
+
+test('refreshStudioLayerOrderUi forwards an explicit document to layer callbacks', () => {
+  const documentRef = { id: 'editor-doc' };
+  const calls = [];
+
+  assert.equal(layerController.refreshStudioLayerOrderUi({
+    doc: documentRef,
+    refreshLayersList: true,
+    updateLayersList(doc) {
+      calls.push(['layers', doc]);
+    },
+    updateLayerOrderActionState(doc) {
+      calls.push(['controls', doc]);
+    },
+    result: true
+  }), true);
+
+  assert.deepEqual(calls, [
+    ['layers', documentRef],
+    ['controls', documentRef]
+  ]);
 });
 
 test('syncStudioLayerOrderActionState composes active slide state for shared toolbar rendering', () => {

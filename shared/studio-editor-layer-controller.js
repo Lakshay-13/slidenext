@@ -123,12 +123,17 @@
         getElementByEditorId: options.getElementByEditorId
       });
     const element = resolveLayerRowElement(parentRow);
+    const targetDocument = element && element.ownerDocument ? element.ownerDocument : null;
     const refreshLayerOrderUi = typeof options.refreshLayerOrderUi === 'function'
       ? options.refreshLayerOrderUi
       : null;
     const refreshAfterNoOp = () => {
       if (refreshLayerOrderUi) {
-        refreshLayerOrderUi({ refreshLayersList: true, result: null });
+        refreshLayerOrderUi({
+          refreshLayersList: true,
+          result: null,
+          ...(targetDocument ? { doc: targetDocument } : {})
+        });
       }
       return false;
     };
@@ -166,7 +171,8 @@
     if (typeof options.finalizeLayerOrderMutation === 'function') {
       options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
         transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
+        ...(canonicalDeck ? { canonicalDeck } : {}),
+        ...(targetDocument ? { doc: targetDocument } : {})
       });
     }
     return true;
@@ -183,13 +189,16 @@
       ? options.refreshLayerOrderUi
       : () => false;
     const resolvedDoc = getDocument ? getDocument() : undefined;
+    const refreshForDocument = () => resolvedDoc
+      ? refreshLayerOrderUi({ doc: resolvedDoc })
+      : refreshLayerOrderUi();
     const targets = getSelectedElements(resolvedDoc) || [];
     if (targets.length === 0) {
-      return refreshLayerOrderUi();
+      return refreshForDocument();
     }
     if (typeof options.selectionHasLockedElements === 'function'
       && options.selectionHasLockedElements(targets, resolvedDoc)) {
-      return refreshLayerOrderUi();
+      return refreshForDocument();
     }
 
     let transaction = null;
@@ -205,7 +214,7 @@
       })
       : false;
     if (!didChange) {
-      return refreshLayerOrderUi();
+      return refreshForDocument();
     }
     if (typeof options.syncLayerOrderZIndexInput === 'function') {
       options.syncLayerOrderZIndexInput(targets[0]);
@@ -213,18 +222,22 @@
     if (typeof options.finalizeLayerOrderMutation === 'function') {
       options.finalizeLayerOrderMutation('Auto: Rearranged Layers', {
         transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
+        ...(canonicalDeck ? { canonicalDeck } : {}),
+        ...(resolvedDoc ? { doc: resolvedDoc } : {})
       });
     }
     return true;
   }
 
   function refreshStudioLayerOrderUi(options = {}) {
+    const hasDocument = Object.prototype.hasOwnProperty.call(options, 'doc');
     if (options.refreshLayersList && typeof options.updateLayersList === 'function') {
-      options.updateLayersList();
+      hasDocument ? options.updateLayersList(options.doc) : options.updateLayersList();
     }
     if (typeof options.updateLayerOrderActionState === 'function') {
-      options.updateLayerOrderActionState();
+      hasDocument
+        ? options.updateLayerOrderActionState(options.doc)
+        : options.updateLayerOrderActionState();
     }
     return options.result === undefined ? false : options.result;
   }
