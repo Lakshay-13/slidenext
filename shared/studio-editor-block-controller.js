@@ -143,7 +143,9 @@
         const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
         if (finalizeResult === false) return null;
       } else {
-        if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
+        if (saveHistoryState && saveHistoryState(false, null, nextCanonicalDeck) === false) {
+          return null;
+        }
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }

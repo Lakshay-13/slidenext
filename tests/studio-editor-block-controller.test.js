@@ -241,6 +241,28 @@ test('block controller reports rejected canonical save without publishing block 
   assert.equal(blocksChanged, 0);
 });
 
+test('block controller does not publish a saved block when history capture fails', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Heading' }]
+    }]
+  });
+  let blocksChanged = 0;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState: () => false,
+    onBlocksChanged: () => { blocksChanged += 1; }
+  });
+
+  assert.equal(controller.saveSelection({ id: 'rejected-block' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(sourceDeck, 'blocks'), false);
+  assert.equal(blocksChanged, 0);
+});
+
 test('block controller removes a saved block and finalizes persistence hooks', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [
