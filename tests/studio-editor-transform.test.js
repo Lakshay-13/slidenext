@@ -161,6 +161,35 @@ test('createStudioTransformSessionFinalizer closes the session before persisting
   ]);
 });
 
+test('createStudioTransformSessionFinalizer stops persistence hooks when history capture fails', () => {
+  const calls = [];
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    onSessionEnd() {
+      calls.push('end');
+    },
+    buildTransaction() {
+      calls.push('transaction');
+      return { type: 'style' };
+    },
+    saveHistoryState() {
+      calls.push('history');
+      return false;
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  assert.equal(finalizeSession({ id: 'move' }, {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  }), false);
+  assert.deepEqual(calls, ['end', 'transaction', 'history']);
+});
+
 test('createStudioTransformSessionFinalizer forwards an optional canonical deck sidecar', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

@@ -1128,13 +1128,13 @@
         }
         return;
       }
-      if (canonicalDeck) {
-        saveHistoryState(false, transaction, canonicalDeck);
-      } else {
-        saveHistoryState(false, transaction);
-      }
+      const historyCaptureResult = canonicalDeck
+        ? saveHistoryState(false, transaction, canonicalDeck)
+        : saveHistoryState(false, transaction);
+      if (historyCaptureResult === false) return false;
       triggerAutoSave();
       triggerAutoVersion(completionPlan.versionLabel);
+      return true;
     };
   }
 
