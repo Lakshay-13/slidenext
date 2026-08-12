@@ -1463,6 +1463,7 @@
   <script src="/shared/studio-editor-slide-metadata-runtime.js"></script>
   <script src="/shared/studio-editor-slide-routing-controller.js"></script>
   <script src="/shared/studio-editor-slide-routing-runtime.js"></script>
+  <script src="/shared/studio-editor-slide-routing-shell-runtime.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-active-slide-controller.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
@@ -2655,10 +2656,14 @@
     const studioEditorSlideMetadataController = studioEditorSlideMetadataRuntime
       ? studioEditorSlideMetadataRuntime.slideMetadataController
       : null;
-    const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingRuntime !== 'undefined'
-      && SlideNextStudioEditorSlideRoutingRuntime
-      && typeof SlideNextStudioEditorSlideRoutingRuntime.createStudioEditorSlideRoutingRuntime === 'function'
-      ? SlideNextStudioEditorSlideRoutingRuntime.createStudioEditorSlideRoutingRuntime({
+    const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingShellRuntime !== 'undefined'
+      && SlideNextStudioEditorSlideRoutingShellRuntime
+      && typeof SlideNextStudioEditorSlideRoutingShellRuntime.createStudioEditorSlideRoutingShellRuntime === 'function'
+      ? SlideNextStudioEditorSlideRoutingShellRuntime.createStudioEditorSlideRoutingShellRuntime({
+          routingRuntimeApi: typeof SlideNextStudioEditorSlideRoutingRuntime !== 'undefined'
+            ? SlideNextStudioEditorSlideRoutingRuntime
+            : null,
+          runtimeOptions: {
           routingApi: typeof SlideNextStudioEditorSlideRoutingController !== 'undefined'
             ? SlideNextStudioEditorSlideRoutingController
             : null,
@@ -2669,6 +2674,7 @@
           activateSlideByIndex: (index, options) => setActiveSlide(index, options),
           deleteSlideByIndex: (index) => deleteSlideNode(index),
           reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
+          }
         })
       : null;
     const studioEditorSlideRoutingController = studioEditorSlideRoutingRuntime
