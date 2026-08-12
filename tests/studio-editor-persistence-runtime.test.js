@@ -79,6 +79,10 @@ test('index wires persistence through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorPersistenceRuntime\.createStudioEditorPersistenceRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined' \? SlideNextDeckPersistence : null/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorPersistenceController\.createStudioEditorPersistenceController\(/

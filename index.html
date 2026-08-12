@@ -3796,6 +3796,7 @@
           getPersistedDeckHtml: getStudioPersistedDeckHtml,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
           getPersistedPlaybackState: getStudioPersistedPlaybackState,
+          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined' ? SlideNextDeckPersistence : null,
           getSlides,
           slideIdAttr: EDITOR_SLIDE_ID_ATTR,
           resolveFallbackActiveSlideId: (doc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
