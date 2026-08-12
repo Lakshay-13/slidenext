@@ -49,8 +49,8 @@
       ? options.finalizeDeckMutation
       : null;
 
-    function remove() {
-      const doc = getIframeDoc();
+    function remove(sourceDoc) {
+      const doc = sourceDoc || getIframeDoc();
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
       const removalActionState = buildRemovalSelectionActionState(doc);
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);

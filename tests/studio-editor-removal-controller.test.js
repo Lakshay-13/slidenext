@@ -5,6 +5,8 @@ const removalController = require('../shared/studio-editor-removal-controller.js
 test('removal controller delegates the mutation, deselects, and finalizes', () => {
   const calls = [];
   let builderOptions = null;
+  const sourceDocument = { id: 'source-doc' };
+  let receivedDocument = null;
   const target = { dataset: { editorId: 'node-1' } };
   const controller = removalController.createStudioEditorRemovalController({
     canonicalDeckApi: {},
@@ -14,11 +16,14 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
         return { buildCanonicalRemovalMutation: () => null };
       }
     },
-    buildRemovalSelectionActionState: (doc) => ({
-      canRemove: true,
-      selection: [target],
-      doc
-    }),
+    buildRemovalSelectionActionState: (doc) => {
+      receivedDocument = doc;
+      return {
+        canRemove: true,
+        selection: [target],
+        doc
+      };
+    },
     getIframeDoc: () => ({ id: 'doc' }),
     assignElementId: (element) => element.dataset.editorId,
     buildCanonicalDeck: () => ({ slides: [] }),
@@ -31,7 +36,8 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
     finalizeDeckMutation: (label, options) => calls.push(['finalize', label, options])
   });
 
-  assert.equal(controller.remove(), true);
+  assert.equal(controller.remove(sourceDocument), true);
+  assert.equal(receivedDocument, sourceDocument);
   assert.equal(calls[0][0], 'remove');
   assert.deepEqual(calls[0][1], [target]);
   assert.equal(calls[1][0], 'deselect');

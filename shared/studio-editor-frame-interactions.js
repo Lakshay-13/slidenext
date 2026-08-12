@@ -147,7 +147,7 @@
         selectAllElementsOnActiveSlide: () => selectAllElementsOnActiveSlide(doc),
         arrangeElementLayer: (action) => arrangeElementLayer(action, doc),
         deselectElement,
-        removeSelectedElement,
+        removeSelectedElement: () => removeSelectedElement(doc),
         copySelectedElements: () => copySelectedElements(doc),
         pasteClipboardElements,
         duplicateSelectedElements,

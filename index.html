@@ -8969,10 +8969,10 @@
     }
 
     // Delete active selection
-    function removeSelectedElement() {
+    function removeSelectedElement(doc) {
       return studioEditorRemovalController
         && typeof studioEditorRemovalController.remove === 'function'
-        ? studioEditorRemovalController.remove()
+        ? studioEditorRemovalController.remove(doc)
         : false;
     }
 

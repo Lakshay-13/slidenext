@@ -461,7 +461,7 @@ test('removeSelectedElement returns false and skips persistence when planned tar
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
     fileContent,
-    'function removeSelectedElement() {',
+    'function removeSelectedElement(doc) {',
     '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
   );
 
@@ -540,7 +540,7 @@ test('removeSelectedElement returns false and refreshes removal controls when de
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
     fileContent,
-    'function removeSelectedElement() {',
+    'function removeSelectedElement(doc) {',
     '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
   );
 
@@ -594,7 +594,7 @@ test('removeSelectedElement returns true after removing live targets and persist
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
     fileContent,
-    'function removeSelectedElement() {',
+    'function removeSelectedElement(doc) {',
     '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
   );
 
@@ -702,7 +702,7 @@ test('removeSelectedElement captures a scoped parent markup transaction', () => 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
     fileContent,
-    'function removeSelectedElement() {',
+    'function removeSelectedElement(doc) {',
     '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
   );
   const parent = {
@@ -777,7 +777,7 @@ test('removeSelectedElement delegates removal and markup capture to the shared r
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removeSelectedElementSource = extractFunctionSource(
     fileContent,
-    'function removeSelectedElement() {',
+    'function removeSelectedElement(doc) {',
     '\n\n    function updateClipboardActionState(doc = getIframeDoc()) {'
   );
   const liveTarget = { isConnected: true };
