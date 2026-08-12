@@ -270,6 +270,36 @@ test('launchPresentationHtml fails closed when the shared preview runtime is una
   assert.equal(context.launchPresentationHtml('<html></html>', 1), false);
 });
 
+test('launchPresentationHtml prefers the shared preview controller when available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const launchPresentationHtmlSource = extractFunctionSource(
+    fileContent,
+    'function launchPresentationHtml(html, startSlideIdx) {',
+    '\n\n    function openSourceViewModal() {'
+  );
+  const calls = [];
+  const context = {
+    studioEditorPreviewController: {
+      launchHtml(html, startSlideIdx) {
+        calls.push([html, startSlideIdx]);
+        return 'controller-result';
+      }
+    },
+    SlideNextStudioPreview: {
+      launchPresentationHtml() {
+        throw new Error('legacy fallback should not run');
+      }
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(launchPresentationHtmlSource, context);
+
+  assert.equal(context.launchPresentationHtml('<html></html>', 2), 'controller-result');
+  assert.deepEqual(calls, [['<html></html>', 2]]);
+});
+
 test('buildEditorSourceHtml falls back to the persisted html baseline when the editor frame is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorSourceHtmlSource = extractFunctionSource(

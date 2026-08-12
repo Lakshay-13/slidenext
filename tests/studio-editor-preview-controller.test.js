@@ -59,6 +59,33 @@ test('launches the shared preview with the live editor session state', () => {
   }]);
 });
 
+test('launches legacy HTML through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchPresentationHtml(options) {
+        calls.push(options);
+        return 'html';
+      }
+    },
+    documentRef: iframeDocument
+  });
+
+  assert.equal(controller.launchHtml('<html>legacy</html>', 3), 'html');
+  assert.deepEqual(calls, [{
+    document: iframeDocument,
+    startSlideIdx: 3,
+    html: '<html>legacy</html>'
+  }]);
+});
+
+test('fails closed when the legacy HTML preview API is unavailable', () => {
+  const controller = previewController.createStudioEditorPreviewController({ previewApi: {} });
+
+  assert.equal(controller.launchHtml('<html>legacy</html>', 0), false);
+});
+
 test('launches preview with one validated canonical deck snapshot', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   const calls = [];

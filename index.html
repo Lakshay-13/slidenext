@@ -4960,6 +4960,11 @@
     }
 
     function launchPresentationHtml(html, startSlideIdx) {
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.launchHtml === 'function') {
+        return studioEditorPreviewController.launchHtml(html, startSlideIdx);
+      }
       const previewApi = typeof SlideNextStudioPreview !== 'undefined'
         ? SlideNextStudioPreview
         : null;

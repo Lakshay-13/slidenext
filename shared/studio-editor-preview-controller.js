@@ -162,9 +162,19 @@
       });
     }
 
+    function launchHtml(html, startSlideIdx) {
+      if (!previewApi || typeof previewApi.launchPresentationHtml !== 'function') return false;
+      return previewApi.launchPresentationHtml({
+        document: documentRef,
+        startSlideIdx,
+        html
+      });
+    }
+
     return {
       launch,
       launchPreview: launch,
+      launchHtml,
       createStudioEditorPreviewFallbackHtmlTransformer,
       createStudioEditorPreviewDeckViewHtmlOptions
     };
