@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const preview = require('../shared/studio-preview.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
+const sourceAccessorsApi = require('../shared/studio-editor-source-accessors.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -123,13 +124,6 @@ function createClassList(initialValues = []) {
 }
 
 test('resetStudioPresentationUiState clears stale preview chrome and exits fullscreen for the modal', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resetStudioPresentationUiStateSource = extractFunctionSource(
-    fileContent,
-    'function resetStudioPresentationUiState() {',
-    '\n\n    function closePresentation() {'
-  );
-
   const elements = {
     presentationModal: {
       classList: createClassList(['active', 'opacity-100'])
@@ -164,20 +158,17 @@ test('resetStudioPresentationUiState clears stale preview chrome and exits fulls
     }
   };
 
-  const context = {
-    SlideNextStudioPreview: preview,
-    studioEditorSourceController: {
+  const globalApi = sourceAccessorsApi.createStudioEditorSourceGlobalApi({
+    accessors: sourceAccessorsApi.createStudioEditorSourceAccessors({
+      controller: {
       resetPresentation() {
         return preview.resetStudioPresentationUiState({ document: documentStub });
       }
-    },
-    document: documentStub
-  };
+      }
+    })
+  });
 
-  vm.createContext(context);
-  vm.runInContext(resetStudioPresentationUiStateSource, context);
-
-  context.resetStudioPresentationUiState();
+  globalApi.resetStudioPresentationUiState();
 
   assert.equal(exitFullscreenCalls, 1);
   assert.equal(documentStub.fullscreenElement, null);

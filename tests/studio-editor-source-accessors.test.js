@@ -130,6 +130,38 @@ test('source accessors preserve source editor fallbacks without a controller', (
   assert.equal(accessors.resetPresentation(), false);
 });
 
+test('source global api preserves the editor shell function names', () => {
+  const calls = [];
+  const accessors = {
+    open: () => calls.push('open'),
+    setMode: (mode) => calls.push(['mode', mode]),
+    applySourceHtml: (sourceHtml) => calls.push(['source', sourceHtml]),
+    apply: () => calls.push('apply'),
+    close: () => calls.push('close'),
+    reset: () => calls.push('reset'),
+    resetPresentation: () => calls.push('reset-presentation')
+  };
+  const globalApi = accessorsApi.createStudioEditorSourceGlobalApi({ accessors });
+
+  globalApi.openSourceViewModal();
+  globalApi.setSourceViewMode('css');
+  globalApi.applyEditorSourceHtml('<html>edited</html>');
+  globalApi.applySourceViewModal();
+  globalApi.closeSourceViewModal();
+  globalApi.resetStudioSourceViewUiState();
+  globalApi.resetStudioPresentationUiState();
+
+  assert.deepEqual(calls, [
+    'open',
+    ['mode', 'css'],
+    ['source', '<html>edited</html>'],
+    'apply',
+    'close',
+    'reset',
+    'reset-presentation'
+  ]);
+});
+
 test('source accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -138,6 +170,11 @@ test('source accessors publish the global consumed by the editor shell', () => {
   assert.equal(
     typeof context.globalThis.SlideNextStudioEditorSourceAccessors
       .createStudioEditorSourceAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorSourceAccessors
+      .createStudioEditorSourceGlobalApi,
     'function'
   );
 });
@@ -151,6 +188,15 @@ test('editor loads source accessors after the source controller', () => {
   );
   assert.match(fileContent, /sourceAccessorsApi: typeof SlideNextStudioEditorSourceAccessors/);
   assert.match(fileContent, /studioEditorSourceAccessors/);
+  assert.match(fileContent, /createStudioEditorSourceGlobalApi\(/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorSourceGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function openSourceViewModal\(\)/);
+  assert.doesNotMatch(fileContent, /function setSourceViewMode\(mode = 'html'\)\s*\{/);
+  assert.doesNotMatch(fileContent, /function applyEditorSourceHtml\(sourceHtml = ''\)\s*\{/);
+  assert.doesNotMatch(fileContent, /function applySourceViewModal\(\)/);
+  assert.doesNotMatch(fileContent, /function closeSourceViewModal\(\)/);
+  assert.doesNotMatch(fileContent, /function resetStudioSourceViewUiState\(\)/);
+  assert.doesNotMatch(fileContent, /function resetStudioPresentationUiState\(\)/);
 });
 
 test('editor loads the source runtime after source adapters', () => {

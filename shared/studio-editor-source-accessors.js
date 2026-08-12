@@ -32,5 +32,22 @@
     };
   }
 
-  return { createStudioEditorSourceAccessors };
+  function createStudioEditorSourceGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorSourceAccessors(options);
+
+    return {
+      openSourceViewModal: () => accessors.open(),
+      setSourceViewMode: (mode = 'html') => accessors.setMode(mode),
+      applyEditorSourceHtml: (sourceHtml = '') => accessors.applySourceHtml(sourceHtml),
+      applySourceViewModal: () => accessors.apply(),
+      closeSourceViewModal: () => accessors.close(),
+      resetStudioSourceViewUiState: () => accessors.reset(),
+      resetStudioPresentationUiState: () => accessors.resetPresentation()
+    };
+  }
+
+  return {
+    createStudioEditorSourceAccessors,
+    createStudioEditorSourceGlobalApi
+  };
 });

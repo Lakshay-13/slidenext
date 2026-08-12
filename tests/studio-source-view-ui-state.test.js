@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const preview = require('../shared/studio-preview.js');
 const deckView = require('../shared/studio-deck-view.js');
 const sourceController = require('../shared/studio-editor-source-controller.js');
+const sourceAccessorsApi = require('../shared/studio-editor-source-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -60,14 +61,13 @@ function createClassList(initialValues = []) {
   };
 }
 
-test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resetStudioSourceViewUiStateSource = extractFunctionSource(
-    fileContent,
-    'function resetStudioSourceViewUiState() {',
-    '\n\n    // Sync fullscreen button icon when native fullscreen changes'
-  );
+function createSourceGlobalApi(controller) {
+  return sourceAccessorsApi.createStudioEditorSourceGlobalApi({
+    accessors: sourceAccessorsApi.createStudioEditorSourceAccessors({ controller })
+  });
+}
 
+test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   const elements = {
     sourceViewModal: {
       classList: createClassList(['opacity-100'])
@@ -87,20 +87,13 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
     }
   };
 
-  const context = {
-    SlideNextStudioPreview: preview,
-    studioEditorSourceController: {
+  const globalApi = createSourceGlobalApi({
       reset() {
         return preview.resetStudioSourceViewUiState({ document: documentStub });
       }
-    },
-    document: documentStub
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(resetStudioSourceViewUiStateSource, context);
-
-  context.resetStudioSourceViewUiState();
+  globalApi.resetStudioSourceViewUiState();
 
   assert.equal(elements.sourceViewContent.value, '');
   assert.equal(elements.sourceViewContent.scrollTop, 0);
@@ -112,52 +105,28 @@ test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
 });
 
 test('openSourceViewModal delegates source view opening to the shared preview helper', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const openSourceViewModalSource = extractFunctionSource(
-    fileContent,
-    'function openSourceViewModal() {',
-    '\n\n    function closeSourceViewModal() {'
-  );
-
   let openCalls = 0;
-  const context = {
-    studioEditorSourceController: {
+  const globalApi = createSourceGlobalApi({
       open() {
         openCalls += 1;
         return true;
       }
-    },
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(openSourceViewModalSource, context);
-
-  assert.equal(context.openSourceViewModal(), true);
+  assert.equal(globalApi.openSourceViewModal(), true);
   assert.equal(openCalls, 1);
 });
 
 test('applyEditorSourceHtml wires canonical source editing through the shared pipeline', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyEditorSourceHtmlSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorSourceHtml(sourceHtml = \'\') {',
-    '\n\n    function applySourceViewModal() {'
-  );
-
   let delegatedSourceHtml = '';
-  const context = {
-    studioEditorSourceController: {
+  const globalApi = createSourceGlobalApi({
       applySourceHtml(sourceHtml) {
         delegatedSourceHtml = sourceHtml;
         return { success: true };
       }
-    }
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(applyEditorSourceHtmlSource, context);
-
-  assert.deepEqual(context.applyEditorSourceHtml('<html>edited</html>'), { success: true });
+  assert.deepEqual(globalApi.applyEditorSourceHtml('<html>edited</html>'), { success: true });
   assert.equal(delegatedSourceHtml, '<html>edited</html>');
 });
 
@@ -166,7 +135,7 @@ test('source history restore propagates canonical frame restore failures', () =>
   const restoreEditorSourceHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function restoreEditorSourceHistoryEntry(historyEntry) {',
-    '\n\n    function applySourceViewModal() {'
+    '\n\n    function closePresentation() {'
   );
   const calls = [];
   const context = {
@@ -232,26 +201,15 @@ test('source history capture keeps the legacy fallback when canonical rebuilding
 });
 
 test('applySourceViewModal delegates source application to the controller', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applySourceViewModalSource = extractFunctionSource(
-    fileContent,
-    'function applySourceViewModal() {',
-    '\n\n    function closeSourceViewModal() {'
-  );
   let applyCalls = 0;
-  const context = {
-    studioEditorSourceController: {
+  const globalApi = createSourceGlobalApi({
       apply() {
         applyCalls += 1;
         return true;
       }
-    }
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(applySourceViewModalSource, context);
-
-  assert.equal(context.applySourceViewModal(), true);
+  assert.equal(globalApi.applySourceViewModal(), true);
   assert.equal(applyCalls, 1);
 });
 
@@ -260,7 +218,7 @@ test('launchPresentationHtml fails closed when the shared preview runtime is una
   const launchPresentationHtmlSource = extractFunctionSource(
     fileContent,
     'function launchPresentationHtml(html, startSlideIdx) {',
-    '\n\n    function openSourceViewModal() {'
+    '\n\n    function restoreEditorSourceHistoryEntry(historyEntry) {'
   );
   const context = { document: {} };
 
@@ -275,7 +233,7 @@ test('launchPresentationHtml prefers the shared preview controller when availabl
   const launchPresentationHtmlSource = extractFunctionSource(
     fileContent,
     'function launchPresentationHtml(html, startSlideIdx) {',
-    '\n\n    function openSourceViewModal() {'
+    '\n\n    function restoreEditorSourceHistoryEntry(historyEntry) {'
   );
   const calls = [];
   const context = {

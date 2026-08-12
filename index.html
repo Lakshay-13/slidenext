@@ -2187,6 +2187,17 @@
     const studioEditorSourceAccessors = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceAccessors
       : null;
+    const studioEditorSourceGlobalApi = typeof SlideNextStudioEditorSourceAccessors !== 'undefined'
+      && SlideNextStudioEditorSourceAccessors
+      && typeof SlideNextStudioEditorSourceAccessors.createStudioEditorSourceGlobalApi === 'function'
+      ? SlideNextStudioEditorSourceAccessors.createStudioEditorSourceGlobalApi({
+          accessors: studioEditorSourceAccessors
+            || SlideNextStudioEditorSourceAccessors.createStudioEditorSourceAccessors({
+              controller: studioEditorSourceController
+            })
+        })
+      : {};
+    Object.assign(globalThis, studioEditorSourceGlobalApi);
     const studioEditorSourceHtmlBuilder = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceHtmlBuilder
       : null;
@@ -4816,78 +4827,8 @@
       });
     }
 
-    function openSourceViewModal() {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.open();
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.open()
-        : false;
-    }
-
-    function setSourceViewMode(mode = 'html') {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.setMode(mode);
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.setMode(mode)
-        : false;
-    }
-
-    function applyEditorSourceHtml(sourceHtml = '') {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.applySourceHtml(sourceHtml);
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.applySourceHtml(sourceHtml)
-        : { success: false, error: 'Source editor is unavailable' };
-    }
-
     function restoreEditorSourceHistoryEntry(historyEntry) {
       return restoreFrameFromHistoryEntry(historyEntry) !== false;
-    }
-
-    function applySourceViewModal() {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.apply();
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.apply()
-        : false;
-    }
-
-    function closeSourceViewModal() {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.close();
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.close()
-        : false;
-    }
-
-    function resetStudioSourceViewUiState() {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.reset();
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.reset()
-        : false;
-    }
-
-    function resetStudioPresentationUiState() {
-      if (typeof studioEditorSourceAccessors !== 'undefined' && studioEditorSourceAccessors) {
-        return studioEditorSourceAccessors.resetPresentation();
-      }
-      return typeof studioEditorSourceController !== 'undefined'
-        && studioEditorSourceController
-        ? studioEditorSourceController.resetPresentation()
-        : false;
     }
 
     function closePresentation() {
