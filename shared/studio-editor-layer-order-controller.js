@@ -166,7 +166,12 @@
     }
 
     function reorder(action, targetElements = [], reorderOptions = {}) {
-      const slide = getActiveSlide();
+      const sourceDocument = reorderOptions && reorderOptions.doc
+        || (Array.isArray(targetElements)
+          ? targetElements.find((element) => element && element.ownerDocument)?.ownerDocument
+          : null)
+        || getIframeDoc();
+      const slide = getActiveSlide(sourceDocument);
       if (!slide || !layerOrderApi || typeof layerOrderApi.buildStudioLayerOrderMutationPlan !== 'function') {
         return false;
       }
@@ -196,14 +201,14 @@
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
             getCanonicalDeckBaseline,
-            sourceDocument: getIframeDoc()
+            sourceDocument
           });
         } catch (error) {
           return false;
         }
       }
       const initialOrder = getNormalizedSlideLayerOrder(slide);
-      const readLockedState = resolveLockedReader(getIframeDoc());
+      const readLockedState = resolveLockedReader(sourceDocument);
       const reorderResult = layerOrderApi.buildStudioLayerOrderMutationPlan(targetElements, action, {
         orderedElements: initialOrder,
         isEligibleElement: (element) => !!(element && element.isConnected && slide.contains(element)),
