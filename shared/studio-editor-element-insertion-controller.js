@@ -31,6 +31,10 @@
       'SlideNextStudioEditorLayoutMode',
       defaultLayoutModeApi
     );
+    const normalizeLayoutMode = layoutModeApi
+      && typeof layoutModeApi.normalizeStudioLayoutMode === 'function'
+      ? layoutModeApi.normalizeStudioLayoutMode
+      : normalizeInsertionLayoutMode;
     const canonicalInsertionApi = resolveDependency(
       'canonicalInsertionApi',
       'SlideNextStudioEditorCanonicalInsertion'
@@ -150,7 +154,7 @@
         if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
         return false;
       }
-      const insertionLayoutMode = normalizeInsertionLayoutMode(normalizedInsertOptions.layoutMode)
+      const insertionLayoutMode = normalizeLayoutMode(normalizedInsertOptions.layoutMode)
         || (layoutModeApi
           && typeof layoutModeApi.resolveStudioCanonicalLayoutMode === 'function'
           ? layoutModeApi.resolveStudioCanonicalLayoutMode(
