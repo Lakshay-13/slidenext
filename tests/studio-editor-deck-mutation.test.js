@@ -93,8 +93,9 @@ test('finalizeStudioEditorDeckMutation preserves canonical fallback history beha
     'Auto: Style',
     { transaction: { id: 'tx' } },
     {
-      buildCanonicalDeck(sourceDoc) {
+      buildCanonicalDeck(sourceDoc, buildOptions) {
         assert.equal(sourceDoc, undefined);
+        assert.deepEqual(buildOptions, { preferLiveCanonicalDeck: false });
         return canonicalDeck;
       },
       syncSelectionOverlay() {},

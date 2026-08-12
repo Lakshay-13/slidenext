@@ -114,7 +114,9 @@
       || !buildCanonicalDeckBaseline
       ? mutationOptions
       : (() => {
-          const canonicalDeck = buildCanonicalDeckBaseline(undefined);
+          const canonicalDeck = buildCanonicalDeckBaseline(undefined, {
+            preferLiveCanonicalDeck: false
+          });
           return canonicalDeck
             ? { ...mutationOptions, canonicalDeck }
             : mutationOptions;
