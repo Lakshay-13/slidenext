@@ -62,6 +62,28 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.deepEqual(calls[6][2].canonicalDeck, { id: 'after' });
 });
 
+test('style controller reads selection from the active iframe document', () => {
+  const documentRef = { id: 'active-document' };
+  let receivedDocument = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        assert.deepEqual(selection, [{ id: 'node-1' }]);
+        return { canApply: false };
+      }
+    },
+    getSelectedElements(doc) {
+      receivedDocument = doc;
+      return [{ id: 'node-1' }];
+    },
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' })
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedDocument, documentRef);
+});
+
 test('style controller preserves transaction finalization when canonical style construction throws', () => {
   const calls = [];
   const element = { dataset: { editorId: 'node-1' } };

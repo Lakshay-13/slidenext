@@ -253,7 +253,7 @@
       let styleMutationPlan = null;
       try {
         doc = getIframeDoc();
-        styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(), prop, value, {
+        styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(doc), prop, value, {
           isLocked: resolveLockedReader(doc),
           canMutateDeck: () => !!getActiveSlide(doc)
         });
