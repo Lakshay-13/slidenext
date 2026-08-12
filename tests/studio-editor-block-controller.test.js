@@ -263,6 +263,30 @@ test('block controller does not publish a saved block when history capture fails
   assert.equal(blocksChanged, 0);
 });
 
+test('block controller does not publish a saved block when history capture throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Heading' }]
+    }]
+  });
+  let blocksChanged = 0;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
+    onBlocksChanged: () => { blocksChanged += 1; }
+  });
+
+  assert.equal(controller.saveSelection({ id: 'rejected-block' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(sourceDeck, 'blocks'), false);
+  assert.equal(blocksChanged, 0);
+});
+
 test('block controller rejects object-form history capture failures', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
@@ -561,6 +585,58 @@ test('block controller removes inserted nodes when history capture fails', () =>
     getActiveSlide: () => slide,
     getActiveSlideId: () => 'slide-1',
     saveHistoryState: () => ({ didCapture: false })
+  });
+
+  assert.equal(controller.insertBlock('hero'), false);
+  assert.deepEqual(slide.children, []);
+});
+
+test('block controller removes inserted nodes when history capture throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{
+      id: 'hero',
+      nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }]
+    }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const slide = {
+    children: [],
+    appendChild(element) {
+      element.parentNode = this;
+      this.children.push(element);
+    },
+    removeChild(element) {
+      const index = this.children.indexOf(element);
+      if (index < 0) throw new Error('missing child');
+      this.children.splice(index, 1);
+      element.parentNode = null;
+    }
+  };
+  const documentRef = {
+    createElement() {
+      const element = { dataset: {}, children: [] };
+      return {
+        content: { firstElementChild: element },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalNode() {
+        return '<h2>Hero</h2>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => documentRef,
+    getActiveSlide: () => slide,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    }
   });
 
   assert.equal(controller.insertBlock('hero'), false);

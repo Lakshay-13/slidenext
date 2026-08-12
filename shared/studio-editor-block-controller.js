@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (err) {
+          return false;
+        }
+      };
 
   function createStudioEditorBlockController(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi
@@ -152,7 +163,9 @@
         if (finalizeResult === false) return null;
       } else {
         if (saveHistoryState
-          && isStudioHistoryCaptureFailure(saveHistoryState(false, null, nextCanonicalDeck))) {
+          && isStudioHistoryCaptureFailure(
+            captureStudioHistoryState(saveHistoryState, false, null, nextCanonicalDeck)
+          )) {
           return null;
         }
         if (triggerAutoSave) triggerAutoSave();
@@ -320,7 +333,9 @@
         return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);
       }
       if (saveHistoryState
-        && isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, nextCanonicalDeck))) {
+        && isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(saveHistoryState, false, transaction, nextCanonicalDeck)
+        )) {
         removeInsertedElements(insertedElements, activeSlide);
         return false;
       }
