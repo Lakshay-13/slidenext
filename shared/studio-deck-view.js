@@ -1058,10 +1058,15 @@
         canonicalDeck = null;
       }
     }
-    if (canonicalDeck) {
-      saveHistoryState(false, null, canonicalDeck);
-    } else {
-      saveHistoryState();
+    const historyCaptureResult = canonicalDeck
+      ? saveHistoryState(false, null, canonicalDeck)
+      : saveHistoryState();
+    if (historyCaptureResult === false) {
+      return {
+        historyCaptureFailed: true,
+        preservedActiveSlideId: '',
+        preservedSelectionIds: []
+      };
     }
     return {
       preservedActiveSlideId: getActiveSlideId(doc),

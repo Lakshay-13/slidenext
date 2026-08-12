@@ -232,9 +232,9 @@
             preferLiveCanonicalDeck: false
           });
           if (canonicalDeck) {
-            saveHistoryState(false, null, canonicalDeck);
+            return saveHistoryState(false, null, canonicalDeck);
           } else {
-            saveHistoryState();
+            return saveHistoryState();
           }
         }
       : saveHistoryState;
@@ -251,8 +251,9 @@
     }
 
     return (iframeDoc) => {
-      captureHistoryBaseline(iframeDoc);
+      const historyCaptureResult = captureHistoryBaseline(iframeDoc);
       return {
+        ...(historyCaptureResult === false ? { historyCaptureFailed: true } : {}),
         preservedActiveSlideId: getActiveSlideId(iframeDoc),
         preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)
       };

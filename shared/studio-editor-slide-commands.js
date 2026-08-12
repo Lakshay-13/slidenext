@@ -290,6 +290,7 @@
       ? options.captureSlideMutationState
       : () => ({ preservedActiveSlideId: '', preservedSelectionIds: [] });
     const slideMutationState = captureSlideMutationState(iframeDoc);
+    if (slideMutationState && slideMutationState.historyCaptureFailed) return false;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
@@ -411,6 +412,7 @@
       ? options.captureSlideMutationState
       : () => ({ preservedActiveSlideId: '', preservedSelectionIds: [] });
     const slideMutationState = captureSlideMutationState(iframeDoc);
+    if (slideMutationState && slideMutationState.historyCaptureFailed) return false;
     const applyReorder = typeof options.applyReorder === 'function'
       ? options.applyReorder
       : () => ({ didApply: false, transaction: null });

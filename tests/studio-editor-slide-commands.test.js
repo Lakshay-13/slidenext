@@ -627,6 +627,28 @@ test('deleteStudioSlideNode fails closed before DOM removal when canonical delet
   assert.equal(deletionCalls, 0);
 });
 
+test('deleteStudioSlideNode stops before DOM removal when history baseline capture fails', () => {
+  const firstSlide = { id: 'slide-1' };
+  const deletedSlide = { id: 'slide-2' };
+  const calls = [];
+
+  const result = slideCommands.deleteStudioSlideNode(1, {
+    getIframeDoc: () => ({}),
+    getSlideContainer: () => ({}),
+    getSlides: () => [firstSlide, deletedSlide],
+    captureSlideMutationState: () => ({ historyCaptureFailed: true }),
+    getSlideId: (slide) => slide.id,
+    buildCanonicalDeleteSlideDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    applyDeletion: () => {
+      calls.push('applyDeletion');
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, []);
+});
+
 test('deleteStudioSlideNode rolls back DOM and view state when persistence rejects', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
@@ -792,6 +814,25 @@ test('reorderStudioSlideNodes fails closed before DOM reorder when canonical reo
 
   assert.equal(result, false);
   assert.equal(reorderCalls, 0);
+});
+
+test('reorderStudioSlideNodes stops before DOM reorder when history baseline capture fails', () => {
+  const calls = [];
+
+  const result = slideCommands.reorderStudioSlideNodes(0, 1, {
+    getIframeDoc: () => ({}),
+    getSlideContainer: () => ({}),
+    getSlides: () => [{ id: 'slide-1' }, { id: 'slide-2' }],
+    buildCanonicalReorderSlideDeck: () => ({ slides: [{ id: 'slide-2' }, { id: 'slide-1' }] }),
+    captureSlideMutationState: () => ({ historyCaptureFailed: true }),
+    applyReorder: () => {
+      calls.push('applyReorder');
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(calls, []);
 });
 
 test('reorderStudioSlideNodes rolls back DOM and view state when persistence rejects', () => {
