@@ -294,7 +294,13 @@
           return false;
         }
       } else {
-        if (saveHistoryState) saveHistoryState(false, mutation.transaction, nextCanonicalDeck);
+        if (saveHistoryState
+          && saveHistoryState(false, mutation.transaction, nextCanonicalDeck) === false) {
+          if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
+          if (generateThumbnails) generateThumbnails();
+          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          return false;
+        }
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion) triggerAutoVersion(versionLabel);
       }
