@@ -71,6 +71,10 @@
     const onTemplatesChanged = typeof options.onTemplatesChanged === 'function'
       ? options.onTemplatesChanged
       : null;
+    const didHistoryCaptureFail = (result) => result === false
+      || (result
+        && typeof result === 'object'
+        && result.didCapture === false);
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
@@ -138,7 +142,8 @@
         const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
         if (finalizeResult === false) return null;
       } else {
-        if (saveHistoryState && saveHistoryState(false, null, nextCanonicalDeck) === false) {
+        if (saveHistoryState
+          && didHistoryCaptureFail(saveHistoryState(false, null, nextCanonicalDeck))) {
           return null;
         }
         if (triggerAutoSave) triggerAutoSave();
@@ -270,7 +275,8 @@
         }
       }
 
-      if (saveHistoryState && saveHistoryState(false, null, canonicalDeck) === false) {
+      if (saveHistoryState
+        && didHistoryCaptureFail(saveHistoryState(false, null, canonicalDeck))) {
         return false;
       }
       const mutation = applyInsertion(container, slideElement, {
@@ -295,7 +301,9 @@
         }
       } else {
         if (saveHistoryState
-          && saveHistoryState(false, mutation.transaction, nextCanonicalDeck) === false) {
+          && didHistoryCaptureFail(
+            saveHistoryState(false, mutation.transaction, nextCanonicalDeck)
+          )) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
           if (generateThumbnails) generateThumbnails();
           if (setActiveSlide) setActiveSlide(activeSlideIndex);

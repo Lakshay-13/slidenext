@@ -239,6 +239,23 @@ test('template controller does not publish a saved template when history capture
   assert.equal(templatesChanged, 0);
 });
 
+test('template controller rejects object-form history capture failures', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'title', tagName: 'h1', text: 'Hero' }] }]
+  });
+  let templatesChanged = 0;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState: () => ({ didCapture: false }),
+    onTemplatesChanged: () => { templatesChanged += 1; }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'rejected-template' }), null);
+  assert.equal(templatesChanged, 0);
+});
+
 test('template controller inserts a rendered template after the active slide through a transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{
@@ -490,7 +507,7 @@ test('template controller rolls back an inserted slide when history capture fail
     setActiveSlide: (index) => calls.push(['active', index]),
     saveHistoryState: () => {
       historyCalls += 1;
-      return historyCalls === 1;
+      return historyCalls === 1 ? true : { didCapture: false };
     },
     rollbackMutation: (transaction, sourceDocument) => {
       assert.deepEqual(transaction, { kind: 'slide-insert' });
