@@ -24,7 +24,7 @@ test('editor routes clipboard reads through the clipboard controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /clipboard: getStudioEditorClipboard\(\)/);
-  assert.match(source, /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(\), getStudioEditorClipboard\(\)/);
+  assert.match(source, /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(resolvedDoc\), getStudioEditorClipboard\(\)/);
   assert.doesNotMatch(source, /let editorClipboard = null/);
 });
 

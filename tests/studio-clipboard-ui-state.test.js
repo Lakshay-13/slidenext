@@ -152,6 +152,14 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
     payloadItems,
     canBuildPayload: true
   });
+  assert.match(
+    buildClipboardSelectionMutationPlanSource,
+    /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(resolvedDoc\),/
+  );
+  assert.match(
+    buildClipboardSelectionMutationPlanSource,
+    /buildStudioClipboardMutationPlan\(\s*getStudioSelectedElements\(resolvedDoc\),/
+  );
   assert.deepEqual(calls, [
     ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
     ['buildStudioClipboardMutationPlan', selection, clipboard],

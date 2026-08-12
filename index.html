@@ -9407,7 +9407,7 @@
         ? clipboardApi.buildStudioClipboardSelectionMutationPlan
         : null;
       if (buildStudioClipboardSelectionMutationPlan) {
-        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(), getStudioEditorClipboard(), {
+        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(resolvedDoc), getStudioEditorClipboard(), {
           isLocked: readLockedState,
           canMutateDeck: () => !!getActiveSlide(resolvedDoc),
           buildPayloadItems(selection) {
@@ -9427,7 +9427,7 @@
         };
       }
       const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(
-        getStudioSelectedElements(),
+        getStudioSelectedElements(resolvedDoc),
         getStudioEditorClipboard(),
         {
           isLocked: readLockedState,
