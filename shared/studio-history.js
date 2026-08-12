@@ -730,6 +730,22 @@
       ? options.scheduleOptions
       : {};
 
+    const captureStateWithCanonicalSync = () => {
+      const captureResult = captureState();
+      const historyEntry = captureResult && captureResult.historyEntry;
+      const capturedCanonicalDeck = historyEntry && historyEntry.canonicalDeck;
+      if (capturedCanonicalDeck && isCanonicalDeck) {
+        try {
+          if (isCanonicalDeck(capturedCanonicalDeck)) {
+            setLiveCanonicalDeck(capturedCanonicalDeck);
+          }
+        } catch (error) {
+          // Preserve the captured history entry when canonical state cannot sync.
+        }
+      }
+      return captureResult;
+    };
+
     return function saveHistoryState(debounce = false, transaction = null, canonicalDeck = null) {
       const hasCanonicalDeck = arguments.length > 2;
       let nextCanonicalDeck = hasCanonicalDeck && canonicalDeck && typeof canonicalDeck === 'object'
@@ -787,7 +803,7 @@
       const nextCaptureState = scheduleCapture(
         getTimer(),
         debounce,
-        captureState,
+        captureStateWithCanonicalSync,
         scheduleOptions
       );
       setTimer(nextCaptureState.nextTimer);

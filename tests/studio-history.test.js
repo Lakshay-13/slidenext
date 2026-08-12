@@ -901,6 +901,37 @@ test('createStudioHistorySaveHandler preserves the live canonical deck without a
   assert.equal(pendingCanonicalDeck, null);
 });
 
+test('createStudioHistorySaveHandler publishes the canonical deck captured in history', () => {
+  const initialCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const capturedCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-2' }] };
+  const liveCanonicalDecks = [];
+  let scheduledCapture = null;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    getLiveCanonicalDeck() {
+      return initialCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextCanonicalDeck) {
+      liveCanonicalDecks.push(nextCanonicalDeck);
+    },
+    captureState() {
+      return {
+        didCapture: true,
+        historyEntry: { canonicalDeck: capturedCanonicalDeck }
+      };
+    },
+    scheduleCapture(_timer, _debounce, captureState) {
+      scheduledCapture = captureState;
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  saveHistoryState(false, { id: 'selection-transaction' });
+  assert.deepEqual(liveCanonicalDecks, [initialCanonicalDeck]);
+
+  scheduledCapture();
+  assert.deepEqual(liveCanonicalDecks, [initialCanonicalDeck, capturedCanonicalDeck]);
+});
+
 test('createStudioHistorySaveHandler rejects malformed canonical sidecars while preserving transactions', () => {
   let pendingTransaction = null;
   let pendingCanonicalDeck = null;
