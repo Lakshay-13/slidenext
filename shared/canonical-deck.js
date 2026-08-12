@@ -2056,6 +2056,7 @@
     DECK_SCHEMA_VERSION,
     DEFAULT_LAYOUT_MODE,
     DEFAULT_NODE_TYPE,
+    normalizeLayoutMode,
     createCanonicalAsset,
     insertCanonicalAsset,
     appendCanonicalAsset,

@@ -11,6 +11,9 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeckApi) {
   function normalizeStudioLayoutMode(value) {
+    if (canonicalDeckApi && typeof canonicalDeckApi.normalizeLayoutMode === 'function') {
+      return canonicalDeckApi.normalizeLayoutMode(value, '');
+    }
     if (typeof value !== 'string') return '';
     const normalizedValue = value.trim().toLowerCase();
     if (normalizedValue === 'freeform') return 'absolute';

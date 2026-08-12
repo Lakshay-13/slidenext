@@ -29,6 +29,9 @@
   }
 
   function normalizeCanonicalLayoutMode(value) {
+    if (typeof canonicalDeck.normalizeLayoutMode === 'function') {
+      return canonicalDeck.normalizeLayoutMode(value, '');
+    }
     const normalizedValue = normalizeString(value).trim().toLowerCase();
     return normalizedValue === 'freeform' ? 'absolute' : normalizedValue;
   }

@@ -3,6 +3,12 @@ const assert = require('node:assert/strict');
 
 const canonicalDeck = require('../shared/canonical-deck.js');
 
+test('normalizeLayoutMode exposes the canonical mode boundary', () => {
+  assert.equal(canonicalDeck.normalizeLayoutMode(' FLOW '), 'flow');
+  assert.equal(canonicalDeck.normalizeLayoutMode('FREEFORM'), 'absolute');
+  assert.equal(canonicalDeck.normalizeLayoutMode('unsupported', ''), '');
+});
+
 test('createCanonicalDeck repairs duplicate slide and nested node ids deterministically', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [
