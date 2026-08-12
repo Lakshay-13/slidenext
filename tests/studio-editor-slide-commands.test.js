@@ -432,6 +432,26 @@ test('addStudioSlideNode stops before DOM insertion when history baseline captur
   assert.deepEqual(calls, []);
 });
 
+test('addStudioSlideNode stops before DOM insertion when injected history capture fails', () => {
+  let insertionCalls = 0;
+
+  const result = slideCommands.addStudioSlideNode({
+    getIframeDoc: () => ({}),
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [{ id: 'slide-1' }],
+    createBlankSlide: () => ({ id: 'slide-2' }),
+    captureSlideMutationState: () => ({ historyCaptureFailed: true }),
+    applyInsertion: () => {
+      insertionCalls += 1;
+      return { didApply: true };
+    }
+  });
+
+  assert.equal(result, false);
+  assert.equal(insertionCalls, 0);
+});
+
 test('addStudioSlideNode stops before history when slide creation is unavailable', () => {
   const calls = [];
 

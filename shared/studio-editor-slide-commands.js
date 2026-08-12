@@ -206,6 +206,7 @@
     const slideMutationState = captureSlideMutationState
       ? captureSlideMutationState(iframeDoc)
       : { preservedActiveSlideId: '', preservedSelectionIds: [] };
+    if (slideMutationState && slideMutationState.historyCaptureFailed) return false;
     if (!captureSlideMutationState) {
       const saveHistoryState = typeof options.saveHistoryState === 'function'
         ? options.saveHistoryState
