@@ -1690,7 +1690,37 @@
             : null,
           wallpaperStateAccessorsApi: typeof SlideNextStudioEditorWallpaperStateAccessors !== 'undefined'
             ? SlideNextStudioEditorWallpaperStateAccessors
-            : null
+            : null,
+          versionRenameStateRuntimeApi: typeof SlideNextStudioEditorVersionRenameStateRuntime !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameStateRuntime
+            : null,
+          versionRenameStateStoreApi: typeof SlideNextStudioEditorVersionRenameStateStore !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameStateStore
+            : null,
+          versionRenameStateBridgeApi: typeof SlideNextStudioEditorVersionRenameStateBridge !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameStateBridge
+            : null,
+          versionRenameStateAccessorsApi: typeof SlideNextStudioEditorVersionRenameStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameStateAccessors
+            : null,
+          getVersionRenameFallbackState: () => ({
+            filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+            context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+          }),
+          setVersionRenameFallbackState: (nextState = {}) => {
+            if (typeof renamingFilename !== 'undefined') {
+              renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
+            }
+            if (typeof renamingVersionContext !== 'undefined') {
+              renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
+                ? nextState.context
+                : null;
+            }
+            return {
+              filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
+              context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
+            };
+          }
         })
       : null;
     const studioEditorSessionStateBridge = studioEditorShellStateRuntime
@@ -2067,49 +2097,17 @@
         ? studioEditorSaveButtonStateAccessors.getState()
         : 'idle';
     }
-    const studioEditorVersionRenameStateRuntime = typeof SlideNextStudioEditorVersionRenameStateRuntime !== 'undefined'
-      && SlideNextStudioEditorVersionRenameStateRuntime
-      && typeof SlideNextStudioEditorVersionRenameStateRuntime.createStudioEditorVersionRenameStateRuntime === 'function'
-      ? SlideNextStudioEditorVersionRenameStateRuntime.createStudioEditorVersionRenameStateRuntime({
-          stateStore: typeof SlideNextStudioEditorVersionRenameStateStore !== 'undefined'
-            ? SlideNextStudioEditorVersionRenameStateStore
-            : null
-        })
+    const studioEditorVersionRenameStateRuntime = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.versionRenameStateRuntime
       : null;
-    const studioEditorVersionRenameStateStore = studioEditorVersionRenameStateRuntime
-      ? studioEditorVersionRenameStateRuntime.versionRenameStateStore
+    const studioEditorVersionRenameStateStore = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.versionRenameStateStore
       : null;
-    const studioEditorVersionRenameStateBridge = typeof SlideNextStudioEditorVersionRenameStateBridge !== 'undefined'
-      && SlideNextStudioEditorVersionRenameStateBridge
-      && typeof SlideNextStudioEditorVersionRenameStateBridge.createStudioEditorVersionRenameStateBridge === 'function'
-      ? SlideNextStudioEditorVersionRenameStateBridge.createStudioEditorVersionRenameStateBridge({
-          stateStore: studioEditorVersionRenameStateStore
-        })
+    const studioEditorVersionRenameStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.versionRenameStateBridge
       : null;
-    const studioEditorVersionRenameStateAccessors = typeof SlideNextStudioEditorVersionRenameStateAccessors !== 'undefined'
-      && SlideNextStudioEditorVersionRenameStateAccessors
-      && typeof SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateAccessors === 'function'
-      ? SlideNextStudioEditorVersionRenameStateAccessors.createStudioEditorVersionRenameStateAccessors({
-          bridge: studioEditorVersionRenameStateBridge,
-          getFallbackState: () => ({
-            filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
-            context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
-          }),
-          setFallbackState: (nextState = {}) => {
-            if (typeof renamingFilename !== 'undefined') {
-              renamingFilename = typeof nextState.filename === 'string' ? nextState.filename : '';
-            }
-            if (typeof renamingVersionContext !== 'undefined') {
-              renamingVersionContext = Object.prototype.hasOwnProperty.call(nextState, 'context')
-                ? nextState.context
-                : null;
-            }
-            return {
-              filename: typeof renamingFilename !== 'undefined' ? renamingFilename : '',
-              context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
-            };
-          }
-        })
+    const studioEditorVersionRenameStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.versionRenameStateAccessors
       : null;
     function getStudioRenameVersionState() {
       if (typeof studioEditorVersionRenameStateAccessors !== 'undefined'

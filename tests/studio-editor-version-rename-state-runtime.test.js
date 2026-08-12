@@ -30,10 +30,7 @@ test('index wires version rename state through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-version-rename-state-runtime\.js"><\/script>/
   );
-  assert.match(
-    fileContent,
-    /SlideNextStudioEditorVersionRenameStateRuntime\.createStudioEditorVersionRenameStateRuntime\(/
-  );
+  assert.match(fileContent, /studioEditorShellStateRuntime\.versionRenameStateRuntime/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorVersionRenameStateStore\.createStudioEditorVersionRenameStateStore\(\{\}/

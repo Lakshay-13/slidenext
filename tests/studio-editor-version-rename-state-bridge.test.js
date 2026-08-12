@@ -61,7 +61,7 @@ test('editor loads and composes version rename state through the bridge', () => 
     /<script src="\/shared\/studio-editor-version-rename-state-bridge\.js"><\/script>/
   );
   assert.match(fileContent, /studioEditorVersionRenameStateBridge/);
-  assert.match(fileContent, /createStudioEditorVersionRenameStateBridge\(\{/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.versionRenameStateBridge/);
   assert.doesNotMatch(
     fileContent,
     /studioEditorVersionRenameStateStore\s*\n\s*&&\s*typeof studioEditorVersionRenameStateStore\.(getState|setState|clear)/

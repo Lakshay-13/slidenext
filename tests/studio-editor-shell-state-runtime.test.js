@@ -72,6 +72,17 @@ test('shell state runtime composes session and editor state bridges and accessor
     wallpaperStateStoreApi: { name: 'wallpaper-store-api' },
     wallpaperStateBridgeApi: bridge('EditorWallpaperState', 'wallpaper-bridge'),
     wallpaperStateAccessorsApi: accessors('EditorWallpaperState', 'wallpaper-accessors'),
+    versionRenameStateRuntimeApi: {
+      createStudioEditorVersionRenameStateRuntime(runtimeOptions) {
+        calls.push(['version-rename-runtime', runtimeOptions]);
+        return { versionRenameStateStore: 'version-rename-store' };
+      }
+    },
+    versionRenameStateStoreApi: { name: 'version-rename-store-api' },
+    versionRenameStateBridgeApi: bridge('EditorVersionRenameState', 'version-rename-bridge'),
+    versionRenameStateAccessorsApi: accessors('EditorVersionRenameState', 'version-rename-accessors'),
+    getVersionRenameFallbackState() {},
+    setVersionRenameFallbackState() {},
     getElementId() {},
     getDocument() {},
     getActiveSlide() {},
@@ -98,7 +109,11 @@ test('shell state runtime composes session and editor state bridges and accessor
     wallpaperStateRuntime: { wallpaperStateStore: 'wallpaper-store' },
     wallpaperStateStore: 'wallpaper-store',
     wallpaperStateBridge: 'wallpaper-bridge',
-    wallpaperStateAccessors: 'wallpaper-accessors'
+    wallpaperStateAccessors: 'wallpaper-accessors',
+    versionRenameStateRuntime: { versionRenameStateStore: 'version-rename-store' },
+    versionRenameStateStore: 'version-rename-store',
+    versionRenameStateBridge: 'version-rename-bridge',
+    versionRenameStateAccessors: 'version-rename-accessors'
   });
   assert.equal(calls[0][1].runtimeApi, options.sessionStateRuntimeApi);
   assert.equal(calls[1][1].bridge, 'session-bridge');
@@ -116,6 +131,10 @@ test('shell state runtime composes session and editor state bridges and accessor
   assert.equal(calls[13][1].stateStore, options.wallpaperStateStoreApi);
   assert.equal(calls[14][1].stateStore, 'wallpaper-store');
   assert.equal(calls[15][1].bridge, 'wallpaper-bridge');
+  assert.equal(calls[16][1].stateStore, options.versionRenameStateStoreApi);
+  assert.equal(calls[17][1].stateStore, 'version-rename-store');
+  assert.equal(calls[18][1].bridge, 'version-rename-bridge');
+  assert.equal(calls[18][1].getFallbackState, options.getVersionRenameFallbackState);
 });
 
 test('shell state runtime preserves safe fallbacks when dependencies are unavailable', () => {
@@ -137,7 +156,11 @@ test('shell state runtime preserves safe fallbacks when dependencies are unavail
     wallpaperStateRuntime: null,
     wallpaperStateStore: null,
     wallpaperStateBridge: null,
-    wallpaperStateAccessors: null
+    wallpaperStateAccessors: null,
+    versionRenameStateRuntime: null,
+    versionRenameStateStore: null,
+    versionRenameStateBridge: null,
+    versionRenameStateAccessors: null
   });
 });
 

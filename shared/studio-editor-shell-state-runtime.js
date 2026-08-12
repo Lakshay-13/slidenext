@@ -179,6 +179,42 @@
       'createStudioEditorWallpaperStateAccessors',
       { bridge: wallpaperStateBridge }
     );
+    const versionRenameStateRuntime = createBridge(
+      resolveApi(
+        options.versionRenameStateRuntimeApi,
+        'SlideNextStudioEditorVersionRenameStateRuntime'
+      ),
+      'createStudioEditorVersionRenameStateRuntime',
+      {
+        stateStore: resolveApi(
+          options.versionRenameStateStoreApi,
+          'SlideNextStudioEditorVersionRenameStateStore'
+        )
+      }
+    );
+    const versionRenameStateStore = versionRenameStateRuntime
+      ? versionRenameStateRuntime.versionRenameStateStore
+      : null;
+    const versionRenameStateBridge = createBridge(
+      resolveApi(
+        options.versionRenameStateBridgeApi,
+        'SlideNextStudioEditorVersionRenameStateBridge'
+      ),
+      'createStudioEditorVersionRenameStateBridge',
+      { stateStore: versionRenameStateStore }
+    );
+    const versionRenameStateAccessors = createBridge(
+      resolveApi(
+        options.versionRenameStateAccessorsApi,
+        'SlideNextStudioEditorVersionRenameStateAccessors'
+      ),
+      'createStudioEditorVersionRenameStateAccessors',
+      {
+        bridge: versionRenameStateBridge,
+        getFallbackState: options.getVersionRenameFallbackState,
+        setFallbackState: options.setVersionRenameFallbackState
+      }
+    );
 
     return {
       sessionStateBridge,
@@ -198,7 +234,11 @@
       wallpaperStateRuntime,
       wallpaperStateStore,
       wallpaperStateBridge,
-      wallpaperStateAccessors
+      wallpaperStateAccessors,
+      versionRenameStateRuntime,
+      versionRenameStateStore,
+      versionRenameStateBridge,
+      versionRenameStateAccessors
     };
   }
 

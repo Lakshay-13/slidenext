@@ -76,6 +76,6 @@ test('editor loads version rename accessors after the rename state bridge', () =
     fileContent,
     /<script src="\/shared\/studio-editor-version-rename-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorVersionRenameStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.versionRenameStateAccessors/);
   assert.match(fileContent, /studioEditorVersionRenameStateAccessors/);
 });
