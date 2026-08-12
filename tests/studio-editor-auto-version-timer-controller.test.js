@@ -5,6 +5,12 @@ const path = require('node:path');
 const timerController = require('../shared/studio-editor-auto-version-timer-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const TIMER_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-timer-state-accessors.js'
+);
 
 test('auto-version timer controller owns keyed timers and clears one timer without affecting others', () => {
   const controller = timerController.createStudioEditorAutoVersionTimerController({
@@ -36,8 +42,13 @@ test('editor routes auto-version timer ownership through the controller', () => 
 
   assert.match(source, /studio-editor-auto-version-timer-store\.js/);
   assert.match(source, /studioEditorTimerStateBridge/);
-  assert.match(source, /getStudioAutoVersionTimers\(\)/);
-  assert.match(source, /setStudioAutoVersionTimer\(/);
+  assert.match(source, /studioEditorTimerStateGlobalApi/);
+  assert.match(source, /Object\.assign\(globalThis, studioEditorTimerStateGlobalApi\)/);
+  const timerAccessors = fs.readFileSync(TIMER_ACCESSORS_PATH, 'utf8');
+  assert.match(timerAccessors, /getStudioAutoVersionTimers: \(\) => accessors\.getAutoVersionTimers\(\)/);
+  assert.match(timerAccessors, /setStudioAutoVersionTimer: \(timerKey, timerId\) => accessors\.setAutoVersionTimer\(timerKey, timerId\)/);
+  assert.match(timerAccessors, /clearStudioAutoVersionTimer: \(timerKey\) => accessors\.clearAutoVersionTimer\(timerKey\)/);
   assert.doesNotMatch(source, /const studioEditorAutoVersionTimerController =/);
   assert.doesNotMatch(source, /let autoVersionTimers = \{\}/);
+  assert.doesNotMatch(source, /function getStudioAutoVersionTimers\(\)/);
 });

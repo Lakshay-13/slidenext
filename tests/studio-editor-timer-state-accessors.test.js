@@ -30,6 +30,27 @@ test('timer state accessors delegate autosave and auto-version timers', () => {
   assert.equal(accessors.clearAutoVersionTimer('deck'), 'cleared:deck');
 });
 
+test('timer state global api preserves the editor shell function names', () => {
+  const accessors = {
+    getAutoSaveDebounceTimer: () => 10,
+    setAutoSaveDebounceTimer: (value) => value,
+    getAutoVersionTimers: () => ({ deck: 20 }),
+    setAutoVersionTimers: (value) => value,
+    getAutoVersionTimer: (key) => `${key}-timer`,
+    setAutoVersionTimer: (key, value) => `${key}:${value}`,
+    clearAutoVersionTimer: (key) => `cleared:${key}`
+  };
+  const globalApi = accessorsApi.createStudioEditorTimerStateGlobalApi({ accessors });
+
+  assert.equal(globalApi.getStudioAutoSaveDebounceTimer(), 10);
+  assert.equal(globalApi.setStudioAutoSaveDebounceTimer(11), 11);
+  assert.deepEqual(globalApi.getStudioAutoVersionTimers(), { deck: 20 });
+  assert.deepEqual(globalApi.setStudioAutoVersionTimers({ deck: 21 }), { deck: 21 });
+  assert.equal(globalApi.getStudioAutoVersionTimer('deck'), 'deck-timer');
+  assert.equal(globalApi.setStudioAutoVersionTimer('deck', 22), 'deck:22');
+  assert.equal(globalApi.clearStudioAutoVersionTimer('deck'), 'cleared:deck');
+});
+
 test('timer state accessors preserve safe fallbacks without a bridge', () => {
   const accessors = accessorsApi.createStudioEditorTimerStateAccessors();
 
@@ -52,6 +73,11 @@ test('timer state accessors publish the global consumed by the editor shell', ()
       .createStudioEditorTimerStateAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorTimerStateAccessors
+      .createStudioEditorTimerStateGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads timer accessors after the timer bridge', () => {
@@ -63,4 +89,7 @@ test('editor loads timer accessors after the timer bridge', () => {
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.timerStateAccessors/);
   assert.match(fileContent, /studioEditorTimerStateAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorTimerStateGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioAutoSaveDebounceTimer\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioAutoVersionTimers\(\)/);
 });

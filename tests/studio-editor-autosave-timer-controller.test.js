@@ -1,8 +1,16 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const path = require('node:path');
 const test = require('node:test');
 
 const autoSaveTimer = require('../shared/studio-editor-autosave-timer-controller.js');
+
+const TIMER_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-timer-state-accessors.js'
+);
 
 test('autosave timer controller owns and clears the debounce handle', () => {
   const controller = autoSaveTimer.createStudioEditorAutoSaveTimerController({
@@ -21,8 +29,12 @@ test('editor routes autosave timer access through the shared controller', () => 
   assert.match(indexHtml, /studio-editor-autosave-timer-controller\.js/);
   assert.match(indexHtml, /studio-editor-autosave-timer-store\.js/);
   assert.match(indexHtml, /studioEditorTimerStateBridge/);
-  assert.match(indexHtml, /getStudioAutoSaveDebounceTimer\(\)/);
-  assert.match(indexHtml, /setStudioAutoSaveDebounceTimer\(nextTimer\)/);
+  assert.match(indexHtml, /studioEditorTimerStateGlobalApi/);
+  assert.match(indexHtml, /Object\.assign\(globalThis, studioEditorTimerStateGlobalApi\)/);
+  const timerAccessors = fs.readFileSync(TIMER_ACCESSORS_PATH, 'utf8');
+  assert.match(timerAccessors, /getStudioAutoSaveDebounceTimer: \(\) => accessors\.getAutoSaveDebounceTimer\(\)/);
+  assert.match(timerAccessors, /setStudioAutoSaveDebounceTimer: \(nextTimer\) => accessors\.setAutoSaveDebounceTimer\(nextTimer\)/);
   assert.doesNotMatch(indexHtml, /const studioEditorAutoSaveTimerController =/);
   assert.doesNotMatch(indexHtml, /let autoSaveDebounceTimer = null/);
+  assert.doesNotMatch(indexHtml, /function getStudioAutoSaveDebounceTimer\(\)/);
 });

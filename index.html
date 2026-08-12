@@ -1824,41 +1824,14 @@
     const studioEditorTimerStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.timerStateAccessors
       : null;
-    function getStudioAutoSaveDebounceTimer() {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.getAutoSaveDebounceTimer()
-        : null;
-    }
-    function setStudioAutoSaveDebounceTimer(nextTimer) {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.setAutoSaveDebounceTimer(nextTimer)
-        : false;
-    }
-    function getStudioAutoVersionTimers() {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.getAutoVersionTimers()
-        : {};
-    }
-    function setStudioAutoVersionTimers(nextTimers) {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.setAutoVersionTimers(nextTimers)
-        : false;
-    }
-    function getStudioAutoVersionTimer(timerKey) {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.getAutoVersionTimer(timerKey)
-        : undefined;
-    }
-    function setStudioAutoVersionTimer(timerKey, timerId) {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.setAutoVersionTimer(timerKey, timerId)
-        : false;
-    }
-    function clearStudioAutoVersionTimer(timerKey) {
-      return studioEditorTimerStateAccessors
-        ? studioEditorTimerStateAccessors.clearAutoVersionTimer(timerKey)
-        : undefined;
-    }
+    const studioEditorTimerStateGlobalApi = typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
+      && SlideNextStudioEditorTimerStateAccessors
+      && typeof SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateGlobalApi === 'function'
+      ? SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateGlobalApi({
+          accessors: studioEditorTimerStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorTimerStateGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'

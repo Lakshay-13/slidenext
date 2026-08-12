@@ -46,5 +46,22 @@
     };
   }
 
-  return { createStudioEditorTimerStateAccessors };
+  function createStudioEditorTimerStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorTimerStateAccessors(options);
+
+    return {
+      getStudioAutoSaveDebounceTimer: () => accessors.getAutoSaveDebounceTimer(),
+      setStudioAutoSaveDebounceTimer: (nextTimer) => accessors.setAutoSaveDebounceTimer(nextTimer),
+      getStudioAutoVersionTimers: () => accessors.getAutoVersionTimers(),
+      setStudioAutoVersionTimers: (nextTimers) => accessors.setAutoVersionTimers(nextTimers),
+      getStudioAutoVersionTimer: (timerKey) => accessors.getAutoVersionTimer(timerKey),
+      setStudioAutoVersionTimer: (timerKey, timerId) => accessors.setAutoVersionTimer(timerKey, timerId),
+      clearStudioAutoVersionTimer: (timerKey) => accessors.clearAutoVersionTimer(timerKey)
+    };
+  }
+
+  return {
+    createStudioEditorTimerStateAccessors,
+    createStudioEditorTimerStateGlobalApi
+  };
 });
