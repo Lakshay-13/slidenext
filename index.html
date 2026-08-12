@@ -5324,6 +5324,13 @@
     }
 
     function setCurrentStudioEditorFrameSource(iframe, presentationUrl, source = {}) {
+      const launchSourceApi = typeof SlideNextStudioEditorLaunchSource !== 'undefined'
+        ? SlideNextStudioEditorLaunchSource
+        : null;
+      if (launchSourceApi
+        && typeof launchSourceApi.applyStudioEditorLaunchSource === 'function') {
+        return launchSourceApi.applyStudioEditorLaunchSource(iframe, presentationUrl, source);
+      }
       if (!iframe) return false;
       const srcdoc = source && typeof source.srcdoc === 'string'
         ? source.srcdoc

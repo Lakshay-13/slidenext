@@ -86,3 +86,24 @@ test('editor shell controller opens canonical source through srcdoc', () => {
   assert.equal(iframe.src, '');
   assert.equal(iframe.srcdoc, '<html>canonical</html>');
 });
+
+test('editor shell controller delegates frame source assignment to the launch source module', () => {
+  const { editor, iframe, documentRef } = createShellElements();
+  const calls = [];
+  const controller = shell.createStudioEditorShellController({
+    documentRef,
+    launchSourceApi: {
+      applyStudioEditorLaunchSource(nextIframe, url, source) {
+        calls.push([nextIframe, url, source]);
+        nextIframe.src = url;
+        nextIframe.srcdoc = '';
+        return true;
+      }
+    }
+  });
+  const source = { kind: 'url', srcdoc: '' };
+
+  assert.equal(controller.open(editor, iframe, '/presentations/demo/index.html', source), true);
+  assert.deepEqual(calls, [[iframe, '/presentations/demo/index.html', source]]);
+  assert.equal(iframe.src, '/presentations/demo/index.html');
+});

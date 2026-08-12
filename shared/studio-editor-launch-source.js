@@ -1,5 +1,5 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
@@ -69,7 +69,28 @@
     return { resolve };
   }
 
+  function applyStudioEditorLaunchSource(iframe, presentationUrl = '', source = {}) {
+    if (!iframe) return false;
+
+    const srcdoc = source && typeof source.srcdoc === 'string'
+      ? source.srcdoc
+      : '';
+    if (srcdoc) {
+      iframe.srcdoc = srcdoc;
+      if (typeof iframe.removeAttribute === 'function') {
+        iframe.removeAttribute('src');
+      } else {
+        iframe.src = '';
+      }
+    } else {
+      iframe.srcdoc = '';
+      iframe.src = presentationUrl;
+    }
+    return true;
+  }
+
   return {
-    createStudioEditorLaunchSourceResolver
+    createStudioEditorLaunchSourceResolver,
+    applyStudioEditorLaunchSource
   };
 });

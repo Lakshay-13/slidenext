@@ -63,6 +63,36 @@ test('launch source resolver falls back when canonical rendering fails or is emp
   assert.equal(emptyResolver.resolve('/deck/index.html', { canonicalDeck }).kind, 'url');
 });
 
+test('launch source applier centralizes canonical srcdoc and legacy URL assignment', () => {
+  const removedAttributes = [];
+  const iframe = {
+    src: 'old.html',
+    srcdoc: 'old source',
+    removeAttribute(name) {
+      removedAttributes.push(name);
+    }
+  };
+
+  assert.equal(
+    launchSource.applyStudioEditorLaunchSource(
+      iframe,
+      '/presentations/demo/index.html',
+      { kind: 'srcdoc', srcdoc: '<html>canonical</html>' }
+    ),
+    true
+  );
+  assert.equal(iframe.srcdoc, '<html>canonical</html>');
+  assert.deepEqual(removedAttributes, ['src']);
+
+  assert.equal(
+    launchSource.applyStudioEditorLaunchSource(iframe, '/presentations/legacy/index.html'),
+    true
+  );
+  assert.equal(iframe.srcdoc, '');
+  assert.equal(iframe.src, '/presentations/legacy/index.html');
+  assert.equal(launchSource.applyStudioEditorLaunchSource(null, '/deck/index.html'), false);
+});
+
 test('index launch source adapter renders a real canonical deck through the shared HTML builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const startMarker = 'function resolveCurrentStudioEditorLaunchSource(metadata, presentationUrl = \'\') {';
