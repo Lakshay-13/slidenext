@@ -230,7 +230,9 @@ test('template controller does not publish a saved template when history capture
     canonicalDeckApi: canonicalDeck,
     getCanonicalDeck: () => sourceDeck,
     getActiveSlideId: () => 'slide-1',
-    saveHistoryState: () => false,
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
     onTemplatesChanged: () => { templatesChanged += 1; }
   });
 
@@ -507,7 +509,8 @@ test('template controller rolls back an inserted slide when history capture fail
     setActiveSlide: (index) => calls.push(['active', index]),
     saveHistoryState: () => {
       historyCalls += 1;
-      return historyCalls === 1 ? true : { didCapture: false };
+      if (historyCalls === 1) return true;
+      throw new Error('history unavailable');
     },
     rollbackMutation: (transaction, sourceDocument) => {
       assert.deepEqual(transaction, { kind: 'slide-insert' });

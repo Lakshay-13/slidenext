@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (err) {
+          return false;
+        }
+      };
 
   function createStudioEditorTemplateController(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi
@@ -147,7 +158,9 @@
         if (finalizeResult === false) return null;
       } else {
         if (saveHistoryState
-          && isStudioHistoryCaptureFailure(saveHistoryState(false, null, nextCanonicalDeck))) {
+          && isStudioHistoryCaptureFailure(
+            captureStudioHistoryState(saveHistoryState, false, null, nextCanonicalDeck)
+          )) {
           return null;
         }
         if (triggerAutoSave) triggerAutoSave();
@@ -280,7 +293,9 @@
       }
 
       if (saveHistoryState
-        && isStudioHistoryCaptureFailure(saveHistoryState(false, null, canonicalDeck))) {
+        && isStudioHistoryCaptureFailure(
+          captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck)
+        )) {
         return false;
       }
       const mutation = applyInsertion(container, slideElement, {
@@ -306,7 +321,12 @@
       } else {
         if (saveHistoryState
         && isStudioHistoryCaptureFailure(
-            saveHistoryState(false, mutation.transaction, nextCanonicalDeck)
+            captureStudioHistoryState(
+              saveHistoryState,
+              false,
+              mutation.transaction,
+              nextCanonicalDeck
+            )
           )) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
           if (generateThumbnails) generateThumbnails();
