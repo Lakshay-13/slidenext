@@ -226,6 +226,27 @@ test('legacy PPTX CLI exports the HTML sibling of a metadata-only sidecar', {
   }
 });
 
+test('legacy PPTX CLI accepts a direct HTML deck path', {
+  skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
+}, async () => {
+  const temporaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-direct-html-pptx-'));
+  const inputPath = path.join(temporaryDir, 'deck.html');
+  const outputPath = path.join(temporaryDir, 'deck.pptx');
+  fs.writeFileSync(
+    inputPath,
+    '<!doctype html><html><head><style>.slide{width:640px;height:360px;page-break-after:always}</style></head><body><section class="slide">Direct HTML</section></body></html>',
+    'utf8'
+  );
+
+  try {
+    assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+    const buffer = fs.readFileSync(outputPath);
+    assert.equal(buffer.subarray(0, 2).toString(), 'PK');
+  } finally {
+    fs.rmSync(temporaryDir, { recursive: true, force: true });
+  }
+});
+
 test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () => {
   const result = pptxExport.createCanonicalPptxExport({
     metadata: {

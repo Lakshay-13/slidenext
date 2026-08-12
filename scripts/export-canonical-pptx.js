@@ -13,7 +13,7 @@ const pdfScript = require('./export-canonical-pdf.js');
 const legacyPptxExport = require('./export-legacy-html-pptx.js');
 
 function printUsage() {
-  console.error('Usage: node scripts/export-canonical-pptx.js <canonical-deck.json> <output.pptx>');
+  console.error('Usage: node scripts/export-canonical-pptx.js <canonical-deck.json|deck.html> <output.pptx>');
 }
 
 async function main(argv = process.argv.slice(2)) {
@@ -25,6 +25,20 @@ async function main(argv = process.argv.slice(2)) {
 
   const resolvedInputPath = path.resolve(inputPath);
   const resolvedOutputPath = path.resolve(outputPath);
+  const directLegacyHtmlPath = pdfScript.resolveLegacyHtmlInputPath(resolvedInputPath);
+  if (directLegacyHtmlPath) {
+    const legacyHtml = await fs.readFile(directLegacyHtmlPath, 'utf8');
+    const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
+      assetBaseDir: path.dirname(directLegacyHtmlPath)
+    });
+    await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
+    await fs.writeFile(resolvedOutputPath, result.buffer);
+    validatePptxArtifact(await fs.readFile(resolvedOutputPath));
+    console.error(`PPTX export completed with ${result.warnings.length} warning(s):`);
+    result.warnings.forEach(warning => console.error(`- ${warning}`));
+    console.log(`Exported ${result.slideCount} legacy slide(s) to ${resolvedOutputPath}`);
+    return 0;
+  }
   const input = JSON.parse(await fs.readFile(resolvedInputPath, 'utf8'));
   const hasCanonicalDeckPayload = Boolean(
     presentationMetadata.resolvePresentationCanonicalDeck(input)
