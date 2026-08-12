@@ -8515,7 +8515,7 @@
         if (typeof updateStyleActionState.sync !== 'function') {
           updateStyleActionState.sync = styleApi.createStudioStyleToolbarStateSync({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getLockedState(sourceDoc) {
               const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'

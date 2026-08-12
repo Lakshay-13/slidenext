@@ -150,7 +150,7 @@
       const resolvedDoc = doc || getDocument();
       return syncStudioStyleToolbarState({
         documentRef: getDocumentRef(),
-        elements: getSelectedElements(),
+        elements: getSelectedElements(resolvedDoc),
         isLocked: getLockedState(resolvedDoc),
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });
