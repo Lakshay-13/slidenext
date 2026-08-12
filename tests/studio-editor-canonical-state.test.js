@@ -212,6 +212,15 @@ test('studio editor canonical state does not claim absent owners', () => {
   assert.equal(state.resolve({ documentRef: activeDocument, sessionToken: 4 }), activeDeck);
 });
 
+test('studio editor canonical state does not resolve unowned state for a real owner', () => {
+  const state = canonicalState.createStudioEditorCanonicalState();
+  const deck = createDeck('unowned');
+
+  assert.equal(state.set(deck, { documentRef: null, sessionToken: null }), deck);
+  assert.equal(state.resolve({ documentRef: {}, sessionToken: 4 }), null);
+  assert.equal(state.resolve({ documentRef: null, sessionToken: null }), deck);
+});
+
 test('studio editor canonical state rejects stale clears but accepts the active owner', () => {
   const state = canonicalState.createStudioEditorCanonicalState();
   const activeDocument = {};
