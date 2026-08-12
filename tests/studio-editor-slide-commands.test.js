@@ -230,7 +230,9 @@ test('duplicateStudioSlideNode stops before DOM insertion when history baseline 
     assignSlideId: () => 'slide-2',
     buildCanonicalDuplicateSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
     buildCanonicalDuplicateSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
-    saveHistoryState: () => ({ didCapture: false }),
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
     applyInsertion: () => {
       calls.push('applyInsertion');
       return { didApply: true };
@@ -421,7 +423,9 @@ test('addStudioSlideNode stops before DOM insertion when history baseline captur
     createBlankSlide: () => ({ id: 'slide-2' }),
     buildCanonicalAddSlideBaseline: () => ({ slides: [{ id: 'slide-1' }] }),
     buildCanonicalAddSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
-    saveHistoryState: () => ({ didCapture: false }),
+    saveHistoryState: () => {
+      throw new Error('history unavailable');
+    },
     applyInsertion: () => {
       calls.push('applyInsertion');
       return { didApply: true };

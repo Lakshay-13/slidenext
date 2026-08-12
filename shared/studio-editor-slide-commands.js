@@ -15,6 +15,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (err) {
+          return false;
+        }
+      };
 
   function prepareStudioSlideDuplication(sourceSlide, options = {}) {
     if (!sourceSlide || typeof sourceSlide.cloneNode !== 'function') {
@@ -119,9 +130,14 @@
       : () => {};
     let historyCaptureResult;
     if (canonicalDeckBeforeDuplication) {
-      historyCaptureResult = saveHistoryState(false, null, canonicalDeckBeforeDuplication);
+      historyCaptureResult = captureStudioHistoryState(
+        saveHistoryState,
+        false,
+        null,
+        canonicalDeckBeforeDuplication
+      );
     } else {
-      historyCaptureResult = saveHistoryState();
+      historyCaptureResult = captureStudioHistoryState(saveHistoryState);
     }
     if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
     const applyInsertion = typeof options.applyInsertion === 'function'
@@ -222,9 +238,14 @@
         : () => {};
       let historyCaptureResult;
       if (canonicalDeckBeforeAddition) {
-        historyCaptureResult = saveHistoryState(false, null, canonicalDeckBeforeAddition);
+        historyCaptureResult = captureStudioHistoryState(
+          saveHistoryState,
+          false,
+          null,
+          canonicalDeckBeforeAddition
+        );
       } else {
-        historyCaptureResult = saveHistoryState();
+        historyCaptureResult = captureStudioHistoryState(saveHistoryState);
       }
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         return false;
