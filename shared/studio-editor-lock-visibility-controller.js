@@ -271,6 +271,7 @@
       if (!mutation || !mutation.didApply) return false;
       if (!finalizeSelectionToggleMutation) return false;
       return finalizeSelectionToggleMutation(lockMutationPlan.versionLabel, {
+        doc,
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
@@ -333,6 +334,7 @@
       if (!finalizeSelectionToggleMutation) return false;
       return finalizeSelectionToggleMutation(visibilityMutationPlan.versionLabel, {
         ...options,
+        doc,
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });

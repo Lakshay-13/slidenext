@@ -138,7 +138,7 @@
   function finalizeStudioSelectionToggleMutation(options = {}) {
     const mutationOptions = options.mutationOptions || {};
     if (!mutationOptions.skipSelectionUi && typeof options.syncSelectionUi === 'function') {
-      options.syncSelectionUi();
+      options.syncSelectionUi(mutationOptions.doc);
     }
     const finalizeMutation = options.finalizeMutation;
     if (typeof finalizeMutation !== 'function') return false;

@@ -152,7 +152,7 @@
       });
     }
     if (!mutationOptions.skipSelectionUi) {
-      syncSelectionUi();
+      syncSelectionUi(mutationOptions.doc);
     }
     if (!finalizeMutation) return false;
     finalizeMutation(versionLabel, {

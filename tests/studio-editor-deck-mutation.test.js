@@ -101,12 +101,13 @@ test('finalizeStudioEditorDeckMutation preserves canonical fallback history beha
 
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
+  const documentRef = { id: 'editor-document' };
   const result = deckMutation.finalizeStudioEditorSelectionToggleMutation(
     'Auto: Locked Element',
-    { transaction: { id: 'tx' }, canonicalDeck: { id: 'deck' } },
+    { doc: documentRef, transaction: { id: 'tx' }, canonicalDeck: { id: 'deck' } },
     {
-      syncSelectionUi() {
-        calls.push('selection');
+      syncSelectionUi(doc) {
+        calls.push(['selection', doc]);
       },
       finalizeMutation(label, options) {
         calls.push(['finalize', label, options]);
@@ -116,7 +117,7 @@ test('finalizeStudioEditorSelectionToggleMutation preserves selection and persis
 
   assert.equal(result, true);
   assert.deepEqual(calls, [
-    'selection',
+    ['selection', documentRef],
     ['finalize', 'Auto: Locked Element', {
       refreshThumbnails: false,
       transaction: { id: 'tx' },

@@ -283,13 +283,15 @@ test('finalizeStudioMutation delegates version and mutation options to the share
 
 test('finalizeStudioSelectionToggleMutation syncs selection before persisting a transaction', () => {
   const calls = [];
+  const documentRef = { id: 'editor-document' };
   assert.equal(mutation.finalizeStudioSelectionToggleMutation({
     versionLabel: 'Auto: Locked Element',
     mutationOptions: {
+      doc: documentRef,
       transaction: { id: 'tx-2' }
     },
-    syncSelectionUi() {
-      calls.push(['selection']);
+    syncSelectionUi(doc) {
+      calls.push(['selection', doc]);
     },
     finalizeMutation(label, options) {
       calls.push(['finalize', label, options]);
@@ -297,7 +299,7 @@ test('finalizeStudioSelectionToggleMutation syncs selection before persisting a 
   }), true);
 
   assert.deepEqual(calls, [
-    ['selection'],
+    ['selection', documentRef],
     ['finalize', 'Auto: Locked Element', {
       refreshThumbnails: false,
       transaction: { id: 'tx-2' }

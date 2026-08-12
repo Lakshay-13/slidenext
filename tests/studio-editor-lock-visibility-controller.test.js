@@ -8,6 +8,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   const calls = [];
   let builderOptions = null;
   const selected = [{ id: 'node-1', dataset: { editorId: 'node-1' } }];
+  const documentRef = { id: 'doc' };
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: {
       buildStudioLockMutationPlan(elements, options) {
@@ -35,7 +36,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
     canonicalDeckApi: canonicalDeck,
     canonicalStateApi: canonicalState,
     getSelectedElements: () => selected,
-    getIframeDoc: () => ({ id: 'doc' }),
+    getIframeDoc: () => documentRef,
     getActiveSlide: () => ({ id: 'slide-1' }),
     assignLockElementId: (element) => element.dataset.editorId,
     assignVisibilityElementId: (element) => element.dataset.editorId,
@@ -64,6 +65,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   assert.equal(calls[2][0], 'lockMutation');
   assert.equal(calls[3][0], 'finalize');
   assert.equal(calls[3][1], 'Auto: Locked Element');
+  assert.equal(calls[3][2].doc, documentRef);
   assert.equal(calls[4][0], 'visibilityPlan');
   assert.equal(calls[5][0], 'canonical');
   assert.deepEqual(calls[5][2], { hidden: true });
@@ -71,6 +73,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   assert.equal(calls[7][0], 'finalize');
   assert.equal(calls[7][1], 'Auto: Hid Element');
   assert.equal(calls[7][2].skipSelectionUi, true);
+  assert.equal(calls[7][2].doc, documentRef);
   assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
 });
