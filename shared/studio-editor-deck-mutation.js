@@ -155,12 +155,12 @@
       syncSelectionUi(mutationOptions.doc);
     }
     if (!finalizeMutation) return false;
-    finalizeMutation(versionLabel, {
+    const result = finalizeMutation(versionLabel, {
       refreshThumbnails: false,
       ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {}),
       ...(mutationOptions.canonicalDeck ? { canonicalDeck: mutationOptions.canonicalDeck } : {})
     });
-    return true;
+    return result === false ? false : true;
   }
 
   function finalizeStudioEditorInsertedElements(

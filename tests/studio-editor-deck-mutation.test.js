@@ -154,6 +154,18 @@ test('finalizeStudioEditorSelectionToggleMutation preserves selection and persis
   ]);
 });
 
+test('finalizeStudioEditorSelectionToggleMutation propagates explicit persistence failures', () => {
+  const result = deckMutation.finalizeStudioEditorSelectionToggleMutation(
+    'Auto: Locked Element',
+    { doc: { id: 'editor-document' } },
+    {
+      finalizeMutation: () => false
+    }
+  );
+
+  assert.equal(result, false);
+});
+
 test('finalizeStudioEditorInsertedElements selects before persisting inserted content', () => {
   const calls = [];
   const insertedElements = [{ id: 'node-1' }];
