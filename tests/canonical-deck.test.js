@@ -39,6 +39,20 @@ test('createCanonicalDeck normalizes the legacy freeform layout alias to absolut
   assert.equal(deck.slides[0].nodes[0].layout.mode, 'absolute');
 });
 
+test('createCanonicalDeck normalizes unsupported layout modes to flow', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    layout: { mode: 'grid' },
+    slides: [{
+      layout: { mode: 'stack' },
+      nodes: [{ id: 'node-1', layout: { mode: 'responsive' } }]
+    }]
+  });
+
+  assert.equal(deck.layout.mode, 'flow');
+  assert.equal(deck.slides[0].layout.mode, 'flow');
+  assert.equal(deck.slides[0].nodes[0].layout.mode, 'flow');
+});
+
 test('canonical deck validation fails closed for unsupported schema versions', () => {
   const unsupportedDeck = {
     kind: 'slidenext.deck',

@@ -25,7 +25,8 @@
 
   function normalizeLayoutMode(value, fallback = DEFAULT_LAYOUT_MODE) {
     const mode = normalizeString(value).trim().toLowerCase();
-    return mode === 'freeform' ? 'absolute' : (mode || fallback);
+    if (mode === 'freeform') return 'absolute';
+    return mode === 'flow' || mode === 'absolute' ? mode : fallback;
   }
 
   function normalizeStringArray(values) {
