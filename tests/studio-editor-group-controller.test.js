@@ -203,6 +203,96 @@ test('group controller commits restored selection and finalizes ungrouping', () 
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
 });
 
+test('group controller rolls back and clears selection when group finalization throws', () => {
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 100, bottom: 100 };
+    }
+  };
+  const group = { id: 'group' };
+  const transaction = { id: 'tx' };
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent,
+      selection: [{ id: 'one' }, { id: 'two' }],
+      groupPlan: { id: 'plan' }
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: (currentSlide) => currentSlide === slide
+      ? [{ id: 'one' }, { id: 'two' }]
+      : [],
+    applyGroupMutation: () => ({ didApply: true, group, transaction }),
+    commitSelectionState: (state) => calls.push(['selection', state]),
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction) {
+        calls.push(['rollback', currentTransaction, direction]);
+        return { didApply: true };
+      }
+    },
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.group(), false);
+  });
+  assert.deepEqual(calls, [
+    ['selection', { selectedElements: [group] }],
+    ['rollback', transaction, 'undo'],
+    ['selection', { selectedElements: [] }]
+  ]);
+});
+
+test('group controller rolls back and clears selection when ungroup finalization throws', () => {
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const group = { id: 'group', parentElement: slide };
+  const child = { id: 'child' };
+  const transaction = { id: 'tx' };
+  const controller = groupController.createStudioEditorGroupController({
+    buildUngroupSelectionActionState: () => ({
+      canUngroup: true,
+      slide,
+      groups: [group]
+    }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getRectOnSlide: (rect) => rect,
+    applyUngroupMutation: () => ({
+      didApply: true,
+      restoredElements: [child],
+      restoredGroups: [{ group, restoredElements: [child] }],
+      transaction
+    }),
+    commitSelectionState: (state) => calls.push(['selection', state]),
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction) {
+        calls.push(['rollback', currentTransaction, direction]);
+        return { didApply: true };
+      }
+    },
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.ungroup(), false);
+  });
+  assert.deepEqual(calls, [
+    ['selection', { selectedElements: [child] }],
+    ['rollback', transaction, 'undo'],
+    ['selection', { selectedElements: [] }]
+  ]);
+});
+
 test('ungroup controller rolls back when the canonical ungroup sidecar is null', () => {
   const calls = [];
   const slide = { id: 'slide-1' };

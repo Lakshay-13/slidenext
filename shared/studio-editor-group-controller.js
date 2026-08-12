@@ -148,6 +148,15 @@
       return !!(rollbackResult && rollbackResult.didApply);
     }
 
+    function finalizeGroupMutation(versionLabel, options = {}) {
+      if (!finalizeDeckMutation) return false;
+      try {
+        return finalizeDeckMutation(versionLabel, options);
+      } catch (error) {
+        return false;
+      }
+    }
+
     function group() {
       if (!buildGroupSelectionActionState) return false;
       const groupActionState = buildGroupSelectionActionState();
@@ -247,7 +256,7 @@
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: [mutation.group] });
       }
-      const finalizeResult = finalizeDeckMutation('Auto: Grouped Elements', {
+      const finalizeResult = finalizeGroupMutation('Auto: Grouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
@@ -370,7 +379,7 @@
       if (commitSelectionState) {
         commitSelectionState({ selectedElements: mutation.restoredElements });
       }
-      const finalizeResult = finalizeDeckMutation('Auto: Ungrouped Elements', {
+      const finalizeResult = finalizeGroupMutation('Auto: Ungrouped Elements', {
         syncSelectionOverlay: true,
         refreshThumbnails: false,
         debounceHistory: true,
