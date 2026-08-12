@@ -5489,6 +5489,16 @@
       });
     }
 
+    function reportStudioFrameInitializationError() {
+      if (typeof setStudioFrameLoadingState === 'function') {
+        setStudioFrameLoadingState('error');
+      }
+      if (typeof setStudioAutoSaveStatus === 'function') {
+        setStudioAutoSaveStatus('editor-load-failed');
+      }
+      return false;
+    }
+
     async function retryStudioEditorFrame() {
       const presentationUrl = getStudioCurrentPresentationUrl();
       if (!presentationUrl) return false;
@@ -5827,8 +5837,10 @@
         } catch (error) {
           didInitialize = false;
         }
-        if (typeof setStudioFrameLoadingState === 'function') {
-          setStudioFrameLoadingState(didInitialize ? 'ready' : 'error');
+        if (didInitialize && typeof setStudioFrameLoadingState === 'function') {
+          setStudioFrameLoadingState('ready');
+        } else if (!didInitialize) {
+          reportStudioFrameInitializationError();
         }
         return didInitialize;
       }
@@ -5837,8 +5849,7 @@
       }
       const iframeDoc = getIframeDoc();
       if (!iframeDoc) {
-        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
-        return false;
+        return reportStudioFrameInitializationError();
       }
       const editorStyleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
         ? SlideNextStudioEditorStyle
@@ -5854,8 +5865,7 @@
         || typeof editorStyleApi.ensureStudioEditorStyle !== 'function'
         || !frameBootstrapApi
         || typeof frameBootstrapApi.runStudioFrameBootstrap !== 'function') {
-        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
-        return false;
+        return reportStudioFrameInitializationError();
       }
       
       // Sync active theme to slide frame
@@ -5931,8 +5941,7 @@
           }
         });
       } catch (error) {
-        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
-        return false;
+        return reportStudioFrameInitializationError();
       }
       updateDeckReadyToolbarActionState();
       setStudioAutoSaveStatus(initialHistoryCaptureFailed ? 'history-failed' : 'saved');

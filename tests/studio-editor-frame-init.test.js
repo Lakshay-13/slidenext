@@ -18,7 +18,16 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(start, end)}`;
+  const frameInitializationErrorStart = fileContent.indexOf(
+    'function reportStudioFrameInitializationError() {'
+  );
+  const frameInitializationErrorEnd = fileContent.indexOf(
+    '\n\n    async function retryStudioEditorFrame()',
+    frameInitializationErrorStart
+  );
+  assert.notEqual(frameInitializationErrorStart, -1, 'Missing frame initialization error helper');
+  assert.notEqual(frameInitializationErrorEnd, -1, 'Missing frame initialization error helper end');
+  return `${sessionTokenFixture.getStudioSessionTokenFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(frameInitializationErrorStart, frameInitializationErrorEnd)}\n${fileContent.slice(start, end)}`;
 }
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
@@ -928,6 +937,7 @@ test('initStudioFrame exposes an error state when the frame controller throws', 
     '\n\n    // Apply hoverable tags to editable nodes'
   );
   const frameLoadingStates = [];
+  const statusStates = [];
   const context = {
     studioEditorFrameController: {
       init() {
@@ -936,6 +946,9 @@ test('initStudioFrame exposes an error state when the frame controller throws', 
     },
     setStudioFrameLoadingState(state) {
       frameLoadingStates.push(state);
+    },
+    setStudioAutoSaveStatus(state) {
+      statusStates.push(state);
     }
   };
 
@@ -944,6 +957,7 @@ test('initStudioFrame exposes an error state when the frame controller throws', 
 
   assert.equal(context.initStudioFrame(), false);
   assert.deepEqual(frameLoadingStates, ['error']);
+  assert.deepEqual(statusStates, ['editor-load-failed']);
 });
 
 test('initStudioFrame exposes an error state when legacy bootstrap throws', () => {

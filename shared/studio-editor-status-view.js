@@ -59,6 +59,8 @@
       statusEl.innerHTML = `<span class="text-rose-400">Network Error</span>`;
     } else if (state === 'history-failed') {
       statusEl.innerHTML = `<span class="text-rose-400">Undo History Unavailable</span>`;
+    } else if (state === 'editor-load-failed') {
+      statusEl.innerHTML = `<span class="text-rose-400">Editor Load Failed</span>`;
     } else if (state === 'exporting') {
       statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PPTX...</span>`;
     } else if (state === 'export-failed') {
