@@ -11152,7 +11152,11 @@
           triggerAutoSave,
           flushPendingHistory: typeof flushPendingEditorHistory === 'function'
             ? flushPendingEditorHistory
-            : null
+            : null,
+          hasPendingHistory: () => (
+            getStudioPendingEditorTransaction() !== null
+            || getStudioPendingEditorCanonicalDeck() !== null
+          )
         });
       }
       return getEditorHistoryStepAdapter.adapter;

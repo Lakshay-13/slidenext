@@ -84,8 +84,10 @@ test('history controller reports pending flush capture failures', () => {
 test('history controller forwards history steps and restore entries', () => {
   const steps = [];
   const restores = [];
+  const pendingTransactions = [];
   const historyApi = {
     createStudioHistoryStepRunner(options) {
+      pendingTransactions.push(options.hasPendingHistory());
       return () => {
         steps.push(options.didStepKey);
         options.restoreHistoryEntry({ id: options.didStepKey }, { id: 'step' });
@@ -111,6 +113,7 @@ test('history controller forwards history steps and restore entries', () => {
   assert.deepEqual(controller.undo(), { didUndo: true });
   assert.deepEqual(controller.redo(), { didRedo: true });
   assert.deepEqual(steps, ['didUndo', 'didRedo']);
+  assert.deepEqual(pendingTransactions, [false, false]);
   assert.deepEqual(restores, [
     [{ id: 'didUndo' }, { id: 'step' }, 'restore-options'],
     [{ id: 'didRedo' }, { id: 'step' }, 'restore-options']

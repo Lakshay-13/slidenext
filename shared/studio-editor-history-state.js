@@ -367,6 +367,9 @@
     const flushPendingHistory = typeof options.flushPendingHistory === 'function'
       ? options.flushPendingHistory
       : () => {};
+    const hasPendingHistory = typeof options.hasPendingHistory === 'function'
+      ? options.hasPendingHistory
+      : null;
 
     const runners = {
       undo: null,
@@ -399,7 +402,8 @@
         restoreHistoryEntry,
         updateHistoryButtons,
         triggerAutoSave,
-        flushPendingHistory
+        flushPendingHistory,
+        hasPendingHistory
       });
     }
 

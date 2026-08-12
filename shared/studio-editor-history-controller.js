@@ -321,7 +321,13 @@
             restoreHistoryEntry: restore,
             updateHistoryButtons,
             triggerAutoSave,
-            flushPendingHistory: flushPending
+            flushPendingHistory: flushPending,
+            hasPendingHistory: () => {
+              const pendingTransaction = getPendingTransaction();
+              const pendingCanonicalDeck = getPendingCanonicalDeck();
+              return (pendingTransaction !== undefined && pendingTransaction !== null)
+                || (pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null);
+            }
           })
         : null;
       return stepAdapter;

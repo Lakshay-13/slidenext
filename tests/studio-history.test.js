@@ -1463,6 +1463,37 @@ test('createStudioHistoryStepRunner applies successful history steps and skips u
   assert.deepEqual(failedUndoStack, ['undo-entry']);
   assert.deepEqual(failedRedoStack, ['redo-entry']);
 
+  let blockedStepCalls = 0;
+  const blockedUndoStack = ['undo-entry'];
+  const blockedRedoStack = ['redo-entry'];
+  const blockedRunner = studioHistory.createStudioHistoryStepRunner({
+    stepHistory() {
+      blockedStepCalls += 1;
+      return { didUndo: true };
+    },
+    didStepKey: 'didUndo',
+    getUndoStack() {
+      return blockedUndoStack;
+    },
+    getRedoStack() {
+      return blockedRedoStack;
+    },
+    flushPendingHistory() {
+      return false;
+    },
+    hasPendingHistory() {
+      return true;
+    }
+  });
+
+  assert.deepEqual(blockedRunner(), {
+    didUndo: false,
+    undoStack: blockedUndoStack,
+    redoStack: blockedRedoStack,
+    restoreEntry: null
+  });
+  assert.equal(blockedStepCalls, 0);
+
   const skippedCalls = [];
   const skippedRunner = studioHistory.createStudioHistoryStepRunner({
     stepHistory(nextUndoStack, nextRedoStack) {

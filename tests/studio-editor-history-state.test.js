@@ -418,7 +418,8 @@ test('createStudioEditorHistoryStepAdapter builds independent undo and redo runn
     historyApi,
     getUndoStack: () => undoStack,
     getRedoStack: () => redoStack,
-    flushPendingHistory() {}
+    flushPendingHistory() {},
+    hasPendingHistory: () => false
   });
 
   assert.equal(adapter.undo().didUndo, true);
@@ -432,6 +433,8 @@ test('createStudioEditorHistoryStepAdapter builds independent undo and redo runn
   assert.equal(createdSteps[1].didStepKey, 'didRedo');
   assert.equal(typeof createdSteps[0].flushPendingHistory, 'function');
   assert.equal(typeof createdSteps[1].flushPendingHistory, 'function');
+  assert.equal(typeof createdSteps[0].hasPendingHistory, 'function');
+  assert.equal(typeof createdSteps[1].hasPendingHistory, 'function');
 });
 
 test('createStudioEditorHistoryStepStateAdapter reuses the shared step adapter', () => {

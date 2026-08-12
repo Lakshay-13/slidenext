@@ -481,9 +481,34 @@
     const flushPendingHistory = typeof options.flushPendingHistory === 'function'
       ? options.flushPendingHistory
       : () => {};
+    const hasPendingHistory = typeof options.hasPendingHistory === 'function'
+      ? options.hasPendingHistory
+      : null;
+
+    function resolvePendingFlushFailure() {
+      return {
+        [didStepKey]: false,
+        undoStack: getUndoStack(),
+        redoStack: getRedoStack(),
+        restoreEntry: null
+      };
+    }
 
     return function runHistoryStep() {
-      flushPendingHistory();
+      const flushResult = flushPendingHistory();
+      const flushFailed = flushResult === false
+        || (flushResult
+          && typeof flushResult === 'object'
+          && flushResult.didCapture === false);
+      if (flushFailed && hasPendingHistory) {
+        let pendingHistory = true;
+        try {
+          pendingHistory = hasPendingHistory() === true;
+        } catch (err) {
+          pendingHistory = true;
+        }
+        if (pendingHistory) return resolvePendingFlushFailure();
+      }
       const nextHistoryState = stepHistory(getUndoStack(), getRedoStack(), options);
       if (!nextHistoryState || !nextHistoryState[didStepKey]) {
         return nextHistoryState;
