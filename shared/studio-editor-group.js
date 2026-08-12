@@ -174,7 +174,7 @@
       const documentFreeformPositioned = getFreeformPositioned
         ? getFreeformPositioned(resolvedDoc)
         : null;
-      return buildStudioGroupSelectionActionState(getSelectedElements(), {
+      return buildStudioGroupSelectionActionState(getSelectedElements(resolvedDoc), {
         doc: resolvedDoc,
         getActiveSlide,
         getLiveSelectedElements,
@@ -234,7 +234,7 @@
 
     return function buildStudioEditorUngroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getDocument();
-      return buildStudioUngroupSelectionActionState(getSelectedElements(), {
+      return buildStudioUngroupSelectionActionState(getSelectedElements(resolvedDoc), {
         doc: resolvedDoc,
         getActiveSlide,
         getLiveSelectedElements,

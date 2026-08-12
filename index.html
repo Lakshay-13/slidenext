@@ -8280,7 +8280,7 @@
         if (typeof buildGroupSelectionActionState.builder !== 'function') {
           buildGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getLiveSelectedElements,
             getSlideMetrics,
@@ -8438,7 +8438,7 @@
         if (typeof buildUngroupSelectionActionState.builder !== 'function') {
           buildUngroupSelectionActionState.builder = groupApi.createStudioUngroupSelectionActionStateBuilder({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getLiveSelectedElements,
             isEditorGroupElement

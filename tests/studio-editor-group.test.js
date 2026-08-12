@@ -1,9 +1,25 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const group = require('../shared/studio-editor-group.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor forwards the group and ungroup documents into the selection reader', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    source,
+    /groupApi\.createStudioGroupSelectionActionStateBuilder\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
+  assert.match(
+    source,
+    /groupApi\.createStudioUngroupSelectionActionStateBuilder\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
+});
 function buildItems() {
   return [
     {
@@ -141,7 +157,10 @@ test('createStudioGroupSelectionActionStateBuilder resolves editor callbacks thr
   ];
   const buildActionState = group.createStudioGroupSelectionActionStateBuilder({
     getDocument: () => doc,
-    getSelectedElements: () => selection,
+    getSelectedElements: (currentDoc) => {
+      assert.equal(currentDoc, doc);
+      return selection;
+    },
     getActiveSlide: () => slide,
     getLiveSelectedElements: (elements) => elements,
     getSlideMetrics: () => ({ logicalWidth: 1920, logicalHeight: 1080 }),
@@ -172,7 +191,10 @@ test('createStudioGroupSelectionActionStateBuilder resolves document-aware freef
   let readerDocument = null;
   const buildActionState = group.createStudioGroupSelectionActionStateBuilder({
     getDocument: () => doc,
-    getSelectedElements: () => [first, second],
+    getSelectedElements: (currentDoc) => {
+      assert.equal(currentDoc, doc);
+      return [first, second];
+    },
     getActiveSlide: () => slide,
     getLiveSelectedElements: (elements) => elements,
     getSlideMetrics: () => ({ logicalWidth: 1920, logicalHeight: 1080 }),
@@ -230,7 +252,10 @@ test('createStudioUngroupSelectionActionStateBuilder resolves editor callbacks t
   const selection = [groupNode];
   const buildActionState = group.createStudioUngroupSelectionActionStateBuilder({
     getDocument: () => doc,
-    getSelectedElements: () => selection,
+    getSelectedElements: (currentDoc) => {
+      assert.equal(currentDoc, doc);
+      return selection;
+    },
     getActiveSlide: () => slide,
     getLiveSelectedElements: (elements) => elements,
     isEditorGroupElement: (element) => element === groupNode
