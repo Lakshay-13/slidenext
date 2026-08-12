@@ -798,6 +798,46 @@ test('createStudioHistorySaveHandler reports an immediate history capture failur
   assert.equal(saveHistoryState(false, { id: 'transaction' }), false);
 });
 
+test('createStudioHistorySaveHandler restores live canonical state after capture failure', () => {
+  const previousCanonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: [{ id: 'before' }]
+  };
+  const nextCanonicalDeck = {
+    kind: 'slidenext.deck',
+    slides: [{ id: 'after' }]
+  };
+  let liveCanonicalDeck = previousCanonicalDeck;
+  let pendingCanonicalDeck = null;
+  let pendingTransaction = null;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    getLiveCanonicalDeck() {
+      return liveCanonicalDeck;
+    },
+    setLiveCanonicalDeck(nextDeck) {
+      liveCanonicalDeck = nextDeck;
+    },
+    getPendingTransaction() {
+      return pendingTransaction;
+    },
+    setPendingTransaction(nextTransaction) {
+      pendingTransaction = nextTransaction;
+    },
+    setPendingCanonicalDeck(nextDeck) {
+      pendingCanonicalDeck = nextDeck;
+    },
+    captureState() {
+      return { didCapture: false, historyEntry: null };
+    },
+    setTimer() {}
+  });
+
+  assert.equal(saveHistoryState(false, { id: 'mutation' }, nextCanonicalDeck), false);
+  assert.equal(liveCanonicalDeck, previousCanonicalDeck);
+  assert.equal(pendingCanonicalDeck, null);
+  assert.equal(pendingTransaction, null);
+});
+
 test('scheduleStudioHistoryCapture cancels a pending debounce before an immediate capture', () => {
   const clearedTimers = [];
   let captureCalls = 0;

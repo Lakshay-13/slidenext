@@ -756,6 +756,16 @@
 
     return function saveHistoryState(debounce = false, transaction = null, canonicalDeck = null) {
       const hasCanonicalDeck = arguments.length > 2;
+      let previousLiveCanonicalDeck = null;
+      let canRestoreLiveCanonicalDeck = false;
+      if (hasCanonicalDeck && getLiveCanonicalDeck) {
+        try {
+          previousLiveCanonicalDeck = getLiveCanonicalDeck();
+          canRestoreLiveCanonicalDeck = true;
+        } catch (error) {
+          canRestoreLiveCanonicalDeck = false;
+        }
+      }
       let nextCanonicalDeck = hasCanonicalDeck && canonicalDeck && typeof canonicalDeck === 'object'
         ? canonicalDeck
         : null;
@@ -816,6 +826,11 @@
       );
       setTimer(nextCaptureState.nextTimer);
       if (!debounce && nextCaptureState && nextCaptureState.didCapture === false) {
+        if (canRestoreLiveCanonicalDeck) {
+          setLiveCanonicalDeck(previousLiveCanonicalDeck);
+        }
+        setPendingCanonicalDeck(null);
+        setPendingTransaction(null);
         return false;
       }
       return nextCaptureState;
