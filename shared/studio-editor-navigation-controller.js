@@ -35,6 +35,7 @@
         doc: getDocument(),
         captureHistory: nextOptions.captureHistory,
         preserveSelection: !!nextOptions.preserveSelection,
+        getCurrentSlideIndex,
         getSlides,
         syncStudioChromeToActiveSlide
       });

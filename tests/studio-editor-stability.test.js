@@ -3824,24 +3824,32 @@ test('restoreStudioDeckViewAfterSlideMutation prefers the preserved active slide
   });
 });
 
-test('setStudioDeckActiveSlide propagates active-slide sync failures', () => {
+test('setStudioDeckActiveSlide rolls back after active-slide sync failures', () => {
   const slides = [{ id: 'slide-1' }, { id: 'slide-2' }];
   const container = { style: {} };
+  const syncOptions = [];
   const result = deckView.setStudioDeckActiveSlide(1, {
     doc: { id: 'iframe-doc' },
+    captureHistory: true,
     getSlides: () => slides,
+    getCurrentSlideIndex: () => 0,
     getSlidesContainer: () => container,
     setSlideActiveState(slide, isActive) {
       slide.isActive = isActive;
     },
-    syncStudioChromeToActiveSlide() {
+    syncStudioChromeToActiveSlide(doc, options) {
+      syncOptions.push(options);
       return false;
     }
   });
 
   assert.equal(result, false);
-  assert.equal(container.style.transform, 'translateX(-100vw)');
-  assert.deepEqual(slides.map((slide) => slide.isActive), [false, true]);
+  assert.equal(container.style.transform, 'translateX(-0vw)');
+  assert.deepEqual(slides.map((slide) => slide.isActive), [true, false]);
+  assert.deepEqual(syncOptions, [
+    { captureHistory: true, preserveSelection: false },
+    { captureHistory: false, preserveSelection: true }
+  ]);
 });
 
 test('syncStudioActiveSlideView preserves selection only when explicitly requested', () => {

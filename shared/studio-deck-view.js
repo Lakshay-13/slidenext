@@ -977,6 +977,9 @@
     const syncStudioChromeToActiveSlide = typeof options.syncStudioChromeToActiveSlide === 'function'
       ? options.syncStudioChromeToActiveSlide
       : () => false;
+    const getCurrentSlideIndex = typeof options.getCurrentSlideIndex === 'function'
+      ? options.getCurrentSlideIndex
+      : null;
     const captureHistory = !!options.captureHistory;
     const preserveSelection = !!options.preserveSelection;
 
@@ -986,12 +989,31 @@
     }
 
     const container = getSlidesContainer(doc);
+    let previousIndex = getCurrentSlideIndex ? getCurrentSlideIndex() : -1;
+    if (!Number.isInteger(previousIndex) || previousIndex < 0 || previousIndex >= slides.length) {
+      previousIndex = slides.findIndex((slide) => (
+        slide
+        && slide.classList
+        && typeof slide.classList.contains === 'function'
+        && slide.classList.contains('slide-active')
+      ));
+    }
     setSlideContainerOffset(container, index);
     slides.forEach((slide, slideIndex) => {
       setSlideActiveState(slide, slideIndex === index);
     });
 
     const syncResult = syncStudioChromeToActiveSlide(doc, { captureHistory, preserveSelection });
+    if (syncResult === false && previousIndex >= 0 && previousIndex < slides.length) {
+      setSlideContainerOffset(container, previousIndex);
+      slides.forEach((slide, slideIndex) => {
+        setSlideActiveState(slide, slideIndex === previousIndex);
+      });
+      syncStudioChromeToActiveSlide(doc, {
+        captureHistory: false,
+        preserveSelection: true
+      });
+    }
     return syncResult !== false;
   }
 
