@@ -332,6 +332,22 @@ test('finalizeStudioSelectionToggleMutation syncs selection before persisting a 
   ]);
 });
 
+test('finalizeStudioSelectionToggleMutation propagates explicit persistence rejection', () => {
+  let didSyncSelection = false;
+
+  assert.equal(mutation.finalizeStudioSelectionToggleMutation({
+    versionLabel: 'Auto: Locked Element',
+    mutationOptions: { transaction: { id: 'tx-rejected' } },
+    syncSelectionUi() {
+      didSyncSelection = true;
+    },
+    finalizeMutation() {
+      return false;
+    }
+  }), false);
+  assert.equal(didSyncSelection, true);
+});
+
 test('finalizeStudioSelectionToggleMutation forwards a canonical history sidecar', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let finalized = null;
