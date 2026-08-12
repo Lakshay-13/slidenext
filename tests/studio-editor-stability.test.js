@@ -190,6 +190,42 @@ test('DOM mutation canonical builder bypasses live canonical state', () => {
   );
 });
 
+test('canonical override fallback preserves the shared persistence dependency contract', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
+    '\n\n    function getEditorCanonicalDeckValidator()'
+  );
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const calls = [];
+  const isCanonicalDeck = (value) => value === canonicalDeck;
+  const buildCanonicalDeck = () => canonicalDeck;
+  const context = {
+    studioEditorPersistenceController: null,
+    SlideNextStudioEditorPersistenceState: null,
+    SlideNextStudioEditorPersistence: {
+      resolveStudioCanonicalDeckOverride(options) {
+        calls.push(options);
+        return canonicalDeck;
+      }
+    },
+    getEditorCanonicalDeckValidator: () => isCanonicalDeck
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolverSource, context);
+
+  assert.equal(
+    context.resolveEditorCanonicalDeckOverride({ id: 'override' }, { buildCanonicalDeck }),
+    canonicalDeck
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].canonicalDeck.id, 'override');
+  assert.equal(calls[0].buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(calls[0].isCanonicalDeck, isCanonicalDeck);
+});
+
 test('nudge wiring prefers live canonical state and keeps a legacy baseline fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(

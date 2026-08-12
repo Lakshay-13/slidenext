@@ -6705,6 +6705,10 @@
     }
 
     function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {
+      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
+        ? SlideNextStudioEditorPersistence
+        : null;
+      const isCanonicalDeck = getEditorCanonicalDeckValidator();
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
         && typeof studioEditorPersistenceController.resolveCanonicalDeckOverride === 'function') {
@@ -6726,10 +6730,8 @@
       if (createStudioEditorCanonicalDeckOverrideAdapter) {
         if (typeof resolveEditorCanonicalDeckOverride.adapter !== 'function') {
           resolveEditorCanonicalDeckOverride.adapter = createStudioEditorCanonicalDeckOverrideAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            isCanonicalDeck: getEditorCanonicalDeckValidator()
+            persistenceApi,
+            isCanonicalDeck
           });
         }
         return typeof resolveEditorCanonicalDeckOverride.adapter === 'function'
@@ -6739,10 +6741,6 @@
       const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : null;
-      const canonicalDeckValidator = getEditorCanonicalDeckValidator();
-      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-        ? SlideNextStudioEditorPersistence
-        : null;
       if (!persistenceApi
         || typeof persistenceApi.resolveStudioCanonicalDeckOverride !== 'function') {
         return null;
@@ -6750,7 +6748,7 @@
       return persistenceApi.resolveStudioCanonicalDeckOverride({
         canonicalDeck,
         buildCanonicalDeck,
-        isCanonicalDeck: canonicalDeckValidator
+        isCanonicalDeck
       });
     }
 
