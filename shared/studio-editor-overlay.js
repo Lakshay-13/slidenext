@@ -316,7 +316,7 @@
         documentRef,
         getActiveSlide,
         ...overlayOptions,
-        selectedElements: getSelectedElements(),
+        selectedElements: getSelectedElements(documentRef),
         buildSelectionOverlayState: overlayStateApi.buildStudioSelectionOverlayState,
         isHidden,
         getSelectionBounds,

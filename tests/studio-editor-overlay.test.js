@@ -215,7 +215,10 @@ test('createStudioSelectionOverlaySynchronizer assembles editor overlay state', 
       assert.equal(doc, documentRef);
       return { id: 'slide-1' };
     },
-    getSelectedElements: () => selectedElements,
+    getSelectedElements: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return selectedElements;
+    },
     getOverlayOptions: ({ documentRef: currentDocument }) => {
       assert.equal(currentDocument, documentRef);
       return { selectionOverlayId: 'custom-overlay' };

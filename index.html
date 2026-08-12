@@ -7532,7 +7532,7 @@
             : null,
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
           getActiveSlide: typeof getActiveSlide === 'function' ? (doc) => getActiveSlide(doc) : null,
-          getSelectedElements: () => getStudioSelectedElements(),
+          getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getOverlayOptions: (options = {}) => getEditorOverlayOptions(options),
           getHiddenStateReader: (doc) => getEditorCanonicalVisibilityReader('hidden', doc),
           getSelectionBounds: (elements) => getSelectionBounds(elements),
