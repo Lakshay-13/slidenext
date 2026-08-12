@@ -207,6 +207,29 @@ test('group and ungroup baselines fail closed when a compatibility rebuild throw
   assert.equal(canonicalGroup.buildStudioCanonicalUngroupBaseline(options), null);
 });
 
+test('group and ungroup baselines disable live reuse for compatibility rebuilds', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  const rebuildOptions = [];
+  const options = {
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, buildOptions) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions.push(buildOptions);
+      return sourceDeck;
+    },
+    sourceDocument
+  };
+
+  assert.equal(canonicalGroup.buildStudioCanonicalGroupBaseline(options), sourceDeck);
+  assert.equal(canonicalGroup.buildStudioCanonicalUngroupBaseline(options), sourceDeck);
+  assert.deepEqual(rebuildOptions, [
+    { preferLiveCanonicalDeck: false },
+    { preferLiveCanonicalDeck: false }
+  ]);
+});
+
 test('createStudioCanonicalGroupMutationBuilders preserves an explicit baseline', () => {
   const sourceDeck = createSourceDeck();
   const explicitBaseline = canonicalDeck.createCanonicalDeck({
