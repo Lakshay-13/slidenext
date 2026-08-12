@@ -390,7 +390,7 @@ test('finalizeInsertedElements commits the new selection and delegates persisten
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
     'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
-    '\n\n    function copySelectedElements() {'
+    '\n\n    function copySelectedElements(doc) {'
   );
 
   const insertedElements = [{ id: 'node-1' }, { id: 'node-2' }];
@@ -432,7 +432,7 @@ test('finalizeInsertedElements fails closed when shared selection is unavailable
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
     'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
-    '\n\n    function copySelectedElements() {'
+    '\n\n    function copySelectedElements(doc) {'
   );
   let finalized = false;
   const context = {
@@ -455,7 +455,7 @@ test('finalizeInsertedElements delegates selection and persistence ordering to s
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
     'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
-    '\n\n    function copySelectedElements() {'
+    '\n\n    function copySelectedElements(doc) {'
   );
   const insertedElements = [{ id: 'node-1' }];
   let delegatedOptions = null;
@@ -493,7 +493,7 @@ test('duplicateSelectedElements forwards the insertion markup transaction to his
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
     'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
-    '\n\n    function copySelectedElements() {'
+    '\n\n    function copySelectedElements(doc) {'
   );
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -573,7 +573,7 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
   const finalizeInsertedElementsSource = extractFunctionSource(
     fileContent,
     'function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {',
-    '\n\n    function copySelectedElements() {'
+    '\n\n    function copySelectedElements(doc) {'
   );
   const duplicateSelectedElementsSource = extractFunctionSource(
     fileContent,
@@ -1230,7 +1230,7 @@ test('copySelectedElements returns false and refreshes clipboard controls when p
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function copySelectedElements() {',
+    'function copySelectedElements(doc) {',
     '\n\n    function pasteClipboardElements() {'
   );
 
@@ -1295,7 +1295,7 @@ test('copySelectedElements returns true after creating clipboard state from copi
   const finalizeClipboardActionResultSource = extractClipboardActionFinalizerSource(fileContent);
   const copySelectedElementsSource = extractFunctionSource(
     fileContent,
-    'function copySelectedElements() {',
+    'function copySelectedElements(doc) {',
     '\n\n    function pasteClipboardElements() {'
   );
 

@@ -30,6 +30,8 @@ test('editor routes clipboard reads through the clipboard controller', () => {
 
 test('clipboard controller copies payload items and updates clipboard state', () => {
   const calls = [];
+  const sourceDocument = { id: 'source-doc' };
+  let receivedDocument = null;
   let clipboard = null;
   const controller = clipboardController.createStudioEditorClipboardController({
     clipboardApi: {
@@ -38,10 +40,13 @@ test('clipboard controller copies payload items and updates clipboard state', ()
         return { items, pasteCount: 0 };
       }
     },
-    buildClipboardSelectionMutationPlan: () => ({
-      canCopy: true,
-      payloadItems: [{ id: 'item-1' }]
-    }),
+    buildClipboardSelectionMutationPlan: (doc) => {
+      receivedDocument = doc;
+      return {
+        canCopy: true,
+        payloadItems: [{ id: 'item-1' }]
+      };
+    },
     setClipboard: (value) => { clipboard = value; },
     finalizeClipboardActionResult: (result) => {
       calls.push(['finalize', result]);
@@ -49,7 +54,8 @@ test('clipboard controller copies payload items and updates clipboard state', ()
     }
   });
 
-  assert.equal(controller.copy(), true);
+  assert.equal(controller.copy(sourceDocument), true);
+  assert.equal(receivedDocument, sourceDocument);
   assert.deepEqual(clipboard, { items: [{ id: 'item-1' }], pasteCount: 0 });
   assert.deepEqual(calls, [
     ['create', [{ id: 'item-1' }]],

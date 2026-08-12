@@ -11,6 +11,7 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   let selectedElementArgs = null;
   let selectAllDocument = null;
   let nudgeDocument = null;
+  let copyDocument = null;
   const resolveAdjacentTextElement = () => 'next-cell';
   const resolveTextElement = (...args) => {
     resolvedTextElementArgs = args;
@@ -27,6 +28,10 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   const nudgeSelectedElements = (dx, dy, currentDoc) => {
     nudgeDocument = currentDoc;
     return [dx, dy];
+  };
+  const copySelectedElements = (currentDoc) => {
+    copyDocument = currentDoc;
+    return 'copied';
   };
   const controller = frameInteractions.createStudioEditorFrameInteractions({
     eventsApi: {
@@ -50,6 +55,7 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
     selectElement,
     selectAllElementsOnActiveSlide,
     nudgeSelectedElements,
+    copySelectedElements,
     getActiveSlide: () => ({ id: 'slide-1' }),
     resolveTextElement,
     getSelectedElements: (currentDoc) => {
@@ -71,6 +77,8 @@ test('attaches frame click, keyboard, and inline-edit handlers with editor callb
   assert.equal(selectAllDocument, doc);
   assert.deepEqual(calls[2][1].nudgeSelectedElements(1, -1), [1, -1]);
   assert.equal(nudgeDocument, doc);
+  assert.equal(calls[2][1].copySelectedElements(), 'copied');
+  assert.equal(copyDocument, doc);
   assert.deepEqual(calls[1][2].getActiveSlide(), { id: 'slide-1' });
   assert.equal(calls[1][2].resolveTextElement('node', 'slide'), 'text-element');
   assert.deepEqual(resolvedTextElementArgs, ['node', 'slide', doc]);

@@ -223,13 +223,13 @@
       }
     }
 
-    function copy() {
+    function copy(doc) {
       if (!buildClipboardSelectionMutationPlan
         || !clipboardApi
         || typeof clipboardApi.createStudioClipboardState !== 'function') {
         return finalizeClipboardActionResult(false);
       }
-      const clipboardActionState = buildClipboardSelectionMutationPlan();
+      const clipboardActionState = buildClipboardSelectionMutationPlan(doc);
       if (!clipboardActionState.canCopy) return finalizeClipboardActionResult(false);
       const items = clipboardActionState.payloadItems;
       if (items.length === 0) return finalizeClipboardActionResult(false);

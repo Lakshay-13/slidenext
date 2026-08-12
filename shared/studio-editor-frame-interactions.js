@@ -148,7 +148,7 @@
         arrangeElementLayer,
         deselectElement,
         removeSelectedElement,
-        copySelectedElements,
+        copySelectedElements: () => copySelectedElements(doc),
         pasteClipboardElements,
         duplicateSelectedElements,
         nudgeSelectedElements: (dx, dy) => nudgeSelectedElements(dx, dy, doc),

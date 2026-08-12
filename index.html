@@ -9518,10 +9518,10 @@
       );
     }
 
-    function copySelectedElements() {
+    function copySelectedElements(doc) {
       return studioEditorClipboardController
         && typeof studioEditorClipboardController.copy === 'function'
-        ? studioEditorClipboardController.copy()
+        ? studioEditorClipboardController.copy(doc)
         : false;
     }
 
