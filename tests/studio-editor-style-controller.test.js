@@ -283,6 +283,47 @@ test('style controller rolls back when finalization rejects the mutation', () =>
   assert.deepEqual(rollbackCalls, [{ currentTransaction: transaction, direction: 'undo', element }]);
 });
 
+test('style controller rolls back when finalization throws', () => {
+  const doc = { id: 'doc' };
+  const element = { dataset: { editorId: 'node-1' } };
+  const transaction = { id: 'tx' };
+  const rollbackCalls = [];
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(selection) {
+        return { canApply: true, selection, versionLabel: 'Auto: Styled Element' };
+      }
+    },
+    transactionApi: {
+      applyStudioEditorTransaction(currentTransaction, direction, options) {
+        rollbackCalls.push({
+          currentTransaction,
+          direction,
+          element: options.getElementById('node-1')
+        });
+        return { didApply: true };
+      }
+    },
+    domApi: {
+      getElementByEditorId(elementId, currentDoc) {
+        assert.equal(elementId, 'node-1');
+        assert.equal(currentDoc, doc);
+        return element;
+      }
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => doc,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: () => ({ didApply: true, displayValue: '32', transaction }),
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.apply('size', '32'), false));
+  assert.deepEqual(rollbackCalls, [{ currentTransaction: transaction, direction: 'undo', element }]);
+});
+
 test('style controller refreshes inspector and fails closed for unavailable edits', () => {
   let syncCalls = 0;
   const controller = styleController.createStudioEditorStyleController({

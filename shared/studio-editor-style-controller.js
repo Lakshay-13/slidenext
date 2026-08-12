@@ -88,6 +88,15 @@
       ? options.finalizeDeckMutation
       : null;
 
+    function finalizeStyleMutation(versionLabel, options = {}) {
+      if (!finalizeDeckMutation) return false;
+      try {
+        return finalizeDeckMutation(versionLabel, options);
+      } catch (error) {
+        return false;
+      }
+    }
+
     const createCanonicalDeckResolver = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckResolver
@@ -334,7 +343,7 @@
         rollbackStyleMutation(transaction, doc);
         return finalizeStyleActionResult(false);
       }
-      const finalizeResult = finalizeDeckMutation(styleMutationPlan.versionLabel, {
+      const finalizeResult = finalizeStyleMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',
         debounceHistory: true,
