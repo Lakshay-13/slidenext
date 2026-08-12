@@ -1589,6 +1589,7 @@
   <script src="/shared/studio-editor-frame-interactions.js"></script>
   <script src="/shared/studio-editor-frame-runtime-options.js"></script>
   <script src="/shared/studio-editor-frame-runtime.js"></script>
+  <script src="/shared/studio-editor-frame-shell-runtime.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
@@ -4148,10 +4149,15 @@
         })
       : null;
     const studioEditorFrameRuntime = studioEditorFrameRuntimeOptions
-      && typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
-      && SlideNextStudioEditorFrameRuntime
-      && typeof SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime === 'function'
-      ? SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime(studioEditorFrameRuntimeOptions)
+      && typeof SlideNextStudioEditorFrameShellRuntime !== 'undefined'
+      && SlideNextStudioEditorFrameShellRuntime
+      && typeof SlideNextStudioEditorFrameShellRuntime.createStudioEditorFrameShellRuntime === 'function'
+      ? SlideNextStudioEditorFrameShellRuntime.createStudioEditorFrameShellRuntime({
+          frameRuntimeApi: typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
+            ? SlideNextStudioEditorFrameRuntime
+            : null,
+          runtimeOptions: studioEditorFrameRuntimeOptions
+        })
       : null;
     const studioEditorFrameInteractionStateController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameInteractionStateController
