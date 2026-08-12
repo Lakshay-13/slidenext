@@ -107,6 +107,38 @@ test('clipboard controller routes paste and duplicate through the insertion cont
   ]);
 });
 
+test('clipboard controller removes pasted and duplicated nodes when persistence rejects', () => {
+  let removed = 0;
+  const controller = clipboardController.createStudioEditorClipboardController({
+    clipboardApi: {
+      buildStudioClipboardPastePlan: () => ({
+        canPaste: true,
+        items: [{ id: 'item-1' }],
+        nextPasteCount: 1,
+        nextClipboard: { items: [{ id: 'item-1' }], pasteCount: 1 }
+      })
+    },
+    buildClipboardSelectionMutationPlan: () => ({
+      canDuplicate: true,
+      payloadItems: [{ id: 'item-1' }]
+    }),
+    getClipboard: () => ({ items: [{ id: 'item-1' }], pasteCount: 0 }),
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    insertClipboardPayload: () => [{
+      remove() {
+        removed += 1;
+      }
+    }],
+    finalizeInsertedElements: () => false,
+    finalizeClipboardActionResult: (result) => result
+  });
+
+  assert.equal(controller.paste(), false);
+  assert.equal(controller.duplicate(), false);
+  assert.equal(removed, 2);
+});
+
 test('clipboard controller preserves transaction finalization when canonical reconstruction throws', () => {
   const calls = [];
   const controller = clipboardController.createStudioEditorClipboardController({

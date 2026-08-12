@@ -201,6 +201,23 @@ test('finalizeStudioEditorInsertedElements selects before persisting inserted co
   ]);
 });
 
+test('finalizeStudioEditorInsertedElements propagates rejected persistence', () => {
+  const result = deckMutation.finalizeStudioEditorInsertedElements(
+    [{ id: 'node-1' }],
+    'Auto: Pasted Element',
+    { id: 'tx' },
+    null,
+    {
+      selectionApi: {
+        selectAllStudioElements: (elements) => ({ selectedElements: elements })
+      },
+      finalizeMutation: () => false
+    }
+  );
+
+  assert.equal(result, false);
+});
+
 test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

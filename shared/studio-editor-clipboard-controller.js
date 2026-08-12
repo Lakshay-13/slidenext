@@ -266,8 +266,12 @@
         transaction,
         canonicalDeck
       );
-      if (didPaste) setClipboard(pastePlan.nextClipboard);
-      return finalizeClipboardActionResult(didPaste);
+      if (didPaste === false) {
+        removeInsertedElements(pasted);
+        return finalizeClipboardActionResult(false);
+      }
+      setClipboard(pastePlan.nextClipboard);
+      return finalizeClipboardActionResult(true);
     }
 
     function duplicate() {
@@ -290,12 +294,17 @@
         removeInsertedElements(duplicates);
         return finalizeClipboardActionResult(false);
       }
-      return finalizeClipboardActionResult(finalizeInsertedElements(
+      const didDuplicate = finalizeInsertedElements(
         duplicates,
         'Auto: Duplicated Element',
         transaction,
         canonicalDeck
-      ));
+      );
+      if (didDuplicate === false) {
+        removeInsertedElements(duplicates);
+        return finalizeClipboardActionResult(false);
+      }
+      return finalizeClipboardActionResult(true);
     }
 
     return {

@@ -196,11 +196,11 @@
     if (typeof options.commitSelectionState === 'function') {
       options.commitSelectionState(nextSelectionState);
     }
-    finalizeMutation(versionLabel, {
+    const finalizeResult = finalizeMutation(versionLabel, {
       transaction,
       ...(canonicalDeck ? { canonicalDeck } : {})
     });
-    return true;
+    return finalizeResult === false ? false : true;
   }
 
   function finalizeStudioEditorLayerOrderMutation(

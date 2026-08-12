@@ -220,12 +220,18 @@
           ? normalizedInsertOptions.versionLabel.trim()
           : 'Auto: Added ' + type.toUpperCase();
         if (finalizeInsertedElements) {
-          return finalizeInsertedElements(
+          const finalizeResult = finalizeInsertedElements(
             [newElement],
             versionLabel,
             transaction,
             canonicalDeck
           );
+          if (finalizeResult === false) {
+            removeInsertedElement(newElement);
+            if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+            return false;
+          }
+          return true;
         }
         if (selectElement) selectElement(newElement);
         if (generateThumbnails) generateThumbnails();

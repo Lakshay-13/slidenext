@@ -354,3 +354,23 @@ test('element insertion controller keeps legacy finalization without a canonical
   assert.equal(controller.insert('h2'), true);
   assert.deepEqual(calls, [[[element], 'Auto: Added H2', transaction, null]]);
 });
+
+test('element insertion controller removes the node when insertion persistence rejects', () => {
+  const calls = [];
+  const element = {
+    remove() {
+      calls.push('remove');
+    }
+  };
+  const documentRef = { id: 'doc' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ children: [] }),
+    applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
+    finalizeInsertedElements: () => false,
+    updateInsertionActionState: (doc) => calls.push(['update', doc])
+  });
+
+  assert.equal(controller.insert('h2'), false);
+  assert.deepEqual(calls, ['remove', ['update', documentRef]]);
+});

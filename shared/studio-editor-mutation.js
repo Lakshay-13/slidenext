@@ -161,15 +161,16 @@
       : () => {};
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
-      : () => {};
+      : null;
+    if (!finalizeMutation) return false;
 
     const nextSelectionState = selectAllElements(insertedElements);
     commitSelectionState(nextSelectionState);
-    finalizeMutation(options.versionLabel, {
+    const finalizeResult = finalizeMutation(options.versionLabel, {
       transaction: options.transaction,
       ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
     });
-    return true;
+    return finalizeResult === false ? false : true;
   }
 
   function finalizeStudioSlideMutation(options = {}) {

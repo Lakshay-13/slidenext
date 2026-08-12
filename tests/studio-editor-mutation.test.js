@@ -424,6 +424,25 @@ test('finalizeStudioInsertedElements forwards a canonical deck sidecar', () => {
   });
 });
 
+test('finalizeStudioInsertedElements fails closed without persistence and propagates rejection', () => {
+  const insertedElements = [{ id: 'node-1' }];
+  let selected = 0;
+
+  assert.equal(mutation.finalizeStudioInsertedElements({
+    insertedElements,
+    selectAllElements() {
+      selected += 1;
+      return { selectedElements: insertedElements };
+    }
+  }), false);
+  assert.equal(selected, 0);
+
+  assert.equal(mutation.finalizeStudioInsertedElements({
+    insertedElements,
+    finalizeMutation: () => false
+  }), false);
+});
+
 test('finalizeStudioSlideMutation forwards transaction and canonical deck persistence state', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
