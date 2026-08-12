@@ -520,6 +520,7 @@ app.post('/api/save', async (req, res) => {
     await writeFileAtomically(targetFile, htmlContent);
     console.log(`Saved new content to ${targetFile} (AutoSave: ${!!isAutoSave})`);
 
+    let canonicalDeckPersistenceError = null;
     if (hasCanonicalDeck) {
       try {
         const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
@@ -529,8 +530,17 @@ app.post('/api/save', async (req, res) => {
           console.log(`Updated canonical deck sidecar: ${metadataInfo.metadataFile}`);
         }
       } catch (metadataErr) {
+        canonicalDeckPersistenceError = metadataErr;
         console.warn('Failed to persist canonical deck sidecar:', metadataErr.message);
       }
+    }
+
+    if (canonicalDeckPersistenceError) {
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to persist canonical deck sidecar',
+        htmlSaved: true
+      });
     }
 
     res.json({ success: true, message: 'File saved successfully' });
