@@ -46,6 +46,7 @@
       : null;
 
     function applyLayoutMutation(nextItems, versionLabel) {
+      if (!finalizeDeckMutation) return false;
       const getAlignmentElementId = (element) => assignElementId(element);
       const canonicalLayoutBuilder = canonicalLayoutApi
         && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'

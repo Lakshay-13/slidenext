@@ -79,6 +79,40 @@ test('alignment controller refreshes state and fails closed for unavailable acti
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('alignment controller fails closed before DOM mutation when finalization is unavailable', () => {
+  let applyCalls = 0;
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    alignmentApi: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      },
+      buildStudioDistributedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 16, nextTop: 18 }]
+        };
+      }
+    },
+    buildAlignmentActionState: () => ({
+      alignmentActionState: {
+        canAlign: true,
+        selection: [{ id: 'one' }, { id: 'two' }]
+      }
+    }),
+    applyPositionLayout: () => {
+      applyCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(controller.align('left'), false);
+  assert.equal(controller.distribute('horizontal'), false);
+  assert.equal(applyCalls, 0);
+});
+
 test('alignment controller requires three selected elements for distribution', () => {
   let buildCalls = 0;
   const controller = alignmentController.createStudioEditorAlignmentController({
