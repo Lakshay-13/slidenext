@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const canonicalDeckApi = typeof module === 'object' && module.exports
+    ? require('./canonical-deck')
+    : root && root.SlideNextCanonicalDeck;
+  const api = factory(canonicalDeckApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorCanonicalState = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (canonicalDeckApi) {
   function isObject(value) {
     return !!value && typeof value === 'object';
   }
@@ -20,6 +23,9 @@
   function normalizeStudioEditorCanonicalLayoutMode(value) {
     if (typeof value !== 'string') return '';
     const normalizedValue = value.trim().toLowerCase();
+    if (canonicalDeckApi && typeof canonicalDeckApi.normalizeLayoutMode === 'function') {
+      return canonicalDeckApi.normalizeLayoutMode(normalizedValue, '') || normalizedValue;
+    }
     return normalizedValue === 'freeform' ? 'absolute' : normalizedValue;
   }
 
