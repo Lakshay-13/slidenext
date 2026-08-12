@@ -8,6 +8,7 @@ const { app, workspaceDir } = require('../server.js');
 const presentationCreation = require('../shared/presentation-creation.js');
 const pdfScript = require('../scripts/export-canonical-pdf.js');
 const legacyPptxExport = require('../scripts/export-legacy-html-pptx.js');
+const canonicalPptxExport = require('../shared/canonical-pptx-export.js');
 
 function listenOnEphemeralPort(server) {
   return new Promise((resolve, reject) => {
@@ -95,6 +96,42 @@ test('PPTX export route flattens an existing legacy HTML deck with an explicit w
   ));
   assert.deepEqual(warningDetails.warnings, [legacyPptxExport.LEGACY_PPTX_WARNING]);
   assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
+});
+
+test('PPTX export route preserves one slide per page for every shipped legacy deck', {
+  skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
+}, async (t) => {
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  for (const deckSlug of SHIPPED_LEGACY_DECKS) {
+    const htmlPath = path.join(workspaceDir, 'presentations', deckSlug, 'index.html');
+    const html = await fs.readFile(htmlPath, 'utf8');
+    const response = await fetch(`http://127.0.0.1:${port}/api/export/pptx`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sourcePath: `presentations/${deckSlug}/index.html`,
+        filename: `${deckSlug}.pptx`
+      })
+    });
+
+    assert.equal(response.status, 200, deckSlug);
+    assert.match(
+      response.headers.get('content-type') || '',
+      /application\/vnd\.openxmlformats/,
+      deckSlug
+    );
+    assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '1', deckSlug);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    assert.equal(buffer.subarray(0, 2).toString(), 'PK', deckSlug);
+    assert.equal(
+      canonicalPptxExport.countPptxSlides(buffer),
+      pdfScript.countLegacyHtmlSlides(html),
+      deckSlug
+    );
+  }
 });
 
 test('PDF export route returns a real generalized PDF response', { skip: !pdfScript.resolveChromeExecutable() }, async (t) => {
