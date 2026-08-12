@@ -2,19 +2,23 @@
   const defaultLayoutModeApi = typeof module === 'object' && module.exports
     ? require('./studio-editor-layout-mode')
     : root && root.SlideNextStudioEditorLayoutMode;
-  const api = factory(root, defaultLayoutModeApi);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(root, defaultLayoutModeApi, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorElementInsertionController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, defaultLayoutModeApi) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, defaultLayoutModeApi, historyResultApi) {
 
-  function isStudioHistoryCaptureFailure(value) {
-    return value === false
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
-  }
 
   function normalizeInsertionLayoutMode(value) {
     if (typeof value !== 'string') return '';
