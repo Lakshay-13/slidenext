@@ -1243,6 +1243,59 @@ test('initStudioFrame keeps the legacy bootstrap alive when persistence runtime 
   ]);
 });
 
+test('initStudioFrame keeps the legacy bootstrap alive when initial history save throws', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const initStudioFrameSource = extractFunctionSource(
+    fileContent,
+    'function initStudioFrame() {',
+    '\n\n    // Apply hoverable tags to editable nodes'
+  );
+  const iframeDoc = { addEventListener() {} };
+  const calls = [];
+  const context = {
+    getIframeDoc() {
+      return iframeDoc;
+    },
+    syncIframeTheme() {},
+    SlideNextStudioEditorStyle: {
+      ensureStudioEditorStyle() {}
+    },
+    makeElementsHoverable() {},
+    studioEditorFrameInteractions: {
+      attach() {}
+    },
+    SlideNextStudioFrameBootstrap: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        assert.doesNotThrow(() => options.captureInitialHistoryState());
+      }
+    },
+    setupIframeDragging() {},
+    generateThumbnails() {},
+    syncStudioChromeToActiveSlide() {},
+    setActiveSlide() {},
+    bindDeckNavigationSync() {},
+    observeDeckActiveSlideState() {},
+    captureEditorPersistableDeckState() {
+      return { cleanHtml: '<html></html>' };
+    },
+    saveHistoryState() {
+      throw new Error('history save failed');
+    },
+    updateDeckReadyToolbarActionState() {},
+    setStudioAutoSaveStatus(status) {
+      calls.push(status);
+    },
+    syncInspectorForSelection() {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(initStudioFrameSource, context);
+
+  assert.doesNotThrow(() => context.initStudioFrame());
+  assert.deepEqual(calls, ['history-failed']);
+});
+
 test('syncIframeTheme uses the shared iframe accessor and injects the light theme override style', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const syncIframeThemeSource = extractFunctionSource(

@@ -242,3 +242,27 @@ test('frame controller surfaces object-form initial history capture failures', (
   assert.equal(controller.init(), true);
   assert.deepEqual(calls, ['history-failed']);
 });
+
+test('frame controller keeps bootstrap alive when initial history save throws', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    capturePersistableDeckState: () => ({ cleanHtml: '<html></html>' }),
+    saveHistoryState() {
+      throw new Error('history save failed');
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap(doc, options) {
+        assert.equal(doc, iframeDoc);
+        assert.doesNotThrow(() => options.captureInitialHistoryState(doc));
+      }
+    },
+    setStudioAutoSaveStatus(status) {
+      calls.push(status);
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, ['history-failed']);
+});

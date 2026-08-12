@@ -95,10 +95,14 @@
       }
       let historyCaptureResult = null;
       if (saveHistoryState) {
-        if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
-          historyCaptureResult = saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
-        } else {
-          historyCaptureResult = saveHistoryState(false);
+        try {
+          if (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck) {
+            historyCaptureResult = saveHistoryState(false, null, initialPersistedDeckState.canonicalDeck);
+          } else {
+            historyCaptureResult = saveHistoryState(false);
+          }
+        } catch (error) {
+          historyCaptureResult = false;
         }
       }
       initialHistoryCaptureFailed = isHistoryCaptureFailure(historyCaptureResult);
