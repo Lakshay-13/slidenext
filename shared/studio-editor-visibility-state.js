@@ -89,7 +89,7 @@
       const resolvedDoc = doc || getDocument();
       return syncStudioVisibilityToolbarState({
         documentRef: getDocumentRef(),
-        elements: getSelectedElements(),
+        elements: getSelectedElements(resolvedDoc),
         isHidden: getHiddenState(resolvedDoc),
         canMutateDeck: () => !!getActiveSlide(resolvedDoc)
       });

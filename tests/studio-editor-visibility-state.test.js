@@ -1,9 +1,22 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
 const elementState = require('../shared/studio-element-state.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor forwards the visibility toolbar document into the selection reader', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    source,
+    /visibilityState\.createStudioVisibilityToolbarStateSync\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
+});
 
 test('getStudioVisibilitySelection ignores disconnected stale selections', () => {
   assert.deepEqual(visibilityState.getStudioVisibilitySelection([
@@ -147,8 +160,9 @@ test('createStudioVisibilityToolbarStateSync resolves live selection and slide r
       calls.push('document');
       return doc;
     },
-    getSelectedElements() {
+    getSelectedElements(currentDoc) {
       calls.push('selection');
+      assert.equal(currentDoc, doc);
       return selectedElements;
     },
     getActiveSlide(currentDoc) {

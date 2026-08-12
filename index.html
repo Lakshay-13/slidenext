@@ -8065,7 +8065,7 @@
         if (typeof updateVisibilityActionState.sync !== 'function') {
           updateVisibilityActionState.sync = visibilityState.createStudioVisibilityToolbarStateSync({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getHiddenState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
               ? getEditorCanonicalVisibilityReader('hidden', sourceDoc, isElementHidden)
