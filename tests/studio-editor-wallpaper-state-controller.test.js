@@ -5,6 +5,12 @@ const path = require('node:path');
 const wallpaperStateController = require('../shared/studio-editor-wallpaper-state-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const WALLPAPER_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-wallpaper-state-accessors.js'
+);
 
 test('wallpaper state controller owns tab and gradient selections', () => {
   const controller = wallpaperStateController.createStudioEditorWallpaperStateController({
@@ -36,8 +42,15 @@ test('editor wiring routes wallpaper state through the shared controller', () =>
   );
   assert.match(fileContent, /studio-editor-wallpaper-state-store\.js/);
   assert.match(fileContent, /studioEditorWallpaperStateStore/);
+  assert.match(fileContent, /studioEditorWallpaperStateGlobalApi/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorWallpaperStateGlobalApi\)/);
+  const wallpaperAccessors = fs.readFileSync(WALLPAPER_ACCESSORS_PATH, 'utf8');
+  assert.match(wallpaperAccessors, /getStudioWallpaperTab: \(\) => accessors\.getWallpaperTab\(\)/);
+  assert.match(
+    wallpaperAccessors,
+    /getStudioPendingCustomWallpaperVersion: \(\) => accessors\.getPendingCustomWallpaperVersion\(\)/
+  );
   assert.match(fileContent, /getWallpaperTab: getStudioWallpaperTab/);
-  assert.match(fileContent, /getPendingCustomWallpaperVersion\(\)/);
   assert.match(fileContent, /setStudioPendingCustomWallpaperVersion\(!!isCustomInput\)/);
   assert.match(fileContent, /clearStudioPendingCustomWallpaperVersion\(\)/);
   assert.doesNotMatch(fileContent, /const studioEditorWallpaperStateController =/);

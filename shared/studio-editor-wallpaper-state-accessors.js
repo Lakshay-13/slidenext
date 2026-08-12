@@ -45,5 +45,24 @@
     };
   }
 
-  return { createStudioEditorWallpaperStateAccessors };
+  function createStudioEditorWallpaperStateGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorWallpaperStateAccessors(options);
+
+    return {
+      getStudioWallpaperTab: () => accessors.getWallpaperTab(),
+      setStudioWallpaperTab: (nextValue) => accessors.setWallpaperTab(nextValue),
+      setStudioCustomGradientType: (nextValue) => accessors.setCustomGradientType(nextValue),
+      getStudioCustomGradientType: () => accessors.getCustomGradientType(),
+      resetStudioWallpaperState: () => accessors.reset(),
+      getStudioPendingCustomWallpaperVersion: () => accessors.getPendingCustomWallpaperVersion(),
+      setStudioPendingCustomWallpaperVersion: (nextValue) => accessors
+        .setPendingCustomWallpaperVersion(nextValue),
+      clearStudioPendingCustomWallpaperVersion: () => accessors.clearPendingCustomWallpaperVersion()
+    };
+  }
+
+  return {
+    createStudioEditorWallpaperStateAccessors,
+    createStudioEditorWallpaperStateGlobalApi
+  };
 });

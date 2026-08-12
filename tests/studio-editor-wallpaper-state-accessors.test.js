@@ -45,6 +45,29 @@ test('wallpaper state accessors preserve safe fallbacks without a bridge', () =>
   assert.equal(accessors.clearPendingCustomWallpaperVersion(), false);
 });
 
+test('wallpaper global api preserves the editor shell function names', () => {
+  const accessors = {
+    getWallpaperTab: () => 'gradient',
+    setWallpaperTab: (value) => value,
+    setCustomGradientType: (value) => value,
+    getCustomGradientType: () => 'radial',
+    reset: () => true,
+    getPendingCustomWallpaperVersion: () => true,
+    setPendingCustomWallpaperVersion: (value) => value,
+    clearPendingCustomWallpaperVersion: () => true
+  };
+  const globalApi = accessorsApi.createStudioEditorWallpaperStateGlobalApi({ accessors });
+
+  assert.equal(globalApi.getStudioWallpaperTab(), 'gradient');
+  assert.equal(globalApi.setStudioWallpaperTab('solid'), 'solid');
+  assert.equal(globalApi.setStudioCustomGradientType('linear'), 'linear');
+  assert.equal(globalApi.getStudioCustomGradientType(), 'radial');
+  assert.equal(globalApi.resetStudioWallpaperState(), true);
+  assert.equal(globalApi.getStudioPendingCustomWallpaperVersion(), true);
+  assert.equal(globalApi.setStudioPendingCustomWallpaperVersion(false), false);
+  assert.equal(globalApi.clearStudioPendingCustomWallpaperVersion(), true);
+});
+
 test('wallpaper state accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -58,6 +81,11 @@ test('wallpaper state accessors publish the global consumed by the editor shell'
       .createStudioEditorWallpaperStateAccessors,
     'function'
   );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorWallpaperStateAccessors
+      .createStudioEditorWallpaperStateGlobalApi,
+    'function'
+  );
 });
 
 test('editor loads wallpaper accessors after the wallpaper state bridge', () => {
@@ -69,4 +97,7 @@ test('editor loads wallpaper accessors after the wallpaper state bridge', () => 
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.wallpaperStateAccessors/);
   assert.match(fileContent, /studioEditorWallpaperStateAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorWallpaperStateGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioWallpaperTab\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioPendingCustomWallpaperVersion\(\)/);
 });

@@ -1882,46 +1882,14 @@
     const studioEditorWallpaperStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.wallpaperStateAccessors
       : null;
-    function getStudioWallpaperTab() {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.getWallpaperTab()
-        : 'solid';
-    }
-    function setStudioWallpaperTab(nextValue) {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.setWallpaperTab(nextValue)
-        : false;
-    }
-    function setStudioCustomGradientType(nextValue) {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.setCustomGradientType(nextValue)
-        : false;
-    }
-    function getStudioCustomGradientType() {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.getCustomGradientType()
-        : 'linear';
-    }
-    function resetStudioWallpaperState() {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.reset()
-        : false;
-    }
-    function getStudioPendingCustomWallpaperVersion() {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.getPendingCustomWallpaperVersion()
-        : false;
-    }
-    function setStudioPendingCustomWallpaperVersion(nextValue) {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.setPendingCustomWallpaperVersion(nextValue)
-        : false;
-    }
-    function clearStudioPendingCustomWallpaperVersion() {
-      return studioEditorWallpaperStateAccessors
-        ? studioEditorWallpaperStateAccessors.clearPendingCustomWallpaperVersion()
-        : false;
-    }
+    const studioEditorWallpaperStateGlobalApi = typeof SlideNextStudioEditorWallpaperStateAccessors !== 'undefined'
+      && SlideNextStudioEditorWallpaperStateAccessors
+      && typeof SlideNextStudioEditorWallpaperStateAccessors.createStudioEditorWallpaperStateGlobalApi === 'function'
+      ? SlideNextStudioEditorWallpaperStateAccessors.createStudioEditorWallpaperStateGlobalApi({
+          accessors: studioEditorWallpaperStateAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorWallpaperStateGlobalApi);
     const studioEditorSaveButtonStateRuntime = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.saveButtonStateRuntime
       : null;
