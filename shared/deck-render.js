@@ -28,6 +28,11 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function normalizeCanonicalLayoutMode(value) {
+    const normalizedValue = normalizeString(value).trim().toLowerCase();
+    return normalizedValue === 'freeform' ? 'absolute' : normalizedValue;
+  }
+
   function escapeHtml(value) {
     return normalizeString(value)
       .replace(/&/g, '&amp;')
@@ -724,7 +729,7 @@
 
   function buildRenderedNodeLayoutStyle(layout = {}) {
     const normalizedLayout = asPlainObject(layout);
-    if (normalizeString(normalizedLayout.mode) !== 'absolute') {
+    if (normalizeCanonicalLayoutMode(normalizedLayout.mode) !== 'absolute') {
       return '';
     }
 
@@ -753,7 +758,7 @@
       if (!node || typeof node !== 'object') {
         return false;
       }
-      if (normalizeString(node.layout && node.layout.mode) === 'absolute') {
+      if (normalizeCanonicalLayoutMode(node.layout && node.layout.mode) === 'absolute') {
         return true;
       }
       return hasAbsolutePositionedNode(node.children);
@@ -799,8 +804,8 @@
       }
     });
 
-    const masterMode = normalizeString(normalizedMasterLayout.mode).trim();
-    const slideMode = normalizeString(normalizedSlideLayout.mode).trim();
+    const masterMode = normalizeCanonicalLayoutMode(normalizedMasterLayout.mode);
+    const slideMode = normalizeCanonicalLayoutMode(normalizedSlideLayout.mode);
     const mergedMode = slideMode === 'flow' && masterMode && masterMode !== 'flow'
       ? masterMode
       : (slideMode || masterMode);

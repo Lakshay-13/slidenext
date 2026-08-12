@@ -1490,6 +1490,25 @@ test('renderCanonicalNode falls back to canonical absolute layout when style is 
   assert.equal(html, '<div style="position: absolute; left: 120px; top: 80px; width: 400px; height: 160px; z-index: 4;">Hero copy</div>');
 });
 
+test('renderCanonicalNode normalizes the legacy freeform layout alias', () => {
+  const html = deckRender.renderCanonicalNode({
+    tagName: 'div',
+    text: 'Legacy freeform copy',
+    layout: {
+      mode: ' FREEFORM ',
+      x: 40,
+      y: 30
+    }
+  }, {
+    preferNodeSourceHtml: false
+  });
+
+  assert.equal(
+    html,
+    '<div style="position: absolute; left: 40px; top: 30px;">Legacy freeform copy</div>'
+  );
+});
+
 test('renderCanonicalNode merges explicit non-layout styles with canonical layout fallbacks', () => {
   const html = deckRender.renderCanonicalNode({
     tagName: 'div',
