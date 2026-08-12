@@ -250,9 +250,14 @@
     let didApply = false;
     nextItems.forEach((item) => {
       if (!item || !item.element || !item.element.style) return;
-      item.element.style.left = `${item.nextLeft}px`;
-      item.element.style.top = `${item.nextTop}px`;
-      didApply = true;
+      if (Number.isFinite(item.nextLeft)) {
+        item.element.style.left = `${item.nextLeft}px`;
+        didApply = true;
+      }
+      if (Number.isFinite(item.nextTop)) {
+        item.element.style.top = `${item.nextTop}px`;
+        didApply = true;
+      }
     });
 
     return {

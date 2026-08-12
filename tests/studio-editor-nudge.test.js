@@ -133,6 +133,20 @@ test('applyStudioNudgedLayout applies positions and creates an optional transact
   assert.deepEqual(result.transaction, { type: 'position' });
 });
 
+test('applyStudioNudgedLayout preserves missing coordinates', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  const second = { style: { left: '30px', top: '40px' } };
+
+  const result = nudge.applyStudioNudgedLayout([
+    { element: first, nextLeft: 120 },
+    { element: second, nextLeft: 'invalid', nextTop: undefined }
+  ]);
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(first.style, { left: '120px', top: '20px' });
+  assert.deepEqual(second.style, { left: '30px', top: '40px' });
+});
+
 test('buildStudioNudgeDeltaFromKey resolves fine and coarse arrow-key deltas', () => {
   assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowUp'), { dx: 0, dy: -1 });
   assert.deepEqual(nudge.buildStudioNudgeDeltaFromKey('ArrowRight', { shiftKey: true }), { dx: 10, dy: 0 });

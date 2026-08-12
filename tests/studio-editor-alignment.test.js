@@ -314,3 +314,17 @@ test('applyStudioAlignmentLayout applies positions and creates an optional posit
   assert.deepEqual(second.style, { left: '120px', top: '130px' });
   assert.deepEqual(result.transaction.operations.map((operation) => operation.elementId), ['node-1', 'node-2']);
 });
+
+test('applyStudioAlignmentLayout preserves missing coordinates', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  const second = { style: { left: '30px', top: '40px' } };
+
+  const result = alignment.applyStudioAlignmentLayout([
+    { element: first, nextLeft: 100 },
+    { element: second, nextLeft: 'invalid', nextTop: undefined }
+  ]);
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(first.style, { left: '100px', top: '20px' });
+  assert.deepEqual(second.style, { left: '30px', top: '40px' });
+});
