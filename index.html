@@ -8003,7 +8003,7 @@
       const readLockedState = canReadCanonicalState
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
         : isElementLocked;
-      return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(getStudioSelectedElements(), {
+      return SlideNextStudioEditorRemoval.buildStudioRemovalActionState(getStudioSelectedElements(resolvedDoc), {
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc || getIframeDoc())
       });
@@ -8034,7 +8034,7 @@
         : isElementLocked;
       return removalState.syncStudioRemovalToolbarState({
         documentRef: document,
-        elements: getStudioSelectedElements(),
+        elements: getStudioSelectedElements(doc),
         isLocked: readLockedState,
         canMutateDeck: () => !!getActiveSlide(doc)
       });
