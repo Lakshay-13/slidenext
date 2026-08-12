@@ -171,6 +171,25 @@ test('buildStudioCanonicalTransformBaseline fails closed when a compatibility re
   assert.equal(result, null);
 });
 
+test('buildStudioCanonicalTransformBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalTransformDeck applies canonical layout updates to the current model', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
