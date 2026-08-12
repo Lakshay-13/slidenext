@@ -19,6 +19,17 @@
     ? historyResultApi.isStudioHistoryCaptureFailure
     : (value) => value === false
       || (!!value && typeof value === 'object' && value.didCapture === false);
+  const captureStudioHistoryState = historyResultApi
+    && typeof historyResultApi.captureStudioHistoryState === 'function'
+    ? historyResultApi.captureStudioHistoryState
+    : (saveHistoryState, ...args) => {
+        if (typeof saveHistoryState !== 'function') return false;
+        try {
+          return saveHistoryState(...args);
+        } catch (error) {
+          return false;
+        }
+      };
 
   function normalizeInsertionLayoutMode(value) {
     if (typeof value !== 'string') return '';
@@ -246,19 +257,21 @@
         if (generateThumbnails) generateThumbnails();
         if (saveHistoryState) {
           if (transaction && canonicalDeck) {
-            if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) {
+            if (isStudioHistoryCaptureFailure(
+              captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+            )) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
             }
           } else if (transaction) {
-            if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) {
+            if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, false, transaction))) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
             }
           } else {
-            if (isStudioHistoryCaptureFailure(saveHistoryState())) {
+            if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState))) {
               removeInsertedElement(newElement);
               if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
               return false;
