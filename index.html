@@ -1341,6 +1341,7 @@
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-bridge.js"></script>
   <script src="/shared/studio-editor-canonical-ui.js"></script>
+  <script src="/shared/studio-editor-canonical-runtime-options.js"></script>
   <script src="/shared/studio-editor-canonical-runtime.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
@@ -3498,22 +3499,12 @@
     const studioEditorTransformController = studioEditorTransformRuntime
       ? studioEditorTransformRuntime.transformController
       : null;
-    const studioEditorCanonicalRuntime = typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
-      && SlideNextStudioEditorCanonicalRuntime
-      && typeof SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime === 'function'
-      ? SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime({
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          canonicalDeckApi: typeof SlideNextStudioEditorCanonicalDeck !== 'undefined'
-            ? SlideNextStudioEditorCanonicalDeck
-            : null,
-          canonicalMutationApi: typeof SlideNextStudioEditorCanonicalMutation !== 'undefined'
-            ? SlideNextStudioEditorCanonicalMutation
-            : null,
-          canonicalBridgeApi: typeof SlideNextStudioEditorCanonicalBridge !== 'undefined'
-            ? SlideNextStudioEditorCanonicalBridge
-            : null,
+    const studioEditorCanonicalRuntimeOptionsApi = typeof SlideNextStudioEditorCanonicalRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorCanonicalRuntimeOptions
+      : null;
+    const studioEditorCanonicalRuntimeOptions = studioEditorCanonicalRuntimeOptionsApi
+      && typeof studioEditorCanonicalRuntimeOptionsApi.createStudioEditorCanonicalRuntimeOptions === 'function'
+      ? studioEditorCanonicalRuntimeOptionsApi.createStudioEditorCanonicalRuntimeOptions({
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
           getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
@@ -3545,6 +3536,14 @@
           ),
           getDocument: getIframeDoc
         })
+      : null;
+    const studioEditorCanonicalRuntime = studioEditorCanonicalRuntimeOptions
+      && typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
+      && SlideNextStudioEditorCanonicalRuntime
+      && typeof SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime === 'function'
+      ? SlideNextStudioEditorCanonicalRuntime.createStudioEditorCanonicalRuntime(
+          studioEditorCanonicalRuntimeOptions
+        )
       : null;
     const studioEditorCanonicalState = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalState

@@ -86,6 +86,14 @@ test('index wires canonical editor composition through the runtime module', () =
 
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-canonical-runtime-options\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorCanonicalRuntimeOptionsApi\.createStudioEditorCanonicalRuntimeOptions\(/
+  );
+  assert.match(
+    fileContent,
     /<script src="\/shared\/studio-editor-canonical-runtime\.js"><\/script>/
   );
   assert.match(
