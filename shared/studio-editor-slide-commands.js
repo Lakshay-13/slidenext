@@ -130,10 +130,21 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : () => {};
-    if (canonicalDeckAfterDuplication) {
-      finalizeMutation('Auto: Duplicated Slide', mutation.transaction, canonicalDeckAfterDuplication);
-    } else {
-      finalizeMutation('Auto: Duplicated Slide', mutation.transaction);
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    const finalized = canonicalDeckAfterDuplication
+      ? finalizeMutation('Auto: Duplicated Slide', mutation.transaction, canonicalDeckAfterDuplication)
+      : finalizeMutation('Auto: Duplicated Slide', mutation.transaction);
+    if (finalized === false) {
+      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (typeof options.generateThumbnails === 'function') {
+        options.generateThumbnails();
+      }
+      if (typeof options.setActiveSlide === 'function') {
+        options.setActiveSlide(sourceIndex);
+      }
+      return false;
     }
     return true;
   }

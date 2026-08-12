@@ -69,6 +69,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.equal(calls[2][1].alert, callbacks.alert);
   assert.equal(calls[3][1].sanitizeDuplicatedSubtree, callbacks.sanitizeDuplicatedSubtree);
   assert.equal(calls[3][1].makeElementsHoverable, callbacks.makeElementsHoverable);
+  assert.equal(calls[3][1].rollbackMutation, callbacks.rollbackMutation);
 });
 
 test('index wires structural slide mutations through the runtime module', () => {

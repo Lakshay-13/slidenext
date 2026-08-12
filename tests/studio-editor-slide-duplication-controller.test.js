@@ -40,6 +40,7 @@ test('slide duplication controller assembles canonical and editor mutation depen
     applyInsertion: () => ({ didApply: true }),
     generateThumbnails: () => {},
     setActiveSlide: () => {},
+    rollbackMutation: () => {},
     finalizeMutation: () => {}
   });
 
@@ -61,6 +62,7 @@ test('slide duplication controller assembles canonical and editor mutation depen
   assert.deepEqual(options.buildCanonicalDuplicateSlideBaseline(), { id: 'baseline' });
   assert.deepEqual(options.buildCanonicalDuplicateSlideDeck(), { slides: [] });
   assert.equal(typeof options.applyInsertion, 'function');
+  assert.equal(typeof options.rollbackMutation, 'function');
   assert.equal(typeof options.finalizeMutation, 'function');
 });
 

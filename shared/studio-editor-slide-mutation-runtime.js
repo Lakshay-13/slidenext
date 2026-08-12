@@ -76,7 +76,8 @@
           makeElementsHoverable: options.makeElementsHoverable,
           saveHistoryState: options.saveHistoryState,
           applyInsertion: options.applyInsertion,
-          setActiveSlide: options.setActiveSlide
+          setActiveSlide: options.setActiveSlide,
+          rollbackMutation: options.rollbackMutation
         })
       : null;
 

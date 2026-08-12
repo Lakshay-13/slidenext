@@ -217,6 +217,57 @@ test('duplicateStudioSlideNode fails closed before DOM insertion when canonical 
   assert.equal(insertionCalls, 0);
 });
 
+test('duplicateStudioSlideNode rolls back DOM and active slide when persistence rejects', () => {
+  const doc = { id: 'editor-doc' };
+  const sourceSlide = {
+    id: 'slide-1',
+    classList: { remove() {} },
+    cloneNode() {
+      return duplicateSlide;
+    }
+  };
+  const duplicateSlide = { id: 'slide-2', classList: { remove() {} } };
+  const targetSlide = { id: 'slide-3' };
+  let slides = [sourceSlide, targetSlide];
+  const container = { id: 'slides-container' };
+  const calls = [];
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    getActiveSlide: () => sourceSlide,
+    assignSlideId: () => 'slide-2',
+    buildCanonicalDuplicateSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-3' }] }),
+    buildCanonicalDuplicateSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] }),
+    saveHistoryState: () => {},
+    applyInsertion: () => {
+      slides = [sourceSlide, duplicateSlide, targetSlide];
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    generateThumbnails: () => calls.push('generateThumbnails'),
+    setActiveSlide: (index) => calls.push(['setActiveSlide', index]),
+    finalizeMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(sourceDoc, doc);
+      slides = [sourceSlide, targetSlide];
+      calls.push('rollbackMutation');
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(slides, [sourceSlide, targetSlide]);
+  assert.deepEqual(calls, [
+    'generateThumbnails',
+    ['setActiveSlide', 1],
+    'rollbackMutation',
+    'generateThumbnails',
+    ['setActiveSlide', 0]
+  ]);
+});
+
 test('addStudioSlideNode preserves canonical insertion and mutation lifecycle ordering', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };

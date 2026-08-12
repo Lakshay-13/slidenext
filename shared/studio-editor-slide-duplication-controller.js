@@ -69,6 +69,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
 
     function duplicate() {
       if (!duplicateStudioSlideNode) return false;
@@ -115,7 +118,8 @@
         applyInsertion,
         generateThumbnails,
         setActiveSlide,
-        finalizeMutation
+        finalizeMutation,
+        rollbackMutation
       });
     }
 
