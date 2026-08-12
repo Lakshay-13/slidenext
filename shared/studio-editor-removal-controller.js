@@ -55,6 +55,15 @@
       ? options.finalizeDeckMutation
       : null;
 
+    function finalizeRemovalMutation(versionLabel, options = {}) {
+      if (!finalizeDeckMutation) return false;
+      try {
+        return finalizeDeckMutation(versionLabel, options);
+      } catch (error) {
+        return false;
+      }
+    }
+
     function remove(sourceDoc) {
       const doc = sourceDoc || getIframeDoc();
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
@@ -112,7 +121,7 @@
       });
       if (!mutation || !mutation.didRemove) return finalizeRemovalActionResult(false, doc);
       if (deselectElement) deselectElement();
-      const finalizeResult = finalizeDeckMutation('Auto: Deleted Element', {
+      const finalizeResult = finalizeRemovalMutation('Auto: Deleted Element', {
         transaction: mutation.transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
