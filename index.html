@@ -5765,10 +5765,14 @@
           } catch (error) {
             historyCaptureResult = false;
           }
-          initialHistoryCaptureFailed = historyCaptureResult === false
-            || (!!historyCaptureResult
-              && typeof historyCaptureResult === 'object'
-              && historyCaptureResult.didCapture === false);
+          initialHistoryCaptureFailed = typeof SlideNextStudioEditorHistoryResult !== 'undefined'
+            && SlideNextStudioEditorHistoryResult
+            && typeof SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure === 'function'
+            ? SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure(historyCaptureResult)
+            : historyCaptureResult === false
+              || (!!historyCaptureResult
+                && typeof historyCaptureResult === 'object'
+                && historyCaptureResult.didCapture === false);
           if (persistenceApi
             && typeof persistenceApi.createStudioPersistedDeckStateActionContext === 'function') {
             applyCurrentStudioPersistenceSuccess(
