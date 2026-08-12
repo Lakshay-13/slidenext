@@ -102,7 +102,11 @@ test('index wires navigation composition through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorNavigationRuntime\.createStudioEditorNavigationRuntime\(/
+    /<script src="\/shared\/studio-editor-navigation-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorNavigationShellRuntime\.createStudioEditorNavigationShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,

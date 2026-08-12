@@ -1590,6 +1590,7 @@
   <script src="/shared/studio-editor-navigation-controller.js"></script>
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-navigation-runtime.js"></script>
+  <script src="/shared/studio-editor-navigation-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-editor-preview-controller.js"></script>
@@ -2411,10 +2412,13 @@
     const studioEditorSourceCssApplier = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceCssApplier
       : null;
-    const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
-      && SlideNextStudioEditorNavigationRuntime
-      && typeof SlideNextStudioEditorNavigationRuntime.createStudioEditorNavigationRuntime === 'function'
-      ? SlideNextStudioEditorNavigationRuntime.createStudioEditorNavigationRuntime({
+    const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationShellRuntime !== 'undefined'
+      && SlideNextStudioEditorNavigationShellRuntime
+      && typeof SlideNextStudioEditorNavigationShellRuntime.createStudioEditorNavigationShellRuntime === 'function'
+      ? SlideNextStudioEditorNavigationShellRuntime.createStudioEditorNavigationShellRuntime({
+          navigationRuntimeApi: typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
+            ? SlideNextStudioEditorNavigationRuntime
+            : null,
           navigationApi: typeof SlideNextStudioEditorNavigationController !== 'undefined'
             ? SlideNextStudioEditorNavigationController
             : null,
