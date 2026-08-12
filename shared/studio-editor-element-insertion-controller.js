@@ -237,14 +237,30 @@
         if (generateThumbnails) generateThumbnails();
         if (saveHistoryState) {
           if (transaction && canonicalDeck) {
-            saveHistoryState(false, transaction, canonicalDeck);
+            if (saveHistoryState(false, transaction, canonicalDeck) === false) {
+              removeInsertedElement(newElement);
+              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              return false;
+            }
           } else if (transaction) {
-            saveHistoryState(false, transaction);
+            if (saveHistoryState(false, transaction) === false) {
+              removeInsertedElement(newElement);
+              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              return false;
+            }
           } else {
-            saveHistoryState();
+            if (saveHistoryState() === false) {
+              removeInsertedElement(newElement);
+              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              return false;
+            }
           }
         }
-        if (triggerAutoSave) triggerAutoSave();
+        if (triggerAutoSave && triggerAutoSave() === false) {
+          removeInsertedElement(newElement);
+          if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+          return false;
+        }
         if (triggerAutoVersion) triggerAutoVersion(versionLabel);
         return true;
       }
