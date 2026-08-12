@@ -780,6 +780,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 0,
     keydownHandlerFactory: 0,
     frameBootstrap: 0,
+    frameLoadingStates: [],
     updateDeckReadyToolbarActionState: 0,
     setStudioAutoSaveStatus: [],
     syncInspectorForSelection: 0
@@ -859,6 +860,9 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     setStudioAutoSaveStatus(state) {
       calls.setStudioAutoSaveStatus.push(state);
     },
+    setStudioFrameLoadingState(state) {
+      calls.frameLoadingStates.push(state);
+    },
     syncInspectorForSelection() {
       calls.syncInspectorForSelection += 1;
     }
@@ -880,6 +884,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
     clickHandlerFactory: 1,
     keydownHandlerFactory: 1,
     frameBootstrap: 1,
+    frameLoadingStates: ['ready'],
     updateDeckReadyToolbarActionState: 1,
     setStudioAutoSaveStatus: ['saved'],
     syncInspectorForSelection: 1
@@ -896,18 +901,23 @@ test('initStudioFrame fails closed when legacy bootstrap runtimes are unavailabl
     '\n\n    // Apply hoverable tags to editable nodes'
   );
   const iframeDoc = {};
+  const frameLoadingStates = [];
   const context = {
     getIframeDoc() {
       return iframeDoc;
     },
     SlideNextStudioEditorStyle: null,
-    SlideNextStudioFrameBootstrap: null
+    SlideNextStudioFrameBootstrap: null,
+    setStudioFrameLoadingState(state) {
+      frameLoadingStates.push(state);
+    }
   };
 
   vm.createContext(context);
   vm.runInContext(initStudioFrameSource, context);
 
   assert.equal(context.initStudioFrame(), false);
+  assert.deepEqual(frameLoadingStates, ['error']);
 });
 
 test('initStudioFrame reuses the resolved canonical deck when capturing the initial persisted state', () => {

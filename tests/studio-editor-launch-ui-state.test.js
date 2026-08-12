@@ -18,6 +18,8 @@ test('editor and preview iframes have accessible names', () => {
 
   assert.match(fileContent, /<iframe id="presentationFrame"[^>]*title="Presentation preview"/);
   assert.match(fileContent, /<iframe id="studioFrame"[^>]*title="Presentation editor canvas"/);
+  assert.match(fileContent, /id="studioFrameLoading"[^>]*aria-busy="true"/);
+  assert.match(fileContent, /id="studioFrameLoadingText">Loading presentation\.\.\.</);
 });
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {

@@ -839,6 +839,12 @@
           <!-- Fixed 1920x1080 Aspect-Ratio container wrapper scaled dynamically -->
           <div id="canvasScrollContainer" style="width: 1920px; height: 1080px; position: relative; transition: all 0.2s ease; flex-shrink: 0; margin: auto;">
             <div id="canvasWrapper" style="width: 1920px; height: 1080px; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); transform-origin: center center; transition: transform 0.2s ease;" class="border border-[#7028d0]/25 rounded-xl shadow-[0_30px_70px_rgba(0,0,0,0.8)] bg-black overflow-hidden">
+              <div id="studioFrameLoading" class="absolute inset-0 z-20 flex items-center justify-center bg-[#030303]/90 backdrop-blur-sm" role="status" aria-live="polite" aria-busy="true" aria-hidden="false">
+                <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-400">
+                  <span id="studioFrameLoadingIcon" class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                  <span id="studioFrameLoadingText">Loading presentation...</span>
+                </div>
+              </div>
               <iframe id="studioFrame" src="" title="Presentation editor canvas" style="width: 1920px; height: 1080px; pointer-events: auto;" class="absolute inset-0 border-none z-10"></iframe>
             </div>
           </div>
@@ -1447,6 +1453,7 @@
   <script src="/shared/studio-editor-zoom-shell-runtime.js"></script>
   <script src="/shared/studio-editor-zoom-accessors.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
+  <script src="/shared/studio-editor-frame-loading-view.js"></script>
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-controller.js"></script>
@@ -5468,6 +5475,19 @@
       return true;
     }
 
+    function setStudioFrameLoadingState(state = 'loading') {
+      const loadingView = typeof SlideNextStudioEditorFrameLoadingView !== 'undefined'
+        ? SlideNextStudioEditorFrameLoadingView
+        : null;
+      if (!loadingView || typeof loadingView.setStudioEditorFrameLoadingState !== 'function') {
+        return false;
+      }
+      return loadingView.setStudioEditorFrameLoadingState({
+        documentRef: document,
+        state
+      });
+    }
+
     async function launchStudioEditor(url, title, category) {
       const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
         ? SlideNextStudioEditorPersistence
@@ -5560,6 +5580,7 @@
       }
       
       setStudioAutoSaveStatus('loading');
+      setStudioFrameLoadingState('loading');
       const didResetEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
         && studioEditorSessionUiController
         && typeof studioEditorSessionUiController.reset === 'function'
@@ -5789,13 +5810,20 @@
       if (typeof studioEditorFrameController !== 'undefined'
         && studioEditorFrameController
         && typeof studioEditorFrameController.init === 'function') {
-        return studioEditorFrameController.init();
+        const didInitialize = studioEditorFrameController.init();
+        if (typeof setStudioFrameLoadingState === 'function') {
+          setStudioFrameLoadingState(didInitialize ? 'ready' : 'error');
+        }
+        return didInitialize;
       }
       if (typeof resetEditorLiveCanonicalDeck === 'function') {
         resetEditorLiveCanonicalDeck();
       }
       const iframeDoc = getIframeDoc();
-      if (!iframeDoc) return;
+      if (!iframeDoc) {
+        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
+        return false;
+      }
       const editorStyleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
         ? SlideNextStudioEditorStyle
         : null;
@@ -5810,6 +5838,7 @@
         || typeof editorStyleApi.ensureStudioEditorStyle !== 'function'
         || !frameBootstrapApi
         || typeof frameBootstrapApi.runStudioFrameBootstrap !== 'function') {
+        if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('error');
         return false;
       }
       
@@ -5887,6 +5916,8 @@
       updateDeckReadyToolbarActionState();
       setStudioAutoSaveStatus(initialHistoryCaptureFailed ? 'history-failed' : 'saved');
       syncInspectorForSelection();
+      if (typeof setStudioFrameLoadingState === 'function') setStudioFrameLoadingState('ready');
+      return true;
     }
 
     // Apply hoverable tags to editable nodes
