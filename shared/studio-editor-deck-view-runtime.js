@@ -108,6 +108,7 @@
           saveHistoryState: options.saveHistoryState,
           isCanonicalDeck: options.sourceIsCanonicalDeck,
           beforeApply: options.beforeApply,
+          captureHistoryEntry: options.captureHistoryEntry,
           restoreHistoryEntry: options.restoreHistoryEntry,
           afterApply: options.afterApply
         })

@@ -266,6 +266,15 @@ test('source controller forwards the live canonical baseline to source applicati
   assert.equal(calls[0][2].canonicalDeckBaseline, canonicalDeckBaseline);
 });
 
+test('source controller forwards the pre-apply history capture callback', () => {
+  const captureHistoryEntry = () => ({ html: '<section class="slide">Original</section>' });
+  const { calls, controller } = createController({ captureHistoryEntry });
+
+  controller.applySourceHtml('<html></html>');
+
+  assert.equal(calls[0][2].captureHistoryEntry, captureHistoryEntry);
+});
+
 test('source controller reports source engine unavailability without throwing', () => {
   const { controller } = createController({ sourceApi: null });
 

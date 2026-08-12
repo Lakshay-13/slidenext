@@ -2315,6 +2315,7 @@
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          captureHistoryEntry: () => createHistoryEntry(getIframeDoc()),
           getCurrentDocument: () => getIframeDoc(),
           resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
             sourceDoc,
@@ -2325,8 +2326,9 @@
           sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           restoreHistoryEntry: restoreEditorSourceHistoryEntry,
           afterApply: (canonicalDeck) => {
-            saveHistoryState(false, null, canonicalDeck);
-            triggerAutoSave();
+            if (saveHistoryState(false, null, canonicalDeck) === false) return false;
+            if (triggerAutoSave() === false) return false;
+            return true;
           }
         })
       : null;

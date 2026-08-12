@@ -317,6 +317,78 @@ test('applyStudioEditorSource reports post-apply callback failures without throw
   assert.equal(restoreCalls, 1);
 });
 
+test('applyStudioEditorSource rolls back the pre-apply entry when persistence rejects', () => {
+  const previousHistoryEntry = {
+    html: '<section class="slide">Original</section>',
+    activeSlideId: 'slide-original',
+    selectedElementIds: [],
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-original' }] }
+  };
+  const restoredEntries = [];
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    captureHistoryEntry() {
+      return previousHistoryEntry;
+    },
+    beforeApply() {
+      return true;
+    },
+    restoreHistoryEntry(historyEntry) {
+      restoredEntries.push(historyEntry);
+      return true;
+    },
+    afterApply() {
+      return false;
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not be applied to the editor'
+  });
+  assert.equal(restoredEntries.length, 2);
+  assert.equal(restoredEntries[0].html, '<section class="slide">Edited</section>');
+  assert.deepEqual(restoredEntries[1], previousHistoryEntry);
+});
+
+test('applyStudioEditorSource preserves success for undefined post-apply results', () => {
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    restoreHistoryEntry() {},
+    afterApply() {}
+  });
+
+  assert.equal(result.success, true);
+});
+
 test('applyStudioEditorSource forwards the canonical rebuild baseline', () => {
   const sourceRoot = {
     innerHTML: '<section class="slide">Edited</section>',

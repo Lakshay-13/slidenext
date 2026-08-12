@@ -137,6 +137,17 @@
       selectedElementIds: [],
       canonicalDeck
     };
+    let previousHistoryEntry = null;
+    if (typeof options.captureHistoryEntry === 'function') {
+      try {
+        const capturedEntry = options.captureHistoryEntry();
+        if (capturedEntry && typeof capturedEntry === 'object') {
+          previousHistoryEntry = capturedEntry;
+        }
+      } catch (error) {
+        previousHistoryEntry = null;
+      }
+    }
 
     if (typeof options.beforeApply === 'function') {
       let canApply = false;
@@ -163,9 +174,20 @@
     }
 
     if (typeof options.afterApply === 'function') {
+      let didPersist = true;
       try {
-        options.afterApply(canonicalDeck, historyEntry);
+        didPersist = options.afterApply(canonicalDeck, historyEntry) !== false;
       } catch (error) {
+        didPersist = false;
+      }
+      if (!didPersist) {
+        if (previousHistoryEntry && typeof options.restoreHistoryEntry === 'function') {
+          try {
+            options.restoreHistoryEntry(previousHistoryEntry);
+          } catch (error) {
+            // Preserve the persistence failure when rollback itself is unavailable.
+          }
+        }
         return fail('Source HTML could not be applied to the editor');
       }
     }

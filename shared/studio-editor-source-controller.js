@@ -199,6 +199,9 @@
           buildCanonicalDeck,
           saveHistoryState
         });
+    const captureHistoryEntry = typeof options.captureHistoryEntry === 'function'
+      ? options.captureHistoryEntry
+      : null;
     const restoreHistoryEntry = typeof options.restoreHistoryEntry === 'function'
       ? options.restoreHistoryEntry
       : null;
@@ -278,6 +281,7 @@
         getCurrentDocument,
         resolveActiveSlideId,
         beforeApply,
+        ...(captureHistoryEntry ? { captureHistoryEntry } : {}),
         restoreHistoryEntry,
         afterApply
       };

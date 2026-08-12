@@ -71,6 +71,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     saveHistoryState() {},
     sourceIsCanonicalDeck() {},
     beforeApply() {},
+    captureHistoryEntry() {},
     restoreHistoryEntry() {},
     afterApply() {}
   };
@@ -124,6 +125,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
   assert.equal(findCall('source').resolveSourceCss, callbacks.resolveSourceCss);
   assert.equal(findCall('source').saveHistoryState, callbacks.saveHistoryState);
   assert.equal(findCall('source').applySourceCss, callbacks.applySourceCss);
+  assert.equal(findCall('source').captureHistoryEntry, callbacks.captureHistoryEntry);
   assert.equal(findCall('source').afterApply, callbacks.afterApply);
 });
 
