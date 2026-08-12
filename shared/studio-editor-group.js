@@ -14,7 +14,7 @@
       : () => false;
     const isFreeformPositioned = typeof options.isFreeformPositioned === 'function'
       ? options.isFreeformPositioned
-      : () => true;
+      : () => false;
 
     return selection.filter((item) => {
       const element = item && item.element ? item.element : item;
@@ -167,7 +167,7 @@
       : null;
     const isFreeformPositioned = typeof options.isFreeformPositioned === 'function'
       ? options.isFreeformPositioned
-      : () => true;
+      : () => false;
 
     return function buildStudioEditorGroupSelectionActionState(doc = null) {
       const resolvedDoc = doc || getDocument();

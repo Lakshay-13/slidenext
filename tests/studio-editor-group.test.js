@@ -92,6 +92,7 @@ test('buildStudioGroupPlan rejects insufficient, invalid, or ineligible selectio
   const items = buildItems();
   assert.equal(group.buildStudioGroupPlan(items.slice(0, 1)).canGroup, false);
   assert.equal(group.buildStudioGroupPlan([{ ...items[0], width: NaN }, items[1]]).canGroup, false);
+  assert.equal(group.buildStudioGroupPlan(items).canGroup, false);
   assert.equal(group.buildStudioGroupPlan(items, {
     isFreeformPositioned: () => false
   }).canGroup, false);
