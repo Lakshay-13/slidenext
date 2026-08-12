@@ -6121,6 +6121,23 @@
     }
 
     function getEditorHistoryStackOptions(options = {}) {
+      const historyOptionsApi = typeof SlideNextStudioEditorHistoryOptions !== 'undefined'
+        ? SlideNextStudioEditorHistoryOptions
+        : null;
+      if (historyOptionsApi
+        && typeof historyOptionsApi.createStudioEditorHistoryStackOptionsResolver === 'function') {
+        if (typeof getEditorHistoryStackOptions.resolver !== 'function') {
+          getEditorHistoryStackOptions.resolver = historyOptionsApi.createStudioEditorHistoryStackOptionsResolver({
+            getHistoryOptions: (nextOptions) => getEditorHistoryOptions(nextOptions),
+            getHistoryApi: () => typeof SlideNextStudioHistory !== 'undefined'
+              ? SlideNextStudioHistory
+              : null
+          });
+        }
+        if (typeof getEditorHistoryStackOptions.resolver === 'function') {
+          return getEditorHistoryStackOptions.resolver(options);
+        }
+      }
       const historyApi = typeof SlideNextStudioHistory !== 'undefined'
         ? SlideNextStudioHistory
         : null;

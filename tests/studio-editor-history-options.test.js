@@ -91,6 +91,33 @@ test('history options resolver falls back to deck persistence sanitization', () 
   });
 });
 
+test('history stack options resolver adds history behavior while preserving caller overrides', () => {
+  const calls = [];
+  const normalizeEntry = (entry) => ({ normalized: entry });
+  const areEntriesEqual = (left, right) => left === right;
+  const resolver = historyOptions.createStudioEditorHistoryStackOptionsResolver({
+    getHistoryOptions(options) {
+      calls.push(options);
+      return { source: 'history-options' };
+    },
+    getHistoryApi() {
+      return {
+        normalizeStudioHistoryEntry: normalizeEntry,
+        areStudioHistoryEntriesEqual: areEntriesEqual
+      };
+    }
+  });
+
+  const result = resolver({ custom: true, maxUndoEntries: 12 });
+
+  assert.deepEqual(calls, [{ custom: true, maxUndoEntries: 12 }]);
+  assert.equal(result.source, 'history-options');
+  assert.equal(result.custom, true);
+  assert.equal(result.normalizeEntry, normalizeEntry);
+  assert.equal(result.areEntriesEqual, areEntriesEqual);
+  assert.equal(result.maxUndoEntries, 12);
+});
+
 test('editor loads the history options module before using the inline compatibility adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(fileContent, /<script src="\/shared\/studio-editor-history-options\.js"><\/script>/);
@@ -160,4 +187,39 @@ test('inline history adapter delegates to the shared module when it is available
       persistenceOptions: { emptyContainerIds: ['runtime-root'] }
     }]
   ]);
+});
+
+test('inline history stack adapter delegates to the shared module when it is available', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('function getEditorHistoryStackOptions(options = {}) {');
+  const end = fileContent.indexOf('\n\n    function assignEditorSlideId(slide, options = {}) {', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+
+  const calls = [];
+  const normalizeEntry = (entry) => ({ normalized: entry });
+  const areEntriesEqual = (left, right) => left === right;
+  const context = {
+    SlideNextStudioEditorHistoryOptions: historyOptions,
+    SlideNextStudioHistory: {
+      normalizeStudioHistoryEntry: normalizeEntry,
+      areStudioHistoryEntriesEqual: areEntriesEqual
+    },
+    getEditorHistoryOptions(options) {
+      calls.push(options);
+      return { source: 'history-options' };
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(fileContent.slice(start, end), context);
+
+  const result = context.getEditorHistoryStackOptions({ custom: true });
+
+  assert.deepEqual(calls, [{ custom: true }]);
+  assert.equal(result.source, 'history-options');
+  assert.equal(result.custom, true);
+  assert.equal(result.normalizeEntry, normalizeEntry);
+  assert.equal(result.areEntriesEqual, areEntriesEqual);
+  assert.equal(result.maxUndoEntries, 50);
 });

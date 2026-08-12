@@ -87,7 +87,37 @@
     };
   }
 
+  function createStudioEditorHistoryStackOptionsResolver(options = {}) {
+    const getHistoryOptions = typeof options.getHistoryOptions === 'function'
+      ? options.getHistoryOptions
+      : () => ({});
+    const getHistoryApi = typeof options.getHistoryApi === 'function'
+      ? options.getHistoryApi
+      : () => null;
+
+    return function resolveStudioEditorHistoryStackOptions(historyInput = {}) {
+      const historyOptionsInput = historyInput && typeof historyInput === 'object'
+        ? historyInput
+        : {};
+      const historyApi = getHistoryApi();
+      return {
+        ...getHistoryOptions(historyOptionsInput),
+        normalizeEntry: historyApi
+          && typeof historyApi.normalizeStudioHistoryEntry === 'function'
+          ? historyApi.normalizeStudioHistoryEntry
+          : undefined,
+        areEntriesEqual: historyApi
+          && typeof historyApi.areStudioHistoryEntriesEqual === 'function'
+          ? historyApi.areStudioHistoryEntriesEqual
+          : undefined,
+        maxUndoEntries: 50,
+        ...historyOptionsInput
+      };
+    };
+  }
+
   return {
-    createStudioEditorHistoryOptionsResolver
+    createStudioEditorHistoryOptionsResolver,
+    createStudioEditorHistoryStackOptionsResolver
   };
 });
