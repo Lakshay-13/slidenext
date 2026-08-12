@@ -1796,66 +1796,14 @@
     const studioEditorHistoryAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.historyAccessors
       : null;
-    function getStudioUndoStack() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.getUndoStack()
-        : [];
-    }
-    function getStudioRedoStack() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.getRedoStack()
-        : [];
-    }
-    function setStudioUndoStack(nextStack) {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.setUndoStack(nextStack)
-        : false;
-    }
-    function setStudioRedoStack(nextStack) {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.setRedoStack(nextStack)
-        : false;
-    }
-    function clearStudioHistoryStacks() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.clearHistoryStacks()
-        : false;
-    }
-    function getStudioPendingEditorTransaction() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.getPendingEditorTransaction()
-        : null;
-    }
-    function setStudioPendingEditorTransaction(nextTransaction) {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.setPendingEditorTransaction(nextTransaction)
-        : false;
-    }
-    function clearStudioPendingEditorTransaction() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.clearPendingEditorTransaction()
-        : false;
-    }
-    function getStudioPendingEditorCanonicalDeck() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.getPendingEditorCanonicalDeck()
-        : null;
-    }
-    function setStudioPendingEditorCanonicalDeck(nextCanonicalDeck) {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.setPendingEditorCanonicalDeck(nextCanonicalDeck)
-        : false;
-    }
-    function getStudioUndoDebounceTimer() {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.getUndoDebounceTimer()
-        : null;
-    }
-    function setStudioUndoDebounceTimer(nextTimer) {
-      return studioEditorHistoryAccessors
-        ? studioEditorHistoryAccessors.setUndoDebounceTimer(nextTimer)
-        : false;
-    }
+    const studioEditorHistoryGlobalApi = typeof SlideNextStudioEditorHistoryAccessors !== 'undefined'
+      && SlideNextStudioEditorHistoryAccessors
+      && typeof SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryGlobalApi({
+          accessors: studioEditorHistoryAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryGlobalApi);
     const studioEditorPersistedDeckBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.persistedDeckBridge
       : null;

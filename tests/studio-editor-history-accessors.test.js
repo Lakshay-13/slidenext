@@ -59,6 +59,46 @@ test('history accessors preserve safe fallbacks without a bridge', () => {
   assert.equal(accessors.setUndoDebounceTimer(null), false);
 });
 
+test('history global api preserves the editor shell function names', () => {
+  const calls = [];
+  const accessors = {
+    getUndoStack: () => ['undo'],
+    getRedoStack: () => ['redo'],
+    setUndoStack: (value) => value,
+    setRedoStack: (value) => value,
+    clearHistoryStacks: () => true,
+    getPendingEditorTransaction: () => ({ id: 'tx' }),
+    setPendingEditorTransaction: (value) => value,
+    clearPendingEditorTransaction: () => {
+      calls.push('clear-transaction');
+      return true;
+    },
+    getPendingEditorCanonicalDeck: () => ({ id: 'deck' }),
+    setPendingEditorCanonicalDeck: (value) => value,
+    getUndoDebounceTimer: () => 10,
+    setUndoDebounceTimer: (value) => value
+  };
+  const globalApi = accessorsApi.createStudioEditorHistoryGlobalApi({ accessors });
+
+  assert.deepEqual(globalApi.getStudioUndoStack(), ['undo']);
+  assert.deepEqual(globalApi.getStudioRedoStack(), ['redo']);
+  assert.deepEqual(globalApi.setStudioUndoStack(['next-undo']), ['next-undo']);
+  assert.deepEqual(globalApi.setStudioRedoStack(['next-redo']), ['next-redo']);
+  assert.equal(globalApi.clearStudioHistoryStacks(), true);
+  assert.deepEqual(globalApi.getStudioPendingEditorTransaction(), { id: 'tx' });
+  assert.deepEqual(globalApi.setStudioPendingEditorTransaction({ id: 'next-tx' }), {
+    id: 'next-tx'
+  });
+  assert.equal(globalApi.clearStudioPendingEditorTransaction(), true);
+  assert.deepEqual(globalApi.getStudioPendingEditorCanonicalDeck(), { id: 'deck' });
+  assert.deepEqual(globalApi.setStudioPendingEditorCanonicalDeck({ id: 'next-deck' }), {
+    id: 'next-deck'
+  });
+  assert.equal(globalApi.getStudioUndoDebounceTimer(), 10);
+  assert.equal(globalApi.setStudioUndoDebounceTimer(20), 20);
+  assert.deepEqual(calls, ['clear-transaction']);
+});
+
 test('history accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -67,6 +107,11 @@ test('history accessors publish the global consumed by the editor shell', () => 
   assert.equal(
     typeof context.globalThis.SlideNextStudioEditorHistoryAccessors
       .createStudioEditorHistoryAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorHistoryAccessors
+      .createStudioEditorHistoryGlobalApi,
     'function'
   );
 });
@@ -80,4 +125,7 @@ test('editor loads history accessors after the history bridge', () => {
   );
   assert.match(fileContent, /studioEditorShellStateRuntime\.historyAccessors/);
   assert.match(fileContent, /studioEditorHistoryAccessors/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorHistoryGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function getStudioUndoStack\(\)/);
+  assert.doesNotMatch(fileContent, /function getStudioPendingEditorTransaction\(\)/);
 });

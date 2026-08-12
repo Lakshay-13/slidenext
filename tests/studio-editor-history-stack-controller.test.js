@@ -5,6 +5,12 @@ const path = require('node:path');
 const historyStackController = require('../shared/studio-editor-history-stack-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const HISTORY_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-history-accessors.js'
+);
 
 test('history stack controller owns undo and redo stacks', () => {
   const controller = historyStackController.createStudioEditorHistoryStackController({
@@ -51,8 +57,11 @@ test('editor wiring routes history stacks through the shared controller', () => 
   );
   assert.match(fileContent, /studio-editor-history-store\.js/);
   assert.match(fileContent, /studioEditorHistoryBridge/);
-  assert.match(fileContent, /getUndoStack\(\)/);
-  assert.match(fileContent, /getRedoStack\(\)/);
+  assert.match(fileContent, /studioEditorHistoryGlobalApi/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorHistoryGlobalApi\)/);
+  const accessorSource = fs.readFileSync(HISTORY_ACCESSORS_PATH, 'utf8');
+  assert.match(accessorSource, /getStudioUndoStack: \(\) => accessors\.getUndoStack\(\)/);
+  assert.match(accessorSource, /getStudioRedoStack: \(\) => accessors\.getRedoStack\(\)/);
   assert.doesNotMatch(fileContent, /let undoStack = \[\]/);
   assert.doesNotMatch(fileContent, /let redoStack = \[\]/);
 });

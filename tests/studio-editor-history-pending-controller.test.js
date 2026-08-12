@@ -5,6 +5,12 @@ const path = require('node:path');
 const pendingController = require('../shared/studio-editor-history-pending-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const HISTORY_ACCESSORS_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-history-accessors.js'
+);
 
 test('pending history controller owns and clears pending history values', () => {
   const transaction = { id: 'transaction-1' };
@@ -34,8 +40,17 @@ test('editor wiring routes pending history transactions through the shared contr
     /<script src="\/shared\/studio-editor-history-pending-controller\.js"><\/script>/
   );
   assert.match(fileContent, /studio-editor-history-store\.js/);
-  assert.match(fileContent, /getPendingEditorTransaction\(\)/);
-  assert.match(fileContent, /getPendingEditorCanonicalDeck\(\)/);
+  assert.match(fileContent, /studioEditorHistoryGlobalApi/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorHistoryGlobalApi\)/);
+  const accessorSource = fs.readFileSync(HISTORY_ACCESSORS_PATH, 'utf8');
+  assert.match(
+    accessorSource,
+    /getStudioPendingEditorTransaction: \(\) => accessors\.getPendingEditorTransaction\(\)/
+  );
+  assert.match(
+    accessorSource,
+    /getStudioPendingEditorCanonicalDeck: \(\) => accessors\.getPendingEditorCanonicalDeck\(\)/
+  );
   assert.doesNotMatch(fileContent, /let pendingEditorTransaction = null/);
   assert.doesNotMatch(fileContent, /let pendingEditorCanonicalDeck = null/);
 });
