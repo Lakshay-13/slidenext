@@ -1140,9 +1140,14 @@
         }
         return;
       }
-      const historyCaptureResult = canonicalDeck
-        ? saveHistoryState(false, transaction, canonicalDeck)
-        : saveHistoryState(false, transaction);
+      let historyCaptureResult = null;
+      try {
+        historyCaptureResult = canonicalDeck
+          ? saveHistoryState(false, transaction, canonicalDeck)
+          : saveHistoryState(false, transaction);
+      } catch (err) {
+        historyCaptureResult = false;
+      }
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         try {
           onHistoryFailure({ finalizeResult, completionPlan, transaction, canonicalDeck });

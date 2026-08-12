@@ -193,6 +193,32 @@ test('createStudioTransformSessionFinalizer stops persistence hooks when history
   assert.deepEqual(calls, ['end', 'transaction', 'history', 'rollback']);
 });
 
+test('createStudioTransformSessionFinalizer rolls back when history capture throws', () => {
+  const calls = [];
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction() {
+      calls.push('transaction');
+      return { type: 'style' };
+    },
+    saveHistoryState() {
+      calls.push('history');
+      throw new Error('history unavailable');
+    },
+    onHistoryFailure() {
+      calls.push('rollback');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  assert.equal(finalizeSession({ id: 'move' }, { shouldPersist: true }), false);
+  assert.deepEqual(calls, ['transaction', 'history', 'rollback']);
+});
+
 test('createStudioTransformSessionFinalizer forwards an optional canonical deck sidecar', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
