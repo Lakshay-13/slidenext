@@ -7508,7 +7508,7 @@
       ? SlideNextStudioEditorSelectionBounds.createStudioSelectionBoundsResolver({
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
           getActiveSlide: typeof getActiveSlide === 'function' ? (doc) => getActiveSlide(doc) : null,
-          getSelectedElements: () => getStudioSelectedElements(),
+          getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getSlideMetrics: (slide) => getSlideMetrics(slide),
           getRectOnSlide: (rect, metrics) => getRectOnSlide(rect, metrics),
           getHiddenStateReader: (doc) => getEditorCanonicalVisibilityReader('hidden', doc),

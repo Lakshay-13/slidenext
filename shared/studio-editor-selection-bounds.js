@@ -124,16 +124,19 @@
       : () => options.minSizePx;
 
     return function resolveStudioSelectionBounds(
-      elements = getSelectedElements(),
+      elements,
       slideMetrics = null
     ) {
       const documentRef = getCurrentDocument();
       const slide = getActiveSlide(documentRef);
       if (!slide) return null;
 
+      const resolvedElements = typeof elements === 'undefined'
+        ? getSelectedElements(documentRef)
+        : elements;
       const metrics = slideMetrics || getSlideMetrics(slide);
       const isHidden = getHiddenStateReader(documentRef);
-      return buildStudioSelectionBounds(elements, {
+      return buildStudioSelectionBounds(resolvedElements, {
         minSizePx: getMinSizePx(),
         isHidden,
         getElementBounds: (element) => {

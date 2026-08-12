@@ -12,6 +12,7 @@ test('editor composes selection bounds through the shared resolver', () => {
 
   assert.match(source, /const studioEditorSelectionBoundsResolver =/);
   assert.match(source, /createStudioSelectionBoundsResolver\(/);
+  assert.match(source, /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/);
   assert.match(source, /return typeof studioEditorSelectionBoundsResolver === 'function'/);
   assert.doesNotMatch(source, /getSelectionBounds\.resolver/);
 });
@@ -122,7 +123,10 @@ test('createStudioSelectionBoundsResolver assembles editor geometry and hidden s
       calls.push(['slide', doc]);
       return slide;
     },
-    getSelectedElements: () => [hiddenElement, visibleElement],
+    getSelectedElements: (doc) => {
+      assert.equal(doc, documentRef);
+      return [hiddenElement, visibleElement];
+    },
     getSlideMetrics: (currentSlide) => {
       calls.push(['metrics', currentSlide]);
       return { id: 'metrics-1' };
