@@ -544,6 +544,40 @@ test('style controller rebuilds the canonical lock baseline when live state is i
   assert.equal(receivedLockState, true);
 });
 
+test('style controller disables live reuse for compatibility lock rebuilds', () => {
+  const element = { dataset: { editorId: 'node-1' } };
+  const documentRef = { id: 'doc' };
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', visibility: { locked: true } }] }]
+  });
+  let rebuildOptions = null;
+  let receivedLockState = null;
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, _prop, _value, options) {
+        receivedLockState = options.isLocked(element);
+        return { canApply: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {},
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(sourceDocument, options) {
+      assert.equal(sourceDocument, documentRef);
+      rebuildOptions = options;
+      return rebuiltDeck;
+    },
+    getSelectedElements: () => [element],
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isElementLocked: () => false
+  });
+
+  assert.equal(controller.apply('color', '#fff'), false);
+  assert.equal(receivedLockState, true);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('style controller rejects malformed canonical baselines before lock lookup', () => {
   const element = { dataset: { editorId: 'node-1' } };
   const malformedDeck = { invalid: true };
