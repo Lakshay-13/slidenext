@@ -140,6 +140,37 @@ test('alignment controller rolls back when finalization rejects the position mut
   assert.deepEqual(rollbackCalls, [[transaction, null]]);
 });
 
+test('alignment controller rolls back when finalization throws', () => {
+  const transaction = { id: 'position-tx' };
+  const rollbackCalls = [];
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    alignmentApi: {
+      buildStudioAlignedLayout() {
+        return {
+          didChange: true,
+          nextItems: [{ element: { id: 'node-1' }, nextLeft: 12, nextTop: 14 }]
+        };
+      }
+    },
+    buildAlignmentActionState: () => ({
+      alignmentActionState: {
+        canAlign: true,
+        selection: [{ id: 'one' }, { id: 'two' }]
+      }
+    }),
+    applyPositionLayout: () => ({ didApply: true, transaction }),
+    finalizeDeckMutation: () => {
+      throw new Error('history finalization failed');
+    },
+    rollbackPositionMutation: (...args) => rollbackCalls.push(args)
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.align('left'), false);
+  });
+  assert.deepEqual(rollbackCalls, [[transaction, null]]);
+});
+
 test('alignment controller requires three selected elements for distribution', () => {
   let buildCalls = 0;
   const controller = alignmentController.createStudioEditorAlignmentController({

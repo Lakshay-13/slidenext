@@ -48,6 +48,15 @@
       ? options.rollbackPositionMutation
       : null;
 
+    function rollbackMutation(transaction, doc) {
+      if (!rollbackPositionMutation) return;
+      try {
+        rollbackPositionMutation(transaction, doc);
+      } catch (error) {
+        // A rollback failure must not break the editor event handler.
+      }
+    }
+
     function applyLayoutMutation(nextItems, versionLabel) {
       if (!finalizeDeckMutation) return false;
       const getAlignmentElementId = (element) => assignElementId(element);
@@ -95,15 +104,20 @@
       });
       if (!mutation || !mutation.didApply) return false;
 
-      const finalizeResult = finalizeDeckMutation(versionLabel, {
-        syncSelectionOverlay: true,
-        refreshThumbnails: false,
-        debounceHistory: true,
-        transaction: mutation.transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
-      });
+      let finalizeResult = false;
+      try {
+        finalizeResult = finalizeDeckMutation(versionLabel, {
+          syncSelectionOverlay: true,
+          refreshThumbnails: false,
+          debounceHistory: true,
+          transaction: mutation.transaction,
+          ...(canonicalDeck ? { canonicalDeck } : {})
+        });
+      } catch (error) {
+        finalizeResult = false;
+      }
       if (finalizeResult === false) {
-        if (rollbackPositionMutation) rollbackPositionMutation(mutation.transaction, doc);
+        rollbackMutation(mutation.transaction, doc);
         return false;
       }
       return true;
