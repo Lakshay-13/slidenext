@@ -282,7 +282,7 @@
         || typeof visibilityStateApi.buildStudioVisibilityMutationPlan !== 'function') {
         return false;
       }
-      const doc = getIframeDoc();
+      const doc = options.doc || getIframeDoc();
       const getVisibilityElementId = (element) => {
         if (typeof options.assignElementId === 'function') {
           const assignedId = options.assignElementId(element);

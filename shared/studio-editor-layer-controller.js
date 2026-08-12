@@ -68,9 +68,10 @@
       return false;
     }
 
+    const targetDocument = target && target.ownerDocument ? target.ownerDocument : undefined;
     const getCommittedSelectedEditorElementIds = options.getCommittedSelectedEditorElementIds;
     const preservedSelectionIds = typeof getCommittedSelectedEditorElementIds === 'function'
-      ? getCommittedSelectedEditorElementIds()
+      ? getCommittedSelectedEditorElementIds(targetDocument)
       : [];
     const restorePreservedSelection = () => {
       if (preservedSelectionIds.length === 0) {
@@ -78,7 +79,7 @@
         return;
       }
       if (typeof options.restoreCommittedSelectionByIdsOnActiveSlide === 'function') {
-        options.restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds);
+        options.restoreCommittedSelectionByIdsOnActiveSlide(preservedSelectionIds, targetDocument);
       }
     };
 
@@ -89,11 +90,14 @@
       });
     }
     if (typeof options.refreshSelectionClasses === 'function') {
-      options.refreshSelectionClasses();
+      options.refreshSelectionClasses(targetDocument);
     }
     const toggleSelectedElementsVisibility = options.toggleSelectedElementsVisibility;
     const didToggle = typeof toggleSelectedElementsVisibility === 'function'
-      ? toggleSelectedElementsVisibility({ skipSelectionUi: true })
+      ? toggleSelectedElementsVisibility({
+          skipSelectionUi: true,
+          ...(targetDocument ? { doc: targetDocument } : {})
+        })
       : false;
     if (!didToggle) {
       restorePreservedSelection();

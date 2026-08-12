@@ -106,7 +106,8 @@ test('selectStudioLayerElementByRef refreshes stale rows and preserves selection
 
 test('toggleStudioLayerVisibilityByRef restores the committed selection after a failed toggle', () => {
   const row = { id: 'row-1' };
-  const target = { id: 'node-1' };
+  const iframeDocument = { id: 'iframe-document' };
+  const target = { id: 'node-1', ownerDocument: iframeDocument };
   const calls = [];
   const event = {
     currentTarget: {
@@ -129,22 +130,22 @@ test('toggleStudioLayerVisibilityByRef restores the committed selection after a 
       calls.push(['resolveLayerRowElement', currentRow]);
       return target;
     },
-    getCommittedSelectedEditorElementIds() {
-      calls.push(['getCommittedSelectedEditorElementIds']);
+    getCommittedSelectedEditorElementIds(doc) {
+      calls.push(['getCommittedSelectedEditorElementIds', doc]);
       return ['node-2'];
     },
     applyEditorSelectionState(nextState) {
       calls.push(['applyEditorSelectionState', nextState]);
     },
-    refreshSelectionClasses() {
-      calls.push(['refreshSelectionClasses']);
+    refreshSelectionClasses(doc) {
+      calls.push(['refreshSelectionClasses', doc]);
     },
     toggleSelectedElementsVisibility(options) {
       calls.push(['toggleSelectedElementsVisibility', options]);
       return false;
     },
-    restoreCommittedSelectionByIdsOnActiveSlide(ids) {
-      calls.push(['restoreCommittedSelectionByIdsOnActiveSlide', ids]);
+    restoreCommittedSelectionByIdsOnActiveSlide(ids, doc) {
+      calls.push(['restoreCommittedSelectionByIdsOnActiveSlide', ids, doc]);
     }
   }), false);
 
@@ -159,9 +160,12 @@ test('toggleStudioLayerVisibilityByRef restores the committed selection after a 
     'toggleSelectedElementsVisibility',
     'restoreCommittedSelectionByIdsOnActiveSlide'
   ]);
+  assert.equal(calls[4][1], iframeDocument);
   assert.equal(calls[5][1].selectedElement, target);
-  assert.deepEqual(calls[7][1], { skipSelectionUi: true });
+  assert.equal(calls[6][1], iframeDocument);
+  assert.deepEqual(calls[7][1], { skipSelectionUi: true, doc: iframeDocument });
   assert.deepEqual(calls[8][1], ['node-2']);
+  assert.equal(calls[8][2], iframeDocument);
 });
 
 test('toggleStudioLayerVisibilityByRef refreshes stale rows without mutating selection', () => {

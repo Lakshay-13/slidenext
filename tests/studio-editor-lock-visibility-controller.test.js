@@ -108,7 +108,9 @@ test('lock and visibility toggles read selection from the active iframe document
 
   assert.equal(controller.toggleLock(), true);
   assert.equal(controller.toggleVisibility(), true);
-  assert.deepEqual(receivedDocuments, [documentRef, documentRef]);
+  const explicitDocument = { id: 'explicit-document' };
+  assert.equal(controller.toggleVisibility({ doc: explicitDocument }), true);
+  assert.deepEqual(receivedDocuments, [documentRef, documentRef, explicitDocument]);
 });
 
 test('lock and visibility controller fails closed when plans or finalization are unavailable', () => {
