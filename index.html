@@ -11110,12 +11110,14 @@
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
       const pendingTransaction = getStudioPendingEditorTransaction();
       const pendingCanonicalDeck = getStudioPendingEditorCanonicalDeck();
+      let saveResult;
       if (pendingCanonicalDeck !== null) {
-        saveHistoryState(false, pendingTransaction, pendingCanonicalDeck);
+        saveResult = saveHistoryState(false, pendingTransaction, pendingCanonicalDeck);
       } else {
-        saveHistoryState(false, pendingTransaction);
+        saveResult = saveHistoryState(false, pendingTransaction);
       }
-      return true;
+      return saveResult !== false
+        && !(saveResult && typeof saveResult === 'object' && saveResult.didCapture === false);
     }
 
     function getEditorHistoryStepAdapter() {

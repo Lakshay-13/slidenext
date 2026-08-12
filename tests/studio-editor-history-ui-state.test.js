@@ -118,3 +118,22 @@ test('captureState delegates editor stacks and pending cleanup through the share
   assert.equal(context.pendingEditorTransaction, null);
   assert.equal(context.pendingEditorCanonicalDeck, null);
 });
+
+test('flushPendingEditorHistory propagates fallback history capture failures', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function flushPendingEditorHistory() {',
+    '\n\n    function getEditorHistoryStepAdapter() {'
+  );
+  const context = {
+    getStudioPendingEditorTransaction: () => ({ id: 'pending' }),
+    getStudioPendingEditorCanonicalDeck: () => null,
+    saveHistoryState: () => ({ didCapture: false })
+  };
+
+  vm.createContext(context);
+  vm.runInContext(helperSource, context);
+
+  assert.equal(context.flushPendingEditorHistory(), false);
+});

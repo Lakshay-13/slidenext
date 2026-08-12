@@ -58,6 +58,29 @@ test('history controller flushes pending state through the shared save adapter',
   assert.equal(controller.flushPending(), false);
 });
 
+test('history controller reports pending flush capture failures', () => {
+  let pendingTransaction = { id: 'pending' };
+  let saveResult = false;
+  const historyApi = {
+    createStudioHistorySaveHandler() {
+      return () => saveResult;
+    }
+  };
+  const controller = historyController.createStudioEditorHistoryController({
+    historyApi,
+    historyStateApi: historyState,
+    getPendingTransaction: () => pendingTransaction
+  });
+
+  assert.equal(controller.flushPending(), false);
+  saveResult = { didCapture: false };
+  assert.equal(controller.flushPending(), false);
+  saveResult = { didCapture: true };
+  assert.equal(controller.flushPending(), true);
+  pendingTransaction = null;
+  assert.equal(controller.flushPending(), false);
+});
+
 test('history controller forwards history steps and restore entries', () => {
   const steps = [];
   const restores = [];

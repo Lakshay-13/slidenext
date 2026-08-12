@@ -275,12 +275,14 @@
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
+      let saveResult;
       if (hasPendingCanonicalDeck) {
-        save(false, hasPendingTransaction ? pendingTransaction : null, pendingCanonicalDeck);
+        saveResult = save(false, hasPendingTransaction ? pendingTransaction : null, pendingCanonicalDeck);
       } else {
-        save(false, pendingTransaction);
+        saveResult = save(false, pendingTransaction);
       }
-      return true;
+      return saveResult !== false
+        && !(saveResult && typeof saveResult === 'object' && saveResult.didCapture === false);
     }
 
     function restore(entry, historyStep = null) {
