@@ -36,6 +36,7 @@
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyPositionLayout: options.applyPositionLayout,
+          rollbackPositionMutation: options.rollbackPositionMutation,
           finalizeDeckMutation: options.finalizeDeckMutation
         })
       : null;
@@ -51,6 +52,7 @@
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyPositionLayout: options.applyPositionLayout,
+          rollbackPositionMutation: options.rollbackPositionMutation,
           finalizeDeckMutation: options.finalizeDeckMutation
         })
       : null;

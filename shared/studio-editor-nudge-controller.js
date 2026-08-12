@@ -41,6 +41,9 @@
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
       : null;
+    const rollbackPositionMutation = typeof options.rollbackPositionMutation === 'function'
+      ? options.rollbackPositionMutation
+      : null;
 
     function nudge(dx, dy, sourceDoc) {
       if (!buildMotionSelectionActionState) return false;
@@ -110,14 +113,16 @@
       });
       if (!mutation || !mutation.didApply) return false;
 
-      if (finalizeDeckMutation) {
-        finalizeDeckMutation('Auto: Nudged Element', {
-          syncSelectionOverlay: true,
-          refreshThumbnails: false,
-          debounceHistory: true,
-          transaction: mutation.transaction,
-          ...(canonicalDeck ? { canonicalDeck } : {})
-        });
+      const finalizeResult = finalizeDeckMutation('Auto: Nudged Element', {
+        syncSelectionOverlay: true,
+        refreshThumbnails: false,
+        debounceHistory: true,
+        transaction: mutation.transaction,
+        ...(canonicalDeck ? { canonicalDeck } : {})
+      });
+      if (finalizeResult === false) {
+        if (rollbackPositionMutation) rollbackPositionMutation(mutation.transaction, doc);
+        return false;
       }
       return true;
     }

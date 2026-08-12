@@ -2703,6 +2703,7 @@
             ? SlideNextStudioEditorTransaction
             : null,
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
+          rollbackPositionMutation: (...args) => rollbackEditorPositionLayoutMutation(...args),
           applyGroupMutation: (...args) => applyEditorGroupMutationWithTransaction(...args),
           applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
@@ -9760,6 +9761,34 @@
           ? { applyLayout: options.applyLayout }
           : {})
       });
+    }
+
+    function rollbackEditorPositionLayoutMutation(transaction, sourceDoc = getIframeDoc()) {
+      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+        ? SlideNextStudioEditorTransaction
+        : null;
+      if (!transaction
+        || !transactionApi
+        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
+        return false;
+      }
+      try {
+        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
+          getElementById: (elementId) => {
+            if (typeof elementId === 'string'
+              && elementId.startsWith('slide:')
+              && typeof getSlideById === 'function') {
+              return getSlideById(elementId.slice('slide:'.length), sourceDoc || getIframeDoc());
+            }
+            return typeof getElementByEditorId === 'function'
+              ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
+              : null;
+          }
+        });
+        return !!(rollbackResult && rollbackResult.didApply);
+      } catch (error) {
+        return false;
+      }
     }
 
     function alignSelectedElements(action = '') {

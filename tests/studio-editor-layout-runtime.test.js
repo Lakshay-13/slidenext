@@ -40,6 +40,7 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
     getEditorSlideId() {},
     getTransactionElementById() {},
     applyPositionLayout() {},
+    rollbackPositionMutation() {},
     applyGroupMutation() {},
     applyUngroupMutation() {},
     commitSelectionState() {},
@@ -78,8 +79,10 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
   assert.deepEqual(result, controllers);
   assert.equal(calls[0][1].nudgeApi, callbacks.nudgeEngineApi);
   assert.equal(calls[0][1].applyPositionLayout, callbacks.applyPositionLayout);
+  assert.equal(calls[0][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[1][1].alignmentApi, callbacks.alignmentEngineApi);
   assert.equal(calls[1][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
+  assert.equal(calls[1][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[2][1].canonicalGroupApi, callbacks.canonicalGroupApi);
   assert.equal(calls[2][1].applyUngroupMutation, callbacks.applyUngroupMutation);
   assert.equal(calls[2][1].getTransactionElementById, callbacks.getTransactionElementById);
@@ -100,6 +103,8 @@ test('index wires layout editing through the runtime module', () => {
     /SlideNextStudioEditorLayoutRuntime\.createStudioEditorLayoutRuntime\(/
   );
   assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);
+  assert.match(fileContent, /function rollbackEditorPositionLayoutMutation\(/);
+  assert.match(fileContent, /rollbackPositionMutation: \(\.\.\.args\) => rollbackEditorPositionLayoutMutation\(\.\.\.args\)/);
   assert.match(
     fileContent,
     /<script src="\/shared\/studio-editor-layout-conversion-view\.js"><\/script>/
