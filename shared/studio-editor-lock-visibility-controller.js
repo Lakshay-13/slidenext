@@ -142,7 +142,9 @@
           }
           if (buildCanonicalDeckBaseline) {
             try {
-              const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument);
+              const rebuiltCanonicalDeck = buildCanonicalDeckBaseline(sourceDocument, {
+                preferLiveCanonicalDeck: false
+              });
               return isValidCanonicalDeck(rebuiltCanonicalDeck)
                 ? rebuiltCanonicalDeck
                 : null;
@@ -194,10 +196,10 @@
         ? canonicalVisibilityApi.createStudioCanonicalVisibilityMutationBuilders({
             canonicalDeckApi,
             buildCanonicalDeck: buildCanonicalDeck
-              ? () => buildCanonicalDeck(doc)
+              ? (_sourceDocument, buildOptions) => buildCanonicalDeck(doc, buildOptions)
               : null,
             buildCanonicalDeckBaseline: buildCanonicalDeckBaseline
-              ? () => buildCanonicalDeckBaseline(doc)
+              ? (_sourceDocument, buildOptions) => buildCanonicalDeckBaseline(doc, buildOptions)
               : null,
             getCanonicalDeckBaseline: getCanonicalDeckBaseline
               ? () => getCanonicalDeckBaseline(doc)

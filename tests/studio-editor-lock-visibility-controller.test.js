@@ -613,6 +613,57 @@ test('lock and visibility readers rebuild when the live canonical baseline is in
   assert.equal(typeof readers.hidden, 'function');
 });
 
+test('lock and visibility readers disable live reuse for compatibility rebuilds', () => {
+  const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
+  const documentRef = { id: 'doc' };
+  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', visibility: { locked: true, hidden: true } }]
+    }]
+  });
+  const rebuildOptions = [];
+  const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
+    lockStateApi: {
+      buildStudioLockMutationPlan(elements, options) {
+        assert.equal(options.isLocked(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    visibilityStateApi: {
+      buildStudioVisibilityMutationPlan(elements, options) {
+        assert.equal(options.isHidden(elements[0]), true);
+        return { didChange: false };
+      }
+    },
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: {
+      createStudioEditorCanonicalVisibilityReaderFromApi: (
+        deck,
+        options
+      ) => canonicalState.createStudioEditorCanonicalVisibilityReaderFromApi(deck, options)
+    },
+    getSelectedElements: () => selected,
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    isLocked: () => false,
+    isHidden: () => false,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(sourceDocument, options) {
+      assert.equal(sourceDocument, documentRef);
+      rebuildOptions.push(options);
+      return rebuiltDeck;
+    }
+  });
+
+  assert.equal(controller.toggleLock(), false);
+  assert.equal(controller.toggleVisibility(), false);
+  assert.deepEqual(rebuildOptions, [
+    { preferLiveCanonicalDeck: false },
+    { preferLiveCanonicalDeck: false }
+  ]);
+});
+
 test('lock reader uses a rebuilt deck after strict compatibility validation', () => {
   const selected = [{ isConnected: true, dataset: { editorId: 'node-1' } }];
   const rebuiltDeck = canonicalDeck.createCanonicalDeck({
