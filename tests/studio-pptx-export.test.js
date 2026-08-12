@@ -70,10 +70,10 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
   assert.deepEqual(result.warnings, ['Node text-1 uses unsupported CSS: transform']);
   assert.equal(result.warningsTruncated, false);
   assert.deepEqual(progress, [
-    { phase: 'request', completed: 1, total: 2, percent: 0 },
-    { phase: 'response', completed: 1, total: 2, percent: 50 },
-    { phase: 'download', completed: 1, total: 2, percent: 75 },
-    { phase: 'complete', completed: 2, total: 2, percent: 100 }
+    { phase: 'request', completed: 0, total: 4, percent: 0 },
+    { phase: 'response', completed: 2, total: 4, percent: 50 },
+    { phase: 'download', completed: 3, total: 4, percent: 75 },
+    { phase: 'complete', completed: 4, total: 4, percent: 100 }
   ]);
   assert.equal(calls[0][0], 'fetch');
   assert.equal(calls[0][1], '/api/export/pptx');

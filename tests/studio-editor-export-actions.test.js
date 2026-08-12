@@ -20,7 +20,7 @@ test('PDF export prefers the generalized server exporter when available', async 
     pdfExport: {
       async exportStudioPdf(options) {
         calls.push(options);
-        options.onProgress({ phase: 'response', completed: 1, total: 2, percent: 50 });
+        options.onProgress({ phase: 'response', completed: 2, total: 4, percent: 50 });
         return {
           success: true,
           warningCount: 1,
@@ -44,7 +44,7 @@ test('PDF export prefers the generalized server exporter when available', async 
   });
   assert.deepEqual(statuses, [
     ['exporting-pdf'],
-    ['exporting-pdf', { phase: 'response', completed: 1, total: 2, percent: 50 }],
+    ['exporting-pdf', { phase: 'response', completed: 2, total: 4, percent: 50 }],
     ['pdf-exported-with-warnings', 1, ['PDF node image-1 references missing asset "hero"'], false]
   ]);
 });

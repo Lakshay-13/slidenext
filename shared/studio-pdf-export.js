@@ -573,10 +573,15 @@
     }
   }
 
-  function reportStudioPdfExportProgress(options, phase, percent) {
+  function reportStudioPdfExportProgress(options, phase, completed, total = 4) {
     if (!options || typeof options.onProgress !== 'function') return;
     try {
-      options.onProgress({ phase, completed: percent === 100 ? 2 : 1, total: 2, percent });
+      options.onProgress({
+        phase,
+        completed,
+        total,
+        percent: total === 0 ? 100 : Math.round((completed / total) * 100)
+      });
     } catch (error) {
       // Progress reporting must not make an otherwise valid download fail.
     }
@@ -624,9 +629,9 @@
         };
       }
 
-      reportStudioPdfExportProgress(options, 'response', 50);
+      reportStudioPdfExportProgress(options, 'response', 2);
       const blob = await response.blob();
-      reportStudioPdfExportProgress(options, 'download', 75);
+      reportStudioPdfExportProgress(options, 'download', 3);
       const downloadUrl = urlApi.createObjectURL(blob);
       let anchor = null;
       try {
@@ -639,7 +644,7 @@
         if (anchor && typeof anchor.remove === 'function') anchor.remove();
         urlApi.revokeObjectURL(downloadUrl);
       }
-      reportStudioPdfExportProgress(options, 'complete', 100);
+      reportStudioPdfExportProgress(options, 'complete', 4);
 
       return {
         success: true,

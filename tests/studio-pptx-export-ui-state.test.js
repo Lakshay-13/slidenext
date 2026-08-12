@@ -119,7 +119,7 @@ test('exportPptx posts the canonical deck and downloads the server response', as
     SlideNextStudioPptxExport: {
       exportStudioPptx(options) {
         calls.push(['exportStudioPptx', options]);
-        options.onProgress({ phase: 'response', completed: 1, total: 2, percent: 50 });
+        options.onProgress({ phase: 'response', completed: 2, total: 4, percent: 50 });
         return Promise.resolve({ success: true, filename: 'Demo_deck.pptx', warningCount: 2 });
       }
     },
@@ -134,7 +134,7 @@ test('exportPptx posts the canonical deck and downloads the server response', as
   assert.equal(button.disabled, false);
   assert.deepEqual(statuses, [
     ['exporting', undefined],
-    ['exporting', { phase: 'response', completed: 1, total: 2, percent: 50 }],
+    ['exporting', { phase: 'response', completed: 2, total: 4, percent: 50 }],
     ['exported-with-warnings', 2]
   ]);
   const exportCall = calls.find(call => call[0] === 'exportStudioPptx');
