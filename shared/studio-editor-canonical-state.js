@@ -71,8 +71,12 @@
       }
 
       canonicalDeck = nextCanonicalDeck;
-      hasDocumentOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
-      hasSessionOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
+      hasDocumentOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef')
+        && resolvedOwner.documentRef !== null
+        && typeof resolvedOwner.documentRef !== 'undefined';
+      hasSessionOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken')
+        && resolvedOwner.sessionToken !== null
+        && typeof resolvedOwner.sessionToken !== 'undefined';
       ownerDocument = hasDocumentOwner ? resolvedOwner.documentRef : null;
       ownerSessionToken = hasSessionOwner ? resolvedOwner.sessionToken : null;
       return canonicalDeck;

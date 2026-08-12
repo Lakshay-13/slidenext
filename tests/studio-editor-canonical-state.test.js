@@ -200,6 +200,18 @@ test('studio editor canonical state rejects stale invalid writes without clearin
   assert.equal(state.resolve({ documentRef: activeDocument, sessionToken: 4 }), activeDeck);
 });
 
+test('studio editor canonical state does not claim absent owners', () => {
+  const state = canonicalState.createStudioEditorCanonicalState();
+  const initialDeck = createDeck('initial');
+  const activeDocument = {};
+  const activeDeck = createDeck('active');
+
+  assert.equal(state.set(initialDeck, { documentRef: null, sessionToken: null }), initialDeck);
+  assert.equal(state.resolve(), initialDeck);
+  assert.equal(state.set(activeDeck, { documentRef: activeDocument, sessionToken: 4 }), activeDeck);
+  assert.equal(state.resolve({ documentRef: activeDocument, sessionToken: 4 }), activeDeck);
+});
+
 test('studio editor canonical state rejects stale clears but accepts the active owner', () => {
   const state = canonicalState.createStudioEditorCanonicalState();
   const activeDocument = {};

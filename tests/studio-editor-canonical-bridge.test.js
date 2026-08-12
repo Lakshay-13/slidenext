@@ -76,6 +76,21 @@ test('canonical bridge ignores an owner-mismatched clear request', () => {
   assert.equal(bridge.resolveLiveCanonicalDeck(activeDocument, 3), null);
 });
 
+test('canonical bridge can upgrade an unowned live deck when the frame owner becomes available', () => {
+  const state = canonicalState.createStudioEditorCanonicalState();
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    state,
+    canonicalStateApi: canonicalState
+  });
+  const initialDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'initial' }] });
+  const activeDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'active' }] });
+  const documentRef = {};
+
+  assert.equal(bridge.setLiveCanonicalDeck(initialDeck), initialDeck);
+  assert.equal(bridge.setLiveCanonicalDeck(activeDeck, documentRef, 3), activeDeck);
+  assert.equal(bridge.resolveLiveCanonicalDeck(documentRef, 3), activeDeck);
+});
+
 test('canonical bridge uses the document getter and normalizes build options', () => {
   const documentRef = { id: 'frame' };
   const calls = [];
