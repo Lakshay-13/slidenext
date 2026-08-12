@@ -126,7 +126,7 @@ test('transform controller thresholds are initialized before controller construc
 
 test('history controller wires the named fallback active-slide resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntime =');
+  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntimeOptions =');
   const controllerEnd = fileContent.indexOf('const studioEditorPersistenceController =', controllerStart);
   assert.notEqual(controllerStart, -1);
   assert.notEqual(controllerEnd, -1);
@@ -152,7 +152,7 @@ test('history controller wires the named fallback active-slide resolver', () => 
 
 test('history restore wiring supplies a canonical rebuild fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntime =');
+  const controllerStart = fileContent.indexOf('const studioEditorHistoryControllerRuntimeOptions =');
   const controllerEnd = fileContent.indexOf('const studioEditorPersistenceController =', controllerStart);
   assert.notEqual(controllerStart, -1);
   assert.notEqual(controllerEnd, -1);

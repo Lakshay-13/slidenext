@@ -1556,6 +1556,7 @@
   <script src="/shared/studio-editor-history-options.js"></script>
   <script src="/shared/studio-editor-history-state.js"></script>
   <script src="/shared/studio-editor-history-controller.js"></script>
+  <script src="/shared/studio-editor-history-controller-runtime-options.js"></script>
   <script src="/shared/studio-editor-history-controller-runtime.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
@@ -3557,30 +3558,13 @@
     const studioEditorCanonicalBridge = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalBridge
       : null;
-    const studioEditorHistoryControllerRuntime = typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
-      && SlideNextStudioEditorHistoryControllerRuntime
-      && typeof SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime === 'function'
-      ? SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime({
-          controllerApi: typeof SlideNextStudioEditorHistoryController !== 'undefined'
-            ? SlideNextStudioEditorHistoryController
-            : null,
+    const studioEditorHistoryControllerRuntimeOptionsApi = typeof SlideNextStudioEditorHistoryControllerRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorHistoryControllerRuntimeOptions
+      : null;
+    const studioEditorHistoryControllerRuntimeOptions = studioEditorHistoryControllerRuntimeOptionsApi
+      && typeof studioEditorHistoryControllerRuntimeOptionsApi.createStudioEditorHistoryControllerRuntimeOptions === 'function'
+      ? studioEditorHistoryControllerRuntimeOptionsApi.createStudioEditorHistoryControllerRuntimeOptions({
           documentRef: document,
-          historyApi: typeof SlideNextStudioHistory !== 'undefined' ? SlideNextStudioHistory : null,
-          historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
-            ? SlideNextStudioEditorHistoryState
-            : null,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          restoreApi: typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
-            ? SlideNextStudioEditorHistoryRestore
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
-            ? SlideNextStudioElementState
-            : null,
           getPendingTransaction: getStudioPendingEditorTransaction,
           setPendingTransaction: (nextTransaction) => {
             setStudioPendingEditorTransaction(nextTransaction);
@@ -3674,6 +3658,14 @@
             });
           }
         })
+      : null;
+    const studioEditorHistoryControllerRuntime = studioEditorHistoryControllerRuntimeOptions
+      && typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
+      && SlideNextStudioEditorHistoryControllerRuntime
+      && typeof SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime === 'function'
+      ? SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime(
+          studioEditorHistoryControllerRuntimeOptions
+        )
       : null;
     const studioEditorHistoryController = studioEditorHistoryControllerRuntime
       ? studioEditorHistoryControllerRuntime.historyController
