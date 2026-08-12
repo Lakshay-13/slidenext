@@ -477,6 +477,63 @@ test('deleteStudioSlideNode fails closed before DOM removal when canonical delet
   assert.equal(deletionCalls, 0);
 });
 
+test('deleteStudioSlideNode rolls back DOM and view state when persistence rejects', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1' };
+  const deletedSlide = { id: 'slide-2' };
+  let slides = [firstSlide, deletedSlide];
+  const calls = [];
+
+  const result = slideCommands.deleteStudioSlideNode(1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    captureSlideMutationState: () => ({
+      preservedActiveSlideId: 'slide-2',
+      preservedSelectionIds: ['element-1']
+    }),
+    getSlideId: (slide) => slide.id,
+    buildCanonicalDeleteSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
+    buildCanonicalDeleteSlideDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    applyDeletion: () => {
+      slides = [firstSlide];
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
+    finalizeMutation: () => false,
+    rollbackMutation: (transaction, sourceDoc) => {
+      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(sourceDoc, doc);
+      slides = [firstSlide, deletedSlide];
+      calls.push('rollbackMutation');
+    },
+    generateThumbnails: () => calls.push('generateThumbnails'),
+    restoreDeckViewAfterSlideMutation: (sourceDoc, selectionIds, options) => {
+      assert.equal(sourceDoc, doc);
+      assert.deepEqual(selectionIds, ['element-1']);
+      assert.equal(options.preservedActiveSlideId, 'slide-2');
+      if (calls.includes('rollbackMutation')) {
+        assert.equal(options.removedSlideId, undefined);
+        assert.equal(options.fallbackIndex, 1);
+      } else {
+        assert.equal(options.removedSlideId, 'slide-2');
+        assert.equal(options.fallbackIndex, 0);
+      }
+      calls.push('restoreDeckViewAfterSlideMutation');
+    }
+  });
+
+  assert.equal(result, false);
+  assert.deepEqual(slides, [firstSlide, deletedSlide]);
+  assert.deepEqual(calls, [
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation',
+    'rollbackMutation',
+    'generateThumbnails',
+    'restoreDeckViewAfterSlideMutation'
+  ]);
+});
+
 test('deleteStudioSlideNode rejects deleting the final slide without mutation', () => {
   const calls = [];
 

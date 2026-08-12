@@ -62,6 +62,9 @@
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
 
     function remove(index) {
       if (!deleteStudioSlideNode) return false;
@@ -97,7 +100,8 @@
         applyDeletion,
         generateThumbnails,
         restoreDeckViewAfterSlideMutation,
-        finalizeMutation
+        finalizeMutation,
+        rollbackMutation
       });
     }
 

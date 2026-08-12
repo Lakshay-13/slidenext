@@ -62,7 +62,8 @@
           alert: options.alert,
           captureSlideMutationState: options.captureSlideMutationState,
           applyDeletion: options.applyDeletion,
-          restoreDeckViewAfterSlideMutation: options.restoreDeckViewAfterSlideMutation
+          restoreDeckViewAfterSlideMutation: options.restoreDeckViewAfterSlideMutation,
+          rollbackMutation: options.rollbackMutation
         })
       : null;
     const slideDuplicationController = duplicationApi

@@ -34,6 +34,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
     applyDeletion: () => ({ didApply: true }),
     generateThumbnails: () => {},
     restoreDeckViewAfterSlideMutation: () => {},
+    rollbackMutation: () => {},
     finalizeMutation: () => {}
   });
 
@@ -52,6 +53,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
   assert.equal(typeof calls[1][2].buildCanonicalDeleteSlideBaseline, 'function');
   assert.deepEqual(calls[1][2].buildCanonicalDeleteSlideDeck(), { slides: [] });
   assert.equal(typeof calls[1][2].applyDeletion, 'function');
+  assert.equal(typeof calls[1][2].rollbackMutation, 'function');
   assert.equal(typeof calls[1][2].finalizeMutation, 'function');
 });
 
