@@ -1,12 +1,21 @@
 (function (root, factory) {
-  const api = factory(root);
+  const historyResultApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-history-result.js')
+    : root && root.SlideNextStudioEditorHistoryResult;
+  const api = factory(root, historyResultApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorBlockController = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, historyResultApi) {
+  const isStudioHistoryCaptureFailure = historyResultApi
+    && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
+    ? historyResultApi.isStudioHistoryCaptureFailure
+    : (value) => value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+
   function createStudioEditorBlockController(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
@@ -63,11 +72,6 @@
     const onBlocksChanged = typeof options.onBlocksChanged === 'function'
       ? options.onBlocksChanged
       : null;
-    const didHistoryCaptureFail = (result) => result === false
-      || (result
-        && typeof result === 'object'
-        && result.didCapture === false);
-
     function findCanonicalSlide(deck, slideId) {
       if (!deck || !Array.isArray(deck.slides)) return null;
       if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
@@ -148,7 +152,7 @@
         if (finalizeResult === false) return null;
       } else {
         if (saveHistoryState
-          && didHistoryCaptureFail(saveHistoryState(false, null, nextCanonicalDeck))) {
+          && isStudioHistoryCaptureFailure(saveHistoryState(false, null, nextCanonicalDeck))) {
           return null;
         }
         if (triggerAutoSave) triggerAutoSave();
@@ -316,7 +320,7 @@
         return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);
       }
       if (saveHistoryState
-        && didHistoryCaptureFail(saveHistoryState(false, transaction, nextCanonicalDeck))) {
+        && isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, nextCanonicalDeck))) {
         removeInsertedElements(insertedElements, activeSlide);
         return false;
       }
