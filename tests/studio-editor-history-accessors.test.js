@@ -78,6 +78,6 @@ test('editor loads history accessors after the history bridge', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-history-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorHistoryAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.historyAccessors/);
   assert.match(fileContent, /studioEditorHistoryAccessors/);
 });

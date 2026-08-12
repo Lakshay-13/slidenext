@@ -76,7 +76,7 @@ test('editor loads the timer bridge after both timer runtimes', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorTimerStateBridge\.createStudioEditorTimerStateBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.match(fileContent, /studioEditorTimerStateBridge/);
 });

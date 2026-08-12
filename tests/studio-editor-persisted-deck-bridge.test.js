@@ -69,7 +69,7 @@ test('editor loads the persisted deck bridge after its runtime dependencies', ()
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorPersistedDeckBridge\.createStudioEditorPersistedDeckBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.match(fileContent, /studioEditorPersistedDeckBridge/);
 });

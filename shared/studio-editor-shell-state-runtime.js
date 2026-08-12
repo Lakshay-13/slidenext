@@ -59,12 +59,83 @@
         getElementById: options.getElementById
       }
     );
+    const historyBridge = createBridge(
+      resolveApi(options.historyBridgeApi, 'SlideNextStudioEditorHistoryBridge'),
+      'createStudioEditorHistoryBridge',
+      {
+        runtimeApi: resolveApi(options.historyRuntimeApi, 'SlideNextStudioEditorHistoryRuntime'),
+        historyStore: resolveApi(options.historyStoreApi, 'SlideNextStudioEditorHistoryStore')
+      }
+    );
+    const historyAccessors = createBridge(
+      resolveApi(options.historyAccessorsApi, 'SlideNextStudioEditorHistoryAccessors'),
+      'createStudioEditorHistoryAccessors',
+      { bridge: historyBridge }
+    );
+    const persistedDeckBridge = createBridge(
+      resolveApi(
+        options.persistedDeckBridgeApi,
+        'SlideNextStudioEditorPersistedDeckBridge'
+      ),
+      'createStudioEditorPersistedDeckBridge',
+      {
+        runtimeApi: resolveApi(
+          options.persistedDeckRuntimeApi,
+          'SlideNextStudioEditorPersistedDeckRuntime'
+        ),
+        stateStore: resolveApi(
+          options.persistedDeckStateStoreApi,
+          'SlideNextStudioEditorPersistedDeckStateStore'
+        )
+      }
+    );
+    const persistedDeckAccessors = createBridge(
+      resolveApi(
+        options.persistedDeckAccessorsApi,
+        'SlideNextStudioEditorPersistedDeckAccessors'
+      ),
+      'createStudioEditorPersistedDeckAccessors',
+      { bridge: persistedDeckBridge }
+    );
+    const timerStateBridge = createBridge(
+      resolveApi(options.timerStateBridgeApi, 'SlideNextStudioEditorTimerStateBridge'),
+      'createStudioEditorTimerStateBridge',
+      {
+        autoSaveRuntimeApi: resolveApi(
+          options.autoSaveTimerRuntimeApi,
+          'SlideNextStudioEditorAutoSaveTimerRuntime'
+        ),
+        autoSaveStateStore: resolveApi(
+          options.autoSaveTimerStoreApi,
+          'SlideNextStudioEditorAutoSaveTimerStore'
+        ),
+        autoVersionRuntimeApi: resolveApi(
+          options.autoVersionTimerRuntimeApi,
+          'SlideNextStudioEditorAutoVersionTimerRuntime'
+        ),
+        autoVersionStateStore: resolveApi(
+          options.autoVersionTimerStoreApi,
+          'SlideNextStudioEditorAutoVersionTimerStore'
+        )
+      }
+    );
+    const timerStateAccessors = createBridge(
+      resolveApi(options.timerStateAccessorsApi, 'SlideNextStudioEditorTimerStateAccessors'),
+      'createStudioEditorTimerStateAccessors',
+      { bridge: timerStateBridge }
+    );
 
     return {
       sessionStateBridge,
       sessionStateAccessors,
       stateBridge,
-      stateAccessors
+      stateAccessors,
+      historyBridge,
+      historyAccessors,
+      persistedDeckBridge,
+      persistedDeckAccessors,
+      timerStateBridge,
+      timerStateAccessors
     };
   }
 

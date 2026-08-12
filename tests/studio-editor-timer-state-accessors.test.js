@@ -61,6 +61,6 @@ test('editor loads timer accessors after the timer bridge', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-timer-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorTimerStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.timerStateAccessors/);
   assert.match(fileContent, /studioEditorTimerStateAccessors/);
 });

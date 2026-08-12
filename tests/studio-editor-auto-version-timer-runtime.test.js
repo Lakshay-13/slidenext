@@ -36,7 +36,7 @@ test('index wires auto-version timer state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorTimerStateBridge\.createStudioEditorTimerStateBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,

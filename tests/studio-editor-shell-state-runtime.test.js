@@ -40,6 +40,20 @@ test('shell state runtime composes session and editor state bridges and accessor
     slideIndexApi: { name: 'slide-index-store' },
     selectionApi: { name: 'selection-store' },
     stateAccessorsApi: accessors('EditorState', 'state-accessors'),
+    historyBridgeApi: bridge('EditorHistory', 'history-bridge'),
+    historyRuntimeApi: { name: 'history-runtime' },
+    historyStoreApi: { name: 'history-store' },
+    historyAccessorsApi: accessors('EditorHistory', 'history-accessors'),
+    persistedDeckBridgeApi: bridge('EditorPersistedDeck', 'persisted-deck-bridge'),
+    persistedDeckRuntimeApi: { name: 'persisted-deck-runtime' },
+    persistedDeckStateStoreApi: { name: 'persisted-deck-store' },
+    persistedDeckAccessorsApi: accessors('EditorPersistedDeck', 'persisted-deck-accessors'),
+    timerStateBridgeApi: bridge('EditorTimerState', 'timer-state-bridge'),
+    autoSaveTimerRuntimeApi: { name: 'autosave-runtime' },
+    autoSaveTimerStoreApi: { name: 'autosave-store' },
+    autoVersionTimerRuntimeApi: { name: 'auto-version-runtime' },
+    autoVersionTimerStoreApi: { name: 'auto-version-store' },
+    timerStateAccessorsApi: accessors('EditorTimerState', 'timer-state-accessors'),
     getElementId() {},
     getDocument() {},
     getActiveSlide() {},
@@ -52,12 +66,24 @@ test('shell state runtime composes session and editor state bridges and accessor
     sessionStateBridge: 'session-bridge',
     sessionStateAccessors: 'session-accessors',
     stateBridge: 'state-bridge',
-    stateAccessors: 'state-accessors'
+    stateAccessors: 'state-accessors',
+    historyBridge: 'history-bridge',
+    historyAccessors: 'history-accessors',
+    persistedDeckBridge: 'persisted-deck-bridge',
+    persistedDeckAccessors: 'persisted-deck-accessors',
+    timerStateBridge: 'timer-state-bridge',
+    timerStateAccessors: 'timer-state-accessors'
   });
   assert.equal(calls[0][1].runtimeApi, options.sessionStateRuntimeApi);
   assert.equal(calls[1][1].bridge, 'session-bridge');
   assert.equal(calls[2][1].getElementId, options.getElementId);
   assert.equal(calls[3][1].getDocument, options.getDocument);
+  assert.equal(calls[4][1].runtimeApi, options.historyRuntimeApi);
+  assert.equal(calls[5][1].bridge, 'history-bridge');
+  assert.equal(calls[6][1].stateStore, options.persistedDeckStateStoreApi);
+  assert.equal(calls[7][1].bridge, 'persisted-deck-bridge');
+  assert.equal(calls[8][1].autoSaveRuntimeApi, options.autoSaveTimerRuntimeApi);
+  assert.equal(calls[9][1].bridge, 'timer-state-bridge');
 });
 
 test('shell state runtime preserves safe fallbacks when dependencies are unavailable', () => {
@@ -65,7 +91,13 @@ test('shell state runtime preserves safe fallbacks when dependencies are unavail
     sessionStateBridge: null,
     sessionStateAccessors: null,
     stateBridge: null,
-    stateAccessors: null
+    stateAccessors: null,
+    historyBridge: null,
+    historyAccessors: null,
+    persistedDeckBridge: null,
+    persistedDeckAccessors: null,
+    timerStateBridge: null,
+    timerStateAccessors: null
   });
 });
 

@@ -1624,7 +1624,49 @@
             : '',
           getDocument: () => getIframeDoc(),
           getActiveSlide: (doc) => getActiveSlide(doc),
-          getElementById: (editorId, doc) => getElementByEditorId(editorId, doc)
+          getElementById: (editorId, doc) => getElementByEditorId(editorId, doc),
+          historyBridgeApi: typeof SlideNextStudioEditorHistoryBridge !== 'undefined'
+            ? SlideNextStudioEditorHistoryBridge
+            : null,
+          historyRuntimeApi: typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'
+            ? SlideNextStudioEditorHistoryRuntime
+            : null,
+          historyStoreApi: typeof SlideNextStudioEditorHistoryStore !== 'undefined'
+            ? SlideNextStudioEditorHistoryStore
+            : null,
+          historyAccessorsApi: typeof SlideNextStudioEditorHistoryAccessors !== 'undefined'
+            ? SlideNextStudioEditorHistoryAccessors
+            : null,
+          persistedDeckBridgeApi: typeof SlideNextStudioEditorPersistedDeckBridge !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckBridge
+            : null,
+          persistedDeckRuntimeApi: typeof SlideNextStudioEditorPersistedDeckRuntime !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckRuntime
+            : null,
+          persistedDeckStateStoreApi: typeof SlideNextStudioEditorPersistedDeckStateStore !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckStateStore
+            : null,
+          persistedDeckAccessorsApi: typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckAccessors
+            : null,
+          timerStateBridgeApi: typeof SlideNextStudioEditorTimerStateBridge !== 'undefined'
+            ? SlideNextStudioEditorTimerStateBridge
+            : null,
+          autoSaveTimerRuntimeApi: typeof SlideNextStudioEditorAutoSaveTimerRuntime !== 'undefined'
+            ? SlideNextStudioEditorAutoSaveTimerRuntime
+            : null,
+          autoSaveTimerStoreApi: typeof SlideNextStudioEditorAutoSaveTimerStore !== 'undefined'
+            ? SlideNextStudioEditorAutoSaveTimerStore
+            : null,
+          autoVersionTimerRuntimeApi: typeof SlideNextStudioEditorAutoVersionTimerRuntime !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionTimerRuntime
+            : null,
+          autoVersionTimerStoreApi: typeof SlideNextStudioEditorAutoVersionTimerStore !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionTimerStore
+            : null,
+          timerStateAccessorsApi: typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorTimerStateAccessors
+            : null
         })
       : null;
     const studioEditorSessionStateBridge = studioEditorShellStateRuntime
@@ -1753,24 +1795,11 @@
         ? studioEditorStateAccessors.setPreserveSelectionOnNextActiveSlideSync(nextValue)
         : false;
     }
-    const studioEditorHistoryBridge = typeof SlideNextStudioEditorHistoryBridge !== 'undefined'
-      && SlideNextStudioEditorHistoryBridge
-      && typeof SlideNextStudioEditorHistoryBridge.createStudioEditorHistoryBridge === 'function'
-      ? SlideNextStudioEditorHistoryBridge.createStudioEditorHistoryBridge({
-          runtimeApi: typeof SlideNextStudioEditorHistoryRuntime !== 'undefined'
-            ? SlideNextStudioEditorHistoryRuntime
-            : null,
-          historyStore: typeof SlideNextStudioEditorHistoryStore !== 'undefined'
-            ? SlideNextStudioEditorHistoryStore
-            : null
-        })
+    const studioEditorHistoryBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.historyBridge
       : null;
-    const studioEditorHistoryAccessors = typeof SlideNextStudioEditorHistoryAccessors !== 'undefined'
-      && SlideNextStudioEditorHistoryAccessors
-      && typeof SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryAccessors === 'function'
-      ? SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryAccessors({
-          bridge: studioEditorHistoryBridge
-        })
+    const studioEditorHistoryAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.historyAccessors
       : null;
     function getStudioUndoStack() {
       return studioEditorHistoryAccessors
@@ -1832,24 +1861,11 @@
         ? studioEditorHistoryAccessors.setUndoDebounceTimer(nextTimer)
         : false;
     }
-    const studioEditorPersistedDeckBridge = typeof SlideNextStudioEditorPersistedDeckBridge !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckBridge
-      && typeof SlideNextStudioEditorPersistedDeckBridge.createStudioEditorPersistedDeckBridge === 'function'
-      ? SlideNextStudioEditorPersistedDeckBridge.createStudioEditorPersistedDeckBridge({
-          runtimeApi: typeof SlideNextStudioEditorPersistedDeckRuntime !== 'undefined'
-            ? SlideNextStudioEditorPersistedDeckRuntime
-            : null,
-          stateStore: typeof SlideNextStudioEditorPersistedDeckStateStore !== 'undefined'
-            ? SlideNextStudioEditorPersistedDeckStateStore
-            : null
-        })
+    const studioEditorPersistedDeckBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.persistedDeckBridge
       : null;
-    const studioEditorPersistedDeckAccessors = typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckAccessors
-      && typeof SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckAccessors === 'function'
-      ? SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckAccessors({
-          bridge: studioEditorPersistedDeckBridge
-        })
+    const studioEditorPersistedDeckAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.persistedDeckAccessors
       : null;
     function getStudioPersistedDeckHtml() {
       return studioEditorPersistedDeckAccessors
@@ -1881,30 +1897,11 @@
         ? studioEditorPersistedDeckAccessors.setPlaybackState(nextPlaybackState)
         : false;
     }
-    const studioEditorTimerStateBridge = typeof SlideNextStudioEditorTimerStateBridge !== 'undefined'
-      && SlideNextStudioEditorTimerStateBridge
-      && typeof SlideNextStudioEditorTimerStateBridge.createStudioEditorTimerStateBridge === 'function'
-      ? SlideNextStudioEditorTimerStateBridge.createStudioEditorTimerStateBridge({
-          autoSaveRuntimeApi: typeof SlideNextStudioEditorAutoSaveTimerRuntime !== 'undefined'
-            ? SlideNextStudioEditorAutoSaveTimerRuntime
-            : null,
-          autoSaveStateStore: typeof SlideNextStudioEditorAutoSaveTimerStore !== 'undefined'
-            ? SlideNextStudioEditorAutoSaveTimerStore
-            : null,
-          autoVersionRuntimeApi: typeof SlideNextStudioEditorAutoVersionTimerRuntime !== 'undefined'
-            ? SlideNextStudioEditorAutoVersionTimerRuntime
-            : null,
-          autoVersionStateStore: typeof SlideNextStudioEditorAutoVersionTimerStore !== 'undefined'
-            ? SlideNextStudioEditorAutoVersionTimerStore
-            : null
-        })
+    const studioEditorTimerStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.timerStateBridge
       : null;
-    const studioEditorTimerStateAccessors = typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
-      && SlideNextStudioEditorTimerStateAccessors
-      && typeof SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateAccessors === 'function'
-      ? SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateAccessors({
-          bridge: studioEditorTimerStateBridge
-        })
+    const studioEditorTimerStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.timerStateAccessors
       : null;
     function getStudioAutoSaveDebounceTimer() {
       return studioEditorTimerStateAccessors

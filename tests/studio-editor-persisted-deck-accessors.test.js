@@ -63,6 +63,6 @@ test('editor loads persisted deck accessors after the persisted deck bridge', ()
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-deck-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorPersistedDeckAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.persistedDeckAccessors/);
   assert.match(fileContent, /studioEditorPersistedDeckAccessors/);
 });

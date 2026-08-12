@@ -37,7 +37,7 @@ test('index wires history state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorHistoryBridge\.createStudioEditorHistoryBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
