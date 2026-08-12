@@ -484,6 +484,14 @@ test('buildUngroupSelectionActionState delegates group-wrapper filtering to the 
   vm.runInContext(source, context);
 
   assert.deepEqual(context.buildUngroupSelectionActionState(doc), { canUngroup: true });
+  assert.match(
+    source,
+    /buildStudioUngroupSelectionActionState\(getStudioSelectedElements\(resolvedDoc\),/
+  );
+  assert.match(
+    source,
+    /getLiveSelectedElements\(getStudioSelectedElements\(resolvedDoc\), resolvedDoc\)/
+  );
   assert.equal(delegatedOptions.elements, selection);
   assert.equal(delegatedOptions.options.doc, doc);
   assert.equal(delegatedOptions.options.getActiveSlide, context.getActiveSlide);

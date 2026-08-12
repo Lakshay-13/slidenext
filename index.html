@@ -8449,7 +8449,7 @@
         }
       }
       if (groupApi && typeof groupApi.buildStudioUngroupSelectionActionState === 'function') {
-        return groupApi.buildStudioUngroupSelectionActionState(getStudioSelectedElements(), {
+        return groupApi.buildStudioUngroupSelectionActionState(getStudioSelectedElements(resolvedDoc), {
           doc: resolvedDoc,
           getActiveSlide,
           getLiveSelectedElements,
@@ -8457,7 +8457,7 @@
         });
       }
       const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(getStudioSelectedElements(), resolvedDoc);
+      const selection = getLiveSelectedElements(getStudioSelectedElements(resolvedDoc), resolvedDoc);
       const groups = selection.filter(isEditorGroupElement).filter((group) => {
         return !!(group.parentElement && group.children && group.children.length > 0);
       });
