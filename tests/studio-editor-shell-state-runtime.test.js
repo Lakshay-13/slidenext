@@ -63,6 +63,15 @@ test('shell state runtime composes session and editor state bridges and accessor
     saveButtonStateStoreApi: { name: 'save-button-store-api' },
     saveButtonStateBridgeApi: bridge('EditorSaveButtonState', 'save-button-bridge'),
     saveButtonStateAccessorsApi: accessors('EditorSaveButtonState', 'save-button-accessors'),
+    wallpaperStateRuntimeApi: {
+      createStudioEditorWallpaperStateRuntime(runtimeOptions) {
+        calls.push(['wallpaper-runtime', runtimeOptions]);
+        return { wallpaperStateStore: 'wallpaper-store' };
+      }
+    },
+    wallpaperStateStoreApi: { name: 'wallpaper-store-api' },
+    wallpaperStateBridgeApi: bridge('EditorWallpaperState', 'wallpaper-bridge'),
+    wallpaperStateAccessorsApi: accessors('EditorWallpaperState', 'wallpaper-accessors'),
     getElementId() {},
     getDocument() {},
     getActiveSlide() {},
@@ -85,7 +94,11 @@ test('shell state runtime composes session and editor state bridges and accessor
     saveButtonStateRuntime: { saveButtonStateStore: 'save-button-store' },
     saveButtonStateStore: 'save-button-store',
     saveButtonStateBridge: 'save-button-bridge',
-    saveButtonStateAccessors: 'save-button-accessors'
+    saveButtonStateAccessors: 'save-button-accessors',
+    wallpaperStateRuntime: { wallpaperStateStore: 'wallpaper-store' },
+    wallpaperStateStore: 'wallpaper-store',
+    wallpaperStateBridge: 'wallpaper-bridge',
+    wallpaperStateAccessors: 'wallpaper-accessors'
   });
   assert.equal(calls[0][1].runtimeApi, options.sessionStateRuntimeApi);
   assert.equal(calls[1][1].bridge, 'session-bridge');
@@ -100,6 +113,9 @@ test('shell state runtime composes session and editor state bridges and accessor
   assert.equal(calls[10][1].stateStore, options.saveButtonStateStoreApi);
   assert.equal(calls[11][1].stateStore, 'save-button-store');
   assert.equal(calls[12][1].bridge, 'save-button-bridge');
+  assert.equal(calls[13][1].stateStore, options.wallpaperStateStoreApi);
+  assert.equal(calls[14][1].stateStore, 'wallpaper-store');
+  assert.equal(calls[15][1].bridge, 'wallpaper-bridge');
 });
 
 test('shell state runtime preserves safe fallbacks when dependencies are unavailable', () => {
@@ -117,7 +133,11 @@ test('shell state runtime preserves safe fallbacks when dependencies are unavail
     saveButtonStateRuntime: null,
     saveButtonStateStore: null,
     saveButtonStateBridge: null,
-    saveButtonStateAccessors: null
+    saveButtonStateAccessors: null,
+    wallpaperStateRuntime: null,
+    wallpaperStateStore: null,
+    wallpaperStateBridge: null,
+    wallpaperStateAccessors: null
   });
 });
 

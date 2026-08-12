@@ -1678,6 +1678,18 @@
             : null,
           saveButtonStateAccessorsApi: typeof SlideNextStudioEditorSaveButtonStateAccessors !== 'undefined'
             ? SlideNextStudioEditorSaveButtonStateAccessors
+            : null,
+          wallpaperStateRuntimeApi: typeof SlideNextStudioEditorWallpaperStateRuntime !== 'undefined'
+            ? SlideNextStudioEditorWallpaperStateRuntime
+            : null,
+          wallpaperStateStoreApi: typeof SlideNextStudioEditorWallpaperStateStore !== 'undefined'
+            ? SlideNextStudioEditorWallpaperStateStore
+            : null,
+          wallpaperStateBridgeApi: typeof SlideNextStudioEditorWallpaperStateBridge !== 'undefined'
+            ? SlideNextStudioEditorWallpaperStateBridge
+            : null,
+          wallpaperStateAccessorsApi: typeof SlideNextStudioEditorWallpaperStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorWallpaperStateAccessors
             : null
         })
       : null;
@@ -1985,31 +1997,17 @@
     const studioEditorAutoVersionExecutor = studioEditorAutoVersionRuntime
       ? studioEditorAutoVersionRuntime.autoVersionExecutor
       : null;
-    const studioEditorWallpaperStateRuntime = typeof SlideNextStudioEditorWallpaperStateRuntime !== 'undefined'
-      && SlideNextStudioEditorWallpaperStateRuntime
-      && typeof SlideNextStudioEditorWallpaperStateRuntime.createStudioEditorWallpaperStateRuntime === 'function'
-      ? SlideNextStudioEditorWallpaperStateRuntime.createStudioEditorWallpaperStateRuntime({
-          stateStore: typeof SlideNextStudioEditorWallpaperStateStore !== 'undefined'
-            ? SlideNextStudioEditorWallpaperStateStore
-            : null
-        })
+    const studioEditorWallpaperStateRuntime = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.wallpaperStateRuntime
       : null;
-    const studioEditorWallpaperStateStore = studioEditorWallpaperStateRuntime
-      ? studioEditorWallpaperStateRuntime.wallpaperStateStore
+    const studioEditorWallpaperStateStore = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.wallpaperStateStore
       : null;
-    const studioEditorWallpaperStateBridge = typeof SlideNextStudioEditorWallpaperStateBridge !== 'undefined'
-      && SlideNextStudioEditorWallpaperStateBridge
-      && typeof SlideNextStudioEditorWallpaperStateBridge.createStudioEditorWallpaperStateBridge === 'function'
-      ? SlideNextStudioEditorWallpaperStateBridge.createStudioEditorWallpaperStateBridge({
-          stateStore: studioEditorWallpaperStateStore
-        })
+    const studioEditorWallpaperStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.wallpaperStateBridge
       : null;
-    const studioEditorWallpaperStateAccessors = typeof SlideNextStudioEditorWallpaperStateAccessors !== 'undefined'
-      && SlideNextStudioEditorWallpaperStateAccessors
-      && typeof SlideNextStudioEditorWallpaperStateAccessors.createStudioEditorWallpaperStateAccessors === 'function'
-      ? SlideNextStudioEditorWallpaperStateAccessors.createStudioEditorWallpaperStateAccessors({
-          bridge: studioEditorWallpaperStateBridge
-        })
+    const studioEditorWallpaperStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.wallpaperStateAccessors
       : null;
     function getStudioWallpaperTab() {
       return studioEditorWallpaperStateAccessors

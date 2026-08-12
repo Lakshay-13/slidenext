@@ -156,6 +156,29 @@
       'createStudioEditorSaveButtonStateAccessors',
       { bridge: saveButtonStateBridge }
     );
+    const wallpaperStateRuntime = createBridge(
+      resolveApi(options.wallpaperStateRuntimeApi, 'SlideNextStudioEditorWallpaperStateRuntime'),
+      'createStudioEditorWallpaperStateRuntime',
+      {
+        stateStore: resolveApi(
+          options.wallpaperStateStoreApi,
+          'SlideNextStudioEditorWallpaperStateStore'
+        )
+      }
+    );
+    const wallpaperStateStore = wallpaperStateRuntime
+      ? wallpaperStateRuntime.wallpaperStateStore
+      : null;
+    const wallpaperStateBridge = createBridge(
+      resolveApi(options.wallpaperStateBridgeApi, 'SlideNextStudioEditorWallpaperStateBridge'),
+      'createStudioEditorWallpaperStateBridge',
+      { stateStore: wallpaperStateStore }
+    );
+    const wallpaperStateAccessors = createBridge(
+      resolveApi(options.wallpaperStateAccessorsApi, 'SlideNextStudioEditorWallpaperStateAccessors'),
+      'createStudioEditorWallpaperStateAccessors',
+      { bridge: wallpaperStateBridge }
+    );
 
     return {
       sessionStateBridge,
@@ -171,7 +194,11 @@
       saveButtonStateRuntime,
       saveButtonStateStore,
       saveButtonStateBridge,
-      saveButtonStateAccessors
+      saveButtonStateAccessors,
+      wallpaperStateRuntime,
+      wallpaperStateStore,
+      wallpaperStateBridge,
+      wallpaperStateAccessors
     };
   }
 

@@ -67,6 +67,6 @@ test('editor loads wallpaper accessors after the wallpaper state bridge', () => 
     fileContent,
     /<script src="\/shared\/studio-editor-wallpaper-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorWallpaperStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.wallpaperStateAccessors/);
   assert.match(fileContent, /studioEditorWallpaperStateAccessors/);
 });

@@ -78,7 +78,7 @@ test('editor loads and composes wallpaper state through the bridge', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(fileContent, /<script src="\/shared\/studio-editor-wallpaper-state-bridge\.js"><\/script>/);
   assert.match(fileContent, /studioEditorWallpaperStateBridge/);
-  assert.match(fileContent, /createStudioEditorWallpaperStateBridge\(\{/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.wallpaperStateBridge/);
   assert.doesNotMatch(
     fileContent,
     /studioEditorWallpaperStateStore\s*\n\s*&&\s*typeof studioEditorWallpaperStateStore\.getWallpaperTab/

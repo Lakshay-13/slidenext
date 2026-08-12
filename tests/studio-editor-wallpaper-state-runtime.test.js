@@ -30,10 +30,7 @@ test('index wires wallpaper state through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-wallpaper-state-runtime\.js"><\/script>/
   );
-  assert.match(
-    fileContent,
-    /SlideNextStudioEditorWallpaperStateRuntime\.createStudioEditorWallpaperStateRuntime\(/
-  );
+  assert.match(fileContent, /studioEditorShellStateRuntime\.wallpaperStateRuntime/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorWallpaperStateStore\.createStudioEditorWallpaperStateStore\(\)/
