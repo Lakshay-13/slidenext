@@ -60,6 +60,10 @@ test('index wires master-slide persistence through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorMasterSlideRuntime\.createStudioEditorMasterSlideRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /getActiveSlideId: \(doc\) => getActiveSlideId\(doc \|\| getIframeDoc\(\)\),/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorMasterSlideController\.createStudioEditorMasterSlideController\(/

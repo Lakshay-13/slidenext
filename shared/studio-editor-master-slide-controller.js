@@ -29,6 +29,7 @@
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
+    const resolveActiveSlideId = () => getActiveSlideId(getDocument());
     const getSlides = typeof options.getSlides === 'function'
       ? options.getSlides
       : () => [];
@@ -144,7 +145,7 @@
 
     function replaceActiveSlide(nextCanonicalDeck) {
       const documentRef = getDocument();
-      const activeSlideId = getActiveSlideId();
+      const activeSlideId = resolveActiveSlideId();
       const activeSlideIndex = nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides)
         ? nextCanonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
         : -1;
@@ -202,7 +203,7 @@
       try {
         nextCanonicalDeck = canonicalDeckApi.saveCanonicalMasterSlideFromSlideId(
           resolveCanonicalDeck(),
-          getActiveSlideId(),
+          resolveActiveSlideId(),
           masterLike
         );
       } catch (err) {
@@ -226,7 +227,7 @@
       try {
         nextCanonicalDeck = canonicalDeckApi.updateCanonicalSlideMasterSlide(
           resolveCanonicalDeck(),
-          getActiveSlideId(),
+          resolveActiveSlideId(),
           masterSlideId
         );
       } catch (err) {
@@ -273,7 +274,7 @@
       }
       if (!nextCanonicalDeck) return false;
 
-      const activeSlideId = getActiveSlideId();
+      const activeSlideId = resolveActiveSlideId();
       const activeSlideWasDetached = currentDeck
         && Array.isArray(currentDeck.slides)
         && currentDeck.slides.some((slide) => slide && slide.id === activeSlideId && slide.masterSlideId === normalizedMasterSlideId);

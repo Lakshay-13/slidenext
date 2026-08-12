@@ -31,6 +31,26 @@ test('saveActiveSlide persists a master layout through the canonical deck', () =
   assert.deepEqual(versionLabels, ['Auto: Saved Master Layout "Opening Master"']);
 });
 
+test('master slide controller resolves the active slide id with the current document', () => {
+  const documentRef = { id: 'iframe-document' };
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => documentRef,
+    getActiveSlideId(currentDocument) {
+      assert.equal(currentDocument, documentRef);
+      return 'slide-1';
+    }
+  });
+
+  const result = controller.saveActiveSlide({ id: 'document-bound-master' });
+
+  assert.equal(result.masterSlides[0].id, 'document-bound-master');
+});
+
 test('master slide mutations prefer a valid live canonical baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'title', text: 'Hello' }] }]

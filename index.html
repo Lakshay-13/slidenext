@@ -3132,7 +3132,7 @@
             ? doc.getElementById('slidesContainer')
             : null,
           getSlides: (doc) => getSlides(doc),
-          getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
           prepareSlide: (...args) => makeElementsHoverable(...args),
           getElementId: (element) => assignEditorSlideId(element),
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
