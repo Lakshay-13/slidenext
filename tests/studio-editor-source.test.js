@@ -139,6 +139,48 @@ test('applyStudioEditorSource preserves raw HTML when canonical import fails', (
   });
 });
 
+test('applyStudioEditorSource fails closed when an existing canonical baseline cannot be rebuilt', () => {
+  const sourceRoot = {
+    innerHTML: '<section class="slide">Edited content</section>',
+    querySelectorAll() {
+      return [{}];
+    }
+  };
+  const parsedDocument = { documentElement: sourceRoot };
+  let callbackCalls = 0;
+
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return parsedDocument;
+      }
+    },
+    canonicalDeckBaseline: {
+      kind: 'slidenext.deck',
+      slides: [{ id: 'slide-1' }]
+    },
+    buildCanonicalDeck() {
+      throw new Error('edited source is not canonicalizable');
+    },
+    getCurrentDocument() {
+      callbackCalls += 1;
+      return { id: 'live-frame' };
+    },
+    beforeApply() {
+      callbackCalls += 1;
+    },
+    restoreHistoryEntry() {
+      callbackCalls += 1;
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not be imported into the canonical deck'
+  });
+  assert.equal(callbackCalls, 0);
+});
+
 test('applyStudioEditorSource fails closed when restoring source history throws', () => {
   let afterApplyCalls = 0;
   const result = source.applyStudioEditorSource('<html>edited</html>', {

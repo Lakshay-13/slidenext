@@ -100,6 +100,15 @@
     if (!hasCanonicalSlides && resolveSourceSlideCount(parsedDocument, sourceRoot, options) === 0) {
       return fail('Source HTML must contain at least one slide');
     }
+    let hasCanonicalBaseline = false;
+    try {
+      hasCanonicalBaseline = isCanonicalDeck(options.canonicalDeckBaseline);
+    } catch (error) {
+      hasCanonicalBaseline = false;
+    }
+    if (!hasCanonicalSlides && hasCanonicalBaseline) {
+      return fail('Source HTML could not be imported into the canonical deck');
+    }
 
     const getCurrentDocument = typeof options.getCurrentDocument === 'function'
       ? options.getCurrentDocument
