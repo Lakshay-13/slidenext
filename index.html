@@ -1594,6 +1594,7 @@
   <script src="/shared/studio-editor-history-controller.js"></script>
   <script src="/shared/studio-editor-history-controller-runtime-options.js"></script>
   <script src="/shared/studio-editor-history-controller-runtime.js"></script>
+  <script src="/shared/studio-editor-history-controller-shell-runtime.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3736,12 +3737,15 @@
         })
       : null;
     const studioEditorHistoryControllerRuntime = studioEditorHistoryControllerRuntimeOptions
-      && typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
-      && SlideNextStudioEditorHistoryControllerRuntime
-      && typeof SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime === 'function'
-      ? SlideNextStudioEditorHistoryControllerRuntime.createStudioEditorHistoryControllerRuntime(
-          studioEditorHistoryControllerRuntimeOptions
-        )
+      && typeof SlideNextStudioEditorHistoryControllerShellRuntime !== 'undefined'
+      && SlideNextStudioEditorHistoryControllerShellRuntime
+      && typeof SlideNextStudioEditorHistoryControllerShellRuntime.createStudioEditorHistoryControllerShellRuntime === 'function'
+      ? SlideNextStudioEditorHistoryControllerShellRuntime.createStudioEditorHistoryControllerShellRuntime({
+          historyRuntimeApi: typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
+            ? SlideNextStudioEditorHistoryControllerRuntime
+            : null,
+          runtimeOptions: studioEditorHistoryControllerRuntimeOptions
+        })
       : null;
     const studioEditorHistoryController = studioEditorHistoryControllerRuntime
       ? studioEditorHistoryControllerRuntime.historyController

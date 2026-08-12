@@ -86,7 +86,11 @@ test('index wires the history controller through its runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorHistoryControllerRuntime\.createStudioEditorHistoryControllerRuntime\(/
+    /<script src="\/shared\/studio-editor-history-controller-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorHistoryControllerShellRuntime\.createStudioEditorHistoryControllerShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
