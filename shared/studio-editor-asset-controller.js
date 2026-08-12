@@ -55,6 +55,10 @@
     const onAssetsChanged = typeof options.onAssetsChanged === 'function'
       ? options.onAssetsChanged
       : null;
+    const didHistoryCaptureFail = (result) => result === false
+      || (result
+        && typeof result === 'object'
+        && result.didCapture === false);
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;
@@ -130,7 +134,8 @@
           return null;
         }
       } else {
-        if (saveHistoryState && saveHistoryState(false, null, nextCanonicalDeck) === false) {
+        if (saveHistoryState
+          && didHistoryCaptureFail(saveHistoryState(false, null, nextCanonicalDeck))) {
           if (typeof commitOptions.onRejected === 'function') {
             commitOptions.onRejected();
           }

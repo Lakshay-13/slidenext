@@ -388,7 +388,7 @@ test('applyAsset restores the previous DOM source when history capture fails', (
     getActiveSlideId: () => 'slide-1',
     getSelectedImage: () => selectedImage,
     syncInspectorForSelection: () => { inspectorSyncs += 1; },
-    saveHistoryState: () => false
+    saveHistoryState: () => ({ didCapture: false })
   });
 
   assert.equal(controller.applyAsset('hero'), false);
