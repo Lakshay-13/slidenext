@@ -7943,7 +7943,7 @@
         if (typeof updateLockActionState.sync !== 'function') {
           updateLockActionState.sync = lockState.createStudioLockToolbarStateSync({
             getDocument: () => getIframeDoc(),
-            getSelectedElements: () => getStudioSelectedElements(),
+            getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
             getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
               ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)

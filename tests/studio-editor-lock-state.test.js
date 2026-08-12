@@ -1,8 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const lockState = require('../shared/studio-editor-lock-state.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('editor forwards the lock toolbar document into the selection reader', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    source,
+    /lockState\.createStudioLockToolbarStateSync\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+  );
+});
 
 test('getStudioLockSelection ignores disconnected stale selections', () => {
   assert.deepEqual(lockState.getStudioLockSelection([
@@ -199,8 +212,9 @@ test('createStudioLockToolbarStateSync resolves live selection and slide readine
       calls.push('document');
       return doc;
     },
-    getSelectedElements() {
+    getSelectedElements(currentDoc) {
       calls.push('selection');
+      assert.equal(currentDoc, doc);
       return selectedElements;
     },
     getActiveSlide(currentDoc) {
