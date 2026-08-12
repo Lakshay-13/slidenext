@@ -62,14 +62,14 @@
     }
 
     function set(nextCanonicalDeck, owner = {}) {
-      if (!isValidCanonicalDeck(nextCanonicalDeck)) {
-        return reset();
-      }
-
       const resolvedOwner = owner && typeof owner === 'object' ? owner : {};
       if (canonicalDeck && hasOwnerConflict(resolvedOwner)) {
         return null;
       }
+      if (!isValidCanonicalDeck(nextCanonicalDeck)) {
+        return reset();
+      }
+
       canonicalDeck = nextCanonicalDeck;
       hasDocumentOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'documentRef');
       hasSessionOwner = Object.prototype.hasOwnProperty.call(resolvedOwner, 'sessionToken');
