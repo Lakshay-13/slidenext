@@ -30,10 +30,7 @@ test('index wires save button state through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-save-button-state-runtime\.js"><\/script>/
   );
-  assert.match(
-    fileContent,
-    /SlideNextStudioEditorSaveButtonStateRuntime\.createStudioEditorSaveButtonStateRuntime\(/
-  );
+  assert.match(fileContent, /studioEditorShellStateRuntime\.saveButtonStateRuntime/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorSaveButtonStateStore\.createStudioEditorSaveButtonStateStore\(\{\}/

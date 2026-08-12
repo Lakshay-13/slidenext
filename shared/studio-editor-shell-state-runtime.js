@@ -124,6 +124,38 @@
       'createStudioEditorTimerStateAccessors',
       { bridge: timerStateBridge }
     );
+    const saveButtonStateRuntime = createBridge(
+      resolveApi(
+        options.saveButtonStateRuntimeApi,
+        'SlideNextStudioEditorSaveButtonStateRuntime'
+      ),
+      'createStudioEditorSaveButtonStateRuntime',
+      {
+        stateStore: resolveApi(
+          options.saveButtonStateStoreApi,
+          'SlideNextStudioEditorSaveButtonStateStore'
+        )
+      }
+    );
+    const saveButtonStateStore = saveButtonStateRuntime
+      ? saveButtonStateRuntime.saveButtonStateStore
+      : null;
+    const saveButtonStateBridge = createBridge(
+      resolveApi(
+        options.saveButtonStateBridgeApi,
+        'SlideNextStudioEditorSaveButtonStateBridge'
+      ),
+      'createStudioEditorSaveButtonStateBridge',
+      { stateStore: saveButtonStateStore }
+    );
+    const saveButtonStateAccessors = createBridge(
+      resolveApi(
+        options.saveButtonStateAccessorsApi,
+        'SlideNextStudioEditorSaveButtonStateAccessors'
+      ),
+      'createStudioEditorSaveButtonStateAccessors',
+      { bridge: saveButtonStateBridge }
+    );
 
     return {
       sessionStateBridge,
@@ -135,7 +167,11 @@
       persistedDeckBridge,
       persistedDeckAccessors,
       timerStateBridge,
-      timerStateAccessors
+      timerStateAccessors,
+      saveButtonStateRuntime,
+      saveButtonStateStore,
+      saveButtonStateBridge,
+      saveButtonStateAccessors
     };
   }
 

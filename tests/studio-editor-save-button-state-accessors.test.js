@@ -49,6 +49,6 @@ test('editor loads save button accessors after the save button bridge', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-save-button-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorSaveButtonStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.saveButtonStateAccessors/);
   assert.match(fileContent, /studioEditorSaveButtonStateAccessors/);
 });

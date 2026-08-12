@@ -1666,6 +1666,18 @@
             : null,
           timerStateAccessorsApi: typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
             ? SlideNextStudioEditorTimerStateAccessors
+            : null,
+          saveButtonStateRuntimeApi: typeof SlideNextStudioEditorSaveButtonStateRuntime !== 'undefined'
+            ? SlideNextStudioEditorSaveButtonStateRuntime
+            : null,
+          saveButtonStateStoreApi: typeof SlideNextStudioEditorSaveButtonStateStore !== 'undefined'
+            ? SlideNextStudioEditorSaveButtonStateStore
+            : null,
+          saveButtonStateBridgeApi: typeof SlideNextStudioEditorSaveButtonStateBridge !== 'undefined'
+            ? SlideNextStudioEditorSaveButtonStateBridge
+            : null,
+          saveButtonStateAccessorsApi: typeof SlideNextStudioEditorSaveButtonStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorSaveButtonStateAccessors
             : null
         })
       : null;
@@ -2039,31 +2051,17 @@
         ? studioEditorWallpaperStateAccessors.clearPendingCustomWallpaperVersion()
         : false;
     }
-    const studioEditorSaveButtonStateRuntime = typeof SlideNextStudioEditorSaveButtonStateRuntime !== 'undefined'
-      && SlideNextStudioEditorSaveButtonStateRuntime
-      && typeof SlideNextStudioEditorSaveButtonStateRuntime.createStudioEditorSaveButtonStateRuntime === 'function'
-      ? SlideNextStudioEditorSaveButtonStateRuntime.createStudioEditorSaveButtonStateRuntime({
-          stateStore: typeof SlideNextStudioEditorSaveButtonStateStore !== 'undefined'
-            ? SlideNextStudioEditorSaveButtonStateStore
-            : null
-        })
+    const studioEditorSaveButtonStateRuntime = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.saveButtonStateRuntime
       : null;
-    const studioEditorSaveButtonStateStore = studioEditorSaveButtonStateRuntime
-      ? studioEditorSaveButtonStateRuntime.saveButtonStateStore
+    const studioEditorSaveButtonStateStore = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.saveButtonStateStore
       : null;
-    const studioEditorSaveButtonStateBridge = typeof SlideNextStudioEditorSaveButtonStateBridge !== 'undefined'
-      && SlideNextStudioEditorSaveButtonStateBridge
-      && typeof SlideNextStudioEditorSaveButtonStateBridge.createStudioEditorSaveButtonStateBridge === 'function'
-      ? SlideNextStudioEditorSaveButtonStateBridge.createStudioEditorSaveButtonStateBridge({
-          stateStore: studioEditorSaveButtonStateStore
-        })
+    const studioEditorSaveButtonStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.saveButtonStateBridge
       : null;
-    const studioEditorSaveButtonStateAccessors = typeof SlideNextStudioEditorSaveButtonStateAccessors !== 'undefined'
-      && SlideNextStudioEditorSaveButtonStateAccessors
-      && typeof SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateAccessors === 'function'
-      ? SlideNextStudioEditorSaveButtonStateAccessors.createStudioEditorSaveButtonStateAccessors({
-          bridge: studioEditorSaveButtonStateBridge
-        })
+    const studioEditorSaveButtonStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.saveButtonStateAccessors
       : null;
     function getStudioSaveButtonState() {
       return typeof studioEditorSaveButtonStateAccessors !== 'undefined'

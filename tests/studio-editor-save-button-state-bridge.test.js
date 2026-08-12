@@ -55,7 +55,7 @@ test('editor loads and composes save button state through the bridge', () => {
     /<script src="\/shared\/studio-editor-save-button-state-bridge\.js"><\/script>/
   );
   assert.match(fileContent, /studioEditorSaveButtonStateBridge/);
-  assert.match(fileContent, /createStudioEditorSaveButtonStateBridge\(\{/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.saveButtonStateBridge/);
   assert.doesNotMatch(
     fileContent,
     /studioEditorSaveButtonStateStore\s*\n\s*&&\s*typeof studioEditorSaveButtonStateStore\.(getState|setState)/

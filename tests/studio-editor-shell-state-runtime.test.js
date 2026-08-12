@@ -54,6 +54,15 @@ test('shell state runtime composes session and editor state bridges and accessor
     autoVersionTimerRuntimeApi: { name: 'auto-version-runtime' },
     autoVersionTimerStoreApi: { name: 'auto-version-store' },
     timerStateAccessorsApi: accessors('EditorTimerState', 'timer-state-accessors'),
+    saveButtonStateRuntimeApi: {
+      createStudioEditorSaveButtonStateRuntime(runtimeOptions) {
+        calls.push(['save-button-runtime', runtimeOptions]);
+        return { saveButtonStateStore: 'save-button-store' };
+      }
+    },
+    saveButtonStateStoreApi: { name: 'save-button-store-api' },
+    saveButtonStateBridgeApi: bridge('EditorSaveButtonState', 'save-button-bridge'),
+    saveButtonStateAccessorsApi: accessors('EditorSaveButtonState', 'save-button-accessors'),
     getElementId() {},
     getDocument() {},
     getActiveSlide() {},
@@ -72,7 +81,11 @@ test('shell state runtime composes session and editor state bridges and accessor
     persistedDeckBridge: 'persisted-deck-bridge',
     persistedDeckAccessors: 'persisted-deck-accessors',
     timerStateBridge: 'timer-state-bridge',
-    timerStateAccessors: 'timer-state-accessors'
+    timerStateAccessors: 'timer-state-accessors',
+    saveButtonStateRuntime: { saveButtonStateStore: 'save-button-store' },
+    saveButtonStateStore: 'save-button-store',
+    saveButtonStateBridge: 'save-button-bridge',
+    saveButtonStateAccessors: 'save-button-accessors'
   });
   assert.equal(calls[0][1].runtimeApi, options.sessionStateRuntimeApi);
   assert.equal(calls[1][1].bridge, 'session-bridge');
@@ -84,6 +97,9 @@ test('shell state runtime composes session and editor state bridges and accessor
   assert.equal(calls[7][1].bridge, 'persisted-deck-bridge');
   assert.equal(calls[8][1].autoSaveRuntimeApi, options.autoSaveTimerRuntimeApi);
   assert.equal(calls[9][1].bridge, 'timer-state-bridge');
+  assert.equal(calls[10][1].stateStore, options.saveButtonStateStoreApi);
+  assert.equal(calls[11][1].stateStore, 'save-button-store');
+  assert.equal(calls[12][1].bridge, 'save-button-bridge');
 });
 
 test('shell state runtime preserves safe fallbacks when dependencies are unavailable', () => {
@@ -97,7 +113,11 @@ test('shell state runtime preserves safe fallbacks when dependencies are unavail
     persistedDeckBridge: null,
     persistedDeckAccessors: null,
     timerStateBridge: null,
-    timerStateAccessors: null
+    timerStateAccessors: null,
+    saveButtonStateRuntime: null,
+    saveButtonStateStore: null,
+    saveButtonStateBridge: null,
+    saveButtonStateAccessors: null
   });
 });
 
