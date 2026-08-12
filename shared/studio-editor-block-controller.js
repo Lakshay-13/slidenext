@@ -63,6 +63,10 @@
     const onBlocksChanged = typeof options.onBlocksChanged === 'function'
       ? options.onBlocksChanged
       : null;
+    const didHistoryCaptureFail = (result) => result === false
+      || (result
+        && typeof result === 'object'
+        && result.didCapture === false);
 
     function findCanonicalSlide(deck, slideId) {
       if (!deck || !Array.isArray(deck.slides)) return null;
@@ -143,7 +147,8 @@
         const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
         if (finalizeResult === false) return null;
       } else {
-        if (saveHistoryState && saveHistoryState(false, null, nextCanonicalDeck) === false) {
+        if (saveHistoryState
+          && didHistoryCaptureFail(saveHistoryState(false, null, nextCanonicalDeck))) {
           return null;
         }
         if (triggerAutoSave) triggerAutoSave();
@@ -310,7 +315,8 @@
       if (finalizeInsertedElements) {
         return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);
       }
-      if (saveHistoryState && saveHistoryState(false, transaction, nextCanonicalDeck) === false) {
+      if (saveHistoryState
+        && didHistoryCaptureFail(saveHistoryState(false, transaction, nextCanonicalDeck))) {
         removeInsertedElements(insertedElements, activeSlide);
         return false;
       }

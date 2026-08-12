@@ -263,6 +263,27 @@ test('block controller does not publish a saved block when history capture fails
   assert.equal(blocksChanged, 0);
 });
 
+test('block controller rejects object-form history capture failures', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Heading' }]
+    }]
+  });
+  let blocksChanged = 0;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState: () => ({ didCapture: false }),
+    onBlocksChanged: () => { blocksChanged += 1; }
+  });
+
+  assert.equal(controller.saveSelection({ id: 'rejected-block' }), null);
+  assert.equal(blocksChanged, 0);
+});
+
 test('block controller removes a saved block and finalizes persistence hooks', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [
@@ -539,7 +560,7 @@ test('block controller removes inserted nodes when history capture fails', () =>
     getDocument: () => documentRef,
     getActiveSlide: () => slide,
     getActiveSlideId: () => 'slide-1',
-    saveHistoryState: () => false
+    saveHistoryState: () => ({ didCapture: false })
   });
 
   assert.equal(controller.insertBlock('hero'), false);
