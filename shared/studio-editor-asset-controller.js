@@ -173,8 +173,7 @@
         return false;
       }
       if (!nextCanonicalDeck) return false;
-      commitDeck(nextCanonicalDeck, `Auto: Removed Asset "${assetId}"`);
-      return true;
+      return !!commitDeck(nextCanonicalDeck, `Auto: Removed Asset "${assetId}"`);
     }
 
     function applyAsset(assetId) {
