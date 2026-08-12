@@ -91,11 +91,11 @@
             : () => ''
         };
     const canonicalStateOptions = {
-      buildCanonicalDeck: rawCanonicalStateOptions
-        && typeof rawCanonicalStateOptions.buildCanonicalDeck === 'function'
-        ? rawCanonicalStateOptions.buildCanonicalDeck
-        : typeof options.buildCanonicalDeck === 'function'
-          ? options.buildCanonicalDeck
+      buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : rawCanonicalStateOptions
+          && typeof rawCanonicalStateOptions.buildCanonicalDeck === 'function'
+          ? rawCanonicalStateOptions.buildCanonicalDeck
           : () => null,
       resolveLiveActiveSlideId: rawCanonicalStateOptions
         && typeof rawCanonicalStateOptions.resolveLiveActiveSlideId === 'function'
@@ -181,6 +181,9 @@
     const resolveCanonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState
       : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
       : () => '';
@@ -198,6 +201,9 @@
       const deckViewStateOptions = createDeckViewStateOptions(doc, buildOptions);
       const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions(doc, {
         ...deckViewStateOptions,
+        ...(buildCanonicalDeck
+          ? { buildCanonicalDeck: (sourceDoc) => buildCanonicalDeck(sourceDoc, buildOptions) }
+          : {}),
         ...(resolveCanonicalDeckViewState
           ? {
               resolveCanonicalDeckViewState: (nextDoc) => resolveCanonicalDeckViewState(nextDoc, buildOptions)

@@ -13,6 +13,9 @@
       ? options[name]
       : (root && root[globalName]) || null;
     const snapshotApi = resolveDependency('snapshotApi', 'SlideNextStudioDeckSnapshot');
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
@@ -88,6 +91,7 @@
 
       const buildDeckSnapshot = createDeckSnapshotBuilder({
         getDocument,
+        buildCanonicalDeck,
         createDeckViewStateOptions,
         resolveCanonicalDeckViewState,
         resolveFallbackActiveSlideId,

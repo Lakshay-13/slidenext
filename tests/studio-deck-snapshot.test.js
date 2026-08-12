@@ -524,6 +524,35 @@ test('createStudioDeckSnapshotBuilder composes build options and snapshot depend
   ]);
 });
 
+test('createStudioDeckSnapshotBuilder prefers its explicit canonical builder over view-state defaults', () => {
+  const doc = { label: 'doc' };
+  const buildOptions = { includeLayers: true };
+  const explicitDeck = { slides: [{ id: 'explicit-slide', nodes: [] }] };
+  const viewStateDeck = { slides: [{ id: 'view-state-slide', nodes: [] }] };
+  const buildDeckSnapshot = deckSnapshot.createStudioDeckSnapshotBuilder({
+    createDeckViewStateOptions() {
+      return {
+        buildCanonicalDeck() {
+          return viewStateDeck;
+        },
+        resolveLiveActiveSlideId() {
+          return '';
+        }
+      };
+    },
+    buildCanonicalDeck(sourceDoc, options) {
+      assert.equal(sourceDoc, doc);
+      assert.equal(options, buildOptions);
+      return explicitDeck;
+    },
+    buildDeckSnapshot(nextDoc, options) {
+      return options.buildCanonicalDeck(nextDoc);
+    }
+  });
+
+  assert.equal(buildDeckSnapshot(doc, buildOptions), explicitDeck);
+});
+
 test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides when requested', () => {
   const doc = { label: 'doc' };
   const slideElsById = new Map([

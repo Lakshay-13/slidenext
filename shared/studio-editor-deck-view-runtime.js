@@ -52,6 +52,7 @@
       ? snapshotControllerApi.createStudioEditorDeckSnapshotController({
           snapshotApi: options.snapshotApi,
           getDocument: options.getDocument,
+          buildCanonicalDeck: options.buildCanonicalDeck,
           createDeckViewStateOptions: options.createDeckViewStateOptions,
           resolveCanonicalDeckViewState: options.resolveCanonicalDeckViewState,
           resolveFallbackActiveSlideId: options.resolveFallbackActiveSlideId,

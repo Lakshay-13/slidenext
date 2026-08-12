@@ -14,6 +14,7 @@ test('deck snapshot controller wires canonical and DOM snapshot callbacks', () =
   let builderOptions = null;
   let domOptions = null;
   const callbacks = {
+    buildCanonicalDeck: () => snapshot,
     createDeckViewStateOptions: () => ({ buildCanonicalDeck: () => snapshot }),
     resolveCanonicalDeckViewState: () => ({ resolveCanonicalDeck: () => snapshot }),
     resolveFallbackActiveSlideId: () => 'slide-1',
@@ -48,6 +49,7 @@ test('deck snapshot controller wires canonical and DOM snapshot callbacks', () =
     currentOptions: buildOptions
   });
   assert.equal(builderOptions.getDocument(), documentRef);
+  assert.equal(builderOptions.buildCanonicalDeck, callbacks.buildCanonicalDeck);
   Object.entries(callbacks).forEach(([name, callback]) => {
     assert.equal(builderOptions[name], callback);
   });
