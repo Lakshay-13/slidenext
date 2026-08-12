@@ -403,6 +403,15 @@ test('finalizeStudioSelectionToggleMutation propagates explicit persistence reje
   assert.equal(didSyncSelection, true);
 });
 
+test('finalizeStudioSelectionToggleMutation contains thrown persistence failures', () => {
+  assert.equal(mutation.finalizeStudioSelectionToggleMutation({
+    versionLabel: 'Auto: Locked Element',
+    finalizeMutation: () => {
+      throw new Error('selection finalization failed');
+    }
+  }), false);
+});
+
 test('finalizeStudioSelectionToggleMutation forwards a canonical history sidecar', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let finalized = null;
@@ -511,6 +520,15 @@ test('finalizeStudioInsertedElements fails closed without persistence and propag
   assert.equal(mutation.finalizeStudioInsertedElements({
     insertedElements,
     finalizeMutation: () => false
+  }), false);
+});
+
+test('finalizeStudioInsertedElements contains thrown persistence failures', () => {
+  assert.equal(mutation.finalizeStudioInsertedElements({
+    insertedElements: [{ id: 'node-1' }],
+    finalizeMutation: () => {
+      throw new Error('inserted element finalization failed');
+    }
   }), false);
 });
 
@@ -808,6 +826,15 @@ test('finalizeStudioLayerOrderMutation propagates rejected fallback history', ()
   }), false);
 });
 
+test('finalizeStudioLayerOrderMutation contains thrown persistence failures', () => {
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    finalizeMutation: () => {
+      throw new Error('layer finalization failed');
+    }
+  }), false);
+});
+
 test('finalizeStudioWallpaperMutation delegates or preserves wallpaper persistence ordering', () => {
   const transaction = { id: 'tx-wallpaper' };
   const delegatedCalls = [];
@@ -880,6 +907,15 @@ test('finalizeStudioWallpaperMutation propagates rejected fallback history', () 
     generateThumbnails() {},
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
+    }
+  }), false);
+});
+
+test('finalizeStudioWallpaperMutation contains thrown persistence failures', () => {
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    finalizeMutation: () => {
+      throw new Error('wallpaper finalization failed');
     }
   }), false);
 });

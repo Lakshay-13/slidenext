@@ -46,6 +46,14 @@
         }
       };
 
+  function invokeStudioEditorMutationFinalizer(finalizeMutation, ...args) {
+    try {
+      return finalizeMutation(...args);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
@@ -166,7 +174,7 @@
     }
     const finalizeMutation = options.finalizeMutation;
     if (typeof finalizeMutation !== 'function') return false;
-    const finalizeResult = finalizeMutation(options.versionLabel, {
+    const finalizeResult = invokeStudioEditorMutationFinalizer(finalizeMutation, options.versionLabel, {
       refreshThumbnails: false,
       ...(mutationOptions.transaction ? { transaction: mutationOptions.transaction } : {}),
       ...(mutationOptions.canonicalDeck ? { canonicalDeck: mutationOptions.canonicalDeck } : {})
@@ -190,7 +198,7 @@
 
     const nextSelectionState = selectAllElements(insertedElements);
     commitSelectionState(nextSelectionState);
-    const finalizeResult = finalizeMutation(options.versionLabel, {
+    const finalizeResult = invokeStudioEditorMutationFinalizer(finalizeMutation, options.versionLabel, {
       transaction: options.transaction,
       ...(options.canonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
     });
@@ -294,7 +302,7 @@
     const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck');
     const finalizeMutation = options.finalizeMutation;
     if (typeof finalizeMutation === 'function') {
-      const result = finalizeMutation(versionLabel, {
+      const result = invokeStudioEditorMutationFinalizer(finalizeMutation, versionLabel, {
         refreshThumbnails: false,
         refreshLayersList: true,
         transaction,
@@ -342,7 +350,7 @@
     const transaction = options.transaction || null;
     const canonicalDeck = options.canonicalDeck || null;
     if (typeof options.finalizeMutation === 'function') {
-      return options.finalizeMutation(versionLabel, {
+      return invokeStudioEditorMutationFinalizer(options.finalizeMutation, versionLabel, {
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
