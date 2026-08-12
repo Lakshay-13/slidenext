@@ -177,12 +177,32 @@
       }
       if (setActiveSlide) setActiveSlide(activeSlideIndex);
       if (generateThumbnails) generateThumbnails();
-      return true;
+
+      return {
+        didApply: true,
+        rollback() {
+          if (typeof nextSlideElement.replaceWith === 'function') {
+            nextSlideElement.replaceWith(currentSlide);
+          } else if (nextSlideElement.parentNode
+            && typeof nextSlideElement.parentNode.replaceChild === 'function') {
+            nextSlideElement.parentNode.replaceChild(currentSlide, nextSlideElement);
+          } else {
+            return false;
+          }
+          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          if (generateThumbnails) generateThumbnails();
+          return true;
+        }
+      };
     }
 
-    function commitDeck(nextCanonicalDeck, versionLabel = '') {
+    function commitDeck(nextCanonicalDeck, versionLabel = '', onRejected = null) {
       if (finalizeMutation) {
-        finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        if (finalizeResult === false) {
+          if (typeof onRejected === 'function') onRejected();
+          return null;
+        }
       } else {
         if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
         if (triggerAutoSave) triggerAutoSave();
@@ -233,7 +253,9 @@
       } catch (err) {
         return false;
       }
-      if (!nextCanonicalDeck || !replaceActiveSlide(nextCanonicalDeck)) return false;
+      if (!nextCanonicalDeck) return false;
+      const mutation = replaceActiveSlide(nextCanonicalDeck);
+      if (!mutation || !mutation.didApply) return false;
 
       const normalizedMasterSlideId = typeof masterSlideId === 'string'
         ? masterSlideId.trim()
@@ -241,13 +263,14 @@
       const master = nextCanonicalDeck.masterSlides.find(
         (candidate) => candidate && candidate.id === normalizedMasterSlideId
       );
-      commitDeck(
+      const committedDeck = commitDeck(
         nextCanonicalDeck,
         normalizedMasterSlideId
           ? `Auto: Applied Master Layout${master && master.name ? ` "${master.name}"` : ''}`
-          : 'Auto: Cleared Master Layout'
+          : 'Auto: Cleared Master Layout',
+        () => mutation.rollback()
       );
-      return true;
+      return !!committedDeck;
     }
 
     function removeMasterSlide(masterSlideId) {
@@ -278,13 +301,20 @@
       const activeSlideWasDetached = currentDeck
         && Array.isArray(currentDeck.slides)
         && currentDeck.slides.some((slide) => slide && slide.id === activeSlideId && slide.masterSlideId === normalizedMasterSlideId);
-      if (activeSlideWasDetached && !replaceActiveSlide(nextCanonicalDeck)) return false;
+      let mutation = null;
+      if (activeSlideWasDetached) {
+        mutation = replaceActiveSlide(nextCanonicalDeck);
+        if (!mutation || !mutation.didApply) return false;
+      }
 
-      commitDeck(
+      const committedDeck = commitDeck(
         nextCanonicalDeck,
-        `Auto: Removed Master Layout${master && master.name ? ` "${master.name}"` : normalizedMasterSlideId ? ` "${normalizedMasterSlideId}"` : ''}`
+        `Auto: Removed Master Layout${master && master.name ? ` "${master.name}"` : normalizedMasterSlideId ? ` "${normalizedMasterSlideId}"` : ''}`,
+        () => {
+          if (mutation) mutation.rollback();
+        }
       );
-      return true;
+      return !!committedDeck;
     }
 
     return {

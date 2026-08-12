@@ -5,6 +5,43 @@ const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const masterSlideController = require('../shared/studio-editor-master-slide-controller.js');
 
+function createReplaceableSlide(initialSlide = {}) {
+  const parent = {
+    current: initialSlide,
+    replaceChild(nextSlide, previousSlide) {
+      if (previousSlide !== this.current) {
+        throw new Error('unexpected slide replacement target');
+      }
+      this.current = nextSlide;
+      nextSlide.parentNode = this;
+      previousSlide.parentNode = null;
+    }
+  };
+  initialSlide.parentNode = parent;
+  initialSlide.replaceWith = function replaceWith(nextSlide) {
+    parent.replaceChild(nextSlide, this);
+  };
+  return parent;
+}
+
+function createMasterSlideDocument(parent) {
+  return {
+    createElement() {
+      const nextSlide = {
+        replaceWith(previousSlide) {
+          parent.replaceChild(previousSlide, this);
+        }
+      };
+      return {
+        content: { firstElementChild: nextSlide },
+        set innerHTML(value) {
+          this.html = value;
+        }
+      };
+    }
+  };
+}
+
 test('saveActiveSlide persists a master layout through the canonical deck', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'title', text: 'Hello' }] }]
@@ -372,6 +409,31 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   assert.equal(activeIndex, 0);
 });
 
+test('assignMasterSlide restores the active slide when persistence rejects', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'body' }] }]
+  });
+  const originalSlide = {};
+  const parent = createReplaceableSlide(originalSlide);
+  let masterSlidesChanged = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => createMasterSlideDocument(parent),
+    getSlides: () => [parent.current],
+    finalizeMutation: () => false,
+    onMasterSlidesChanged: () => { masterSlidesChanged += 1; }
+  });
+
+  assert.equal(controller.assignMasterSlide('master-1'), false);
+  assert.equal(parent.current, originalSlide);
+  assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[0], 'masterSlideId'), false);
+  assert.equal(masterSlidesChanged, 0);
+});
+
 test('removeMasterSlide detaches the active slide and rerenders it without the removed layout', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
@@ -412,4 +474,46 @@ test('removeMasterSlide detaches the active slide and rerenders it without the r
   assert.deepEqual(deck.masterSlides, []);
   assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[0], 'masterSlideId'), false);
   assert.equal(replacementCount, 1);
+});
+
+test('removeMasterSlide restores the active slide when persistence rejects', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
+    slides: [{ id: 'slide-1', masterSlideId: 'master-1', nodes: [{ id: 'body' }] }]
+  });
+  const originalSlide = {};
+  const parent = createReplaceableSlide(originalSlide);
+  let masterSlidesChanged = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => createMasterSlideDocument(parent),
+    getSlides: () => [parent.current],
+    finalizeMutation: () => false,
+    onMasterSlidesChanged: () => { masterSlidesChanged += 1; }
+  });
+
+  assert.equal(controller.removeMasterSlide('master-1'), false);
+  assert.equal(parent.current, originalSlide);
+  assert.equal(deck.masterSlides.length, 1);
+  assert.equal(deck.slides[0].masterSlideId, 'master-1');
+  assert.equal(masterSlidesChanged, 0);
+});
+
+test('saveActiveSlide does not publish a rejected canonical mutation', () => {
+  const deck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let masterSlidesChanged = 0;
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    finalizeMutation: () => false,
+    onMasterSlidesChanged: () => { masterSlidesChanged += 1; }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'rejected-master' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(deck, 'masterSlides'), false);
+  assert.equal(masterSlidesChanged, 0);
 });
