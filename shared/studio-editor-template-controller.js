@@ -316,7 +316,12 @@
         : null;
       const versionLabel = `Auto: Inserted Template${template && template.name ? ` "${template.name}"` : ''}`;
       if (finalizeMutation) {
-        const finalizeResult = finalizeMutation(versionLabel, mutation.transaction, nextCanonicalDeck);
+        let finalizeResult = false;
+        try {
+          finalizeResult = finalizeMutation(versionLabel, mutation.transaction, nextCanonicalDeck);
+        } catch (err) {
+          finalizeResult = false;
+        }
         if (finalizeResult === false) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
           if (generateThumbnails) generateThumbnails();

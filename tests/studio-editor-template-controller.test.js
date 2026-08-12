@@ -738,3 +738,53 @@ test('template controller fails closed when preparing an inserted template slide
   assert.equal(controller.insertTemplate('hero-template'), false);
   assert.equal(didApply, false);
 });
+
+test('template controller rolls back inserted slide when canonical finalization throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const documentRef = {
+    createElement() {
+      return {
+        content: { firstElementChild: {} },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getSlideContainer: () => ({}),
+    getSlides: () => [{}],
+    applyInsertion(target, element, options) {
+      calls.push(['apply', target, element, options]);
+      return { didApply: true, transaction: { kind: 'slide-insert' } };
+    },
+    finalizeMutation: () => {
+      throw new Error('template insertion finalization failed');
+    },
+    rollbackMutation(transaction, sourceDocument) {
+      calls.push(['rollback', transaction, sourceDocument]);
+    },
+    setActiveSlide: (index) => calls.push(['active', index])
+  });
+
+  assert.equal(controller.insertTemplate('hero-template'), false);
+  assert.equal(calls[0][0], 'apply');
+  assert.deepEqual(calls.slice(1), [
+    ['active', 1],
+    ['rollback', { kind: 'slide-insert' }, documentRef],
+    ['active', 0]
+  ]);
+});
