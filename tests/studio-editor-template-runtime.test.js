@@ -63,6 +63,10 @@ test('index wires template persistence through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorTemplateRuntime\.createStudioEditorTemplateRuntime\(/
   );
+  assert.match(
+    fileContent,
+    /getActiveSlideId: \(doc\) => getActiveSlideId\(doc \|\| getIframeDoc\(\)\),/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorTemplateController\.createStudioEditorTemplateController\(/

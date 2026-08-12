@@ -3081,7 +3081,7 @@
             : null,
           getDocument: () => getIframeDoc(),
           getActiveSlide: (doc) => getActiveSlide(doc),
-          getActiveSlideId: () => getActiveSlideId(getIframeDoc()),
+          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
           getSelectedNodeIds: () => getCommittedSelectedEditorElementIds(getIframeDoc()),
           prepareElement: (...args) => makeElementsHoverable(...args),
           createMarkupTransactionCapture: (...args) => {

@@ -254,7 +254,10 @@ test('template controller inserts a rendered template after the active slide thr
       }
     },
     getCanonicalDeck: () => sourceDeck,
-    getActiveSlideId: () => 'slide-1',
+    getActiveSlideId(currentDocument) {
+      assert.equal(currentDocument, documentRef);
+      return 'slide-1';
+    },
     getDocument: () => documentRef,
     getSlideContainer: () => container,
     getSlides: () => [currentSlide],

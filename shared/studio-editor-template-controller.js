@@ -29,6 +29,7 @@
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
+    const resolveActiveSlideId = () => getActiveSlideId(getDocument());
     const getSlideContainer = typeof options.getSlideContainer === 'function'
       ? options.getSlideContainer
       : (documentRef) => documentRef && typeof documentRef.getElementById === 'function'
@@ -162,7 +163,7 @@
       try {
         nextCanonicalDeck = canonicalDeckApi.saveCanonicalTemplateFromSlideId(
           resolveCanonicalDeck(),
-          getActiveSlideId(),
+          resolveActiveSlideId(),
           templateLike
         );
       } catch (err) {
@@ -220,7 +221,7 @@
       }
 
       const canonicalDeck = resolveCanonicalDeck();
-      const activeSlideId = getActiveSlideId();
+      const activeSlideId = resolveActiveSlideId();
       const activeSlideIndex = canonicalDeck
         && canonicalDeckApi
         && typeof canonicalDeckApi.findCanonicalSlideIndexById === 'function'
