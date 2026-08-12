@@ -2367,7 +2367,11 @@
           sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
           restoreHistoryEntry: restoreEditorSourceHistoryEntry,
           afterApply: (canonicalDeck) => {
-            if (saveHistoryState(false, null, canonicalDeck) === false) return false;
+            const historyCaptureResult = saveHistoryState(false, null, canonicalDeck);
+            if (historyCaptureResult === false
+              || (historyCaptureResult
+                && typeof historyCaptureResult === 'object'
+                && historyCaptureResult.didCapture === false)) return false;
             if (triggerAutoSave() === false) return false;
             return true;
           }
