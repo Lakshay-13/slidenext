@@ -11140,8 +11140,15 @@
       } else {
         saveResult = saveHistoryState(false, pendingTransaction);
       }
-      return saveResult !== false
-        && !(saveResult && typeof saveResult === 'object' && saveResult.didCapture === false);
+      const historyCaptureFailed = typeof SlideNextStudioEditorHistoryResult !== 'undefined'
+        && SlideNextStudioEditorHistoryResult
+        && typeof SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure === 'function'
+        ? SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure(saveResult)
+        : saveResult === false
+          || (!!saveResult
+            && typeof saveResult === 'object'
+            && saveResult.didCapture === false);
+      return !historyCaptureFailed;
     }
 
     function getEditorHistoryStepAdapter() {
