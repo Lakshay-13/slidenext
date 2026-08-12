@@ -133,6 +133,19 @@
         : null;
     }
 
+    function commitDeck(nextCanonicalDeck, versionLabel = '') {
+      if (finalizeMutation) {
+        const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        if (finalizeResult === false) return null;
+      } else {
+        if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
+        if (triggerAutoSave) triggerAutoSave();
+        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+      }
+      if (onTemplatesChanged) onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
+      return nextCanonicalDeck;
+    }
+
     function renderCanonicalSlideElement(documentRef, slide, index) {
       try {
         if (!documentRef
@@ -175,13 +188,10 @@
       if (!nextCanonicalDeck) return null;
 
       const template = nextCanonicalDeck.templates[nextCanonicalDeck.templates.length - 1] || null;
-      if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
-      if (triggerAutoSave) triggerAutoSave();
-      if (triggerAutoVersion) {
-        triggerAutoVersion(`Auto: Saved Template${template && template.name ? ` "${template.name}"` : ''}`);
-      }
-      if (onTemplatesChanged) onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
-      return nextCanonicalDeck;
+      return commitDeck(
+        nextCanonicalDeck,
+        `Auto: Saved Template${template && template.name ? ` "${template.name}"` : ''}`
+      );
     }
 
     function removeTemplate(templateId) {
@@ -207,13 +217,10 @@
       }
       if (!nextCanonicalDeck) return null;
 
-      if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
-      if (triggerAutoSave) triggerAutoSave();
-      if (triggerAutoVersion) {
-        triggerAutoVersion(`Auto: Removed Template${template && template.name ? ` "${template.name}"` : normalizedTemplateId ? ` "${normalizedTemplateId}"` : ''}`);
-      }
-      if (onTemplatesChanged) onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
-      return nextCanonicalDeck;
+      return commitDeck(
+        nextCanonicalDeck,
+        `Auto: Removed Template${template && template.name ? ` "${template.name}"` : normalizedTemplateId ? ` "${normalizedTemplateId}"` : ''}`
+      );
     }
 
     function insertTemplate(templateId) {

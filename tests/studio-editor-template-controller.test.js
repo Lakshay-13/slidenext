@@ -205,6 +205,22 @@ test('template controller fails closed when the active slide or dependencies are
   assert.equal(templateController.createStudioEditorTemplateController().saveActiveSlide(), null);
 });
 
+test('template controller reports rejected canonical save without publishing template state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let templatesChanged = 0;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    finalizeMutation: () => false,
+    onTemplatesChanged: () => { templatesChanged += 1; }
+  });
+
+  assert.equal(controller.saveActiveSlide({ id: 'rejected-template' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(sourceDeck, 'templates'), false);
+  assert.equal(templatesChanged, 0);
+});
+
 test('template controller inserts a rendered template after the active slide through a transaction', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{
@@ -406,6 +422,24 @@ test('template controller removes a saved template and finalizes persistence hoo
   assert.deepEqual(calls.slice(1, 3), [['save'], ['version', 'Auto: Removed Template "Hero Template"']]);
   assert.deepEqual(calls[3][0], 'templates');
   assert.deepEqual(calls[3][1], ['stats-template']);
+});
+
+test('template controller reports rejected canonical removal without publishing template state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let templatesChanged = 0;
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    finalizeMutation: () => false,
+    onTemplatesChanged: () => { templatesChanged += 1; }
+  });
+
+  assert.equal(controller.removeTemplate('hero-template'), null);
+  assert.deepEqual(sourceDeck.templates.map((template) => template.id), ['hero-template']);
+  assert.equal(templatesChanged, 0);
 });
 
 test('template controller fails closed when removing a template canonical mutation throws', () => {
