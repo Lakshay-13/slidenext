@@ -1504,6 +1504,7 @@
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-runtime.js"></script>
+  <script src="/shared/studio-editor-auto-version-shell-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
@@ -2016,10 +2017,13 @@
         ? studioEditorTimerStateAccessors.clearAutoVersionTimer(timerKey)
         : undefined;
     }
-    const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionRuntime !== 'undefined'
-      && SlideNextStudioEditorAutoVersionRuntime
-      && typeof SlideNextStudioEditorAutoVersionRuntime.createStudioEditorAutoVersionRuntime === 'function'
-      ? SlideNextStudioEditorAutoVersionRuntime.createStudioEditorAutoVersionRuntime({
+    const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
+      && SlideNextStudioEditorAutoVersionShellRuntime
+      && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
+      ? SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime({
+          autoVersionRuntimeApi: typeof SlideNextStudioEditorAutoVersionRuntime !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
             ? SlideNextStudioEditorAutoVersionController
             : null,

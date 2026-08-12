@@ -62,7 +62,11 @@ test('index wires auto-version controller and executor through the runtime modul
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorAutoVersionRuntime\.createStudioEditorAutoVersionRuntime\(/
+    /<script src="\/shared\/studio-editor-auto-version-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorAutoVersionShellRuntime\.createStudioEditorAutoVersionShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
