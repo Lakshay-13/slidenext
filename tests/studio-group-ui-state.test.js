@@ -379,6 +379,14 @@ test('buildGroupSelectionActionState delegates geometry orchestration to the sha
   vm.runInContext(source, context);
 
   assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: true });
+  assert.match(
+    source,
+    /buildStudioGroupSelectionActionState\(getStudioSelectedElements\(resolvedDoc\),/
+  );
+  assert.match(
+    source,
+    /getLiveSelectedElements\(getStudioSelectedElements\(resolvedDoc\), resolvedDoc\)/
+  );
   assert.equal(delegatedOptions.elements, selection);
   assert.equal(delegatedOptions.options.doc, doc);
   assert.equal(delegatedOptions.options.getActiveSlide, context.getActiveSlide);

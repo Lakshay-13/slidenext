@@ -8322,7 +8322,7 @@
         ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
         : isElementLocked;
       if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
-        return groupApi.buildStudioGroupSelectionActionState(getStudioSelectedElements(), {
+        return groupApi.buildStudioGroupSelectionActionState(getStudioSelectedElements(resolvedDoc), {
           doc: resolvedDoc,
           getActiveSlide,
           getLiveSelectedElements,
@@ -8342,7 +8342,7 @@
         });
       }
       const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(getStudioSelectedElements(), resolvedDoc);
+      const selection = getLiveSelectedElements(getStudioSelectedElements(resolvedDoc), resolvedDoc);
       if (!resolvedDoc || !slide || selection.length < 2) {
         return {
           slide,
