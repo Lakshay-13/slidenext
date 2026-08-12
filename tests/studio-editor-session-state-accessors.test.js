@@ -55,6 +55,6 @@ test('editor loads session accessors after the session state bridge', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-session-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorSessionStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.sessionStateAccessors/);
   assert.match(fileContent, /studioEditorSessionStateAccessors/);
 });

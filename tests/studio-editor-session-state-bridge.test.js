@@ -59,7 +59,7 @@ test('editor loads the session state bridge after its runtime dependency', () =>
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSessionStateBridge\.createStudioEditorSessionStateBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.match(fileContent, /studioEditorSessionStateBridge/);
 });

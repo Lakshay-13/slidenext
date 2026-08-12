@@ -1530,6 +1530,7 @@
   <script src="/shared/studio-editor-state-runtime.js"></script>
   <script src="/shared/studio-editor-state-bridge.js"></script>
   <script src="/shared/studio-editor-state-accessors.js"></script>
+  <script src="/shared/studio-editor-shell-state-runtime.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1614,24 +1615,23 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
-    const studioEditorSessionStateBridge = typeof SlideNextStudioEditorSessionStateBridge !== 'undefined'
-      && SlideNextStudioEditorSessionStateBridge
-      && typeof SlideNextStudioEditorSessionStateBridge.createStudioEditorSessionStateBridge === 'function'
-      ? SlideNextStudioEditorSessionStateBridge.createStudioEditorSessionStateBridge({
-          runtimeApi: typeof SlideNextStudioEditorSessionStateRuntime !== 'undefined'
-            ? SlideNextStudioEditorSessionStateRuntime
-            : null,
-          controllerApi: typeof SlideNextStudioEditorSessionState !== 'undefined'
-            ? SlideNextStudioEditorSessionState
-            : null
+    const studioEditorShellStateRuntime = typeof SlideNextStudioEditorShellStateRuntime !== 'undefined'
+      && SlideNextStudioEditorShellStateRuntime
+      && typeof SlideNextStudioEditorShellStateRuntime.createStudioEditorShellStateRuntime === 'function'
+      ? SlideNextStudioEditorShellStateRuntime.createStudioEditorShellStateRuntime({
+          getElementId: (element) => typeof assignEditorElementId === 'function'
+            ? assignEditorElementId(element)
+            : '',
+          getDocument: () => getIframeDoc(),
+          getActiveSlide: (doc) => getActiveSlide(doc),
+          getElementById: (editorId, doc) => getElementByEditorId(editorId, doc)
         })
       : null;
-    const studioEditorSessionStateAccessors = typeof SlideNextStudioEditorSessionStateAccessors !== 'undefined'
-      && SlideNextStudioEditorSessionStateAccessors
-      && typeof SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateAccessors === 'function'
-      ? SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateAccessors({
-          bridge: studioEditorSessionStateBridge
-        })
+    const studioEditorSessionStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.sessionStateBridge
+      : null;
+    const studioEditorSessionStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.sessionStateAccessors
       : null;
     function getStudioCurrentPresentationUrl() {
       return typeof studioEditorSessionStateAccessors !== 'undefined'
@@ -1657,39 +1657,11 @@
         ? studioEditorSessionStateAccessors.advanceSessionToken()
         : 0;
     }
-    const studioEditorStateBridge = typeof SlideNextStudioEditorStateBridge !== 'undefined'
-      && SlideNextStudioEditorStateBridge
-      && typeof SlideNextStudioEditorStateBridge.createStudioEditorStateBridge === 'function'
-      ? SlideNextStudioEditorStateBridge.createStudioEditorStateBridge({
-          runtimeApi: typeof SlideNextStudioEditorStateRuntime !== 'undefined'
-            ? SlideNextStudioEditorStateRuntime
-            : null,
-          presentationMetadataApi: typeof SlideNextStudioEditorPresentationMetadataStateStore !== 'undefined'
-            ? SlideNextStudioEditorPresentationMetadataStateStore
-            : null,
-          presentationLabelApi: typeof SlideNextStudioEditorPresentationLabelStateStore !== 'undefined'
-            ? SlideNextStudioEditorPresentationLabelStateStore
-            : null,
-          slideIndexApi: typeof SlideNextStudioEditorSlideIndexStore !== 'undefined'
-            ? SlideNextStudioEditorSlideIndexStore
-            : null,
-          selectionApi: typeof SlideNextStudioEditorSelectionStateStore !== 'undefined'
-            ? SlideNextStudioEditorSelectionStateStore
-            : null,
-          getElementId: (element) => typeof assignEditorElementId === 'function'
-            ? assignEditorElementId(element)
-            : ''
-        })
+    const studioEditorStateBridge = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.stateBridge
       : null;
-    const studioEditorStateAccessors = typeof SlideNextStudioEditorStateAccessors !== 'undefined'
-      && SlideNextStudioEditorStateAccessors
-      && typeof SlideNextStudioEditorStateAccessors.createStudioEditorStateAccessors === 'function'
-      ? SlideNextStudioEditorStateAccessors.createStudioEditorStateAccessors({
-          bridge: studioEditorStateBridge,
-          getDocument: () => getIframeDoc(),
-          getActiveSlide: (doc) => getActiveSlide(doc),
-          getElementById: (editorId, doc) => getElementByEditorId(editorId, doc)
-        })
+    const studioEditorStateAccessors = studioEditorShellStateRuntime
+      ? studioEditorShellStateRuntime.stateAccessors
       : null;
     function getStudioCurrentPresentationMetadata() {
       return studioEditorStateAccessors

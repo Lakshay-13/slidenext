@@ -72,7 +72,7 @@ test('index wires basic editor state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorStateBridge\.createStudioEditorStateBridge\(/
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,

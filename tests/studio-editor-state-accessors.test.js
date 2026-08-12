@@ -97,6 +97,6 @@ test('editor loads state accessors after the state bridge', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-state-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorStateAccessors\(/);
+  assert.match(fileContent, /studioEditorShellStateRuntime\.stateAccessors/);
   assert.match(fileContent, /studioEditorStateAccessors/);
 });
