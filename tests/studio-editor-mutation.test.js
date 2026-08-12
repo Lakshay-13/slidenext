@@ -41,6 +41,31 @@ test('createStudioMutationFinalizer runs mutation side effects in a stable order
   ]);
 });
 
+test('createStudioMutationFinalizer forwards the mutation document to selection UI refreshes', () => {
+  const documentRef = { id: 'editor-document' };
+  const receivedDocuments = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    syncSelectionOverlay(doc) {
+      receivedDocuments.push(['overlay', doc]);
+    },
+    updateLayersList(doc) {
+      receivedDocuments.push(['layers', doc]);
+    }
+  });
+
+  finalizeMutation('', {
+    doc: documentRef,
+    syncSelectionOverlay: true,
+    refreshThumbnails: false,
+    refreshLayersList: true
+  });
+
+  assert.deepEqual(receivedDocuments, [
+    ['overlay', documentRef],
+    ['layers', documentRef]
+  ]);
+});
+
 test('createStudioMutationFinalizer honors refresh and version guards', () => {
   const calls = [];
   const finalizeMutation = mutation.createStudioMutationFinalizer({

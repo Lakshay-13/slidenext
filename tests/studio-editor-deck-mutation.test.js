@@ -99,6 +99,34 @@ test('finalizeStudioEditorDeckMutation preserves canonical fallback history beha
   ]);
 });
 
+test('finalizeStudioEditorDeckMutation forwards the mutation document in its fallback lifecycle', () => {
+  const documentRef = { id: 'editor-document' };
+  const receivedDocuments = [];
+
+  deckMutation.finalizeStudioEditorDeckMutation(
+    '',
+    {
+      doc: documentRef,
+      syncSelectionOverlay: true,
+      refreshThumbnails: false,
+      refreshLayersList: true
+    },
+    {
+      syncSelectionOverlay(doc) {
+        receivedDocuments.push(['overlay', doc]);
+      },
+      updateLayersList(doc) {
+        receivedDocuments.push(['layers', doc]);
+      }
+    }
+  );
+
+  assert.deepEqual(receivedDocuments, [
+    ['overlay', documentRef],
+    ['layers', documentRef]
+  ]);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };

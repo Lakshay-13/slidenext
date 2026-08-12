@@ -108,15 +108,15 @@
           return canonicalDeck
             ? { ...mutationOptions, canonicalDeck }
             : mutationOptions;
-        })();
+    })();
     if (resolvedMutationOptions.syncSelectionOverlay) {
-      syncSelectionOverlay();
+      syncSelectionOverlay(resolvedMutationOptions.doc);
     }
     if (resolvedMutationOptions.refreshThumbnails !== false) {
       generateThumbnails();
     }
     if (resolvedMutationOptions.refreshLayersList) {
-      updateLayersList();
+      updateLayersList(resolvedMutationOptions.doc);
     }
     const historyArgs = [
       resolvedMutationOptions.debounceHistory === true,
