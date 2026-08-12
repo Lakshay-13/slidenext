@@ -1444,6 +1444,7 @@
   <script src="/shared/studio-editor-zoom-controller.js"></script>
   <script src="/shared/studio-editor-zoom-runtime-options.js"></script>
   <script src="/shared/studio-editor-zoom-runtime.js"></script>
+  <script src="/shared/studio-editor-zoom-shell-runtime.js"></script>
   <script src="/shared/studio-editor-zoom-accessors.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-save-button-state-controller.js"></script>
@@ -3984,12 +3985,15 @@
         })
       : null;
     const studioEditorZoomRuntime = studioEditorZoomRuntimeOptions
-      && typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
-      && SlideNextStudioEditorZoomRuntime
-      && typeof SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime === 'function'
-      ? SlideNextStudioEditorZoomRuntime.createStudioEditorZoomRuntime(
-          studioEditorZoomRuntimeOptions
-        )
+      && typeof SlideNextStudioEditorZoomShellRuntime !== 'undefined'
+      && SlideNextStudioEditorZoomShellRuntime
+      && typeof SlideNextStudioEditorZoomShellRuntime.createStudioEditorZoomShellRuntime === 'function'
+      ? SlideNextStudioEditorZoomShellRuntime.createStudioEditorZoomShellRuntime({
+          zoomRuntimeApi: typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
+            ? SlideNextStudioEditorZoomRuntime
+            : null,
+          runtimeOptions: studioEditorZoomRuntimeOptions
+        })
       : null;
     const studioEditorZoomController = studioEditorZoomRuntime
       ? studioEditorZoomRuntime.zoomController
