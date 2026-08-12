@@ -527,12 +527,20 @@
         yCandidates.push({ position: bottom, target: targetPosition, kind: 'guide' });
       });
     });
+    const getSnapCandidatePriority = (candidate) => candidate && candidate.kind === 'guide'
+      ? 0
+      : candidate && candidate.kind === 'grid'
+        ? 2
+        : 1;
     const findSnap = (candidates) => candidates
-      .map((candidate) => ({
+      .map((candidate, order) => ({
         ...candidate,
-        distance: Math.abs(candidate.target - candidate.position)
+        distance: Math.abs(candidate.target - candidate.position),
+        order
       }))
-      .sort((first, second) => first.distance - second.distance)[0];
+      .sort((first, second) => first.distance - second.distance
+        || getSnapCandidatePriority(first) - getSnapCandidatePriority(second)
+        || first.order - second.order)[0];
     const xSnap = findSnap(xCandidates);
     const ySnap = findSnap(yCandidates);
     const nextBounds = { left, top, right, bottom };

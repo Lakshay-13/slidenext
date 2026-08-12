@@ -1174,6 +1174,33 @@ test('snapStudioTransformBounds optionally aligns dragged top-left bounds to a g
   });
 });
 
+test('snapStudioTransformBounds prefers smart guides over equal-distance grid candidates', () => {
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 43,
+    top: 103,
+    right: 93,
+    bottom: 153
+  }, {
+    type: 'drag',
+    slideBounds: { width: 200, height: 500 },
+    snapTargets: [{ left: 46, top: 106, right: 146, bottom: 206 }]
+  }, {
+    snapDistancePx: 5,
+    gridSizePx: 20
+  }), {
+    bounds: {
+      left: 46,
+      top: 106,
+      right: 96,
+      bottom: 156
+    },
+    guides: [
+      { axis: 'x', position: 46, kind: 'guide' },
+      { axis: 'y', position: 106, kind: 'guide' }
+    ]
+  });
+});
+
 test('snapStudioTransformBounds aligns dragged bounds to neighboring element guides', () => {
   assert.deepEqual(transformState.snapStudioTransformBounds({
     left: 97,
