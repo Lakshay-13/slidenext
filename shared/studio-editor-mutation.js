@@ -26,6 +26,11 @@
     }
   }
 
+  function isStudioHistoryCaptureFailure(value) {
+    return value === false
+      || (!!value && typeof value === 'object' && value.didCapture === false);
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
@@ -108,7 +113,7 @@
         historyArgs.push(resolvedMutationOptions.canonicalDeck);
       }
       if (shouldPublishCanonicalDeckBeforeUi) {
-        if (saveHistoryState(...historyArgs) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(...historyArgs))) return false;
       }
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay(resolvedMutationOptions.doc);
@@ -120,7 +125,7 @@
         updateLayersList(resolvedMutationOptions.doc);
       }
       if (!shouldPublishCanonicalDeckBeforeUi) {
-        if (saveHistoryState(...historyArgs) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(...historyArgs))) return false;
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
@@ -197,9 +202,9 @@
 
     return function finalizeStudioSlideMutation(versionLabel, transaction = null, canonicalDeck = null) {
       if (canonicalDeck) {
-        if (saveHistoryState(false, transaction, canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction, canonicalDeck))) return false;
       } else {
-        if (saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(saveHistoryState(false, transaction))) return false;
       }
       if (triggerAutoSave() === false) return false;
       if (versionLabel) {
@@ -253,7 +258,7 @@
     return (iframeDoc) => {
       const historyCaptureResult = captureHistoryBaseline(iframeDoc);
       return {
-        ...(historyCaptureResult === false ? { historyCaptureFailed: true } : {}),
+        ...(isStudioHistoryCaptureFailure(historyCaptureResult) ? { historyCaptureFailed: true } : {}),
         preservedActiveSlideId: getActiveSlideId(iframeDoc),
         preservedSelectionIds: getCommittedSelectedElementIds(iframeDoc)
       };
@@ -280,9 +285,9 @@
 
     if (typeof options.saveHistoryState === 'function') {
       if (hasCanonicalDeck) {
-        if (options.saveHistoryState(false, transaction, options.canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, options.canonicalDeck))) return false;
       } else {
-        if (options.saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
@@ -315,9 +320,9 @@
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
-        if (options.saveHistoryState(false, transaction, canonicalDeck) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction, canonicalDeck))) return false;
       } else {
-        if (options.saveHistoryState(false, transaction) === false) return false;
+        if (isStudioHistoryCaptureFailure(options.saveHistoryState(false, transaction))) return false;
       }
     }
     if (typeof options.triggerAutoSave === 'function') {

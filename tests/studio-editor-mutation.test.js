@@ -173,7 +173,7 @@ test('createStudioMutationFinalizer fails before UI work when canonical history 
     },
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
-      return false;
+      return { didCapture: false };
     },
     triggerAutoSave() {
       calls.push('save');
@@ -571,7 +571,7 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
 
 test('createStudioSlideMutationPersistenceFinalizer propagates rejected history', () => {
   const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     },
@@ -659,6 +659,20 @@ test('createStudioSlideMutationRestoreStateCapturer records a canonical baseline
   ]);
 });
 
+test('createStudioSlideMutationRestoreStateCapturer marks object-form baseline failures', () => {
+  const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
+    saveHistoryState: () => ({ didCapture: false }),
+    getActiveSlideId: () => 'slide-1',
+    getCommittedSelectedElementIds: () => []
+  });
+
+  assert.deepEqual(captureState({}), {
+    historyCaptureFailed: true,
+    preservedActiveSlideId: 'slide-1',
+    preservedSelectionIds: []
+  });
+});
+
 test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared persistence', () => {
   const calls = [];
   const transaction = { id: 'tx-layer-order' };
@@ -741,7 +755,7 @@ test('finalizeStudioLayerOrderMutation propagates rejected fallback history', ()
   assert.equal(mutation.finalizeStudioLayerOrderMutation({
     versionLabel: 'Auto: Rejected Layer Order',
     transaction: { id: 'tx' },
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
     }
@@ -814,7 +828,7 @@ test('finalizeStudioWallpaperMutation propagates rejected fallback history', () 
     versionLabel: 'Auto: Rejected Background',
     transaction: { id: 'tx' },
     canonicalDeck: { kind: 'slidenext.deck', slides: [] },
-    saveHistoryState: () => false,
+    saveHistoryState: () => ({ didCapture: false }),
     generateThumbnails() {},
     triggerAutoSave: () => {
       throw new Error('autosave should not run');
