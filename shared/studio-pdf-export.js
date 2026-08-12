@@ -429,6 +429,14 @@
     page-break-after: auto;
   }
 
+  ${slideSelector} [style*="translate: none"][style*="rotate: none"][style*="scale: none"][style*="opacity:"] {
+    opacity: 1 !important;
+    transform: none !important;
+    translate: none !important;
+    rotate: none !important;
+    scale: 1 !important;
+  }
+
   #prevBtn,
   #nextBtn,
   #progressLine,

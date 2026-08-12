@@ -123,6 +123,9 @@ test('buildStudioPdfPrintHtml injects fixed-size one-slide-per-page print styles
   assert.match(html, /position: relative !important/);
   assert.match(html, /break-inside: avoid/);
   assert.match(html, /page-break-inside: avoid/);
+  assert.match(html, /translate: none.*rotate: none.*scale: none.*opacity:/s);
+  assert.match(html, /opacity: 1 !important/);
+  assert.match(html, /transform: none !important/);
   assert.equal((html.match(/data-slidenext-pdf-print="true"/g) || []).length, 1);
 });
 
