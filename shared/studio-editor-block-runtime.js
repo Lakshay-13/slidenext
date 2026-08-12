@@ -33,6 +33,7 @@
           createMarkupTransactionCapture: options.createMarkupTransactionCapture,
           getElementId: options.getElementId,
           finalizeInsertedElements: options.finalizeInsertedElements,
+          finalizeMutation: options.finalizeMutation,
           saveHistoryState: options.saveHistoryState,
           triggerAutoSave: options.triggerAutoSave,
           triggerAutoVersion: options.triggerAutoVersion,

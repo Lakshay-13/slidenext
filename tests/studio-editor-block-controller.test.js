@@ -222,6 +222,25 @@ test('block controller fails closed when selection or dependencies are unavailab
   assert.equal(blockController.createStudioEditorBlockController().saveSelection(), null);
 });
 
+test('block controller reports rejected canonical save without publishing block state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Heading' }] }]
+  });
+  let blocksChanged = 0;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    finalizeMutation: () => false,
+    onBlocksChanged: () => { blocksChanged += 1; }
+  });
+
+  assert.equal(controller.saveSelection({ id: 'rejected-block' }), null);
+  assert.equal(Object.prototype.hasOwnProperty.call(sourceDeck, 'blocks'), false);
+  assert.equal(blocksChanged, 0);
+});
+
 test('block controller removes a saved block and finalizes persistence hooks', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     blocks: [
@@ -259,6 +278,24 @@ test('block controller removes a saved block and finalizes persistence hooks', (
   assert.deepEqual(calls.slice(1, 3), [['save'], ['version', 'Auto: Removed Block "Hero"']]);
   assert.deepEqual(calls[3][0], 'blocks');
   assert.deepEqual(calls[3][1], ['stats']);
+});
+
+test('block controller reports rejected canonical removal without publishing block state', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{ id: 'hero', name: 'Hero' }],
+    slides: [{ id: 'slide-1' }]
+  });
+  let blocksChanged = 0;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    finalizeMutation: () => false,
+    onBlocksChanged: () => { blocksChanged += 1; }
+  });
+
+  assert.equal(controller.removeBlock('hero'), null);
+  assert.deepEqual(sourceDeck.blocks.map((block) => block.id), ['hero']);
+  assert.equal(blocksChanged, 0);
 });
 
 test('block controller fails closed when removing a block canonical mutation throws', () => {

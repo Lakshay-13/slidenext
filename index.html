@@ -3109,6 +3109,7 @@
           },
           getElementId: (element) => assignEditorElementId(element),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
+          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
           triggerAutoSave: (...args) => triggerAutoSave(...args),
           triggerAutoVersion: (...args) => triggerAutoVersion(...args),

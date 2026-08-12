@@ -48,6 +48,9 @@
     const finalizeInsertedElements = typeof options.finalizeInsertedElements === 'function'
       ? options.finalizeInsertedElements
       : null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
@@ -135,6 +138,19 @@
         : null;
     }
 
+    function commitDeck(nextCanonicalDeck, versionLabel = '') {
+      if (finalizeMutation) {
+        const finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
+        if (finalizeResult === false) return null;
+      } else {
+        if (saveHistoryState) saveHistoryState(false, null, nextCanonicalDeck);
+        if (triggerAutoSave) triggerAutoSave();
+        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+      }
+      if (onBlocksChanged) onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
+      return nextCanonicalDeck;
+    }
+
     function saveSelection(blockLike = {}) {
       if (!canonicalDeckApi
         || typeof canonicalDeckApi.saveCanonicalBlockFromNodeIds !== 'function') {
@@ -158,15 +174,10 @@
       if (!nextCanonicalDeck) return null;
 
       const block = nextCanonicalDeck.blocks[nextCanonicalDeck.blocks.length - 1] || null;
-      if (saveHistoryState) {
-        saveHistoryState(false, null, nextCanonicalDeck);
-      }
-      if (triggerAutoSave) triggerAutoSave();
-      if (triggerAutoVersion) {
-        triggerAutoVersion(`Auto: Saved Block${block && block.name ? ` "${block.name}"` : ''}`);
-      }
-      if (onBlocksChanged) onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
-      return nextCanonicalDeck;
+      return commitDeck(
+        nextCanonicalDeck,
+        `Auto: Saved Block${block && block.name ? ` "${block.name}"` : ''}`
+      );
     }
 
     function removeBlock(blockId) {
@@ -192,15 +203,10 @@
       }
       if (!nextCanonicalDeck) return null;
 
-      if (saveHistoryState) {
-        saveHistoryState(false, null, nextCanonicalDeck);
-      }
-      if (triggerAutoSave) triggerAutoSave();
-      if (triggerAutoVersion) {
-        triggerAutoVersion(`Auto: Removed Block${block && block.name ? ` "${block.name}"` : normalizedBlockId ? ` "${normalizedBlockId}"` : ''}`);
-      }
-      if (onBlocksChanged) onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
-      return nextCanonicalDeck;
+      return commitDeck(
+        nextCanonicalDeck,
+        `Auto: Removed Block${block && block.name ? ` "${block.name}"` : normalizedBlockId ? ` "${normalizedBlockId}"` : ''}`
+      );
     }
 
     function assignRenderedNodeIds(element, node) {
