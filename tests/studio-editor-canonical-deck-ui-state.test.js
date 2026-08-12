@@ -3339,6 +3339,58 @@ test('buildEditorElementSnapshot caches the shared element snapshot policy build
   ]);
 });
 
+test('buildEditorElementSnapshot resolves selection through the candidate owner document', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('function buildEditorElementSnapshot(el) {');
+  const end = fileContent.indexOf('\n\n    function buildEditorLayerSnapshot(slide) {', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+
+  const documentReads = [];
+  const firstDocument = { id: 'first-document' };
+  const secondDocument = { id: 'second-document' };
+  const firstElement = { id: 'first', ownerDocument: firstDocument };
+  const secondElement = { id: 'second', ownerDocument: secondDocument };
+  const context = {
+    SlideNextStudioElementSnapshot: {
+      buildStudioElementSnapshot(element, options) {
+        return { id: element.id, isSelected: options.isSelectedElement(element) };
+      }
+    },
+    SlideNextStudioEditorLiveSelection: {
+      isStudioLiveSelectedElement(elements, element) {
+        return Array.isArray(elements) && elements.includes(element);
+      }
+    },
+    assignEditorElementId() {
+      return 'editor-element';
+    },
+    isElementLocked() {
+      return false;
+    },
+    isElementHidden() {
+      return false;
+    },
+    getStudioSelectedElements(doc) {
+      documentReads.push(doc);
+      return doc === firstDocument ? [firstElement] : [secondElement];
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(fileContent.slice(start, end), context);
+
+  assert.deepEqual(context.buildEditorElementSnapshot(firstElement), {
+    id: 'first',
+    isSelected: true
+  });
+  assert.deepEqual(context.buildEditorElementSnapshot(secondElement), {
+    id: 'second',
+    isSelected: true
+  });
+  assert.deepEqual(documentReads, [firstDocument, secondDocument]);
+});
+
 test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snapshot builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorLayerSnapshotSource = extractFunctionSource(

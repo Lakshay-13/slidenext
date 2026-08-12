@@ -6889,7 +6889,10 @@
             isElementLocked,
             isElementHidden,
             isSelectedElement: candidate => isStudioLiveSelectedElement
-              ? isStudioLiveSelectedElement(getStudioSelectedElements(), candidate)
+              ? isStudioLiveSelectedElement(
+                getStudioSelectedElements(candidate && candidate.ownerDocument),
+                candidate
+              )
               : false
           });
         }
@@ -6927,7 +6930,10 @@
         isElementLocked,
         isElementHidden,
         isSelectedElement: candidate => isStudioLiveSelectedElement
-          ? isStudioLiveSelectedElement(getStudioSelectedElements(), candidate)
+          ? isStudioLiveSelectedElement(
+            getStudioSelectedElements(candidate && candidate.ownerDocument),
+            candidate
+          )
           : false
       });
     }
