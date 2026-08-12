@@ -5,9 +5,63 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const accessorsApi = require('../shared/studio-editor-source-accessors.js');
+const sourceRuntime = require('../shared/studio-editor-source-runtime.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const ACCESSORS_PATH = path.join(__dirname, '..', 'shared', 'studio-editor-source-accessors.js');
+const RUNTIME_PATH = path.join(__dirname, '..', 'shared', 'studio-editor-source-runtime.js');
+
+test('source runtime composes source adapters behind one editor seam', () => {
+  const calls = [];
+  const sourceControllerApi = {
+    createStudioEditorSourceHtmlBuilder(options) {
+      calls.push(['html', options]);
+      return 'html-builder';
+    },
+    createStudioEditorSourceCssResolver(options) {
+      calls.push(['css-resolver', options]);
+      return 'css-resolver';
+    },
+    createStudioEditorSourceCssApplier(options) {
+      calls.push(['css-applier', options]);
+      return 'css-applier';
+    }
+  };
+  const sourceAccessorsApi = {
+    createStudioEditorSourceAccessors(options) {
+      calls.push(['accessors', options]);
+      return 'accessors';
+    }
+  };
+  const options = {
+    sourceControllerApi,
+    sourceAccessorsApi,
+    sourceController: { name: 'controller' },
+    buildDeckViewHtml() {},
+    createDeckViewHtmlOptions() {},
+    resolveBuildStudioSourceHtml() {},
+    resolveBuildDeckSourceHtml() {},
+    getCurrentDocument() {},
+    resolveCanonicalDeck() {},
+    buildSourceHtml() {},
+    extractSourceCss() {},
+    resolveReplaceSourceCss() {},
+    applySourceHtml() {}
+  };
+
+  const result = sourceRuntime.createStudioEditorSourceRuntime(options);
+
+  assert.deepEqual(result, {
+    sourceAccessors: 'accessors',
+    sourceHtmlBuilder: 'html-builder',
+    sourceCssResolver: 'css-resolver',
+    sourceCssApplier: 'css-applier'
+  });
+  assert.equal(calls[0][1].buildDeckViewHtml, options.buildDeckViewHtml);
+  assert.equal(calls[1][1].resolveCanonicalDeck, options.resolveCanonicalDeck);
+  assert.equal(calls[2][1].applySourceHtml, options.applySourceHtml);
+  assert.equal(calls[3][1].controller, options.sourceController);
+});
 
 test('source accessors delegate the source modal action contract', () => {
   const calls = [];
@@ -95,6 +149,31 @@ test('editor loads source accessors after the source controller', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-source-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorSourceAccessors\(/);
+  assert.match(fileContent, /sourceAccessorsApi: typeof SlideNextStudioEditorSourceAccessors/);
   assert.match(fileContent, /studioEditorSourceAccessors/);
+});
+
+test('editor loads the source runtime after source adapters', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-source-runtime\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorSourceRuntime\(/);
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorSourceController\.createStudioEditorSource(CssResolver|CssApplier|HtmlBuilder)\(/
+  );
+});
+
+test('source runtime publishes its browser global', () => {
+  const context = { globalThis: {} };
+  vm.runInNewContext(fs.readFileSync(RUNTIME_PATH, 'utf8'), context);
+
+  assert.equal(typeof context.globalThis.SlideNextStudioEditorSourceRuntime, 'object');
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorSourceRuntime.createStudioEditorSourceRuntime,
+    'function'
+  );
 });
