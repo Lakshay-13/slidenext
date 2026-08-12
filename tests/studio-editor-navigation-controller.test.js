@@ -49,6 +49,7 @@ test('navigation controller forwards active-slide changes and frame sync', () =>
   assert.equal(calls[0][2].doc, documentRef);
   assert.equal(calls[0][2].captureHistory, true);
   assert.equal(calls[0][2].preserveSelection, true);
+  assert.equal(calls[0][2].getCurrentSlideIndex(), 1);
   assert.equal(calls[1][1], 0);
   assert.equal(calls[1][2].captureHistory, true);
   assert.equal(calls[2][1], documentRef);
