@@ -234,6 +234,49 @@ test('PDF and PPTX exports rebuild from the current DOM while a transaction is p
   assert.equal(fallbackBuildCalls, 0);
 });
 
+test('PDF and PPTX exports prefer a pending canonical sidecar before rebuilding', async () => {
+  const pendingDeck = { slides: [{ id: 'pending-slide' }] };
+  const rebuiltDeck = { slides: [{ id: 'rebuilt-slide' }] };
+  let rebuildCalls = 0;
+  let pdfDeck = null;
+  let pptxDeck = null;
+  const sharedOptions = {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getPendingCanonicalDeck: () => pendingDeck,
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return rebuiltDeck;
+    }
+  };
+  const pdfExport = exportActions.createStudioPdfExportAction({
+    ...sharedOptions,
+    buildPreviewHtml: (canonicalDeck) => {
+      pdfDeck = canonicalDeck;
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    pdfExport: {
+      openStudioPdfPrintWindow() {
+        return true;
+      }
+    }
+  });
+  const pptxExport = exportActions.createStudioPptxExportAction({
+    ...sharedOptions,
+    pptxExport: {
+      async exportStudioPptx({ canonicalDeck }) {
+        pptxDeck = canonicalDeck;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(pdfExport(), true);
+  assert.equal(await pptxExport(), true);
+  assert.equal(pdfDeck, pendingDeck);
+  assert.equal(pptxDeck, pendingDeck);
+  assert.equal(rebuildCalls, 0);
+});
+
 test('PPTX export rejects malformed canonical decks before invoking exporter', async () => {
   let exportCalls = 0;
   const statuses = [];

@@ -2269,6 +2269,7 @@
             ? (sourceDoc) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc())
             : null,
           getPendingTransaction: getStudioPendingEditorTransaction,
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()

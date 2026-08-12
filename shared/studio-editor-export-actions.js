@@ -27,6 +27,9 @@
   }
 
   function resolveStudioExportCanonicalDeck(options = {}) {
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : null;
@@ -43,6 +46,15 @@
       ? options.isCanonicalDeck
       : null;
     const isValidDeck = (value) => isValidStudioExportDeck(value, isCanonicalDeck);
+
+    if (getPendingCanonicalDeck) {
+      try {
+        const pendingCanonicalDeck = getPendingCanonicalDeck();
+        if (isValidDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+      } catch (error) {
+        // Continue through the transaction and live-baseline fallbacks.
+      }
+    }
 
     let pendingTransaction = null;
     if (getPendingTransaction) {
@@ -99,6 +111,9 @@
     const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
       ? options.buildMutationCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : null;
@@ -139,6 +154,7 @@
       const canonicalDeck = resolveStudioExportCanonicalDeck({
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         getPendingTransaction,
         isCanonicalDeck
@@ -270,6 +286,9 @@
     const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
       ? options.buildMutationCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : null;
@@ -300,6 +319,7 @@
       const canonicalDeck = resolveStudioExportCanonicalDeck({
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         getPendingTransaction,
         isCanonicalDeck

@@ -33,6 +33,9 @@
     const buildMutationCanonicalDeck = typeof options.buildMutationCanonicalDeck === 'function'
       ? options.buildMutationCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -63,6 +66,7 @@
         buildPreviewHtml,
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
+        getPendingCanonicalDeck,
         getPendingTransaction,
         getCanonicalDeckBaseline,
         isCanonicalDeck,
@@ -87,6 +91,7 @@
         resolveReadyState,
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
+        getPendingCanonicalDeck,
         getPendingTransaction,
         getCanonicalDeckBaseline,
         isCanonicalDeck,

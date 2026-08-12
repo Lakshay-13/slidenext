@@ -36,6 +36,7 @@
           buildPreviewHtml: options.buildPreviewHtml,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildMutationCanonicalDeck: options.buildMutationCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getPendingTransaction: options.getPendingTransaction,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           isCanonicalDeck: options.isCanonicalDeck,
