@@ -233,7 +233,8 @@ test('updateBlockActionState caches the shared block state synchronizer when ava
       assert.equal(currentDoc, doc);
       return [{ id: 'selected' }];
     },
-    selectionHasLockedElements() {
+    selectionHasLockedElements(_elements, currentDoc) {
+      assert.equal(currentDoc, doc);
       return false;
     },
     buildEditorCanonicalDeck() {

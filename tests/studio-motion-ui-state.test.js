@@ -68,7 +68,7 @@ function loadGetTransformSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function getTransformSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
-    '\n\n    function selectionHasLockedElements(elements = selectedElements) {'
+    '\n\n    function selectionHasLockedElements(elements = selectedElements, doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
 }
@@ -76,7 +76,7 @@ function loadGetTransformSelectionState(fileContent, context) {
 function loadSelectionHasLockedElements(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'function selectionHasLockedElements(elements = selectedElements) {',
+    'function selectionHasLockedElements(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {'
   );
   vm.runInContext(helperSource, context);
@@ -235,7 +235,7 @@ test('selectionHasLockedElements prefers canonical lock state over stale DOM sta
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorLiveSelection: liveSelection,
     getIframeDoc() {
-      return doc;
+      throw new Error('explicit document should avoid the iframe fallback');
     },
     buildEditorCanonicalDeck(currentDoc) {
       assert.equal(currentDoc, doc);
@@ -255,7 +255,7 @@ test('selectionHasLockedElements prefers canonical lock state over stale DOM sta
   loadCanonicalVisibilityReader(fileContent, context);
   loadSelectionHasLockedElements(fileContent, context);
 
-  assert.equal(context.selectionHasLockedElements(), true);
+  assert.equal(context.selectionHasLockedElements(undefined, doc), true);
 });
 
 test('selectionHasLockedElements fails closed when the live-selection runtime is unavailable', () => {

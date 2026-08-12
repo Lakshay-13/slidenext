@@ -7765,7 +7765,7 @@
         : null;
     }
 
-    function selectionHasLockedElements(elements = getStudioSelectedElements()) {
+    function selectionHasLockedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
       const hasStudioLockedLiveSelection = (
         typeof SlideNextStudioEditorLiveSelection !== 'undefined'
         && SlideNextStudioEditorLiveSelection
@@ -7776,7 +7776,7 @@
       if (!hasStudioLockedLiveSelection) return false;
       const readLockedState = getEditorCanonicalVisibilityReader(
         'locked',
-        getIframeDoc(),
+        doc,
         isElementLocked
       );
       return hasStudioLockedLiveSelection(elements, {
@@ -9190,7 +9190,7 @@
             getActionState: (sourceDoc) => {
               const selectedElements = getStudioSelectedElements(sourceDoc);
               const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-                ? selectionHasLockedElements(selectedElements)
+                ? selectionHasLockedElements(selectedElements, sourceDoc)
                 : typeof isElementLocked === 'function'
                   ? selectedElements.some((element) => isElementLocked(element))
                   : false;
@@ -9214,7 +9214,7 @@
       }
       const selectedElements = getStudioSelectedElements(doc);
       const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-        ? selectionHasLockedElements(selectedElements)
+        ? selectionHasLockedElements(selectedElements, doc)
         : typeof isElementLocked === 'function'
           ? selectedElements.some((element) => isElementLocked(element))
           : false;
