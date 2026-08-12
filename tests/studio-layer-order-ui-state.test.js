@@ -1035,7 +1035,7 @@ test('arrangeElementLayer returns false when there is no live reorder target or 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(
     fileContent,
-    'function arrangeElementLayer(action) {',
+    'function arrangeElementLayer(action, doc) {',
     '\n\n    // Wallpaper / Background styles Tabs'
   );
 
@@ -1116,7 +1116,7 @@ test('arrangeElementLayer returns false and refreshes layer controls when the li
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(
     fileContent,
-    'function arrangeElementLayer(action) {',
+    'function arrangeElementLayer(action, doc) {',
     '\n\n    // Wallpaper / Background styles Tabs'
   );
 
@@ -1177,7 +1177,7 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const arrangeElementLayerSource = extractFunctionSource(
     fileContent,
-    'function arrangeElementLayer(action) {',
+    'function arrangeElementLayer(action, doc) {',
     '\n\n    // Wallpaper / Background styles Tabs'
   );
 
@@ -1273,7 +1273,7 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
   vm.createContext(context);
   const arrangeElementLayerSource = extractFunctionSource(
     fileContent,
-    'function arrangeElementLayer(action) {',
+    'function arrangeElementLayer(action, doc) {',
     '\n\n    // Wallpaper / Background styles Tabs'
   );
   vm.runInContext(arrangeElementLayerSource, context);

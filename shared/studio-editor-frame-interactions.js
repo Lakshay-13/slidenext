@@ -145,7 +145,7 @@
         editorUndo,
         editorRedo,
         selectAllElementsOnActiveSlide: () => selectAllElementsOnActiveSlide(doc),
-        arrangeElementLayer,
+        arrangeElementLayer: (action) => arrangeElementLayer(action, doc),
         deselectElement,
         removeSelectedElement,
         copySelectedElements: () => copySelectedElements(doc),

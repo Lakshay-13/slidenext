@@ -9970,16 +9970,17 @@
     }
 
     // Rearrange Selected Element Layers
-    function arrangeElementLayer(action) {
+    function arrangeElementLayer(action, doc) {
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
       if (!layerController || typeof layerController.arrangeStudioElementLayer !== 'function') {
         return false;
       }
+      const resolvedDoc = doc || (typeof getIframeDoc === 'function' ? getIframeDoc() : null);
       return layerController.arrangeStudioElementLayer({
         action,
-        getDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : null,
+        getDocument: () => resolvedDoc,
         getSelectedElements: typeof getStudioSelectedElements === 'function'
           ? (doc) => getLiveSelectedElements(getStudioSelectedElements(doc), doc)
           : getLiveSelectedElements,
