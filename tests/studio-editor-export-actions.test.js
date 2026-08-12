@@ -20,6 +20,7 @@ test('PDF export prefers the generalized server exporter when available', async 
     pdfExport: {
       async exportStudioPdf(options) {
         calls.push(options);
+        options.onProgress({ phase: 'response', completed: 1, total: 2, percent: 50 });
         return {
           success: true,
           warningCount: 1,
@@ -35,12 +36,15 @@ test('PDF export prefers the generalized server exporter when available', async 
   });
 
   assert.equal(await exportPdf(), true);
-  assert.deepEqual(calls, [{
+  const { onProgress, ...pdfOptions } = calls[0];
+  assert.equal(typeof onProgress, 'function');
+  assert.deepEqual(pdfOptions, {
     canonicalDeck: { slides: [{ id: 'slide-1' }] },
     sourcePath: '/presentations/demo/index.html'
-  }]);
+  });
   assert.deepEqual(statuses, [
     ['exporting-pdf'],
+    ['exporting-pdf', { phase: 'response', completed: 1, total: 2, percent: 50 }],
     ['pdf-exported-with-warnings', 1, ['PDF node image-1 references missing asset "hero"'], false]
   ]);
 });

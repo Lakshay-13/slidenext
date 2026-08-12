@@ -573,6 +573,15 @@
     }
   }
 
+  function reportStudioPdfExportProgress(options, phase, percent) {
+    if (!options || typeof options.onProgress !== 'function') return;
+    try {
+      options.onProgress({ phase, completed: percent === 100 ? 2 : 1, total: 2, percent });
+    } catch (error) {
+      // Progress reporting must not make an otherwise valid download fail.
+    }
+  }
+
   async function exportStudioPdf(options = {}) {
     const fetchImpl = typeof options.fetchImpl === 'function'
       ? options.fetchImpl
@@ -597,6 +606,7 @@
       ? options.endpoint.trim()
       : '/api/export/pdf';
     try {
+      reportStudioPdfExportProgress(options, 'request', 0);
       const response = await fetchImpl(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -614,7 +624,9 @@
         };
       }
 
+      reportStudioPdfExportProgress(options, 'response', 50);
       const blob = await response.blob();
+      reportStudioPdfExportProgress(options, 'download', 75);
       const downloadUrl = urlApi.createObjectURL(blob);
       let anchor = null;
       try {
@@ -627,6 +639,7 @@
         if (anchor && typeof anchor.remove === 'function') anchor.remove();
         urlApi.revokeObjectURL(downloadUrl);
       }
+      reportStudioPdfExportProgress(options, 'complete', 100);
 
       return {
         success: true,

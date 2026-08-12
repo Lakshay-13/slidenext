@@ -195,7 +195,10 @@
           try {
             const result = await pdfExport.exportStudioPdf({
               canonicalDeck,
-              sourcePath
+              sourcePath,
+              onProgress: (progress) => {
+                setStatus('exporting-pdf', progress);
+              }
             });
             if (!result || !result.success) return failPdfExport();
             setStatus(
@@ -346,7 +349,10 @@
         const result = await pptxExport.exportStudioPptx({
           canonicalDeck,
           sourcePath,
-          filename
+          filename,
+          onProgress: (progress) => {
+            setStatus('exporting', progress);
+          }
         });
         if (!result || !result.success) {
           setStatus('export-failed');

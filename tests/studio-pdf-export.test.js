@@ -5,6 +5,7 @@ const pdfExport = require('../shared/studio-pdf-export.js');
 
 test('exportStudioPdf posts the canonical deck and downloads the server response', async () => {
   const calls = [];
+  const progress = [];
   const anchor = {
     click() {
       calls.push(['click']);
@@ -17,6 +18,9 @@ test('exportStudioPdf posts the canonical deck and downloads the server response
     canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     sourcePath: '/presentations/demo/index.html',
     filename: 'Demo deck.pdf',
+    onProgress(nextProgress) {
+      progress.push(nextProgress);
+    },
     fetchImpl(endpoint, options) {
       calls.push(['fetch', endpoint, options]);
       return Promise.resolve({
@@ -65,6 +69,12 @@ test('exportStudioPdf posts the canonical deck and downloads the server response
   assert.equal(result.warningCount, 2);
   assert.deepEqual(result.warnings, ['PDF node image-1 references missing asset "hero"']);
   assert.equal(result.warningsTruncated, false);
+  assert.deepEqual(progress, [
+    { phase: 'request', completed: 1, total: 2, percent: 0 },
+    { phase: 'response', completed: 1, total: 2, percent: 50 },
+    { phase: 'download', completed: 1, total: 2, percent: 75 },
+    { phase: 'complete', completed: 2, total: 2, percent: 100 }
+  ]);
   assert.equal(calls[0][1], '/api/export/pdf');
   assert.deepEqual(JSON.parse(calls[0][2].body), {
     canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },

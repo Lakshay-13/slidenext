@@ -5,6 +5,7 @@ const pptxExport = require('../shared/studio-pptx-export.js');
 
 test('exportStudioPptx posts the canonical deck and downloads the response', async () => {
   const calls = [];
+  const progress = [];
   const anchor = {
     click() {
       calls.push(['click']);
@@ -17,6 +18,9 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
     canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] },
     sourcePath: '/presentations/demo/index.html',
     filename: 'Demo deck.pptx',
+    onProgress(nextProgress) {
+      progress.push(nextProgress);
+    },
     fetchImpl(endpoint, options) {
       calls.push(['fetch', endpoint, options]);
       return Promise.resolve({
@@ -65,6 +69,12 @@ test('exportStudioPptx posts the canonical deck and downloads the response', asy
   assert.equal(result.warningCount, 2);
   assert.deepEqual(result.warnings, ['Node text-1 uses unsupported CSS: transform']);
   assert.equal(result.warningsTruncated, false);
+  assert.deepEqual(progress, [
+    { phase: 'request', completed: 1, total: 2, percent: 0 },
+    { phase: 'response', completed: 1, total: 2, percent: 50 },
+    { phase: 'download', completed: 1, total: 2, percent: 75 },
+    { phase: 'complete', completed: 2, total: 2, percent: 100 }
+  ]);
   assert.equal(calls[0][0], 'fetch');
   assert.equal(calls[0][1], '/api/export/pptx');
   assert.deepEqual(JSON.parse(calls[0][2].body), {
