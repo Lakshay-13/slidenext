@@ -1609,6 +1609,7 @@
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
+  <script src="/shared/studio-editor-deck-ready-shell-runtime.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
@@ -4193,10 +4194,14 @@
     const studioEditorThemeController = studioEditorThemeRuntime
       ? studioEditorThemeRuntime.themeController
       : null;
-    const studioEditorDeckReadyRuntime = typeof SlideNextStudioEditorDeckReadyRuntime !== 'undefined'
-      && SlideNextStudioEditorDeckReadyRuntime
-      && typeof SlideNextStudioEditorDeckReadyRuntime.createStudioEditorDeckReadyRuntime === 'function'
-      ? SlideNextStudioEditorDeckReadyRuntime.createStudioEditorDeckReadyRuntime({
+    const studioEditorDeckReadyRuntime = typeof SlideNextStudioEditorDeckReadyShellRuntime !== 'undefined'
+      && SlideNextStudioEditorDeckReadyShellRuntime
+      && typeof SlideNextStudioEditorDeckReadyShellRuntime.createStudioEditorDeckReadyShellRuntime === 'function'
+      ? SlideNextStudioEditorDeckReadyShellRuntime.createStudioEditorDeckReadyShellRuntime({
+          deckReadyRuntimeApi: typeof SlideNextStudioEditorDeckReadyRuntime !== 'undefined'
+            ? SlideNextStudioEditorDeckReadyRuntime
+            : null,
+          runtimeOptions: {
           controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
             ? SlideNextStudioEditorDeckReadyController
             : null,
@@ -4212,6 +4217,7 @@
           ),
           getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
           getSaveButtonState: getStudioSaveButtonState
+          }
         })
       : null;
     const studioEditorDeckReadyController = studioEditorDeckReadyRuntime

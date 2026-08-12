@@ -51,7 +51,11 @@ test('index wires deck readiness through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorDeckReadyRuntime\.createStudioEditorDeckReadyRuntime\(/
+    /<script src="\/shared\/studio-editor-deck-ready-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorDeckReadyShellRuntime\.createStudioEditorDeckReadyShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
