@@ -113,6 +113,14 @@ test('index wires frame editing composition through the runtime module', () => {
 
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-frame-runtime-options\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorFrameRuntimeOptionsApi\.createStudioEditorFrameRuntimeOptions\(/
+  );
+  assert.match(
+    fileContent,
     /<script src="\/shared\/studio-editor-frame-runtime\.js"><\/script>/
   );
   assert.match(
@@ -133,7 +141,15 @@ test('index wires frame editing composition through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /onInlineEditStart: \(\{ element \}, iframeDoc\) => \{\s+commitEditorSelectionState\(\s+\{ selectedElements: \[element\] \},\s+\{ doc: iframeDoc \}\s+\);/
+    /commitSelectionState: commitEditorSelectionState,/
+  );
+  assert.match(
+    fileContent,
+    /getOverlayOptions: getEditorOverlayOptions,/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /onInlineEditStart: \(\{ element \}, iframeDoc\)/
   );
   assert.doesNotMatch(
     fileContent,

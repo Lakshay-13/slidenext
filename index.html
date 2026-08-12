@@ -1546,6 +1546,7 @@
   <script src="/shared/studio-frame-bootstrap.js"></script>
   <script src="/shared/studio-editor-frame-controller.js"></script>
   <script src="/shared/studio-editor-frame-interactions.js"></script>
+  <script src="/shared/studio-editor-frame-runtime-options.js"></script>
   <script src="/shared/studio-editor-frame-runtime.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -3938,25 +3939,12 @@
       && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
       ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
       : ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    const studioEditorFrameRuntime = typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
-      && SlideNextStudioEditorFrameRuntime
-      && typeof SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime === 'function'
-      ? SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime({
-          interactionStateApi: typeof SlideNextStudioEditorFrameInteractionStateController !== 'undefined'
-            ? SlideNextStudioEditorFrameInteractionStateController
-            : null,
-          frameInteractionsApi: typeof SlideNextStudioEditorFrameInteractions !== 'undefined'
-            ? SlideNextStudioEditorFrameInteractions
-            : null,
-          frameControllerApi: typeof SlideNextStudioEditorFrameController !== 'undefined'
-            ? SlideNextStudioEditorFrameController
-            : null,
-          eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
-            ? SlideNextStudioEditorEvents
-            : null,
-          inlineTextEditApi: typeof SlideNextStudioEditorInlineEdit !== 'undefined'
-            ? SlideNextStudioEditorInlineEdit
-            : null,
+    const studioEditorFrameRuntimeOptionsApi = typeof SlideNextStudioEditorFrameRuntimeOptions !== 'undefined'
+      ? SlideNextStudioEditorFrameRuntimeOptions
+      : null;
+    const studioEditorFrameRuntimeOptions = studioEditorFrameRuntimeOptionsApi
+      && typeof studioEditorFrameRuntimeOptionsApi.createStudioEditorFrameRuntimeOptions === 'function'
+      ? studioEditorFrameRuntimeOptionsApi.createStudioEditorFrameRuntimeOptions({
           shouldIgnoreTarget: (target) => !!(
             target
             && (
@@ -3978,22 +3966,8 @@
           },
           isElementLocked,
           isElementHidden,
-          onInlineEditStart: ({ element }, iframeDoc) => {
-            commitEditorSelectionState(
-              { selectedElements: [element] },
-              { doc: iframeDoc }
-            );
-            const overlayApi = typeof SlideNextStudioEditorOverlay !== 'undefined'
-              ? SlideNextStudioEditorOverlay
-              : null;
-            if (overlayApi && typeof overlayApi.hideStudioSelectionOverlay === 'function') {
-              overlayApi.hideStudioSelectionOverlay(
-                iframeDoc,
-                getActiveSlide(iframeDoc),
-                getEditorOverlayOptions()
-              );
-            }
-          },
+          commitSelectionState: commitEditorSelectionState,
+          getOverlayOptions: getEditorOverlayOptions,
           onInlineEditCommit: ({ text }) => {
             applySelectedElementStyle('text', text);
           },
@@ -4020,13 +3994,7 @@
             }
           },
           syncIframeTheme,
-          editorStyleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
-            ? SlideNextStudioEditorStyle
-            : null,
           makeElementsHoverable,
-          frameBootstrapApi: typeof SlideNextStudioFrameBootstrap !== 'undefined'
-            ? SlideNextStudioFrameBootstrap
-            : null,
           setupIframeDragging,
           generateThumbnails,
           syncStudioChromeToActiveSlide,
@@ -4035,9 +4003,6 @@
           observeDeckActiveSlideState,
           capturePersistableDeckState: captureEditorPersistableDeckState,
           saveHistoryState,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
           applyPersistenceSuccess: applyCurrentStudioPersistenceSuccess,
           getPresentationUrl: getStudioCurrentPresentationUrl,
           getSessionToken: getStudioEditorSessionToken,
@@ -4049,6 +4014,12 @@
           setStudioAutoSaveStatus,
           syncInspectorForSelection
         })
+      : null;
+    const studioEditorFrameRuntime = studioEditorFrameRuntimeOptions
+      && typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
+      && SlideNextStudioEditorFrameRuntime
+      && typeof SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime === 'function'
+      ? SlideNextStudioEditorFrameRuntime.createStudioEditorFrameRuntime(studioEditorFrameRuntimeOptions)
       : null;
     const studioEditorFrameInteractionStateController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameInteractionStateController
