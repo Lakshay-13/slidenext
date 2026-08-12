@@ -165,6 +165,25 @@ test('buildStudioCanonicalThemeBaseline falls back when the live canonical deck 
   assert.equal(didBuildFromDocument, true);
 });
 
+test('buildStudioCanonicalThemeBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalThemeBaseline fails closed when a compatibility rebuild throws', () => {
   const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
     canonicalDeckApi: canonicalDeck,
