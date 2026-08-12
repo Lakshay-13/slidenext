@@ -108,7 +108,7 @@
         historyArgs.push(resolvedMutationOptions.canonicalDeck);
       }
       if (shouldPublishCanonicalDeckBeforeUi) {
-        saveHistoryState(...historyArgs);
+        if (saveHistoryState(...historyArgs) === false) return false;
       }
       if (resolvedMutationOptions.syncSelectionOverlay) {
         syncSelectionOverlay(resolvedMutationOptions.doc);
@@ -120,9 +120,9 @@
         updateLayersList(resolvedMutationOptions.doc);
       }
       if (!shouldPublishCanonicalDeckBeforeUi) {
-        saveHistoryState(...historyArgs);
+        if (saveHistoryState(...historyArgs) === false) return false;
       }
-      triggerAutoSave();
+      if (triggerAutoSave() === false) return false;
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
       }

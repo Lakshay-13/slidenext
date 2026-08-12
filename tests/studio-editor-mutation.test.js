@@ -161,6 +161,35 @@ test('createStudioMutationFinalizer publishes canonical state before dependent U
   ]);
 });
 
+test('createStudioMutationFinalizer fails before UI work when canonical history rejects', () => {
+  const calls = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    syncSelectionOverlay() {
+      calls.push('overlay');
+    },
+    generateThumbnails() {
+      calls.push('thumbnails');
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+      return false;
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Rejected Canonical Update', {
+    syncSelectionOverlay: true,
+    canonicalDeck
+  }), false);
+  assert.deepEqual(calls, [['history', false, null, canonicalDeck]]);
+});
+
 test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
   const historyArgs = [];
   const isCanonicalDeck = (value) => (
