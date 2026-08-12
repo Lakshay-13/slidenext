@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const transformController = require('../shared/studio-editor-transform-controller.js');
+const transformState = require('../shared/studio-editor-transform.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('transform controller delegates modern transform and marquee setup with shared options', () => {
   const calls = [];
@@ -190,6 +192,93 @@ test('transform controller rolls back a DOM transaction when a canonical transfo
   assert.equal(syncInspectorCalls, 1);
 });
 
+test('transform controller rolls back DOM styles when history capture fails', () => {
+  const doc = { body: {} };
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: {
+      position: 'absolute',
+      margin: '0px',
+      left: '120px',
+      top: '90px',
+      width: '240px',
+      height: '120px'
+    }
+  };
+  let finalizeTransformSession = null;
+  let historyCaptureCalls = 0;
+  let syncOverlayCalls = 0;
+  let syncInspectorCalls = 0;
+  const controller = transformController.createStudioEditorTransformController({
+    transformApi: {
+      buildStudioTransformStyleTransaction: transformState.buildStudioTransformStyleTransaction,
+      createStudioTransformSessionFinalizer(options) {
+        finalizeTransformSession = transformState.createStudioTransformSessionFinalizer(options);
+        return finalizeTransformSession;
+      }
+    },
+    transactionApi: transactionState,
+    domApi: {
+      getElementByEditorId(elementId, currentDoc) {
+        assert.equal(elementId, 'node-1');
+        assert.equal(currentDoc, doc);
+        return element;
+      }
+    },
+    interactionOptionsApi: {
+      buildStudioTransformInteractionOptions() {
+        return { kind: 'transform' };
+      },
+      buildStudioMarqueeInteractionOptions() {
+        return { kind: 'marquee' };
+      }
+    },
+    interactionsApi: {
+      attachStudioEditorInteractionHandlers() {
+        return true;
+      }
+    },
+    saveHistoryState() {
+      historyCaptureCalls += 1;
+      return { didCapture: false };
+    },
+    syncSelectionOverlay() {
+      syncOverlayCalls += 1;
+    },
+    syncInspectorForSelection() {
+      syncInspectorCalls += 1;
+    }
+  });
+
+  assert.equal(controller.setup(doc), true);
+  assert.ok(finalizeTransformSession);
+  assert.equal(finalizeTransformSession({
+    session: {
+      items: [{
+        element,
+        startStyle: {
+          position: 'absolute',
+          margin: '0px',
+          left: '20px',
+          top: '30px',
+          width: '240px',
+          height: '120px'
+        }
+      }]
+    }
+  }, {
+    shouldPersist: true,
+    versionLabel: 'Auto: Moved Element'
+  }), false);
+  assert.equal(historyCaptureCalls, 1);
+  assert.equal(element.style.left, '20px');
+  assert.equal(element.style.top, '30px');
+  assert.equal(element.style.width, '240px');
+  assert.equal(element.style.height, '120px');
+  assert.equal(syncOverlayCalls, 2);
+  assert.equal(syncInspectorCalls, 2);
+});
+
 test('transform controller continues setup when canonical baseline capture throws', () => {
   const calls = [];
   const controller = transformController.createStudioEditorTransformController({
@@ -221,7 +310,7 @@ test('transform controller continues setup when canonical baseline capture throw
 });
 
 test('transform controller fails closed when no transform factory is available', () => {
-  const controller = transformController.createStudioEditorTransformController({});
+  const controller = transformController.createStudioEditorTransformController({ transformApi: null });
   assert.equal(controller.setup({ body: {} }), false);
 });
 
