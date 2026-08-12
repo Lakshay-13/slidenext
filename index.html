@@ -1392,6 +1392,7 @@
   <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
+  <script src="/shared/studio-editor-clipboard-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
@@ -2782,6 +2783,23 @@
     const studioEditorClipboardController = studioEditorClipboardRuntime
       ? studioEditorClipboardRuntime.clipboardController
       : null;
+    const studioEditorClipboardAccessorsApi = typeof SlideNextStudioEditorClipboardAccessors !== 'undefined'
+      ? SlideNextStudioEditorClipboardAccessors
+      : null;
+    const studioEditorClipboardAccessors = studioEditorClipboardAccessorsApi
+      && typeof studioEditorClipboardAccessorsApi.createStudioEditorClipboardAccessors === 'function'
+      ? studioEditorClipboardAccessorsApi.createStudioEditorClipboardAccessors({
+          controller: studioEditorClipboardController,
+          getFallbackClipboard: () => typeof editorClipboard !== 'undefined' ? editorClipboard : null
+        })
+      : null;
+    const studioEditorClipboardGlobalApi = studioEditorClipboardAccessorsApi
+      && typeof studioEditorClipboardAccessorsApi.createStudioEditorClipboardGlobalApi === 'function'
+      ? studioEditorClipboardAccessorsApi.createStudioEditorClipboardGlobalApi({
+          accessors: studioEditorClipboardAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorClipboardGlobalApi);
     const studioEditorClipboardPayloadRuntime = typeof SlideNextStudioEditorClipboardPayloadShellRuntime !== 'undefined'
       && SlideNextStudioEditorClipboardPayloadShellRuntime
       && typeof SlideNextStudioEditorClipboardPayloadShellRuntime.createStudioEditorClipboardPayloadShellRuntime === 'function'
@@ -3733,13 +3751,6 @@
           triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
         })
       : null;
-    function getStudioEditorClipboard() {
-      if (studioEditorClipboardController
-        && typeof studioEditorClipboardController.getClipboard === 'function') {
-        return studioEditorClipboardController.getClipboard();
-      }
-      return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
-    }
     const studioEditorZoomRuntimeOptionsApi = typeof SlideNextStudioEditorZoomRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorZoomRuntimeOptions
       : null;
