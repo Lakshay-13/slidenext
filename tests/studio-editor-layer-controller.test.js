@@ -380,6 +380,40 @@ test('arrangeStudioElementLayer refreshes no-ops and finalizes successful reorde
   assert.deepEqual(calls[6][2], { transaction, canonicalDeck });
 });
 
+test('arrangeStudioElementLayer forwards the editor document to selection callbacks', () => {
+  const documentRef = { id: 'editor-doc' };
+  const selectedElements = [{ id: 'node-1' }];
+  const calls = [];
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'front',
+    getDocument() {
+      calls.push(['getDocument']);
+      return documentRef;
+    },
+    getSelectedElements(currentDoc) {
+      calls.push(['getSelectedElements', currentDoc]);
+      return selectedElements;
+    },
+    selectionHasLockedElements(elements, currentDoc) {
+      calls.push(['selectionHasLockedElements', elements, currentDoc]);
+      assert.equal(currentDoc, documentRef);
+      return true;
+    },
+    refreshLayerOrderUi() {
+      calls.push(['refreshLayerOrderUi']);
+      return false;
+    }
+  }), false);
+
+  assert.deepEqual(calls, [
+    ['getDocument'],
+    ['getSelectedElements', documentRef],
+    ['selectionHasLockedElements', selectedElements, documentRef],
+    ['refreshLayerOrderUi']
+  ]);
+});
+
 test('refreshStudioLayerOrderUi preserves layer refresh ordering and result values', () => {
   const calls = [];
   assert.equal(layerController.refreshStudioLayerOrderUi({

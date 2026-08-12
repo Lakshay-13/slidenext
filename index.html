@@ -9954,7 +9954,10 @@
       }
       return layerController.arrangeStudioElementLayer({
         action,
-        getSelectedElements: getLiveSelectedElements,
+        getDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : null,
+        getSelectedElements: typeof getStudioSelectedElements === 'function'
+          ? (doc) => getLiveSelectedElements(getStudioSelectedElements(doc), doc)
+          : getLiveSelectedElements,
         selectionHasLockedElements,
         refreshLayerOrderUi,
         reorderSlideLayers,

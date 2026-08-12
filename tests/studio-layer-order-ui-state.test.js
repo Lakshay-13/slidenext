@@ -1235,6 +1235,9 @@ test('arrangeElementLayer returns true and tolerates a missing z-index input whe
 
 test('arrangeElementLayer delegates to the shared layer controller when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'editor-doc' };
+  const rawSelection = [{ id: 'raw-selection' }];
+  const liveSelection = [{ id: 'live-selection' }];
   let delegatedOptions = null;
   const context = {
     SlideNextStudioEditorLayerController: {
@@ -1243,7 +1246,15 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
         return 'shared-arrange';
       }
     },
-    getLiveSelectedElements() {},
+    getIframeDoc() {
+      return documentRef;
+    },
+    selectedElements: rawSelection,
+    getLiveSelectedElements(elements, currentDoc) {
+      assert.deepEqual(elements, rawSelection);
+      assert.equal(currentDoc, documentRef);
+      return liveSelection;
+    },
     selectionHasLockedElements() {},
     refreshLayerOrderUi() {},
     reorderSlideLayers() {},
@@ -1261,7 +1272,9 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
 
   assert.equal(context.arrangeElementLayer('backward'), 'shared-arrange');
   assert.equal(delegatedOptions.action, 'backward');
-  assert.equal(delegatedOptions.getSelectedElements, context.getLiveSelectedElements);
+  assert.equal(delegatedOptions.getDocument(), documentRef);
+  assert.deepEqual(delegatedOptions.getSelectedElements(documentRef), liveSelection);
+  assert.notEqual(delegatedOptions.getSelectedElements, context.getLiveSelectedElements);
   assert.equal(delegatedOptions.selectionHasLockedElements, context.selectionHasLockedElements);
   assert.equal(delegatedOptions.finalizeLayerOrderMutation, context.finalizeLayerOrderMutation);
 });

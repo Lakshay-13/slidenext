@@ -172,15 +172,19 @@
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : null;
     const refreshLayerOrderUi = typeof options.refreshLayerOrderUi === 'function'
       ? options.refreshLayerOrderUi
       : () => false;
-    const targets = getSelectedElements() || [];
+    const resolvedDoc = getDocument ? getDocument() : undefined;
+    const targets = getSelectedElements(resolvedDoc) || [];
     if (targets.length === 0) {
       return refreshLayerOrderUi();
     }
     if (typeof options.selectionHasLockedElements === 'function'
-      && options.selectionHasLockedElements(targets)) {
+      && options.selectionHasLockedElements(targets, resolvedDoc)) {
       return refreshLayerOrderUi();
     }
 
