@@ -1449,6 +1449,7 @@
   <script src="/shared/studio-editor-grid-snap-view.js"></script>
   <script src="/shared/studio-editor-grid-snap-controller.js"></script>
   <script src="/shared/studio-editor-grid-snap-runtime.js"></script>
+  <script src="/shared/studio-editor-grid-snap-shell-runtime.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-controller.js"></script>
@@ -3330,10 +3331,13 @@
       ? studioEditorAssetRuntime.assetController
       : null;
     const GRID_SNAP_SIZE_PX = 20;
-    const studioEditorGridSnapRuntime = typeof SlideNextStudioEditorGridSnapRuntime !== 'undefined'
-      && SlideNextStudioEditorGridSnapRuntime
-      && typeof SlideNextStudioEditorGridSnapRuntime.createStudioEditorGridSnapRuntime === 'function'
-      ? SlideNextStudioEditorGridSnapRuntime.createStudioEditorGridSnapRuntime({
+    const studioEditorGridSnapRuntime = typeof SlideNextStudioEditorGridSnapShellRuntime !== 'undefined'
+      && SlideNextStudioEditorGridSnapShellRuntime
+      && typeof SlideNextStudioEditorGridSnapShellRuntime.createStudioEditorGridSnapShellRuntime === 'function'
+      ? SlideNextStudioEditorGridSnapShellRuntime.createStudioEditorGridSnapShellRuntime({
+          gridSnapRuntimeApi: typeof SlideNextStudioEditorGridSnapRuntime !== 'undefined'
+            ? SlideNextStudioEditorGridSnapRuntime
+            : null,
           controllerApi: typeof SlideNextStudioEditorGridSnapController !== 'undefined'
             ? SlideNextStudioEditorGridSnapController
             : null,

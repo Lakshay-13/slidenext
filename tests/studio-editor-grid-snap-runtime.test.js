@@ -43,7 +43,11 @@ test('index wires grid snap state through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorGridSnapRuntime\.createStudioEditorGridSnapRuntime\(/
+    /<script src="\/shared\/studio-editor-grid-snap-shell-runtime\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /SlideNextStudioEditorGridSnapShellRuntime\.createStudioEditorGridSnapShellRuntime\(/
   );
   assert.doesNotMatch(
     fileContent,
