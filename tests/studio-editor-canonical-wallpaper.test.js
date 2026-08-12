@@ -190,6 +190,25 @@ test('buildStudioCanonicalWallpaperBaseline fails closed when a compatibility re
   assert.equal(result, null);
 });
 
+test('buildStudioCanonicalWallpaperBaseline disables live reuse for compatibility rebuilds', () => {
+  const sourceDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let rebuildOptions = null;
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeckBaseline: () => ({ invalid: true }),
+    buildCanonicalDeckBaseline(documentRef, options) {
+      assert.equal(documentRef, sourceDocument);
+      rebuildOptions = options;
+      return sourceDeck;
+    },
+    sourceDocument
+  });
+
+  assert.equal(result, sourceDeck);
+  assert.deepEqual(rebuildOptions, { preferLiveCanonicalDeck: false });
+});
+
 test('buildStudioCanonicalWallpaperDeck fails closed when an adapter dependency is missing', () => {
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([{ id: 'slide-1' }], 'black', {}), null);
   assert.equal(canonicalWallpaper.buildStudioCanonicalWallpaperDeck([], 'black', {
