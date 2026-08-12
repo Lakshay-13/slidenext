@@ -19,6 +19,10 @@
     && Number.isFinite(interactionOptions.DEFAULT_DRAG_START_THRESHOLD_PX)
     ? interactionOptions.DEFAULT_DRAG_START_THRESHOLD_PX
     : 4;
+  const DEFAULT_SNAP_THRESHOLD_PX = interactionOptions
+    && Number.isFinite(interactionOptions.DEFAULT_SNAP_THRESHOLD_PX)
+    ? interactionOptions.DEFAULT_SNAP_THRESHOLD_PX
+    : 12;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
 
   const isStudioHistoryCaptureFailure = historyResultApi
@@ -464,7 +468,7 @@
     const slideHeight = Number.isFinite(slideBounds.height) ? slideBounds.height : 0;
     const snapDistancePx = Number.isFinite(options.snapDistancePx) && options.snapDistancePx >= 0
       ? options.snapDistancePx
-      : 8;
+      : DEFAULT_SNAP_THRESHOLD_PX;
     const left = Number.isFinite(bounds.left) ? bounds.left : 0;
     const top = Number.isFinite(bounds.top) ? bounds.top : 0;
     const right = Number.isFinite(bounds.right) ? bounds.right : left;

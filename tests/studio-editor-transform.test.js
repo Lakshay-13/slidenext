@@ -1090,6 +1090,29 @@ test('snapStudioTransformBounds aligns dragged bounds to slide edges and centers
   });
 });
 
+test('snapStudioTransformBounds uses the shared interaction threshold when no override is supplied', () => {
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 10,
+    top: 10,
+    right: 60,
+    bottom: 60
+  }, {
+    type: 'drag',
+    slideBounds: { width: 200, height: 120 }
+  }), {
+    bounds: {
+      left: 0,
+      top: 0,
+      right: 50,
+      bottom: 50
+    },
+    guides: [
+      { axis: 'x', position: 0 },
+      { axis: 'y', position: 0 }
+    ]
+  });
+});
+
 test('snapStudioTransformBounds optionally aligns dragged top-left bounds to a grid', () => {
   assert.deepEqual(transformState.snapStudioTransformBounds({
     left: 23,
