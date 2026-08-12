@@ -116,4 +116,5 @@ test('index wires layout editing through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorGroupController\.createStudioEditorGroupController\(/
   );
+  assert.match(fileContent, /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/);
 });

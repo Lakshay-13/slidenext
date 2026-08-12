@@ -2656,7 +2656,7 @@
           buildUngroupSelectionActionState: (...args) => buildUngroupSelectionActionState(...args),
           updateGroupActionState: (...args) => updateGroupActionState(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
-          getSelectedElements: () => getStudioSelectedElements(),
+          getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getActiveSlide: (...args) => getActiveSlide(...args),
           getSlideMetrics: (...args) => getSlideMetrics(...args),
           getRectOnSlide: (...args) => getRectOnSlide(...args),
