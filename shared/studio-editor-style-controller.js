@@ -332,13 +332,17 @@
         rollbackStyleMutation(transaction, doc);
         return finalizeStyleActionResult(false);
       }
-      finalizeDeckMutation(styleMutationPlan.versionLabel, {
+      const finalizeResult = finalizeDeckMutation(styleMutationPlan.versionLabel, {
         syncSelectionOverlay: true,
         refreshLayersList: prop === 'zIndex',
         debounceHistory: true,
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
+      if (finalizeResult === false) {
+        rollbackStyleMutation(transaction, doc);
+        return finalizeStyleActionResult(false);
+      }
       return true;
     }
 
