@@ -62,7 +62,8 @@
     } else if (state === 'editor-load-failed') {
       statusEl.innerHTML = `<span class="text-rose-400">Editor Load Failed</span>`;
     } else if (state === 'exporting') {
-      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PPTX...</span>`;
+      const progressSuffix = progressPercent === null ? '' : ` ${progressPercent}%`;
+      statusEl.innerHTML = `<span class="inline-flex items-center gap-1 text-amber-400"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> Exporting PPTX${progressSuffix}...</span>`;
     } else if (state === 'export-failed') {
       statusEl.innerHTML = `<span class="text-rose-400">PPTX Export Failed</span>`;
     } else if (state === 'exported') {

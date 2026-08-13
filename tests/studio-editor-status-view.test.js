@@ -55,6 +55,22 @@ test('setStudioAutoSaveStatus renders PDF resource progress', () => {
   assert.match(statusEl.innerHTML, /Exporting PDF 42%/);
 });
 
+test('setStudioAutoSaveStatus renders PPTX export progress', () => {
+  const statusEl = { innerHTML: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'autoSaveStatus' ? statusEl : null;
+    }
+  };
+
+  assert.equal(statusView.setStudioAutoSaveStatus({
+    documentRef,
+    state: 'exporting',
+    progressPercent: 75
+  }), true);
+  assert.match(statusEl.innerHTML, /Exporting PPTX 75%/);
+});
+
 test('setStudioAutoSaveStatus exposes live status semantics and busy state', () => {
   const attributes = {};
   const statusEl = {
