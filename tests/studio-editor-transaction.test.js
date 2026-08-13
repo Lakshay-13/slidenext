@@ -88,6 +88,10 @@ test('createStudioSlideOrderTransaction stores only a changed complete slide ord
   });
   assert.equal(transaction.createStudioSlideOrderTransaction(['slide-1'], ['slide-2']), null);
   assert.equal(transaction.createStudioSlideOrderTransaction(['slide-1'], ['slide-1']), null);
+  assert.equal(transaction.createStudioSlideOrderTransaction(
+    ['slide-1', 'slide-1', 'slide-2'],
+    ['slide-2', 'slide-1']
+  ), null);
 });
 
 test('applyStudioEditorTransaction replays slide-order operations without resolving element ids', () => {

@@ -370,9 +370,12 @@
   }
 
   function createStudioSlideOrderTransaction(beforeSlideIds, afterSlideIds) {
+    const rawBefore = Array.isArray(beforeSlideIds) ? beforeSlideIds : [];
+    const rawAfter = Array.isArray(afterSlideIds) ? afterSlideIds : [];
     const before = normalizeTransactionIdList(beforeSlideIds);
     const after = normalizeTransactionIdList(afterSlideIds);
-    if (before.length === 0 || before.length !== after.length
+    if (before.length !== rawBefore.length || after.length !== rawAfter.length
+      || before.length === 0 || before.length !== after.length
       || before.every((slideId, index) => slideId === after[index])) {
       return null;
     }
