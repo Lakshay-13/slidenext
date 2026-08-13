@@ -81,6 +81,43 @@ test('history restore rebuilds canonical state when the entry has no canonical d
   ]);
 });
 
+test('history restore prefers the shared canonical deck validator', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const entryCanonicalDeck = { kind: 'candidate', slides: [] };
+  const rebuiltCanonicalDeck = { kind: 'rebuilt', slides: [] };
+  let validatorCalls = 0;
+  let buildCalls = 0;
+  let restoredDeck = null;
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry() {}
+    },
+    canonicalStateApi: {
+      isStudioEditorCanonicalDeckLike(value) {
+        validatorCalls += 1;
+        return value === rebuiltCanonicalDeck;
+      }
+    },
+    getIframeDoc: () => iframeDoc,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return rebuiltCanonicalDeck;
+    },
+    applyPersistedDeckState(state) {
+      restoredDeck = state.canonicalDeck;
+    }
+  });
+
+  restoreHandler({ canonicalDeck: entryCanonicalDeck });
+
+  assert.equal(restoredDeck, rebuiltCanonicalDeck);
+  assert.equal(validatorCalls, 2);
+  assert.equal(buildCalls, 1);
+});
+
 test('history restore fails closed when the canonical frame cannot be rendered', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };

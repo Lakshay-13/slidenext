@@ -1,12 +1,12 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(root);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorHistoryRestore = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function isCanonicalDeckLike(value) {
     return !!value
       && typeof value === 'object'
@@ -14,9 +14,9 @@
       && Array.isArray(value.slides);
   }
 
-  function isValidCanonicalDeck(value, validator) {
+  function isValidCanonicalDeck(value, validator, fallbackValidator = isCanonicalDeckLike) {
     if (!value) return false;
-    const validate = typeof validator === 'function' ? validator : isCanonicalDeckLike;
+    const validate = typeof validator === 'function' ? validator : fallbackValidator;
     try {
       return validate(value) === true;
     } catch (error) {
@@ -79,6 +79,13 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
+    const canonicalStateApi = options.canonicalStateApi
+      || (root && root.SlideNextStudioEditorCanonicalState)
+      || null;
+    const defaultCanonicalDeckValidator = canonicalStateApi
+      && typeof canonicalStateApi.isStudioEditorCanonicalDeckLike === 'function'
+      ? canonicalStateApi.isStudioEditorCanonicalDeckLike
+      : isCanonicalDeckLike;
     const applyEditorSelectionState = typeof options.applyEditorSelectionState === 'function'
       ? options.applyEditorSelectionState
       : () => {};
@@ -107,7 +114,8 @@
     function syncRestoredCanonicalState(historyEntry, iframeDoc) {
       let restoredCanonicalDeck = historyEntry && isValidCanonicalDeck(
         historyEntry.canonicalDeck,
-        isCanonicalDeck
+        isCanonicalDeck,
+        defaultCanonicalDeckValidator
       )
         ? historyEntry.canonicalDeck
         : null;
@@ -116,7 +124,11 @@
           const rebuiltCanonicalDeck = buildCanonicalDeck(iframeDoc, {
             preferLiveCanonicalDeck: false
           });
-          if (isValidCanonicalDeck(rebuiltCanonicalDeck, isCanonicalDeck)) {
+          if (isValidCanonicalDeck(
+            rebuiltCanonicalDeck,
+            isCanonicalDeck,
+            defaultCanonicalDeckValidator
+          )) {
             restoredCanonicalDeck = rebuiltCanonicalDeck;
           }
         } catch (error) {
