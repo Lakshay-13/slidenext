@@ -1669,6 +1669,7 @@
   <script src="/shared/studio-editor-selection-options-adapter.js"></script>
   <script src="/shared/studio-editor-live-selection-adapter.js"></script>
   <script src="/shared/studio-editor-transform-selection-state-adapter.js"></script>
+  <script src="/shared/studio-editor-positioned-layout-items-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -3978,10 +3979,24 @@
         )
       : null;
 
-    const studioEditorPositionedLayoutItemsBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorPositionedLayoutItemsAdapter = typeof SlideNextStudioEditorPositionedLayoutItemsAdapter !== 'undefined'
+      && SlideNextStudioEditorPositionedLayoutItemsAdapter
+      && typeof SlideNextStudioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems === 'function'
+      ? SlideNextStudioEditorPositionedLayoutItemsAdapter
+      : null;
+
+    const studioEditorPositionedLayoutItemsBuilder = studioEditorPositionedLayoutItemsAdapter
+      && typeof studioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
-      ? (elements, options) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(elements, options)
+      ? (elements, options) => studioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems(
+          elements,
+          {
+            transformApi: SlideNextStudioEditorTransform,
+            layoutOptions: options
+          }
+        )
       : null;
 
     function buildEditorPositionedLayoutItems(elements, options) {

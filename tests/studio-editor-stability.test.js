@@ -1268,8 +1268,10 @@ test('editor composes positioned-layout-items building through the shared transf
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorPositionedLayoutItemsBuilder =/);
+  assert.match(source, /const studioEditorPositionedLayoutItemsAdapter =/);
+  assert.match(source, /buildStudioEditorPositionedLayoutItems/);
   assert.match(source, /buildStudioPositionedLayoutItems/);
-  assert.match(source, /typeof studioEditorPositionedLayoutItemsBuilder === 'function'/);
+  assert.match(source, /typeof SlideNextStudioEditorPositionedLayoutItemsAdapter !== 'undefined'/);
   assert.doesNotMatch(source, /buildEditorPositionedLayoutItems\.builder/);
 });
 
@@ -1277,7 +1279,7 @@ test('positioned-layout-items building delegates elements and options to the sha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemsBuilder =',
+    'const studioEditorPositionedLayoutItemsAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const elements = [{ id: 'element-1' }, { id: 'element-2' }];
@@ -1285,6 +1287,7 @@ test('positioned-layout-items building delegates elements and options to the sha
   const calls = [];
   const layoutItems = [{ element: elements[0] }, { element: elements[1] }];
   const context = {
+    SlideNextStudioEditorPositionedLayoutItemsAdapter: require('../shared/studio-editor-positioned-layout-items-adapter.js'),
     SlideNextStudioEditorTransform: {
       buildStudioPositionedLayoutItems(elementsValue, optionsValue) {
         calls.push([elementsValue, optionsValue]);
@@ -1307,10 +1310,13 @@ test('positioned-layout-items building fails closed when the shared transform mo
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemsBuilder =',
+    'const studioEditorPositionedLayoutItemsAdapter =',
     'const studioEditorTransformRuntime ='
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorTransform: null,
+    SlideNextStudioEditorPositionedLayoutItemsAdapter: require('../shared/studio-editor-positioned-layout-items-adapter.js')
+  };
 
   vm.createContext(context);
   vm.runInContext(positionedItemsSource, context);
