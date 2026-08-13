@@ -151,6 +151,45 @@ test('removeStudioElements removes live targets and creates an optional parent m
   });
 });
 
+test('removeStudioElements prefers scoped element-presence transactions for serializable live targets', () => {
+  const parent = {
+    dataset: { editorId: 'slide:slide-1' },
+    children: [],
+    innerHTML: '<div data-editor-id="node-1">A</div>'
+  };
+  const element = {
+    isConnected: true,
+    dataset: { editorId: 'node-1' },
+    parentElement: parent,
+    outerHTML: '<div data-editor-id="node-1">A</div>',
+    remove() {
+      this.isConnected = false;
+      parent.children = [];
+      parent.innerHTML = '';
+    }
+  };
+  parent.children = [element];
+
+  const result = removal.removeStudioElements([element], {
+    createMarkupTransactionCapture: transactionState.createStudioMarkupTransactionCapture,
+    createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
+    getElementId: (target) => target && target.dataset && target.dataset.editorId
+  });
+
+  assert.equal(result.didRemove, true);
+  assert.deepEqual(result.transaction.operations[0], {
+    type: 'element-presence',
+    elementId: 'node-1',
+    parentId: 'slide:slide-1',
+    before: {
+      exists: true,
+      index: 0,
+      markup: '<div data-editor-id="node-1">A</div>'
+    },
+    after: { exists: false, index: 0, markup: '' }
+  });
+});
+
 test('renderStudioRemovalToolbarState applies the delete button state', () => {
   const removeSelectionBtn = { disabled: true };
   assert.equal(removal.renderStudioRemovalToolbarState({

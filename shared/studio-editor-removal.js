@@ -138,9 +138,20 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveElementId = (element) => {
+      if (!element) return '';
+      try {
+        return getElementId(element) || '';
+      } catch (error) {
+        return '';
+      }
+    };
     const markupCaptureTargets = [];
     if (createMarkupTransactionCapture) {
       const parentSet = new Set();
@@ -157,6 +168,22 @@
     const markupCapture = createMarkupTransactionCapture
       ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
       : null;
+    const liveSelection = selection.filter((element) => element && element.isConnected);
+    const presenceItems = liveSelection.map((element) => {
+      const parent = element.parentElement || element.parentNode;
+      const childNodes = parent && (parent.children || parent.childNodes);
+      const index = childNodes ? Array.prototype.indexOf.call(childNodes, element) : -1;
+      return {
+        elementId: resolveElementId(element),
+        parentId: resolveElementId(parent),
+        before: {
+          exists: true,
+          index,
+          markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+        },
+        after: { exists: false, index, markup: '' }
+      };
+    });
     let removedCount = 0;
     selection.forEach((element) => {
       if (!element || !element.isConnected) return;
@@ -167,9 +194,14 @@
     return {
       didRemove: removedCount > 0,
       removedCount,
-      transaction: removedCount > 0 && markupCapture
-        ? markupCapture.createTransaction()
-        : null
+      transaction: removedCount > 0
+        && createElementPresenceTransaction
+        && removedCount === liveSelection.length
+        && presenceItems.every((item) => item.elementId && item.parentId && item.before.index >= 0 && item.before.markup)
+        ? createElementPresenceTransaction(presenceItems)
+        : removedCount > 0 && markupCapture
+          ? markupCapture.createTransaction()
+          : null
     };
   }
 

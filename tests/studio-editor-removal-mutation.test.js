@@ -29,7 +29,29 @@ test('applyStudioRemovalMutationWithTransaction delegates removal and markup tra
   assert.deepEqual(result, { didRemove: true, removedCount: 1, transaction: { id: 'tx-removal' } });
   assert.equal(delegated.currentSelection, selection);
   assert.equal(typeof delegated.options.createMarkupTransactionCapture, 'function');
+  assert.equal(delegated.options.createElementPresenceTransaction, null);
   assert.equal(typeof delegated.options.removeElement, 'function');
+});
+
+test('applyStudioRemovalMutationWithTransaction forwards scoped element presence transactions', () => {
+  const selection = [{ dataset: { editorId: 'node-1' }, isConnected: true }];
+  const createElementPresenceTransaction = () => ({ id: 'tx-presence' });
+  let delegated = null;
+
+  removalMutation.applyStudioRemovalMutationWithTransaction(selection, {
+    removalApi: {
+      removeStudioElements(currentSelection, options) {
+        delegated = { currentSelection, options };
+        return { didRemove: true, removedCount: 1, transaction: { id: 'tx-presence' } };
+      }
+    },
+    transactionApi: { createStudioElementPresenceTransaction: createElementPresenceTransaction },
+    getElementId: (element) => element.dataset.editorId,
+    removeElement() {}
+  });
+
+  assert.equal(delegated.currentSelection, selection);
+  assert.equal(delegated.options.createElementPresenceTransaction, createElementPresenceTransaction);
 });
 
 test('applyStudioRemovalMutationWithTransaction preserves the shared removal behavior', () => {
