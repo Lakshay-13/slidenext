@@ -3858,6 +3858,7 @@
           getActiveSlide: (...args) => getActiveSlide(...args),
           getEditorSlideId: (...args) => getEditorSlideId(...args),
           buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()

@@ -80,6 +80,7 @@ test('element insertion controller selects flow mode for a flow-only canonical s
   let builderOptions = null;
   const slide = { children: [] };
   const element = { id: 'element-1' };
+  const pendingDeck = { id: 'pending-deck' };
   const controller = elementInsertionController.createStudioEditorElementInsertionController({
     canonicalInsertionApi: {
       createStudioCanonicalInsertionMutationBuilders(options) {
@@ -97,6 +98,7 @@ test('element insertion controller selects flow mode for a flow-only canonical s
     },
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    getPendingCanonicalDeck: () => pendingDeck,
     getCanonicalDeckBaseline: () => ({ id: 'live-baseline' }),
     getIframeDoc: () => ({}),
     getActiveSlide: () => slide,
@@ -112,6 +114,7 @@ test('element insertion controller selects flow mode for a flow-only canonical s
   assert.equal(calls[0].layoutMode, 'flow');
   assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(builderOptions.getPendingCanonicalDeck(), pendingDeck);
   assert.deepEqual(builderOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 

@@ -24,6 +24,7 @@ test('element insertion runtime composes canonical and persistence dependencies'
     getActiveSlide: () => null,
     getEditorSlideId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyElementInsertion: () => ({}),
     makeElementsHoverable: () => {},
@@ -45,6 +46,7 @@ test('element insertion runtime composes canonical and persistence dependencies'
   assert.equal(calls[0].canonicalInsertionApi, options.canonicalInsertionApi);
   assert.equal(calls[0].deckImportApi, options.deckImportApi);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyElementInsertion, options.applyElementInsertion);
   assert.equal(calls[0].triggerAutoVersion, options.triggerAutoVersion);
 });

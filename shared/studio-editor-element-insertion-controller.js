@@ -78,6 +78,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const applyElementInsertion = typeof options.applyElementInsertion === 'function'
       ? options.applyElementInsertion
       : () => ({ element: null, transaction: null });
@@ -122,6 +125,7 @@
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline,
             importElementToCanonicalNode
           })

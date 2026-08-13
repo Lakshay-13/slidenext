@@ -467,6 +467,10 @@ test('element insertion wiring prefers live canonical state and keeps a legacy b
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
   );
+  assert.match(
+    controllerSource,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
+  );
   assert.doesNotMatch(
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/

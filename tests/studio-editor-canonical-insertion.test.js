@@ -90,6 +90,7 @@ test('buildStudioCanonicalInsertionDeck builds the baseline from the source docu
 test('buildStudioCanonicalInsertionBaseline delegates baseline resolution to the shared canonical-state reader', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
+  const getPendingCanonicalDeck = () => sourceDeck;
   let readerOptions = null;
   const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
     canonicalDeckApi: canonicalDeck,
@@ -102,6 +103,7 @@ test('buildStudioCanonicalInsertionBaseline delegates baseline resolution to the
         };
       }
     },
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline() {
       return null;
     },
@@ -112,6 +114,7 @@ test('buildStudioCanonicalInsertionBaseline delegates baseline resolution to the
   });
 
   assert.equal(result, sourceDeck);
+  assert.equal(readerOptions.getPendingCanonicalDeck, getPendingCanonicalDeck);
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
@@ -131,15 +134,39 @@ test('buildStudioCanonicalInsertionBaseline prefers the shared canonical deck re
         throw new Error('legacy baseline reader should not be used');
       }
     },
+    getPendingCanonicalDeck: () => ({ slides: [] }),
     getCanonicalDeckBaseline: () => ({ invalid: true }),
     buildCanonicalDeckBaseline: () => ({ invalid: true }),
     sourceDocument: { id: 'editor-doc' }
   });
 
   assert.equal(result, sourceDeck);
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
+});
+
+test('buildStudioCanonicalInsertionBaseline prefers a valid pending canonical deck', () => {
+  const pendingDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  let liveReads = 0;
+  let rebuilds = 0;
+  const result = canonicalInsertion.buildStudioCanonicalInsertionBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => {
+      liveReads += 1;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    },
+    buildCanonicalDeckBaseline: () => {
+      rebuilds += 1;
+      return canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+  assert.equal(liveReads, 0);
+  assert.equal(rebuilds, 0);
 });
 
 test('buildStudioCanonicalInsertionBaseline prefers a valid live canonical deck', () => {

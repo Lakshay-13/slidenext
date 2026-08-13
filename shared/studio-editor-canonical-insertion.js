@@ -23,6 +23,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
@@ -39,6 +42,7 @@
     if (createCanonicalDeckResolver) {
       const resolveCanonicalDeck = createCanonicalDeckResolver({
         getCanonicalDeck: () => null,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -51,6 +55,7 @@
     }
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -77,6 +82,14 @@
       }
     };
     const readCanonicalDeckBaseline = (sourceDocument) => {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (err) {
+          // Fall through to the live baseline and document rebuild paths.
+        }
+      }
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
@@ -119,6 +132,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
       : buildStudioCanonicalInsertionBaseline(options);
@@ -160,6 +176,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -168,6 +187,7 @@
         ...insertionOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -184,6 +204,7 @@
         ...insertionOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,
@@ -202,6 +223,7 @@
         ...sequenceOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,

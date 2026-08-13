@@ -27,6 +27,7 @@
           getActiveSlide: options.getActiveSlide,
           getEditorSlideId: options.getEditorSlideId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyElementInsertion: options.applyElementInsertion,
           makeElementsHoverable: options.makeElementsHoverable,
