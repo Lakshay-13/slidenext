@@ -55,6 +55,18 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
 
 function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   context.SlideNextStudioEditorSession ??= editorSession;
+  context.studioEditorSessionStateController ??= {
+    readers() {
+      return {
+        getCurrentPresentationUrl: () => typeof context.currentPresentationUrl === 'string'
+          ? context.currentPresentationUrl
+          : '',
+        getCurrentSessionToken: () => typeof context.studioEditorSessionToken === 'undefined'
+          ? 0
+          : context.studioEditorSessionToken
+      };
+    }
+  };
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateReaders() {',

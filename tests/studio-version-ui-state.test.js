@@ -93,6 +93,18 @@ function createClassList(initialValues = []) {
 
 function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
   context.SlideNextStudioEditorSession ??= editorSession;
+  context.studioEditorSessionStateController ??= {
+    readers() {
+      return {
+        getCurrentPresentationUrl: () => typeof context.currentPresentationUrl === 'string'
+          ? context.currentPresentationUrl
+          : '',
+        getCurrentSessionToken: () => typeof context.studioEditorSessionToken === 'undefined'
+          ? 0
+          : context.studioEditorSessionToken
+      };
+    }
+  };
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioSessionStateReaders() {',
@@ -2860,13 +2872,15 @@ test('loadVersions renders an error state when the shared version-history loader
 
 test('createCurrentStudioSessionStateReaders exposes live presentation and session getters', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let capturedAdapterOptions = null;
+  let readerCalls = 0;
   const context = {
-    SlideNextStudioEditorSession: {
-      ...editorSession,
-      createStudioEditorSessionStateReadersAdapter(options) {
-        capturedAdapterOptions = options;
-        return editorSession.createStudioSessionStateReaders(options);
+    studioEditorSessionStateController: {
+      readers() {
+        readerCalls += 1;
+        return {
+          getCurrentPresentationUrl: () => context.currentPresentationUrl,
+          getCurrentSessionToken: () => context.studioEditorSessionToken
+        };
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -2879,13 +2893,10 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   const options = context.createCurrentStudioSessionStateReaders();
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 4);
-  assert.equal(capturedAdapterOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedAdapterOptions.getCurrentSessionToken(), 4);
+  assert.equal(readerCalls, 1);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 5);
-  assert.equal(capturedAdapterOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedAdapterOptions.getCurrentSessionToken(), 5);
 });
