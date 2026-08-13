@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const persistedHtmlAction = require('../shared/studio-editor-persisted-html-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -40,6 +41,14 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
       ? context.getActiveSlideId(nextDoc)
       : '',
     isCanonicalDeck: (deck) => !!deck && Array.isArray(deck.slides)
+  });
+}
+
+function loadResolveEditorReusablePersistedHtml(context) {
+  context.resolveEditorReusablePersistedHtml = persistedHtmlAction.createStudioEditorPersistedHtmlAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null
   });
 }
 
@@ -80,12 +89,7 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     vm.runInContext(sanitizeEditorReusablePersistedHtmlSource, context);
   }
   if (typeof context.resolveEditorReusablePersistedHtml !== 'function') {
-    const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-      '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-    );
-    vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+    loadResolveEditorReusablePersistedHtml(context);
   }
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
@@ -3207,11 +3211,6 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
 
 test('resolveEditorReusablePersistedHtml delegates reusable persisted html resolution through the shared persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   let delegatedArgs = null;
   const canonicalDeck = {
@@ -3241,7 +3240,7 @@ test('resolveEditorReusablePersistedHtml delegates reusable persisted html resol
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+  loadResolveEditorReusablePersistedHtml(context);
 
   assert.equal(
     context.resolveEditorReusablePersistedHtml(persistedDeckState, {
@@ -3261,11 +3260,6 @@ test('resolveEditorReusablePersistedHtml delegates reusable persisted html resol
 
 test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   let delegatedArgs = null;
   const canonicalDeck = {
@@ -3312,7 +3306,7 @@ test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolve
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+  loadResolveEditorReusablePersistedHtml(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorReusablePersistedHtml(persistedDeckState, {
@@ -3340,11 +3334,6 @@ test('resolveEditorReusablePersistedHtml reuses the shared reusable-html resolve
 
 test('resolveEditorReusablePersistedHtml delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
   const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
   const persistedDeckState = {
     cleanHtml: '<html>persisted-baseline</html>',
@@ -3370,7 +3359,7 @@ test('resolveEditorReusablePersistedHtml delegates through the editor persistenc
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+  loadResolveEditorReusablePersistedHtml(context);
 
   const result = context.resolveEditorReusablePersistedHtml(persistedDeckState, {
     canonicalDeck,
@@ -3388,11 +3377,6 @@ test('resolveEditorReusablePersistedHtml delegates through the editor persistenc
 
 test('resolveEditorReusablePersistedHtml creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
   const persistedDeckState = { cleanHtml: '<html>persisted</html>' };
   const calls = [];
   let adapterCreateCalls = 0;
@@ -3411,7 +3395,7 @@ test('resolveEditorReusablePersistedHtml creates the shared persistence-state ad
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+  loadResolveEditorReusablePersistedHtml(context);
 
   assert.equal(context.resolveEditorReusablePersistedHtml(persistedDeckState, { id: 1 }), '<html>persisted</html>');
   assert.equal(context.resolveEditorReusablePersistedHtml(persistedDeckState, { id: 2 }), '<html>persisted</html>');
@@ -3421,11 +3405,6 @@ test('resolveEditorReusablePersistedHtml creates the shared persistence-state ad
 
 test('resolveEditorReusablePersistedHtml fails closed when the shared helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorReusablePersistedHtmlSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -3435,7 +3414,7 @@ test('resolveEditorReusablePersistedHtml fails closed when the shared helper is 
   const context = {};
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorReusablePersistedHtmlSource, context);
+  loadResolveEditorReusablePersistedHtml(context);
 
   assert.equal(
     context.resolveEditorReusablePersistedHtml({
