@@ -1523,6 +1523,7 @@
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-save-request-body-action.js"></script>
+  <script src="/shared/studio-editor-persisted-html-checker-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -1955,6 +1956,38 @@
         })
       : {};
     Object.assign(globalThis, studioEditorSaveRequestBodyGlobalApi);
+    const studioEditorPersistedHtmlCheckerAction =
+      typeof SlideNextStudioEditorPersistedHtmlCheckerAction !== 'undefined'
+      && SlideNextStudioEditorPersistedHtmlCheckerAction
+      && typeof SlideNextStudioEditorPersistedHtmlCheckerAction
+        .createStudioEditorPersistedHtmlCheckerAction === 'function'
+      ? SlideNextStudioEditorPersistedHtmlCheckerAction
+        .createStudioEditorPersistedHtmlCheckerAction({
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getPersistedDeckState: getCurrentEditorPersistedDeckState
+        })
+      : null;
+    const studioEditorPersistedHtmlCheckerGlobalApi =
+      typeof SlideNextStudioEditorPersistedHtmlCheckerAction !== 'undefined'
+      && SlideNextStudioEditorPersistedHtmlCheckerAction
+      && typeof SlideNextStudioEditorPersistedHtmlCheckerAction
+        .createStudioEditorPersistedHtmlCheckerGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistedHtmlCheckerAction
+        .createStudioEditorPersistedHtmlCheckerGlobalApi({
+          isCurrentDeckHtmlPersisted
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistedHtmlCheckerGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11212,70 +11245,9 @@
     }
 
     function isCurrentDeckHtmlPersisted(cleanHtml) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.isPersistedDeckHtml === 'function') {
-        const result = studioEditorPersistenceController.isPersistedDeckHtml(cleanHtml);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorPersistedDeckHtmlCheckerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckHtmlCheckerAdapter
-        : null;
-      if (createStudioEditorPersistedDeckHtmlCheckerAdapter) {
-        if (typeof isCurrentDeckHtmlPersisted.adapter !== 'function') {
-          isCurrentDeckHtmlPersisted.adapter = createStudioEditorPersistedDeckHtmlCheckerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            readPersistedDeckState: getCurrentEditorPersistedDeckState
-          });
-        }
-        const result = typeof isCurrentDeckHtmlPersisted.adapter === 'function'
-          ? isCurrentDeckHtmlPersisted.adapter(cleanHtml)
-          : null;
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-
-      const createStudioPersistedDeckHtmlChecker = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedDeckHtmlChecker === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedDeckHtmlChecker
-        : null;
-      if (createStudioPersistedDeckHtmlChecker) {
-        return createStudioPersistedDeckHtmlChecker({
-          readPersistedDeckState: getCurrentEditorPersistedDeckState,
-          isPersistedDeckHtml: (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml === 'function'
-          )
-            ? SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml
-            : null
-        })(cleanHtml);
-      }
-
-      const isStudioPersistedDeckHtml = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.isStudioPersistedDeckHtml
-        : null;
-      if (!isStudioPersistedDeckHtml) return false;
-      return isStudioPersistedDeckHtml(
-        cleanHtml,
-        getCurrentEditorPersistedDeckState()
-      );
+      return studioEditorPersistedHtmlCheckerAction
+        ? studioEditorPersistedHtmlCheckerAction(...arguments)
+        : false;
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {

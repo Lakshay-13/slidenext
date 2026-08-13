@@ -17,6 +17,7 @@ const capturedStateAction = require('../shared/studio-editor-captured-persistabl
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const persistableDeckHtmlAction = require('../shared/studio-editor-persistable-deck-html-action.js');
 const saveRequestBodyAction = require('../shared/studio-editor-save-request-body-action.js');
+const persistedHtmlCheckerAction = require('../shared/studio-editor-persisted-html-checker-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -280,6 +281,21 @@ function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
     getResolveLiveCanonicalDeck: () => context.resolveEditorLiveCanonicalDeck || null,
     getBuildPersistableDeckHtml: () => context.buildPersistableDeckHtml || null
   });
+}
+
+function loadIsCurrentDeckHtmlPersisted(fileContent, context, helperSource) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  if (typeof context.getCurrentEditorPersistedDeckState !== 'function'
+    && Object.prototype.hasOwnProperty.call(context, 'lastPersistedDeckHtml')) {
+    loadGetCurrentEditorPersistedDeckState(fileContent, context);
+  }
+  context.isCurrentDeckHtmlPersisted = persistedHtmlCheckerAction
+    .createStudioEditorPersistedHtmlCheckerAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPersistedDeckState: context.getCurrentEditorPersistedDeckState || (() => ({}))
+    });
 }
 
 test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requests', () => {
@@ -932,7 +948,7 @@ test('isCurrentDeckHtmlPersisted reuses the shared persisted-html checker when a
 
   vm.createContext(context);
   loadGetCurrentEditorPersistedDeckState(fileContent, context);
-  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+  loadIsCurrentDeckHtmlPersisted(fileContent, context, isCurrentDeckHtmlPersistedSource);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.isCurrentDeckHtmlPersisted('<html></html>'))),
@@ -977,7 +993,7 @@ test('isCurrentDeckHtmlPersisted delegates through the editor persistence-state 
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+  loadIsCurrentDeckHtmlPersisted(fileContent, context, isCurrentDeckHtmlPersistedSource);
 
   assert.deepEqual(context.isCurrentDeckHtmlPersisted('<html>current</html>'), {
     cleanHtml: '<html>current</html>',
@@ -1013,7 +1029,7 @@ test('isCurrentDeckHtmlPersisted creates the shared persistence-state adapter on
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+  loadIsCurrentDeckHtmlPersisted(fileContent, context, isCurrentDeckHtmlPersistedSource);
 
   assert.equal(context.isCurrentDeckHtmlPersisted('<html>one</html>'), true);
   persistedDeckState = { cleanHtml: '<html>two</html>' };
@@ -1037,7 +1053,7 @@ test('isCurrentDeckHtmlPersisted fails closed when all shared persistence checke
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentDeckHtmlPersistedSource, context);
+  loadIsCurrentDeckHtmlPersisted(fileContent, context, isCurrentDeckHtmlPersistedSource);
 
   assert.equal(
     context.isCurrentDeckHtmlPersisted('<html>current</html>'),
