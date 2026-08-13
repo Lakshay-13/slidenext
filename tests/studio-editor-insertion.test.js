@@ -147,6 +147,7 @@ test('applyStudioElementInsertion prefers a scoped element-presence transaction 
     }
   };
   const calls = [];
+  let markupCaptureCalls = 0;
 
   const result = insertion.applyStudioElementInsertion('h2', {
     documentRef,
@@ -157,6 +158,7 @@ test('applyStudioElementInsertion prefers a scoped element-presence transaction 
       element.outerHTML = '<h2 data-editor-id="node-2">Heading</h2>';
     },
     createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
       return {
         createTransaction() {
           return { id: 'legacy-markup' };
@@ -170,6 +172,7 @@ test('applyStudioElementInsertion prefers a scoped element-presence transaction 
   });
 
   assert.deepEqual(result.transaction, { id: 'element-presence' });
+  assert.equal(markupCaptureCalls, 0);
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0][0], {
     elementId: 'node-2',

@@ -260,7 +260,28 @@ function trainEpoch(model, data) {
     const transactionElementId = typeof options.transactionElementId === 'string'
       ? options.transactionElementId.trim()
       : '';
-    const markupCapture = createMarkupTransactionCapture && transactionElementId
+    const elementId = typeof options.getElementId === 'function'
+      ? options.getElementId(element)
+      : element && element.dataset && element.dataset.editorId;
+    const childNodes = slide.children || slide.childNodes;
+    const insertionIndex = childNodes && Number.isInteger(childNodes.length)
+      ? childNodes.length
+      : -1;
+    const elementPresenceTransaction = createElementPresenceTransaction
+      ? createElementPresenceTransaction([{
+          elementId,
+          parentId: transactionElementId,
+          before: { exists: false, index: insertionIndex, markup: '' },
+          after: {
+            exists: true,
+            index: insertionIndex,
+            markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+          }
+        }])
+      : null;
+    const markupCapture = !elementPresenceTransaction
+      && createMarkupTransactionCapture
+      && transactionElementId
       ? createMarkupTransactionCapture([{
           element: slide,
           elementId: transactionElementId
@@ -270,24 +291,6 @@ function trainEpoch(model, data) {
       : null;
 
     slide.appendChild(element);
-
-    const elementId = typeof options.getElementId === 'function'
-      ? options.getElementId(element)
-      : element && element.dataset && element.dataset.editorId;
-    const childNodes = slide.children || slide.childNodes || [];
-    const insertionIndex = Array.prototype.indexOf.call(childNodes, element);
-    const elementPresenceTransaction = createElementPresenceTransaction
-      ? createElementPresenceTransaction([{
-          elementId,
-          parentId: transactionElementId,
-          before: { exists: false, index: Math.max(0, insertionIndex), markup: '' },
-          after: {
-            exists: true,
-            index: Math.max(0, insertionIndex),
-            markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
-          }
-        }])
-      : null;
 
     return {
       element,
