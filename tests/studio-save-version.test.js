@@ -9,6 +9,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
+const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -50,12 +51,31 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
       persistenceApi: context.SlideNextStudioEditorPersistence || null,
       persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null
     });
-  const captureEditorPersistableDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',
-    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
-  );
-  vm.runInContext(captureEditorPersistableDeckStateSource, context);
+  context.captureEditorPersistableDeckState =
+    persistableDeckStateAction.createStudioEditorPersistableDeckStateAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getCaptureBuildState: () => context.captureEditorPersistableDeckBuildState || null,
+      getResolveCapturedState: () => context.resolveEditorCapturedPersistableDeckState || null,
+      getCapturePlaybackState: () => context.capturePersistedDeckPlaybackState || null,
+      resolveCanonicalDeck: (providedCanonicalDeck, doc) => {
+        if (typeof context.resolveEditorCanonicalDeckOverride === 'function') {
+          return context.resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+            buildCanonicalDeck: () => typeof context.buildEditorCanonicalDeck === 'function'
+              ? context.buildEditorCanonicalDeck(doc)
+              : null
+          });
+        }
+        return providedCanonicalDeck
+          || (typeof context.buildEditorCanonicalDeck === 'function'
+            ? context.buildEditorCanonicalDeck(doc)
+            : null);
+      }
+    });
 }
 
 function loadCreateCurrentStudioSessionStateReaders(fileContent, context) {
