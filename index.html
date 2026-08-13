@@ -1665,6 +1665,7 @@
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-ids-adapter.js"></script>
+  <script src="/shared/studio-editor-id-list-equality-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8208,16 +8209,24 @@
       return selectedIds || [];
     }
 
-    const studioEditorIdListEqualityChecker = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.areStudioIdListsEqual === 'function'
-      ? (a, b) => SlideNextStudioEditorSelection.areStudioIdListsEqual(a, b)
+    const studioEditorIdListEqualityAdapter = typeof SlideNextStudioEditorIdListEqualityAdapter !== 'undefined'
+      && SlideNextStudioEditorIdListEqualityAdapter
+      && typeof SlideNextStudioEditorIdListEqualityAdapter.areStudioEditorIdListsEqual === 'function'
+      ? SlideNextStudioEditorIdListEqualityAdapter
       : null;
 
     function areEditorIdListsEqual(a = [], b = []) {
-      return typeof studioEditorIdListEqualityChecker === 'function'
-        ? studioEditorIdListEqualityChecker(a, b)
-        : false;
+      const compareIdLists = studioEditorIdListEqualityAdapter
+        && typeof studioEditorIdListEqualityAdapter.areStudioEditorIdListsEqual === 'function'
+        ? studioEditorIdListEqualityAdapter.areStudioEditorIdListsEqual
+        : null;
+      if (!compareIdLists) return false;
+      const result = compareIdLists(a, b, {
+        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+          ? SlideNextStudioEditorSelection
+          : null
+      });
+      return result === null ? false : result;
     }
 
     function getActiveSlide(doc = getIframeDoc()) {

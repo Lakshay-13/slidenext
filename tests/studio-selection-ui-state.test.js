@@ -13,6 +13,7 @@ const selectionRestoreAdapter = require('../shared/studio-editor-selection-resto
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapter.js');
 const committedSelectionIdsAdapter = require('../shared/studio-editor-committed-selection-ids-adapter.js');
+const idListEqualityAdapter = require('../shared/studio-editor-id-list-equality-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -145,8 +146,9 @@ test('editor composes selection option building through the shared selection API
 test('editor composes ID-list equality through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorIdListEqualityChecker =/);
-  assert.match(source, /typeof studioEditorIdListEqualityChecker === 'function'/);
+  assert.match(source, /const studioEditorIdListEqualityAdapter =/);
+  assert.match(source, /areStudioEditorIdListsEqual/);
+  assert.match(source, /if \(!compareIdLists\) return false/);
   assert.doesNotMatch(source, /areEditorIdListsEqual\.checker/);
 });
 
@@ -215,9 +217,10 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
 function loadAreEditorIdListsEqual(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorIdListEqualityChecker =',
+    'const studioEditorIdListEqualityAdapter =',
     '\n\n    function getActiveSlide(doc = getIframeDoc()) {'
   );
+  context.SlideNextStudioEditorIdListEqualityAdapter = idListEqualityAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -742,6 +745,29 @@ test('areEditorIdListsEqual fails closed when the shared selection API is unavai
   loadAreEditorIdListsEqual(fileContent, context);
 
   assert.equal(context.areEditorIdListsEqual(['node-1'], ['node-1']), false);
+});
+
+test('areStudioEditorIdListsEqual composes shared ID-list comparison', () => {
+  const firstIds = ['node-1'];
+  const secondIds = ['node-1'];
+  let delegated = null;
+
+  const result = idListEqualityAdapter.areStudioEditorIdListsEqual(firstIds, secondIds, {
+    selectionApi: {
+      areStudioIdListsEqual(leftIds, rightIds) {
+        delegated = { leftIds, rightIds };
+        return true;
+      }
+    }
+  });
+
+  assert.equal(result, true);
+  assert.equal(delegated.leftIds, firstIds);
+  assert.equal(delegated.rightIds, secondIds);
+});
+
+test('areStudioEditorIdListsEqual fails closed without the shared selection API', () => {
+  assert.equal(idListEqualityAdapter.areStudioEditorIdListsEqual([], [], {}), null);
 });
 
 test('applyEditorSelectionState keeps only connected selections on the active slide', () => {
