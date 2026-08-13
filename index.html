@@ -1503,6 +1503,7 @@
   <script src="/shared/studio-editor-slide-mutation-shell-runtime.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-global-shortcuts.js"></script>
+  <script src="/shared/studio-editor-bootstrap.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-table-navigation.js"></script>
   <script src="/shared/studio-editor-keyboard.js"></script>
@@ -5492,42 +5493,32 @@
       document.documentElement.classList.remove('dark');
     }
 
-    // Initialize Dashboard
-    document.addEventListener('DOMContentLoaded', () => {
-      loadPresentations();
-      renderWallpaperPresets();
-      renderThemeTokenPresets();
-      updateWallpaperActionState();
-      updateThemeTokenActionState();
-      updateGridSnapActionState();
-      updateDeckReadyToolbarActionState();
-      updateBlockActionState();
-      updateTemplateActionState();
-      updateMasterSlideActionState();
-      updateAssetLibraryState();
-      
-      // Update theme toggle icons
-      const themeIcon = document.getElementById('themeIcon');
-      const themeIconEditor = document.getElementById('themeIconEditor');
-      if (themeIcon) themeIcon.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
-      if (themeIconEditor) themeIconEditor.textContent = savedTheme === 'dark' ? 'light_mode' : 'dark_mode';
-      
-      // Bind shortcuts globally
-      bindStudioGlobalKeydownHandler();
-
-      // Bind window resize for FIT zoom scaling
-      window.addEventListener('resize', () => {
-        if (document.getElementById('zoomSelect') && document.getElementById('zoomSelect').value === 'fit') {
-          applyZoom('fit');
-        }
-        syncCanvasRulers();
-      });
-      const canvasStage = document.getElementById('canvasStage');
-      if (canvasStage) {
-        canvasStage.addEventListener('scroll', syncCanvasRulers);
-      }
-      syncCanvasRulers();
-    });
+    const studioEditorBootstrap = typeof SlideNextStudioEditorBootstrap !== 'undefined'
+      && SlideNextStudioEditorBootstrap
+      && typeof SlideNextStudioEditorBootstrap.createStudioEditorBootstrap === 'function'
+      ? SlideNextStudioEditorBootstrap.createStudioEditorBootstrap({
+          documentRef: document,
+          windowRef: window,
+          savedTheme,
+          loadPresentations,
+          renderWallpaperPresets,
+          renderThemeTokenPresets,
+          updateWallpaperActionState,
+          updateThemeTokenActionState,
+          updateGridSnapActionState,
+          updateDeckReadyToolbarActionState,
+          updateBlockActionState,
+          updateTemplateActionState,
+          updateMasterSlideActionState,
+          updateAssetLibraryState,
+          bindStudioGlobalKeydownHandler,
+          applyZoom,
+          syncCanvasRulers
+        })
+      : null;
+    if (studioEditorBootstrap && typeof studioEditorBootstrap.bindDomReady === 'function') {
+      studioEditorBootstrap.bindDomReady();
+    }
 
     function bindStudioGlobalKeydownHandler() {
       const shortcutsApi = typeof SlideNextStudioEditorGlobalShortcuts !== 'undefined'
