@@ -56,6 +56,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : typeof options.buildCanonicalDeck === 'function'
@@ -72,6 +75,7 @@
       : null;
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -156,13 +160,17 @@
     const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildCanonicalThemeBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalThemeBaseline({
         ...baselineOptions,
         canonicalDeckApi,
         canonicalStateApi,
         buildCanonicalDeck,
-        buildCanonicalDeckBaseline
+        buildCanonicalDeckBaseline,
+        getPendingCanonicalDeck
       })
     );
     const buildCanonicalThemeDeck = (tokenUpdates = {}, mutationOptions = {}) => {

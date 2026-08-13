@@ -47,6 +47,9 @@
         getCanonicalDeckBaseline: typeof options.getCanonicalDeckBaseline === 'function'
           ? options.getCanonicalDeckBaseline
           : null,
+        getPendingCanonicalDeck: typeof options.getPendingCanonicalDeck === 'function'
+          ? options.getPendingCanonicalDeck
+          : null,
         buildCanonicalDeckBaseline: typeof options.buildCanonicalDeckBaseline === 'function'
           ? options.buildCanonicalDeckBaseline
           : null

@@ -11104,6 +11104,7 @@
           sourceDoc || getIframeDoc(),
           getStudioEditorSessionToken()
         ),
+        getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
         buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions),
         finalizeMutation: finalizeEditorDeckMutation,
         updateActionState: updateThemeTokenActionState

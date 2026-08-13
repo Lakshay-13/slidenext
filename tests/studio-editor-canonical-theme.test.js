@@ -78,6 +78,26 @@ test('buildStudioCanonicalThemeBaseline prefers a valid live canonical deck', ()
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalThemeBaseline prefers pending canonical state over live state', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    theme: { tokens: { '--color-primary': '#pending' } },
+    slides: [{ id: 'slide-1' }]
+  });
+
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    buildCanonicalDeck() {
+      throw new Error('pending state should prevent a compatibility rebuild');
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+});
+
 test('buildStudioCanonicalThemeBaseline delegates baseline resolution to canonical state', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
@@ -96,6 +116,7 @@ test('buildStudioCanonicalThemeBaseline delegates baseline resolution to canonic
         };
       }
     },
+    getPendingCanonicalDeck: () => sourceDeck,
     getCanonicalDeckBaseline,
     buildCanonicalDeckBaseline,
     sourceDocument
@@ -104,6 +125,7 @@ test('buildStudioCanonicalThemeBaseline delegates baseline resolution to canonic
   assert.equal(result, sourceDeck);
   assert.equal(readerDocument, sourceDocument);
   assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
+  assert.equal(typeof readerOptions.getPendingCanonicalDeck, 'function');
   assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

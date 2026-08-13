@@ -55,6 +55,9 @@ test('applyStudioThemeTokenPreset mirrors and persists a ready deck theme preset
     getCanonicalDeckBaseline() {
       return null;
     },
+    getPendingCanonicalDeck() {
+      return { kind: 'slidenext.deck', theme: { tokens: { '--color-primary': '#pending' } } };
+    },
     buildCanonicalDeckBaseline(doc) {
       calls.push(['baseline', doc]);
       return { kind: 'slidenext.deck', theme: { tokens: {} } };
@@ -71,6 +74,7 @@ test('applyStudioThemeTokenPreset mirrors and persists a ready deck theme preset
   assert.equal(result, true);
   assert.deepEqual(calls.map(([name]) => name), ['baseline-helper', 'baseline', 'build', 'apply', 'finalize', 'sync']);
   assert.equal(typeof calls[0][1].getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof calls[0][1].getPendingCanonicalDeck, 'function');
   assert.equal(calls[4][1], 'Auto: Applied Aurora Glass Theme');
   assert.equal(calls[4][2].canonicalDeck, canonicalDeck);
 });
@@ -175,6 +179,10 @@ test('index routes theme-token mutations through the shared controller', () => {
   assert.match(
     source,
     /buildCanonicalDeckBaseline: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc \|\| getIframeDoc\(\), buildOptions\)/
+  );
+  assert.match(
+    source,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
 });
 
