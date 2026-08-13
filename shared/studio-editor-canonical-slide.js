@@ -41,6 +41,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildBaseline = typeof options.buildBaseline === 'function'
       ? options.buildBaseline
       : null;
@@ -59,6 +62,7 @@
             canonicalStateApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline
           })
         : null
@@ -105,6 +109,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
@@ -121,6 +128,7 @@
     if (createCanonicalDeckResolver) {
       const resolveCanonicalDeck = createCanonicalDeckResolver({
         getCanonicalDeck: () => null,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -133,6 +141,7 @@
     }
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck

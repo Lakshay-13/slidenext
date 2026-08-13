@@ -5,6 +5,7 @@ const reorderController = require('../shared/studio-editor-slide-reorder-control
 test('slide reorder controller assembles canonical and persistence dependencies', () => {
   const calls = [];
   const liveCanonicalDeck = { id: 'live-baseline' };
+  const pendingCanonicalDeck = { id: 'pending-baseline' };
   const legacyCanonicalDeck = { slides: [] };
   const canonicalBuilders = {
     buildCanonicalReorderSlideBaseline() {
@@ -40,6 +41,7 @@ test('slide reorder controller assembles canonical and persistence dependencies'
       }
     },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     getSlides: () => [{ id: 'slide-1' }],
     getSlideId: (slide) => slide.id,
@@ -59,6 +61,7 @@ test('slide reorder controller assembles canonical and persistence dependencies'
   assert.equal(calls[0][1].buildCanonicalDeck({}), legacyCanonicalDeck);
   assert.equal(calls[0][1].buildCanonicalDeckBaseline({}).id, 'baseline-fallback');
   assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
+  assert.equal(calls[0][1].getPendingCanonicalDeck(), pendingCanonicalDeck);
   assert.equal(calls[1][0], 'reorder');
   assert.equal(calls[1][1], 0);
   assert.equal(calls[1][2], 1);

@@ -3140,6 +3140,7 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
           applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),

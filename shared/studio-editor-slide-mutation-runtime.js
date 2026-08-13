@@ -42,6 +42,7 @@
     const slideReorderController = reorderApi
       ? reorderApi.createStudioEditorSlideReorderController({
           ...shared,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           captureSlideMutationState: options.captureSlideMutationState,
           applyReorder: options.applyReorder,
           restoreDeckViewAfterSlideMutation: options.restoreDeckViewAfterSlideMutation

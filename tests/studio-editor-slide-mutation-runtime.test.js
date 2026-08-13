@@ -25,6 +25,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     getSlides() {},
     getSlideId() {},
     buildCanonicalDeckBaseline() {},
+    getPendingCanonicalDeck() {},
     getCanonicalDeckBaseline() {},
     captureSlideMutationState() {},
     applyReorder() {},
@@ -61,6 +62,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
 
   assert.deepEqual(result, controllers);
   assert.equal(calls[0][1].canonicalDeckApi, callbacks.canonicalDeckApi);
+  assert.equal(calls[0][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[1][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
   assert.equal(calls[0][1].rollbackMutation, callbacks.rollbackMutation);
@@ -109,5 +111,9 @@ test('index wires structural slide mutations through the runtime module', () => 
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorSlideDuplicationController\.createStudioEditorSlideDuplicationController\(/
+  );
+  assert.match(
+    fileContent,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
 });
