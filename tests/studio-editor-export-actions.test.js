@@ -290,6 +290,7 @@ test('PDF and PPTX exports rebuild from the current DOM while a transaction is p
 });
 
 test('PDF and PPTX exports prefer a pending canonical sidecar before rebuilding', async () => {
+  const sourceDocument = { id: 'editor-document' };
   const pendingDeck = { slides: [{ id: 'pending-slide' }] };
   const rebuiltDeck = { slides: [{ id: 'rebuilt-slide' }] };
   let rebuildCalls = 0;
@@ -297,7 +298,11 @@ test('PDF and PPTX exports prefer a pending canonical sidecar before rebuilding'
   let pptxDeck = null;
   const sharedOptions = {
     resolveReadyState: () => ({ canUseDeckActions: true }),
-    getPendingCanonicalDeck: () => pendingDeck,
+    getSourceDocument: () => sourceDocument,
+    getPendingCanonicalDeck(documentRef) {
+      assert.equal(documentRef, sourceDocument);
+      return pendingDeck;
+    },
     buildCanonicalDeck: () => {
       rebuildCalls += 1;
       return rebuiltDeck;

@@ -43,6 +43,7 @@
           pdfExport: options.pdfExport,
           pptxExport: options.pptxExport,
           documentRef: options.documentRef,
+          getSourceDocument: options.getDocument,
           resolvePdfBaseHref: options.resolvePdfBaseHref,
           setStatus: options.setStatus,
           resolveSourcePath: options.resolveSourcePath,

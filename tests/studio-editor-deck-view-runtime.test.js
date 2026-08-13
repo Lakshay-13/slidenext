@@ -106,6 +106,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
   assert.equal(findCall('export').buildCanonicalDeck, callbacks.buildCanonicalDeck);
   assert.equal(findCall('export').buildMutationCanonicalDeck, callbacks.buildMutationCanonicalDeck);
   assert.equal(findCall('export').getPendingTransaction, callbacks.getPendingTransaction);
+  assert.equal(findCall('export').getSourceDocument, callbacks.getDocument);
   assert.equal(findCall('export').resolvePdfBaseHref, callbacks.resolvePdfBaseHref);
   assert.equal(findCall('export').pptxExport, callbacks.pptxExport);
   assert.equal(findCall('snapshot').snapshotApi, callbacks.snapshotApi);

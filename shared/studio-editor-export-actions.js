@@ -70,6 +70,7 @@
   }
 
   function resolveStudioExportCanonicalDeck(options = {}) {
+    const sourceDocument = options.sourceDocument || null;
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
@@ -92,7 +93,7 @@
 
     if (getPendingCanonicalDeck) {
       try {
-        const pendingCanonicalDeck = getPendingCanonicalDeck();
+        const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
         if (isValidDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
       } catch (error) {
         // Continue through the transaction and live-baseline fallbacks.
@@ -109,7 +110,7 @@
     }
     if (pendingTransaction && buildMutationCanonicalDeck) {
       try {
-        const mutationCanonicalDeck = buildMutationCanonicalDeck();
+        const mutationCanonicalDeck = buildMutationCanonicalDeck(sourceDocument);
         if (isValidDeck(mutationCanonicalDeck)) {
           return mutationCanonicalDeck;
         }
@@ -120,7 +121,7 @@
 
     if (getCanonicalDeckBaseline) {
       try {
-        const canonicalDeckBaseline = getCanonicalDeckBaseline();
+        const canonicalDeckBaseline = getCanonicalDeckBaseline(sourceDocument);
         if (isValidDeck(canonicalDeckBaseline)) {
           return canonicalDeckBaseline;
         }
@@ -130,7 +131,7 @@
     }
     if (buildCanonicalDeck) {
       try {
-        const canonicalDeck = buildCanonicalDeck();
+        const canonicalDeck = buildCanonicalDeck(sourceDocument);
         if (isValidDeck(canonicalDeck)) {
           return canonicalDeck;
         }
@@ -172,6 +173,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const getSourceDocument = typeof options.getSourceDocument === 'function'
+      ? options.getSourceDocument
+      : () => documentRef;
     const resolveBaseHref = typeof options.resolveBaseHref === 'function'
       ? options.resolveBaseHref
       : null;
@@ -202,7 +206,14 @@
         return failPdfExport();
       }
 
+      let sourceDocument = documentRef;
+      try {
+        sourceDocument = getSourceDocument() || documentRef;
+      } catch (error) {
+        sourceDocument = documentRef;
+      }
       const canonicalDeck = resolveStudioExportCanonicalDeck({
+        sourceDocument,
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
         getPendingCanonicalDeck,
@@ -361,6 +372,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const getSourceDocument = typeof options.getSourceDocument === 'function'
+      ? options.getSourceDocument
+      : () => documentRef;
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
@@ -378,7 +392,14 @@
       const actionState = resolveStudioExportReadyState(resolveReadyState);
       if (!actionState || !actionState.canUseDeckActions) return false;
 
+      let sourceDocument = documentRef;
+      try {
+        sourceDocument = getSourceDocument() || documentRef;
+      } catch (error) {
+        sourceDocument = documentRef;
+      }
       const canonicalDeck = resolveStudioExportCanonicalDeck({
+        sourceDocument,
         buildCanonicalDeck,
         buildMutationCanonicalDeck,
         getPendingCanonicalDeck,

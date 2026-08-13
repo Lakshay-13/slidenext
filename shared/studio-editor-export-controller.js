@@ -48,6 +48,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const getSourceDocument = typeof options.getSourceDocument === 'function'
+      ? options.getSourceDocument
+      : null;
     const resolvePdfBaseHref = typeof options.resolvePdfBaseHref === 'function'
       ? options.resolvePdfBaseHref
       : null;
@@ -72,6 +75,7 @@
         isCanonicalDeck,
         pdfExport,
         documentRef,
+        getSourceDocument,
         resolveBaseHref: resolvePdfBaseHref,
         sourcePath: resolveValue(options.resolveSourcePath, options.sourcePath || ''),
         setStatus
@@ -97,6 +101,7 @@
         isCanonicalDeck,
         pptxExport,
         documentRef,
+        getSourceDocument,
         setStatus,
         sourcePath: typeof sourcePath === 'string' ? sourcePath : '',
         filename: typeof filename === 'string' ? filename : 'slidenext-presentation.pptx'
