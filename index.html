@@ -5510,18 +5510,12 @@
 
     // 2. Viewer Presentation Modal
     function openPresentationModalWithLoader(startSlideIdx) {
-      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
-        ? SlideNextStudioPreview
-        : null;
-      if (!previewApi || typeof previewApi.openPresentationModalWithLoader !== 'function') {
-        return false;
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.openModal === 'function') {
+        return studioEditorPreviewController.openModal(startSlideIdx);
       }
-      return previewApi.openPresentationModalWithLoader({
-        modalEl: document.getElementById('presentationModal'),
-        iframeEl: document.getElementById('presentationFrame'),
-        bodyEl: document.body,
-        startSlideIdx
-      });
+      return false;
     }
 
     function launchPresentation(url, startSlideIdx) {

@@ -59,6 +59,26 @@ test('launches the shared preview with the live editor session state', () => {
   }]);
 });
 
+test('opens the presentation modal through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      openPresentationModalWithLoader(options) {
+        calls.push(options);
+        return 'modal';
+      }
+    },
+    documentRef: iframeDocument
+  });
+
+  assert.equal(controller.openModal(5), 'modal');
+  assert.deepEqual(calls, [{
+    document: iframeDocument,
+    startSlideIdx: 5
+  }]);
+});
+
 test('launches legacy HTML through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };

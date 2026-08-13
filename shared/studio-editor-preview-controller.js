@@ -162,6 +162,16 @@
       });
     }
 
+    function openModal(startSlideIdx) {
+      if (!previewApi || typeof previewApi.openPresentationModalWithLoader !== 'function') {
+        return false;
+      }
+      return previewApi.openPresentationModalWithLoader({
+        document: documentRef,
+        startSlideIdx
+      });
+    }
+
     function launchUrl(url, startSlideIdx) {
       if (!previewApi || typeof previewApi.launchPresentationUrl !== 'function') return false;
       return previewApi.launchPresentationUrl({
@@ -183,6 +193,7 @@
     return {
       launch,
       launchPreview: launch,
+      openModal,
       launchUrl,
       launchHtml,
       createStudioEditorPreviewFallbackHtmlTransformer,

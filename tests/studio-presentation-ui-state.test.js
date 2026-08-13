@@ -245,6 +245,31 @@ test('preview launch wrappers fail closed when the shared preview runtime is una
   assert.equal(context.launchPresentation('/presentations/missing/index.html', 1), false);
 });
 
+test('openPresentationModalWithLoader delegates to the shared preview controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const openPresentationModalWithLoaderSource = extractFunctionSource(
+    fileContent,
+    'function openPresentationModalWithLoader(startSlideIdx) {',
+    '\n\n    function launchPresentation(url, startSlideIdx) {'
+  );
+  const calls = [];
+  const context = {
+    studioEditorPreviewController: {
+      openModal(startSlideIdx) {
+        calls.push(startSlideIdx);
+        return 'modal-result';
+      }
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(openPresentationModalWithLoaderSource, context);
+
+  assert.equal(context.openPresentationModalWithLoader(5), 'modal-result');
+  assert.deepEqual(calls, [5]);
+});
+
 test('launchPreview does not open preview flows when deck-ready state disables preview', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(
