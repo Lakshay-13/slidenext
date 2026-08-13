@@ -21,6 +21,7 @@ test('master-slide runtime composes controller dependencies without changing the
     canonicalStateApi: {},
     renderApi: {},
     getCanonicalDeck: () => null,
+    getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     getDocument: () => null,
     getSlides: () => [],
@@ -43,6 +44,7 @@ test('master-slide runtime composes controller dependencies without changing the
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
   assert.equal(calls[0].getDocument, options.getDocument);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].getSlides, options.getSlides);
   assert.equal(calls[0].setActiveSlide, options.setActiveSlide);
   assert.equal(calls[0].finalizeMutation, options.finalizeMutation);
@@ -71,5 +73,9 @@ test('index wires master-slide persistence through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorMasterSlideController\.createStudioEditorMasterSlideController\(/
+  );
+  assert.match(
+    fileContent,
+    /getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
 });

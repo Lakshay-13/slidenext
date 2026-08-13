@@ -88,13 +88,17 @@ test('master slide controller resolves the active slide id with the current docu
   assert.equal(result.masterSlides[0].id, 'document-bound-master');
 });
 
-test('master slide mutations prefer a valid live canonical baseline', () => {
+test('master slide mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Opening', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Pending Opening', nodes: [{ id: 'title', text: 'Hello' }] }]
   });
   let didBuildFromDocument = false;
   const controller = masterSlideController.createStudioEditorMasterSlideController({
     canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
     canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
@@ -107,6 +111,7 @@ test('master slide mutations prefer a valid live canonical baseline', () => {
   const result = controller.saveActiveSlide({ id: 'live-master', name: 'Live Master' });
 
   assert.equal(result.masterSlides[0].id, 'live-master');
+  assert.equal(result.masterSlides[0].slide.title, 'Pending Opening');
   assert.equal(didBuildFromDocument, false);
 });
 
@@ -123,6 +128,9 @@ test('master slide controller delegates canonical deck resolution to shared stat
         return () => deck;
       }
     },
+    getPendingCanonicalDeck() {
+      return deck;
+    },
     getCanonicalDeckBaseline() {
       throw new Error('shared resolver should own baseline resolution');
     },
@@ -136,6 +144,7 @@ test('master slide controller delegates canonical deck resolution to shared stat
 
   assert.equal(result.masterSlides[0].slide.title, 'Shared');
   assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });
