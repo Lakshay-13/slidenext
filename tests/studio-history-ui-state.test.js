@@ -8,6 +8,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
 const historyState = require('../shared/studio-editor-history-state.js');
+const historySaveAction = require('../shared/studio-editor-history-save-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -43,17 +44,64 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
 }
 
 function loadSaveHistoryState(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function saveHistoryState(debounce = false, transaction = null) {',
-    '\n\n    function buildHistoryFrameHtml('
-  );
-  context.SlideNextStudioHistory = {
-    ...studioHistory,
-    ...(context.SlideNextStudioHistory || {})
-  };
-  context.SlideNextStudioEditorHistoryState = historyState;
-  vm.runInContext(helperSource, context);
+  const configuredHistoryApi = Object.prototype.hasOwnProperty.call(
+    context,
+    'SlideNextStudioHistory'
+  )
+    ? context.SlideNextStudioHistory
+    : {};
+  context.SlideNextStudioHistory = configuredHistoryApi === null
+    ? null
+    : {
+        ...studioHistory,
+        ...configuredHistoryApi
+      };
+  context.SlideNextStudioEditorHistoryState = Object.prototype.hasOwnProperty.call(
+    context,
+    'SlideNextStudioEditorHistoryState'
+  )
+    ? context.SlideNextStudioEditorHistoryState
+    : historyState;
+  context.saveHistoryState = historySaveAction.createStudioEditorHistorySaveAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyApi: context.SlideNextStudioHistory,
+    historyStateApi: context.SlideNextStudioEditorHistoryState,
+    transactionApi: context.SlideNextStudioEditorTransaction || null,
+    getPendingTransaction: () => context.pendingEditorTransaction,
+    setPendingTransaction: (nextTransaction) => {
+      context.pendingEditorTransaction = nextTransaction;
+      return nextTransaction;
+    },
+    setPendingCanonicalDeck: (nextCanonicalDeck) => {
+      context.pendingEditorCanonicalDeck = nextCanonicalDeck;
+      return nextCanonicalDeck;
+    },
+    setLiveCanonicalDeck: (nextCanonicalDeck) => {
+      if (typeof context.setEditorLiveCanonicalDeck === 'function') {
+        const documentRef = typeof context.getIframeDoc === 'function'
+          ? context.getIframeDoc()
+          : null;
+        const sessionToken = typeof context.getStudioEditorSessionToken === 'function'
+          ? context.getStudioEditorSessionToken()
+          : null;
+        context.setEditorLiveCanonicalDeck(nextCanonicalDeck, documentRef, sessionToken);
+      }
+    },
+    getLiveCanonicalDeck: () => null,
+    isCanonicalDeck: typeof context.getEditorCanonicalDeckValidator === 'function'
+      ? context.getEditorCanonicalDeckValidator()
+      : null,
+    getTimer: () => context.undoDebounceTimer,
+    setTimer: (nextTimer) => {
+      context.undoDebounceTimer = nextTimer;
+      return nextTimer;
+    },
+    captureState: context.captureState,
+    scheduleOptions: {
+      clearScheduledCapture: context.clearTimeout,
+      scheduleCapture: context.setTimeout
+    }
+  });
 }
 
 function loadHistoryStepAdapter(fileContent, context) {
@@ -1331,13 +1379,9 @@ test('saveHistoryState preserves canonical sidecars through the shared handler',
 
 test('saveHistoryState passes a null history API when the shared runtime is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveHistoryStateSource = extractFunctionSource(
-    fileContent,
-    'function saveHistoryState(debounce = false, transaction = null) {',
-    '\n\n    function buildHistoryFrameHtml('
-  );
   let capturedOptions = null;
   const context = {
+    SlideNextStudioHistory: null,
     SlideNextStudioEditorHistoryState: {
       createStudioEditorHistorySaveAdapter(options) {
         capturedOptions = options;
@@ -1359,7 +1403,7 @@ test('saveHistoryState passes a null history API when the shared runtime is unav
   };
 
   vm.createContext(context);
-  vm.runInContext(saveHistoryStateSource, context);
+  loadSaveHistoryState(fileContent, context);
 
   assert.deepEqual(context.saveHistoryState(), { didCapture: true });
   assert.equal(capturedOptions.historyApi, null);
