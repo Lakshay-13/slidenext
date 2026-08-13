@@ -2008,7 +2008,7 @@ test('deleteVersion reuses the shared delete request helper when available', asy
   const deleteVersionSource = extractFunctionSource(
     fileContent,
     'async function deleteVersion(filename) {',
-    '\n\n    // Slide Elements / Layers List Inspector Panel'
+    '\n\n    // Presentation Live Preview from workspace'
   );
 
   let helperArgs = null;
@@ -2118,7 +2118,7 @@ test('deleteVersion reuses the shared delete request executor when available', a
   const deleteVersionSource = extractFunctionSource(
     fileContent,
     'async function deleteVersion(filename) {',
-    '\n\n    // Slide Elements / Layers List Inspector Panel'
+    '\n\n    // Presentation Live Preview from workspace'
   );
 
   let delegatedArgs = null;

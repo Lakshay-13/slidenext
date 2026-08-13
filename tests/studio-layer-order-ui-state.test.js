@@ -12,6 +12,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
+const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -1299,12 +1300,6 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
 });
 
 test('changeLayerZIndexByRef resolves selected elements from the iframe document', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('function changeLayerZIndexByRef(event, action) {');
-  const end = fileContent.indexOf('\n\n    // Presentation Live Preview', start);
-  assert.notEqual(start, -1);
-  assert.notEqual(end, -1);
-
   const iframeDoc = { id: 'iframe-document' };
   const selectedElements = [{ id: 'selected' }];
   let delegatedOptions = null;
@@ -1331,11 +1326,20 @@ test('changeLayerZIndexByRef resolves selected elements from the iframe document
     finalizeLayerOrderMutation() {}
   };
 
-  vm.createContext(context);
-  vm.runInContext(fileContent.slice(start, end), context);
-
   const event = { target: { id: 'layer-row' } };
-  assert.equal(context.changeLayerZIndexByRef(event, 'front'), 'delegated-change');
+  const accessors = layerAccessors.createStudioEditorLayerAccessors({
+    controller: context.SlideNextStudioEditorLayerController,
+    getIframeDoc: context.getIframeDoc,
+    resolveLayerRowElement: context.resolveLayerRowElement,
+    refreshLayerOrderUi: context.refreshLayerOrderUi,
+    isElementLocked: context.isElementLocked,
+    reorderSlideLayers: context.reorderSlideLayers,
+    liveSelectionApi: context.SlideNextStudioEditorLiveSelection,
+    getSelectedElements: context.getStudioSelectedElements,
+    syncLayerOrderZIndexInput: context.syncLayerOrderZIndexInput,
+    finalizeLayerOrderMutation: context.finalizeLayerOrderMutation
+  });
+  assert.equal(accessors.changeLayerZIndexByRef(event, 'front'), 'delegated-change');
   assert.equal(delegatedOptions.event, event);
   assert.equal(delegatedOptions.action, 'front');
   assert.deepEqual(delegatedOptions.selectedElements, selectedElements);

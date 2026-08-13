@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerView = require('../shared/studio-editor-layer-view.js');
+const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -44,6 +45,20 @@ function createListContainer() {
   };
 }
 
+function createLayerAccessors(context) {
+  return layerAccessors.createStudioEditorLayerAccessors({
+    controller: context.SlideNextStudioEditorLayerController,
+    documentRef: context.document,
+    getIframeDoc: context.getIframeDoc,
+    getActiveSlide: context.getActiveSlide,
+    getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
+    buildEditorDeckSnapshot: context.buildEditorDeckSnapshot,
+    getSelectedElementIds: context.getCommittedSelectedEditorElementIds,
+    getElementByEditorId: context.getElementByEditorId,
+    buildLayerOrderSelectionActionState: context.buildLayerOrderSelectionActionState
+  });
+}
+
 function getLayerButtonAttributes(html, displayName) {
   const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(
@@ -74,12 +89,6 @@ function hasDisabledAttribute(attrs) {
 }
 
 test('resolveLayerRowElement delegates stable row lookup to the shared controller', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const source = extractFunctionSource(
-    fileContent,
-    'function resolveLayerRowElement(row) {',
-    '\n\n    function selectLayerElementByRef'
-  );
   const row = { dataset: { editorElementId: 'node-1' } };
   const target = { id: 'node-1' };
   const calls = [];
@@ -95,22 +104,14 @@ test('resolveLayerRowElement delegates stable row lookup to the shared controlle
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(source, context);
-
-  assert.equal(context.resolveLayerRowElement(row), target);
+  const accessors = createLayerAccessors(context);
+  assert.equal(accessors.resolveLayerRowElement(row), target);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].row, row);
   assert.equal(typeof calls[0].getElementByEditorId, 'function');
 });
 
 test('updateLayersList delegates layer synchronization to the shared layer controller', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateLayersListSource = extractFunctionSource(
-    fileContent,
-    'function updateLayersList() {',
-    '\n\n    function resolveLayerRowElement(row) {'
-  );
   const iframeDoc = { id: 'doc' };
   const activeSlide = { id: 'slide-1' };
   const listContainer = createListContainer();
@@ -150,10 +151,7 @@ test('updateLayersList delegates layer synchronization to the shared layer contr
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateLayersListSource, context);
-
-  context.updateLayersList();
+  createLayerAccessors(context).updateLayersList();
 
   assert.equal(delegatedOptions.documentRef, context.document);
   assert.equal(delegatedOptions.iframeDoc, iframeDoc);
@@ -163,13 +161,6 @@ test('updateLayersList delegates layer synchronization to the shared layer contr
 });
 
 test('updateLayersList disables row layer controls when a layer cannot move in that direction', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateLayersListSource = extractFunctionSource(
-    fileContent,
-    'function updateLayersList() {',
-    '\n\n    function resolveLayerRowElement(row) {'
-  );
-
   const backElement = { id: 'back', isConnected: true, locked: false };
   const middleElement = { id: 'middle', isConnected: true, locked: false };
   const lockedFrontElement = { id: 'locked-front', isConnected: true, locked: true };
@@ -227,11 +218,10 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
     }
   };
 
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   vm.createContext(context);
   loadBuildLayerOrderSelectionActionState(fileContent, context);
-  vm.runInContext(updateLayersListSource, context);
-
-  context.updateLayersList();
+  createLayerAccessors(context).updateLayersList();
 
   const backLayerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Back Layer');
   assert.equal(hasDisabledAttribute(backLayerButtons.forwardAttrs), false);
@@ -250,13 +240,6 @@ test('updateLayersList disables row layer controls when a layer cannot move in t
 });
 
 test('updateLayersList renders canonical layer snapshots when the editor frame is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateLayersListSource = extractFunctionSource(
-    fileContent,
-    'function updateLayersList() {',
-    '\n\n    function resolveLayerRowElement(row) {'
-  );
-
   const listContainer = createListContainer();
   let getIframeDocCalls = 0;
   let getNormalizedSlideLayerOrderCalls = 0;
@@ -311,11 +294,10 @@ test('updateLayersList renders canonical layer snapshots when the editor frame i
     }
   };
 
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   vm.createContext(context);
   loadBuildLayerOrderSelectionActionState(fileContent, context);
-  vm.runInContext(updateLayersListSource, context);
-
-  context.updateLayersList();
+  createLayerAccessors(context).updateLayersList();
 
   assert.match(listContainer.innerHTML, /Heading: &quot;Welcome&quot;|Heading: "Welcome"/);
   assert.match(listContainer.innerHTML, /selectLayerElementByRef\(event\)" disabled/);

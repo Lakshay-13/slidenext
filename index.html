@@ -1370,6 +1370,7 @@
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
+  <script src="/shared/studio-editor-layer-accessors.js"></script>
   <script src="/shared/studio-editor-layout-mode.js"></script>
   <script src="/shared/studio-editor-layout-mode-view.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
@@ -1655,6 +1656,52 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
+    const studioEditorLayerAccessorsApi = typeof SlideNextStudioEditorLayerAccessors !== 'undefined'
+      ? SlideNextStudioEditorLayerAccessors
+      : null;
+    const studioEditorLayerAccessors = studioEditorLayerAccessorsApi
+      && typeof studioEditorLayerAccessorsApi.createStudioEditorLayerAccessors === 'function'
+      ? studioEditorLayerAccessorsApi.createStudioEditorLayerAccessors({
+          controller: typeof SlideNextStudioEditorLayerController !== 'undefined'
+            ? SlideNextStudioEditorLayerController
+            : null,
+          documentRef: document,
+          getIframeDoc,
+          getActiveSlide,
+          getNormalizedSlideLayerOrder,
+          buildEditorDeckSnapshot,
+          getSelectedElementIds: typeof getCommittedSelectedEditorElementIds === 'function'
+            ? getCommittedSelectedEditorElementIds
+            : null,
+          getElementByEditorId,
+          buildLayerOrderSelectionActionState,
+          selectElement,
+          getCommittedSelectedEditorElementIds,
+          deselectElement,
+          restoreCommittedSelectionByIdsOnActiveSlide,
+          applyEditorSelectionState,
+          refreshSelectionClasses,
+          toggleSelectedElementsVisibility,
+          refreshLayerOrderUi,
+          isElementLocked,
+          reorderSlideLayers,
+          liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+            ? SlideNextStudioEditorLiveSelection
+            : null,
+          getSelectedElements: typeof getStudioSelectedElements === 'function'
+            ? getStudioSelectedElements
+            : null,
+          syncLayerOrderZIndexInput,
+          finalizeLayerOrderMutation
+        })
+      : null;
+    const studioEditorLayerGlobalApi = studioEditorLayerAccessorsApi
+      && typeof studioEditorLayerAccessorsApi.createStudioEditorLayerGlobalApi === 'function'
+      ? studioEditorLayerAccessorsApi.createStudioEditorLayerGlobalApi({
+          accessors: studioEditorLayerAccessors
+        })
+      : {};
+    Object.assign(globalThis, studioEditorLayerGlobalApi);
     const studioEditorShellStateRuntime = typeof SlideNextStudioEditorShellStateRuntime !== 'undefined'
       && SlideNextStudioEditorShellStateRuntime
       && typeof SlideNextStudioEditorShellStateRuntime.createStudioEditorShellStateRuntime === 'function'
@@ -14305,98 +14352,6 @@
           }
         });
       }
-    }
-
-    // Slide Elements / Layers List Inspector Panel
-    function updateLayersList() {
-      const iframeDoc = arguments.length > 0 && arguments[0] ? arguments[0] : getIframeDoc();
-      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
-        ? SlideNextStudioEditorLayerController
-        : null;
-      if (!layerController || typeof layerController.syncStudioLayerList !== 'function') {
-        return false;
-      }
-      return layerController.syncStudioLayerList({
-        documentRef: document,
-        iframeDoc,
-        getActiveSlide,
-        getNormalizedSlideLayerOrder,
-        buildEditorDeckSnapshot,
-        getSelectedElementIds: typeof getCommittedSelectedEditorElementIds === 'function'
-          ? getCommittedSelectedEditorElementIds
-          : null,
-        getElementByEditorId,
-        buildLayerOrderSelectionActionState
-      });
-    }
-
-    function resolveLayerRowElement(row) {
-      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
-        ? SlideNextStudioEditorLayerController
-        : null;
-      if (!layerController || typeof layerController.resolveStudioLayerRowElement !== 'function') {
-        return null;
-      }
-      return layerController.resolveStudioLayerRowElement({
-        row,
-        getElementByEditorId
-      });
-    }
-
-    function selectLayerElementByRef(event) {
-      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
-        ? SlideNextStudioEditorLayerController
-        : null;
-      if (!layerController || typeof layerController.selectStudioLayerElementByRef !== 'function') {
-        return false;
-      }
-      return layerController.selectStudioLayerElementByRef({
-        event,
-        resolveLayerRowElement,
-        selectElement,
-        updateLayersList
-      });
-    }
-
-    function toggleLayerVisibilityByRef(event) {
-      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
-        ? SlideNextStudioEditorLayerController
-        : null;
-      if (!layerController || typeof layerController.toggleStudioLayerVisibilityByRef !== 'function') {
-        return false;
-      }
-      return layerController.toggleStudioLayerVisibilityByRef({
-        event,
-        resolveLayerRowElement,
-        updateLayersList,
-        getCommittedSelectedEditorElementIds,
-        deselectElement,
-        restoreCommittedSelectionByIdsOnActiveSlide,
-        applyEditorSelectionState,
-        refreshSelectionClasses,
-        toggleSelectedElementsVisibility
-      });
-    }
-    
-    function changeLayerZIndexByRef(event, action) {
-      const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
-        ? SlideNextStudioEditorLayerController
-        : null;
-      if (!layerController || typeof layerController.changeStudioLayerZIndexByRef !== 'function') {
-        return false;
-      }
-      return layerController.changeStudioLayerZIndexByRef({
-        event,
-        action,
-        resolveLayerRowElement,
-        refreshLayerOrderUi,
-        isElementLocked,
-        reorderSlideLayers,
-        liveSelectionApi: SlideNextStudioEditorLiveSelection,
-        selectedElements: getStudioSelectedElements(getIframeDoc()),
-        syncLayerOrderZIndexInput,
-        finalizeLayerOrderMutation
-      });
     }
 
     // Presentation Live Preview from workspace

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
+const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -48,14 +49,33 @@ function loadRefreshLayerOrderUi(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-test('toggleLayerVisibilityByRef restores preserved selection when the visibility toggle fails', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const toggleLayerVisibilityByRefSource = extractFunctionSource(
-    fileContent,
-    'function toggleLayerVisibilityByRef(event) {',
-    '\n    \n    function changeLayerZIndexByRef(event, action) {'
-  );
+function createLayerAccessors(context) {
+  return layerAccessors.createStudioEditorLayerAccessors({
+    controller: context.SlideNextStudioEditorLayerController || layerController,
+    documentRef: context.document,
+    getIframeDoc: context.getIframeDoc,
+    getElementByEditorId: context.getElementByEditorId,
+    resolveLayerRowElement: context.resolveLayerRowElement,
+    updateLayersList: context.updateLayersList,
+    selectElement: context.selectElement,
+    getCommittedSelectedEditorElementIds: context.getCommittedSelectedEditorElementIds,
+    deselectElement: context.deselectElement,
+    restoreCommittedSelectionByIdsOnActiveSlide: context.restoreCommittedSelectionByIdsOnActiveSlide,
+    applyEditorSelectionState: context.applyEditorSelectionState,
+    refreshSelectionClasses: context.refreshSelectionClasses,
+    toggleSelectedElementsVisibility: context.toggleSelectedElementsVisibility,
+    refreshLayerOrderUi: context.refreshLayerOrderUi,
+    isElementLocked: context.isElementLocked,
+    reorderSlideLayers: context.reorderSlideLayers,
+    liveSelectionApi: context.SlideNextStudioEditorLiveSelection,
+    getSelectedElements: context.getSelectedElements
+      || (() => Array.isArray(context.selectedElements) ? context.selectedElements : []),
+    syncLayerOrderZIndexInput: context.syncLayerOrderZIndexInput,
+    finalizeLayerOrderMutation: context.finalizeLayerOrderMutation
+  });
+}
 
+test('toggleLayerVisibilityByRef restores preserved selection when the visibility toggle fails', () => {
   const target = { id: 'target' };
   const row = { id: 'row-1' };
   const calls = [];
@@ -86,9 +106,6 @@ test('toggleLayerVisibilityByRef restores preserved selection when the visibilit
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(toggleLayerVisibilityByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -104,7 +121,7 @@ test('toggleLayerVisibilityByRef restores preserved selection when the visibilit
     }
   };
 
-  context.toggleLayerVisibilityByRef(event);
+  createLayerAccessors(context).toggleLayerVisibilityByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -125,13 +142,6 @@ test('toggleLayerVisibilityByRef restores preserved selection when the visibilit
 });
 
 test('toggleLayerVisibilityByRef deselects the temporary target when the visibility toggle fails without preserved selection', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const toggleLayerVisibilityByRefSource = extractFunctionSource(
-    fileContent,
-    'function toggleLayerVisibilityByRef(event) {',
-    '\n    \n    function changeLayerZIndexByRef(event, action) {'
-  );
-
   const target = { id: 'target' };
   const row = { id: 'row-1' };
   const calls = [];
@@ -165,9 +175,6 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(toggleLayerVisibilityByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -183,7 +190,7 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
     }
   };
 
-  context.toggleLayerVisibilityByRef(event);
+  createLayerAccessors(context).toggleLayerVisibilityByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -203,13 +210,6 @@ test('toggleLayerVisibilityByRef deselects the temporary target when the visibil
 });
 
 test('toggleLayerVisibilityByRef skips temporary selection UI sync before restoring preserved selection on success', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const toggleLayerVisibilityByRefSource = extractFunctionSource(
-    fileContent,
-    'function toggleLayerVisibilityByRef(event) {',
-    '\n    \n    function changeLayerZIndexByRef(event, action) {'
-  );
-
   const target = { id: 'target' };
   const row = { id: 'row-1' };
   const calls = [];
@@ -240,9 +240,6 @@ test('toggleLayerVisibilityByRef skips temporary selection UI sync before restor
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(toggleLayerVisibilityByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -258,7 +255,7 @@ test('toggleLayerVisibilityByRef skips temporary selection UI sync before restor
     }
   };
 
-  context.toggleLayerVisibilityByRef(event);
+  createLayerAccessors(context).toggleLayerVisibilityByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -278,13 +275,6 @@ test('toggleLayerVisibilityByRef skips temporary selection UI sync before restor
 });
 
 test('selectLayerElementByRef refreshes the layer list when the row target is stale', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const selectLayerElementByRefSource = extractFunctionSource(
-    fileContent,
-    'function selectLayerElementByRef(event) {',
-    '\n\n    function toggleLayerVisibilityByRef(event) {'
-  );
-
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
@@ -300,9 +290,6 @@ test('selectLayerElementByRef refreshes the layer list when the row target is st
       calls.push(['updateLayersList']);
     }
   };
-
-  vm.createContext(context);
-  vm.runInContext(selectLayerElementByRefSource, context);
 
   const event = {
     currentTarget: {
@@ -320,7 +307,7 @@ test('selectLayerElementByRef refreshes the layer list when the row target is st
     }
   };
 
-  context.selectLayerElementByRef(event);
+  createLayerAccessors(context).selectLayerElementByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -333,13 +320,6 @@ test('selectLayerElementByRef refreshes the layer list when the row target is st
 });
 
 test('selectLayerElementByRef relies on selection sync to refresh the layer list for a live row target', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const selectLayerElementByRefSource = extractFunctionSource(
-    fileContent,
-    'function selectLayerElementByRef(event) {',
-    '\n\n    function toggleLayerVisibilityByRef(event) {'
-  );
-
   const row = { id: 'row-1' };
   const target = { id: 'target-1' };
   const calls = [];
@@ -358,9 +338,6 @@ test('selectLayerElementByRef relies on selection sync to refresh the layer list
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(selectLayerElementByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -377,7 +354,7 @@ test('selectLayerElementByRef relies on selection sync to refresh the layer list
     }
   };
 
-  context.selectLayerElementByRef(event);
+  createLayerAccessors(context).selectLayerElementByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -394,13 +371,6 @@ test('selectLayerElementByRef relies on selection sync to refresh the layer list
 });
 
 test('toggleLayerVisibilityByRef refreshes the layer list when the row target is stale', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const toggleLayerVisibilityByRefSource = extractFunctionSource(
-    fileContent,
-    'function toggleLayerVisibilityByRef(event) {',
-    '\n    \n    function changeLayerZIndexByRef(event, action) {'
-  );
-
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
@@ -420,9 +390,6 @@ test('toggleLayerVisibilityByRef refreshes the layer list when the row target is
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(toggleLayerVisibilityByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -438,7 +405,7 @@ test('toggleLayerVisibilityByRef refreshes the layer list when the row target is
     }
   };
 
-  context.toggleLayerVisibilityByRef(event);
+  createLayerAccessors(context).toggleLayerVisibilityByRef(event);
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -452,12 +419,6 @@ test('toggleLayerVisibilityByRef refreshes the layer list when the row target is
 
 test('changeLayerZIndexByRef refreshes layer controls when the row target is locked', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const changeLayerZIndexByRefSource = extractFunctionSource(
-    fileContent,
-    'function changeLayerZIndexByRef(event, action) {',
-    '\n\n    // Presentation Live Preview from workspace'
-  );
-
   const target = { id: 'target', style: { zIndex: '4' } };
   const row = { id: 'row-1' };
   const calls = [];
@@ -505,8 +466,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
   loadRefreshLayerOrderUi(fileContent, context);
-  vm.runInContext(changeLayerZIndexByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -522,7 +481,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
     }
   };
 
-  context.changeLayerZIndexByRef(event, 'forward');
+  createLayerAccessors(context).changeLayerZIndexByRef(event, 'forward');
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -539,12 +498,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is loc
 
 test('changeLayerZIndexByRef refreshes layer controls when the row target is stale', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const changeLayerZIndexByRefSource = extractFunctionSource(
-    fileContent,
-    'function changeLayerZIndexByRef(event, action) {',
-    '\n\n    // Presentation Live Preview from workspace'
-  );
-
   const row = { id: 'row-1' };
   const calls = [];
   const context = {
@@ -591,8 +544,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
   loadRefreshLayerOrderUi(fileContent, context);
-  vm.runInContext(changeLayerZIndexByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -608,7 +559,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
     }
   };
 
-  context.changeLayerZIndexByRef(event, 'forward');
+  createLayerAccessors(context).changeLayerZIndexByRef(event, 'forward');
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -623,12 +574,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row target is sta
 
 test('changeLayerZIndexByRef refreshes layer controls when the row reorder becomes a no-op', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const changeLayerZIndexByRefSource = extractFunctionSource(
-    fileContent,
-    'function changeLayerZIndexByRef(event, action) {',
-    '\n\n    // Presentation Live Preview from workspace'
-  );
-
   const target = { id: 'target', style: { zIndex: '4' } };
   const row = { id: 'row-1' };
   const calls = [];
@@ -676,8 +621,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
   loadRefreshLayerOrderUi(fileContent, context);
-  vm.runInContext(changeLayerZIndexByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -693,7 +636,7 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
     }
   };
 
-  context.changeLayerZIndexByRef(event, 'forward');
+  createLayerAccessors(context).changeLayerZIndexByRef(event, 'forward');
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
@@ -714,12 +657,6 @@ test('changeLayerZIndexByRef refreshes layer controls when the row reorder becom
 
 test('changeLayerZIndexByRef updates layer controls after a successful row reorder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const changeLayerZIndexByRefSource = extractFunctionSource(
-    fileContent,
-    'function changeLayerZIndexByRef(event, action) {',
-    '\n\n    // Presentation Live Preview from workspace'
-  );
-
   const target = { id: 'target', style: { zIndex: '9' } };
   const row = { id: 'row-1' };
   const zIndexInput = { value: '' };
@@ -776,8 +713,6 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
   loadRefreshLayerOrderUi(fileContent, context);
-  vm.runInContext(changeLayerZIndexByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -793,7 +728,7 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
     }
   };
 
-  context.changeLayerZIndexByRef(event, 'forward');
+  createLayerAccessors(context).changeLayerZIndexByRef(event, 'forward');
 
   assert.equal(zIndexInput.value, '9');
   assert.deepEqual(calls.map(([name]) => name), [
@@ -825,12 +760,6 @@ test('changeLayerZIndexByRef updates layer controls after a successful row reord
 
 test('changeLayerZIndexByRef tolerates a missing z-index input on successful row reorder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const changeLayerZIndexByRefSource = extractFunctionSource(
-    fileContent,
-    'function changeLayerZIndexByRef(event, action) {',
-    '\n\n    // Presentation Live Preview from workspace'
-  );
-
   const target = { id: 'target', style: { zIndex: '11' } };
   const row = { id: 'row-1' };
   const calls = [];
@@ -886,8 +815,6 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
   loadFinalizeLayerOrderMutation(fileContent, context);
   loadSyncLayerOrderZIndexInput(fileContent, context);
   loadRefreshLayerOrderUi(fileContent, context);
-  vm.runInContext(changeLayerZIndexByRefSource, context);
-
   const event = {
     currentTarget: {
       closest(selector) {
@@ -903,7 +830,7 @@ test('changeLayerZIndexByRef tolerates a missing z-index input on successful row
     }
   };
 
-  context.changeLayerZIndexByRef(event, 'forward');
+  createLayerAccessors(context).changeLayerZIndexByRef(event, 'forward');
 
   assert.deepEqual(calls.map(([name]) => name), [
     'preventDefault',
