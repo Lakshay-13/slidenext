@@ -39,6 +39,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const applyRemovalMutation = typeof options.applyRemovalMutation === 'function'
       ? options.applyRemovalMutation
       : () => ({ didRemove: false, transaction: null });
@@ -80,6 +83,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline
             })
           : null;

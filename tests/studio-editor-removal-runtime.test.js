@@ -24,6 +24,7 @@ test('removal runtime composes canonical and mutation dependencies', () => {
     getIframeDoc: () => null,
     assignElementId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyRemovalMutation: () => ({}),
     deselectElement: () => {},
@@ -40,6 +41,7 @@ test('removal runtime composes canonical and mutation dependencies', () => {
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].buildRemovalSelectionActionState, options.buildRemovalSelectionActionState);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyRemovalMutation, options.applyRemovalMutation);
   assert.equal(calls[0].finalizeDeckMutation, options.finalizeDeckMutation);
   assert.equal(calls[0].rollbackMutation, options.rollbackMutation);

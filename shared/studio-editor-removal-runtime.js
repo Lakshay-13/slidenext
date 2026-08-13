@@ -25,6 +25,7 @@
           getIframeDoc: options.getIframeDoc,
           assignElementId: options.assignElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyRemovalMutation: options.applyRemovalMutation,
           deselectElement: options.deselectElement,

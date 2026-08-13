@@ -6,6 +6,7 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
   const calls = [];
   let builderOptions = null;
   const sourceDocument = { id: 'source-doc' };
+  const pendingDeck = { id: 'pending-deck' };
   let receivedDocument = null;
   const target = { dataset: { editorId: 'node-1' } };
   const controller = removalController.createStudioEditorRemovalController({
@@ -28,6 +29,7 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
     assignElementId: (element) => element.dataset.editorId,
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    getPendingCanonicalDeck: () => pendingDeck,
     applyRemovalMutation: (selection, options) => {
       calls.push(['remove', selection, options]);
       return { didRemove: true, transaction: { id: 'tx' } };
@@ -45,6 +47,7 @@ test('removal controller delegates the mutation, deselects, and finalizes', () =
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
   assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(builderOptions.getPendingCanonicalDeck(), pendingDeck);
 });
 
 test('removal controller refreshes removal state when deletion is unavailable', () => {
