@@ -59,9 +59,32 @@ test('buildStudioCanonicalStyleBaseline prefers the live canonical baseline buil
   assert.equal(result, sourceDeck);
 });
 
+test('buildStudioCanonicalStyleBaseline prefers a valid pending canonical deck', () => {
+  const pendingDeck = createSourceDeck();
+  let liveReads = 0;
+  let rebuilds = 0;
+  const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => {
+      liveReads += 1;
+      return createSourceDeck();
+    },
+    buildCanonicalDeckBaseline: () => {
+      rebuilds += 1;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+  assert.equal(liveReads, 0);
+  assert.equal(rebuilds, 0);
+});
+
 test('buildStudioCanonicalStyleBaseline delegates baseline resolution to the shared canonical-state reader', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
+  const getPendingCanonicalDeck = () => sourceDeck;
   let readerOptions = null;
   const result = canonicalStyle.buildStudioCanonicalStyleBaseline({
     canonicalDeckApi: canonicalDeck,
@@ -74,6 +97,7 @@ test('buildStudioCanonicalStyleBaseline delegates baseline resolution to the sha
         };
       }
     },
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline() {
       return null;
     },
@@ -84,6 +108,7 @@ test('buildStudioCanonicalStyleBaseline delegates baseline resolution to the sha
   });
 
   assert.equal(result, sourceDeck);
+  assert.equal(readerOptions.getPendingCanonicalDeck, getPendingCanonicalDeck);
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');

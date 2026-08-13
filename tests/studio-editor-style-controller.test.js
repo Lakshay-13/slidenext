@@ -8,6 +8,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   const calls = [];
   const buildCanonicalDeck = () => ({ id: 'live' });
   const buildCanonicalDeckBaseline = () => ({ id: 'baseline' });
+  const getPendingCanonicalDeck = () => ({ id: 'pending' });
   const element = { dataset: { editorId: 'node-1' } };
   const controller = styleController.createStudioEditorStyleController({
     styleApi: {
@@ -45,6 +46,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
     assignElementId: () => 'node-1',
     buildCanonicalDeck,
     buildCanonicalDeckBaseline,
+    getPendingCanonicalDeck,
     applyStyleMutation: (...args) => {
       calls.push(['apply', ...args]);
       return { didApply: true, displayValue: '32', transaction: { id: 'tx' } };
@@ -58,6 +60,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.equal(calls[1][0], 'builders');
   assert.equal(calls[1][1].buildCanonicalDeck, buildCanonicalDeck);
   assert.equal(calls[1][1].buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
+  assert.equal(calls[1][1].getPendingCanonicalDeck, getPendingCanonicalDeck);
   assert.equal(calls[2][0], 'baseline');
   assert.equal(calls[3][0], 'apply');
   assert.equal(calls[4][0], 'feedback');

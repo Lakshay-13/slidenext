@@ -413,6 +413,10 @@ test('style wiring prefers live canonical state and keeps a legacy baseline fall
   );
   assert.match(
     controllerSource,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
+  );
+  assert.match(
+    controllerSource,
     /buildCanonicalDeck: \(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
   );
   assert.doesNotMatch(

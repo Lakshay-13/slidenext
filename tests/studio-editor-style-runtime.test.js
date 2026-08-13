@@ -31,6 +31,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
     assignElementId: () => '',
     buildCanonicalDeck: () => ({}),
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyStyleMutation: () => ({}),
     finalizeDeckMutation: () => {}
@@ -47,6 +48,7 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
   assert.equal(calls[0].documentRef, options.documentRef);
   assert.equal(calls[0].buildCanonicalDeck, options.buildCanonicalDeck);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyStyleMutation, options.applyStyleMutation);
 });
 

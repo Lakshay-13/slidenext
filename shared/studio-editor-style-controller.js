@@ -66,6 +66,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -109,6 +112,7 @@
       ? (() => {
           const sharedResolver = createCanonicalDeckResolver({
             getCanonicalDeck: () => null,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline,
             isCanonicalDeck: canonicalDeckApi
               && typeof canonicalDeckApi.isCanonicalDeck === 'function'
@@ -121,6 +125,7 @@
       : createCanonicalDeckBaselineReader
         ? (() => {
             const sharedReader = createCanonicalDeckBaselineReader({
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline,
               isCanonicalDeck: canonicalDeckApi
                 && typeof canonicalDeckApi.isCanonicalDeck === 'function'
@@ -131,6 +136,14 @@
             return typeof sharedReader === 'function' ? sharedReader : () => null;
           })()
         : (sourceDocument) => {
+            if (getPendingCanonicalDeck) {
+              try {
+                const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+                if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+              } catch (err) {
+                // Fall through to the live baseline and document rebuild paths.
+              }
+            }
             if (getCanonicalDeckBaseline) {
               try {
                 const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
@@ -306,6 +319,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline
             })
           : null;

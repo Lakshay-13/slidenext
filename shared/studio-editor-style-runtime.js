@@ -42,6 +42,7 @@
           assignElementId: options.assignElementId,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyStyleMutation: options.applyStyleMutation,
           finalizeDeckMutation: options.finalizeDeckMutation
