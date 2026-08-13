@@ -261,6 +261,11 @@
       ? sessionApi.createStudioEditorFrameLoadHandlerAdapter
       : createStudioEditorFrameLoadHandlerAdapter;
     const frameLoadHandler = createFrameLoadHandler({ sessionApi });
+    const createFrameLoadGuard = sessionApi
+      && typeof sessionApi.createStudioEditorFrameLoadGuardAdapter === 'function'
+      ? sessionApi.createStudioEditorFrameLoadGuardAdapter
+      : createStudioEditorFrameLoadGuardAdapter;
+    const frameLoadGuard = createFrameLoadGuard({ sessionApi });
     const setPresentationUrl = typeof options.setPresentationUrl === 'function'
       ? options.setPresentationUrl
       : () => {};
@@ -330,10 +335,17 @@
         : createStudioFrameLoadHandler(nextOptions);
     }
 
+    function shouldHandleFrameLoad(expectedPresentationUrl = '', nextOptions = {}) {
+      return typeof frameLoadGuard === 'function'
+        ? frameLoadGuard(expectedPresentationUrl, nextOptions)
+        : false;
+    }
+
     return {
       readers: readSessionState,
       readerOptions: createSessionReaderOptions,
       createFrameLoadHandler: createSessionFrameLoadHandler,
+      shouldHandleFrameLoad,
       update,
       capture
     };

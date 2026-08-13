@@ -6740,34 +6740,12 @@
     }
 
     function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = '', options = {}) {
-      const createStudioEditorFrameLoadGuardAdapter = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioEditorFrameLoadGuardAdapter === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioEditorFrameLoadGuardAdapter
-        : null;
-      if (createStudioEditorFrameLoadGuardAdapter) {
-        if (typeof shouldHandleCurrentStudioFrameLoad.adapter !== 'function') {
-          shouldHandleCurrentStudioFrameLoad.adapter = createStudioEditorFrameLoadGuardAdapter({
-            sessionApi: SlideNextStudioEditorSession
-          });
-        }
-        if (typeof shouldHandleCurrentStudioFrameLoad.adapter === 'function') {
-          return shouldHandleCurrentStudioFrameLoad.adapter(expectedPresentationUrl, options);
-        }
+      if (typeof studioEditorSessionStateController !== 'undefined'
+        && studioEditorSessionStateController
+        && typeof studioEditorSessionStateController.shouldHandleFrameLoad === 'function') {
+        return studioEditorSessionStateController.shouldHandleFrameLoad(expectedPresentationUrl, options);
       }
-
-      const shouldHandleStudioFrameLoad = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.shouldHandleStudioFrameLoad === 'function'
-      )
-        ? SlideNextStudioEditorSession.shouldHandleStudioFrameLoad
-        : null;
-      return shouldHandleStudioFrameLoad
-        ? shouldHandleStudioFrameLoad(expectedPresentationUrl, options)
-        : false;
+      return false;
     }
 
     function resolveCurrentStudioEditorLaunchSource(metadata, presentationUrl = '') {

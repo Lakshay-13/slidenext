@@ -407,6 +407,33 @@ test('createStudioEditorPresentationSessionStateController creates guarded frame
   assert.deepEqual(calls, ['load', 'after']);
 });
 
+test('createStudioEditorPresentationSessionStateController exposes the frame-load guard', () => {
+  const calls = [];
+  const controller = editorSession.createStudioEditorPresentationSessionStateController({
+    sessionApi: {
+      createStudioEditorFrameLoadGuardAdapter() {
+        return (presentationUrl, options) => {
+          calls.push([presentationUrl, options]);
+          return options.allowed;
+        };
+      }
+    }
+  });
+
+  assert.equal(
+    controller.shouldHandleFrameLoad('/presentations/deck/index.html', { allowed: true }),
+    true
+  );
+  assert.equal(
+    controller.shouldHandleFrameLoad('/presentations/other/index.html', { allowed: false }),
+    false
+  );
+  assert.deepEqual(calls.map(([presentationUrl]) => presentationUrl), [
+    '/presentations/deck/index.html',
+    '/presentations/other/index.html'
+  ]);
+});
+
 test('shouldHandleStudioFrameLoad requires an active matching editor session', () => {
   assert.equal(editorSession.shouldHandleStudioFrameLoad('', {
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',

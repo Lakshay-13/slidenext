@@ -77,6 +77,19 @@ test('editor routes frame-load handlers through the shared session controller', 
   assert.doesNotMatch(source, /createStudioFrameLoadHandler/);
 });
 
+test('editor routes frame-load guards through the shared session controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = \'\', options = {}) {',
+    '\n\n    async function launchStudioEditor('
+  );
+
+  assert.match(source, /studioEditorSessionStateController\.shouldHandleFrameLoad\(expectedPresentationUrl, options\)/);
+  assert.doesNotMatch(source, /createStudioEditorFrameLoadGuardAdapter/);
+  assert.doesNotMatch(source, /shouldHandleStudioFrameLoad/);
+});
+
 test('retryStudioEditorFrame reuses the current presentation session', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const retrySource = extractFunctionSource(
@@ -870,6 +883,9 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
     studioEditorSessionStateController: {
       createFrameLoadHandler(options) {
         return context.SlideNextStudioEditorSession.createStudioFrameLoadHandler(options);
+      },
+      shouldHandleFrameLoad(presentationUrl, options) {
+        return context.SlideNextStudioEditorSession.shouldHandleStudioFrameLoad(presentationUrl, options);
       }
     },
     SlideNextStudioEditorSession: {
@@ -1008,23 +1024,19 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   assert.deepEqual(zoomCalls, ['80']);
 });
 
-test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard adapter once', () => {
+test('shouldHandleCurrentStudioFrameLoad delegates through the session controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const shouldHandleCurrentStudioFrameLoadSource = extractFunctionSource(
     fileContent,
     'function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = \'\', options = {}) {',
     '\n\n    async function launchStudioEditor(url, title, category) {'
   );
-  let adapterCreateCalls = 0;
   const calls = [];
   const context = {
-    SlideNextStudioEditorSession: {
-      createStudioEditorFrameLoadGuardAdapter() {
-        adapterCreateCalls += 1;
-        return (presentationUrl, options) => {
-          calls.push([presentationUrl, options]);
-          return options.allowed;
-        };
+    studioEditorSessionStateController: {
+      shouldHandleFrameLoad(presentationUrl, options) {
+        calls.push([presentationUrl, options]);
+        return options.allowed;
       }
     }
   };
@@ -1040,7 +1052,6 @@ test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard ada
     context.shouldHandleCurrentStudioFrameLoad('/presentations/two/index.html', { allowed: false }),
     false
   );
-  assert.equal(adapterCreateCalls, 1);
   assert.deepEqual(calls.map(([presentationUrl]) => presentationUrl), [
     '/presentations/one/index.html',
     '/presentations/two/index.html'
