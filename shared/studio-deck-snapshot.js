@@ -265,7 +265,7 @@
       });
       if (getPendingCanonicalDeck) {
         try {
-          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          const pendingCanonicalDeck = getPendingCanonicalDeck(doc);
           if (isCanonicalDeckLike(pendingCanonicalDeck)) {
             snapshotBuildOptions.canonicalDeck = pendingCanonicalDeck;
           }

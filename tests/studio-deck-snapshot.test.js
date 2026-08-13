@@ -617,12 +617,16 @@ test('createStudioDeckSnapshotBuilder prefers its explicit canonical builder ove
 });
 
 test('createStudioDeckSnapshotBuilder prefers pending canonical state before rebuilding the document', () => {
+  const sourceDocument = { label: 'editor-document' };
   const pendingCanonicalDeck = {
     slides: [{ id: 'pending-slide', nodes: [] }]
   };
   let buildCalls = 0;
   const buildDeckSnapshot = deckSnapshot.createStudioDeckSnapshotBuilder({
-    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    getPendingCanonicalDeck(documentRef) {
+      assert.equal(documentRef, sourceDocument);
+      return pendingCanonicalDeck;
+    },
     buildCanonicalDeck() {
       buildCalls += 1;
       throw new Error('document rebuild should not be needed');
@@ -630,7 +634,7 @@ test('createStudioDeckSnapshotBuilder prefers pending canonical state before reb
     resolveCanonicalDeckViewState: () => null
   });
 
-  const result = buildDeckSnapshot({ label: 'stale-document' });
+  const result = buildDeckSnapshot(sourceDocument);
 
   assert.equal(result.slides[0].id, 'pending-slide');
   assert.equal(buildCalls, 0);
