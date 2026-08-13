@@ -1507,6 +1507,7 @@
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-deletion-controller.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-insertion-transaction.js"></script>
   <script src="/shared/studio-editor-slide-insertion-controller.js"></script>
   <script src="/shared/studio-editor-slide-duplication-controller.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
@@ -7013,20 +7014,23 @@
     }
 
     function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
-        ? SlideNextStudioEditorSlideInsertionMutation
+      const transactionApi = typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
+        ? SlideNextStudioEditorSlideInsertionTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioSlideInsertionMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioSlideInsertionMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorSlideInsertionMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorSlideInsertionMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      return applyMutation(container, slideNode, {
+      return applyTransaction(container, slideNode, {
+        mutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
+          ? SlideNextStudioEditorSlideInsertionMutation
+          : null,
         slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
           ? SlideNextStudioEditorSlideCommands
           : null,
