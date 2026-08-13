@@ -14,6 +14,7 @@ const committedSelectionRestoreAdapter = require('../shared/studio-editor-commit
 const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapter.js');
 const committedSelectionIdsAdapter = require('../shared/studio-editor-committed-selection-ids-adapter.js');
 const idListEqualityAdapter = require('../shared/studio-editor-id-list-equality-adapter.js');
+const selectionOptionsAdapter = require('../shared/studio-editor-selection-options-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -138,8 +139,9 @@ test('editor resolves stored selection IDs against the current active-slide DOM'
 test('editor composes selection option building through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionOptionsBuilder =/);
-  assert.match(source, /typeof studioEditorSelectionOptionsBuilder === 'function'/);
+  assert.match(source, /const studioEditorSelectionOptionsAdapter =/);
+  assert.match(source, /buildStudioEditorSelectionOptions/);
+  assert.match(source, /if \(buildSelectionOptions\)/);
   assert.doesNotMatch(source, /getEditorSelectionOptions\.api/);
 });
 
@@ -774,7 +776,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSelectionOptionsBuilder =',
+    'const studioEditorSelectionOptionsAdapter =',
     '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const applyEditorSelectionStateSource = extractFunctionSource(
@@ -816,6 +818,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   installSelectionAccessors(context);
 
   vm.createContext(context);
+  context.SlideNextStudioEditorSelectionOptionsAdapter = selectionOptionsAdapter;
   vm.runInContext(getEditorSelectionOptionsSource, context);
   context.studioEditorSelectionStateAdapter = selectionStateAdapter;
   vm.runInContext(applyEditorSelectionStateSource, context);
@@ -865,7 +868,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorSelectionOptionsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSelectionOptionsBuilder =',
+    'const studioEditorSelectionOptionsAdapter =',
     '\n\n    function getEditorHistoryOptions(options = {}) {'
   );
   const getLiveSelectedElementsSource = extractFunctionSource(
@@ -907,6 +910,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   installSelectionAccessors(context);
 
   vm.createContext(context);
+  context.SlideNextStudioEditorSelectionOptionsAdapter = selectionOptionsAdapter;
   vm.runInContext(getEditorSelectionOptionsSource, context);
   vm.runInContext(getLiveSelectedElementsSource, context);
 

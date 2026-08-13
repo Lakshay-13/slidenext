@@ -1880,7 +1880,7 @@ test('deleteSlideNode uses the shared iframe accessor and restores editor state 
   const deleteSlideNodeSource = extractFunctionSource(
     fileContent,
     'function deleteSlideNode(idx) {',
-    '\n\n    const studioEditorSelectionOptionsBuilder ='
+    '\n\n    const studioEditorSelectionOptionsAdapter ='
   );
 
   const selectionIds = ['element-1', 'element-2'];
@@ -2041,7 +2041,7 @@ test('deleteSlideNode delegates slide removal and transaction capture to the sha
   const deleteSlideNodeSource = extractFunctionSource(
     fileContent,
     'function deleteSlideNode(idx) {',
-    '\n\n    const studioEditorSelectionOptionsBuilder ='
+    '\n\n    const studioEditorSelectionOptionsAdapter ='
   );
   const firstSlide = { id: 'slide-1' };
   const deletedSlide = { id: 'slide-2' };
@@ -2117,7 +2117,7 @@ test('deleteSlideNode no-ops when the iframe document is unavailable', () => {
   const deleteSlideNodeSource = extractFunctionSource(
     fileContent,
     'function deleteSlideNode(idx) {',
-    '\n\n    const studioEditorSelectionOptionsBuilder ='
+    '\n\n    const studioEditorSelectionOptionsAdapter ='
   );
 
   const calls = [];
@@ -2150,7 +2150,7 @@ test('deleteSlideNode no-ops when the requested slide index is unavailable', () 
   const deleteSlideNodeSource = extractFunctionSource(
     fileContent,
     'function deleteSlideNode(idx) {',
-    '\n\n    const studioEditorSelectionOptionsBuilder ='
+    '\n\n    const studioEditorSelectionOptionsAdapter ='
   );
 
   const firstSlide = { id: 'slide-1', remove() {} };
@@ -2200,7 +2200,7 @@ test('deleteSlideNode refuses to remove the final remaining slide', () => {
   const deleteSlideNodeSource = extractFunctionSource(
     fileContent,
     'function deleteSlideNode(idx) {',
-    '\n\n    const studioEditorSelectionOptionsBuilder ='
+    '\n\n    const studioEditorSelectionOptionsAdapter ='
   );
 
   const alerts = [];

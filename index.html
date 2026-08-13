@@ -1666,6 +1666,7 @@
   <script src="/shared/studio-editor-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-id-list-equality-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-options-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -7125,10 +7126,10 @@
         : false;
     }
 
-    const studioEditorSelectionOptionsBuilder = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.buildStudioEditorSelectionOptions === 'function'
-      ? options => SlideNextStudioEditorSelection.buildStudioEditorSelectionOptions(options)
+    const studioEditorSelectionOptionsAdapter = typeof SlideNextStudioEditorSelectionOptionsAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionOptionsAdapter
+      && typeof SlideNextStudioEditorSelectionOptionsAdapter.buildStudioEditorSelectionOptions === 'function'
+      ? SlideNextStudioEditorSelectionOptionsAdapter
       : null;
 
     function getEditorSelectionOptions(options = {}) {
@@ -7138,8 +7139,16 @@
       const activeSlide = Object.prototype.hasOwnProperty.call(options, 'activeSlide')
         ? options.activeSlide
         : getActiveSlide(doc);
-      if (typeof studioEditorSelectionOptionsBuilder === 'function') {
-        return studioEditorSelectionOptionsBuilder({
+      const buildSelectionOptions = studioEditorSelectionOptionsAdapter
+        && typeof studioEditorSelectionOptionsAdapter.buildStudioEditorSelectionOptions === 'function'
+        ? studioEditorSelectionOptionsAdapter.buildStudioEditorSelectionOptions
+        : null;
+      if (buildSelectionOptions) {
+        const selectionOptions = buildSelectionOptions({
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          selectionOptions: {
           ...options,
           doc,
           activeSlide,
@@ -7147,7 +7156,9 @@
           getElementId: assignEditorElementId,
           getActiveSlide,
           getElementById: getElementByEditorId
+          }
         });
+        if (selectionOptions) return selectionOptions;
       }
       return {
         selectionClassName: 'editor-selected',
