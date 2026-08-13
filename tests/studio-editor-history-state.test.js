@@ -171,6 +171,39 @@ test('createStudioEditorHistoryEntryBuilder does not rebuild content for view-on
   assert.equal(buildCalls, 0);
 });
 
+test('createStudioEditorHistoryEntryBuilder delegates view-only classification to shared history', () => {
+  const pendingTransaction = { id: 'navigation-transaction' };
+  let classifierCalls = 0;
+  let buildCalls = 0;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      isStudioHistoryViewTransaction(transaction) {
+        classifierCalls += 1;
+        assert.equal(transaction, pendingTransaction);
+        return true;
+      },
+      buildStudioHistoryEntry(_doc, options) {
+        return {
+          canonicalDeck: options.buildCanonicalDeck('navigation-doc'),
+          transaction: options.transaction
+        };
+      }
+    },
+    getPendingTransaction: () => pendingTransaction,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return { kind: 'slidenext.deck', slides: [{ id: 'rebuilt' }] };
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), {
+    canonicalDeck: null,
+    transaction: pendingTransaction
+  });
+  assert.equal(classifierCalls, 1);
+  assert.equal(buildCalls, 0);
+});
+
 test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pending canonical state is absent', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
   let buildCalls = 0;

@@ -165,10 +165,19 @@
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : () => null;
-    const isViewOnlyTransaction = (transaction) => !!transaction
-      && Array.isArray(transaction.operations)
-      && transaction.operations.length > 0
-      && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
+    const isViewOnlyTransaction = (transaction) => {
+      if (historyApi && typeof historyApi.isStudioHistoryViewTransaction === 'function') {
+        try {
+          return historyApi.isStudioHistoryViewTransaction(transaction) === true;
+        } catch (error) {
+          // Preserve compatibility with older history APIs that fail during classification.
+        }
+      }
+      return !!transaction
+        && Array.isArray(transaction.operations)
+        && transaction.operations.length > 0
+        && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
+    };
 
     return function createHistoryEntry(doc) {
       if (!historyApi || typeof historyApi.buildStudioHistoryEntry !== 'function') {
