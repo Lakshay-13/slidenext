@@ -419,11 +419,12 @@
           else setStatus('export-failed');
           return false;
         }
+        const warningStatus = resolveStudioExportWarningStatus(result);
         setStatus(
-          result.warningCount > 0 ? 'exported-with-warnings' : 'exported',
-          result.warningCount,
-          result.warnings,
-          result.warningsTruncated
+          warningStatus.warningCount > 0 ? 'exported-with-warnings' : 'exported',
+          warningStatus.warningCount,
+          warningStatus.warnings,
+          warningStatus.warningsTruncated
         );
         return true;
       } catch (error) {

@@ -373,6 +373,34 @@ test('PPTX export forwards exporter failure details to the status callback', asy
   ]);
 });
 
+test('PPTX export derives warning state from warning details when the count is absent', async () => {
+  const statuses = [];
+  const exportPptx = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pptxExport: {
+      async exportStudioPptx() {
+        return {
+          success: true,
+          warnings: ['Node text-1 uses unsupported CSS: transform']
+        };
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(await exportPptx(), true);
+  assert.deepEqual(statuses, [
+    ['exporting'],
+    [
+      'exported-with-warnings',
+      1,
+      ['Node text-1 uses unsupported CSS: transform'],
+      false
+    ]
+  ]);
+});
+
 test('PDF and PPTX exports use structural canonical validation without an injected validator', async () => {
   let pdfOpenCalls = 0;
   let pptxExportCalls = 0;
