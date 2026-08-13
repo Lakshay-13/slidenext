@@ -70,6 +70,41 @@ test('applyStudioCanvasDimensions updates logical canvas and zoomed scroll bound
   assert.equal(nodes.canvasScrollContainer.style.height, '540px');
 });
 
+test('createStudioCanvasDimensionsSynchronizer resolves canonical size and zoom at call time', () => {
+  const nodes = {
+    canvasWrapper: { style: {} },
+    studioFrame: { style: {} },
+    canvasScrollContainer: { style: {} }
+  };
+  const documentRef = { getElementById: id => nodes[id] || null };
+  const canonicalDeck = {
+    layout: {
+      size: { width: 1024, height: 576, unit: 'px' }
+    }
+  };
+  let canonicalCalls = 0;
+  let zoomFactor = 1.25;
+  const sync = canvas.createStudioCanvasDimensionsSynchronizer({
+    getDocumentRef: () => documentRef,
+    getCanonicalDeck: () => {
+      canonicalCalls += 1;
+      return canonicalDeck;
+    },
+    getZoomFactor: () => zoomFactor
+  });
+
+  assert.deepEqual(sync(), {
+    didApply: true,
+    dimensions: { width: 1024, height: 576 },
+    zoomFactor: 1.25
+  });
+  zoomFactor = 0.75;
+  assert.equal(sync().zoomFactor, 0.75);
+  assert.equal(canonicalCalls, 2);
+  assert.equal(nodes.canvasScrollContainer.style.width, '768px');
+  assert.equal(nodes.canvasScrollContainer.style.height, '432px');
+});
+
 test('index applies canonical canvas dimensions after frame initialization', () => {
   const fs = require('node:fs');
   const path = require('node:path');

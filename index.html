@@ -7041,7 +7041,26 @@
     }
 
     // Initialize Frame Hooks
+    const studioEditorCanvasSynchronizer = typeof SlideNextStudioEditorCanvas !== 'undefined'
+      && SlideNextStudioEditorCanvas
+      && typeof SlideNextStudioEditorCanvas.createStudioCanvasDimensionsSynchronizer === 'function'
+      ? SlideNextStudioEditorCanvas.createStudioCanvasDimensionsSynchronizer({
+          getDocumentRef: () => document,
+          getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(getIframeDoc())
+            : null,
+          getZoomFactor: () => typeof studioEditorZoomController !== 'undefined'
+            && studioEditorZoomController
+            && typeof studioEditorZoomController.getZoomFactor === 'function'
+            ? studioEditorZoomController.getZoomFactor()
+            : 1
+        })
+      : null;
+
     function syncStudioEditorCanvasDimensions() {
+      if (typeof studioEditorCanvasSynchronizer === 'function') {
+        return studioEditorCanvasSynchronizer();
+      }
       const canvasApi = typeof SlideNextStudioEditorCanvas !== 'undefined'
         ? SlideNextStudioEditorCanvas
         : null;

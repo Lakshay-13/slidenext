@@ -88,10 +88,41 @@
     return { didApply: true, dimensions, zoomFactor };
   }
 
+  function createStudioCanvasDimensionsSynchronizer(options = {}) {
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+    const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
+      ? options.getCanonicalDeck
+      : () => null;
+    const getZoomFactor = typeof options.getZoomFactor === 'function'
+      ? options.getZoomFactor
+      : () => 1;
+
+    return function syncStudioCanvasDimensions() {
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = getCanonicalDeck();
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      try {
+        return applyStudioCanvasDimensions({
+          documentRef: getDocumentRef(),
+          canonicalDeck,
+          zoomFactor: getZoomFactor()
+        });
+      } catch (error) {
+        return { didApply: false };
+      }
+    };
+  }
+
   return {
     DEFAULT_STUDIO_CANVAS_WIDTH_PX,
     DEFAULT_STUDIO_CANVAS_HEIGHT_PX,
     resolveStudioCanvasDimensions,
-    applyStudioCanvasDimensions
+    applyStudioCanvasDimensions,
+    createStudioCanvasDimensionsSynchronizer
   };
 });
