@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalVisibility = require('../shared/studio-editor-canonical-visibility.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
@@ -266,6 +267,7 @@ test('updateVisibilityActionState prefers canonical hidden metadata when availab
   };
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextCanonicalDeck: canonicalDeckModel,
     buildEditorCanonicalDeck() {

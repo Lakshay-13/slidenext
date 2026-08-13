@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
@@ -274,6 +275,7 @@ test('alignment action state prefers canonical lock metadata when available', ()
   });
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorAlignment: {
       buildStudioAlignmentActionState(items, options) {

@@ -7,6 +7,7 @@ const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js'
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
 const canonicalNodeAdapter = require('../shared/studio-editor-canonical-node-adapter.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const overlayApi = require('../shared/studio-editor-overlay.js');
 
 test('shared editor canonical-deck shape predicate accepts decks and rejects malformed values', () => {
@@ -612,6 +613,7 @@ test('editor visibility reader passes the live-first canonical resolver to share
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: {
       createStudioEditorCanonicalVisibilityReaderResolver(options) {
         calls.push(['factory', options.buildCanonicalDeck]);
@@ -690,6 +692,7 @@ test('editor selection bounds and overlays use canonical hidden state before DOM
     ]
   }];
   const context = {
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorSelectionBounds: selectionBounds,
     SlideNextStudioEditorOverlay: {

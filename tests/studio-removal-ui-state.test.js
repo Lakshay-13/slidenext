@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
@@ -38,6 +39,7 @@ function loadBuildRemovalSelectionActionState(fileContent, context) {
     '\n\n    function updateRemovalActionState(doc = getIframeDoc()) {'
   );
   context.SlideNextStudioEditorCanonicalState = canonicalState;
+  context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   vm.runInContext(`${visibilityReaderSource}\n${helperSource}`, context);
 }
 

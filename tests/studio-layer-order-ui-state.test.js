@@ -7,6 +7,7 @@ const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalNodeAdapter = require('../shared/studio-editor-canonical-node-adapter.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const layerOrderTransaction = require('../shared/studio-editor-layer-order-transaction.js');
@@ -42,6 +43,7 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
 }
 
 function loadSyncLayerOrderZIndexInput(fileContent, context) {
+  context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   const canonicalUiSource = fs.readFileSync(
     path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
     'utf8'
@@ -971,6 +973,7 @@ test('updateLayerOrderActionState prefers canonical lock metadata for toolbar ac
   let receivedOptions = null;
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorLayerOrder: {
       syncStudioLayerOrderToolbarState(options) {

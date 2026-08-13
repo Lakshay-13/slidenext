@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalStyle = require('../shared/studio-editor-canonical-style.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
@@ -468,6 +469,7 @@ test('updateStyleActionState prefers canonical lock metadata for style controls'
   let receivedOptions = null;
   const context = {
     selectedElements: [selectedElement],
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorStyle: {
       syncStudioStyleToolbarState(options) {

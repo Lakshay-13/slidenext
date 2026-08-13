@@ -9513,27 +9513,7 @@
             buildCanonicalDeck: resolveCanonicalDeck
           });
       }
-      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-        ? SlideNextStudioEditorCanonicalState
-        : null;
-      const createVisibilityReaderResolver = canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalVisibilityReaderResolver === 'function'
-        ? canonicalStateApi.createStudioEditorCanonicalVisibilityReaderResolver
-        : null;
-      return createVisibilityReaderResolver
-        ? createVisibilityReaderResolver({
-            buildCanonicalDeck: resolveCanonicalDeck,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            getElementId: typeof assignEditorElementId === 'function'
-              ? assignEditorElementId
-              : null,
-            resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
-              ? resolveEditorCanonicalNodeForElement
-              : null
-          })(property, doc, fallback)
-        : fallback;
+      return fallback;
     }
 
     function getEditorCanonicalFreeformReader(doc = getIframeDoc(), fallbackReader) {
@@ -9572,27 +9552,7 @@
             buildCanonicalDeck: resolveCanonicalDeck
           });
       }
-      const canonicalStateApi = typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-        ? SlideNextStudioEditorCanonicalState
-        : null;
-      const createFreeformReaderResolver = canonicalStateApi
-        && typeof canonicalStateApi.createStudioEditorCanonicalFreeformReaderResolver === 'function'
-        ? canonicalStateApi.createStudioEditorCanonicalFreeformReaderResolver
-        : null;
-      return createFreeformReaderResolver
-        ? createFreeformReaderResolver({
-            buildCanonicalDeck: resolveCanonicalDeck,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            getElementId: typeof assignEditorElementId === 'function'
-              ? assignEditorElementId
-              : null,
-            resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
-              ? resolveEditorCanonicalNodeForElement
-              : null
-          })(doc, fallback)
-        : fallback;
+      return fallback;
     }
 
     const studioEditorElementHiddenWriter = typeof SlideNextStudioElementState !== 'undefined'

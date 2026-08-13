@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const assetView = require('../shared/studio-editor-asset-view.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -21,6 +22,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function runSourceWithCanonicalUi(source, context) {
+  context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
     fileContent,

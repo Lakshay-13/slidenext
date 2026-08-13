@@ -10,6 +10,7 @@ const studioNudge = require('../shared/studio-editor-nudge.js');
 const studioTransform = require('../shared/studio-editor-transform.js');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
@@ -59,6 +60,7 @@ function loadGetNudgeSelectionState(fileContent, context) {
 }
 
 function loadCanonicalVisibilityReader(fileContent, context) {
+  context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   const helperSource = extractFunctionSource(
     fileContent,
     'function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {',

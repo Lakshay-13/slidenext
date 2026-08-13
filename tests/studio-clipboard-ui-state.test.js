@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
@@ -252,6 +253,7 @@ test('buildClipboardSelectionMutationPlan disables copy and duplicate for canoni
   const context = {
     selectedElements: [selectedElement],
     editorClipboard: { items: [], pasteCount: 0 },
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorClipboard: clipboardState,
     buildEditorCanonicalDeck(currentDoc) {
@@ -1152,6 +1154,7 @@ test('updateClipboardActionState prefers canonical lock metadata when available'
   });
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextStudioEditorClipboard: {
       syncStudioClipboardToolbarState(options) {

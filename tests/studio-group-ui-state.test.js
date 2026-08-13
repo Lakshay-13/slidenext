@@ -11,6 +11,7 @@ const ungroupTransaction = require('../shared/studio-editor-ungroup-transaction.
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
+const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const groupController = require('../shared/studio-editor-group-controller.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -418,6 +419,7 @@ test('buildGroupSelectionActionState prefers canonical lock metadata for groupin
   let receivedOptions = null;
   const context = {
     selectedElements: [first, second],
+    SlideNextStudioEditorCanonicalReaderAdapter: canonicalReaderAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     getIframeDoc() {
       return doc;
