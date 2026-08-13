@@ -1410,6 +1410,7 @@
   <script src="/shared/studio-editor-lock-transaction.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
+  <script src="/shared/studio-editor-visibility-transaction.js"></script>
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
   <script src="/shared/studio-editor-lock-visibility-runtime.js"></script>
   <script src="/shared/studio-editor-lock-visibility-shell-runtime.js"></script>
@@ -9949,59 +9950,42 @@
     }
 
     function applyEditorVisibilityMutationWithTransaction(selection, shouldHide, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorVisibilityMutation !== 'undefined'
-        ? SlideNextStudioEditorVisibilityMutation
+      const transactionApi = typeof SlideNextStudioEditorVisibilityTransaction !== 'undefined'
+        ? SlideNextStudioEditorVisibilityTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioVisibilityMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioVisibilityMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorVisibilityMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorVisibilityMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      const isHidden = typeof options.isHidden === 'function'
-        ? options.isHidden
-        : () => false;
-      const setHidden = typeof options.setHidden === 'function'
-        ? options.setHidden
-        : (element, nextShouldHide) => {
-            if (typeof setElementHiddenState === 'function') {
-              setElementHiddenState(element, nextShouldHide);
-            }
-          };
-      const getVisibilityState = typeof options.getVisibilityState === 'function'
-        ? options.getVisibilityState
-        : (element) => {
-            const elementState = typeof SlideNextStudioElementState !== 'undefined'
-              ? SlideNextStudioElementState
-              : null;
-            return elementState && typeof elementState.getStudioElementVisibilityState === 'function'
-              ? elementState.getStudioElementVisibilityState(element)
-              : null;
-          };
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation(selection, shouldHide, {
+      return applyTransaction(selection, shouldHide, {
+        mutationApi: typeof SlideNextStudioEditorVisibilityMutation !== 'undefined'
+          ? SlideNextStudioEditorVisibilityMutation
+          : null,
         visibilityApi: typeof SlideNextStudioEditorVisibilityState !== 'undefined'
           ? SlideNextStudioEditorVisibilityState
           : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
-        isHidden,
-        setHidden,
-        getVisibilityState,
-        getElementId
+        isHidden: options.isHidden,
+        setHidden: options.setHidden,
+        setElementHiddenState: typeof setElementHiddenState === 'function'
+          ? setElementHiddenState
+          : null,
+        getVisibilityState: options.getVisibilityState,
+        elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
+          ? SlideNextStudioElementState
+          : null,
+        getElementId: options.getElementId,
+        assignEditorElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null
       });
     }
 

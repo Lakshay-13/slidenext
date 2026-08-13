@@ -10,6 +10,7 @@ const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
 const visibilityMutation = require('../shared/studio-editor-visibility-mutation.js');
+const visibilityTransaction = require('../shared/studio-editor-visibility-transaction.js');
 const lockVisibilityRollback = require('../shared/studio-editor-lock-visibility-rollback.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const lockVisibilityController = require('../shared/studio-editor-lock-visibility-controller.js');
@@ -63,6 +64,7 @@ function loadVisibilityMutationHelper(fileContent, context) {
     'function toggleSelectedElementsVisibility(options = {}) {'
   );
   context.SlideNextStudioEditorVisibilityMutation = visibilityMutation;
+  context.SlideNextStudioEditorVisibilityTransaction = visibilityTransaction;
   vm.runInContext(helperSource, context);
 }
 
