@@ -1487,6 +1487,7 @@
   <script src="/shared/studio-editor-wallpaper-finalization.js"></script>
   <script src="/shared/studio-editor-wallpaper-transaction-actions.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
+  <script src="/shared/studio-editor-layer-order-rollback.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
@@ -8336,24 +8337,24 @@
     }
 
     function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {
-      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
-        ? SlideNextStudioEditorTransaction
+      const rollbackApi = typeof SlideNextStudioEditorLayerOrderRollback !== 'undefined'
+        ? SlideNextStudioEditorLayerOrderRollback
         : null;
-      if (!transaction
-        || !transactionApi
-        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
-        return false;
-      }
-      try {
-        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
-          getElementById: (elementId) => typeof getElementByEditorId === 'function'
-            ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
-            : null
-        });
-        return !!(rollbackResult && rollbackResult.didApply);
-      } catch (error) {
-        return false;
-      }
+      const rollbackMutation = rollbackApi
+        && typeof rollbackApi.rollbackStudioEditorLayerOrderMutation === 'function'
+        ? rollbackApi.rollbackStudioEditorLayerOrderMutation
+        : null;
+      return rollbackMutation
+        ? rollbackMutation(transaction, sourceDoc, {
+            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+              ? SlideNextStudioEditorTransaction
+              : null,
+            getIframeDoc: typeof getIframeDoc === 'function' ? getIframeDoc : () => null,
+            getElementByEditorId: typeof getElementByEditorId === 'function'
+              ? getElementByEditorId
+              : () => null
+          })
+        : false;
     }
 
     function reorderSlideLayers(action, targetElements = getStudioSelectedElements(), options = {}) {
