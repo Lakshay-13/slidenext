@@ -42,13 +42,17 @@ test('template controller saves the active slide and finalizes persistence hooks
   assert.deepEqual(calls[3][1], ['hero-template']);
 });
 
-test('template mutations prefer a valid live canonical baseline', () => {
+test('template mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Pending Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
   });
   let didBuildFromDocument = false;
   const controller = templateController.createStudioEditorTemplateController({
     canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
     canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
@@ -61,6 +65,7 @@ test('template mutations prefer a valid live canonical baseline', () => {
   const result = controller.saveActiveSlide({ id: 'live-template', name: 'Live Template' });
 
   assert.equal(result.templates[0].id, 'live-template');
+  assert.equal(result.templates[0].slide.title, 'Pending Hero');
   assert.equal(didBuildFromDocument, false);
 });
 
@@ -75,6 +80,9 @@ test('template controller delegates canonical deck resolution to shared state', 
         return () => deck;
       }
     },
+    getPendingCanonicalDeck() {
+      return deck;
+    },
     getCanonicalDeckBaseline() {
       throw new Error('shared resolver should own baseline resolution');
     },
@@ -88,6 +96,7 @@ test('template controller delegates canonical deck resolution to shared state', 
 
   assert.equal(result.templates[0].slide.title, 'Shared');
   assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

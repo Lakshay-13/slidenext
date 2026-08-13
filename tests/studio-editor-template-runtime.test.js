@@ -21,6 +21,7 @@ test('template runtime composes controller dependencies without changing them', 
     canonicalStateApi: {},
     renderApi: {},
     getCanonicalDeck: () => null,
+    getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     getDocument: () => null,
     getSlideContainer: () => null,
@@ -46,6 +47,7 @@ test('template runtime composes controller dependencies without changing them', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].getDocument, options.getDocument);
   assert.equal(calls[0].getSlideContainer, options.getSlideContainer);
   assert.equal(calls[0].applyInsertion, options.applyInsertion);
@@ -72,6 +74,10 @@ test('index wires template persistence through the runtime module', () => {
   assert.match(
     fileContent,
     /getActiveSlideId: \(doc\) => getActiveSlideId\(doc \|\| getIframeDoc\(\)\),/
+  );
+  assert.match(
+    fileContent,
+    /getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
   assert.doesNotMatch(
     fileContent,

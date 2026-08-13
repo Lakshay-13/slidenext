@@ -3898,11 +3898,11 @@
           getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
             ? resolveEditorUiCanonicalDeck(getIframeDoc())
             : buildEditorCanonicalDeck(getIframeDoc()),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
             : null,
@@ -3958,6 +3958,7 @@
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getDocument: () => getIframeDoc(),
           getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
             ? doc.getElementById('slidesContainer')

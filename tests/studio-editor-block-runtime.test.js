@@ -80,6 +80,6 @@ test('index wires block persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,\n\s+getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\(/
+    /getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
 });

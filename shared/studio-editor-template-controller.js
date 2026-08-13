@@ -40,6 +40,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -110,6 +113,7 @@
     const readCanonicalDeckBaseline = canonicalStateApi
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckBaselineReader({
+          getPendingCanonicalDeck,
           getCanonicalDeckBaseline,
           isCanonicalDeck: canonicalDeckApi
             && typeof canonicalDeckApi.isCanonicalDeck === 'function'
@@ -132,6 +136,7 @@
       && typeof canonicalStateApi.createStudioEditorCanonicalDeckResolver === 'function'
       ? canonicalStateApi.createStudioEditorCanonicalDeckResolver({
           getCanonicalDeck,
+          getPendingCanonicalDeck,
           getCanonicalDeckBaseline,
           isCanonicalDeck: canonicalDeckApi
             && typeof canonicalDeckApi.isCanonicalDeck === 'function'
