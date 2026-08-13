@@ -741,14 +741,16 @@
       const startBounds = session.startBounds || {};
       const dx = (Number.isFinite(bounds.left) ? bounds.left : 0) - (Number.isFinite(startBounds.left) ? startBounds.left : 0);
       const dy = (Number.isFinite(bounds.top) ? bounds.top : 0) - (Number.isFinite(startBounds.top) ? startBounds.top : 0);
+      const nextItems = [];
 
       items.forEach((item) => {
         const nextAbsLeft = (Number.isFinite(item.startAbsLeft) ? item.startAbsLeft : 0) + dx;
         const nextAbsTop = (Number.isFinite(item.startAbsTop) ? item.startAbsTop : 0) + dy;
         item.element.style.left = `${nextAbsLeft - (Number.isFinite(item.parentOffsetLeft) ? item.parentOffsetLeft : 0)}px`;
         item.element.style.top = `${nextAbsTop - (Number.isFinite(item.parentOffsetTop) ? item.parentOffsetTop : 0)}px`;
+        nextItems.push({ element: item.element, nextAbsLeft, nextAbsTop });
       });
-      return;
+      return { nextItems };
     }
 
     const startBounds = session.startBounds || {};
@@ -757,22 +759,30 @@
     const scaleX = startWidth === 0 ? 1 : (Number.isFinite(bounds.width) ? bounds.width : 0) / startWidth;
     const scaleY = startHeight === 0 ? 1 : (Number.isFinite(bounds.height) ? bounds.height : 0) / startHeight;
 
+    const nextItems = [];
     items.forEach((item) => {
       const relLeft = (Number.isFinite(item.startAbsLeft) ? item.startAbsLeft : 0) - (Number.isFinite(startBounds.left) ? startBounds.left : 0);
       const relTop = (Number.isFinite(item.startAbsTop) ? item.startAbsTop : 0) - (Number.isFinite(startBounds.top) ? startBounds.top : 0);
       const nextAbsLeft = (Number.isFinite(bounds.left) ? bounds.left : 0) + (relLeft * scaleX);
       const nextAbsTop = (Number.isFinite(bounds.top) ? bounds.top : 0) + (relTop * scaleY);
+      const nextItem = { element: item.element, nextAbsLeft, nextAbsTop };
 
       item.element.style.left = `${nextAbsLeft - (Number.isFinite(item.parentOffsetLeft) ? item.parentOffsetLeft : 0)}px`;
       item.element.style.top = `${nextAbsTop - (Number.isFinite(item.parentOffsetTop) ? item.parentOffsetTop : 0)}px`;
 
       if (shouldResizeWidth(item.element)) {
-        item.element.style.width = `${Math.max(minSizePx, (Number.isFinite(item.startWidth) ? item.startWidth : 0) * scaleX)}px`;
+        const nextWidth = Math.max(minSizePx, (Number.isFinite(item.startWidth) ? item.startWidth : 0) * scaleX);
+        item.element.style.width = `${nextWidth}px`;
+        nextItem.nextWidth = nextWidth;
       }
       if (shouldResizeHeight(item.element)) {
-        item.element.style.height = `${Math.max(minSizePx, (Number.isFinite(item.startHeight) ? item.startHeight : 0) * scaleY)}px`;
+        const nextHeight = Math.max(minSizePx, (Number.isFinite(item.startHeight) ? item.startHeight : 0) * scaleY);
+        item.element.style.height = `${nextHeight}px`;
+        nextItem.nextHeight = nextHeight;
       }
+      nextItems.push(nextItem);
     });
+    return { nextItems };
   }
 
   function materializeStudioTransformSession(session = {}, options = {}) {
@@ -1072,6 +1082,9 @@
   function buildStudioTransformCanonicalLayoutUpdates(finalizeResult = {}, options = {}) {
     const session = finalizeResult && finalizeResult.session;
     const items = session && Array.isArray(session.items) ? session.items : [];
+    const appliedLayoutItems = session && Array.isArray(session.lastAppliedLayoutItems)
+      ? session.lastAppliedLayoutItems
+      : [];
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -1081,6 +1094,24 @@
       const parsed = Number.parseFloat(value);
       return Number.isFinite(parsed) ? parsed : null;
     };
+
+    if (appliedLayoutItems.length > 0) {
+      return appliedLayoutItems.map((item) => {
+        const element = item && item.element;
+        const nodeId = getElementId(element);
+        if (!nodeId
+          || !Number.isFinite(item && item.nextAbsLeft)
+          || !Number.isFinite(item && item.nextAbsTop)) return null;
+        const layout = {
+          mode: 'absolute',
+          x: item.nextAbsLeft,
+          y: item.nextAbsTop
+        };
+        if (Number.isFinite(item.nextWidth)) layout.width = item.nextWidth;
+        if (Number.isFinite(item.nextHeight)) layout.height = item.nextHeight;
+        return { id: nodeId, layout };
+      }).filter(Boolean);
+    }
 
     return items.map((item) => {
       const element = item && item.element;
@@ -1640,7 +1671,10 @@
       }
 
       const bounds = transformFrameState.bounds;
-      applyTransformBounds(session, bounds, { minSizePx });
+      const appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      if (appliedBounds && Array.isArray(appliedBounds.nextItems)) {
+        session.lastAppliedLayoutItems = appliedBounds.nextItems;
+      }
       if (typeof options.onSessionFrame === 'function') {
         options.onSessionFrame(bounds, transformFrameState);
       }
@@ -1798,7 +1832,10 @@
       if (!transformFrameState.isActive) return false;
 
       const bounds = transformFrameState.bounds;
-      applyTransformBounds(session, bounds, { minSizePx });
+      const appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      if (appliedBounds && Array.isArray(appliedBounds.nextItems)) {
+        session.lastAppliedLayoutItems = appliedBounds.nextItems;
+      }
       if (typeof options.onSessionFrame === 'function') {
         options.onSessionFrame(bounds, transformFrameState);
       }

@@ -125,6 +125,40 @@ test('buildStudioTransformCanonicalLayoutUpdates derives absolute positions and 
   }]);
 });
 
+test('buildStudioTransformCanonicalLayoutUpdates uses the last computed layout result instead of stale DOM styles', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: {
+      left: 'stale-left',
+      top: 'stale-top',
+      width: 'stale-width',
+      height: 'stale-height'
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformCanonicalLayoutUpdates({
+    session: {
+      items: [{ element, isPrePositioned: true }],
+      lastAppliedLayoutItems: [{
+        element,
+        nextAbsLeft: 140,
+        nextAbsTop: 90,
+        nextWidth: 240,
+        nextHeight: 120
+      }]
+    }
+  }), [{
+    id: 'node-1',
+    layout: {
+      mode: 'absolute',
+      x: 140,
+      y: 90,
+      width: 240,
+      height: 120
+    }
+  }]);
+});
+
 test('createStudioTransformSessionFinalizer closes the session before persisting a move', () => {
   const calls = [];
   const transaction = { type: 'style' };
@@ -1443,7 +1477,7 @@ test('resolveStudioTransformBounds keeps locked ratios when minimum size conflic
 
 test('applyStudioTransformBounds updates drag and resize item styles using shared transform math', () => {
   const dragElement = { tagName: 'DIV', style: {} };
-  transformState.applyStudioTransformBounds({
+  const dragResult = transformState.applyStudioTransformBounds({
     type: 'drag',
     startBounds: { left: 100, top: 80 },
     items: [{
@@ -1462,9 +1496,14 @@ test('applyStudioTransformBounds updates drag and resize item styles using share
 
   assert.equal(dragElement.style.left, '150px');
   assert.equal(dragElement.style.top, '105px');
+  assert.deepEqual(dragResult.nextItems, [{
+    element: dragElement,
+    nextAbsLeft: 160,
+    nextAbsTop: 125
+  }]);
 
   const resizeElement = { tagName: 'DIV', style: {} };
-  transformState.applyStudioTransformBounds({
+  const resizeResult = transformState.applyStudioTransformBounds({
     type: 'resize',
     startBounds: { left: 100, top: 80, width: 200, height: 100 },
     items: [{
@@ -1489,6 +1528,13 @@ test('applyStudioTransformBounds updates drag and resize item styles using share
   assert.equal(resizeElement.style.top, '85px');
   assert.equal(resizeElement.style.width, '120px');
   assert.equal(resizeElement.style.height, '60px');
+  assert.deepEqual(resizeResult.nextItems, [{
+    element: resizeElement,
+    nextAbsLeft: 130,
+    nextAbsTop: 95,
+    nextWidth: 120,
+    nextHeight: 60
+  }]);
 });
 
 test('materializeStudioTransformSession applies absolute positioning state only once', () => {
