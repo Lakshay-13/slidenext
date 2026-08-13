@@ -39,6 +39,7 @@ test('history restore options expose canonical rebuild and view callbacks', () =
   const validator = (value) => value === canonicalDeck;
   const buildCalls = [];
   const buildViewCalls = [];
+  const buildDeckSourceHtml = () => '<main>canonical</main>';
   const options = restoreOptions.createStudioEditorHistoryRestoreOptions({
     getIframeDoc: () => iframeDoc,
     buildEditorCanonicalDeck(doc) {
@@ -46,6 +47,7 @@ test('history restore options expose canonical rebuild and view callbacks', () =
       return canonicalDeck;
     },
     getEditorCanonicalDeckValidator: () => validator,
+    buildDeckSourceHtml,
     createEditorDeckViewBuildOptions(doc, viewOptions) {
       buildViewCalls.push([doc, viewOptions]);
       return { deckHtmlOptions: { activeSlideId: viewOptions.activeSlideId } };
@@ -58,13 +60,26 @@ test('history restore options expose canonical rebuild and view callbacks', () =
 
   const historyEntry = { activeSlideId: 'slide-2', canonicalDeck };
   assert.deepEqual(options.buildDeckViewOptions(historyEntry), {
-    deckHtmlOptions: { activeSlideId: 'slide-2' }
+    deckHtmlOptions: { activeSlideId: 'slide-2' },
+    buildDeckSourceHtml
   });
   assert.equal(buildViewCalls.length, 1);
   assert.equal(buildViewCalls[0][0], null);
   assert.equal(buildViewCalls[0][1].activeSlideId, 'slide-2');
   assert.equal(buildViewCalls[0][1].buildCanonicalDeck(), canonicalDeck);
   assert.equal(buildViewCalls[0][1].buildFallbackHtml(), '');
+});
+
+test('history restore options omit the optional source builder when unavailable', () => {
+  const options = restoreOptions.createStudioEditorHistoryRestoreOptions({
+    createEditorDeckViewBuildOptions() {
+      return { deckHtmlOptions: {} };
+    }
+  });
+
+  assert.deepEqual(options.buildDeckViewOptions({ activeSlideId: '' }), {
+    deckHtmlOptions: {}
+  });
 });
 
 test('history restore options fail closed for optional application callbacks', () => {

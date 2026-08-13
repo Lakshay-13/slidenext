@@ -152,6 +152,35 @@ test('history restore fails closed when the canonical frame cannot be rendered',
   assert.deepEqual(calls, []);
 });
 
+test('history restore forwards the explicit canonical HTML builder to frame setup', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const buildDeckSourceHtml = () => '<main>canonical</main>';
+  let receivedBuilder = null;
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry(entry, options) {
+        return { frameSetup: options.restoreFrameSetup(entry) };
+      },
+      restoreStudioHistoryFrameSetup(entry, options) {
+        receivedBuilder = options.buildDeckSourceHtml;
+        return { didRestoreDoc: false, restoredHtmlLength: 0 };
+      }
+    },
+    getIframeDoc: () => iframeDoc,
+    buildDeckViewOptions: () => ({
+      deckHtmlOptions: {},
+      buildDeckSourceHtml
+    })
+  });
+
+  assert.equal(restoreHandler({ canonicalDeck }), false);
+  assert.equal(receivedBuilder, buildDeckSourceHtml);
+});
+
 test('history restore applies active-slide transactions without rebuilding the frame', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const calls = [];

@@ -17,6 +17,7 @@
     const buildEditorCanonicalDeck = getFunction('buildEditorCanonicalDeck');
     const getEditorCanonicalDeckValidator = getFunction('getEditorCanonicalDeckValidator');
     const createEditorDeckViewBuildOptions = getFunction('createEditorDeckViewBuildOptions');
+    const buildDeckSourceHtml = getFunction('buildDeckSourceHtml');
 
     return {
       transactionApi: options.transactionApi || null,
@@ -59,10 +60,13 @@
         : null,
       applyEditorSelectionState: getFunction('applyEditorSelectionState'),
       buildDeckViewOptions: createEditorDeckViewBuildOptions
-        ? (nextHistoryEntry) => createEditorDeckViewBuildOptions(null, {
-            activeSlideId: nextHistoryEntry.activeSlideId,
-            buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
-            buildFallbackHtml: () => ''
+        ? (nextHistoryEntry) => ({
+            ...createEditorDeckViewBuildOptions(null, {
+              activeSlideId: nextHistoryEntry.activeSlideId,
+              buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
+              buildFallbackHtml: () => ''
+            }),
+            ...(buildDeckSourceHtml ? { buildDeckSourceHtml } : {})
           })
         : null,
       syncIframeTheme: getFunction('syncIframeTheme'),

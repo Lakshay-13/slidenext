@@ -217,10 +217,14 @@
           restoreFrameSetup: (nextHistoryEntry) => {
             const deckViewOptions = buildDeckViewOptions(nextHistoryEntry) || {};
             const deckHtmlOptions = deckViewOptions.deckHtmlOptions || {};
+            const buildDeckSourceHtml = typeof deckViewOptions.buildDeckSourceHtml === 'function'
+              ? deckViewOptions.buildDeckSourceHtml
+              : null;
             if (typeof historyApi.restoreStudioHistoryFrameSetup !== 'function') return null;
             return historyApi.restoreStudioHistoryFrameSetup(nextHistoryEntry, {
               doc: iframeDoc,
               deckHtmlOptions,
+              buildDeckSourceHtml,
               replaceFrameHtml: (doc, html) => {
                 if (doc && doc.documentElement) {
                   doc.documentElement.innerHTML = html;
