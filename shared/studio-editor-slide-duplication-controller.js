@@ -60,6 +60,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
@@ -95,6 +98,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline,
               importSlideToCanonicalSlide
             })

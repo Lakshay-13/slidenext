@@ -5,6 +5,7 @@ const duplicationController = require('../shared/studio-editor-slide-duplication
 test('slide duplication controller assembles canonical and editor mutation dependencies', () => {
   const calls = [];
   const liveCanonicalDeck = { id: 'live-baseline' };
+  const pendingCanonicalDeck = { id: 'pending-baseline' };
   const legacyCanonicalDeck = { slides: [] };
   const controller = duplicationController.createStudioEditorSlideDuplicationController({
     slideCommandsApi: {
@@ -30,6 +31,7 @@ test('slide duplication controller assembles canonical and editor mutation depen
     },
     canonicalDeckApi: { id: 'canonical-api' },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
     getSlides: () => [{ id: 'slide-1' }],
@@ -53,6 +55,7 @@ test('slide duplication controller assembles canonical and editor mutation depen
   assert.equal(calls[0][1].buildCanonicalDeck({}), legacyCanonicalDeck);
   assert.equal(calls[0][1].buildCanonicalDeckBaseline({}).id, 'baseline-fallback');
   assert.equal(calls[0][1].getCanonicalDeckBaseline(), liveCanonicalDeck);
+  assert.equal(calls[0][1].getPendingCanonicalDeck(), pendingCanonicalDeck);
   assert.equal(typeof calls[0][1].importSlideToCanonicalSlide, 'function');
   const options = calls[1];
   assert.equal(options.getIframeDoc().id, 'doc');

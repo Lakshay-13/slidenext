@@ -76,6 +76,7 @@
     const slideDuplicationController = duplicationApi
       ? duplicationApi.createStudioEditorSlideDuplicationController({
           ...shared,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           resolveInsertionActionState: options.resolveInsertionActionState,
           getActiveSlide: options.getActiveSlide,
           sanitizeDuplicatedSubtree: options.sanitizeDuplicatedSubtree,
