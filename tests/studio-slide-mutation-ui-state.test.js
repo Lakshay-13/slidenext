@@ -10,6 +10,7 @@ const slideCommands = require('../shared/studio-editor-slide-commands.js');
 const slideDeletionMutation = require('../shared/studio-editor-slide-deletion-mutation.js');
 const slideInsertionMutation = require('../shared/studio-editor-slide-insertion-mutation.js');
 const slideReorderMutation = require('../shared/studio-editor-slide-reorder-mutation.js');
+const slideReorderTransaction = require('../shared/studio-editor-slide-reorder-transaction.js');
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const slideMutationRollback = require('../shared/studio-editor-slide-mutation-rollback.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -109,6 +110,7 @@ function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
     '\n\n    // Swap node indices in iframe and re-render'
   );
   context.SlideNextStudioEditorSlideReorderMutation = slideReorderMutation;
+  context.SlideNextStudioEditorSlideReorderTransaction = slideReorderTransaction;
   vm.runInContext(helperSource, context);
 }
 

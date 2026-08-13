@@ -1510,6 +1510,7 @@
   <script src="/shared/studio-editor-slide-insertion-controller.js"></script>
   <script src="/shared/studio-editor-slide-duplication-controller.js"></script>
   <script src="/shared/studio-editor-slide-reorder-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-reorder-transaction.js"></script>
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation-runtime.js"></script>
   <script src="/shared/studio-editor-slide-mutation-shell-runtime.js"></script>
@@ -6787,20 +6788,23 @@
     }
 
     function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
-        ? SlideNextStudioEditorSlideReorderMutation
+      const transactionApi = typeof SlideNextStudioEditorSlideReorderTransaction !== 'undefined'
+        ? SlideNextStudioEditorSlideReorderTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioSlideReorderMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioSlideReorderMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorSlideReorderMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorSlideReorderMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      return applyMutation(container, slideNode, beforeNode, {
+      return applyTransaction(container, slideNode, beforeNode, {
+        mutationApi: typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
+          ? SlideNextStudioEditorSlideReorderMutation
+          : null,
         slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
           ? SlideNextStudioEditorSlideCommands
           : null,
