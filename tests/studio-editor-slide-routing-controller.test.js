@@ -51,3 +51,18 @@ test('slide routing controller fails closed when route dependencies are unavaila
   assert.equal(controller.remove('slide-1', {}), false);
   assert.equal(controller.reorder('slide-1', 'slide-2', {}), false);
 });
+
+test('slide routing controller reports activation failures instead of a false success', () => {
+  const controller = routingController.createStudioEditorSlideRoutingController({
+    deckViewApi: {
+      setStudioDeckActiveSlideById(_slideId, options) {
+        options.activateSlideByIndex(1);
+        return true;
+      }
+    },
+    getSlideIndexById: () => 1,
+    activateSlideByIndex: () => false
+  });
+
+  assert.equal(controller.select('slide-2', {}), false);
+});

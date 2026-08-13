@@ -28,15 +28,22 @@
       if (!deckViewApi || typeof deckViewApi.setStudioDeckActiveSlideById !== 'function') {
         return false;
       }
-      return deckViewApi.setStudioDeckActiveSlideById(slideId, {
+      let didActivate = false;
+      let activationFailed = false;
+      const didSelect = deckViewApi.setStudioDeckActiveSlideById(slideId, {
         doc,
         getSlideIndexById,
         activateSlideByIndex: (index) => {
-          if (activateSlideByIndex) {
-            activateSlideByIndex(index, slideOptions);
+          if (!activateSlideByIndex) {
+            activationFailed = true;
+            return false;
           }
+          didActivate = true;
+          activationFailed = activateSlideByIndex(index, slideOptions) === false;
+          return !activationFailed;
         }
       });
+      return didSelect !== false && didActivate && !activationFailed;
     }
 
     function remove(slideId, doc) {
