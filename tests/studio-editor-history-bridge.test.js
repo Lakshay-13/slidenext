@@ -17,11 +17,15 @@ test('history bridge composes the runtime and delegates all history state access
     getPendingEditorTransaction: () => ({ id: 'tx' }),
     setPendingEditorTransaction: (value) => value,
     clearPendingEditorTransaction: () => true,
-    getPendingEditorCanonicalDeck: () => ({ kind: 'slidenext.deck' }),
+    getPendingEditorCanonicalDeck: (sourceDocument) => {
+      assert.equal(sourceDocument, documentRef);
+      return { kind: 'slidenext.deck' };
+    },
     setPendingEditorCanonicalDeck: (value) => value,
     getUndoDebounceTimer: () => 10,
     setUndoDebounceTimer: (value) => value
   };
+  const documentRef = { id: 'editor-document' };
   const historyStore = { name: 'history-store' };
   const runtimeApi = {
     createStudioEditorHistoryRuntime(options) {
@@ -43,7 +47,7 @@ test('history bridge composes the runtime and delegates all history state access
   assert.deepEqual(bridge.getPendingEditorTransaction(), { id: 'tx' });
   assert.deepEqual(bridge.setPendingEditorTransaction({ id: 'next-tx' }), { id: 'next-tx' });
   assert.equal(bridge.clearPendingEditorTransaction(), true);
-  assert.deepEqual(bridge.getPendingEditorCanonicalDeck(), { kind: 'slidenext.deck' });
+  assert.deepEqual(bridge.getPendingEditorCanonicalDeck(documentRef), { kind: 'slidenext.deck' });
   assert.deepEqual(bridge.setPendingEditorCanonicalDeck({ id: 'next-deck' }), { id: 'next-deck' });
   assert.equal(bridge.getUndoDebounceTimer(), 10);
   assert.equal(bridge.setUndoDebounceTimer(20), 20);

@@ -34,7 +34,7 @@
     return {
       getPendingTransaction: () => pendingTransaction,
       setPendingTransaction,
-      getPendingCanonicalDeck: () => pendingCanonicalDeck,
+      getPendingCanonicalDeck: (sourceDocument) => pendingCanonicalDeck,
       setPendingCanonicalDeck,
       clear
     };

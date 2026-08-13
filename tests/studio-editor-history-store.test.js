@@ -26,6 +26,7 @@ test('history state composes stacks, pending values, and debounce timing', () =>
   const redoStack = ['redo-entry'];
   const transaction = { id: 'transaction-1' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const documentRef = { id: 'editor-document' };
   const timer = { id: 'timer-1' };
   const controller = historyStateApi.createStudioEditorHistoryStateController({
     stackController: {
@@ -38,7 +39,10 @@ test('history state composes stacks, pending values, and debounce timing', () =>
     pendingController: {
       getPendingTransaction: () => transaction,
       setPendingTransaction: (value) => value,
-      getPendingCanonicalDeck: () => canonicalDeck,
+      getPendingCanonicalDeck: (sourceDocument) => {
+        assert.equal(sourceDocument, documentRef);
+        return canonicalDeck;
+      },
       setPendingCanonicalDeck: (value) => value,
       clear: () => null
     },
@@ -51,7 +55,7 @@ test('history state composes stacks, pending values, and debounce timing', () =>
   assert.deepEqual(controller.getUndoStack(), undoStack);
   assert.deepEqual(controller.getRedoStack(), redoStack);
   assert.equal(controller.getPendingEditorTransaction(), transaction);
-  assert.equal(controller.getPendingEditorCanonicalDeck(), canonicalDeck);
+  assert.equal(controller.getPendingEditorCanonicalDeck(documentRef), canonicalDeck);
   assert.equal(controller.getUndoDebounceTimer(), timer);
   assert.deepEqual(controller.setUndoStack(['undo-next']), ['undo-next']);
   assert.deepEqual(controller.setRedoStack(['redo-next']), ['redo-next']);

@@ -23,10 +23,10 @@
       ? runtime.historyStateController
       : null;
 
-    function read(methodName, fallback) {
+    function read(methodName, fallback, ...args) {
       return historyStateController
         && typeof historyStateController[methodName] === 'function'
-        ? historyStateController[methodName]()
+        ? historyStateController[methodName](...args)
         : fallback;
     }
 
@@ -52,7 +52,11 @@
         false
       ),
       clearPendingEditorTransaction: () => read('clearPendingEditorTransaction', false),
-      getPendingEditorCanonicalDeck: () => read('getPendingEditorCanonicalDeck', null),
+      getPendingEditorCanonicalDeck: (sourceDocument) => read(
+        'getPendingEditorCanonicalDeck',
+        null,
+        sourceDocument
+      ),
       setPendingEditorCanonicalDeck: (nextCanonicalDeck) => write(
         'setPendingEditorCanonicalDeck',
         nextCanonicalDeck,

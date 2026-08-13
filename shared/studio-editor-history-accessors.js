@@ -10,9 +10,9 @@
   function createStudioEditorHistoryAccessors(options = {}) {
     const bridge = options.bridge || null;
 
-    function read(methodName, fallback) {
+    function read(methodName, fallback, ...args) {
       return bridge && typeof bridge[methodName] === 'function'
-        ? bridge[methodName]()
+        ? bridge[methodName](...args)
         : fallback;
     }
 
@@ -36,7 +36,11 @@
         false
       ),
       clearPendingEditorTransaction: () => read('clearPendingEditorTransaction', false),
-      getPendingEditorCanonicalDeck: () => read('getPendingEditorCanonicalDeck', null),
+      getPendingEditorCanonicalDeck: (sourceDocument) => read(
+        'getPendingEditorCanonicalDeck',
+        null,
+        sourceDocument
+      ),
       setPendingEditorCanonicalDeck: (nextCanonicalDeck) => write(
         'setPendingEditorCanonicalDeck',
         nextCanonicalDeck,
@@ -60,7 +64,8 @@
       setStudioPendingEditorTransaction: (nextTransaction) => accessors
         .setPendingEditorTransaction(nextTransaction),
       clearStudioPendingEditorTransaction: () => accessors.clearPendingEditorTransaction(),
-      getStudioPendingEditorCanonicalDeck: () => accessors.getPendingEditorCanonicalDeck(),
+      getStudioPendingEditorCanonicalDeck: (sourceDocument) => accessors
+        .getPendingEditorCanonicalDeck(sourceDocument),
       setStudioPendingEditorCanonicalDeck: (nextCanonicalDeck) => accessors
         .setPendingEditorCanonicalDeck(nextCanonicalDeck),
       getStudioUndoDebounceTimer: () => accessors.getUndoDebounceTimer(),

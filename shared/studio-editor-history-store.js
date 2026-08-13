@@ -88,9 +88,9 @@
         : false;
     }
 
-    function getPendingEditorCanonicalDeck() {
+    function getPendingEditorCanonicalDeck(sourceDocument) {
       return pendingController && typeof pendingController.getPendingCanonicalDeck === 'function'
-        ? pendingController.getPendingCanonicalDeck()
+        ? pendingController.getPendingCanonicalDeck(sourceDocument)
         : null;
     }
 

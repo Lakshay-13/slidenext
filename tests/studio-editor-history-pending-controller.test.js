@@ -49,7 +49,7 @@ test('editor wiring routes pending history transactions through the shared contr
   );
   assert.match(
     accessorSource,
-    /getStudioPendingEditorCanonicalDeck: \(\) => accessors\.getPendingEditorCanonicalDeck\(\)/
+    /getStudioPendingEditorCanonicalDeck: \(sourceDocument\) => accessors\s+\.getPendingEditorCanonicalDeck\(sourceDocument\)/
   );
   assert.doesNotMatch(fileContent, /let pendingEditorTransaction = null/);
   assert.doesNotMatch(fileContent, /let pendingEditorCanonicalDeck = null/);

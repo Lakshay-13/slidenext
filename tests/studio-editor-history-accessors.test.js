@@ -10,6 +10,7 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const ACCESSORS_PATH = path.join(__dirname, '..', 'shared', 'studio-editor-history-accessors.js');
 
 test('history accessors delegate all history state operations', () => {
+  const documentRef = { id: 'editor-document' };
   const bridge = {
     getUndoStack: () => ['undo'],
     getRedoStack: () => ['redo'],
@@ -19,7 +20,10 @@ test('history accessors delegate all history state operations', () => {
     getPendingEditorTransaction: () => ({ id: 'tx' }),
     setPendingEditorTransaction: (value) => value,
     clearPendingEditorTransaction: () => true,
-    getPendingEditorCanonicalDeck: () => ({ kind: 'slidenext.deck' }),
+    getPendingEditorCanonicalDeck: (sourceDocument) => {
+      assert.equal(sourceDocument, documentRef);
+      return { kind: 'slidenext.deck' };
+    },
     setPendingEditorCanonicalDeck: (value) => value,
     getUndoDebounceTimer: () => 10,
     setUndoDebounceTimer: (value) => value
@@ -34,7 +38,7 @@ test('history accessors delegate all history state operations', () => {
   assert.deepEqual(accessors.getPendingEditorTransaction(), { id: 'tx' });
   assert.deepEqual(accessors.setPendingEditorTransaction({ id: 'next-tx' }), { id: 'next-tx' });
   assert.equal(accessors.clearPendingEditorTransaction(), true);
-  assert.deepEqual(accessors.getPendingEditorCanonicalDeck(), { kind: 'slidenext.deck' });
+  assert.deepEqual(accessors.getPendingEditorCanonicalDeck(documentRef), { kind: 'slidenext.deck' });
   assert.deepEqual(accessors.setPendingEditorCanonicalDeck({ id: 'next-deck' }), {
     id: 'next-deck'
   });
@@ -60,6 +64,7 @@ test('history accessors preserve safe fallbacks without a bridge', () => {
 });
 
 test('history global api preserves the editor shell function names', () => {
+  const documentRef = { id: 'editor-document' };
   const calls = [];
   const accessors = {
     getUndoStack: () => ['undo'],
@@ -73,7 +78,10 @@ test('history global api preserves the editor shell function names', () => {
       calls.push('clear-transaction');
       return true;
     },
-    getPendingEditorCanonicalDeck: () => ({ id: 'deck' }),
+    getPendingEditorCanonicalDeck: (sourceDocument) => {
+      assert.equal(sourceDocument, documentRef);
+      return { id: 'deck' };
+    },
     setPendingEditorCanonicalDeck: (value) => value,
     getUndoDebounceTimer: () => 10,
     setUndoDebounceTimer: (value) => value
@@ -90,7 +98,7 @@ test('history global api preserves the editor shell function names', () => {
     id: 'next-tx'
   });
   assert.equal(globalApi.clearStudioPendingEditorTransaction(), true);
-  assert.deepEqual(globalApi.getStudioPendingEditorCanonicalDeck(), { id: 'deck' });
+  assert.deepEqual(globalApi.getStudioPendingEditorCanonicalDeck(documentRef), { id: 'deck' });
   assert.deepEqual(globalApi.setStudioPendingEditorCanonicalDeck({ id: 'next-deck' }), {
     id: 'next-deck'
   });
