@@ -8,6 +8,9 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function resolveStudioEditorCanonicalDeck(sourceDoc = null, options = {}) {
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
       ? options.resolveLiveCanonicalDeck
       : null;
@@ -24,6 +27,15 @@
       }
     };
     let liveCanonicalDeck = null;
+
+    if (getPendingCanonicalDeck) {
+      try {
+        const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
+        if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+      } catch (error) {
+        // Continue through live and rebuilt canonical state.
+      }
+    }
 
     if (resolveLiveCanonicalDeck) {
       try {

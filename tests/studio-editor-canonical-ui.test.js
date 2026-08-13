@@ -26,6 +26,27 @@ test('canonical UI reader prefers the live deck and forwards the session token',
   assert.equal(buildCalls, 0);
 });
 
+test('canonical UI reader prefers pending state before live state', () => {
+  const sourceDoc = { id: 'pending-doc' };
+  const pendingCanonicalDeck = { slides: [{ id: 'pending-slide' }] };
+  const liveCanonicalDeck = { slides: [{ id: 'live-slide' }] };
+  const calls = [];
+
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck(sourceDoc, {
+    getPendingCanonicalDeck(doc) {
+      calls.push(['pending', doc]);
+      return pendingCanonicalDeck;
+    },
+    resolveLiveCanonicalDeck(doc) {
+      calls.push(['live', doc]);
+      return liveCanonicalDeck;
+    }
+  });
+
+  assert.equal(result, pendingCanonicalDeck);
+  assert.deepEqual(calls, [['pending', sourceDoc]]);
+});
+
 test('canonical UI reader falls back to the document builder when live state is unavailable', () => {
   const sourceDoc = { id: 'fallback-doc' };
   const importedCanonicalDeck = { slides: [{ id: 'imported-slide' }] };

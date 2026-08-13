@@ -7870,6 +7870,9 @@
       if (canonicalUiApi
         && typeof canonicalUiApi.resolveStudioEditorCanonicalDeck === 'function') {
         return canonicalUiApi.resolveStudioEditorCanonicalDeck(doc, {
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           resolveLiveCanonicalDeck: typeof resolveEditorLiveCanonicalDeck === 'function'
             ? resolveEditorLiveCanonicalDeck
             : null,
