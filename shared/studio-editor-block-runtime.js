@@ -24,6 +24,7 @@
             || (root && root.SlideNextDeckRender)
             || null,
           getCanonicalDeck: options.getCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           getActiveSlideId: options.getActiveSlideId,
           getSelectedNodeIds: options.getSelectedNodeIds,

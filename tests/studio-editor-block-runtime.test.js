@@ -21,6 +21,7 @@ test('block runtime composes canonical and persistence dependencies', () => {
     canonicalStateApi: {},
     renderApi: {},
     getCanonicalDeck: () => null,
+    getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     getActiveSlideId: () => '',
     getSelectedNodeIds: () => [],
@@ -47,6 +48,7 @@ test('block runtime composes canonical and persistence dependencies', () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
   assert.equal(calls[0].renderApi, options.renderApi);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(
     calls[0].createElementPresenceTransaction,
     options.transactionApi.createStudioElementPresenceTransaction
@@ -75,5 +77,9 @@ test('index wires block persistence through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorBlockController\.createStudioEditorBlockController\(/
+  );
+  assert.match(
+    fileContent,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,\n\s+getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\(/
   );
 });

@@ -46,16 +46,23 @@ test('block controller saves the active selection and finalizes persistence hook
   assert.deepEqual(calls[3][1], ['intro']);
 });
 
-test('block mutations prefer a valid live canonical baseline', () => {
+test('block mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{
       id: 'slide-1',
       nodes: [{ id: 'node-1', text: 'Heading' }]
     }]
   });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1', text: 'Pending Heading' }]
+    }]
+  });
   let didBuildFromDocument = false;
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
     canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
@@ -69,6 +76,7 @@ test('block mutations prefer a valid live canonical baseline', () => {
   const result = controller.saveSelection({ id: 'live-block', name: 'Live Block' });
 
   assert.equal(result.blocks[0].id, 'live-block');
+  assert.equal(result.slides[0].nodes[0].text, 'Pending Heading');
   assert.equal(didBuildFromDocument, false);
 });
 
@@ -85,6 +93,9 @@ test('block controller delegates canonical deck resolution to shared state', () 
         return () => deck;
       }
     },
+    getPendingCanonicalDeck() {
+      return deck;
+    },
     getCanonicalDeckBaseline() {
       throw new Error('shared resolver should own baseline resolution');
     },
@@ -99,6 +110,7 @@ test('block controller delegates canonical deck resolution to shared state', () 
 
   assert.equal(result.blocks[0].nodes[0].text, 'Shared');
   assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

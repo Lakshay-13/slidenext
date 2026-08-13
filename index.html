@@ -3898,6 +3898,7 @@
           getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
             ? resolveEditorUiCanonicalDeck(getIframeDoc())
             : buildEditorCanonicalDeck(getIframeDoc()),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
             getIframeDoc(),
             getStudioEditorSessionToken()
