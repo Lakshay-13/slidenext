@@ -1399,6 +1399,7 @@
   <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
+  <script src="/shared/studio-editor-removal-transaction.js"></script>
   <script src="/shared/studio-editor-removal-controller.js"></script>
   <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
@@ -10130,44 +10131,35 @@
     }
 
     function applyEditorRemovalMutationWithTransaction(selection, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
-        ? SlideNextStudioEditorRemovalMutation
+      const transactionApi = typeof SlideNextStudioEditorRemovalTransaction !== 'undefined'
+        ? SlideNextStudioEditorRemovalTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioRemovalMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioRemovalMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorRemovalMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorRemovalMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           didRemove: false,
           removedCount: 0,
           transaction: null
         };
       }
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation(selection, {
+      return applyTransaction(selection, {
+        mutationApi: typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
+          ? SlideNextStudioEditorRemovalMutation
+          : null,
         removalApi: typeof SlideNextStudioEditorRemoval !== 'undefined'
           ? SlideNextStudioEditorRemoval
           : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
-        getElementId,
-        removeElement: typeof options.removeElement === 'function'
-          ? options.removeElement
-          : (element) => {
-              if (element && typeof element.remove === 'function') {
-                element.remove();
-              }
-            }
+        getElementId: options.getElementId,
+        assignElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null,
+        removeElement: options.removeElement
       });
     }
 

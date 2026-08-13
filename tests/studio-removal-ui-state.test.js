@@ -9,6 +9,7 @@ const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js')
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
 const removalMutation = require('../shared/studio-editor-removal-mutation.js');
+const removalTransaction = require('../shared/studio-editor-removal-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const removalController = require('../shared/studio-editor-removal-controller.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -66,6 +67,7 @@ function loadRemovalMutationHelper(fileContent, context) {
     '\n\n    // Delete active selection'
   );
   context.SlideNextStudioEditorRemovalMutation = removalMutation;
+  context.SlideNextStudioEditorRemovalTransaction = removalTransaction;
   vm.runInContext(helperSource, context);
 }
 
