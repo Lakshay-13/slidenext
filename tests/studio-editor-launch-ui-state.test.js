@@ -9,6 +9,7 @@ const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const launchController = require('../shared/studio-editor-launch-controller.js');
+const sessionLifecycleController = require('../shared/studio-editor-session-lifecycle-controller.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
 
@@ -207,6 +208,10 @@ function loadStudioEditorLaunchController(context) {
     getCurrentPresentationUrl: () => context.currentPresentationUrl || '',
     getCurrentSessionToken: () => context.studioEditorSessionToken
   });
+}
+
+function loadStudioEditorSessionLifecycleController(context) {
+  context.SlideNextStudioEditorSessionLifecycleController = sessionLifecycleController;
 }
 
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
@@ -1283,6 +1288,9 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
     currentSlideIndex: 2,
     currentTitle: 'Project Onboarding',
+    studioEditorSessionResetController: null,
+    studioEditorSessionUiController: null,
+    studioEditorShellController: null,
     applyCurrentPresentationMetadata(metadata) {
       context.currentPresentationMetadata = metadata;
     },
@@ -1340,6 +1348,8 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
     resetStudioSaveButtonState() {},
     resetStudioSourceViewUiState() {},
     resetStudioVersionUiState() {},
+    resetEditorLiveCanonicalDeck() {},
+    resetSaveButtonState() {},
     clearTimeout() {},
     redoStack: ['redo-entry'],
     setTimeout(callback) {
@@ -1354,6 +1364,7 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
   };
 
   vm.createContext(context);
+  loadStudioEditorSessionLifecycleController(context);
   vm.runInContext(closeStudioEditorSource, context);
 
   context.closeStudioEditor();

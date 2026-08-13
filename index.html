@@ -6651,6 +6651,7 @@
           getAutoVersionTimers: getStudioAutoVersionTimers,
           setAutoVersionTimers: setStudioAutoVersionTimers,
           clearTimer: clearTimeout,
+          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
           clearHistoryStacks: clearStudioHistoryStacks,
           updateHistoryButtons,
@@ -6666,86 +6667,7 @@
           loadPresentations
         });
       }
-      const editor = document.getElementById('studioEditor');
-      const iframe = getStudioFrame();
-      advanceStudioEditorSessionToken();
-      if (typeof resetEditorLiveCanonicalDeck === 'function') {
-        resetEditorLiveCanonicalDeck();
-      }
-      teardownDeckActiveSlideSync();
-      updateCurrentPresentationSessionState({
-        presentationUrl: '',
-        presentationTitle: '',
-        presentationCategory: '',
-        slideIndex: 0,
-        presentationMetadata: null
-      });
-      const didResetSessionData = typeof studioEditorSessionResetController !== 'undefined'
-        && studioEditorSessionResetController
-        && typeof studioEditorSessionResetController.reset === 'function'
-        ? studioEditorSessionResetController.reset()
-        : false;
-      if (!didResetSessionData) {
-        const clearedTimerState = persistenceApi
-          && typeof persistenceApi.clearStudioPersistenceTimers === 'function'
-          ? persistenceApi.clearStudioPersistenceTimers({
-              autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-              autoVersionTimers: getStudioAutoVersionTimers(),
-              clearTimer: clearTimeout
-            })
-          : {
-              autoSaveDebounceTimer: null,
-              autoVersionTimers: {}
-            };
-        setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-        setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
-        applyCurrentStudioPersistedDeckState({
-          cleanHtml: '',
-          canonicalDeck: null,
-          playbackState: null
-        }, {
-          presentationUrl: '',
-          syncPresentationMetadata: false
-        });
-        clearStudioHistoryStacks();
-        updateHistoryButtons();
-      }
-      const didResetEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
-        && studioEditorSessionUiController
-        && typeof studioEditorSessionUiController.reset === 'function'
-        ? studioEditorSessionUiController.reset({ resetDeckUiState: false })
-        : false;
-      if (!didResetEditorUiState) {
-        resetStudioPresentationUiState();
-        resetStudioSourceViewUiState();
-        resetStudioVersionUiState();
-        resetStudioSaveButtonState();
-        updateDeckReadyToolbarActionState();
-      }
-      deselectElement();
-      
-      const didCloseEditorShell = typeof studioEditorShellController !== 'undefined'
-        && studioEditorShellController
-        && typeof studioEditorShellController.close === 'function'
-        ? studioEditorShellController.close(editor, iframe)
-        : false;
-      if (!didCloseEditorShell) {
-        iframe.onload = null;
-        iframe.src = '';
-        editor.classList.remove('active');
-        editor.style.opacity = '0';
-        editor.style.pointerEvents = 'none';
-        document.body.style.overflow = '';
-        setTimeout(() => {
-          if (!editor.classList.contains('active')) {
-            editor.classList.add('hidden');
-          }
-        }, 300);
-      }
-      resetStudioDeckUiState();
-      
-      // Refresh dashboard list
-      loadPresentations();
+      return false;
     }
 
     // Initialize Frame Hooks
