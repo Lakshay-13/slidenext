@@ -115,6 +115,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const assignElementId = typeof options.assignElementId === 'function'
       ? options.assignElementId
       : null;
@@ -170,6 +173,9 @@
           : null,
         getCanonicalDeckBaseline: getCanonicalDeckBaseline
           ? (sourceDocument) => getCanonicalDeckBaseline(sourceDocument)
+          : null,
+        getPendingCanonicalDeck: getPendingCanonicalDeck
+          ? (sourceDocument) => getPendingCanonicalDeck(sourceDocument)
           : null,
         buildCanonicalLayoutUpdates,
         getElementId: assignElementId

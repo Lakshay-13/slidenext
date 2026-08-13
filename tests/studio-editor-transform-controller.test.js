@@ -59,6 +59,7 @@ test('transform controller forwards the live canonical baseline reader', () => {
   let builderOptions = null;
   let forwardedBuildOptions = null;
   const liveCanonicalDeck = { kind: 'live-deck' };
+  const pendingCanonicalDeck = { kind: 'pending-deck' };
   const controller = transformController.createStudioEditorTransformController({
     transformApi: {
       createStudioTransformSessionFinalizer() {
@@ -98,6 +99,9 @@ test('transform controller forwards the live canonical baseline reader', () => {
     getCanonicalDeckBaseline() {
       return liveCanonicalDeck;
     },
+    getPendingCanonicalDeck() {
+      return pendingCanonicalDeck;
+    },
     buildCanonicalDeckBaseline(sourceDocument, buildOptions) {
       forwardedBuildOptions = { sourceDocument, buildOptions };
       return { kind: 'rebuilt-deck' };
@@ -107,6 +111,8 @@ test('transform controller forwards the live canonical baseline reader', () => {
   assert.equal(controller.setup({ body: {} }), true);
   assert.equal(typeof builderOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(builderOptions.getCanonicalDeckBaseline(), liveCanonicalDeck);
+  assert.equal(typeof builderOptions.getPendingCanonicalDeck, 'function');
+  assert.equal(builderOptions.getPendingCanonicalDeck(), pendingCanonicalDeck);
   const sourceDocument = { id: 'fallback-doc' };
   assert.deepEqual(
     builderOptions.buildCanonicalDeckBaseline(sourceDocument, { preferLiveCanonicalDeck: false }),

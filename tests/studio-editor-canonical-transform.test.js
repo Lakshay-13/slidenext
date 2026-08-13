@@ -47,6 +47,31 @@ test('buildStudioCanonicalTransformBaseline prefers a valid live canonical deck'
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalTransformBaseline prefers pending canonical state before the live baseline', () => {
+  const pendingDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'pending-slide' }] });
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'live-slide' }] });
+  let didBuildFromDocument = false;
+  const result = canonicalTransform.buildStudioCanonicalTransformBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck(documentRef) {
+      assert.deepEqual(documentRef, { id: 'editor-doc' });
+      return pendingDeck;
+    },
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return canonicalDeck.createCanonicalDeck({ slides: [] });
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, pendingDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalTransformBaseline delegates baseline resolution to the shared canonical-state reader', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [] });
   const sourceDocument = { id: 'editor-doc' };
@@ -65,6 +90,9 @@ test('buildStudioCanonicalTransformBaseline delegates baseline resolution to the
     getCanonicalDeckBaseline() {
       return null;
     },
+    getPendingCanonicalDeck() {
+      return null;
+    },
     buildCanonicalDeckBaseline() {
       return null;
     },
@@ -73,6 +101,7 @@ test('buildStudioCanonicalTransformBaseline delegates baseline resolution to the
 
   assert.equal(result, sourceDeck);
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof readerOptions.getPendingCanonicalDeck, 'function');
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
 });
@@ -92,12 +121,14 @@ test('buildStudioCanonicalTransformBaseline prefers the shared canonical deck re
       }
     },
     getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getPendingCanonicalDeck: () => null,
     buildCanonicalDeckBaseline: () => ({ invalid: true }),
     sourceDocument: { id: 'editor-doc' }
   });
 
   assert.equal(result, sourceDeck);
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

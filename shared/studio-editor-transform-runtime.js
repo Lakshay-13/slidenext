@@ -68,6 +68,7 @@
           triggerAutoVersion: options.triggerAutoVersion,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           assignElementId: options.assignElementId,
           getGridSizePx: options.getGridSizePx,

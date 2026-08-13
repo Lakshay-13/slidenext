@@ -129,6 +129,9 @@
   }
 
   function createStudioEditorCanonicalDeckBaselineReader(options = {}) {
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -149,6 +152,14 @@
     }
 
     return function readCanonicalDeckBaseline(sourceDocument) {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (error) {
+          // Fall through to the live baseline and document rebuild paths.
+        }
+      }
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
@@ -179,6 +190,7 @@
       ? options.isCanonicalDeck
       : isStudioEditorCanonicalDeckLike;
     const readCanonicalDeckBaseline = createStudioEditorCanonicalDeckBaselineReader({
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
       getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
       buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
       isCanonicalDeck

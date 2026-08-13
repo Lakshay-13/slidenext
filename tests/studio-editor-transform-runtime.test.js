@@ -57,6 +57,7 @@ test('transform runtime composes the full controller dependency bundle', () => {
     triggerAutoVersion: () => {},
     buildCanonicalDeck: () => null,
     buildCanonicalDeckBaseline: () => null,
+    getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     assignElementId: () => '',
     getGridSizePx: () => null,
@@ -82,6 +83,7 @@ test('transform runtime composes the full controller dependency bundle', () => {
   assert.equal(calls[0].isFreeformPositioned, options.isFreeformPositioned);
   assert.equal(calls[0].getClosestPositionedAncestor, options.getClosestPositionedAncestor);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].getCanonicalDeckBaseline, options.getCanonicalDeckBaseline);
   assert.equal(calls[0].snapDistancePx, options.snapDistancePx);
   assert.equal(calls[0].snapEnabled, options.snapEnabled);
@@ -109,6 +111,10 @@ test('index wires transform behavior through the runtime module', () => {
   assert.match(
     fileContent,
     /getSelectedElements: \(doc\) => getLiveSelectedElements\(getStudioSelectedElements\(doc\), doc\),/
+  );
+  assert.match(
+    fileContent,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
   assert.match(
     fileContent,
