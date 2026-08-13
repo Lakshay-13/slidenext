@@ -32,8 +32,10 @@
       }
       const pendingTransaction = getPendingTransaction();
       const pendingCanonicalDeck = getPendingCanonicalDeck();
-      if (pendingTransaction === null && pendingCanonicalDeck === null) return false;
-      const saveResult = pendingCanonicalDeck !== null
+      const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
+      const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
+      if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
+      const saveResult = hasPendingCanonicalDeck
         ? saveHistoryState(false, pendingTransaction, pendingCanonicalDeck)
         : saveHistoryState(false, pendingTransaction);
       return !isHistoryCaptureFailure(saveResult);

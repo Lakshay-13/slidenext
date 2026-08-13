@@ -70,6 +70,21 @@ test('history flush action returns false when there is no pending history', () =
   assert.equal(saveCalls, 0);
 });
 
+test('history flush action treats undefined pending state as empty', () => {
+  let saveCalls = 0;
+  const flushPendingEditorHistory = historyFlushAction.createStudioEditorHistoryFlushAction({
+    getPendingTransaction: () => undefined,
+    getPendingCanonicalDeck: () => undefined,
+    saveHistoryState() {
+      saveCalls += 1;
+      return { didCapture: true };
+    }
+  });
+
+  assert.equal(flushPendingEditorHistory(), false);
+  assert.equal(saveCalls, 0);
+});
+
 test('history flush global API preserves the editor handler name', () => {
   const calls = [];
   const api = historyFlushAction.createStudioEditorHistoryFlushGlobalApi({
