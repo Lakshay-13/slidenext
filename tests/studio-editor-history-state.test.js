@@ -44,6 +44,7 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   const buildOptionsCalls = [];
   let pendingCanonicalDeck = null;
   let pendingTransaction = null;
+  const pendingDocuments = [];
   const historyApi = {
     buildStudioHistoryEntry(doc, options) {
       const canonicalDeck = options.buildCanonicalDeck(doc);
@@ -63,7 +64,8 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   const overrideDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   const builder = historyState.createStudioEditorHistoryEntryBuilder({
     historyApi,
-    getPendingCanonicalDeck() {
+    getPendingCanonicalDeck(doc) {
+      pendingDocuments.push(doc);
       return pendingCanonicalDeck;
     },
     preferCanonicalDeck: true,
@@ -97,6 +99,7 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   assert.deepEqual(buildOptionsCalls, [
     { preferLiveCanonicalDeck: false }
   ]);
+  assert.deepEqual(pendingDocuments, ['doc-1', 'doc-2']);
   assert.equal(calls[0].preferCanonicalDeck, true);
   assert.equal(calls[1].preferCanonicalDeck, true);
 });

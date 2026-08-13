@@ -186,7 +186,7 @@
       if (!historyApi || typeof historyApi.buildStudioHistoryEntry !== 'function') {
         return null;
       }
-      const pendingCanonicalDeck = getPendingCanonicalDeck();
+      const pendingCanonicalDeck = getPendingCanonicalDeck(doc);
       const pendingTransaction = getPendingTransaction();
       const hasPendingCanonicalDeck = isValidCanonicalDeck(pendingCanonicalDeck);
       const historyCanonicalDeckBuilder = hasPendingCanonicalDeck
