@@ -174,6 +174,43 @@ test('applyStudioEditorTransaction applies before and after style patches', () =
   assert.deepEqual(element.style, { left: '10px', top: '20px' });
 });
 
+test('applyStudioEditorTransaction reverses compound operation order during undo', () => {
+  const first = { dataset: { editorId: 'node-1' } };
+  const second = { dataset: { editorId: 'node-2' } };
+  const markupTransaction = transaction.createStudioMarkupTransaction([
+    { element: first, before: '<p>first-before</p>', after: '<p>first-after</p>' },
+    { element: second, before: '<p>second-before</p>', after: '<p>second-after</p>' }
+  ]);
+  const calls = [];
+
+  const applyOptions = {
+    getElementById(editorId) {
+      return editorId === 'node-1' ? first : second;
+    }
+  };
+  transaction.applyStudioEditorTransaction(markupTransaction, 'redo', {
+    ...applyOptions,
+    applyMarkupState(element, markup) {
+      calls.push(['redo-apply', element.dataset.editorId, markup]);
+      return true;
+    }
+  });
+  transaction.applyStudioEditorTransaction(markupTransaction, 'undo', {
+    ...applyOptions,
+    applyMarkupState(element, markup) {
+      calls.push(['undo-apply', element.dataset.editorId, markup]);
+      return true;
+    }
+  });
+
+  assert.deepEqual(calls, [
+    ['redo-apply', 'node-1', '<p>first-after</p>'],
+    ['redo-apply', 'node-2', '<p>second-after</p>'],
+    ['undo-apply', 'node-2', '<p>second-before</p>'],
+    ['undo-apply', 'node-1', '<p>first-before</p>']
+  ]);
+});
+
 test('applyStudioEditorTransaction fails atomically when a target is missing', () => {
   const element = createStyleElement('node-1', { left: '10px' });
   const styleTransaction = transaction.createStudioStyleTransaction([

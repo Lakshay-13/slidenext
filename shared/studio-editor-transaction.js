@@ -564,9 +564,12 @@
       return true;
     };
 
+    const operationsToApply = nextDirection === 'undo'
+      ? [...resolvedOperations].reverse()
+      : resolvedOperations;
     const appliedOperations = [];
     try {
-      resolvedOperations.forEach((resolvedOperation) => {
+      operationsToApply.forEach((resolvedOperation) => {
         appliedOperations.push(resolvedOperation);
         if (!applyResolvedOperation(resolvedOperation, nextDirection)) {
           throw new Error('transaction operation rejected');
