@@ -390,13 +390,6 @@
         after: { exists: false, index, markup: '' }
       };
     });
-    const markupCapture = createMarkupTransactionCapture
-      ? createMarkupTransactionCapture([{
-          element: parent,
-          elementId: getElementId(parent)
-        }], { getElementId })
-      : null;
-
     const group = documentRef.createElement('div');
     if (!group || typeof group.appendChild !== 'function') {
       return {
@@ -423,6 +416,24 @@
     if (assignElementId) {
       assignElementId(group);
     }
+
+    const preflightPresenceIds = new Set();
+    const canPreflightPresenceTransaction = !!createElementPresenceTransaction
+      && !!parentId
+      && !!resolveElementId(group)
+      && typeof group.outerHTML === 'string'
+      && !!group.outerHTML.trim()
+      && childPresenceItems.every((item) => {
+        if (!item.elementId || preflightPresenceIds.has(item.elementId)) return false;
+        preflightPresenceIds.add(item.elementId);
+        return item.before.index >= 0 && !!item.before.markup.trim();
+      });
+    const markupCapture = !canPreflightPresenceTransaction && createMarkupTransactionCapture
+      ? createMarkupTransactionCapture([{
+          element: parent,
+          elementId: getElementId(parent)
+        }], { getElementId })
+      : null;
 
     const itemByElement = new Map(groupPlan.nextItems.map((item) => [item.element, item]));
     const firstElement = orderedSelection[0];

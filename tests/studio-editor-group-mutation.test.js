@@ -134,6 +134,7 @@ test('applyStudioGroupMutation prefers scoped presence transactions for serializ
   };
   childOne.parentElement = parent;
   childTwo.parentElement = parent;
+  let markupCaptureCalls = 0;
   const documentRef = {
     createElement() {
       const group = {
@@ -166,6 +167,10 @@ test('applyStudioGroupMutation prefers scoped presence transactions for serializ
     },
     parentBounds: { left: 0, top: 0 },
     orderedSelection: [childOne, childTwo],
+    createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
+      return null;
+    },
     createElementPresenceTransaction: studioTransaction.createStudioElementPresenceTransaction,
     getElementId(element) {
       return element.dataset.editorId || '';
@@ -192,6 +197,7 @@ test('applyStudioGroupMutation prefers scoped presence transactions for serializ
   assert.equal(result.transaction.operations[2].elementId, 'group-1');
   assert.equal(result.transaction.operations[2].before.index, 0);
   assert.match(result.transaction.operations[2].after.markup, /child-1/);
+  assert.equal(markupCaptureCalls, 0);
 });
 
 test('applyStudioGroupMutationWithTransaction fails closed without a shared group adapter', () => {
