@@ -1617,6 +1617,7 @@
   <script src="/shared/studio-editor-history-controller-runtime.js"></script>
   <script src="/shared/studio-editor-history-controller-shell-runtime.js"></script>
   <script src="/shared/studio-editor-history-save-action.js"></script>
+  <script src="/shared/studio-editor-history-frame-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3763,6 +3764,30 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistorySaveGlobalApi);
+    const studioEditorHistoryFrameAction = typeof SlideNextStudioEditorHistoryFrameAction !== 'undefined'
+      && SlideNextStudioEditorHistoryFrameAction
+      && typeof SlideNextStudioEditorHistoryFrameAction.createStudioEditorHistoryFrameAction === 'function'
+      ? SlideNextStudioEditorHistoryFrameAction.createStudioEditorHistoryFrameAction({
+          getHistoryController: () => studioEditorHistoryController,
+          historyApi: typeof SlideNextStudioHistory !== 'undefined'
+            ? SlideNextStudioHistory
+            : null,
+          historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
+            ? SlideNextStudioEditorHistoryState
+            : null,
+          getDocument: getIframeDoc,
+          getHistoryOptions: (options) => getEditorHistoryOptions(options),
+          buildPersistableDeckHtml: (doc, options) => buildPersistableDeckHtml(doc, options)
+        })
+      : null;
+    const studioEditorHistoryFrameGlobalApi = typeof SlideNextStudioEditorHistoryFrameAction !== 'undefined'
+      && SlideNextStudioEditorHistoryFrameAction
+      && typeof SlideNextStudioEditorHistoryFrameAction.createStudioEditorHistoryFrameGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryFrameAction.createStudioEditorHistoryFrameGlobalApi({
+          buildHistoryFrameHtml: studioEditorHistoryFrameAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryFrameGlobalApi);
     const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorPersistenceRuntimeOptions
       : null;
@@ -10507,34 +10532,6 @@
     }
 
     // 5. Undo/Redo Engine
-    function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {
-      if (typeof studioEditorHistoryController !== 'undefined'
-        && studioEditorHistoryController
-        && typeof studioEditorHistoryController.buildFrameHtml === 'function'
-      ) {
-        return studioEditorHistoryController.buildFrameHtml(doc, options);
-      }
-      if (typeof buildHistoryFrameHtml.builder !== 'function') {
-        const createStudioEditorHistoryFrameHtmlStateAdapter = (
-          typeof SlideNextStudioEditorHistoryState !== 'undefined'
-          && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlStateAdapter === 'function'
-        )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryFrameHtmlStateAdapter
-          : null;
-        if (!createStudioEditorHistoryFrameHtmlStateAdapter) return '';
-        buildHistoryFrameHtml.builder = createStudioEditorHistoryFrameHtmlStateAdapter({
-          historyStateApi: SlideNextStudioEditorHistoryState,
-          historyApi: SlideNextStudioHistory,
-          getHistoryOptions: getEditorHistoryOptions,
-          buildPersistableDeckHtml
-        });
-      }
-      return typeof buildHistoryFrameHtml.builder === 'function'
-        ? buildHistoryFrameHtml.builder(doc, options)
-        : '';
-    }
-
     function createHistoryEntry(doc) {
       if (typeof studioEditorHistoryController !== 'undefined'
         && studioEditorHistoryController

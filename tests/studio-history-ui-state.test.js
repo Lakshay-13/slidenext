@@ -9,6 +9,7 @@ const studioPersistence = require('../shared/studio-editor-persistence.js');
 const deckView = require('../shared/studio-deck-view.js');
 const historyState = require('../shared/studio-editor-history-state.js');
 const historySaveAction = require('../shared/studio-editor-history-save-action.js');
+const historyFrameAction = require('../shared/studio-editor-history-frame-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -114,13 +115,20 @@ function loadHistoryStepAdapter(fileContent, context) {
 }
 
 function loadBuildHistoryFrameHtml(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
-  context.SlideNextStudioEditorHistoryState = historyState;
-  vm.runInContext(helperSource, context);
+  context.SlideNextStudioEditorHistoryState = Object.prototype.hasOwnProperty.call(
+    context,
+    'SlideNextStudioEditorHistoryState'
+  )
+    ? context.SlideNextStudioEditorHistoryState
+    : historyState;
+  context.buildHistoryFrameHtml = historyFrameAction.createStudioEditorHistoryFrameAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyApi: context.SlideNextStudioHistory || null,
+    historyStateApi: context.SlideNextStudioEditorHistoryState,
+    getDocument: context.getIframeDoc,
+    getHistoryOptions: context.getEditorHistoryOptions,
+    buildPersistableDeckHtml: context.buildPersistableDeckHtml
+  });
 }
 
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
@@ -552,11 +560,6 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
   );
-  const buildHistoryFrameHtmlSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
   const createHistoryEntrySource = extractFunctionSource(
     fileContent,
     'function createHistoryEntry(doc) {',
@@ -714,12 +717,6 @@ test('buildHistoryFrameHtml reuses shared deck source sanitization for history s
     'function getEditorHistoryOptions(options = {}) {',
     '\n\n    function getEditorHistoryStackOptions(options = {}) {'
   );
-  const buildHistoryFrameHtmlSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
-
   function createSerializableNode(tagName, attributes = {}, classes = [], children = [], textContent = '') {
     const state = {
       removed: false,
@@ -961,12 +958,6 @@ test('getEditorHistoryOptions reuses the local metadata persistence resolver whe
 
 test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOptions', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildHistoryFrameHtmlSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
-
   const doc = { label: 'iframe-doc' };
   const calls = [];
   const sanitizer = () => {};
@@ -1031,12 +1022,6 @@ test('buildHistoryFrameHtml forwards sanitizer overrides into getEditorHistoryOp
 
 test('buildHistoryFrameHtml reuses the shared history capture helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildHistoryFrameHtmlSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
-
   const doc = { label: 'iframe-doc' };
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -1107,12 +1092,6 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
     'function getEditorHistoryOptions(options = {}) {',
     '\n\n    function getEditorHistoryStackOptions(options = {}) {'
   );
-  const buildHistoryFrameHtmlSource = extractFunctionSource(
-    fileContent,
-    'function buildHistoryFrameHtml(doc = getIframeDoc(), options = {}) {',
-    '\n\n    function createHistoryEntry(doc) {'
-  );
-
   function createSerializableNode(tagName, attributes = {}, classes = [], children = [], textContent = '') {
     const state = {
       removed: false,
