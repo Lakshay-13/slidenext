@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.js');
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
+const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -16,8 +17,11 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
+  const effectiveEndMarker = endMarker === '\n\n    function setCustomGradientType(type) {'
+    ? '\n\n    function applyThemeTokenPreset(presetId) {'
+    : endMarker;
+  const end = fileContent.indexOf(effectiveEndMarker, start);
+  assert.notEqual(end, -1, `Missing end marker: ${effectiveEndMarker}`);
   return `
 function getStudioPendingCustomWallpaperVersion() {
   return typeof hasPendingCustomWallpaperVersion !== 'undefined'
@@ -41,6 +45,28 @@ function installWallpaperStateAccessors(context) {
     return nextValue;
   };
   context.getStudioCustomGradientType = () => context.customGradientType;
+}
+
+function createWallpaperGradientActions(context) {
+  return wallpaperGradientActions.createStudioEditorWallpaperGradientActions({
+    resolveActionState: context.resolveCurrentStudioWallpaperActionState,
+    getDocument: () => context.document,
+    getWallpaperView: () => context.SlideNextStudioEditorWallpaperView,
+    getCustomGradientType: () => typeof context.getStudioCustomGradientType === 'function'
+      ? context.getStudioCustomGradientType()
+      : context.customGradientType,
+    setCustomGradientType: (nextValue) => {
+      if (typeof context.setStudioCustomGradientType === 'function') {
+        return context.setStudioCustomGradientType(nextValue);
+      }
+      context.customGradientType = nextValue;
+      return nextValue;
+    },
+    applyPresetWallpaper: (...args) => context.applyPresetWallpaper(...args),
+    applyCustomGradient: typeof context.applyCustomGradient === 'function'
+      ? context.applyCustomGradient
+      : null
+  });
 }
 
 function loadFinalizeWallpaperMutation(fileContent, context) {
@@ -1015,13 +1041,6 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
 });
 
 test('applyCustomGradient exits cleanly when the custom gradient controls are unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyCustomGradientSource = extractFunctionSource(
-    fileContent,
-    'function applyCustomGradient() {',
-    '\n\n    function applyWallpaperToAllSlides() {'
-  );
-
   const calls = [];
   const context = {
     applyPresetWallpaper() {
@@ -1045,10 +1064,9 @@ test('applyCustomGradient exits cleanly when the custom gradient controls are un
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(applyCustomGradientSource, context);
+  const actions = createWallpaperGradientActions(context);
 
-  assert.equal(context.applyCustomGradient(), false);
+  assert.equal(actions.applyCustomGradient(), false);
   assert.deepEqual(calls, [
     ['getElementById', 'cgColor1'],
     ['getElementById', 'cgColor2'],
@@ -1057,13 +1075,6 @@ test('applyCustomGradient exits cleanly when the custom gradient controls are un
 });
 
 test('setCustomGradientType exits cleanly when the gradient chrome is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const setCustomGradientTypeSource = extractFunctionSource(
-    fileContent,
-    'function setCustomGradientType(type) {',
-    '\n\n    // Build background CSS based on custom stops'
-  );
-
   const calls = [];
   const context = {
     applyCustomGradient() {
@@ -1088,10 +1099,9 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
   };
   installWallpaperStateAccessors(context);
 
-  vm.createContext(context);
-  vm.runInContext(setCustomGradientTypeSource, context);
+  const actions = createWallpaperGradientActions(context);
 
-  assert.equal(context.setCustomGradientType('linear'), false);
+  assert.equal(actions.setCustomGradientType('linear'), false);
   assert.equal(context.customGradientType, 'radial');
   assert.deepEqual(calls, [
     ['getElementById', 'cgLinearBtn'],
@@ -1101,13 +1111,6 @@ test('setCustomGradientType exits cleanly when the gradient chrome is unavailabl
 });
 
 test('setCustomGradientType delegates chrome synchronization to the shared wallpaper view', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const setCustomGradientTypeSource = extractFunctionSource(
-    fileContent,
-    'function setCustomGradientType(type) {',
-    '\n\n    // Build background CSS based on custom stops'
-  );
-
   let syncOptions = null;
   const context = {
     SlideNextStudioEditorWallpaperView: {
@@ -1132,23 +1135,15 @@ test('setCustomGradientType delegates chrome synchronization to the shared wallp
   };
   installWallpaperStateAccessors(context);
 
-  vm.createContext(context);
-  vm.runInContext(setCustomGradientTypeSource, context);
+  const actions = createWallpaperGradientActions(context);
 
-  assert.equal(context.setCustomGradientType('radial'), true);
+  assert.equal(actions.setCustomGradientType('radial'), true);
   assert.equal(syncOptions.documentRef, context.document);
   assert.equal(syncOptions.gradientType, 'radial');
   assert.equal(context.customGradientType, 'radial');
 });
 
 test('updateCustomGradientAngle exits cleanly when the angle label is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateCustomGradientAngleSource = extractFunctionSource(
-    fileContent,
-    'function updateCustomGradientAngle(value) {',
-    '\n\n    // Build background CSS based on custom stops'
-  );
-
   const calls = [];
   const context = {
     applyCustomGradient() {
@@ -1171,10 +1166,9 @@ test('updateCustomGradientAngle exits cleanly when the angle label is unavailabl
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateCustomGradientAngleSource, context);
+  const actions = createWallpaperGradientActions(context);
 
-  assert.equal(context.updateCustomGradientAngle('180'), false);
+  assert.equal(actions.updateCustomGradientAngle('180'), false);
   assert.deepEqual(calls, [
     ['getElementById', 'cgAngleVal'],
     ['applyCustomGradient']
@@ -1182,12 +1176,6 @@ test('updateCustomGradientAngle exits cleanly when the angle label is unavailabl
 });
 
 test('updateCustomGradientAngle delegates angle chrome to the shared wallpaper view', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateCustomGradientAngleSource = extractFunctionSource(
-    fileContent,
-    'function updateCustomGradientAngle(value) {',
-    '\n\n    // Build background CSS based on custom stops'
-  );
   let syncOptions = null;
   const context = {
     SlideNextStudioEditorWallpaperView: {
@@ -1205,10 +1193,9 @@ test('updateCustomGradientAngle delegates angle chrome to the shared wallpaper v
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateCustomGradientAngleSource, context);
+  const actions = createWallpaperGradientActions(context);
 
-  assert.equal(context.updateCustomGradientAngle('210'), true);
+  assert.equal(actions.updateCustomGradientAngle('210'), true);
   assert.equal(syncOptions.documentRef, context.document);
   assert.equal(syncOptions.angle, '210');
 });

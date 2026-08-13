@@ -1464,6 +1464,7 @@
   <script src="/shared/studio-editor-grid-snap-shell-runtime.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
+  <script src="/shared/studio-editor-wallpaper-gradient-actions.js"></script>
   <script src="/shared/studio-editor-wallpaper-controller.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-controller.js"></script>
   <script src="/shared/studio-editor-notes.js"></script>
@@ -1938,6 +1939,28 @@
         })
       : {};
     Object.assign(globalThis, studioEditorWallpaperStateGlobalApi);
+    const studioEditorWallpaperGradientActions = typeof SlideNextStudioEditorWallpaperGradientActions !== 'undefined'
+      && SlideNextStudioEditorWallpaperGradientActions
+      && typeof SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientActions === 'function'
+      ? SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientActions({
+          resolveActionState: resolveCurrentStudioWallpaperActionState,
+          getDocument: () => document,
+          getWallpaperView: () => typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          getCustomGradientType: getStudioCustomGradientType,
+          setCustomGradientType: setStudioCustomGradientType,
+          applyPresetWallpaper: (...args) => applyPresetWallpaper(...args)
+        })
+      : null;
+    const studioEditorWallpaperGradientGlobalApi = typeof SlideNextStudioEditorWallpaperGradientActions !== 'undefined'
+      && SlideNextStudioEditorWallpaperGradientActions
+      && typeof SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientGlobalApi === 'function'
+      ? SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientGlobalApi({
+          actions: studioEditorWallpaperGradientActions
+        })
+      : {};
+    Object.assign(globalThis, studioEditorWallpaperGradientGlobalApi);
     const studioEditorSaveButtonStateRuntime = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.saveButtonStateRuntime
       : null;
@@ -10407,98 +10430,7 @@
       });
     }
 
-    function setCustomGradientType(type) {
-      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
-      const linearBtn = document.getElementById('cgLinearBtn');
-      const radialBtn = document.getElementById('cgRadialBtn');
-      const angleGroup = document.getElementById('cgAngleGroup');
-      const nextGradientTypeBtn = type === 'radial' ? radialBtn : linearBtn;
-      if (!linearBtn || !radialBtn || !angleGroup || !nextGradientTypeBtn) {
-        return false;
-      }
-
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      if (wallpaperView && typeof wallpaperView.syncStudioCustomGradientTypeChrome === 'function') {
-        if (!wallpaperView.syncStudioCustomGradientTypeChrome({
-          documentRef: document,
-          gradientType: type
-        })) {
-          return false;
-        }
-        setStudioCustomGradientType(type);
-        return applyCustomGradient();
-      }
-
-      setStudioCustomGradientType(type);
-      
-      if (type === 'linear') {
-        if (linearBtn) {
-          linearBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-        }
-        if (radialBtn) {
-          radialBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-        }
-        if (angleGroup) {
-          angleGroup.classList.remove('hidden');
-        }
-      } else {
-        if (radialBtn) {
-          radialBtn.className = 'py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]';
-        }
-        if (linearBtn) {
-          linearBtn.className = 'py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400';
-        }
-        if (angleGroup) {
-          angleGroup.classList.add('hidden');
-        }
-      }
-      
-      return applyCustomGradient();
-    }
-
-    function updateCustomGradientAngle(value) {
-      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      if (wallpaperView && typeof wallpaperView.syncStudioCustomGradientAngleChrome === 'function') {
-        wallpaperView.syncStudioCustomGradientAngleChrome({
-          documentRef: document,
-          angle: value
-        });
-      } else {
-        const angleLabel = document.getElementById('cgAngleVal');
-        if (angleLabel) {
-          angleLabel.textContent = `${value}°`;
-        }
-      }
-      return applyCustomGradient();
-    }
-
     // Build background CSS based on custom stops
-    function applyCustomGradient() {
-      if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) return false;
-      const color1Input = document.getElementById('cgColor1');
-      const color2Input = document.getElementById('cgColor2');
-      const angleInput = document.getElementById('cgAngle');
-      if (!color1Input || !color2Input || !angleInput) {
-        return false;
-      }
-      const color1 = color1Input.value;
-      const color2 = color2Input.value;
-      const angle = angleInput.value;
-      
-      let gradientVal = '';
-      if (getStudioCustomGradientType() === 'linear') {
-        gradientVal = `linear-gradient(${angle}deg, ${color1} 0%, ${color2} 100%)`;
-      } else {
-        gradientVal = `radial-gradient(circle, ${color1} 0%, ${color2} 100%)`;
-      }
-      
-      return applyPresetWallpaper(gradientVal, true);
-    }
 
     function applyWallpaperToAllSlides() {
       const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'

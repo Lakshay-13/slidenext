@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
+const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
@@ -12,8 +13,11 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
+  const effectiveEndMarker = endMarker === '\n\n    function setCustomGradientType(type) {'
+    ? '\n\n    function applyThemeTokenPreset(presetId) {'
+    : endMarker;
+  const end = fileContent.indexOf(effectiveEndMarker, start);
+  assert.notEqual(end, -1, `Missing end marker: ${effectiveEndMarker}`);
   return fileContent.slice(start, end);
 }
 
@@ -27,6 +31,20 @@ function installWallpaperStateAccessors(context) {
     return nextValue;
   };
   context.getStudioCustomGradientType = () => context.customGradientType;
+}
+
+function createWallpaperGradientActions(context) {
+  return wallpaperGradientActions.createStudioEditorWallpaperGradientActions({
+    resolveActionState: context.resolveCurrentStudioWallpaperActionState,
+    getDocument: () => context.document,
+    getWallpaperView: () => context.SlideNextStudioEditorWallpaperView,
+    getCustomGradientType: () => context.customGradientType,
+    setCustomGradientType: (nextValue) => {
+      context.customGradientType = nextValue;
+      return nextValue;
+    },
+    applyPresetWallpaper: (...args) => context.applyPresetWallpaper(...args)
+  });
 }
 
 function loadWallpaperRollbackHelper(fileContent, context) {
@@ -531,21 +549,6 @@ test('wallpaper mutation helpers no-op when wallpaper readiness or required cont
     'function applyPresetWallpaper(val, isCustomInput = false) {',
     '\n\n    function setCustomGradientType(type) {'
   );
-  const setCustomGradientTypeSource = extractFunctionSource(
-    fileContent,
-    'function setCustomGradientType(type) {',
-    '\n\n    function updateCustomGradientAngle(value) {'
-  );
-  const updateCustomGradientAngleSource = extractFunctionSource(
-    fileContent,
-    'function updateCustomGradientAngle(value) {',
-    '\n\n    // Build background CSS based on custom stops'
-  );
-  const applyCustomGradientSource = extractFunctionSource(
-    fileContent,
-    'function applyCustomGradient() {',
-    '\n\n    function applyWallpaperToAllSlides() {'
-  );
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
@@ -605,23 +608,21 @@ test('wallpaper mutation helpers no-op when wallpaper readiness or required cont
   vm.runInContext(
     [
       applyPresetWallpaperSource,
-      setCustomGradientTypeSource,
-      updateCustomGradientAngleSource,
-      applyCustomGradientSource,
       applyWallpaperToAllSlidesSource
     ].join('\n\n'),
     context
   );
+  const gradientActions = createWallpaperGradientActions(context);
 
   assert.equal(context.applyPresetWallpaper('#ffffff'), false);
   assert.equal(activeSlide.style.background, 'black');
-  assert.equal(context.setCustomGradientType('radial'), false);
+  assert.equal(gradientActions.setCustomGradientType('radial'), false);
   assert.equal(context.customGradientType, 'linear');
   assert.equal(elements.cgLinearBtn.className, 'linear-idle');
   assert.equal(elements.cgRadialBtn.className, 'radial-idle');
-  assert.equal(context.updateCustomGradientAngle('180'), false);
+  assert.equal(gradientActions.updateCustomGradientAngle('180'), false);
   assert.equal(elements.cgAngleVal.textContent, '135°');
-  assert.equal(context.applyCustomGradient(), false);
+  assert.equal(gradientActions.applyCustomGradient(), false);
   assert.equal(context.applyWallpaperToAllSlides(), false);
   assert.equal(siblingSlide.style.background, 'white');
   assert.equal(finalizeCalls, 0);
