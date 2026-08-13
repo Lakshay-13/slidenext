@@ -29,9 +29,14 @@ test('history flush action saves pending canonical edits with their transaction'
   const calls = [];
   const transaction = { id: 'transaction' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const documentRef = { id: 'editor-document' };
   const flushPendingEditorHistory = historyFlushAction.createStudioEditorHistoryFlushAction({
     getPendingTransaction: () => transaction,
-    getPendingCanonicalDeck: () => canonicalDeck,
+    getDocument: () => documentRef,
+    getPendingCanonicalDeck: (sourceDocument) => {
+      assert.equal(sourceDocument, documentRef);
+      return canonicalDeck;
+    },
     saveHistoryState(...args) {
       calls.push(args);
       return { didCapture: true };

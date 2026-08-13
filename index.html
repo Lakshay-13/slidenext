@@ -5008,6 +5008,7 @@
       ? SlideNextStudioEditorHistoryFlushAction.createStudioEditorHistoryFlushAction({
           getHistoryController: () => studioEditorHistoryController,
           getPendingTransaction: getStudioPendingEditorTransaction,
+          getDocument: getIframeDoc,
           getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           saveHistoryState,
           historyResultApi: typeof SlideNextStudioEditorHistoryResult !== 'undefined'

@@ -12,6 +12,9 @@
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : () => null;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : () => null;
@@ -31,7 +34,7 @@
         return historyController.flushPending();
       }
       const pendingTransaction = getPendingTransaction();
-      const pendingCanonicalDeck = getPendingCanonicalDeck();
+      const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
