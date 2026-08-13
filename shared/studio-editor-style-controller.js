@@ -233,6 +233,26 @@
       label.textContent = `${displayValue}${suffix}`;
     }
 
+    function resolveCanonicalStyleValue(prop, value, mutationResult) {
+      if (mutationResult
+        && Object.prototype.hasOwnProperty.call(mutationResult, 'styleValue')
+        && mutationResult.styleValue !== undefined
+        && mutationResult.styleValue !== null) {
+        return mutationResult.styleValue;
+      }
+      if (!styleApi || typeof styleApi.normalizeStudioStyleMutationValue !== 'function') {
+        return undefined;
+      }
+      try {
+        const normalizedValue = styleApi.normalizeStudioStyleMutationValue(prop, value);
+        return normalizedValue && normalizedValue.styleValue !== undefined
+          ? normalizedValue.styleValue
+          : undefined;
+      } catch (error) {
+        return undefined;
+      }
+    }
+
     function rollbackStyleMutation(transaction, doc) {
       if (!transaction
         || !transactionApi
@@ -323,6 +343,7 @@
       }
 
       syncFeedbackLabel(prop, styleMutationResult.displayValue);
+      const canonicalStyleValue = resolveCanonicalStyleValue(prop, value, styleMutationResult);
       let canonicalDeck = null;
       if (canonicalStyleBuilders
         && typeof canonicalStyleBuilders.buildCanonicalStyleMutation === 'function') {
@@ -333,6 +354,7 @@
             selection: styleMutationPlan.selection,
             prop,
             value,
+            ...(canonicalStyleValue !== undefined ? { styleValue: canonicalStyleValue } : {}),
             getElementId: getStyleElementId
           });
         } catch (err) {

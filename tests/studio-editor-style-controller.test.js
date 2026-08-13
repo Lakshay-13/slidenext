@@ -17,6 +17,11 @@ test('style controller assembles mutation, feedback, canonical, and finalization
       },
       syncStudioStyleFeedbackLabel(options) {
         calls.push(['feedback', options]);
+      },
+      normalizeStudioStyleMutationValue(prop, value) {
+        assert.equal(prop, 'size');
+        assert.equal(value, '32');
+        return { styleValue: '32px' };
       }
     },
     canonicalStyleApi: {
@@ -57,6 +62,7 @@ test('style controller assembles mutation, feedback, canonical, and finalization
   assert.equal(calls[3][0], 'apply');
   assert.equal(calls[4][0], 'feedback');
   assert.equal(calls[5][0], 'canonical');
+  assert.equal(calls[5][1].styleValue, '32px');
   assert.equal(calls[6][1], 'Auto: Styled Element');
   assert.deepEqual(calls[6][2].transaction, { id: 'tx' });
   assert.deepEqual(calls[6][2].canonicalDeck, { id: 'after' });

@@ -298,6 +298,24 @@ test('buildStudioCanonicalStyleMutation uses the requested image source instead 
   assert.equal(result.slides[0].nodes[0].attributes.src, 'assets/requested-source.png');
 });
 
+test('buildStudioCanonicalStyleMutation uses the normalized style value instead of stale DOM state', () => {
+  const sourceDeck = createSourceDeck();
+  const element = createElement();
+  element.style.color = 'stale-dom-color';
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    selection: [element],
+    prop: 'color',
+    value: '#requested',
+    styleValue: '#requested',
+    getElementId: (node) => node.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].style, 'color: #requested;');
+});
+
 test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
   const throwingCanonicalDeckApi = {
     ...canonicalDeck,

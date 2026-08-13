@@ -119,6 +119,8 @@
     const selection = Array.isArray(options.selection) ? options.selection : [];
     const prop = typeof options.prop === 'string' ? options.prop : '';
     const value = options.value;
+    const hasRequestedStyleValue = options.styleValue !== undefined
+      && options.styleValue !== null;
     const getElementId = options.getElementId;
 
     if (!canonicalDeckApi || !canonicalDeckBeforeMutation || selection.length === 0) {
@@ -128,7 +130,11 @@
     if (prop === 'zIndex' && typeof canonicalDeckApi.updateCanonicalNodeLayout === 'function') {
       const canonicalNodeLayouts = selection.map((element) => {
         const elementId = resolveElementId(element, getElementId);
-        const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
+        const zIndex = hasRequestedStyleValue
+          ? Number(options.styleValue)
+          : element && element.style
+            ? Number(element.style.zIndex)
+            : NaN;
         return elementId && Number.isFinite(zIndex)
           ? { id: elementId, layout: { zIndex } }
           : null;
@@ -184,11 +190,13 @@
         selection.map((element) => ({
           id: resolveElementId(element, getElementId),
           property: styleProperty.property,
-          value: element
-            && element.style
-            && typeof element.style[styleProperty.domProperty] === 'string'
-            ? element.style[styleProperty.domProperty]
-            : `${value}`
+          value: hasRequestedStyleValue
+            ? `${options.styleValue}`
+            : element
+              && element.style
+              && typeof element.style[styleProperty.domProperty] === 'string'
+              ? element.style[styleProperty.domProperty]
+              : `${value}`
         }))
       ));
     }
