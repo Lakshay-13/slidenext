@@ -87,6 +87,58 @@ test('canonical UI reader forwards explicit rebuild options to the document buil
   assert.deepEqual(result, { slides: [{ id: 'rebuilt-slide' }] });
 });
 
+test('canonical UI reader honors deterministic rebuild options over live state', () => {
+  const sourceDoc = { id: 'deterministic-live-doc' };
+  const liveCanonicalDeck = { slides: [{ id: 'live-slide' }] };
+  const rebuiltCanonicalDeck = { slides: [{ id: 'rebuilt-slide' }] };
+  let liveCalls = 0;
+  let buildOptions = null;
+
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck(sourceDoc, {
+    buildOptions: { preferLiveCanonicalDeck: false },
+    resolveLiveCanonicalDeck() {
+      liveCalls += 1;
+      return liveCanonicalDeck;
+    },
+    buildCanonicalDeck(_doc, options) {
+      buildOptions = options;
+      return rebuiltCanonicalDeck;
+    }
+  });
+
+  assert.equal(result, rebuiltCanonicalDeck);
+  assert.equal(liveCalls, 0);
+  assert.deepEqual(buildOptions, { preferLiveCanonicalDeck: false });
+});
+
+test('canonical UI reader honors a valid explicit canonical override before pending or live state', () => {
+  const overrideDeck = { slides: [{ id: 'override-slide' }] };
+  let pendingCalls = 0;
+  let liveCalls = 0;
+  let buildCalls = 0;
+
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck({}, {
+    buildOptions: { canonicalDeckOverride: overrideDeck },
+    getPendingCanonicalDeck() {
+      pendingCalls += 1;
+      return { slides: [{ id: 'pending-slide' }] };
+    },
+    resolveLiveCanonicalDeck() {
+      liveCalls += 1;
+      return { slides: [{ id: 'live-slide' }] };
+    },
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return { slides: [{ id: 'rebuilt-slide' }] };
+    }
+  });
+
+  assert.equal(result, overrideDeck);
+  assert.equal(pendingCalls, 0);
+  assert.equal(liveCalls, 0);
+  assert.equal(buildCalls, 0);
+});
+
 test('canonical UI reader rejects malformed live state before rebuilding', () => {
   const rebuiltCanonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
   let buildCalls = 0;

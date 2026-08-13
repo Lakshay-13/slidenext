@@ -8,6 +8,11 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   function resolveStudioEditorCanonicalDeck(sourceDoc = null, options = {}) {
+    const buildOptions = options.buildOptions
+      && typeof options.buildOptions === 'object'
+      && !Array.isArray(options.buildOptions)
+      ? options.buildOptions
+      : {};
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
@@ -26,9 +31,15 @@
         return false;
       }
     };
+    const hasCanonicalDeckBaseline = Object.prototype.hasOwnProperty.call(
+      buildOptions,
+      'canonicalDeckBaseline'
+    );
+    const canonicalDeckOverride = buildOptions.canonicalDeckOverride;
+    if (isValidCanonicalDeck(canonicalDeckOverride)) return canonicalDeckOverride;
     let liveCanonicalDeck = null;
 
-    if (getPendingCanonicalDeck) {
+    if (getPendingCanonicalDeck && !hasCanonicalDeckBaseline) {
       try {
         const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
         if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
@@ -37,7 +48,7 @@
       }
     }
 
-    if (resolveLiveCanonicalDeck) {
+    if (resolveLiveCanonicalDeck && buildOptions.preferLiveCanonicalDeck !== false) {
       try {
         const sessionToken = typeof options.getSessionToken === 'function'
           ? options.getSessionToken()
@@ -50,11 +61,6 @@
 
     if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
     if (typeof options.buildCanonicalDeck !== 'function') return null;
-    const buildOptions = options.buildOptions
-      && typeof options.buildOptions === 'object'
-      && !Array.isArray(options.buildOptions)
-      ? options.buildOptions
-      : {};
     let rebuiltCanonicalDeck = null;
     try {
       rebuiltCanonicalDeck = options.buildCanonicalDeck(sourceDoc, buildOptions);
