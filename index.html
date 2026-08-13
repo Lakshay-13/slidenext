@@ -1432,6 +1432,7 @@
   <script src="/shared/studio-editor-canonical-removal.js"></script>
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-view.js"></script>
+  <script src="/shared/studio-editor-block-state.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
@@ -10648,59 +10649,36 @@
     }
 
     function updateBlockActionState(doc = getIframeDoc()) {
-      const blockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
-        ? SlideNextStudioEditorBlockView
+      const blockStateApi = typeof SlideNextStudioEditorBlockState !== 'undefined'
+        ? SlideNextStudioEditorBlockState
         : null;
-      if (!blockView || typeof blockView.syncStudioBlockState !== 'function') {
+      if (!blockStateApi
+        || typeof blockStateApi.createStudioEditorBlockStateController !== 'function') {
         return false;
       }
-      if (typeof blockView.createStudioBlockStateSync === 'function') {
-        if (typeof updateBlockActionState.sync !== 'function') {
-          updateBlockActionState.sync = blockView.createStudioBlockStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => {
-              const selectedElements = getStudioSelectedElements(sourceDoc);
-              const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-                ? selectionHasLockedElements(selectedElements, sourceDoc)
-                : typeof isElementLocked === 'function'
-                  ? selectedElements.some((element) => isElementLocked(element))
-                  : false;
-              const canSave = !!getActiveSlide(sourceDoc)
-                && selectedElements.length > 0
-                && !hasLockedSelection;
-              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
-              return {
-                blocks: canonicalDeck && canonicalDeck.blocks,
-                canUseBlockActions: canSave,
-                insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
-                removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null
-              };
-            },
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateBlockActionState.sync === 'function') {
-          return updateBlockActionState.sync(doc);
-        }
+      if (!updateBlockActionState.controller) {
+        const blockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
+          ? SlideNextStudioEditorBlockView
+          : null;
+        updateBlockActionState.controller = blockStateApi.createStudioEditorBlockStateController({
+          blockView,
+          getDocument: () => getIframeDoc(),
+          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          selectionHasLockedElements: typeof selectionHasLockedElements === 'function'
+            ? selectionHasLockedElements
+            : null,
+          isElementLocked: typeof isElementLocked === 'function' ? isElementLocked : null,
+          insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
+          removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null,
+          documentRef: document
+        });
       }
-      const selectedElements = getStudioSelectedElements(doc);
-      const hasLockedSelection = typeof selectionHasLockedElements === 'function'
-        ? selectionHasLockedElements(selectedElements, doc)
-        : typeof isElementLocked === 'function'
-          ? selectedElements.some((element) => isElementLocked(element))
-          : false;
-      const canSave = !!getActiveSlide(doc)
-        && selectedElements.length > 0
-        && !hasLockedSelection;
-      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
-      blockView.syncStudioBlockState({
-        documentRef: document,
-        blocks: canonicalDeck && canonicalDeck.blocks,
-        canUseBlockActions: canSave,
-        insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
-        removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null
-      });
-      return canSave;
+      return updateBlockActionState.controller
+        && typeof updateBlockActionState.controller.sync === 'function'
+        ? updateBlockActionState.controller.sync(doc)
+        : false;
     }
 
     const studioEditorDuplicatedSubtreeSanitizer = typeof SlideNextStudioElementState !== 'undefined'
