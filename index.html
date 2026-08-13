@@ -1517,6 +1517,7 @@
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -4297,6 +4298,41 @@
         })
       : {};
     Object.assign(globalThis, studioEditorReusablePersistedHtmlSanitizerGlobalApi);
+    const studioEditorPersistedDeckPlaybackStateAction =
+      typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckPlaybackStateAction
+      && typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction
+        .createStudioEditorPersistedDeckPlaybackStateAction === 'function'
+      ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
+        .createStudioEditorPersistedDeckPlaybackStateAction({
+          getDocument: getIframeDoc,
+          getPersistenceController: () => studioEditorPersistenceController,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+            ? SlideNextDeckPersistence
+            : null,
+          getSlides,
+          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
+          buildCanonicalDeck: (doc) => buildEditorCanonicalDeck(doc),
+          resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId
+        })
+      : null;
+    const studioEditorPersistedDeckPlaybackStateGlobalApi =
+      typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
+      && SlideNextStudioEditorPersistedDeckPlaybackStateAction
+      && typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction
+        .createStudioEditorPersistedDeckPlaybackStateGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
+        .createStudioEditorPersistedDeckPlaybackStateGlobalApi({
+          capturePersistedDeckPlaybackState: studioEditorPersistedDeckPlaybackStateAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistedDeckPlaybackStateGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorSessionRuntimeOptions
       : null;
@@ -11461,175 +11497,6 @@
           resolvePlaybackState: (nextCanonicalDeck) => capturePersistedDeckPlaybackState(doc, nextCanonicalDeck)
         }
       );
-    }
-
-    function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {
-      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-        ? SlideNextStudioEditorPersistence
-        : null;
-      const deckPersistenceApi = typeof SlideNextDeckPersistence !== 'undefined'
-        ? SlideNextDeckPersistence
-        : null;
-      const resolveFallbackActiveSlideId = doc
-        ? () => resolveEditorFallbackActiveSlideId(
-            doc,
-            canonicalDeck || buildEditorCanonicalDeck(doc)
-          )
-        : null;
-
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.capturePersistedDeckPlaybackState === 'function') {
-        const playbackState = studioEditorPersistenceController.capturePersistedDeckPlaybackState(doc, {
-          canonicalDeck
-        });
-        if (playbackState !== null && typeof playbackState !== 'undefined') {
-          return playbackState;
-        }
-      }
-
-      const createStudioEditorPersistedDeckPlaybackStateCapturerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedDeckPlaybackStateCapturerAdapter
-        : null;
-      if (createStudioEditorPersistedDeckPlaybackStateCapturerAdapter) {
-        if (typeof capturePersistedDeckPlaybackState.adapter !== 'function') {
-          capturePersistedDeckPlaybackState.adapter = createStudioEditorPersistedDeckPlaybackStateCapturerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            deckPersistenceApi,
-            getSlides,
-            slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-            resolveFallbackActiveSlideId: (nextDoc, nextCanonicalDeck) => (
-              resolveEditorFallbackActiveSlideId(
-                nextDoc,
-                nextCanonicalDeck || buildEditorCanonicalDeck(nextDoc)
-              )
-            )
-          });
-        }
-        const playbackState = typeof capturePersistedDeckPlaybackState.adapter === 'function'
-          ? capturePersistedDeckPlaybackState.adapter(doc, { canonicalDeck })
-          : null;
-        if (playbackState !== null && typeof playbackState !== 'undefined') {
-          return playbackState;
-        }
-      }
-
-      const createStudioPersistedDeckPlaybackStateCapturer = persistenceApi
-        && typeof persistenceApi.createStudioPersistedDeckPlaybackStateCapturer === 'function'
-        ? persistenceApi.createStudioPersistedDeckPlaybackStateCapturer
-        : null;
-      if (createStudioPersistedDeckPlaybackStateCapturer) {
-        const capturer = createStudioPersistedDeckPlaybackStateCapturer({
-          capturePlaybackState: persistenceApi
-            && typeof persistenceApi.captureStudioPersistedDeckPlaybackState === 'function'
-            ? persistenceApi.captureStudioPersistedDeckPlaybackState
-            : null,
-          capturePersistedDeckPlaybackStateWithFallback: deckPersistenceApi
-            && typeof deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback === 'function'
-            ? deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback
-            : null,
-          capturePersistedDeckPlaybackState: deckPersistenceApi
-            && typeof deckPersistenceApi.capturePersistedDeckPlaybackState === 'function'
-            ? deckPersistenceApi.capturePersistedDeckPlaybackState
-            : null,
-          ensurePersistedDeckPlaybackStateActiveSlideId: deckPersistenceApi
-            && typeof deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
-            ? deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId
-            : null,
-          getSlides,
-          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-          resolveFallbackActiveSlideId
-        });
-        if (typeof capturer === 'function') return capturer(doc);
-      }
-
-      const captureStudioPersistedDeckPlaybackState = persistenceApi
-        && typeof persistenceApi.captureStudioPersistedDeckPlaybackState === 'function'
-        ? persistenceApi.captureStudioPersistedDeckPlaybackState
-        : null;
-      if (captureStudioPersistedDeckPlaybackState) {
-        return captureStudioPersistedDeckPlaybackState(doc, {
-          capturePersistedDeckPlaybackStateWithFallback: deckPersistenceApi
-            && typeof deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback === 'function'
-            ? deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback
-            : null,
-          capturePersistedDeckPlaybackState: deckPersistenceApi
-            && typeof deckPersistenceApi.capturePersistedDeckPlaybackState === 'function'
-            ? deckPersistenceApi.capturePersistedDeckPlaybackState
-            : null,
-          ensurePersistedDeckPlaybackStateActiveSlideId: deckPersistenceApi
-            && typeof deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
-            ? deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId
-            : null,
-          getSlides,
-          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-          resolveFallbackActiveSlideId
-        });
-      }
-
-      const capturePersistedDeckPlaybackStateWithFallback = deckPersistenceApi
-        && typeof deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback === 'function'
-        ? deckPersistenceApi.capturePersistedDeckPlaybackStateWithFallback
-        : null;
-      if (capturePersistedDeckPlaybackStateWithFallback) {
-        return capturePersistedDeckPlaybackStateWithFallback(doc, {
-          getSlides,
-          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-          resolveFallbackActiveSlideId
-        });
-      }
-
-      const captureDeckPlaybackState = deckPersistenceApi
-        && typeof deckPersistenceApi.capturePersistedDeckPlaybackState === 'function'
-        ? deckPersistenceApi.capturePersistedDeckPlaybackState
-        : null;
-      if (!captureDeckPlaybackState) {
-        return null;
-      }
-
-      const playbackState = captureDeckPlaybackState(doc, {
-        getSlides,
-        slideIdAttr: EDITOR_SLIDE_ID_ATTR
-      });
-      if (!doc) {
-        return playbackState;
-      }
-      const ensurePersistedDeckPlaybackStateActiveSlideId = deckPersistenceApi
-        && typeof deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId === 'function'
-        ? deckPersistenceApi.ensurePersistedDeckPlaybackStateActiveSlideId
-        : null;
-      if (ensurePersistedDeckPlaybackStateActiveSlideId) {
-        return ensurePersistedDeckPlaybackStateActiveSlideId(playbackState, {
-          resolveFallbackActiveSlideId
-        });
-      }
-
-      const hasActiveSlideIds = !!(playbackState
-        && Array.isArray(playbackState.activeSlideIds)
-        && playbackState.activeSlideIds.some((slideId) => typeof slideId === 'string' && slideId.trim()));
-      if (hasActiveSlideIds) {
-        return playbackState;
-      }
-
-      const fallbackActiveSlideId = resolveFallbackActiveSlideId
-        ? resolveFallbackActiveSlideId()
-        : '';
-      if (!fallbackActiveSlideId) {
-        return playbackState;
-      }
-
-      return {
-        activeSlideIds: [fallbackActiveSlideId],
-        slideCounterText: playbackState && typeof playbackState.slideCounterText === 'string'
-          ? playbackState.slideCounterText
-          : ''
-      };
     }
 
     function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {

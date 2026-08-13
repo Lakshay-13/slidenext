@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
+const playbackStateAction = require('../shared/studio-editor-persisted-deck-playback-state-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -80,6 +81,33 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+}
+
+function loadCapturePersistedDeckPlaybackState(context) {
+  context.capturePersistedDeckPlaybackState =
+    playbackStateAction.createStudioEditorPersistedDeckPlaybackStateAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      deckPersistenceApi: context.SlideNextDeckPersistence || null,
+      getSlides: typeof context.getSlides === 'function' ? context.getSlides : null,
+      slideIdAttr: context.EDITOR_SLIDE_ID_ATTR || 'data-slide-id',
+      buildCanonicalDeck: (doc) => typeof context.buildEditorCanonicalDeck === 'function'
+        ? context.buildEditorCanonicalDeck(doc)
+        : null,
+      resolveFallbackActiveSlideId: (doc, canonicalDeck) => {
+        if (typeof context.resolveEditorFallbackActiveSlideId !== 'function') return '';
+        return context.resolveEditorFallbackActiveSlideId(
+          doc,
+          canonicalDeck || (typeof context.buildEditorCanonicalDeck === 'function'
+            ? context.buildEditorCanonicalDeck(doc)
+            : null)
+        );
+      }
+    });
 }
 
 test('setCurrentPresentationCanonicalDeck normalizes valid deck-like metadata updates for the active presentation', () => {
@@ -632,11 +660,6 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {'
   );
-  const capturePersistedDeckPlaybackStateSource = extractFunctionSource(
-    fileContent,
-    'function capturePersistedDeckPlaybackState(doc = getIframeDoc(), canonicalDeck = null) {',
-    '\n\n    function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {'
-  );
   const saveVersionCheckpointSource = extractFunctionSource(
     fileContent,
     'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
@@ -740,7 +763,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
   vm.runInContext(getPersistedActiveSlideIdSource, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
-  vm.runInContext(capturePersistedDeckPlaybackStateSource, context);
+  loadCapturePersistedDeckPlaybackState(context);
   vm.runInContext(saveVersionCheckpointSource, context);
 
   const result = await context.saveVersionCheckpoint(
