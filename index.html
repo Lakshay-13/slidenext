@@ -8811,30 +8811,8 @@
         && typeof studioEditorSelectionCompositionController.refreshClasses === 'function') {
         return studioEditorSelectionCompositionController.refreshClasses(doc);
       }
-      const refreshSelectionState = studioEditorSelectionClassAdapter
-        && typeof studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses === 'function'
-        ? studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses
-        : null;
-      if (!refreshSelectionState) {
-        clearStudioSelectionState();
-        return false;
-      }
-      const nextSelectionState = refreshSelectionState(
-        doc,
-        getStudioSelectedElements(doc),
-        {
-          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
-            ? SlideNextStudioEditorSelection
-            : null,
-          getSelectionOptions: () => getEditorSelectionOptions({ doc })
-        }
-      );
-      if (!nextSelectionState) {
-        clearStudioSelectionState();
-        return false;
-      }
-      setStudioSelectionState(nextSelectionState);
-      return true;
+      clearStudioSelectionState();
+      return false;
     }
 
     const studioEditorSelectionClassAdapter = typeof SlideNextStudioEditorSelectionClassAdapter !== 'undefined'
@@ -8855,22 +8833,8 @@
         && typeof studioEditorSelectionCompositionController.apply === 'function') {
         return studioEditorSelectionCompositionController.apply(nextState);
       }
-      const applySelectionState = studioEditorSelectionStateAdapter
-        && typeof studioEditorSelectionStateAdapter.applyStudioEditorSelectionState === 'function'
-        ? studioEditorSelectionStateAdapter.applyStudioEditorSelectionState
-        : null;
-      if (!applySelectionState) {
-        clearStudioSelectionState();
-        return false;
-      }
-      return applySelectionState(nextState, {
-        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
-          ? SlideNextStudioEditorSelection
-          : null,
-        getSelectionOptions: () => getEditorSelectionOptions(),
-        setSelectionState: (selectionState) => setStudioSelectionState(selectionState),
-        clearSelectionState: () => clearStudioSelectionState()
-      });
+      clearStudioSelectionState();
+      return false;
     }
 
     const studioEditorSelectionCommitAdapter = typeof SlideNextStudioEditorSelectionCommitAdapter !== 'undefined'
@@ -8910,33 +8874,7 @@
         && typeof studioEditorSelectionCompositionController.commit === 'function') {
         return studioEditorSelectionCompositionController.commit(nextSelectionState, options);
       }
-      const commitSelectionState = studioEditorSelectionCommitAdapter
-        && typeof studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState === 'function'
-        ? studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState
-        : null;
-      if (!commitSelectionState) return false;
-      return commitSelectionState(nextSelectionState, {
-        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
-          ? SlideNextStudioEditorSelection
-          : null,
-        getSelectionOptions: () => getEditorSelectionOptions(),
-        applySelectionState: typeof applyEditorSelectionState === 'function'
-          ? applyEditorSelectionState
-          : null,
-        refreshSelectionClasses: typeof refreshSelectionClasses === 'function'
-          ? refreshSelectionClasses
-          : null,
-        syncSelectionOverlay: typeof syncSelectionOverlay === 'function'
-          ? syncSelectionOverlay
-          : null,
-        syncInspectorForSelection: typeof syncInspectorForSelection === 'function'
-          ? syncInspectorForSelection
-          : null,
-        updateLayersList: typeof updateLayersList === 'function'
-          ? updateLayersList
-          : null,
-        commitOptions: options
-      });
+      return false;
     }
 
     const studioEditorSelectionRestoreAdapter = typeof SlideNextStudioEditorSelectionRestoreAdapter !== 'undefined'

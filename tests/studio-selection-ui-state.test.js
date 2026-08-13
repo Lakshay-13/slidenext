@@ -9,6 +9,7 @@ const selection = require('../shared/studio-editor-selection.js');
 const selectionStateAdapter = require('../shared/studio-editor-selection-state-adapter.js');
 const selectionCommitAdapter = require('../shared/studio-editor-selection-commit-adapter.js');
 const selectionClassAdapter = require('../shared/studio-editor-selection-class-adapter.js');
+const selectionComposition = require('../shared/studio-editor-selection-composition.js');
 const selectionRestoreAdapter = require('../shared/studio-editor-selection-restore-adapter.js');
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapter.js');
@@ -27,29 +28,25 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 test('editor composes selection state normalization through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionStateAdapter =/);
-  assert.match(source, /applyStudioEditorSelectionState/);
-  assert.match(source, /if \(!applySelectionState\)/);
-  assert.doesNotMatch(source, /applyEditorSelectionState\.normalizer/);
+  assert.match(source, /const studioEditorSelectionCompositionController =/);
+  assert.match(source, /studioEditorSelectionCompositionController\.apply\(nextState\)/);
+  assert.doesNotMatch(source, /const applySelectionState =/);
 });
 
 test('editor composes selection class refresh through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionClassAdapter =/);
-  assert.match(source, /refreshStudioEditorSelectionClasses/);
-  assert.match(source, /if \(!refreshSelectionState\)/);
-  assert.doesNotMatch(source, /refreshSelectionClasses\.refresher/);
+  assert.match(source, /const studioEditorSelectionCompositionController =/);
+  assert.match(source, /studioEditorSelectionCompositionController\.refreshClasses\(doc\)/);
+  assert.doesNotMatch(source, /const refreshSelectionState =/);
 });
 
 test('editor composes selection state commits through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionCommitAdapter =/);
-  assert.match(source, /commitStudioEditorSelectionState/);
-  assert.match(source, /commitStudioEditorSelectionState/);
-  assert.match(source, /if \(!commitSelectionState\) return false/);
-  assert.doesNotMatch(source, /commitEditorSelectionState\.committer/);
+  assert.match(source, /const studioEditorSelectionCompositionController =/);
+  assert.match(source, /studioEditorSelectionCompositionController\.commit\(nextSelectionState, options\)/);
+  assert.doesNotMatch(source, /const commitSelectionState =/);
 });
 
 test('editor composes active-slide selection restore through the shared selection API', () => {
@@ -214,6 +211,49 @@ function installSelectionAccessors(context) {
   };
 }
 
+function installSelectionCompositionController(context) {
+  context.studioEditorSelectionCompositionController = selectionComposition
+    .createStudioEditorSelectionCompositionController({
+      selectionApi: context.SlideNextStudioEditorSelection || null,
+      selectionStateAdapter: context.SlideNextStudioEditorSelectionStateAdapter
+        || context.studioEditorSelectionStateAdapter
+        || selectionStateAdapter,
+      selectionCommitAdapter: context.SlideNextStudioEditorSelectionCommitAdapter
+        || context.studioEditorSelectionCommitAdapter
+        || selectionCommitAdapter,
+      selectionClassAdapter: context.SlideNextStudioEditorSelectionClassAdapter
+        || context.studioEditorSelectionClassAdapter
+        || selectionClassAdapter,
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+        ? context.getStudioSelectedElements(doc)
+        : context.selectedElements || [],
+      getSelectionOptions: () => typeof context.getEditorSelectionOptions === 'function'
+        ? context.getEditorSelectionOptions()
+        : {},
+      getRefreshSelectionOptions: (doc) => typeof context.getEditorSelectionOptions === 'function'
+        ? context.getEditorSelectionOptions({ doc })
+        : {},
+      setSelectionState: (nextState) => typeof context.setStudioSelectionState === 'function'
+        ? context.setStudioSelectionState(nextState)
+        : undefined,
+      clearSelectionState: () => typeof context.clearStudioSelectionState === 'function'
+        ? context.clearStudioSelectionState()
+        : undefined,
+      syncSelectionOverlay: (...args) => typeof context.syncSelectionOverlay === 'function'
+        ? context.syncSelectionOverlay(...args)
+        : false,
+      syncInspectorForSelection: (...args) => typeof context.syncInspectorForSelection === 'function'
+        ? context.syncInspectorForSelection(...args)
+        : false,
+      updateLayersList: (...args) => typeof context.updateLayersList === 'function'
+        ? context.updateLayersList(...args)
+        : false
+    });
+}
+
 function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
@@ -254,16 +294,18 @@ function loadRefreshSelectionClasses(fileContent, context) {
     '\n\n    function applyEditorSelectionState(nextState = {}) {'
   );
   context.SlideNextStudioEditorSelectionClassAdapter = selectionClassAdapter;
+  installSelectionCompositionController(context);
   vm.runInContext(helperSource, context);
 }
 
 function loadCommitEditorSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSelectionCommitAdapter =',
+    'function commitEditorSelectionState(nextSelectionState, options = {}) {',
     '\n\n    function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {'
   );
   context.SlideNextStudioEditorSelectionCommitAdapter = selectionCommitAdapter;
+  installSelectionCompositionController(context);
   vm.runInContext(helperSource, context);
 }
 
@@ -408,7 +450,10 @@ test('commitEditorSelectionState delegates to the shared selection commit helper
   );
   assert.equal(delegatedArgs[0], nextSelectionState);
   assert.equal(delegatedArgs[1].selectionOptions, true);
-  assert.equal(delegatedArgs[1].applySelectionState, context.applyEditorSelectionState);
+  assert.equal(
+    delegatedArgs[1].applySelectionState,
+    context.studioEditorSelectionCompositionController.apply
+  );
 });
 
 test('commitEditorSelectionState fails closed when the shared selection API is unavailable', () => {
@@ -791,7 +836,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   const applyEditorSelectionStateSource = extractFunctionSource(
     fileContent,
     'function applyEditorSelectionState(nextState = {}) {',
-    '\n\n    function commitEditorSelectionState(nextSelectionState, options = {}) {'
+    '\n\n    const studioEditorSelectionCommitAdapter ='
   );
 
   const activeElement = { id: 'active', isConnected: true, onActiveSlide: true };
@@ -829,9 +874,18 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
   vm.createContext(context);
   context.SlideNextStudioEditorSelectionOptionsAdapter = selectionOptionsAdapter;
   vm.runInContext(getEditorSelectionOptionsSource, context);
+  context.SlideNextStudioEditorSelectionStateAdapter = selectionStateAdapter;
   context.studioEditorSelectionStateAdapter = selectionStateAdapter;
+  installSelectionCompositionController(context);
   vm.runInContext(applyEditorSelectionStateSource, context);
-
+  context.getEditorSelectionOptions = () => {
+    const activeSlide = context.getIframeDoc() && context.getIframeDoc().activeSlide;
+    return {
+      isEligibleElement: (element) => !!element && !!activeSlide && activeSlide.contains(element),
+      getElementId: (element) => element && element.id,
+      getActiveSlide: () => activeSlide
+    };
+  };
   context.applyEditorSelectionState({
     selectedElements: [offSlideElement, activeElement],
     selectedElement: offSlideElement
@@ -853,7 +907,7 @@ test('applyEditorSelectionState clears local selection when the shared selection
   const applyEditorSelectionStateSource = extractFunctionSource(
     fileContent,
     'function applyEditorSelectionState(nextState = {}) {',
-    '\n\n    function commitEditorSelectionState(nextSelectionState, options = {}) {'
+    '\n\n    const studioEditorSelectionCommitAdapter ='
   );
   const staleElement = { id: 'stale' };
   const context = {
