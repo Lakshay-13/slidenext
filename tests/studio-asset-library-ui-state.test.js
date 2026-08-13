@@ -276,6 +276,51 @@ test('shared asset state disables asset creation controls without a canonical de
   assert.equal(controls.addAssetBtn.disabled, false);
 });
 
+test('shared asset state disables asset insertion without an active slide', () => {
+  const list = {
+    children: [],
+    set textContent(value) {
+      this.value = value;
+      this.children = [];
+    },
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById() {
+      return list;
+    },
+    createElement() {
+      return {
+        children: [],
+        disabled: false,
+        appendChild(child) {
+          this.children.push(child);
+        },
+        addEventListener() {},
+        setAttribute() {}
+      };
+    }
+  };
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets: [{ id: 'hero', name: 'Hero', type: 'image' }],
+    insertAsset() {},
+    canInsertAsset: false
+  }), true);
+  assert.equal(list.children[0].children[2].disabled, true);
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets: [{ id: 'hero', name: 'Hero', type: 'image' }],
+    insertAsset() {},
+    canInsertAsset: true
+  }), true);
+  assert.equal(list.children[0].children[2].disabled, false);
+});
+
 test('createStudioAssetStateSync resolves asset state through callbacks', () => {
   const doc = { id: 'iframe-doc' };
   const list = {
@@ -331,15 +376,19 @@ test('asset state exposes canonical-deck availability for asset creation control
   const deck = { assets: [] };
   const controller = assetState.createStudioEditorAssetStateController({
     getCanonicalDeck: () => deck,
-    getSelectedElements: () => []
+    getSelectedElements: () => [],
+    getActiveSlide: () => ({ id: 'slide-1' })
   });
   assert.equal(controller.buildActionState({}).canAddAsset, true);
+  assert.equal(controller.buildActionState({}).canInsertAsset, true);
 
   const unavailableController = assetState.createStudioEditorAssetStateController({
     getCanonicalDeck: () => null,
-    getSelectedElements: () => []
+    getSelectedElements: () => [],
+    getActiveSlide: () => null
   });
   assert.equal(unavailableController.buildActionState({}).canAddAsset, false);
+  assert.equal(unavailableController.buildActionState({}).canInsertAsset, false);
 });
 
 test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {

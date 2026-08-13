@@ -17,6 +17,9 @@
     const getCanonicalDeck = typeof options.getCanonicalDeck === 'function'
       ? options.getCanonicalDeck
       : () => null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
@@ -71,6 +74,7 @@
       return {
         assets: canonicalDeck && canonicalDeck.assets,
         canAddAsset: !!canonicalDeck,
+        canInsertAsset: !!getActiveSlide(sourceDoc),
         selectedElement,
         isElementLocked: lockedState,
         applyAsset,

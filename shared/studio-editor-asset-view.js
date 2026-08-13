@@ -18,7 +18,8 @@
     const normalizedAssets = Array.isArray(options.assets) ? options.assets : [];
     const canApply = !!options.canApply;
     const applyAsset = typeof options.applyAsset === 'function' ? options.applyAsset : () => {};
-    const canInsert = typeof options.insertAsset === 'function';
+    const canInsert = options.canInsertAsset !== false
+      && typeof options.insertAsset === 'function';
     const insertAsset = canInsert ? options.insertAsset : () => {};
     const removeAsset = typeof options.removeAsset === 'function' ? options.removeAsset : () => {};
     const resolvePreviewSource = typeof options.resolvePreviewSource === 'function'

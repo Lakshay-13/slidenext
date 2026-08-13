@@ -10142,6 +10142,9 @@
           assetView,
           getDocument: () => getIframeDoc(),
           getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          getActiveSlide: (sourceDoc) => typeof getActiveSlide === 'function'
+            ? getActiveSlide(sourceDoc)
+            : null,
           getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
           getLockedState: (sourceDoc, fallbackReader) => typeof getEditorCanonicalVisibilityReader === 'function'
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, fallbackReader)
