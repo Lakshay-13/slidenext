@@ -195,13 +195,14 @@
       ? options.createHistoryEntry
       : createStudioHistoryEntry;
 
-    const nextDoc = doc || getDocument();
-    let canonicalDeck = isValidStudioHistoryCanonicalDeck(
+    const suppliedCanonicalDeck = isValidStudioHistoryCanonicalDeck(
       options.canonicalDeck,
       isCanonicalDeck
     )
       ? options.canonicalDeck
       : null;
+    const nextDoc = doc || (suppliedCanonicalDeck ? null : getDocument());
+    let canonicalDeck = suppliedCanonicalDeck;
     if (!canonicalDeck) {
       try {
         canonicalDeck = buildCanonicalDeck(nextDoc, {

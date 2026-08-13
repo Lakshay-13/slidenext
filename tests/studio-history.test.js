@@ -443,6 +443,32 @@ test('buildStudioHistoryEntry uses a supplied canonical deck before rebuilding f
   });
 });
 
+test('buildStudioHistoryEntry keeps canonical-only captures independent of the document reader', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+
+  const entry = studioHistory.buildStudioHistoryEntry(undefined, {
+    canonicalDeck,
+    preferCanonicalDeck: true,
+    getDocument() {
+      throw new Error('canonical-only history should not read the iframe document');
+    },
+    resolveFallbackActiveSlideId() {
+      return 'slide-1';
+    }
+  });
+
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck
+  });
+});
+
 test('buildStudioHistoryEntry falls back to HTML when canonical rebuild fails', () => {
   const doc = { id: 'legacy-doc' };
   const entry = studioHistory.buildStudioHistoryEntry(doc, {
