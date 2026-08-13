@@ -1019,6 +1019,34 @@ test('resolveStudioWallpaperActionState derives wallpaper readiness from the act
   );
 });
 
+test('resolveStudioWallpaperCanonicalActionState enriches wallpaper state from the canonical active slide', () => {
+  const activeSlide = { dataset: { slideId: 'slide-1' } };
+  const canonicalActiveSlide = { id: 'slide-1', layout: { background: { style: 'background: #112233;' } } };
+  const canonicalDeck = { slides: [canonicalActiveSlide] };
+
+  assert.deepEqual(
+    deckView.resolveStudioWallpaperCanonicalActionState(
+      { activeSlide },
+      {
+        getActiveSlide(doc) {
+          return doc.activeSlide;
+        },
+        getSlideId(slide) {
+          return slide.dataset.slideId;
+        },
+        resolveCanonicalDeck() {
+          return canonicalDeck;
+        }
+      }
+    ),
+    {
+      activeSlide,
+      canUseWallpaperControls: true,
+      canonicalActiveSlide
+    }
+  );
+});
+
 test('syncStudioWallpaperToolbarActionState resolves and renders wallpaper controls in one shared operation', () => {
   const controls = {
     wpTabSolid: { disabled: true },

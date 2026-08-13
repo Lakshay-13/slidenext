@@ -11578,6 +11578,20 @@
           canUseWallpaperControls: false
         };
       }
+      if (typeof deckView.resolveStudioWallpaperCanonicalActionState === 'function') {
+        return deckView.resolveStudioWallpaperCanonicalActionState(doc, {
+          getActiveSlide,
+          getSlideId: typeof getEditorSlideId === 'function' ? getEditorSlideId : null,
+          resolveCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+          findCanonicalSlideById: typeof findEditorCanonicalSlideById === 'function'
+            ? findEditorCanonicalSlideById
+            : null
+        });
+      }
       const actionState = deckView.resolveStudioWallpaperActionState(doc, {
         getActiveSlide
       });
