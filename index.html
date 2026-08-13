@@ -1677,6 +1677,7 @@
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-composition.js"></script>
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
@@ -8805,6 +8806,11 @@
     }
 
     function refreshSelectionClasses(doc = getIframeDoc()) {
+      if (typeof studioEditorSelectionCompositionController !== 'undefined'
+        && studioEditorSelectionCompositionController
+        && typeof studioEditorSelectionCompositionController.refreshClasses === 'function') {
+        return studioEditorSelectionCompositionController.refreshClasses(doc);
+      }
       const refreshSelectionState = studioEditorSelectionClassAdapter
         && typeof studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses === 'function'
         ? studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses
@@ -8844,6 +8850,11 @@
       : null;
 
     function applyEditorSelectionState(nextState = {}) {
+      if (typeof studioEditorSelectionCompositionController !== 'undefined'
+        && studioEditorSelectionCompositionController
+        && typeof studioEditorSelectionCompositionController.apply === 'function') {
+        return studioEditorSelectionCompositionController.apply(nextState);
+      }
       const applySelectionState = studioEditorSelectionStateAdapter
         && typeof studioEditorSelectionStateAdapter.applyStudioEditorSelectionState === 'function'
         ? studioEditorSelectionStateAdapter.applyStudioEditorSelectionState
@@ -8868,7 +8879,37 @@
       ? SlideNextStudioEditorSelectionCommitAdapter
       : null;
 
+    const studioEditorSelectionCompositionController = typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
+      && SlideNextStudioEditorSelectionComposition
+      && typeof SlideNextStudioEditorSelectionComposition.createStudioEditorSelectionCompositionController === 'function'
+      ? SlideNextStudioEditorSelectionComposition.createStudioEditorSelectionCompositionController({
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          selectionStateAdapter: studioEditorSelectionStateAdapter,
+          selectionCommitAdapter: studioEditorSelectionCommitAdapter,
+          selectionClassAdapter: studioEditorSelectionClassAdapter,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getSelectionOptions: () => getEditorSelectionOptions(),
+          getRefreshSelectionOptions: (sourceDoc) => getEditorSelectionOptions({ doc: sourceDoc }),
+          setSelectionState: (selectionState) => setStudioSelectionState(selectionState),
+          clearSelectionState: () => clearStudioSelectionState(),
+          syncSelectionOverlay: (...args) => syncSelectionOverlay(...args),
+          syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
+          updateLayersList: (...args) => {
+            if (typeof updateLayersList === 'function') return updateLayersList(...args);
+            return false;
+          }
+        })
+      : null;
+
     function commitEditorSelectionState(nextSelectionState, options = {}) {
+      if (typeof studioEditorSelectionCompositionController !== 'undefined'
+        && studioEditorSelectionCompositionController
+        && typeof studioEditorSelectionCompositionController.commit === 'function') {
+        return studioEditorSelectionCompositionController.commit(nextSelectionState, options);
+      }
       const commitSelectionState = studioEditorSelectionCommitAdapter
         && typeof studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState === 'function'
         ? studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState
