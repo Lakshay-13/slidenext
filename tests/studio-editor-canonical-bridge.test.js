@@ -172,6 +172,30 @@ test('canonical bridge adds the live baseline to forced DOM rebuilds', () => {
   });
 });
 
+test('canonical bridge prefers pending state for forced DOM rebuilds', () => {
+  const documentRef = { id: 'frame' };
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending' }] };
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'live' }] };
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: canonicalState,
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    getPendingCanonicalDeck() {
+      return pendingCanonicalDeck;
+    },
+    getCanonicalDeckBaseline() {
+      return liveCanonicalDeck;
+    }
+  });
+
+  bridge.buildCanonicalDeck(documentRef, { preferLiveCanonicalDeck: false });
+
+  assert.equal(capturedOptions.canonicalDeckBaseline, pendingCanonicalDeck);
+});
+
 test('canonical bridge delegates baseline resolution to canonical state', () => {
   const documentRef = { id: 'frame' };
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };

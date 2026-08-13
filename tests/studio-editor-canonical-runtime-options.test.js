@@ -24,6 +24,7 @@ test('canonical runtime options preserves injected dependencies and callbacks', 
     getSlideId() {},
     getNodeId() {},
     buildCanonicalDeck() {},
+    getPendingCanonicalDeck() {},
     getCanonicalDeckBaseline() {},
     getDocument() {}
   };

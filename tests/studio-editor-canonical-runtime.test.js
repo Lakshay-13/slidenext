@@ -27,6 +27,7 @@ test('canonical runtime composes state, builders, and bridge with shared depende
     getSlideId() {},
     getNodeId() {},
     buildCanonicalDeck() {},
+    getPendingCanonicalDeck() {},
     getCanonicalDeckBaseline() {},
     getDocument() {}
   };
@@ -78,6 +79,7 @@ test('canonical runtime composes state, builders, and bridge with shared depende
   assert.equal(calls[3][1].state, state);
   assert.equal(calls[3][1].canonicalDeckBuilder, canonicalDeckBuilder);
   assert.equal(calls[3][1].mutationCanonicalDeckBuilder, mutationCanonicalDeckBuilder);
+  assert.equal(calls[3][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[3][1].getDocument, callbacks.getDocument);
 });
 

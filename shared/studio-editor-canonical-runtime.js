@@ -75,6 +75,7 @@
           state: canonicalState,
           canonicalDeckBuilder,
           mutationCanonicalDeckBuilder,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           isCanonicalDeck,
           getDocument: options.getDocument

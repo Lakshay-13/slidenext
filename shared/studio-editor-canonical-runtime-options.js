@@ -49,6 +49,7 @@
       getSlideId: options.getSlideId,
       getNodeId: options.getNodeId,
       buildCanonicalDeck: options.buildCanonicalDeck,
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
       getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
       getDocument: options.getDocument
     };
