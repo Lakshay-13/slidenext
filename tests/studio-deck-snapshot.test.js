@@ -339,6 +339,43 @@ test('createStudioDeckSnapshotBuildOptions resolves live snapshot state from the
   assert.equal(fallbackCalls, 0);
 });
 
+test('createStudioDeckSnapshotBuildOptions prefers pending canonical state during live editing', () => {
+  const doc = { label: 'doc' };
+  const pendingCanonicalDeck = {
+    slides: [{ id: 'pending-slide', title: 'Pending', nodes: [] }]
+  };
+  const result = deckSnapshot.createStudioDeckSnapshotBuildOptions(doc, {
+    getPendingCanonicalDeck(sourceDoc) {
+      assert.equal(sourceDoc, doc);
+      return pendingCanonicalDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('live document rebuild should not be needed');
+    },
+    resolveLiveActiveSlideId() {
+      return 'pending-slide';
+    }
+  });
+
+  assert.equal(result.resolvedCanonicalDeck, pendingCanonicalDeck);
+  assert.equal(result.buildCanonicalDeck(doc), pendingCanonicalDeck);
+});
+
+test('createStudioDeckSnapshotCanonicalDeckResolver checks pending state before the shared resolver', () => {
+  const doc = { label: 'doc' };
+  const pendingCanonicalDeck = { slides: [{ id: 'pending-slide' }] };
+  const resolveCanonicalDeck = deckSnapshot.createStudioDeckSnapshotCanonicalDeckResolver(doc, {
+    getPendingCanonicalDeck() {
+      return pendingCanonicalDeck;
+    },
+    buildCanonicalDeck() {
+      throw new Error('built canonical deck should not be needed');
+    }
+  });
+
+  assert.equal(resolveCanonicalDeck(doc), pendingCanonicalDeck);
+});
+
 test('createStudioDeckSnapshotBuildOptions uses an explicit live canonical deck during editing', () => {
   const doc = { label: 'doc' };
   const canonicalDeck = {

@@ -25,10 +25,24 @@
 
   function createStudioDeckSnapshotCanonicalDeckResolver(doc, options = {}) {
     const deckView = resolveStudioDeckView();
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     if (deckView && typeof deckView.createStudioCanonicalDeckResolver === 'function') {
-      return deckView.createStudioCanonicalDeckResolver(doc, {
+      const resolveBuiltCanonicalDeck = deckView.createStudioCanonicalDeckResolver(doc, {
         buildCanonicalDeck: options.buildCanonicalDeck
       });
+      return function resolveCanonicalDeck(sourceDoc = doc) {
+        if (getPendingCanonicalDeck) {
+          try {
+            const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
+            if (isCanonicalDeckLike(pendingCanonicalDeck)) return pendingCanonicalDeck;
+          } catch (error) {
+            // Continue through the live canonical deck fallback.
+          }
+        }
+        return resolveBuiltCanonicalDeck(sourceDoc);
+      };
     }
 
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
@@ -38,6 +52,14 @@
     let resolvedCanonicalDeck = null;
 
     return function resolveCanonicalDeck(sourceDoc = doc) {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
+          if (isCanonicalDeckLike(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (error) {
+          // Continue through the live canonical deck fallback.
+        }
+      }
       if (!didResolveCanonicalDeck) {
         resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
         didResolveCanonicalDeck = true;
@@ -71,6 +93,7 @@
     if (deckView && typeof deckView.resolveStudioCanonicalDeckViewState === 'function') {
       return deckView.resolveStudioCanonicalDeckViewState(doc, {
         buildCanonicalDeck: options.buildCanonicalDeck,
+        getPendingCanonicalDeck: options.getPendingCanonicalDeck,
         resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
         resolveCanonicalDeck: options.resolveCanonicalDeck,
         resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck
@@ -81,6 +104,7 @@
       && typeof deckView.createStudioDeckViewCanonicalStateOptions === 'function'
       ? deckView.createStudioDeckViewCanonicalStateOptions({
           buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId
         })
       : {
@@ -103,12 +127,19 @@
         ? rawCanonicalStateOptions.resolveLiveActiveSlideId
         : typeof options.resolveLiveActiveSlideId === 'function'
           ? options.resolveLiveActiveSlideId
-          : () => ''
+          : () => '',
+      getPendingCanonicalDeck: rawCanonicalStateOptions
+        && typeof rawCanonicalStateOptions.getPendingCanonicalDeck === 'function'
+        ? rawCanonicalStateOptions.getPendingCanonicalDeck
+        : typeof options.getPendingCanonicalDeck === 'function'
+          ? options.getPendingCanonicalDeck
+          : null
     };
     const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
       ? options.resolveCanonicalDeck
       : createStudioDeckSnapshotCanonicalDeckResolver(doc, {
-          buildCanonicalDeck: canonicalStateOptions.buildCanonicalDeck
+          buildCanonicalDeck: canonicalStateOptions.buildCanonicalDeck,
+          getPendingCanonicalDeck: canonicalStateOptions.getPendingCanonicalDeck
         });
     const resolveLiveActiveSlideId = canonicalStateOptions.resolveLiveActiveSlideId;
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
@@ -212,6 +243,7 @@
       const deckViewStateOptions = createDeckViewStateOptions(doc, buildOptions);
       const snapshotBuildOptions = createStudioDeckSnapshotBuildOptions(doc, {
         ...deckViewStateOptions,
+        getPendingCanonicalDeck,
         ...(buildCanonicalDeck
           ? { buildCanonicalDeck: (sourceDoc) => buildCanonicalDeck(sourceDoc, buildOptions) }
           : {}),
