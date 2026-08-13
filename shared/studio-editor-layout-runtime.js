@@ -107,6 +107,7 @@
           assignElementId: options.assignElementId,
           buildCanonicalDeck: options.buildCanonicalDeck,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           finalizeDeckMutation: options.finalizeDeckMutation,
           updateActionState: options.updateConversionActionState

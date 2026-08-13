@@ -267,12 +267,16 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     return (mutationOptions = {}) => buildStudioCanonicalLayoutMutation({
       ...mutationOptions,
       canonicalDeckApi,
       canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
+      getPendingCanonicalDeck,
       getCanonicalDeckBaseline
     });
   }

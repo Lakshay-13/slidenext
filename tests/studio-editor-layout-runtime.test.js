@@ -104,6 +104,7 @@ test('layout runtime composes layout controllers', () => {
   assert.equal(calls[3][1].conversionApi, callbacks.conversionEngineApi);
   assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[3][1].buildPositionedLayoutItems, callbacks.buildPositionedLayoutItems);
+  assert.equal(calls[3][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[4][1].layoutModeApi, callbacks.layoutModeApi);
   assert.equal(calls[4][1].layoutModeViewApi, callbacks.layoutModeViewApi);
   assert.equal(calls[4][1].documentRef, callbacks.documentRef);

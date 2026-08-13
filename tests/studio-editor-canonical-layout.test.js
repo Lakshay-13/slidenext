@@ -377,6 +377,31 @@ test('createStudioCanonicalLayoutMutationBuilder shares canonical dependencies',
   assert.equal(result.slides[0].nodes[0].layout.x, 40);
 });
 
+test('createStudioCanonicalLayoutMutationBuilder preserves pending canonical state', () => {
+  const pendingDeck = createSourceDeck();
+  const liveDeck = createSourceDeck();
+  const buildCanonicalLayoutMutation = canonicalLayout.createStudioCanonicalLayoutMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => liveDeck
+  });
+
+  const result = buildCanonicalLayoutMutation({
+    sourceDocument: { id: 'editor-doc' },
+    nextItems: [{
+      element: { dataset: { editorId: 'node-1' } },
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+  assert.equal(result.slides[0].nodes[0].layout.y, 60);
+  assert.equal(pendingDeck.slides[0].nodes[0].layout.x, null);
+  assert.equal(liveDeck.slides[0].nodes[0].layout.x, null);
+});
+
 test('createStudioCanonicalLayoutMutationBuilder falls back when the live baseline is invalid', () => {
   const sourceDeck = createSourceDeck();
   let fallbackBuildCount = 0;

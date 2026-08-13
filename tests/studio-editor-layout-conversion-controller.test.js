@@ -25,6 +25,7 @@ test('convert applies one reversible style transaction and canonical layout side
   };
   const transaction = { kind: 'style' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending' }] };
   const calls = [];
   const controller = controllerApi.createStudioEditorLayoutConversionController({
     conversionApi: {
@@ -35,6 +36,7 @@ test('convert applies one reversible style transaction and canonical layout side
     canonicalLayoutApi: {
       createStudioCanonicalLayoutMutationBuilder(builderOptions) {
         assert.equal(builderOptions.canonicalDeckApi.id, 'deck-api');
+        assert.equal(builderOptions.getPendingCanonicalDeck(), pendingCanonicalDeck);
         return (mutationOptions) => {
           calls.push(['canonical', mutationOptions]);
           return canonicalDeck;
@@ -50,6 +52,7 @@ test('convert applies one reversible style transaction and canonical layout side
     },
     getDocument: () => ({ id: 'doc' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
     finalizeDeckMutation(label, options) {
       calls.push(['finalize', label, options]);
     },

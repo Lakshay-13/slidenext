@@ -58,6 +58,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
       : null;
@@ -123,6 +126,7 @@
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline
           })
         : null;
