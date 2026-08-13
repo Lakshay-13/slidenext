@@ -38,6 +38,19 @@ test('editor routes session updates through the shared session controller', () =
   assert.doesNotMatch(source, /createStudioPresentationSessionStateUpdate/);
 });
 
+test('editor routes session readers through the shared session controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionStateReaders() {',
+    '\n\n    function createCurrentStudioSessionReaderOptions('
+  );
+
+  assert.match(source, /studioEditorSessionStateController\.readers\(\)/);
+  assert.doesNotMatch(source, /createStudioEditorSessionStateReadersAdapter/);
+  assert.doesNotMatch(source, /createStudioSessionStateReaders/);
+});
+
 test('retryStudioEditorFrame reuses the current presentation session', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const retrySource = extractFunctionSource(
@@ -284,6 +297,14 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   const loadVersionsCalls = [];
   let capturedFrameLoadHandlerOptions = null;
   const context = {
+    studioEditorSessionStateController: {
+      readers() {
+        return {
+          getCurrentPresentationUrl: () => context.currentPresentationUrl,
+          getCurrentSessionToken: () => context.studioEditorSessionToken
+        };
+      }
+    },
     SlideNextStudioEditorSession: {
       ...editorSession,
       createStudioFrameLoadHandler(options) {
@@ -430,6 +451,14 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
 
   const calls = [];
   const context = {
+    studioEditorSessionStateController: {
+      readers() {
+        return {
+          getCurrentPresentationUrl: () => context.currentPresentationUrl,
+          getCurrentSessionToken: () => context.studioEditorSessionToken
+        };
+      }
+    },
     SlideNextStudioEditorSession: {
       ...editorSession,
       createStudioFrameLoadHandler(options) {
@@ -575,13 +604,13 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
 
 test('createCurrentStudioSessionStateReaders exposes live session getters through the shared reader helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let capturedReaderOptions = null;
   const context = {
-    SlideNextStudioEditorSession: {
-      ...editorSession,
-      createStudioSessionStateReaders(options) {
-        capturedReaderOptions = options;
-        return editorSession.createStudioSessionStateReaders(options);
+    studioEditorSessionStateController: {
+      readers() {
+        return {
+          getCurrentPresentationUrl: () => context.currentPresentationUrl,
+          getCurrentSessionToken: () => context.studioEditorSessionToken
+        };
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -593,31 +622,26 @@ test('createCurrentStudioSessionStateReaders exposes live session getters throug
 
   const readers = context.createCurrentStudioSessionStateReaders();
 
-  assert.equal(typeof capturedReaderOptions.getCurrentPresentationUrl, 'function');
-  assert.equal(typeof capturedReaderOptions.getCurrentSessionToken, 'function');
   assert.equal(typeof readers.getCurrentPresentationUrl, 'function');
   assert.equal(typeof readers.getCurrentSessionToken, 'function');
-  assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
-  assert.equal(capturedReaderOptions.getCurrentSessionToken(), 4);
   assert.equal(readers.getCurrentPresentationUrl(), '/presentations/onboarding-presentation/index.html');
   assert.equal(readers.getCurrentSessionToken(), 4);
 
   context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
   context.studioEditorSessionToken = 5;
-  assert.equal(capturedReaderOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(capturedReaderOptions.getCurrentSessionToken(), 5);
   assert.equal(readers.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(readers.getCurrentSessionToken(), 5);
 });
 
-test('createCurrentStudioSessionStateReaders creates the shared reader adapter once', () => {
+test('createCurrentStudioSessionStateReaders returns neutral readers without the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let adapterCreateCalls = 0;
   const context = {
     SlideNextStudioEditorSession: {
       createStudioEditorSessionStateReadersAdapter(options) {
-        adapterCreateCalls += 1;
-        return editorSession.createStudioEditorSessionStateReadersAdapter(options);
+        throw new Error('legacy session reader adapter should not run');
+      },
+      createStudioSessionStateReaders() {
+        throw new Error('legacy session readers should not run');
       }
     },
     currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
@@ -627,16 +651,10 @@ test('createCurrentStudioSessionStateReaders creates the shared reader adapter o
   vm.createContext(context);
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
 
-  const firstReaders = context.createCurrentStudioSessionStateReaders();
-  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
-  context.studioEditorSessionToken = 5;
-  const secondReaders = context.createCurrentStudioSessionStateReaders();
+  const readers = context.createCurrentStudioSessionStateReaders();
 
-  assert.equal(adapterCreateCalls, 1);
-  assert.equal(firstReaders.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(firstReaders.getCurrentSessionToken(), 5);
-  assert.equal(secondReaders.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(secondReaders.getCurrentSessionToken(), 5);
+  assert.equal(readers.getCurrentPresentationUrl(), '');
+  assert.equal(readers.getCurrentSessionToken(), 0);
 });
 
 test('createCurrentStudioSessionReaderOptions reuses the shared session-reader options builder when available', () => {

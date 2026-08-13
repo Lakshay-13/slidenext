@@ -6655,46 +6655,9 @@
         && typeof studioEditorSessionStateController.readers === 'function') {
         return studioEditorSessionStateController.readers();
       }
-      const createStudioEditorSessionStateReadersAdapter = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioEditorSessionStateReadersAdapter === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioEditorSessionStateReadersAdapter
-        : null;
-      if (createStudioEditorSessionStateReadersAdapter) {
-        if (typeof createCurrentStudioSessionStateReaders.adapter !== 'function') {
-          createCurrentStudioSessionStateReaders.adapter = createStudioEditorSessionStateReadersAdapter({
-            sessionApi: SlideNextStudioEditorSession,
-            getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
-            getCurrentSessionToken: getStudioEditorSessionToken
-          });
-        }
-        if (typeof createCurrentStudioSessionStateReaders.adapter === 'function') {
-          return createCurrentStudioSessionStateReaders.adapter();
-        }
-        if (createCurrentStudioSessionStateReaders.adapter && typeof createCurrentStudioSessionStateReaders.adapter === 'object') {
-          return createCurrentStudioSessionStateReaders.adapter;
-        }
-      }
-
-      const createStudioSessionStateReaders = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioSessionStateReaders === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioSessionStateReaders
-        : null;
-      if (createStudioSessionStateReaders) {
-        return createStudioSessionStateReaders({
-          getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
-          getCurrentSessionToken: getStudioEditorSessionToken
-        });
-      }
-
       return {
-        getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
-        getCurrentSessionToken: getStudioEditorSessionToken
+        getCurrentPresentationUrl: () => '',
+        getCurrentSessionToken: () => 0
       };
     }
 
