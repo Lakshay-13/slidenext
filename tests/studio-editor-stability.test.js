@@ -2803,6 +2803,8 @@ test('editor composes editable-element eligibility through the shared DOM module
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorEditableElementEligibilityReader =/);
+  assert.match(source, /const studioEditorElementIdentityAdapter =/);
+  assert.match(source, /typeof SlideNextStudioEditorElementIdentityAdapter !== 'undefined'/);
   assert.match(source, /typeof editableElementEligibilityReader === 'function'/);
   const isEligibleEditableElementSource = extractFunctionSource(
     source,
@@ -2816,7 +2818,7 @@ test('isEligibleEditableElement delegates the element and DOM options to the sha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const editableElementEligibilityReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorEditableElementEligibilityReader =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const isEligibleEditableElementSource = extractFunctionSource(
@@ -2828,6 +2830,7 @@ test('isEligibleEditableElement delegates the element and DOM options to the sha
   const options = { blockedIds: ['editor-overlay'] };
   const calls = [];
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: {
       isEligibleEditableElement(elementValue, optionsValue) {
         calls.push([elementValue, optionsValue]);
@@ -2852,7 +2855,7 @@ test('isEligibleEditableElement fails closed when the shared DOM module is unava
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const editableElementEligibilityReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorEditableElementEligibilityReader =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const isEligibleEditableElementSource = extractFunctionSource(
@@ -2861,6 +2864,7 @@ test('isEligibleEditableElement fails closed when the shared DOM module is unava
     '\n\n    function assignEditorElementId'
   );
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {
       return {};
@@ -2882,6 +2886,7 @@ test('editor composes element-ID assignment through the shared DOM module', () =
   );
 
   assert.match(source, /const studioEditorElementIdAssigner =/);
+  assert.match(source, /const studioEditorElementIdentityAdapter =/);
   assert.match(source, /typeof elementIdAssigner === 'function'/);
   assert.doesNotMatch(assignEditorElementIdSource, /SlideNextStudioEditorDom\.assignStudioElementId/);
 });
@@ -2890,7 +2895,7 @@ test('assignEditorElementId delegates the element and DOM options to the shared 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const elementIdAssignerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorElementIdAssigner =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const assignEditorElementIdSource = extractFunctionSource(
@@ -2902,6 +2907,7 @@ test('assignEditorElementId delegates the element and DOM options to the shared 
   const options = { elementAttrName: 'data-editor-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: {
       assignStudioElementId(elementValue, optionsValue) {
         calls.push([elementValue, optionsValue]);
@@ -2927,7 +2933,7 @@ test('assignEditorElementId fails closed when the shared DOM module is unavailab
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const elementIdAssignerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorElementIdAssigner =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const assignEditorElementIdSource = extractFunctionSource(
@@ -2936,6 +2942,7 @@ test('assignEditorElementId fails closed when the shared DOM module is unavailab
     '\n\n    function getElementByEditorId'
   );
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {
       return {};
@@ -2957,6 +2964,7 @@ test('editor composes editor-element lookup through the shared DOM module', () =
   );
 
   assert.match(source, /const studioEditorElementByIdReader =/);
+  assert.match(source, /const studioEditorElementIdentityAdapter =/);
   assert.match(source, /typeof elementByIdReader === 'function'/);
   assert.doesNotMatch(getElementByEditorIdSource, /SlideNextStudioEditorDom\.getElementByEditorId/);
 });
@@ -2965,7 +2973,7 @@ test('getElementByEditorId delegates the ID, document, and DOM options to the sh
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const elementByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorElementByIdReader =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getElementByEditorIdSource = extractFunctionSource(
@@ -2978,6 +2986,7 @@ test('getElementByEditorId delegates the ID, document, and DOM options to the sh
   const options = { elementAttrName: 'data-editor-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: {
       getElementByEditorId(editorId, docValue, optionsValue) {
         calls.push([editorId, docValue, optionsValue]);
@@ -3006,7 +3015,7 @@ test('getElementByEditorId fails closed when the shared DOM module is unavailabl
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const elementByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorElementByIdReader =',
+    'const studioEditorElementIdentityAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getElementByEditorIdSource = extractFunctionSource(
@@ -3015,6 +3024,7 @@ test('getElementByEditorId fails closed when the shared DOM module is unavailabl
     '\n\n    function getSlideEditableElements'
   );
   const context = {
+    SlideNextStudioEditorElementIdentityAdapter: require('../shared/studio-editor-element-identity-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
       return {};
