@@ -3269,7 +3269,7 @@ test('resolveInlineTextEditTarget delegates through the shared inline-edit modul
   const resolveInlineTextEditTargetSource = extractFunctionSource(
     fileContent,
     'function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {',
-    '\n\n    const studioEditorSelectionClassRefresher ='
+    '\n\n    const studioEditorSelectionClassAdapter ='
   );
   const node = { id: 'event-target' };
   const slide = { id: 'slide-1' };
@@ -3320,7 +3320,7 @@ test('resolveInlineTextEditTarget fails closed when the shared inline-edit modul
   const resolveInlineTextEditTargetSource = extractFunctionSource(
     fileContent,
     'function resolveInlineTextEditTarget(node, slide, doc = getIframeDoc()) {',
-    '\n\n    const studioEditorSelectionClassRefresher ='
+    '\n\n    const studioEditorSelectionClassAdapter ='
   );
   const context = {
     selectedElements: [],

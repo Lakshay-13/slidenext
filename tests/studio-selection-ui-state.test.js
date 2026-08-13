@@ -8,6 +8,7 @@ const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 const selectionStateAdapter = require('../shared/studio-editor-selection-state-adapter.js');
 const selectionCommitAdapter = require('../shared/studio-editor-selection-commit-adapter.js');
+const selectionClassAdapter = require('../shared/studio-editor-selection-class-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -28,9 +29,9 @@ test('editor composes selection state normalization through the shared selection
 test('editor composes selection class refresh through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionClassRefresher =/);
-  assert.match(source, /refreshStudioSelectionClasses/);
-  assert.match(source, /if \(typeof studioEditorSelectionClassRefresher !== 'function'\)/);
+  assert.match(source, /const studioEditorSelectionClassAdapter =/);
+  assert.match(source, /refreshStudioEditorSelectionClasses/);
+  assert.match(source, /if \(!refreshSelectionState\)/);
   assert.doesNotMatch(source, /refreshSelectionClasses\.refresher/);
 });
 
@@ -224,6 +225,7 @@ function loadRefreshSelectionClasses(fileContent, context) {
     'function refreshSelectionClasses(doc = getIframeDoc()) {',
     '\n\n    function applyEditorSelectionState(nextState = {}) {'
   );
+  context.SlideNextStudioEditorSelectionClassAdapter = selectionClassAdapter;
   vm.runInContext(helperSource, context);
 }
 

@@ -1659,6 +1659,7 @@
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-class-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8429,27 +8430,36 @@
     }
 
     function refreshSelectionClasses(doc = getIframeDoc()) {
-      if (typeof studioEditorSelectionClassRefresher !== 'function') {
+      const refreshSelectionState = studioEditorSelectionClassAdapter
+        && typeof studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses === 'function'
+        ? studioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses
+        : null;
+      if (!refreshSelectionState) {
         clearStudioSelectionState();
         return false;
       }
-      const nextSelectionState = studioEditorSelectionClassRefresher(
+      const nextSelectionState = refreshSelectionState(
         doc,
         getStudioSelectedElements(doc),
-        getEditorSelectionOptions({ doc })
+        {
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          getSelectionOptions: () => getEditorSelectionOptions({ doc })
+        }
       );
+      if (!nextSelectionState) {
+        clearStudioSelectionState();
+        return false;
+      }
       setStudioSelectionState(nextSelectionState);
       return true;
     }
 
-    const studioEditorSelectionClassRefresher = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.refreshStudioSelectionClasses === 'function'
-      ? (doc, selectedElements, options) => SlideNextStudioEditorSelection.refreshStudioSelectionClasses(
-          doc,
-          selectedElements,
-          options
-        )
+    const studioEditorSelectionClassAdapter = typeof SlideNextStudioEditorSelectionClassAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionClassAdapter
+      && typeof SlideNextStudioEditorSelectionClassAdapter.refreshStudioEditorSelectionClasses === 'function'
+      ? SlideNextStudioEditorSelectionClassAdapter
       : null;
 
     const studioEditorSelectionStateAdapter = typeof SlideNextStudioEditorSelectionStateAdapter !== 'undefined'
