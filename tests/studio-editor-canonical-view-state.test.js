@@ -106,6 +106,30 @@ test('canonical view state resolver exposes the live canonical deck during activ
   assert.equal(result.resolveCanonicalDeck(doc), canonicalDeck);
 });
 
+test('canonical view state resolver forwards pending canonical state to the shared deck view', () => {
+  const doc = { id: 'editor-doc' };
+  const pendingCanonicalDeck = { slides: [{ id: 'pending-slide' }] };
+  const getPendingCanonicalDeck = () => pendingCanonicalDeck;
+  let capturedOptions = null;
+
+  canonicalViewState.resolveStudioEditorCanonicalDeckViewState(doc, {
+    deckViewApi: {
+      createStudioDeckViewCanonicalStateOptions(options) {
+        return options;
+      },
+      resolveStudioCanonicalDeckViewState(_doc, options) {
+        capturedOptions = options;
+        return { resolved: true };
+      }
+    },
+    buildCanonicalDeck: () => ({ slides: [] }),
+    getPendingCanonicalDeck,
+    resolveLiveActiveSlideId: () => 'slide-live'
+  });
+
+  assert.equal(capturedOptions.getPendingCanonicalDeck, getPendingCanonicalDeck);
+});
+
 test('editor deck view shared options delegate canonical and playback callbacks', () => {
   const doc = { id: 'editor-doc' };
   const buildCanonicalDeck = () => ({ slides: [] });

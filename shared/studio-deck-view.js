@@ -58,6 +58,9 @@
       buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
         ? options.buildCanonicalDeck
         : () => null,
+      getPendingCanonicalDeck: typeof options.getPendingCanonicalDeck === 'function'
+        ? options.getPendingCanonicalDeck
+        : null,
       resolveLiveActiveSlideId: typeof options.resolveLiveActiveSlideId === 'function'
         ? options.resolveLiveActiveSlideId
         : () => ''
@@ -74,14 +77,28 @@
     const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
       ? options.resolveLiveCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveLiveActiveSlideId = canonicalStateOptions.resolveLiveActiveSlideId;
     const liveActiveSlideId = resolveLiveActiveSlideId(doc);
-    const resolvedCanonicalDeck = !doc
+    let pendingCanonicalDeck = null;
+    if (getPendingCanonicalDeck) {
+      try {
+        const candidate = getPendingCanonicalDeck(doc);
+        if (isCanonicalDeckLike(candidate)) pendingCanonicalDeck = candidate;
+      } catch (error) {
+        // Continue through live and rebuilt canonical state.
+      }
+    }
+    const resolvedCanonicalDeck = pendingCanonicalDeck || (!doc
       ? resolveCanonicalDeck(doc)
       : (liveActiveSlideId
         ? (resolveLiveCanonicalDeck ? resolveLiveCanonicalDeck(doc) : null)
-        : resolveCanonicalDeck(doc));
-    const canonicalDeckResolver = liveActiveSlideId
+        : resolveCanonicalDeck(doc)));
+    const canonicalDeckResolver = pendingCanonicalDeck
+      ? () => pendingCanonicalDeck
+      : liveActiveSlideId
       && resolveLiveCanonicalDeck
       && resolvedCanonicalDeck
       ? () => resolvedCanonicalDeck
@@ -97,8 +114,9 @@
   function createStudioDeckViewBuildOptions(doc, options = {}) {
     const canonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState(doc)
-      : resolveStudioCanonicalDeckViewState(doc, {
+        : resolveStudioCanonicalDeckViewState(doc, {
           buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
           resolveCanonicalDeck: options.resolveCanonicalDeck
         });

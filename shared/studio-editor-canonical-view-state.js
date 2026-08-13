@@ -51,6 +51,7 @@
     if (deckViewApi && typeof deckViewApi.createStudioDeckViewCanonicalStateOptions === 'function') {
       const sharedOptions = deckViewApi.createStudioDeckViewCanonicalStateOptions({
         buildCanonicalDeck,
+        getPendingCanonicalDeck: options.getPendingCanonicalDeck,
         resolveLiveActiveSlideId
       });
       if (sharedOptions
@@ -66,10 +67,18 @@
         resolveLiveActiveSlideId: sharedOptions
           && typeof sharedOptions.resolveLiveActiveSlideId === 'function'
           ? sharedOptions.resolveLiveActiveSlideId
-          : resolveLiveActiveSlideId
+          : resolveLiveActiveSlideId,
+        getPendingCanonicalDeck: sharedOptions
+          && typeof sharedOptions.getPendingCanonicalDeck === 'function'
+          ? sharedOptions.getPendingCanonicalDeck
+          : options.getPendingCanonicalDeck
       };
     }
-    return { buildCanonicalDeck, resolveLiveActiveSlideId };
+    return {
+      buildCanonicalDeck,
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
+      resolveLiveActiveSlideId
+    };
   }
 
   function resolveStudioEditorCanonicalDeckViewState(doc, options = {}) {
@@ -77,12 +86,16 @@
     const deckViewStateOptions = createStudioEditorCanonicalDeckViewStateOptions(options);
     const {
       buildCanonicalDeck,
+      getPendingCanonicalDeck,
       resolveLiveActiveSlideId
     } = deckViewStateOptions;
     if (deckViewApi && typeof deckViewApi.resolveStudioCanonicalDeckViewState === 'function') {
       return deckViewApi.resolveStudioCanonicalDeckViewState(doc, {
         buildCanonicalDeck,
         resolveLiveActiveSlideId,
+        ...(typeof getPendingCanonicalDeck === 'function'
+          ? { getPendingCanonicalDeck }
+          : {}),
         ...(typeof options.resolveLiveCanonicalDeck === 'function'
           ? { resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck }
           : {})
@@ -92,16 +105,27 @@
     const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
       ? options.resolveLiveCanonicalDeck
       : null;
+    let pendingCanonicalDeck = null;
+    if (getPendingCanonicalDeck) {
+      try {
+        const candidate = getPendingCanonicalDeck(doc);
+        if (candidate && Array.isArray(candidate.slides)) pendingCanonicalDeck = candidate;
+      } catch (error) {
+        // Continue through the live canonical fallback.
+      }
+    }
     return {
-      resolveCanonicalDeck: resolveLiveCanonicalDeck || (() => null),
+      resolveCanonicalDeck: pendingCanonicalDeck
+        ? () => pendingCanonicalDeck
+        : resolveLiveCanonicalDeck || (() => null),
       liveActiveSlideId,
-      resolvedCanonicalDeck: !doc
+      resolvedCanonicalDeck: pendingCanonicalDeck || (!doc
         ? resolveLiveCanonicalDeck
           ? resolveLiveCanonicalDeck(doc)
           : null
         : liveActiveSlideId && resolveLiveCanonicalDeck
           ? resolveLiveCanonicalDeck(doc)
-          : null
+          : null)
     };
   }
 
@@ -188,12 +212,14 @@
     const deckViewStateOptions = createStudioEditorCanonicalDeckViewStateOptions({
       deckViewApi,
       buildCanonicalDeck: buildOptions.buildCanonicalDeck,
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
       resolveLiveActiveSlideId: buildOptions.resolveLiveActiveSlideId,
       fallbackBuildCanonicalDeck: options.fallbackBuildCanonicalDeck,
       fallbackResolveLiveActiveSlideId: options.fallbackResolveLiveActiveSlideId
     });
     const {
       buildCanonicalDeck,
+      getPendingCanonicalDeck,
       resolveLiveActiveSlideId
     } = deckViewStateOptions;
     const buildFallbackHtml = typeof buildOptions.buildFallbackHtml === 'function'
@@ -211,6 +237,7 @@
       return deckViewApi.createStudioDeckViewBuildOptions(doc, {
         activeSlideId,
         buildCanonicalDeck,
+        getPendingCanonicalDeck,
         resolveLiveActiveSlideId,
         buildFallbackHtml,
         buildRenderOptions
@@ -220,6 +247,7 @@
     const canonicalDeckViewState = resolveStudioEditorCanonicalDeckViewState(doc, {
       deckViewApi,
       buildCanonicalDeck,
+      getPendingCanonicalDeck,
       resolveLiveActiveSlideId
     });
     const resolveCanonicalDeck = canonicalDeckViewState

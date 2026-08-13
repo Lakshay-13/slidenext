@@ -6201,6 +6201,9 @@
         return editorCanonicalViewStateApi.createStudioEditorCanonicalDeckViewStateOptions({
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
           buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
           fallbackBuildCanonicalDeck,
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
@@ -6218,6 +6221,9 @@
       if (deckViewApi && typeof deckViewApi.createStudioDeckViewCanonicalStateOptions === 'function') {
         const sharedOptions = deckViewApi.createStudioDeckViewCanonicalStateOptions({
           buildCanonicalDeck,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           resolveLiveActiveSlideId
         });
         if (sharedOptions
@@ -6233,10 +6239,22 @@
           resolveLiveActiveSlideId: sharedOptions
             && typeof sharedOptions.resolveLiveActiveSlideId === 'function'
             ? sharedOptions.resolveLiveActiveSlideId
-            : resolveLiveActiveSlideId
+            : resolveLiveActiveSlideId,
+          getPendingCanonicalDeck: sharedOptions
+            && typeof sharedOptions.getPendingCanonicalDeck === 'function'
+            ? sharedOptions.getPendingCanonicalDeck
+            : (typeof getStudioPendingEditorCanonicalDeck === 'function'
+              ? getStudioPendingEditorCanonicalDeck
+              : null)
         };
       }
-      return { buildCanonicalDeck, resolveLiveActiveSlideId };
+      return {
+        buildCanonicalDeck,
+        getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+          ? getStudioPendingEditorCanonicalDeck
+          : null,
+        resolveLiveActiveSlideId
+      };
     }
 
     function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {
@@ -6248,6 +6266,9 @@
         return editorCanonicalViewStateApi.resolveStudioEditorCanonicalDeckViewState(doc, {
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
           buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
           resolveLiveCanonicalDeck: typeof options.resolveLiveCanonicalDeck === 'function'
             ? options.resolveLiveCanonicalDeck
@@ -6282,6 +6303,9 @@
       if (resolveStudioCanonicalDeckViewState) {
         return resolveStudioCanonicalDeckViewState(doc, {
           buildCanonicalDeck,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           resolveLiveActiveSlideId,
           resolveLiveCanonicalDeck: typeof options.resolveLiveCanonicalDeck === 'function'
             ? options.resolveLiveCanonicalDeck
@@ -6319,6 +6343,9 @@
         return editorCanonicalViewStateApi.createStudioEditorDeckViewBuildOptions(doc, {
           buildOptions,
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
           fallbackBuildCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc),
           buildFallbackHtml: (sourceDoc, canonicalDeck) => buildPersistableDeckHtml(sourceDoc, {
@@ -6337,6 +6364,7 @@
       const deckViewStateOptions = createEditorCanonicalDeckViewStateOptions(buildOptions);
       const {
         buildCanonicalDeck,
+        getPendingCanonicalDeck,
         resolveLiveActiveSlideId
       } = deckViewStateOptions;
       const buildFallbackHtml = typeof buildOptions.buildFallbackHtml === 'function'
@@ -6362,6 +6390,7 @@
         return createStudioDeckViewBuildOptions(doc, {
           activeSlideId,
           buildCanonicalDeck,
+          getPendingCanonicalDeck,
           resolveLiveActiveSlideId,
           buildFallbackHtml,
           buildRenderOptions
@@ -6374,6 +6403,7 @@
         resolvedCanonicalDeck
       } = resolveEditorCanonicalDeckViewState(doc, {
         buildCanonicalDeck,
+        getPendingCanonicalDeck,
         resolveLiveActiveSlideId
       });
       return {

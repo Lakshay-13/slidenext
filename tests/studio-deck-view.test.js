@@ -518,6 +518,31 @@ test('resolveStudioCanonicalDeckViewState uses an explicit canonical deck during
   assert.equal(resolveCanonicalDeckCalls, 2);
 });
 
+test('resolveStudioCanonicalDeckViewState prefers pending state during live editing', () => {
+  const doc = { label: 'iframe-doc' };
+  const pendingCanonicalDeck = { slides: [{ id: 'pending-slide' }] };
+  const liveCanonicalDeck = { slides: [{ id: 'live-slide' }] };
+  const calls = [];
+
+  const result = deckView.resolveStudioCanonicalDeckViewState(doc, {
+    getPendingCanonicalDeck(sourceDoc) {
+      calls.push(['pending', sourceDoc]);
+      return pendingCanonicalDeck;
+    },
+    resolveLiveCanonicalDeck(sourceDoc) {
+      calls.push(['live', sourceDoc]);
+      return liveCanonicalDeck;
+    },
+    resolveLiveActiveSlideId() {
+      return 'slide-live';
+    }
+  });
+
+  assert.equal(result.resolvedCanonicalDeck, pendingCanonicalDeck);
+  assert.equal(result.resolveCanonicalDeck(), pendingCanonicalDeck);
+  assert.deepEqual(calls, [['pending', doc]]);
+});
+
 test('createStudioDeckViewBuildOptions reuses shared canonical view state for fallback html and render options', () => {
   const doc = { label: 'iframe-doc' };
   const canonicalDeck = {
