@@ -11,6 +11,7 @@ const historyState = require('../shared/studio-editor-history-state.js');
 const historySaveAction = require('../shared/studio-editor-history-save-action.js');
 const historyFrameAction = require('../shared/studio-editor-history-frame-action.js');
 const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
+const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -164,6 +165,39 @@ function loadCreateHistoryEntry(context) {
     getPendingTransaction: () => typeof context.getStudioPendingEditorTransaction === 'function'
       ? context.getStudioPendingEditorTransaction()
       : context.pendingEditorTransaction || null
+  });
+}
+
+function loadCaptureState(context) {
+  context.captureState = historyCaptureAction.createStudioEditorHistoryCaptureAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyStateApi: context.SlideNextStudioEditorHistoryState || historyState,
+    historyApi: context.SlideNextStudioHistory || null,
+    createHistoryEntry: context.createHistoryEntry,
+    getUndoStack: typeof context.getStudioUndoStack === 'function'
+      ? context.getStudioUndoStack
+      : () => context.undoStack || [],
+    getRedoStack: typeof context.getStudioRedoStack === 'function'
+      ? context.getStudioRedoStack
+      : () => context.redoStack || [],
+    getHistoryStateOptions: context.getEditorHistoryStackOptions || null,
+    setUndoStack: typeof context.setStudioUndoStack === 'function'
+      ? context.setStudioUndoStack
+      : (nextUndoStack) => {
+          context.undoStack = nextUndoStack;
+        },
+    setRedoStack: typeof context.setStudioRedoStack === 'function'
+      ? context.setStudioRedoStack
+      : (nextRedoStack) => {
+          context.redoStack = nextRedoStack;
+        },
+    updateHistoryButtons: context.updateHistoryButtons,
+    clearPendingState: typeof context.clearStudioPendingEditorTransaction === 'function'
+      ? context.clearStudioPendingEditorTransaction
+      : () => {
+          context.pendingEditorTransaction = null;
+          context.pendingEditorCanonicalDeck = null;
+        }
   });
 }
 
@@ -1240,11 +1274,6 @@ test('buildHistoryFrameHtml strips editor style tags when the shared deck source
 
 test('captureState reads the live frame through the shared iframe accessor before updating history state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureStateSource = extractFunctionSource(
-    fileContent,
-    'function captureState() {',
-    '\n\n    function updateHistoryButtons() {'
-  );
 
   const historyEntry = { html: '<html></html>' };
   const capturedCalls = [];
@@ -1269,7 +1298,7 @@ test('captureState reads the live frame through the shared iframe accessor befor
   };
 
   vm.createContext(context);
-  vm.runInContext(captureStateSource, context);
+  loadCaptureState(context);
 
   context.captureState();
 
@@ -1413,13 +1442,6 @@ test('saveHistoryState passes a null history API when the shared runtime is unav
 });
 
 test('captureState fails closed when the shared history state capturer is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureStateSource = extractFunctionSource(
-    fileContent,
-    'function captureState() {',
-    '\n\n    function updateHistoryButtons() {'
-  );
-
   let createHistoryEntryCalls = 0;
   const context = {
     createHistoryEntry() {
@@ -1440,7 +1462,7 @@ test('captureState fails closed when the shared history state capturer is unavai
   };
 
   vm.createContext(context);
-  vm.runInContext(captureStateSource, context);
+  loadCaptureState(context);
 
   const result = context.captureState();
 
@@ -1457,11 +1479,6 @@ test('captureState fails closed when the shared history state capturer is unavai
 
 test('captureState can store a persisted baseline history entry without a live frame document', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureStateSource = extractFunctionSource(
-    fileContent,
-    'function captureState() {',
-    '\n\n    function updateHistoryButtons() {'
-  );
 
   const historyEntry = {
     html: '<html>persisted-baseline</html>',
@@ -1491,7 +1508,7 @@ test('captureState can store a persisted baseline history entry without a live f
   };
 
   vm.createContext(context);
-  vm.runInContext(captureStateSource, context);
+  loadCaptureState(context);
 
   context.captureState();
 
@@ -1509,13 +1526,6 @@ test('captureState can store a persisted baseline history entry without a live f
 });
 
 test('captureState reuses the shared history state capturer when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureStateSource = extractFunctionSource(
-    fileContent,
-    'function captureState() {',
-    '\n\n    function updateHistoryButtons() {'
-  );
-
   const captureResult = {
     didCapture: true,
     undoStack: ['undo-entry'],
@@ -1546,7 +1556,7 @@ test('captureState reuses the shared history state capturer when available', () 
   };
 
   vm.createContext(context);
-  vm.runInContext(captureStateSource, context);
+  loadCaptureState(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.captureState())),

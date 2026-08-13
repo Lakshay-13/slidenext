@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
+const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -71,12 +72,6 @@ test('createHistoryEntry delegates editor dependencies through the shared histor
 });
 
 test('captureState delegates editor stacks and pending cleanup through the shared history adapter', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function captureState() {',
-    '\n\n    function updateHistoryButtons() {'
-  );
   let capturedOptions = null;
   let adapterCalls = 0;
   const context = {
@@ -99,8 +94,25 @@ test('captureState delegates editor stacks and pending cleanup through the share
     updateHistoryButtons() {}
   };
 
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  context.captureState = historyCaptureAction.createStudioEditorHistoryCaptureAction({
+    historyStateApi: context.SlideNextStudioEditorHistoryState,
+    historyApi: context.SlideNextStudioHistory,
+    createHistoryEntry: context.createHistoryEntry,
+    getUndoStack: () => context.undoStack,
+    getRedoStack: () => context.redoStack,
+    getHistoryStateOptions: context.getEditorHistoryStackOptions,
+    setUndoStack: (nextUndoStack) => {
+      context.undoStack = nextUndoStack;
+    },
+    setRedoStack: (nextRedoStack) => {
+      context.redoStack = nextRedoStack;
+    },
+    updateHistoryButtons: context.updateHistoryButtons,
+    clearPendingState: () => {
+      context.pendingEditorTransaction = null;
+      context.pendingEditorCanonicalDeck = null;
+    }
+  });
 
   assert.deepEqual(context.captureState(), {
     didCapture: true,
