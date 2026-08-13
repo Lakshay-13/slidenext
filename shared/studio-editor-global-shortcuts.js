@@ -10,6 +10,8 @@
     root.SlideNextStudioEditorGlobalShortcuts = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root, defaultEventsApi) {
+  const boundDocuments = typeof WeakSet === 'function' ? new WeakSet() : null;
+
   function bindStudioGlobalKeydownHandler(options = {}) {
     const eventsApi = options.eventsApi || defaultEventsApi;
     const documentRef = options.documentRef
@@ -29,7 +31,11 @@
       return false;
     }
 
+    if (boundDocuments && boundDocuments.has(documentRef)) {
+      return true;
+    }
     documentRef.addEventListener('keydown', keydownHandler);
+    if (boundDocuments) boundDocuments.add(documentRef);
     return true;
   }
 

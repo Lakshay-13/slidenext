@@ -50,3 +50,22 @@ test('global shortcut binding registers the shared keydown handler with its call
   assert.equal(receivedOptions.eventsApi, undefined);
   assert.equal(receivedOptions.editorUndo, callbacks.editorUndo);
 });
+
+test('global shortcut binding does not register duplicate handlers for one document', () => {
+  const listeners = [];
+  const documentRef = {
+    addEventListener(type, handler) {
+      listeners.push({ type, handler });
+    }
+  };
+  const eventsApi = {
+    createStudioGlobalKeydownHandler() {
+      return () => {};
+    }
+  };
+
+  assert.equal(globalShortcuts.bindStudioGlobalKeydownHandler({ documentRef, eventsApi }), true);
+  assert.equal(globalShortcuts.bindStudioGlobalKeydownHandler({ documentRef, eventsApi }), true);
+  assert.equal(listeners.length, 1);
+  assert.equal(listeners[0].type, 'keydown');
+});
