@@ -60,7 +60,11 @@ test('index wires layer order through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /layerOrderApi\.createStudioLayerOrderActionStateBuilder\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+    /const studioEditorLayerOrderStateController =[\s\S]+?createStudioEditorLayerOrderStateController\(\{[\s\S]+?getDocument: \(\) => getIframeDoc\(\),[\s\S]+?getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\),/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorLayerOrderStateController\.buildActionState\(elements, options\)/
   );
   assert.doesNotMatch(
     fileContent,

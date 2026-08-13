@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const layerOrder = require('../shared/studio-editor-layer-order.js');
+const layerOrderState = require('../shared/studio-editor-layer-order-state.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerView = require('../shared/studio-editor-layer-view.js');
 const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
@@ -28,6 +29,21 @@ function loadBuildLayerOrderSelectionActionState(fileContent, context) {
     'function buildLayerOrderSelectionActionState(elements, options = {}) {',
     '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
   );
+  context.SlideNextStudioEditorLayerOrderState = layerOrderState;
+  context.studioEditorLayerOrderStateController = layerOrderState.createStudioEditorLayerOrderStateController({
+    layerOrderApi: context.SlideNextStudioEditorLayerOrder,
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : context.doc || null,
+    getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+      ? context.getStudioSelectedElements(doc)
+      : Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: context.getActiveSlide,
+    getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
+    getLockedState: () => typeof context.isElementLocked === 'function'
+      ? context.isElementLocked
+      : () => false
+  });
   vm.runInContext(helperSource, context);
 }
 
