@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const historyRestore = require('../shared/studio-editor-history-restore.js');
+const historyApi = require('../shared/studio-history.js');
+const transactionApi = require('../shared/studio-editor-transaction.js');
 
 test('createStudioEditorHistoryRestoreStateAdapter delegates restore handler construction', () => {
   let createCalls = 0;
@@ -111,4 +113,39 @@ test('history restore fails closed when the canonical frame cannot be rendered',
 
   assert.equal(restoreHandler({ canonicalDeck }), false);
   assert.deepEqual(calls, []);
+});
+
+test('history restore applies active-slide transactions without rebuilding the frame', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const calls = [];
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi,
+    transactionApi,
+    getIframeDoc: () => iframeDoc,
+    setActiveSlideById(slideId, doc, options) {
+      calls.push(['setActiveSlideById', slideId, doc, options]);
+      return true;
+    },
+    buildCanonicalDeck() {
+      throw new Error('view-only restore should not need frame rebuild');
+    }
+  });
+
+  const result = restoreHandler({
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck: null
+  }, {
+    direction: 'undo',
+    transaction: transactionApi.createStudioActiveSlideTransaction('slide-1', 'slide-2')
+  });
+
+  assert.equal(result.didRestoreTransaction, true);
+  assert.deepEqual(calls, [[
+    'setActiveSlideById',
+    'slide-1',
+    iframeDoc,
+    { captureHistory: false, preserveSelection: true }
+  ]]);
 });

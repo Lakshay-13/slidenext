@@ -58,6 +58,46 @@ test('createStudioPositionTransaction derives reversible left and top patches', 
   });
 });
 
+test('createStudioActiveSlideTransaction stores a reversible view-only operation', () => {
+  assert.deepEqual(transaction.createStudioActiveSlideTransaction(' slide-1 ', 'slide-2'), {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'active-slide',
+      before: 'slide-1',
+      after: 'slide-2'
+    }]
+  });
+  assert.equal(transaction.createStudioActiveSlideTransaction('slide-1', 'slide-1'), null);
+});
+
+test('applyStudioEditorTransaction replays active-slide operations without resolving an element', () => {
+  const activeSlideIds = [];
+  const activeSlideTransaction = transaction.createStudioActiveSlideTransaction('slide-1', 'slide-2');
+
+  assert.deepEqual(transaction.applyStudioEditorTransaction(activeSlideTransaction, 'redo', {
+    applyActiveSlideState(slideId) {
+      activeSlideIds.push(slideId);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'redo'
+  });
+  assert.deepEqual(transaction.applyStudioEditorTransaction(activeSlideTransaction, 'undo', {
+    applyActiveSlideState(slideId) {
+      activeSlideIds.push(slideId);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'undo'
+  });
+  assert.deepEqual(activeSlideIds, ['slide-2', 'slide-1']);
+});
+
 test('applyStudioPositionLayoutWithTransaction delegates layout application and preserves transaction context', () => {
   const first = { style: { left: '10px', top: '20px' } };
   const calls = [];

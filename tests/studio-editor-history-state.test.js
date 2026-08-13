@@ -137,6 +137,40 @@ test('createStudioEditorHistoryEntryBuilder rebuilds canonical state for transac
   assert.equal(fallbackBuildCalls, 0);
 });
 
+test('createStudioEditorHistoryEntryBuilder does not rebuild content for view-only transactions', () => {
+  const pendingTransaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'active-slide',
+      before: 'slide-1',
+      after: 'slide-2'
+    }]
+  };
+  let buildCalls = 0;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        return {
+          canonicalDeck: options.buildCanonicalDeck('navigation-doc'),
+          transaction: options.transaction
+        };
+      }
+    },
+    getPendingTransaction: () => pendingTransaction,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return { kind: 'slidenext.deck', slides: [{ id: 'rebuilt' }] };
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), {
+    canonicalDeck: null,
+    transaction: pendingTransaction
+  });
+  assert.equal(buildCalls, 0);
+});
+
 test('createStudioEditorHistoryEntryBuilder forwards a live baseline when pending canonical state is absent', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
   let buildCalls = 0;

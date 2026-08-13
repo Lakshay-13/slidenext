@@ -165,6 +165,10 @@
     const getPendingTransaction = typeof options.getPendingTransaction === 'function'
       ? options.getPendingTransaction
       : () => null;
+    const isViewOnlyTransaction = (transaction) => !!transaction
+      && Array.isArray(transaction.operations)
+      && transaction.operations.length > 0
+      && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
 
     return function createHistoryEntry(doc) {
       if (!historyApi || typeof historyApi.buildStudioHistoryEntry !== 'function') {
@@ -174,6 +178,8 @@
       const pendingTransaction = getPendingTransaction();
       const historyCanonicalDeckBuilder = isValidCanonicalDeck(pendingCanonicalDeck)
         ? () => pendingCanonicalDeck
+        : isViewOnlyTransaction(pendingTransaction)
+          ? () => null
           : (sourceDoc) => {
             if (pendingTransaction && buildMutationCanonicalDeck) {
               try {

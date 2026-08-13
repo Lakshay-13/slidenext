@@ -97,6 +97,40 @@ test('createStudioHistoryEntry preserves optional transaction metadata', () => {
   assert.deepEqual(studioHistory.normalizeStudioHistoryEntry(entry), entry);
 });
 
+test('createStudioHistoryEntry keeps active-slide transactions free of content snapshots', () => {
+  let buildHistoryHtmlCalls = 0;
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'active-slide',
+      before: 'slide-1',
+      after: 'slide-2'
+    }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    transaction,
+    getActiveSlideId() {
+      return 'slide-2';
+    },
+    buildHistoryHtml() {
+      buildHistoryHtmlCalls += 1;
+      return '<html>should not be serialized</html>';
+    }
+  });
+
+  assert.equal(studioHistory.isStudioHistoryViewTransaction(transaction), true);
+  assert.equal(buildHistoryHtmlCalls, 0);
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-2',
+    selectedElementIds: [],
+    canonicalDeck: null,
+    transaction
+  });
+});
+
 test('createStudioHistoryEntry makes canonical transaction entries model-first without building HTML', () => {
   const canonicalDeck = {
     kind: 'slidenext.deck',

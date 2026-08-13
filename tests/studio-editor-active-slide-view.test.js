@@ -83,6 +83,48 @@ test('syncStudioActiveSlideChrome coordinates live slide chrome and history', ()
   assert.deepEqual(calls.at(-1), ['history', false, null, canonicalDeck]);
 });
 
+test('syncStudioActiveSlideChrome records slide navigation as a view transaction', () => {
+  let currentSlideIndex = 0;
+  const calls = [];
+  const doc = { label: 'iframe-doc' };
+
+  const didSync = activeSlideView.syncStudioActiveSlideChrome(doc, {
+    captureHistory: true,
+    getCurrentSlideIndex: () => currentSlideIndex,
+    syncStudioActiveSlideView(sourceDoc, options) {
+      assert.equal(sourceDoc, doc);
+      options.setCurrentSlideIndex(1);
+      return { didSync: true };
+    },
+    getSlides() {
+      return [{ id: 'slide-1' }, { id: 'slide-2' }];
+    },
+    getSlideId(slide) {
+      return slide.id;
+    },
+    createActiveSlideTransaction(beforeSlideId, afterSlideId) {
+      calls.push(['transaction', beforeSlideId, afterSlideId]);
+      return { kind: 'active-slide-transaction' };
+    },
+    getActiveSlide() {
+      return { id: 'slide-2' };
+    },
+    updateCurrentPresentationSessionState(nextState) {
+      currentSlideIndex = nextState.slideIndex;
+    },
+    saveHistoryState(...args) {
+      calls.push(['history', ...args]);
+      return { didCapture: true };
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.deepEqual(calls, [
+    ['transaction', 'slide-1', 'slide-2'],
+    ['history', false, { kind: 'active-slide-transaction' }]
+  ]);
+});
+
 test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exists', () => {
   let currentSlideIndex = 0;
   const calls = [];

@@ -2969,6 +2969,9 @@
           deckSnapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
             ? SlideNextStudioDeckSnapshot
             : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           documentRef: document,
           getDocument: () => getIframeDoc(),
           getWindow: () => getIframeWindow(),

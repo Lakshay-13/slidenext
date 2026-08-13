@@ -155,9 +155,16 @@
         ? historyApi.restoreStudioHistoryTransaction
         : null;
       const transactionRestoreResult = restoreStudioHistoryTransaction
-        ? restoreStudioHistoryTransaction(historyEntry, historyStep, {
+          ? restoreStudioHistoryTransaction(historyEntry, historyStep, {
             transactionApi,
             getElementById: (editorId) => resolveElementById(editorId, iframeDoc),
+            applyActiveSlideState: (slideId) => {
+              if (!slideId) return false;
+              return setActiveSlideById(slideId, iframeDoc, {
+                captureHistory: false,
+                preserveSelection: true
+              }) !== false;
+            },
             applyVisibilityState: elementStateApi
               && typeof elementStateApi.applyStudioElementVisibilityState === 'function'
               ? elementStateApi.applyStudioElementVisibilityState

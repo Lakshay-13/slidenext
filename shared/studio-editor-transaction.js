@@ -342,6 +342,21 @@
     };
   }
 
+  function createStudioActiveSlideTransaction(beforeSlideId, afterSlideId) {
+    const before = typeof beforeSlideId === 'string' ? beforeSlideId.trim() : '';
+    const after = typeof afterSlideId === 'string' ? afterSlideId.trim() : '';
+    if (!before || !after || before === after) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations: [{
+        type: 'active-slide',
+        before,
+        after
+      }]
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -383,6 +398,8 @@
               before: operation.before,
               after: operation.after
             }])
+        : operation.type === 'active-slide'
+          ? createStudioActiveSlideTransaction(operation.before, operation.after)
           : null;
       if (nextTransaction) {
         nextOperations.push(...nextTransaction.operations);
@@ -411,6 +428,8 @@
     [...first.operations, ...second.operations].forEach((operation) => {
       const operationKey = operation.type === 'property' || operation.type === 'dataset'
         ? `${operation.type}:${operation.elementId}:${operation.property}`
+        : operation.type === 'active-slide'
+          ? operation.type
         : `${operation.type}:${operation.elementId}`;
       const existingOperation = operationsByKey.get(operationKey);
       if (!existingOperation) {
@@ -424,6 +443,8 @@
                 after: { ...operation.after, dataset: { ...operation.after.dataset } }
               }
           : operation.type === 'markup'
+            ? { ...operation }
+          : operation.type === 'active-slide'
             ? { ...operation }
           : {
               type: 'style',
@@ -442,6 +463,8 @@
           dataset: { ...operation.after.dataset }
         };
       } else if (operation.type === 'markup') {
+        existingOperation.after = operation.after;
+      } else if (operation.type === 'active-slide') {
         existingOperation.after = operation.after;
       } else {
         existingOperation.before = {
@@ -472,6 +495,9 @@
     const getElementById = typeof options.getElementById === 'function'
       ? options.getElementById
       : () => null;
+    const applyActiveSlideState = typeof options.applyActiveSlideState === 'function'
+      ? options.applyActiveSlideState
+      : null;
     if (!normalizedTransaction || !nextDirection) {
       return {
         didApply: false,
@@ -482,7 +508,7 @@
 
     const resolvedOperations = normalizedTransaction.operations.map((operation) => ({
       operation,
-      element: getElementById(operation.elementId)
+      element: operation.type === 'active-slide' ? null : getElementById(operation.elementId)
     }));
     const applyVisibilityState = typeof options.applyVisibilityState === 'function'
       ? options.applyVisibilityState
@@ -491,7 +517,8 @@
       ? options.applyMarkupState
       : null;
     if (resolvedOperations.some(({ operation, element }) => {
-      return !element
+      return (operation.type === 'active-slide' && !applyActiveSlideState)
+        || (operation.type !== 'active-slide' && !element)
         || (operation.type === 'style' && !element.style)
         || (operation.type === 'dataset' && !element.dataset)
         || (operation.type === 'visibility' && !applyVisibilityState)
@@ -505,6 +532,10 @@
     }
 
     const applyResolvedOperation = ({ operation, element }, direction) => {
+      if (operation.type === 'active-slide') {
+        const slideId = direction === 'undo' ? operation.before : operation.after;
+        return applyActiveSlideState(slideId) !== false;
+      }
       if (operation.type === 'property') {
         element[operation.property] = direction === 'undo' ? operation.before : operation.after;
         return true;
@@ -577,6 +608,7 @@
     createStudioVisibilityTransaction,
     createStudioMarkupTransaction,
     createStudioMarkupTransactionCapture,
+    createStudioActiveSlideTransaction,
     normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,

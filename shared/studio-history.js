@@ -248,11 +248,13 @@
       ? candidateCanonicalDeck
       : null;
     const transaction = normalizeStudioHistoryTransaction(options.transaction);
-    const html = canonicalDeck && (transaction || options.preferCanonicalDeck === true)
+    const html = isStudioHistoryViewTransaction(transaction)
       ? ''
-      : normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
+      : canonicalDeck && (transaction || options.preferCanonicalDeck === true)
+        ? ''
+        : normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
 
-    if (!doc && !html && !canonicalDeck) {
+    if (!doc && !html && !canonicalDeck && !isStudioHistoryViewTransaction(transaction)) {
       return null;
     }
 
@@ -270,6 +272,13 @@
 
   function normalizeStudioHistoryTransaction(transaction) {
     return transaction && typeof transaction === 'object' ? transaction : null;
+  }
+
+  function isStudioHistoryViewTransaction(transaction) {
+    return !!transaction
+      && Array.isArray(transaction.operations)
+      && transaction.operations.length > 0
+      && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
   }
 
   function normalizeStudioHistoryEntry(entry) {
@@ -886,6 +895,9 @@
     const applyVisibilityState = typeof options.applyVisibilityState === 'function'
       ? options.applyVisibilityState
       : null;
+    const applyActiveSlideState = typeof options.applyActiveSlideState === 'function'
+      ? options.applyActiveSlideState
+      : null;
     const applyMarkupState = typeof options.applyMarkupState === 'function'
       ? options.applyMarkupState
       : () => false;
@@ -897,6 +909,7 @@
         {
           getElementById,
           applyVisibilityState,
+          applyActiveSlideState,
           applyMarkupState
         }
       );
@@ -929,6 +942,7 @@
             {
               getElementById,
               applyVisibilityState,
+              applyActiveSlideState,
               applyMarkupState
             }
           );
@@ -1094,6 +1108,7 @@
     buildStudioHistoryEntry,
     createStudioHistoryEntry,
     normalizeStudioHistoryTransaction,
+    isStudioHistoryViewTransaction,
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,
     captureStudioHistoryState,

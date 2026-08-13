@@ -29,6 +29,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
@@ -193,6 +196,10 @@
         },
         buildEditorDeckSnapshot,
         buildEditorCanonicalDeck,
+        createActiveSlideTransaction: transactionApi
+          && typeof transactionApi.createStudioActiveSlideTransaction === 'function'
+          ? transactionApi.createStudioActiveSlideTransaction
+          : null,
         resolveStudioActiveSlideIndex,
         saveHistoryState,
         syncStudioActiveSlideView,

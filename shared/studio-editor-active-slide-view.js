@@ -79,8 +79,36 @@
     const syncSlideSectionControl = typeof options.syncSlideSectionControl === 'function'
       ? options.syncSlideSectionControl
       : () => {};
+    const createActiveSlideTransaction = typeof options.createActiveSlideTransaction === 'function'
+      ? options.createActiveSlideTransaction
+      : null;
 
     const captureSlideNavigationHistory = (sourceDoc) => {
+      if (createActiveSlideTransaction) {
+        const getSlides = typeof options.getSlides === 'function' ? options.getSlides : () => [];
+        const getSlideId = typeof options.getSlideId === 'function' ? options.getSlideId : () => '';
+        const slides = getSlides(sourceDoc);
+        const resolveSlideId = (index) => {
+          const slide = Array.isArray(slides) ? slides[index] : null;
+          if (!slide) return '';
+          return getSlideId(slide)
+            || slide.id
+            || (slide.dataset && slide.dataset.slideId)
+            || '';
+        };
+        const transaction = createActiveSlideTransaction(
+          resolveSlideId(previousIndex),
+          resolveSlideId(getCurrentSlideIndex())
+        );
+        if (transaction) {
+          const transactionHistoryResult = captureStudioHistoryState(
+            saveHistoryState,
+            false,
+            transaction
+          );
+          return !isStudioHistoryCaptureFailure(transactionHistoryResult);
+        }
+      }
       let historyResult;
       if (buildEditorCanonicalDeck) {
         let canonicalDeck = null;
