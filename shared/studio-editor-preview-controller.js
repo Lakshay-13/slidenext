@@ -61,6 +61,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : (value) => !!value && typeof value === 'object' && Array.isArray(value.slides);
@@ -145,12 +148,22 @@
       if (!previewApi || typeof previewApi.launchStudioPresentation !== 'function') return false;
 
       let canonicalDeck = null;
-      if (buildCanonicalDeck) {
+      if (getPendingCanonicalDeck) {
         try {
-          const candidate = buildCanonicalDeck();
-          canonicalDeck = isCanonicalDeck(candidate) ? candidate : null;
+          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          canonicalDeck = isCanonicalDeck(pendingCanonicalDeck) ? pendingCanonicalDeck : null;
         } catch (error) {
           canonicalDeck = null;
+        }
+      }
+      if (buildCanonicalDeck) {
+        if (!canonicalDeck) {
+          try {
+            const candidate = buildCanonicalDeck();
+            canonicalDeck = isCanonicalDeck(candidate) ? candidate : null;
+          } catch (error) {
+            canonicalDeck = null;
+          }
         }
       }
 

@@ -77,6 +77,7 @@
           resolvePresentationUrl: options.resolvePresentationUrl,
           resolveActiveSlideIndex: options.resolveActiveSlideIndex,
           buildPreviewHtml: options.previewBuildHtml,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           buildCanonicalDeck: options.previewBuildCanonicalDeck,
           isCanonicalDeck: options.previewIsCanonicalDeck
         })

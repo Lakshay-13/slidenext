@@ -216,6 +216,33 @@ test('launches preview with one validated canonical deck snapshot', () => {
   assert.equal(calls[0].previewHtml, '<html>canonical-preview</html>');
 });
 
+test('launches preview from pending canonical state without rebuilding the document', () => {
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending-slide' }] };
+  let buildCalls = 0;
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation(options) {
+        assert.equal(options.previewHtml, '<html>pending-preview</html>');
+        return true;
+      }
+    },
+    resolveReadyState: () => ({ canLaunchPreview: true }),
+    resolvePresentationUrl: () => '/presentations/demo/index.html',
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('document rebuild should not be needed');
+    },
+    buildPreviewHtml(nextCanonicalDeck) {
+      assert.equal(nextCanonicalDeck, pendingCanonicalDeck);
+      return '<html>pending-preview</html>';
+    }
+  });
+
+  assert.equal(controller.launch(), true);
+  assert.equal(buildCalls, 0);
+});
+
 test('keeps preview fallback behavior when canonical snapshot resolution fails', () => {
   let receivedCanonicalDeck = 'unset';
   const controller = previewController.createStudioEditorPreviewController({
