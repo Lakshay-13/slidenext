@@ -8,6 +8,7 @@ const deckContext = require('../shared/studio-deck-context.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
+const launchController = require('../shared/studio-editor-launch-controller.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
 
@@ -172,6 +173,42 @@ function loadCreateCurrentStudioFrameLoadHandler(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadStudioEditorLaunchController(context) {
+  const sessionApi = context.SlideNextStudioEditorSession || null;
+  context.studioEditorLaunchController = launchController.createStudioEditorLaunchController({
+    documentRef: context.document,
+    localStorageRef: context.localStorage,
+    schedule: (callback, delayMs) => context.setTimeout(callback, delayMs),
+    createFrameLoadHandler: (...args) => context.createCurrentStudioFrameLoadHandler(...args),
+    shouldHandleFrameLoad: (presentationUrl, options) => sessionApi
+      && typeof sessionApi.shouldHandleStudioFrameLoad === 'function'
+      ? sessionApi.shouldHandleStudioFrameLoad(presentationUrl, options)
+      : false,
+    initStudioFrame: (...args) => typeof context.initStudioFrame === 'function'
+      ? context.initStudioFrame(...args)
+      : false,
+    applyZoom: (...args) => typeof context.applyZoom === 'function'
+      ? context.applyZoom(...args)
+      : false,
+    loadVersions: (...args) => context.loadVersions(...args),
+    loadPresentationMetadata: (...args) => context.loadCurrentPresentationMetadata(...args),
+    resolveLaunchSource: (...args) => typeof context.resolveCurrentStudioEditorLaunchSource === 'function'
+      ? context.resolveCurrentStudioEditorLaunchSource(...args)
+      : {
+          kind: 'url',
+          url: args[1] || '',
+          srcdoc: '',
+          canonicalDeck: null
+        },
+    shellController: context.studioEditorShellController || null,
+    setFrameSource: typeof context.setCurrentStudioEditorFrameSource === 'function'
+      ? (...args) => context.setCurrentStudioEditorFrameSource(...args)
+      : null,
+    getCurrentPresentationUrl: () => context.currentPresentationUrl || '',
+    getCurrentSessionToken: () => context.studioEditorSessionToken
+  });
+}
+
 function loadBuildCurrentPresentationMetadataSeed(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
@@ -316,6 +353,7 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
   context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
+  loadStudioEditorLaunchController(context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -486,6 +524,7 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
   context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
+  loadStudioEditorLaunchController(context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
@@ -882,6 +921,7 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   vm.createContext(context);
   context.SlideNextStudioEditorStatusView = editorStatusView;
   loadCreateCurrentStudioFrameLoadHandler(fileContent, context);
+  loadStudioEditorLaunchController(context);
   vm.runInContext(setStudioAutoSaveStatusSource, context);
   vm.runInContext(launchStudioEditorSource, context);
 
