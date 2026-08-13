@@ -582,13 +582,17 @@ test('wallpaper wiring forwards canonical baseline rebuild options', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const wallpaperSource = extractFunctionSource(
     fileContent,
-    'function applyEditorWallpaperSlidesMutationWithTransaction',
-    'function applyEditorWallpaperMutationWithTransaction'
+    'const studioEditorWallpaperTransactionActions =',
+    'const studioEditorWallpaperTransactionGlobalApi ='
   );
 
   assert.match(
     wallpaperSource,
-    /buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'[\s\S]*?\(sourceDoc, buildOptions\) => buildEditorCanonicalDeck\(sourceDoc \|\| sourceDocument, buildOptions\)/
+    /buildCanonicalDeck: \(sourceDoc, buildOptions\) => typeof buildEditorCanonicalDeck === 'function'[\s\S]*?buildEditorCanonicalDeck\(sourceDoc, buildOptions\)/
+  );
+  assert.match(
+    wallpaperSource,
+    /getCanonicalDeckBaseline: \(sourceDoc\) => typeof resolveEditorLiveCanonicalDeck === 'function'[\s\S]*?resolveEditorLiveCanonicalDeck\(sourceDoc, getStudioEditorSessionToken\(\)\)/
   );
 });
 

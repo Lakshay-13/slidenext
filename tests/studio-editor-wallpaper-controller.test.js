@@ -191,8 +191,9 @@ test('wallpaper controller rolls back rejected all-slide persistence before aler
 test('index routes normal preset wallpaper actions through the shared controller seam', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-wallpaper-controller\.js"/);
+  assert.match(source, /src="\/shared\/studio-editor-wallpaper-transaction-actions\.js"/);
   assert.match(source, /wallpaperController\.applyStudioPresetWallpaper/);
   assert.match(source, /wallpaperController\.applyStudioWallpaperToAllSlides/);
-  assert.match(source, /function rollbackEditorWallpaperMutation\(/);
+  assert.match(source, /Object\.assign\(globalThis, studioEditorWallpaperTransactionGlobalApi\);/);
   assert.match(source, /rollbackMutation: rollbackEditorWallpaperMutation/);
 });

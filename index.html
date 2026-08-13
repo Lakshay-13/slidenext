@@ -1483,6 +1483,7 @@
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-deck-mutation.js"></script>
   <script src="/shared/studio-editor-wallpaper-finalization.js"></script>
+  <script src="/shared/studio-editor-wallpaper-transaction-actions.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
@@ -1967,6 +1968,51 @@
         })
       : {};
     Object.assign(globalThis, studioEditorWallpaperFinalizationGlobalApi);
+    const studioEditorWallpaperTransactionActions = typeof SlideNextStudioEditorWallpaperTransactionActions !== 'undefined'
+      && SlideNextStudioEditorWallpaperTransactionActions
+      && typeof SlideNextStudioEditorWallpaperTransactionActions.createStudioEditorWallpaperTransactionActions === 'function'
+      ? SlideNextStudioEditorWallpaperTransactionActions.createStudioEditorWallpaperTransactionActions({
+          wallpaperMutationApi: typeof SlideNextStudioEditorWallpaperMutation !== 'undefined'
+            ? SlideNextStudioEditorWallpaperMutation
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
+          wallpaperViewApi: typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalWallpaperApi: typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
+            ? SlideNextStudioEditorCanonicalWallpaper
+            : null,
+          getSlideId: (slide) => typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(slide)
+            : '',
+          buildCanonicalDeck: (sourceDoc, buildOptions) => typeof buildEditorCanonicalDeck === 'function'
+            ? buildEditorCanonicalDeck(sourceDoc, buildOptions)
+            : null,
+          getCanonicalDeckBaseline: (sourceDoc) => typeof resolveEditorLiveCanonicalDeck === 'function'
+            ? resolveEditorLiveCanonicalDeck(sourceDoc, getStudioEditorSessionToken())
+            : null,
+          getIframeDocument: getIframeDoc,
+          getSlideById: (slideId, sourceDoc) => typeof getSlideById === 'function'
+            ? getSlideById(slideId, sourceDoc)
+            : null,
+          getElementByEditorId: (elementId, sourceDoc) => typeof getElementByEditorId === 'function'
+            ? getElementByEditorId(elementId, sourceDoc)
+            : null
+        })
+      : null;
+    const studioEditorWallpaperTransactionGlobalApi = typeof SlideNextStudioEditorWallpaperTransactionActions !== 'undefined'
+      && SlideNextStudioEditorWallpaperTransactionActions
+      && typeof SlideNextStudioEditorWallpaperTransactionActions.createStudioEditorWallpaperTransactionGlobalApi === 'function'
+      ? SlideNextStudioEditorWallpaperTransactionActions.createStudioEditorWallpaperTransactionGlobalApi({
+          actions: studioEditorWallpaperTransactionActions
+        })
+      : {};
+    Object.assign(globalThis, studioEditorWallpaperTransactionGlobalApi);
     const studioEditorWallpaperGradientActions = typeof SlideNextStudioEditorWallpaperGradientActions !== 'undefined'
       && SlideNextStudioEditorWallpaperGradientActions
       && typeof SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientActions === 'function'
@@ -10250,96 +10296,6 @@
       clearStudioPendingCustomWallpaperVersion();
       triggerAutoVersion('Auto: Changed Background');
       return true;
-    }
-
-    function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorWallpaperMutation !== 'undefined'
-        ? SlideNextStudioEditorWallpaperMutation
-        : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioWallpaperSlidesMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioWallpaperSlidesMutationWithTransaction
-        : null;
-      if (!applyMutation) {
-        return {
-          didChange: false,
-          transaction: null
-        };
-      }
-
-      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
-        ? SlideNextStudioEditorTransaction
-        : null;
-      const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
-        ? SlideNextStudioEditorWallpaperView
-        : null;
-      const getSlideId = typeof options.getSlideId === 'function'
-        ? options.getSlideId
-        : (slide) => {
-            if (typeof options.slideId === 'string') return options.slideId;
-            if (typeof getEditorSlideId === 'function') return getEditorSlideId(slide);
-            return '';
-          };
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const canonicalWallpaperApi = typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
-        ? SlideNextStudioEditorCanonicalWallpaper
-        : null;
-      const sourceDocument = options.sourceDocument || null;
-      return applyMutation(slides, background, {
-        createStyleTransaction: transactionApi
-          && typeof transactionApi.createStudioStyleTransaction === 'function'
-          ? transactionApi.createStudioStyleTransaction
-          : null,
-        applyStudioWallpaperToSlides: wallpaperView
-          && typeof wallpaperView.applyStudioWallpaperToSlides === 'function'
-          ? wallpaperView.applyStudioWallpaperToSlides
-          : null,
-        getSlideId,
-        canonicalDeckApi,
-        canonicalWallpaperApi,
-        sourceDocument,
-        buildCanonicalDeckBaseline: typeof buildEditorCanonicalDeck === 'function'
-          ? (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc || sourceDocument, buildOptions)
-          : null,
-        getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-          sourceDoc || sourceDocument,
-          getStudioEditorSessionToken()
-        )
-      });
-    }
-
-    function applyEditorWallpaperMutationWithTransaction(activeSlide, background, options = {}) {
-      return applyEditorWallpaperSlidesMutationWithTransaction([activeSlide], background, options);
-    }
-
-    function rollbackEditorWallpaperMutation(transaction, sourceDoc = getIframeDoc()) {
-      const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
-        ? SlideNextStudioEditorTransaction
-        : null;
-      if (!transaction
-        || !transactionApi
-        || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
-        return false;
-      }
-      try {
-        const rollbackResult = transactionApi.applyStudioEditorTransaction(transaction, 'undo', {
-          getElementById: (elementId) => {
-            if (typeof elementId === 'string'
-              && elementId.startsWith('slide:')
-              && typeof getSlideById === 'function') {
-              return getSlideById(elementId.slice('slide:'.length), sourceDoc || getIframeDoc());
-            }
-            return typeof getElementByEditorId === 'function'
-              ? getElementByEditorId(elementId, sourceDoc || getIframeDoc())
-              : null;
-          }
-        });
-        return !!(rollbackResult && rollbackResult.didApply);
-      } catch (error) {
-        return false;
-      }
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {

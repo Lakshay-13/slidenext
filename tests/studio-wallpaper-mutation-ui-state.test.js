@@ -9,6 +9,7 @@ const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
 const wallpaperFinalization = require('../shared/studio-editor-wallpaper-finalization.js');
+const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-transaction-actions.js');
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -84,24 +85,34 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
   const flushSource = extractFunctionSource(
     fileContent,
     'function flushPendingWallpaperVersion() {',
-    '\n\n    function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {'
+    '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
   );
   vm.runInContext(flushSource, context);
 }
 
 function loadApplyEditorWallpaperMutationWithTransaction(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {',
-    '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
-  );
   context.SlideNextStudioEditorWallpaperView = {
     ...studioWallpaperView,
     ...(context.SlideNextStudioEditorWallpaperView || {})
   };
   context.SlideNextStudioEditorWallpaperMutation = studioWallpaperMutation;
   context.SlideNextStudioEditorCanonicalWallpaper = canonicalWallpaper;
-  vm.runInContext(helperSource, context);
+  const actions = wallpaperTransactionActions.createStudioEditorWallpaperTransactionActions({
+    wallpaperMutationApi: context.SlideNextStudioEditorWallpaperMutation,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    wallpaperViewApi: context.SlideNextStudioEditorWallpaperView,
+    canonicalDeckApi: context.SlideNextCanonicalDeck,
+    canonicalWallpaperApi: context.SlideNextStudioEditorCanonicalWallpaper,
+    getSlideId: (slide) => typeof context.getEditorSlideId === 'function'
+      ? context.getEditorSlideId(slide)
+      : '',
+    buildCanonicalDeck: context.buildEditorCanonicalDeck,
+    getCanonicalDeckBaseline: context.resolveEditorLiveCanonicalDeck,
+    getIframeDocument: context.getIframeDoc,
+    getSlideById: context.getSlideById,
+    getElementByEditorId: context.getElementByEditorId
+  });
+  Object.assign(context, actions);
 }
 
 function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {

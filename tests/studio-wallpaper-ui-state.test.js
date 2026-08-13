@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
+const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-transaction-actions.js');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 
@@ -48,12 +49,13 @@ function createWallpaperGradientActions(context) {
 }
 
 function loadWallpaperRollbackHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function rollbackEditorWallpaperMutation(transaction, sourceDoc = getIframeDoc()) {',
-    'function applyPresetWallpaper(val, isCustomInput = false) {'
-  );
-  vm.runInContext(helperSource, context);
+  const actions = wallpaperTransactionActions.createStudioEditorWallpaperTransactionActions({
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    getIframeDocument: context.getIframeDoc,
+    getSlideById: context.getSlideById,
+    getElementByEditorId: context.getElementByEditorId
+  });
+  context.rollbackEditorWallpaperMutation = actions.rollbackEditorWallpaperMutation;
 }
 
 function createControls() {
