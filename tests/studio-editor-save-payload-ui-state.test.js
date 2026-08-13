@@ -15,6 +15,7 @@ const playbackStateAction = require('../shared/studio-editor-persisted-deck-play
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
+const persistableDeckHtmlAction = require('../shared/studio-editor-persistable-deck-html-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -227,7 +228,26 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  vm.runInContext(helperSource, context);
+  context.buildPersistableDeckHtml = persistableDeckHtmlAction.createStudioEditorPersistableDeckHtmlAction({
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : null,
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    deckPersistenceApi: context.SlideNextDeckPersistence || null,
+    getCurrentPersistedDeckState: () => context.getCurrentEditorPersistedDeckState || null,
+    getPersistedDeckStateWithContent: () => context.resolveEditorPersistedDeckStateWithContent || null,
+    getResolveCanonicalDeckOverride: () => context.resolveEditorCanonicalDeckOverride || null,
+    getBuildCanonicalDeck: () => context.buildEditorCanonicalDeck || null,
+    getResolveReusablePersistedHtml: () => context.resolveEditorReusablePersistedHtml || null,
+    getSanitizeReusablePersistedHtml: () => context.sanitizeEditorReusablePersistedHtml || null,
+    getCreateDeckViewBuildOptions: () => context.createEditorDeckViewBuildOptions || null,
+    getBuildDeckRenderOptions: () => context.buildEditorDeckRenderOptions || null,
+    getBuildSourceDeckHtml: () => context.buildEditorSourceDeckHtml || null,
+    getCapturePlaybackState: () => context.capturePersistedDeckPlaybackState || null,
+    getBuildSanitizerOptions: () => context.buildEditorPersistableDeckSanitizerOptions || null,
+    getResolveMetadataPersistenceOptions: () => context.resolveEditorMetadataPersistenceOptions || null
+  });
 }
 
 function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
@@ -4640,7 +4660,7 @@ test('buildPersistableDeckHtml delegates document dispatch through the persisten
   };
 
   vm.createContext(context);
-  vm.runInContext(buildPersistableDeckHtmlSource, context);
+  loadBuildPersistableDeckHtml(fileContent, context, buildPersistableDeckHtmlSource);
 
   assert.equal(context.buildPersistableDeckHtml(doc, { id: 1 }), 'document-html');
   assert.equal(context.buildPersistableDeckHtml(null, { id: 2 }), 'fallback-html');

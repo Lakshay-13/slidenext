@@ -1521,6 +1521,7 @@
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -3613,6 +3614,70 @@
     const studioEditorCanonicalBridge = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalBridge
       : null;
+    const studioEditorPersistableDeckHtmlAction =
+      typeof SlideNextStudioEditorPersistableDeckHtmlAction !== 'undefined'
+      && SlideNextStudioEditorPersistableDeckHtmlAction
+      && typeof SlideNextStudioEditorPersistableDeckHtmlAction
+        .createStudioEditorPersistableDeckHtmlAction === 'function'
+      ? SlideNextStudioEditorPersistableDeckHtmlAction
+        .createStudioEditorPersistableDeckHtmlAction({
+          getDocument: getIframeDoc,
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+            ? SlideNextDeckPersistence
+            : null,
+          getCurrentPersistedDeckState: () => getCurrentEditorPersistedDeckState,
+          getPersistedDeckStateWithContent: () => resolveEditorPersistedDeckStateWithContent,
+          getResolveCanonicalDeckOverride: () => resolveEditorCanonicalDeckOverride,
+          getBuildCanonicalDeck: () => buildEditorCanonicalDeck,
+          getResolveReusablePersistedHtml: () => (
+            typeof resolveEditorReusablePersistedHtml === 'function'
+              ? resolveEditorReusablePersistedHtml
+              : null
+          ),
+          getSanitizeReusablePersistedHtml: () => (
+            typeof sanitizeEditorReusablePersistedHtml === 'function'
+              ? sanitizeEditorReusablePersistedHtml
+              : null
+          ),
+          getCreateDeckViewBuildOptions: () => createEditorDeckViewBuildOptions,
+          getBuildDeckRenderOptions: () => buildEditorDeckRenderOptions,
+          getBuildSourceDeckHtml: () => buildEditorSourceDeckHtml,
+          getCapturePlaybackState: () => (
+            typeof capturePersistedDeckPlaybackState === 'function'
+              ? capturePersistedDeckPlaybackState
+              : null
+          ),
+          getBuildSanitizerOptions: () => (
+            typeof buildEditorPersistableDeckSanitizerOptions === 'function'
+              ? buildEditorPersistableDeckSanitizerOptions
+              : null
+          ),
+          getResolveMetadataPersistenceOptions: () => (
+            typeof resolveEditorMetadataPersistenceOptions === 'function'
+              ? resolveEditorMetadataPersistenceOptions
+              : null
+          )
+        })
+      : null;
+    const studioEditorPersistableDeckHtmlGlobalApi =
+      typeof SlideNextStudioEditorPersistableDeckHtmlAction !== 'undefined'
+      && SlideNextStudioEditorPersistableDeckHtmlAction
+      && typeof SlideNextStudioEditorPersistableDeckHtmlAction
+        .createStudioEditorPersistableDeckHtmlGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistableDeckHtmlAction
+        .createStudioEditorPersistableDeckHtmlGlobalApi({
+          buildPersistableDeckHtml
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistableDeckHtmlGlobalApi);
     const studioEditorHistoryControllerRuntimeOptionsApi = typeof SlideNextStudioEditorHistoryControllerRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorHistoryControllerRuntimeOptions
       : null;
@@ -11083,182 +11148,9 @@
 
     // 5. Undo/Redo Engine
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
-      const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
-        ? arguments[1]
-        : {};
-      const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(buildOptions, 'canonicalDeck')
-        ? buildOptions.canonicalDeck
-        : null;
-      const buildStudioPersistableDeckHtmlWithoutDocument = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlWithoutDocument === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlWithoutDocument
-        : null;
-      const buildStudioPersistableDeckHtmlFromDocument = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlFromDocument === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckHtmlFromDocument
-        : null;
-      const sharedBuildPersistableDeckHtml = (
-        typeof SlideNextDeckPersistence !== 'undefined'
-        && SlideNextDeckPersistence
-        && typeof SlideNextDeckPersistence.buildPersistableDeckHtml === 'function'
-      )
-        ? SlideNextDeckPersistence.buildPersistableDeckHtml
-        : null;
-      const sharedBuildWithoutDocumentOptions = {
-        getPersistedDeckState: (...args) => getCurrentEditorPersistedDeckState(...args),
-        resolvePersistedDeckStateWithContent: (...args) => resolveEditorPersistedDeckStateWithContent(...args),
-        resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-        }),
-        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-          ? buildOptions.onCanonicalDeckResolved
-          : null,
-        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-          ? buildOptions.onPlaybackStateResolved
-          : null,
-        resolveReusablePersistedHtml: (...args) => resolveEditorReusablePersistedHtml(...args),
-        sanitizeReusablePersistedHtml: (persistedHtml, options = {}) => sanitizeEditorReusablePersistedHtml(
-          persistedHtml,
-          {
-            playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
-              ? options.playbackState
-              : null,
-            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-          }
-        ),
-        buildSourceDeckHtml: ({ canonicalDeck, persistedHtml }) => {
-          const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
-            buildCanonicalDeck: () => canonicalDeck,
-            buildFallbackHtml: () => persistedHtml,
-            buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-              sourceDoc,
-              nextCanonicalDeck,
-              options
-            )
-          });
-          return buildEditorSourceDeckHtml(doc, {
-            buildViewOptions: () => sourceViewOptions
-          });
-        }
-      };
-      const sharedBuildFromDocumentOptions = {
-        resolveCanonicalDeck: () => resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-          || (typeof buildEditorCanonicalDeck === 'function'
-            ? buildEditorCanonicalDeck(doc)
-            : null),
-        resolvePlaybackState: (canonicalDeck) => capturePersistedDeckPlaybackState(doc, canonicalDeck),
-        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-          ? buildOptions.onCanonicalDeckResolved
-          : null,
-        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-          ? buildOptions.onPlaybackStateResolved
-          : null,
-        buildPersistableDeckSanitizerOptions: (playbackState) => buildEditorPersistableDeckSanitizerOptions(
-          playbackState,
-          {
-            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-          }
-        ),
-        buildPersistableDeckHtml: sharedBuildPersistableDeckHtml
-      };
-      if (!doc) {
-        if (typeof studioEditorPersistenceController !== 'undefined'
-          && studioEditorPersistenceController
-          && typeof studioEditorPersistenceController.buildPersistableDeckHtml === 'function') {
-          const sharedResult = studioEditorPersistenceController.buildPersistableDeckHtml(
-            doc,
-            sharedBuildWithoutDocumentOptions
-          );
-          if (sharedResult !== null && typeof sharedResult !== 'undefined') {
-            return sharedResult;
-          }
-        }
-        if (buildStudioPersistableDeckHtmlWithoutDocument) {
-          return buildStudioPersistableDeckHtmlWithoutDocument(sharedBuildWithoutDocumentOptions);
-        }
-
-        const persistedDeckState = getCurrentEditorPersistedDeckState();
-        const persistedDeckStateWithContent = resolveEditorPersistedDeckStateWithContent(persistedDeckState);
-        const persistedHtml = persistedDeckStateWithContent
-          ? persistedDeckStateWithContent.cleanHtml
-          : '';
-        const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-          buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-        });
-        if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-          buildOptions.onCanonicalDeckResolved(canonicalDeck);
-        }
-        if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-          buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
-        }
-        const reusablePersistedHtml = resolveEditorReusablePersistedHtml(
-          persistedDeckStateWithContent || persistedDeckState,
-          {
-            canonicalDeck,
-            persistedHtml,
-            persistedCanonicalDeck: persistedDeckState.canonicalDeck
-          }
-        );
-        if (reusablePersistedHtml) {
-          return sanitizeEditorReusablePersistedHtml(reusablePersistedHtml, {
-            playbackState: persistedDeckState.playbackState,
-            resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-          });
-        }
-        const sourceViewOptions = createEditorDeckViewBuildOptions(doc, {
-          buildCanonicalDeck: () => canonicalDeck,
-          buildFallbackHtml: () => persistedHtml,
-          buildRenderOptions: (sourceDoc, nextCanonicalDeck, options = {}) => buildEditorDeckRenderOptions(
-            sourceDoc,
-            nextCanonicalDeck,
-            options
-          )
-        });
-        return buildEditorSourceDeckHtml(doc, {
-          buildViewOptions: () => sourceViewOptions
-        });
-      }
-      if (buildStudioPersistableDeckHtmlFromDocument) {
-        if (typeof studioEditorPersistenceController !== 'undefined'
-          && studioEditorPersistenceController
-          && typeof studioEditorPersistenceController.buildPersistableDeckHtml === 'function') {
-          const sharedResult = studioEditorPersistenceController.buildPersistableDeckHtml(
-            doc,
-            sharedBuildFromDocumentOptions
-          );
-          if (sharedResult !== null && typeof sharedResult !== 'undefined') {
-            return sharedResult;
-          }
-        }
-        return buildStudioPersistableDeckHtmlFromDocument(doc, sharedBuildFromDocumentOptions);
-      }
-
-      const canonicalDeck = resolveEditorCanonicalDeckOverride(providedCanonicalDeck)
-        || (typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(doc)
-          : null);
-      const resolvedPlaybackState = capturePersistedDeckPlaybackState(doc, canonicalDeck);
-      if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-        buildOptions.onCanonicalDeckResolved(canonicalDeck);
-      }
-      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-        buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
-      }
-      const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(resolvedPlaybackState, {
-        resolveMetadataPersistenceOptions: resolveEditorMetadataPersistenceOptions
-      });
-      if (!sharedBuildPersistableDeckHtml) {
-        return '';
-      }
-      return sharedBuildPersistableDeckHtml(doc, {
-        ...persistableDeckSanitizerOptions
-      });
+      return studioEditorPersistableDeckHtmlAction
+        ? studioEditorPersistableDeckHtmlAction(...arguments)
+        : '';
     }
 
     function buildEditorSaveRequestBody(doc = getIframeDoc(), cleanHtml = null, options = {}) {
