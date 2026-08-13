@@ -1447,6 +1447,7 @@
   <script src="/shared/studio-editor-alignment-controller.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
+  <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
   <script src="/shared/studio-editor-layout-shell-runtime.js"></script>
@@ -10989,34 +10990,31 @@
     }
 
     function applyEditorGroupMutationWithTransaction(options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorGroupMutation !== 'undefined'
-        ? SlideNextStudioEditorGroupMutation
+      const transactionApi = typeof SlideNextStudioEditorGroupTransaction !== 'undefined'
+        ? SlideNextStudioEditorGroupTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioGroupMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioGroupMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorGroupMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorGroupMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return { didApply: false, group: null, transaction: null };
       }
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation({
+      return applyTransaction({
         ...options,
+        mutationApi: typeof SlideNextStudioEditorGroupMutation !== 'undefined'
+          ? SlideNextStudioEditorGroupMutation
+          : null,
         groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
           ? SlideNextStudioEditorGroup
           : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
-        getElementId,
+        getElementId: options.getElementId,
+        assignEditorElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null,
         assignElementId: typeof options.assignElementId === 'function'
           ? options.assignElementId
           : null,
