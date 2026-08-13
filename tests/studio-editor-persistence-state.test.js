@@ -264,14 +264,16 @@ test('createStudioEditorCanonicalDeckOverrideAdapter forwards per-call builders 
   };
   const isCanonicalDeck = (deck) => deck === canonicalDeck;
   const buildCanonicalDeck = () => canonicalDeck;
+  const sourceDocument = { label: 'iframe-doc' };
   const adapter = editorPersistenceState.createStudioEditorCanonicalDeckOverrideAdapter({
     persistenceApi,
     isCanonicalDeck
   });
   const override = { id: 'override' };
 
-  assert.equal(adapter(override, { buildCanonicalDeck }), canonicalDeck);
+  assert.equal(adapter(override, { buildCanonicalDeck, sourceDocument }), canonicalDeck);
   assert.equal(delegatedOptions.canonicalDeck, override);
+  assert.equal(delegatedOptions.sourceDocument, sourceDocument);
   assert.equal(delegatedOptions.buildCanonicalDeck, buildCanonicalDeck);
   assert.equal(delegatedOptions.isCanonicalDeck, isCanonicalDeck);
   assert.equal(adapter(override), canonicalDeck);

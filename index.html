@@ -5534,6 +5534,7 @@
           getCapturePlaybackState: () => capturePersistedDeckPlaybackState,
           resolveCanonicalDeck: (providedCanonicalDeck, doc) =>
             resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+              sourceDocument: doc,
               buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
             })
         })

@@ -276,6 +276,9 @@
       if (!resolveCanonicalDeckOverride) return null;
       return resolveCanonicalDeckOverride({
         canonicalDeck,
+        sourceDocument: Object.prototype.hasOwnProperty.call(nextOptions, 'sourceDocument')
+          ? nextOptions.sourceDocument
+          : null,
         buildCanonicalDeck: typeof nextOptions.buildCanonicalDeck === 'function'
           ? nextOptions.buildCanonicalDeck
           : null,
