@@ -13,6 +13,7 @@ const historyFrameAction = require('../shared/studio-editor-history-frame-action
 const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
 const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
 const historyButtonsAction = require('../shared/studio-editor-history-buttons-action.js');
+const historyFlushAction = require('../shared/studio-editor-history-flush-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -341,12 +342,6 @@ test('getEditorHistoryStepAdapter delegates factory wiring through shared histor
 });
 
 test('flushPendingEditorHistory captures pending canonical edits before stepping history', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const flushPendingEditorHistorySource = extractFunctionSource(
-    fileContent,
-    'function flushPendingEditorHistory() {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
-  );
   const calls = [];
   const context = {
     pendingEditorTransaction: { id: 'pending-transaction' },
@@ -357,7 +352,11 @@ test('flushPendingEditorHistory captures pending canonical edits before stepping
   };
 
   vm.createContext(context);
-  vm.runInContext(flushPendingEditorHistorySource, context);
+  context.flushPendingEditorHistory = historyFlushAction.createStudioEditorHistoryFlushAction({
+    getPendingTransaction: () => context.pendingEditorTransaction,
+    getPendingCanonicalDeck: () => context.pendingEditorCanonicalDeck,
+    saveHistoryState: context.saveHistoryState
+  });
 
   assert.equal(context.flushPendingEditorHistory(), true);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [[

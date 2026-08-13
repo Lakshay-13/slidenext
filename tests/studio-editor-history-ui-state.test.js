@@ -6,6 +6,7 @@ const vm = require('node:vm');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
 const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
+const historyFlushAction = require('../shared/studio-editor-history-flush-action.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -133,20 +134,10 @@ test('captureState delegates editor stacks and pending cleanup through the share
 });
 
 test('flushPendingEditorHistory propagates fallback history capture failures', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function flushPendingEditorHistory() {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
-  );
-  const context = {
-    getStudioPendingEditorTransaction: () => ({ id: 'pending' }),
-    getStudioPendingEditorCanonicalDeck: () => null,
+  const flushPendingEditorHistory = historyFlushAction.createStudioEditorHistoryFlushAction({
+    getPendingTransaction: () => ({ id: 'pending' }),
     saveHistoryState: () => ({ didCapture: false })
-  };
+  });
 
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  assert.equal(context.flushPendingEditorHistory(), false);
+  assert.equal(flushPendingEditorHistory(), false);
 });

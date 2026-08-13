@@ -1621,6 +1621,7 @@
   <script src="/shared/studio-editor-history-entry-action.js"></script>
   <script src="/shared/studio-editor-history-capture-action.js"></script>
   <script src="/shared/studio-editor-history-buttons-action.js"></script>
+  <script src="/shared/studio-editor-history-flush-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3890,6 +3891,27 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistoryButtonsGlobalApi);
+    const studioEditorHistoryFlushAction = typeof SlideNextStudioEditorHistoryFlushAction !== 'undefined'
+      && SlideNextStudioEditorHistoryFlushAction
+      && typeof SlideNextStudioEditorHistoryFlushAction.createStudioEditorHistoryFlushAction === 'function'
+      ? SlideNextStudioEditorHistoryFlushAction.createStudioEditorHistoryFlushAction({
+          getHistoryController: () => studioEditorHistoryController,
+          getPendingTransaction: getStudioPendingEditorTransaction,
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+          saveHistoryState,
+          historyResultApi: typeof SlideNextStudioEditorHistoryResult !== 'undefined'
+            ? SlideNextStudioEditorHistoryResult
+            : null
+        })
+      : null;
+    const studioEditorHistoryFlushGlobalApi = typeof SlideNextStudioEditorHistoryFlushAction !== 'undefined'
+      && SlideNextStudioEditorHistoryFlushAction
+      && typeof SlideNextStudioEditorHistoryFlushAction.createStudioEditorHistoryFlushGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryFlushAction.createStudioEditorHistoryFlushGlobalApi({
+          flushPendingEditorHistory: studioEditorHistoryFlushAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryFlushGlobalApi);
     const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorPersistenceRuntimeOptions
       : null;
@@ -10678,34 +10700,6 @@
       }
       if (typeof updateEditorPersistedDeckState.adapter !== 'function') return {};
       return updateEditorPersistedDeckState.adapter(nextState);
-    }
-
-    function flushPendingEditorHistory() {
-      if (typeof studioEditorHistoryController !== 'undefined'
-        && studioEditorHistoryController
-        && typeof studioEditorHistoryController.flushPending === 'function') {
-        return studioEditorHistoryController.flushPending();
-      }
-      const hasPendingTransaction = getStudioPendingEditorTransaction() !== null;
-      const hasPendingCanonicalDeck = getStudioPendingEditorCanonicalDeck() !== null;
-      if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
-      const pendingTransaction = getStudioPendingEditorTransaction();
-      const pendingCanonicalDeck = getStudioPendingEditorCanonicalDeck();
-      let saveResult;
-      if (pendingCanonicalDeck !== null) {
-        saveResult = saveHistoryState(false, pendingTransaction, pendingCanonicalDeck);
-      } else {
-        saveResult = saveHistoryState(false, pendingTransaction);
-      }
-      const historyCaptureFailed = typeof SlideNextStudioEditorHistoryResult !== 'undefined'
-        && SlideNextStudioEditorHistoryResult
-        && typeof SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure === 'function'
-        ? SlideNextStudioEditorHistoryResult.isStudioHistoryCaptureFailure(saveResult)
-        : saveResult === false
-          || (!!saveResult
-            && typeof saveResult === 'object'
-            && saveResult.didCapture === false);
-      return !historyCaptureFailed;
     }
 
     function getEditorHistoryStepAdapter() {
