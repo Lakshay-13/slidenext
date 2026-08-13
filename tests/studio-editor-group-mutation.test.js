@@ -35,9 +35,26 @@ test('applyStudioGroupMutationWithTransaction delegates group and markup transac
     transaction: { id: 'tx-group' }
   });
   assert.equal(typeof delegated.createMarkupTransactionCapture, 'function');
+  assert.equal(delegated.createElementPresenceTransaction, null);
   assert.equal(typeof delegated.getElementId, 'function');
   assert.equal(typeof delegated.assignElementId, 'function');
   assert.equal(typeof delegated.prepareGroup, 'function');
+});
+
+test('applyStudioGroupMutationWithTransaction forwards scoped presence transaction dependencies', () => {
+  const createStudioElementPresenceTransaction = () => ({ id: 'tx-presence' });
+  let delegated = null;
+  groupMutation.applyStudioGroupMutationWithTransaction({
+    groupApi: {
+      applyStudioGroupMutation(options) {
+        delegated = options;
+        return { didApply: true, group: {}, transaction: null };
+      }
+    },
+    transactionApi: { createStudioElementPresenceTransaction }
+  });
+
+  assert.equal(delegated.createElementPresenceTransaction, createStudioElementPresenceTransaction);
 });
 
 test('applyStudioGroupMutationWithTransaction preserves the shared group behavior', () => {
@@ -85,6 +102,98 @@ test('applyStudioGroupMutationWithTransaction preserves the shared group behavio
   assert.equal(child.parentElement, result.group);
 });
 
+test('applyStudioGroupMutation prefers scoped presence transactions for serializable grouping', () => {
+  const childOne = {
+    dataset: { editorId: 'child-1' },
+    style: {},
+    parentElement: null,
+    outerHTML: '<div data-editor-id="child-1">One</div>'
+  };
+  const childTwo = {
+    dataset: { editorId: 'child-2' },
+    style: {},
+    parentElement: null,
+    outerHTML: '<div data-editor-id="child-2">Two</div>'
+  };
+  const parent = {
+    dataset: { editorId: 'parent-1' },
+    children: [childOne, childTwo],
+    insertBefore(child, beforeNode) {
+      const currentIndex = this.children.indexOf(child);
+      if (currentIndex >= 0) this.children.splice(currentIndex, 1);
+      const index = beforeNode ? this.children.indexOf(beforeNode) : this.children.length;
+      this.children.splice(index < 0 ? this.children.length : index, 0, child);
+      child.parentElement = this;
+    },
+    appendChild(child) {
+      const currentIndex = this.children.indexOf(child);
+      if (currentIndex >= 0) this.children.splice(currentIndex, 1);
+      this.children.push(child);
+      child.parentElement = this;
+    }
+  };
+  childOne.parentElement = parent;
+  childTwo.parentElement = parent;
+  const documentRef = {
+    createElement() {
+      const group = {
+        dataset: {},
+        style: {},
+        children: [],
+        appendChild(child) {
+          const currentIndex = parent.children.indexOf(child);
+          if (currentIndex >= 0) parent.children.splice(currentIndex, 1);
+          child.parentElement = this;
+          this.children.push(child);
+        },
+        setAttribute() {},
+        get outerHTML() {
+          return `<div data-editor-id="${this.dataset.editorId}">${this.children.map((child) => child.outerHTML).join('')}</div>`;
+        }
+      };
+      return group;
+    }
+  };
+  const result = studioGroup.applyStudioGroupMutation({
+    documentRef,
+    parent,
+    groupPlan: {
+      bounds: { left: 0, top: 0, width: 100, height: 100 },
+      nextItems: [
+        { element: childOne, nextLeft: 0, nextTop: 0 },
+        { element: childTwo, nextLeft: 20, nextTop: 20 }
+      ]
+    },
+    parentBounds: { left: 0, top: 0 },
+    orderedSelection: [childOne, childTwo],
+    createElementPresenceTransaction: studioTransaction.createStudioElementPresenceTransaction,
+    getElementId(element) {
+      return element.dataset.editorId || '';
+    },
+    assignElementId(element) {
+      element.dataset.editorId = 'group-1';
+      return 'group-1';
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(result.transaction.operations.map((operation) => operation.type), [
+    'element-presence',
+    'element-presence',
+    'element-presence'
+  ]);
+  assert.deepEqual(result.transaction.operations[0], {
+    type: 'element-presence',
+    elementId: 'child-1',
+    parentId: 'parent-1',
+    before: { exists: true, index: 0, markup: childOne.outerHTML },
+    after: { exists: false, index: 0, markup: '' }
+  });
+  assert.equal(result.transaction.operations[2].elementId, 'group-1');
+  assert.equal(result.transaction.operations[2].before.index, 0);
+  assert.match(result.transaction.operations[2].after.markup, /child-1/);
+});
+
 test('applyStudioGroupMutationWithTransaction fails closed without a shared group adapter', () => {
   assert.deepEqual(
     groupMutation.applyStudioGroupMutationWithTransaction({}),
@@ -119,6 +228,7 @@ test('applyStudioUngroupMutationWithTransaction delegates layout and markup tran
   });
   assert.equal(typeof delegated.buildUngroupedLayout, 'function');
   assert.equal(typeof delegated.createMarkupTransactionCapture, 'function');
+  assert.equal(delegated.createElementPresenceTransaction, null);
   assert.equal(typeof delegated.getElementId, 'function');
 });
 

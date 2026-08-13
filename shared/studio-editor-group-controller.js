@@ -140,6 +140,50 @@
             if (!element || typeof markup !== 'string') return false;
             element.innerHTML = markup;
             return true;
+          },
+          applyElementPresenceState(elementId, parentId, snapshot) {
+            const parent = getTransactionElementById
+              ? getTransactionElementById(parentId, doc)
+              : null;
+            if (!parent || !snapshot || typeof snapshot !== 'object') return false;
+            const currentElement = getTransactionElementById
+              ? getTransactionElementById(elementId, doc)
+              : null;
+            if (snapshot.exists !== true) {
+              if (!currentElement) return false;
+              if (typeof currentElement.remove === 'function') {
+                currentElement.remove();
+              } else if (currentElement.parentNode
+                && typeof currentElement.parentNode.removeChild === 'function') {
+                currentElement.parentNode.removeChild(currentElement);
+              } else {
+                return false;
+              }
+            } else {
+              let element = currentElement;
+              if (!element) {
+                if (!doc || typeof doc.createElement !== 'function'
+                  || typeof snapshot.markup !== 'string' || !snapshot.markup.trim()) {
+                  return false;
+                }
+                const template = doc.createElement('template');
+                if (!template) return false;
+                template.innerHTML = snapshot.markup;
+                element = template.content && template.content.firstElementChild;
+                if (!element) return false;
+              }
+              const childNodes = parent.children || parent.childNodes || [];
+              const beforeNode = childNodes[snapshot.index] || null;
+              if (beforeNode && beforeNode !== element && typeof parent.insertBefore === 'function') {
+                parent.insertBefore(element, beforeNode);
+              } else if (typeof parent.appendChild === 'function') {
+                parent.appendChild(element);
+              } else {
+                return false;
+              }
+              if (prepareGroup) prepareGroup(element);
+            }
+            return true;
           }
         });
       } catch (error) {

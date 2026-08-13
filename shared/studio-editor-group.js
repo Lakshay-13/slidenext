@@ -358,9 +358,38 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveElementId = (element) => {
+      if (!element) return '';
+      try {
+        return getElementId(element) || '';
+      } catch (error) {
+        return '';
+      }
+    };
+    const parentId = resolveElementId(parent);
+    const childPresenceItems = orderedSelection.map((element) => {
+      const childNodes = parent.children || parent.childNodes;
+      const index = childNodes
+        ? Array.prototype.indexOf.call(childNodes, element)
+        : -1;
+      return {
+        element,
+        elementId: resolveElementId(element),
+        parentId,
+        before: {
+          exists: true,
+          index,
+          markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+        },
+        after: { exists: false, index, markup: '' }
+      };
+    });
     const markupCapture = createMarkupTransactionCapture
       ? createMarkupTransactionCapture([{
           element: parent,
@@ -422,12 +451,45 @@
       prepareGroup(group);
     }
 
+    const groupChildNodes = parent.children || parent.childNodes;
+    const groupIndex = groupChildNodes
+      ? Array.prototype.indexOf.call(groupChildNodes, group)
+      : -1;
+    const groupElementId = resolveElementId(group);
+    const presenceIds = new Set();
+    const presenceItems = [
+      ...childPresenceItems.map(({ element, ...item }) => item),
+      {
+        elementId: groupElementId,
+        parentId,
+        before: { exists: false, index: groupIndex, markup: '' },
+        after: {
+          exists: true,
+          index: groupIndex,
+          markup: typeof group.outerHTML === 'string' ? group.outerHTML : ''
+        }
+      }
+    ];
+    const canUsePresenceTransaction = !!createElementPresenceTransaction
+      && presenceItems.every((item) => {
+        if (!item.elementId || presenceIds.has(item.elementId)) return false;
+        presenceIds.add(item.elementId);
+        return !!item.parentId
+          && item.before.index >= 0
+          && (item.before.exists !== true || !!item.before.markup.trim())
+          && (item.after.exists !== true || !!item.after.markup.trim());
+      });
+    const presenceTransaction = canUsePresenceTransaction
+      ? createElementPresenceTransaction(presenceItems)
+      : null;
+
     return {
       didApply: true,
       group,
-      transaction: markupCapture
-        ? markupCapture.createTransaction()
-        : null
+      transaction: presenceTransaction
+        || (markupCapture
+          ? markupCapture.createTransaction()
+          : null)
     };
   }
 

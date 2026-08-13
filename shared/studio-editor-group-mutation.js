@@ -26,6 +26,10 @@
       && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
       ? transactionApi.createStudioMarkupTransactionCapture
       : null;
+    const createStudioElementPresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioElementPresenceTransaction === 'function'
+      ? transactionApi.createStudioElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -39,6 +43,7 @@
     const mutation = applyStudioGroupMutation({
       ...options,
       createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      createElementPresenceTransaction: createStudioElementPresenceTransaction,
       getElementId,
       assignElementId,
       prepareGroup
@@ -71,6 +76,10 @@
       && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
       ? transactionApi.createStudioMarkupTransactionCapture
       : null;
+    const createStudioElementPresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioElementPresenceTransaction === 'function'
+      ? transactionApi.createStudioElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -79,6 +88,7 @@
       ...options,
       buildUngroupedLayout: buildStudioUngroupedLayout,
       createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      createElementPresenceTransaction: createStudioElementPresenceTransaction,
       getElementId
     });
     return mutation && typeof mutation === 'object'
