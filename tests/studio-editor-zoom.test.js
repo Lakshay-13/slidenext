@@ -31,6 +31,23 @@ test('applyStudioZoom applies fit dimensions and persists the requested mode', (
   assert.deepEqual(storageCalls, [['presentationZoom', 'fit']]);
 });
 
+test('applyStudioZoom uses the unscaled canvas dimensions for custom canvases', () => {
+  const nodes = {
+    canvasStage: { clientWidth: 1400, clientHeight: 900 },
+    canvasScrollContainer: { style: {} },
+    canvasWrapper: { clientWidth: 1280, clientHeight: 720, style: {} },
+    zoomSelect: { value: '' }
+  };
+  const result = zoom.applyStudioZoom({
+    documentRef: { getElementById: id => nodes[id] || null },
+    scaleVal: '1.25'
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(nodes.canvasScrollContainer.style.width, '1600px');
+  assert.equal(nodes.canvasScrollContainer.style.height, '900px');
+});
+
 test('applyStudioZoom rejects invalid values and missing canvas nodes safely', () => {
   assert.deepEqual(zoom.applyStudioZoom({
     documentRef: { getElementById: () => null },

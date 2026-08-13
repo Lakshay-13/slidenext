@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const canvas = typeof module === 'object' && module.exports
+    ? require('./studio-editor-canvas')
+    : root && root.SlideNextStudioEditorCanvas;
+  const api = factory(canvas);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorZoom = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (canvas) {
   const STUDIO_ZOOM_OPTIONS = [
     0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
     0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2,
@@ -59,12 +62,15 @@
       return { didApply: false, zoomFactor: options.zoomFactor };
     }
 
+    const canvasDimensions = canvas && typeof canvas.resolveStudioCanvasDimensions === 'function'
+      ? canvas.resolveStudioCanvasDimensions({ documentRef })
+      : { width: 1920, height: 1080 };
     let zoomFactor;
     if (scaleValue === 'fit') {
       const stageWidth = stage.clientWidth - 48;
       const stageHeight = stage.clientHeight - 48;
-      const scaleX = stageWidth / 1920;
-      const scaleY = stageHeight / 1080;
+      const scaleX = stageWidth / canvasDimensions.width;
+      const scaleY = stageHeight / canvasDimensions.height;
       zoomFactor = Math.min(scaleX, scaleY);
       zoomFactor = Math.max(0.15, Math.min(1.5, zoomFactor));
       if (select) select.value = 'fit';
@@ -80,8 +86,8 @@
     if (storage && typeof storage.setItem === 'function') {
       storage.setItem('presentationZoom', scaleValue);
     }
-    scroller.style.width = `${1920 * zoomFactor}px`;
-    scroller.style.height = `${1080 * zoomFactor}px`;
+    scroller.style.width = `${canvasDimensions.width * zoomFactor}px`;
+    scroller.style.height = `${canvasDimensions.height * zoomFactor}px`;
     wrapper.style.transform = `translate(-50%, -50%) scale(${zoomFactor})`;
     return { didApply: true, zoomFactor };
   }

@@ -2,14 +2,17 @@
   const ruler = typeof module === 'object' && module.exports
     ? require('./studio-editor-ruler')
     : root && root.SlideNextStudioEditorRuler;
-  const api = factory(ruler);
+  const canvas = typeof module === 'object' && module.exports
+    ? require('./studio-editor-canvas')
+    : root && root.SlideNextStudioEditorCanvas;
+  const api = factory(ruler, canvas);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorRulerView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (ruler) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (ruler, canvas) {
   function renderStudioCanvasRulers(options = {}) {
     const documentRef = options.documentRef;
     const stage = documentRef && documentRef.getElementById('canvasStage');
@@ -28,11 +31,14 @@
     const wrapperRect = wrapper.getBoundingClientRect();
     const offsetX = wrapperRect.left - stageRect.left;
     const offsetY = wrapperRect.top - stageRect.top;
-    const horizontalTicks = ruler.buildStudioRulerRenderState(1920, offsetX, zoomFactor, {
+    const canvasDimensions = canvas && typeof canvas.resolveStudioCanvasDimensions === 'function'
+      ? canvas.resolveStudioCanvasDimensions({ documentRef, wrapper })
+      : { width: 1920, height: 1080 };
+    const horizontalTicks = ruler.buildStudioRulerRenderState(canvasDimensions.width, offsetX, zoomFactor, {
       majorStepPx: 100,
       minorStepPx: 20
     });
-    const verticalTicks = ruler.buildStudioRulerRenderState(1080, offsetY, zoomFactor, {
+    const verticalTicks = ruler.buildStudioRulerRenderState(canvasDimensions.height, offsetY, zoomFactor, {
       majorStepPx: 100,
       minorStepPx: 20
     });
