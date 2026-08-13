@@ -6736,37 +6736,7 @@
         && typeof studioEditorSessionStateController.createFrameLoadHandler === 'function') {
         return studioEditorSessionStateController.createFrameLoadHandler(options);
       }
-      const createStudioEditorFrameLoadHandlerAdapter = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioEditorFrameLoadHandlerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioEditorFrameLoadHandlerAdapter
-        : null;
-      if (createStudioEditorFrameLoadHandlerAdapter) {
-        if (typeof createCurrentStudioFrameLoadHandler.adapter !== 'function') {
-          createCurrentStudioFrameLoadHandler.adapter = createStudioEditorFrameLoadHandlerAdapter({
-            sessionApi: SlideNextStudioEditorSession
-          });
-        }
-        if (typeof createCurrentStudioFrameLoadHandler.adapter === 'function') {
-          return createCurrentStudioFrameLoadHandler.adapter(options);
-        }
-        if (createCurrentStudioFrameLoadHandler.adapter && typeof createCurrentStudioFrameLoadHandler.adapter === 'object') {
-          return createCurrentStudioFrameLoadHandler.adapter;
-        }
-      }
-
-      const createStudioFrameLoadHandler = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioFrameLoadHandler === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioFrameLoadHandler
-        : null;
-      return createStudioFrameLoadHandler
-        ? createStudioFrameLoadHandler(options)
-        : () => false;
+      return () => false;
     }
 
     function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = '', options = {}) {

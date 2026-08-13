@@ -64,6 +64,19 @@ test('editor routes session reader options through the shared session controller
   assert.doesNotMatch(source, /createStudioSessionReaderOptionsBuilder/);
 });
 
+test('editor routes frame-load handlers through the shared session controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioFrameLoadHandler(options = {}) {',
+    '\n\n    function shouldHandleCurrentStudioFrameLoad('
+  );
+
+  assert.match(source, /studioEditorSessionStateController\.createFrameLoadHandler\(options\)/);
+  assert.doesNotMatch(source, /createStudioEditorFrameLoadHandlerAdapter/);
+  assert.doesNotMatch(source, /createStudioFrameLoadHandler/);
+});
+
 test('retryStudioEditorFrame reuses the current presentation session', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const retrySource = extractFunctionSource(
@@ -316,6 +329,9 @@ test('launchStudioEditor shows a loading autosave status until the iframe deck f
           getCurrentPresentationUrl: () => context.currentPresentationUrl,
           getCurrentSessionToken: () => context.studioEditorSessionToken
         };
+      },
+      createFrameLoadHandler(options) {
+        return context.SlideNextStudioEditorSession.createStudioFrameLoadHandler(options);
       }
     },
     SlideNextStudioEditorSession: {
@@ -470,6 +486,9 @@ test('launchStudioEditor tolerates missing header labels while bootstrapping the
           getCurrentPresentationUrl: () => context.currentPresentationUrl,
           getCurrentSessionToken: () => context.studioEditorSessionToken
         };
+      },
+      createFrameLoadHandler(options) {
+        return context.SlideNextStudioEditorSession.createStudioFrameLoadHandler(options);
       }
     },
     SlideNextStudioEditorSession: {
@@ -848,6 +867,11 @@ test('launchStudioEditor after-load zoom guard passes live session getters to th
   let scheduledCallback = null;
   const zoomCalls = [];
   const context = {
+    studioEditorSessionStateController: {
+      createFrameLoadHandler(options) {
+        return context.SlideNextStudioEditorSession.createStudioFrameLoadHandler(options);
+      }
+    },
     SlideNextStudioEditorSession: {
       ...editorSession,
       createStudioFrameLoadHandler(options) {
@@ -1023,14 +1047,14 @@ test('shouldHandleCurrentStudioFrameLoad creates the shared frame-load guard ada
   ]);
 });
 
-test('createCurrentStudioFrameLoadHandler creates the shared frame-load handler adapter once', () => {
+test('createCurrentStudioFrameLoadHandler delegates through the session controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let adapterCreateCalls = 0;
+  let controllerCalls = 0;
   const context = {
-    SlideNextStudioEditorSession: {
-      createStudioEditorFrameLoadHandlerAdapter() {
-        adapterCreateCalls += 1;
-        return (options) => ({ presentationUrl: options.presentationUrl });
+    studioEditorSessionStateController: {
+      createFrameLoadHandler(options) {
+        controllerCalls += 1;
+        return { presentationUrl: options.presentationUrl };
       }
     }
   };
@@ -1046,7 +1070,7 @@ test('createCurrentStudioFrameLoadHandler creates the shared frame-load handler 
     context.createCurrentStudioFrameLoadHandler({ presentationUrl: '/presentations/two/index.html' }),
     { presentationUrl: '/presentations/two/index.html' }
   );
-  assert.equal(adapterCreateCalls, 1);
+  assert.equal(controllerCalls, 2);
 });
 
 test('updateCurrentPresentationSessionState updates only the provided session fields and delegates metadata commits', () => {
