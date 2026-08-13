@@ -1682,6 +1682,7 @@
   <script src="/shared/studio-editor-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
   <script src="/shared/studio-editor-slide-editable-elements-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -4279,16 +4280,37 @@
         )
       : null;
 
-    const studioEditorNormalizedSlideLayerOrderReader = typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder === 'function'
-      ? (slide, options) => SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder(slide, options)
+    const studioEditorSlideLayerOrderAdapter = typeof SlideNextStudioEditorSlideLayerOrderAdapter !== 'undefined'
+      && SlideNextStudioEditorSlideLayerOrderAdapter
+      && typeof SlideNextStudioEditorSlideLayerOrderAdapter.getStudioEditorNormalizedSlideLayerOrder === 'function'
+      && typeof SlideNextStudioEditorSlideLayerOrderAdapter.applyStudioEditorSlideLayerOrder === 'function'
+      ? SlideNextStudioEditorSlideLayerOrderAdapter
       : null;
 
-    const studioEditorSlideLayerOrderWriter = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorNormalizedSlideLayerOrderReader = studioEditorSlideLayerOrderAdapter
+      && typeof studioEditorSlideLayerOrderAdapter.getStudioEditorNormalizedSlideLayerOrder === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.getNormalizedStudioSlideLayerOrder === 'function'
+      ? (slide, options) => studioEditorSlideLayerOrderAdapter.getStudioEditorNormalizedSlideLayerOrder(
+          slide,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
+      : null;
+
+    const studioEditorSlideLayerOrderWriter = studioEditorSlideLayerOrderAdapter
+      && typeof studioEditorSlideLayerOrderAdapter.applyStudioEditorSlideLayerOrder === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.applyStudioSlideLayerOrder === 'function'
-      ? (slide, orderedElements) => SlideNextStudioEditorDom.applyStudioSlideLayerOrder(slide, orderedElements)
+      ? (slide, orderedElements) => studioEditorSlideLayerOrderAdapter.applyStudioEditorSlideLayerOrder(
+          slide,
+          orderedElements,
+          { domApi: SlideNextStudioEditorDom }
+        )
       : null;
 
     const studioEditorEditableTargetResolver = typeof SlideNextStudioEditorDom !== 'undefined'

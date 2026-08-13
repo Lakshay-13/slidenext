@@ -3117,7 +3117,7 @@ test('getSlideEditableElements fails closed when the shared adapter is unavailab
   assert.deepEqual(JSON.parse(JSON.stringify(context.getSlideEditableElements({}))), []);
 });
 
-test('editor composes normalized slide layer order through the shared DOM module', () => {
+test('editor composes normalized slide layer order through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getNormalizedSlideLayerOrderSource = extractFunctionSource(
     source,
@@ -3125,16 +3125,18 @@ test('editor composes normalized slide layer order through the shared DOM module
     '\n\n    function applySlideLayerOrder'
   );
 
+  assert.match(source, /const studioEditorSlideLayerOrderAdapter =/);
+  assert.match(source, /SlideNextStudioEditorSlideLayerOrderAdapter/);
   assert.match(source, /const studioEditorNormalizedSlideLayerOrderReader =/);
   assert.match(source, /typeof normalizedSlideLayerOrderReader === 'function'/);
   assert.doesNotMatch(getNormalizedSlideLayerOrderSource, /SlideNextStudioEditorDom\.getNormalizedStudioSlideLayerOrder/);
 });
 
-test('getNormalizedSlideLayerOrder delegates the slide and composed DOM options to the shared DOM module', () => {
+test('getNormalizedSlideLayerOrder delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const normalizedSlideLayerOrderReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorNormalizedSlideLayerOrderReader =',
+    'const studioEditorSlideLayerOrderAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getNormalizedSlideLayerOrderSource = extractFunctionSource(
@@ -3146,6 +3148,7 @@ test('getNormalizedSlideLayerOrder delegates the slide and composed DOM options 
   const editorOptions = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideLayerOrderAdapter: require('../shared/studio-editor-slide-layer-order-adapter.js'),
     SlideNextStudioEditorDom: {
       getNormalizedStudioSlideLayerOrder(slideValue, optionsValue) {
         calls.push([slideValue, optionsValue]);
@@ -3170,11 +3173,11 @@ test('getNormalizedSlideLayerOrder delegates the slide and composed DOM options 
   assert.equal(typeof calls[0][1].getSlideEditableElements, 'function');
 });
 
-test('getNormalizedSlideLayerOrder fails closed when the shared DOM module is unavailable', () => {
+test('getNormalizedSlideLayerOrder fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const normalizedSlideLayerOrderReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorNormalizedSlideLayerOrderReader =',
+    'const studioEditorSlideLayerOrderAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getNormalizedSlideLayerOrderSource = extractFunctionSource(
@@ -3198,7 +3201,7 @@ test('getNormalizedSlideLayerOrder fails closed when the shared DOM module is un
   assert.deepEqual(JSON.parse(JSON.stringify(context.getNormalizedSlideLayerOrder({}))), []);
 });
 
-test('editor composes slide layer-order writes through the shared DOM module', () => {
+test('editor composes slide layer-order writes through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySlideLayerOrderSource = extractFunctionSource(
     source,
@@ -3206,16 +3209,17 @@ test('editor composes slide layer-order writes through the shared DOM module', (
     '\n\n    function applyEditorLayerOrderMutationWithTransaction'
   );
 
+  assert.match(source, /const studioEditorSlideLayerOrderAdapter =/);
   assert.match(source, /const studioEditorSlideLayerOrderWriter =/);
   assert.match(source, /typeof slideLayerOrderWriter === 'function'/);
   assert.doesNotMatch(applySlideLayerOrderSource, /SlideNextStudioEditorDom\.applyStudioSlideLayerOrder/);
 });
 
-test('applySlideLayerOrder delegates the slide and ordered elements to the shared DOM module', () => {
+test('applySlideLayerOrder delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideLayerOrderWriterSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideLayerOrderWriter =',
+    'const studioEditorSlideLayerOrderAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const applySlideLayerOrderSource = extractFunctionSource(
@@ -3227,6 +3231,7 @@ test('applySlideLayerOrder delegates the slide and ordered elements to the share
   const orderedElements = [{ id: 'element-1' }];
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideLayerOrderAdapter: require('../shared/studio-editor-slide-layer-order-adapter.js'),
     SlideNextStudioEditorDom: {
       applyStudioSlideLayerOrder(slideValue, orderedElementsValue) {
         calls.push([slideValue, orderedElementsValue]);
@@ -3244,11 +3249,11 @@ test('applySlideLayerOrder delegates the slide and ordered elements to the share
   assert.equal(calls[0][1], orderedElements);
 });
 
-test('applySlideLayerOrder fails closed when the shared DOM module is unavailable', () => {
+test('applySlideLayerOrder fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideLayerOrderWriterSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideLayerOrderWriter =',
+    'const studioEditorSlideLayerOrderAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const applySlideLayerOrderSource = extractFunctionSource(
