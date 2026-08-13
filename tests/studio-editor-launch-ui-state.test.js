@@ -25,6 +25,19 @@ test('editor and preview iframes have accessible names', () => {
   assert.match(fileContent, /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/);
 });
 
+test('editor routes session updates through the shared session controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateCurrentPresentationSessionState(nextState = {}) {',
+    '\n\n    async function launchStudioEditor('
+  );
+
+  assert.match(source, /studioEditorSessionStateController\.update\(nextState\)/);
+  assert.doesNotMatch(source, /createStudioEditorPresentationSessionStateUpdateAdapter/);
+  assert.doesNotMatch(source, /createStudioPresentationSessionStateUpdate/);
+});
+
 test('retryStudioEditorFrame reuses the current presentation session', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const retrySource = extractFunctionSource(
@@ -1035,11 +1048,17 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   let capturedStateUpdate = null;
   const context = {
     Object,
-    SlideNextStudioEditorSession: {
-      ...editorSession,
-      createStudioPresentationSessionStateUpdate(nextState) {
+    studioEditorSessionStateController: {
+      update(nextState) {
         capturedStateUpdate = nextState;
-        return editorSession.createStudioPresentationSessionStateUpdate(nextState);
+        context.currentTitle = nextState.presentationTitle;
+        context.currentSlideIndex = nextState.slideIndex;
+        context.currentPresentationMetadata = nextState.presentationMetadata;
+        return {
+          presentationTitle: nextState.presentationTitle,
+          slideIndex: nextState.slideIndex,
+          presentationMetadata: nextState.presentationMetadata
+        };
       }
     },
     currentCategory: 'General',
@@ -1074,27 +1093,27 @@ test('updateCurrentPresentationSessionState updates only the provided session fi
   });
 });
 
-test('updateCurrentPresentationSessionState delegates normalization through the editor session adapter', () => {
+test('updateCurrentPresentationSessionState delegates normalized updates through the session controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateCurrentPresentationSessionStateSource = extractFunctionSource(
     fileContent,
     'function updateCurrentPresentationSessionState(nextState = {}) {',
     '\n\n    async function launchStudioEditor(url, title, category) {'
   );
-  let adapterOptions = null;
+  let controllerCalls = 0;
   const metadata = { id: 'deck-1' };
   const context = {
-    SlideNextStudioEditorSession: {
-      createStudioEditorPresentationSessionStateUpdateAdapter(options = {}) {
-        adapterOptions = options;
-        return (nextState) => ({
+    studioEditorSessionStateController: {
+      update(nextState) {
+        controllerCalls += 1;
+        context.currentTitle = nextState.presentationTitle;
+        context.currentSlideIndex = nextState.slideIndex;
+        context.currentPresentationMetadata = nextState.presentationMetadata;
+        return {
           presentationTitle: nextState.presentationTitle,
           slideIndex: nextState.slideIndex,
           presentationMetadata: nextState.presentationMetadata
-        });
-      },
-      createStudioPresentationSessionStateUpdate() {
-        throw new Error('direct session normalization should not run when the adapter exists');
+        };
       }
     },
     currentCategory: 'General',
@@ -1120,17 +1139,18 @@ test('updateCurrentPresentationSessionState delegates normalization through the 
   assert.equal(context.currentTitle, 'Renamed Deck');
   assert.equal(context.currentSlideIndex, 4);
   assert.equal(context.currentPresentationMetadata, metadata);
-  assert.equal(adapterOptions.sessionApi, context.SlideNextStudioEditorSession);
+  assert.equal(controllerCalls, 1);
 });
 
-test('updateCurrentPresentationSessionState creates the shared session update adapter once', () => {
+test('updateCurrentPresentationSessionState does not use legacy session helpers without the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let adapterCreateCalls = 0;
   const context = {
     SlideNextStudioEditorSession: {
       createStudioEditorPresentationSessionStateUpdateAdapter() {
-        adapterCreateCalls += 1;
-        return (nextState) => ({ presentationTitle: nextState.presentationTitle });
+        throw new Error('legacy session adapter should not run');
+      },
+      createStudioPresentationSessionStateUpdate() {
+        throw new Error('legacy session normalizer should not run');
       }
     },
     currentCategory: 'General',
@@ -1149,11 +1169,12 @@ test('updateCurrentPresentationSessionState creates the shared session update ad
   );
   vm.runInContext(updateCurrentPresentationSessionStateSource, context);
 
-  context.updateCurrentPresentationSessionState({ presentationTitle: 'First Deck' });
-  context.updateCurrentPresentationSessionState({ presentationTitle: 'Second Deck' });
+  assert.equal(
+    context.updateCurrentPresentationSessionState({ presentationTitle: 'Unavailable Runtime Deck' }),
+    false
+  );
 
-  assert.equal(adapterCreateCalls, 1);
-  assert.equal(context.currentTitle, 'Second Deck');
+  assert.equal(context.currentTitle, 'Project Onboarding');
 });
 
 test('updateCurrentPresentationSessionState safely no-ops without a session runtime', () => {
