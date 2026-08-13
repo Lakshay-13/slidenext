@@ -14,6 +14,7 @@ const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
 const positionLayoutRollback = require('../shared/studio-editor-position-layout-rollback.js');
+const positionLayoutRollbackAdapter = require('../shared/studio-editor-position-layout-rollback-adapter.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -105,6 +106,7 @@ function loadPositionRollbackHelper(fileContent, context) {
     'function alignSelectedElements(action = \'\') {'
   );
   context.SlideNextStudioEditorPositionLayoutRollback = positionLayoutRollback;
+  context.SlideNextStudioEditorPositionLayoutRollbackAdapter = positionLayoutRollbackAdapter;
   vm.runInContext(helperSource, context);
 }
 
