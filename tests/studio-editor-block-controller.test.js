@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const blockController = require('../shared/studio-editor-block-controller.js');
+const transactionState = require('../shared/studio-editor-transaction.js');
 
 test('block controller saves the active selection and finalizes persistence hooks', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
@@ -560,6 +561,72 @@ test('block controller renders and inserts canonical block nodes through a marku
   assert.equal(calls[0].transaction.kind, 'markup-transaction');
   assert.equal(calls[0].nextDeck.slides[0].nodes[0].id, 'hero-heading');
   assert.deepEqual(lookupCalls.map(([, slideId]) => slideId), ['slide-1', 'slide-1']);
+});
+
+test('block controller prefers scoped element-presence transactions for serializable nodes', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    blocks: [{
+      id: 'hero',
+      nodes: [{ id: 'heading', tagName: 'h2', text: 'Hero' }]
+    }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const slide = {
+    children: [],
+    appendChild(element) {
+      this.children.push(element);
+    }
+  };
+  const rootElement = {
+    dataset: {},
+    children: [],
+    textContent: 'Hero',
+    get outerHTML() {
+      return `<h2 data-editor-id="${this.dataset.editorId}">${this.textContent}</h2>`;
+    }
+  };
+  const documentRef = {
+    createElement(tagName) {
+      if (tagName !== 'template') return null;
+      return {
+        content: { firstElementChild: rootElement },
+        set innerHTML(value) {
+          this.markup = value;
+        }
+      };
+    }
+  };
+  let transaction = null;
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalNode() {
+        return '<h2>Hero</h2>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getDocument: () => documentRef,
+    getActiveSlide: () => slide,
+    getActiveSlideId: () => 'slide-1',
+    createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
+    finalizeInsertedElements(_elements, _versionLabel, nextTransaction) {
+      transaction = nextTransaction;
+      return true;
+    }
+  });
+
+  assert.equal(controller.insertBlock('hero'), true);
+  assert.deepEqual(transaction.operations[0], {
+    type: 'element-presence',
+    elementId: 'hero-heading',
+    parentId: 'slide:slide-1',
+    before: { exists: false, index: 0, markup: '' },
+    after: {
+      exists: true,
+      index: 0,
+      markup: '<h2 data-editor-id="hero-heading">Hero</h2>'
+    }
+  });
 });
 
 test('block controller removes inserted nodes when history capture fails', () => {

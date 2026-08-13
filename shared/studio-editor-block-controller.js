@@ -62,6 +62,9 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -330,9 +333,44 @@
           }], { getElementId })
         : null;
       insertedElements.forEach((element) => activeSlide.appendChild(element));
-      const transaction = markupCapture && typeof markupCapture.createTransaction === 'function'
-        ? markupCapture.createTransaction()
+      const presenceElementIds = new Set();
+      const presenceItems = insertedElements.map((element) => {
+        const childNodes = activeSlide.children || activeSlide.childNodes;
+        const insertionIndex = childNodes
+          ? Array.prototype.indexOf.call(childNodes, element)
+          : -1;
+        let elementId = '';
+        try {
+          elementId = getElementId(element) || '';
+        } catch (err) {
+          elementId = '';
+        }
+        return {
+          elementId,
+          parentId: `slide:${slideId}`,
+          before: { exists: false, index: insertionIndex, markup: '' },
+          after: {
+            exists: true,
+            index: insertionIndex,
+            markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+          }
+        };
+      });
+      const canUsePresenceTransaction = !!createElementPresenceTransaction
+        && presenceItems.every((item) => {
+          if (!item.elementId || presenceElementIds.has(item.elementId)) return false;
+          presenceElementIds.add(item.elementId);
+          return item.parentId
+            && item.before.index >= 0
+            && !!item.after.markup.trim();
+        });
+      const presenceTransaction = canUsePresenceTransaction
+        ? createElementPresenceTransaction(presenceItems)
         : null;
+      const transaction = presenceTransaction
+        || (markupCapture && typeof markupCapture.createTransaction === 'function'
+          ? markupCapture.createTransaction()
+          : null);
       const versionLabel = `Auto: Inserted Block${blockId ? ` "${blockId}"` : ''}`;
       if (finalizeInsertedElements) {
         return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);

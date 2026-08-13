@@ -31,6 +31,11 @@
           getActiveSlide: options.getActiveSlide,
           prepareElement: options.prepareElement,
           createMarkupTransactionCapture: options.createMarkupTransactionCapture,
+          createElementPresenceTransaction: options.createElementPresenceTransaction
+            || (options.transactionApi
+              && typeof options.transactionApi.createStudioElementPresenceTransaction === 'function'
+              ? options.transactionApi.createStudioElementPresenceTransaction
+              : null),
           getElementId: options.getElementId,
           finalizeInsertedElements: options.finalizeInsertedElements,
           finalizeMutation: options.finalizeMutation,

@@ -28,6 +28,9 @@ test('block runtime composes canonical and persistence dependencies', () => {
     getActiveSlide: () => null,
     prepareElement: () => {},
     createMarkupTransactionCapture: () => null,
+    transactionApi: {
+      createStudioElementPresenceTransaction: () => null
+    },
     getElementId: () => '',
     finalizeInsertedElements: () => false,
     finalizeMutation: () => false,
@@ -44,6 +47,10 @@ test('block runtime composes canonical and persistence dependencies', () => {
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
   assert.equal(calls[0].renderApi, options.renderApi);
+  assert.equal(
+    calls[0].createElementPresenceTransaction,
+    options.transactionApi.createStudioElementPresenceTransaction
+  );
   assert.equal(calls[0].getSelectedNodeIds, options.getSelectedNodeIds);
   assert.equal(calls[0].finalizeMutation, options.finalizeMutation);
   assert.equal(calls[0].saveHistoryState, options.saveHistoryState);
