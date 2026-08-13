@@ -33,6 +33,7 @@
             || (root && root.SlideNextStudioEditorTransaction)
             || null,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           resolveReadyState: options.resolveReadyState,
           getDocument: options.getDocument,

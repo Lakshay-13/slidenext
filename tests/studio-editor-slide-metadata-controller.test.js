@@ -17,6 +17,7 @@ test('slide metadata controller assembles metadata and canonical dependencies', 
     canonicalDeckApi: { id: 'canonical-deck-api' },
     transactionApi: { id: 'transaction-api' },
     buildCanonicalDeck: () => ({ slides: [] }),
+    getPendingCanonicalDeck: () => ({ id: 'pending-baseline' }),
     getCanonicalDeckBaseline: () => ({ id: 'live-baseline' }),
     resolveReadyState: () => ({ canUseDeckActions: true }),
     getDocument: () => ({ id: 'doc' }),
@@ -39,6 +40,7 @@ test('slide metadata controller assembles metadata and canonical dependencies', 
   assert.equal(options.canonicalDeckApi.id, 'canonical-deck-api');
   assert.equal(options.transactionApi.id, 'transaction-api');
   assert.equal(options.getCanonicalDeckBaseline().id, 'live-baseline');
+  assert.equal(options.getPendingCanonicalDeck().id, 'pending-baseline');
   assert.equal(options.metadataMethod, 'applyStudioSlideSection');
   assert.equal(options.versionLabel, 'Auto: Updated Slide Section');
   assert.equal(options.getDocument().id, 'doc');

@@ -18,6 +18,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeckBaseline === 'function'
       ? options.buildCanonicalDeckBaseline
       : typeof options.buildCanonicalDeck === 'function'
@@ -39,6 +42,7 @@
     if (createCanonicalDeckResolver) {
       const resolveCanonicalDeck = createCanonicalDeckResolver({
         getCanonicalDeck: () => null,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -51,6 +55,7 @@
     }
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -144,6 +149,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildCanonicalMetadataBaseline = (baselineOptions = {}) => (
       buildStudioCanonicalMetadataBaseline({
         ...baselineOptions,
@@ -151,6 +159,7 @@
         canonicalStateApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline
       })
     );

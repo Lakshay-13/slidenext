@@ -39,6 +39,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canUseDeckActions: false });
@@ -71,6 +74,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         resolveReadyState,
         getDocument,

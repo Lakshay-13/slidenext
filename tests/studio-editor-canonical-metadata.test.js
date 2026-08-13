@@ -62,6 +62,27 @@ test('buildStudioCanonicalMetadataBaseline prefers a valid live canonical deck',
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalMetadataBaseline prefers pending canonical state over live state', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', notes: 'Live' }]
+  });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', notes: 'Pending' }]
+  });
+
+  const result = metadata.buildStudioCanonicalMetadataBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    buildCanonicalDeckBaseline() {
+      throw new Error('pending state should prevent a compatibility rebuild');
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+});
+
 test('buildStudioCanonicalMetadataBaseline delegates baseline resolution to canonical state', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
@@ -106,6 +127,7 @@ test('buildStudioCanonicalMetadataBaseline prefers the shared canonical deck res
         throw new Error('legacy baseline reader should not be used');
       }
     },
+    getPendingCanonicalDeck: () => sourceDeck,
     getCanonicalDeckBaseline: () => ({ invalid: true }),
     buildCanonicalDeckBaseline: () => ({ invalid: true }),
     sourceDocument: { id: 'editor-doc' }
@@ -113,6 +135,7 @@ test('buildStudioCanonicalMetadataBaseline prefers the shared canonical deck res
 
   assert.equal(result, sourceDeck);
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

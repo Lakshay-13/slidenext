@@ -24,6 +24,7 @@ test('slide metadata runtime composes metadata controller dependencies', () => {
     canonicalDeckApi: {},
     transactionApi: {},
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     resolveReadyState: () => ({}),
     getDocument: () => null,
@@ -43,6 +44,7 @@ test('slide metadata runtime composes metadata controller dependencies', () => {
   assert.equal(calls[0].metadataApi, options.metadataApi);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].finalizeMutation, options.finalizeMutation);
   assert.equal(calls[0].rollbackMutation, options.rollbackMutation);
 });

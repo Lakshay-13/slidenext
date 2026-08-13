@@ -3211,6 +3211,7 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
           getDocument: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
