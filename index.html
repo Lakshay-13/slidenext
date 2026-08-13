@@ -1532,6 +1532,7 @@
   <script src="/shared/studio-editor-persistence-action-current-action.js"></script>
   <script src="/shared/studio-editor-persistence-stale-action.js"></script>
   <script src="/shared/studio-editor-persistence-capture-action.js"></script>
+  <script src="/shared/studio-editor-version-checkpoint-state-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2262,6 +2263,34 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistenceCaptureGlobalApi);
+    const studioEditorVersionCheckpointStateAction =
+      typeof SlideNextStudioEditorVersionCheckpointStateAction !== 'undefined'
+      && SlideNextStudioEditorVersionCheckpointStateAction
+      && typeof SlideNextStudioEditorVersionCheckpointStateAction
+        .createStudioEditorVersionCheckpointStateAction === 'function'
+      ? SlideNextStudioEditorVersionCheckpointStateAction
+        .createStudioEditorVersionCheckpointStateAction({
+          getDocument: getIframeDoc,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken,
+          getResolvePersistenceStateFromCapture: () => resolveCurrentStudioPersistenceStateFromCapture,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null
+        })
+      : null;
+    const studioEditorVersionCheckpointStateGlobalApi =
+      typeof SlideNextStudioEditorVersionCheckpointStateAction !== 'undefined'
+      && SlideNextStudioEditorVersionCheckpointStateAction
+      && typeof SlideNextStudioEditorVersionCheckpointStateAction
+        .createStudioEditorVersionCheckpointStateGlobalApi === 'function'
+      ? SlideNextStudioEditorVersionCheckpointStateAction
+        .createStudioEditorVersionCheckpointStateGlobalApi({
+          resolveCurrentStudioVersionCheckpointPersistenceState:
+            studioEditorVersionCheckpointStateAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorVersionCheckpointStateGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -12155,13 +12184,9 @@
       presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
-      return resolveCurrentStudioPersistenceStateFromCapture(doc, {
-        presentationUrl,
-        resolvePersistenceStateFromCapture: SlideNextStudioEditorPersistence.resolveStudioVersionCheckpointPersistenceStateFromCapture,
-        persistenceOptions: {
-          sessionToken
-        }
-      });
+      return studioEditorVersionCheckpointStateAction
+        ? studioEditorVersionCheckpointStateAction(...arguments)
+        : null;
     }
     
     async function submitSaveVersion() {

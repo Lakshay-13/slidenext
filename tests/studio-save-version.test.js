@@ -17,6 +17,7 @@ const versionPersistenceSuccessAction = require('../shared/studio-editor-version
 const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
 const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
 const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
+const versionCheckpointStateAction = require('../shared/studio-editor-version-checkpoint-state-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -650,6 +651,22 @@ function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, contex
 }
 
 function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorVersionCheckpointStateAction =
+    versionCheckpointStateAction.createStudioEditorVersionCheckpointStateAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getSessionToken: () => typeof context.getStudioEditorSessionToken === 'function'
+        ? context.getStudioEditorSessionToken()
+        : context.studioEditorSessionToken || null,
+      getResolvePersistenceStateFromCapture: () =>
+        context.resolveCurrentStudioPersistenceStateFromCapture || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioVersionCheckpointPersistenceState(',
