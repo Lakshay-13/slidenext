@@ -27,6 +27,7 @@ test('applyStudioSlideInsertionMutationWithTransaction delegates insertion and m
       },
       containerElementId: 'container-1',
       beforeNode: { id: 'slide-2' },
+      skipMarkupTransactionCapture: true,
       getElementId: () => 'slide-1'
     }
   );
@@ -37,6 +38,7 @@ test('applyStudioSlideInsertionMutationWithTransaction delegates insertion and m
   assert.equal(typeof delegated.options.applyStudioSlideInsertionMutation, 'function');
   assert.equal(typeof delegated.options.createStudioMarkupTransactionCapture, 'function');
   assert.equal(delegated.options.containerElementId, 'container-1');
+  assert.equal(delegated.options.skipMarkupTransactionCapture, true);
 });
 
 test('applyStudioSlideInsertionMutationWithTransaction fails closed without a shared slide-command adapter', () => {

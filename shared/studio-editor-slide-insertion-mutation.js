@@ -42,6 +42,7 @@
       createStudioMarkupTransactionCapture,
       containerElementId: options.containerElementId,
       beforeNode: options.beforeNode,
+      skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
       getElementId: options.getElementId
     });
   }

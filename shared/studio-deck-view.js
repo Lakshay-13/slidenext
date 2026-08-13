@@ -820,7 +820,8 @@
       && options.containerElementId.trim()
       ? options.containerElementId.trim()
       : 'slides-container';
-    const markupCapture = createMarkupTransactionCapture
+    const markupCapture = options.skipMarkupTransactionCapture !== true
+      && createMarkupTransactionCapture
       ? createMarkupTransactionCapture([{
           element: container,
           elementId: containerElementId

@@ -375,6 +375,31 @@ test('applyStudioSlideInsertionMutation appends a slide node and captures the co
   });
 });
 
+test('applyStudioSlideInsertionMutation skips the legacy markup capture when requested', () => {
+  const slideNode = { id: 'slide-2' };
+  const container = {
+    innerHTML: '<section data-slide-id="slide-1"></section>',
+    appendChild(node) {
+      assert.equal(node, slideNode);
+      this.innerHTML = '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section>';
+      return node;
+    }
+  };
+  let captureCalls = 0;
+
+  const result = deckView.applyStudioSlideInsertionMutation(container, slideNode, {
+    skipMarkupTransactionCapture: true,
+    createMarkupTransactionCapture() {
+      captureCalls += 1;
+      return studioTransaction.createStudioMarkupTransactionCapture([]);
+    }
+  });
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction, null);
+  assert.equal(captureCalls, 0);
+});
+
 test('applyStudioSlideInsertionMutation inserts before a sibling when requested', () => {
   const slideNode = { id: 'slide-2' };
   const beforeNode = { id: 'slide-3' };

@@ -295,8 +295,6 @@
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
-    const mutation = applyInsertion(container, newSlide);
-    if (!mutation || !mutation.didApply) return false;
     const slidePresenceTransaction = createStudioSlidePresenceTransaction
       ? createStudioSlidePresenceTransaction([{
           slideId: getSlideId(newSlide),
@@ -308,6 +306,10 @@
           }
         }])
       : null;
+    const mutation = applyInsertion(container, newSlide, {
+      skipMarkupTransactionCapture: !!slidePresenceTransaction
+    });
+    if (!mutation || !mutation.didApply) return false;
     const appliedMutation = slidePresenceTransaction
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
@@ -615,6 +617,7 @@
         createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
         containerElementId,
         beforeNode: options.beforeNode,
+        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
         getElementId: options.getElementId
       });
       return {
@@ -631,7 +634,8 @@
       };
     }
 
-    const markupCapture = createStudioMarkupTransactionCapture
+    const markupCapture = options.skipMarkupTransactionCapture !== true
+      && createStudioMarkupTransactionCapture
       ? createStudioMarkupTransactionCapture([{
           element: container,
           elementId: containerElementId

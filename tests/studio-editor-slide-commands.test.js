@@ -414,9 +414,10 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
       assert.deepEqual(canonicalDeck.slides.map((slide) => slide.id), ['slide-1']);
       calls.push('saveHistoryState');
     },
-    applyInsertion(sourceContainer, slide) {
+    applyInsertion(sourceContainer, slide, options) {
       assert.equal(sourceContainer, container);
       assert.equal(slide, newSlide);
+      assert.equal(options.skipMarkupTransactionCapture, false);
       calls.push('applyInsertion');
       return { didApply: true, transaction: { type: 'markup' } };
     },
@@ -457,6 +458,7 @@ test('addStudioSlideNode prefers a scoped slide-presence transaction when the ne
   const container = { id: 'slides-container' };
   const newSlide = { id: 'slide-2', outerHTML: '<section id="slide-2"></section>' };
   let finalizedTransaction = null;
+  let insertionOptions = null;
 
   const result = slideCommands.addStudioSlideNode({
     getIframeDoc: () => doc,
@@ -467,7 +469,10 @@ test('addStudioSlideNode prefers a scoped slide-presence transaction when the ne
     createBlankSlide: () => newSlide,
     buildCanonicalAddSlideBaseline: () => null,
     buildCanonicalAddSlideDeck: () => null,
-    applyInsertion: () => ({ didApply: true, transaction: { type: 'markup' } }),
+    applyInsertion: (_container, _slide, options) => {
+      insertionOptions = options;
+      return { didApply: true, transaction: { type: 'markup' } };
+    },
     createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
     finalizeMutation: (_label, transaction) => {
       finalizedTransaction = transaction;
@@ -475,6 +480,7 @@ test('addStudioSlideNode prefers a scoped slide-presence transaction when the ne
   });
 
   assert.equal(result, true);
+  assert.equal(insertionOptions.skipMarkupTransactionCapture, true);
   assert.deepEqual(finalizedTransaction.operations, [{
     type: 'slide-presence',
     slideId: 'slide-2',
@@ -1112,6 +1118,7 @@ test('applyStudioSlideInsertionWithTransaction delegates the shared slide mutati
     createStudioMarkupTransactionCapture() {},
     containerElementId: 'deck-slides',
     beforeNode,
+    skipMarkupTransactionCapture: true,
     getElementId() {}
   });
 
@@ -1121,6 +1128,7 @@ test('applyStudioSlideInsertionWithTransaction delegates the shared slide mutati
   });
   assert.equal(delegatedOptions.containerElementId, 'deck-slides');
   assert.equal(delegatedOptions.beforeNode, beforeNode);
+  assert.equal(delegatedOptions.skipMarkupTransactionCapture, true);
   assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
 });
 
