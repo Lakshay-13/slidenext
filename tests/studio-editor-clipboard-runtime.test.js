@@ -28,6 +28,7 @@ test('clipboard runtime composes clipboard and canonical insertion dependencies'
     getEditorSlideId: () => '',
     assignElementId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     insertClipboardPayload: () => [],
     finalizeInsertedElements: () => false
@@ -42,6 +43,7 @@ test('clipboard runtime composes clipboard and canonical insertion dependencies'
   assert.equal(calls[0].deckImportApi, options.deckImportApi);
   assert.equal(calls[0].buildClipboardSelectionMutationPlan, options.buildClipboardSelectionMutationPlan);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].insertClipboardPayload, options.insertClipboardPayload);
 });
 

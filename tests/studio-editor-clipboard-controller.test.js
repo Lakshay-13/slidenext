@@ -387,11 +387,16 @@ test('clipboard controller rebuilds canonical state from the live post-insertion
   assert.equal(typeof insertionBuilderOptions.buildCanonicalDeckBaseline, 'function');
 });
 
-test('clipboard controller applies inserted nodes to a validated live canonical baseline first', () => {
+test('clipboard controller applies inserted nodes to a validated pending canonical baseline first', () => {
   const liveCanonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
     slides: [{ id: 'slide-1', nodes: [{ id: 'existing' }] }]
+  };
+  const pendingCanonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [{ id: 'pending-existing' }] }]
   };
   let baselineUsed = null;
   let finalizedCanonicalDeck = null;
@@ -408,7 +413,7 @@ test('clipboard controller applies inserted nodes to a validated live canonical 
     },
     canonicalDeckApi: {
       isCanonicalDeck(value) {
-        return value === liveCanonicalDeck;
+        return value === liveCanonicalDeck || value === pendingCanonicalDeck;
       }
     },
     canonicalInsertionApi: {
@@ -425,6 +430,7 @@ test('clipboard controller applies inserted nodes to a validated live canonical 
     getIframeDoc: () => ({ id: 'editor-document' }),
     getActiveSlide: () => ({ id: 'slide-1' }),
     getEditorSlideId: (slide) => slide.id,
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
     buildCanonicalDeck() {
       throw new Error('The DOM fallback should not run when live canonical state is valid');
@@ -438,7 +444,7 @@ test('clipboard controller applies inserted nodes to a validated live canonical 
   });
 
   assert.equal(controller.paste(), true);
-  assert.equal(baselineUsed, liveCanonicalDeck);
+  assert.equal(baselineUsed, pendingCanonicalDeck);
   assert.deepEqual(finalizedCanonicalDeck.slides[0].nodes.map((node) => node.id), [
     'existing',
     'pasted'

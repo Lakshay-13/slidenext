@@ -58,6 +58,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const insertClipboardPayload = typeof options.insertClipboardPayload === 'function'
       ? options.insertClipboardPayload
       : () => [];
@@ -94,6 +97,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline,
               importElementToCanonicalNode
             })
@@ -108,13 +112,21 @@
 
     function buildCanonicalInsertionContext(items) {
       const buildCanonicalInsertionSequence = getCanonicalInsertionSequence();
-      if (!buildCanonicalInsertionSequence && !getCanonicalDeckBaseline) return null;
+      if (!buildCanonicalInsertionSequence && !getPendingCanonicalDeck && !getCanonicalDeckBaseline) return null;
       const doc = getIframeDoc();
       const activeSlide = getActiveSlide(doc);
       const slideId = getEditorSlideId(activeSlide);
       if (!doc || !slideId) return null;
       let canonicalDeckBefore = null;
-      if (getCanonicalDeckBaseline) {
+      if (getPendingCanonicalDeck) {
+        try {
+          const candidate = getPendingCanonicalDeck(doc);
+          if (isValidCanonicalDeck(candidate)) canonicalDeckBefore = candidate;
+        } catch (error) {
+          canonicalDeckBefore = null;
+        }
+      }
+      if (!canonicalDeckBefore && getCanonicalDeckBaseline) {
         try {
           const candidate = getCanonicalDeckBaseline(doc);
           if (isValidCanonicalDeck(candidate)) canonicalDeckBefore = candidate;
@@ -140,6 +152,16 @@
       let liveCanonicalDeck = context && context.canonicalDeckBefore
         ? context.canonicalDeckBefore
         : null;
+      if (!liveCanonicalDeck && getPendingCanonicalDeck) {
+        try {
+          liveCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+        } catch (err) {
+          liveCanonicalDeck = null;
+        }
+        if (liveCanonicalDeck && !isValidCanonicalDeck(liveCanonicalDeck)) {
+          liveCanonicalDeck = null;
+        }
+      }
       if (!liveCanonicalDeck && getCanonicalDeckBaseline) {
         try {
           liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);

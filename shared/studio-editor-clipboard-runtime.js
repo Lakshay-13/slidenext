@@ -33,6 +33,7 @@
           getEditorSlideId: options.getEditorSlideId,
           assignElementId: options.assignElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           insertClipboardPayload: options.insertClipboardPayload,
           finalizeInsertedElements: options.finalizeInsertedElements
