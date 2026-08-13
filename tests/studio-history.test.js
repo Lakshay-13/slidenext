@@ -411,6 +411,38 @@ test('buildStudioHistoryEntry resolves live editor history state before delegati
   });
 });
 
+test('buildStudioHistoryEntry uses a supplied canonical deck before rebuilding from the document', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+
+  const entry = studioHistory.buildStudioHistoryEntry({ id: 'stale-doc' }, {
+    canonicalDeck,
+    preferCanonicalDeck: true,
+    buildCanonicalDeck() {
+      throw new Error('history should not rebuild supplied canonical state');
+    },
+    buildHistoryHtml() {
+      throw new Error('model-first history should not build HTML');
+    },
+    getActiveSlideId() {
+      return 'slide-1';
+    },
+    getSelectedElementIds() {
+      return [];
+    }
+  });
+
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck
+  });
+});
+
 test('buildStudioHistoryEntry falls back to HTML when canonical rebuild fails', () => {
   const doc = { id: 'legacy-doc' };
   const entry = studioHistory.buildStudioHistoryEntry(doc, {

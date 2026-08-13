@@ -196,17 +196,24 @@
       : createStudioHistoryEntry;
 
     const nextDoc = doc || getDocument();
-    let canonicalDeck = null;
-    try {
-      canonicalDeck = buildCanonicalDeck(nextDoc, {
-        preferLiveCanonicalDeck: false
-      });
-      if (!isValidStudioHistoryCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
+    let canonicalDeck = isValidStudioHistoryCanonicalDeck(
+      options.canonicalDeck,
+      isCanonicalDeck
+    )
+      ? options.canonicalDeck
+      : null;
+    if (!canonicalDeck) {
+      try {
+        canonicalDeck = buildCanonicalDeck(nextDoc, {
+          preferLiveCanonicalDeck: false
+        });
+        if (!isValidStudioHistoryCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
+          canonicalDeck = null;
+        }
+      } catch (err) {
+        // Preserve history capture for legacy or partially supported decks.
         canonicalDeck = null;
       }
-    } catch (err) {
-      // Preserve history capture for legacy or partially supported decks.
-      canonicalDeck = null;
     }
     const historyOptions = getHistoryOptions();
 

@@ -101,6 +101,29 @@ test('createStudioEditorHistoryEntryBuilder reads pending canonical state for ea
   assert.equal(calls[1].preferCanonicalDeck, true);
 });
 
+test('createStudioEditorHistoryEntryBuilder forwards pending canonical state directly', () => {
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  let capturedCanonicalDeck = null;
+  let buildCalls = 0;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        capturedCanonicalDeck = options.canonicalDeck;
+        return { canonicalDeck: options.canonicalDeck };
+      }
+    },
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return { kind: 'slidenext.deck', slides: [] };
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), { canonicalDeck: pendingCanonicalDeck });
+  assert.equal(capturedCanonicalDeck, pendingCanonicalDeck);
+  assert.equal(buildCalls, 0);
+});
+
 test('createStudioEditorHistoryEntryBuilder rebuilds canonical state for transaction captures', () => {
   const baselineDeck = { kind: 'slidenext.deck', slides: [{ id: 'baseline' }] };
   const mutatedDeck = { kind: 'slidenext.deck', slides: [{ id: 'mutated' }] };

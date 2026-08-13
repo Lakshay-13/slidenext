@@ -188,7 +188,8 @@
       }
       const pendingCanonicalDeck = getPendingCanonicalDeck();
       const pendingTransaction = getPendingTransaction();
-      const historyCanonicalDeckBuilder = isValidCanonicalDeck(pendingCanonicalDeck)
+      const hasPendingCanonicalDeck = isValidCanonicalDeck(pendingCanonicalDeck);
+      const historyCanonicalDeckBuilder = hasPendingCanonicalDeck
         ? () => pendingCanonicalDeck
         : isViewOnlyTransaction(pendingTransaction)
           ? () => null
@@ -222,7 +223,8 @@
         getSelectedElementIds,
         isCanonicalDeck,
         transaction: pendingTransaction,
-        preferCanonicalDeck: options.preferCanonicalDeck === true
+        preferCanonicalDeck: options.preferCanonicalDeck === true,
+        ...(hasPendingCanonicalDeck ? { canonicalDeck: pendingCanonicalDeck } : {})
       });
     };
   }
