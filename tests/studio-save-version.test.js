@@ -19,6 +19,7 @@ const persistenceStaleAction = require('../shared/studio-editor-persistence-stal
 const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
 const versionCheckpointStateAction = require('../shared/studio-editor-version-checkpoint-state-action.js');
 const versionCheckpointSaveAction = require('../shared/studio-editor-version-checkpoint-save-action.js');
+const autoVersion = require('../shared/studio-editor-auto-version-controller.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -640,6 +641,25 @@ function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, c
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',
     '\n\n    // 6. AutoSave debouncing pipeline'
   );
+  vm.runInContext(helperSource, context);
+}
+
+function loadExecuteSaveAutoVersion(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
+    '\n\n    // 7. Versions and Backups listing'
+  );
+  context.studioEditorAutoVersionExecutor = autoVersion.createStudioEditorAutoVersionExecutor({
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    isTaskStale: context.isCurrentStudioPersistenceTaskStale,
+    getDocument: context.getIframeDoc,
+    resolvePersistenceState: context.resolveCurrentStudioVersionCheckpointPersistenceState,
+    isPersistedState: context.isCurrentDeckStatePersisted,
+    buildSaveRequestBody: context.buildEditorSaveRequestBody,
+    saveCheckpoint: context.executeCurrentStudioVersionCheckpointSaveWithFailure,
+    logger: context.console || null
+  });
   vm.runInContext(helperSource, context);
 }
 
@@ -1592,11 +1612,6 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
 
 test('executeSaveAutoVersion skips persistence when editor content is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   let saveVersionCalls = 0;
   const context = {
@@ -1645,7 +1660,7 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 
@@ -1654,11 +1669,6 @@ test('executeSaveAutoVersion skips persistence when editor content is unavailabl
 
 test('executeSaveAutoVersion fails closed when the checkpoint persisted-state checker is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
   const versionCheckpointPersistenceState = {
     cleanHtml: '<html>checkpoint</html>',
     persistenceContext: { presentationUrl: '/presentations/demo/index.html' }
@@ -1697,7 +1707,7 @@ test('executeSaveAutoVersion fails closed when the checkpoint persisted-state ch
   };
 
   vm.createContext(context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   assert.equal(
     await context.executeSaveAutoVersion(
@@ -1711,11 +1721,6 @@ test('executeSaveAutoVersion fails closed when the checkpoint persisted-state ch
 
 test('executeSaveAutoVersion can save the persisted html baseline when the editor frame is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   const loadVersionsCalls = [];
   const logCalls = [];
@@ -1799,7 +1804,7 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 
@@ -1819,11 +1824,6 @@ test('executeSaveAutoVersion can save the persisted html baseline when the edito
 
 test('executeSaveAutoVersion skips redundant auto version saves when the captured state already matches the persisted baseline', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   const loadVersionsCalls = [];
   const logCalls = [];
@@ -1904,7 +1904,7 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
   loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   const result = await context.executeSaveAutoVersion('Auto: Edited Text');
 
@@ -2309,11 +2309,6 @@ test('submitSaveVersion reports network save errors through the shared persisten
 
 test('executeSaveAutoVersion reuses the local version checkpoint failure-aware helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   let helperArgs = null;
   const logCalls = [];
@@ -2379,7 +2374,7 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 
@@ -2393,11 +2388,6 @@ test('executeSaveAutoVersion reuses the local version checkpoint failure-aware h
 
 test('executeSaveAutoVersion reports unsuccessful checkpoint responses through the failure-aware helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   const errorCalls = [];
   const versionCheckpointPersistenceState = {
@@ -2459,7 +2449,7 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   vm.runInContext('executeCurrentStudioVersionCheckpointSaveWithFailure = __executeCurrentStudioVersionCheckpointSaveWithFailure;', context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 
@@ -2468,11 +2458,6 @@ test('executeSaveAutoVersion reports unsuccessful checkpoint responses through t
 
 test('executeSaveAutoVersion reuses the shared version checkpoint success helper when the failure-aware helper delegates to it', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const executeSaveAutoVersionSource = extractFunctionSource(
-    fileContent,
-    'async function executeSaveAutoVersion(label, presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {',
-    '\n\n    // 7. Versions and Backups listing'
-  );
 
   let successHelperArgs = null;
   const logCalls = [];
@@ -2547,7 +2532,7 @@ test('executeSaveAutoVersion reuses the shared version checkpoint success helper
   loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context);
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
-  vm.runInContext(executeSaveAutoVersionSource, context);
+  loadExecuteSaveAutoVersion(fileContent, context);
 
   await context.executeSaveAutoVersion('Auto: Edited Text');
 

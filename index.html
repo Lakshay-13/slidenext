@@ -12280,52 +12280,6 @@
         && typeof studioEditorAutoVersionExecutor.execute === 'function') {
         return studioEditorAutoVersionExecutor.execute(label, presentationUrl, sessionToken);
       }
-      if (isCurrentStudioPersistenceTaskStale(presentationUrl, sessionToken)) return;
-      const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
-        iframeDoc,
-        presentationUrl,
-        sessionToken
-      );
-      if (!versionCheckpointPersistenceState) return;
-
-      const isStudioVersionCheckpointSavePersisted = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.isStudioVersionCheckpointSavePersisted
-        : null;
-      if (!isStudioVersionCheckpointSavePersisted) return true;
-      if (isStudioVersionCheckpointSavePersisted(
-        label,
-        versionCheckpointPersistenceState,
-        presentationUrl,
-        {
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody
-        }
-      )) {
-        return false;
-      }
-      
-      try {
-        await executeCurrentStudioVersionCheckpointSaveWithFailure(
-          label,
-          versionCheckpointPersistenceState,
-          presentationUrl,
-          {
-            onSuccess: () => {
-              console.log(`Auto-created version checkpoint: ${label}`);
-            },
-            onFailure: (data = {}) => {
-              console.error(`Failed to auto-create version backup: ${data.error}`);
-            }
-          }
-        );
-      } catch (err) {
-        console.error('Failed to auto-create version backup:', err);
-      }
     }
 
     // 7. Versions and Backups listing

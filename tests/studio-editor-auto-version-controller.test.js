@@ -101,6 +101,25 @@ test('auto-version executor skips stale or already-persisted checkpoints', async
   assert.equal(saveCalls, 0);
 });
 
+test('auto-version executor fails closed when the persisted-state checker is unavailable', async () => {
+  let saveCalls = 0;
+  const executor = autoVersion.createStudioEditorAutoVersionExecutor({
+    persistenceApi: {},
+    getDocument: () => ({ id: 'iframe-doc' }),
+    resolvePersistenceState: () => ({
+      persistenceContext: { presentationUrl: '/deck/index.html' }
+    }),
+    saveCheckpoint: () => {
+      saveCalls += 1;
+    }
+  });
+
+  const result = await executor.execute('Auto: Edited Text', '/deck/index.html', 10);
+
+  assert.equal(result, true);
+  assert.equal(saveCalls, 0);
+});
+
 test('auto-version executor forwards checkpoint callbacks and reports failures', async () => {
   const logCalls = [];
   const errorCalls = [];

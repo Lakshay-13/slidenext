@@ -73,6 +73,10 @@
     const persistenceApi = options.persistenceApi && typeof options.persistenceApi === 'object'
       ? options.persistenceApi
       : null;
+    const isVersionCheckpointSavePersisted = persistenceApi
+      && typeof persistenceApi.isStudioVersionCheckpointSavePersisted === 'function'
+      ? persistenceApi.isStudioVersionCheckpointSavePersisted
+      : null;
     const isTaskStale = typeof options.isTaskStale === 'function'
       ? options.isTaskStale
       : () => false;
@@ -110,17 +114,16 @@
       );
       if (!persistenceState) return;
 
-      if (persistenceApi
-        && typeof persistenceApi.isStudioVersionCheckpointSavePersisted === 'function'
-        && persistenceApi.isStudioVersionCheckpointSavePersisted(
-          label,
-          persistenceState,
-          presentationUrl,
-          {
-            isPersistedState,
-            buildSaveRequestBody
-          }
-        )) {
+      if (!isVersionCheckpointSavePersisted) return true;
+      if (isVersionCheckpointSavePersisted(
+        label,
+        persistenceState,
+        presentationUrl,
+        {
+          isPersistedState,
+          buildSaveRequestBody
+        }
+      )) {
         return false;
       }
 
