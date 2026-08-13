@@ -1366,6 +1366,7 @@
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-transaction.js"></script>
+  <script src="/shared/studio-editor-layer-order-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
@@ -8365,24 +8366,26 @@
     }
 
     function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {
-      const rollbackApi = typeof SlideNextStudioEditorLayerOrderRollback !== 'undefined'
-        ? SlideNextStudioEditorLayerOrderRollback
+      const rollbackAdapter = typeof SlideNextStudioEditorLayerOrderRollbackAdapter !== 'undefined'
+        ? SlideNextStudioEditorLayerOrderRollbackAdapter
         : null;
-      const rollbackMutation = rollbackApi
-        && typeof rollbackApi.rollbackStudioEditorLayerOrderMutation === 'function'
-        ? rollbackApi.rollbackStudioEditorLayerOrderMutation
+      const rollbackMutation = rollbackAdapter
+        && typeof rollbackAdapter.rollbackStudioEditorLayerOrderMutation === 'function'
+        ? rollbackAdapter.rollbackStudioEditorLayerOrderMutation
         : null;
-      return rollbackMutation
-        ? rollbackMutation(transaction, sourceDoc, {
-            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-              ? SlideNextStudioEditorTransaction
-              : null,
-            getIframeDoc: typeof getIframeDoc === 'function' ? getIframeDoc : () => null,
-            getElementByEditorId: typeof getElementByEditorId === 'function'
-              ? getElementByEditorId
-              : () => null
-          })
-        : false;
+      if (!rollbackMutation) return false;
+      return rollbackMutation(transaction, sourceDoc, {
+        rollbackApi: typeof SlideNextStudioEditorLayerOrderRollback !== 'undefined'
+          ? SlideNextStudioEditorLayerOrderRollback
+          : null,
+        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+          ? SlideNextStudioEditorTransaction
+          : null,
+        getIframeDoc: typeof getIframeDoc === 'function' ? getIframeDoc : null,
+        getElementByEditorId: typeof getElementByEditorId === 'function'
+          ? getElementByEditorId
+          : null
+      });
     }
 
     function reorderSlideLayers(action, targetElements = getStudioSelectedElements(), options = {}) {

@@ -10,6 +10,7 @@ const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
 const layerOrderTransaction = require('../shared/studio-editor-layer-order-transaction.js');
 const layerOrderRollback = require('../shared/studio-editor-layer-order-rollback.js');
+const layerOrderRollbackAdapter = require('../shared/studio-editor-layer-order-rollback-adapter.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
@@ -105,6 +106,7 @@ function loadLayerOrderMutationHelper(fileContent, context) {
 
 function loadLayerOrderRollbackHelper(fileContent, context) {
   context.SlideNextStudioEditorLayerOrderRollback = layerOrderRollback;
+  context.SlideNextStudioEditorLayerOrderRollbackAdapter = layerOrderRollbackAdapter;
   const helperSource = extractFunctionSource(
     fileContent,
     'function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {',
