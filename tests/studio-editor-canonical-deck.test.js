@@ -40,6 +40,26 @@ test('canonical deck builder prioritizes overrides and session-scoped live state
   assert.deepEqual(calls, [['live', documentRef]]);
 });
 
+test('canonical deck builder prefers pending state before live state', () => {
+  const pendingDeck = createDeck('pending');
+  const liveDeck = createDeck('live');
+  const documentRef = {};
+  const calls = [];
+  const builder = canonicalDeckBuilder.createStudioCanonicalDeckBuilder({
+    getPendingCanonicalDeck(doc) {
+      calls.push(['pending', doc]);
+      return pendingDeck;
+    },
+    resolveLiveCanonicalDeck(doc) {
+      calls.push(['live', doc]);
+      return liveDeck;
+    }
+  });
+
+  assert.equal(builder(documentRef), pendingDeck);
+  assert.deepEqual(calls, [['pending', documentRef]]);
+});
+
 test('canonical deck builder uses the shared editor shape predicate when available', () => {
   const context = {
     module: { exports: {} },

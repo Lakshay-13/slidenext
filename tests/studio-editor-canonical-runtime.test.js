@@ -74,6 +74,7 @@ test('canonical runtime composes state, builders, and bridge with shared depende
   assert.equal(calls[0][1].isCanonicalDeck, isCanonicalDeck);
   assert.equal(calls[1][1].getCurrentPresentationMetadata, callbacks.getCurrentPresentationMetadata);
   assert.equal(calls[1][1].getNodeId, callbacks.getNodeId);
+  assert.equal(calls[1][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[2][1].buildCanonicalDeck, callbacks.buildCanonicalDeck);
   assert.equal(calls[2][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
   assert.equal(calls[3][1].state, state);

@@ -40,6 +40,9 @@
     const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
       ? options.resolveLiveCanonicalDeck
       : () => null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveStoredCanonicalBaseline = typeof options.resolveStoredCanonicalBaseline === 'function'
       ? options.resolveStoredCanonicalBaseline
       : () => null;
@@ -69,6 +72,18 @@
         : null;
       if (isValidCanonicalDeck(canonicalDeckOverride)) {
         return canonicalDeckOverride;
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(normalizedBuildOptions, 'canonicalDeckBaseline')
+        && getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(doc, normalizedBuildOptions);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) {
+            return pendingCanonicalDeck;
+          }
+        } catch (error) {
+          // Continue through live, stored, and DOM-derived fallback sources.
+        }
       }
 
       if (normalizedBuildOptions.preferLiveCanonicalDeck !== false && doc) {

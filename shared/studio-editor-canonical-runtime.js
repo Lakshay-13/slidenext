@@ -53,6 +53,7 @@
           getCurrentPresentationMetadata: options.getCurrentPresentationMetadata,
           getPersistedCanonicalDeck: options.getPersistedCanonicalDeck,
           resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           resolveStoredCanonicalBaseline: options.resolveStoredCanonicalBaseline,
           buildPresentationMetadataSeed: options.buildPresentationMetadataSeed,
           getPresentationUrl: options.getPresentationUrl,
