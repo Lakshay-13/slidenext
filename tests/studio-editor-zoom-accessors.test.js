@@ -67,6 +67,32 @@ test('zoom accessors preserve safe no-controller fallbacks', () => {
   assert.equal(accessors.zoomSelectChange('1.0'), false);
 });
 
+test('zoom global api preserves the editor shell function names and contracts', () => {
+  const calls = [];
+  const accessors = {
+    syncCanvasRulers: () => calls.push('sync'),
+    applyZoom: (value) => calls.push(['apply', value]),
+    zoomIn: () => calls.push('in'),
+    zoomOut: () => calls.push('out'),
+    zoomSelectChange: (value) => calls.push(['select', value])
+  };
+  const globalApi = accessorsApi.createStudioEditorZoomGlobalApi({ accessors });
+
+  globalApi.syncCanvasRulers();
+  assert.equal(globalApi.applyZoom('fit'), undefined);
+  globalApi.zoomIn();
+  globalApi.zoomOut();
+  globalApi.zoomSelectChange('1.2');
+
+  assert.deepEqual(calls, [
+    'sync',
+    ['apply', 'fit'],
+    'in',
+    'out',
+    ['select', '1.2']
+  ]);
+});
+
 test('zoom accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -75,6 +101,11 @@ test('zoom accessors publish the global consumed by the editor shell', () => {
   assert.equal(
     typeof context.globalThis.SlideNextStudioEditorZoomAccessors
       .createStudioEditorZoomAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextStudioEditorZoomAccessors
+      .createStudioEditorZoomGlobalApi,
     'function'
   );
 });
@@ -88,4 +119,11 @@ test('editor loads zoom accessors after the zoom runtime', () => {
   );
   assert.match(fileContent, /createStudioEditorZoomAccessors\(/);
   assert.match(fileContent, /studioEditorZoomAccessors/);
+  assert.match(fileContent, /createStudioEditorZoomGlobalApi\(/);
+  assert.match(fileContent, /Object\.assign\(globalThis, studioEditorZoomGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function syncCanvasRulers\(\)/);
+  assert.doesNotMatch(fileContent, /function applyZoom\(scaleVal\)/);
+  assert.doesNotMatch(fileContent, /function zoomIn\(\)/);
+  assert.doesNotMatch(fileContent, /function zoomOut\(\)/);
+  assert.doesNotMatch(fileContent, /function zoomSelectChange\(val\)/);
 });

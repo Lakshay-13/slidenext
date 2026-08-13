@@ -665,7 +665,7 @@ test('applyWallpaperToAllSlides uses the shared iframe accessor and propagates t
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const iframeDoc = { id: 'doc' };
@@ -737,7 +737,7 @@ test('applyWallpaperToAllSlides delegates slide mutation to the shared wallpaper
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const iframeDoc = { id: 'doc' };
@@ -784,7 +784,7 @@ test('applyWallpaperToAllSlides uses canonical active-slide paint', () => {
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
   const iframeDoc = { id: 'doc' };
   const activeSlide = { style: { background: '#000000' } };
@@ -833,7 +833,7 @@ test('applyWallpaperToAllSlides records one style transaction per changed slide'
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const iframeDoc = { id: 'doc' };
@@ -898,7 +898,7 @@ test('applyWallpaperToAllSlides exits when the shared iframe accessor has no act
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const calls = [];
@@ -955,7 +955,7 @@ test('applyWallpaperToAllSlides skips persistence and alerts when every slide al
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const iframeDoc = { id: 'doc' };

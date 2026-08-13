@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const zoomView = require('../shared/studio-editor-zoom.js');
 const zoomController = require('../shared/studio-editor-zoom-controller.js');
+const zoomAccessorsApi = require('../shared/studio-editor-zoom-accessors.js');
 const deckView = require('../shared/studio-deck-view.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -68,13 +69,6 @@ test('shared zoom view resolves a control step from the document select', () => 
 });
 
 test('applyZoom tolerates a missing zoom select while fitting the canvas', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyZoomSource = extractFunctionSource(
-    fileContent,
-    'function applyZoom(scaleVal) {',
-    '\n\n    function zoomIn() {'
-  );
-
   const stage = {
     clientWidth: 1400,
     clientHeight: 900
@@ -112,7 +106,7 @@ test('applyZoom tolerates a missing zoom select while fitting the canvas', () =>
     SlideNextStudioEditorZoom: require('../shared/studio-editor-zoom.js'),
     zoomFactor: 1
   };
-  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+  const controller = zoomController.createStudioEditorZoomController({
     zoomApi: context.SlideNextStudioEditorZoom,
     documentRef: context.document,
     localStorageRef: context.localStorage,
@@ -122,10 +116,13 @@ test('applyZoom tolerates a missing zoom select while fitting the canvas', () =>
     }
   });
 
-  vm.createContext(context);
-  vm.runInContext(applyZoomSource, context);
+  const globalApi = zoomAccessorsApi.createStudioEditorZoomGlobalApi({
+    accessors: zoomAccessorsApi.createStudioEditorZoomAccessors({
+      zoomController: controller
+    })
+  });
 
-  assert.doesNotThrow(() => context.applyZoom('fit'));
+  assert.doesNotThrow(() => globalApi.applyZoom('fit'));
   assert.ok(Number.isFinite(context.zoomFactor));
   assert.ok(context.zoomFactor >= 0.15 && context.zoomFactor <= 1.5);
   assert.equal(typeof scroller.style.width, 'string');
@@ -358,23 +355,6 @@ test('updateZoomActionState caches the shared zoom toolbar synchronizer when ava
 });
 
 test('zoom helpers no-op safely when zoom readiness is disabled and still tolerate a missing zoom select', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const zoomInSource = extractFunctionSource(
-    fileContent,
-    'function zoomIn() {',
-    '\n\n    function zoomOut() {'
-  );
-  const zoomOutSource = extractFunctionSource(
-    fileContent,
-    'function zoomOut() {',
-    '\n\n    function zoomSelectChange(val) {'
-  );
-  const zoomSelectChangeSource = extractFunctionSource(
-    fileContent,
-    'function zoomSelectChange(val) {',
-    '\n\n    // 5. Undo/Redo Engine'
-  );
-
   let zoomSelect = null;
   let applyZoomCalls = 0;
   let canUseZoomControls = false;
@@ -385,8 +365,11 @@ test('zoom helpers no-op safely when zoom readiness is disabled and still tolera
         return zoomSelect;
       }
     },
-    applyZoom() {
-      applyZoomCalls += 1;
+    SlideNextStudioEditorZoom: {
+      applyStudioZoom() {
+        applyZoomCalls += 1;
+        return { didApply: true, zoomFactor: 1 };
+      }
     },
     resolveCurrentStudioZoomActionState() {
       return {
@@ -395,44 +378,35 @@ test('zoom helpers no-op safely when zoom readiness is disabled and still tolera
     },
     zoomFactor: 1
   };
-  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+  const controller = zoomController.createStudioEditorZoomController({
+    zoomApi: context.SlideNextStudioEditorZoom,
     documentRef: context.document,
     resolveActionState: () => context.resolveCurrentStudioZoomActionState(),
     getZoomFactor: () => context.zoomFactor,
     applyZoom: undefined
   });
 
-  vm.createContext(context);
-  vm.runInContext(zoomInSource, context);
-  vm.runInContext(zoomOutSource, context);
-  vm.runInContext(zoomSelectChangeSource, context);
+  const globalApi = zoomAccessorsApi.createStudioEditorZoomGlobalApi({
+    accessors: zoomAccessorsApi.createStudioEditorZoomAccessors({
+      zoomController: controller
+    })
+  });
 
-  assert.equal(context.zoomIn(), false);
-  assert.equal(context.zoomOut(), false);
-  assert.equal(context.zoomSelectChange('1.2'), false);
+  assert.equal(globalApi.zoomIn(), false);
+  assert.equal(globalApi.zoomOut(), false);
+  assert.equal(globalApi.zoomSelectChange('1.2'), false);
 
   canUseZoomControls = true;
-  assert.equal(context.zoomSelectChange('1.2'), true);
+  assert.equal(globalApi.zoomSelectChange('1.2'), true);
 
   zoomSelect = { disabled: true, value: '1.0' };
-  assert.equal(context.zoomIn(), true);
-  assert.equal(context.zoomOut(), true);
-  assert.equal(context.zoomSelectChange('1.2'), true);
+  assert.equal(globalApi.zoomIn(), true);
+  assert.equal(globalApi.zoomOut(), true);
+  assert.equal(globalApi.zoomSelectChange('1.2'), true);
   assert.equal(applyZoomCalls, 4);
 });
 
 test('zoomIn and zoomOut delegate step resolution to the shared zoom view', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const zoomInSource = extractFunctionSource(
-    fileContent,
-    'function zoomIn() {',
-    '\n\n    function zoomOut() {'
-  );
-  const zoomOutSource = extractFunctionSource(
-    fileContent,
-    'function zoomOut() {',
-    '\n\n    function zoomSelectChange(val) {'
-  );
   const select = { value: '1.0' };
   const applied = [];
   const context = {
@@ -444,31 +418,34 @@ test('zoomIn and zoomOut delegate step resolution to the shared zoom view', () =
     SlideNextStudioEditorZoom: {
       resolveStudioZoomControlStep(options) {
         return options.direction === 'in' ? 1.05 : 0.95;
+      },
+      applyStudioZoom({ scaleVal }) {
+        applied.push(scaleVal);
+        return { didApply: true, zoomFactor: Number(scaleVal) };
       }
     },
     resolveCurrentStudioZoomActionState() {
       return { canUseZoomControls: true };
     },
-    applyZoom(value) {
-      applied.push(value);
-    },
     zoomFactor: 1
   };
-  context.studioEditorZoomController = zoomController.createStudioEditorZoomController({
+  const controller = zoomController.createStudioEditorZoomController({
     zoomApi: context.SlideNextStudioEditorZoom,
     documentRef: context.document,
     resolveActionState: () => context.resolveCurrentStudioZoomActionState(),
     getZoomFactor: () => context.zoomFactor,
-    applyZoom(value) {
-      applied.push(value);
+    setZoomFactor(value) {
+      context.zoomFactor = value;
     }
   });
 
-  vm.createContext(context);
-  vm.runInContext(zoomInSource, context);
-  vm.runInContext(zoomOutSource, context);
+  const globalApi = zoomAccessorsApi.createStudioEditorZoomGlobalApi({
+    accessors: zoomAccessorsApi.createStudioEditorZoomAccessors({
+      zoomController: controller
+    })
+  });
 
-  assert.equal(context.zoomIn(), true);
-  assert.equal(context.zoomOut(), true);
+  assert.equal(globalApi.zoomIn(), true);
+  assert.equal(globalApi.zoomOut(), true);
   assert.deepEqual(applied, ['1.05', '0.95']);
 });

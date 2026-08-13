@@ -549,7 +549,7 @@ test('wallpaper mutation helpers no-op when wallpaper readiness or required cont
   const applyWallpaperToAllSlidesSource = extractFunctionSource(
     fileContent,
     'function applyWallpaperToAllSlides() {',
-    '\n\n    // 4. Zoom Engine (Center workspace stage)'
+    '\n\n    // 5. Undo/Redo Engine'
   );
 
   const activeSlide = { style: { background: 'black' } };

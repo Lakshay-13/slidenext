@@ -3795,6 +3795,17 @@
           zoomController: studioEditorZoomController
         })
       : null;
+    const studioEditorZoomGlobalApi = typeof SlideNextStudioEditorZoomAccessors !== 'undefined'
+      && SlideNextStudioEditorZoomAccessors
+      && typeof SlideNextStudioEditorZoomAccessors.createStudioEditorZoomGlobalApi === 'function'
+      ? SlideNextStudioEditorZoomAccessors.createStudioEditorZoomGlobalApi({
+          accessors: studioEditorZoomAccessors
+            || SlideNextStudioEditorZoomAccessors.createStudioEditorZoomAccessors({
+              zoomController: studioEditorZoomController
+            })
+        })
+      : {};
+    Object.assign(globalThis, studioEditorZoomGlobalApi);
     const DUPLICATE_OFFSET_PX = 24;
     const CANVAS_GUIDE_MARGIN_PX = 64;
     const editorConfiguration = typeof SlideNextStudioEditorConfiguration !== 'undefined'
@@ -10547,53 +10558,6 @@
 
       alert("Successfully applied active background paint to all slides in the deck.");
       return true;
-    }
-
-    function syncCanvasRulers() {
-      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
-        return studioEditorZoomAccessors.syncCanvasRulers();
-      }
-      if (!studioEditorZoomController
-        || typeof studioEditorZoomController.syncRulers !== 'function') return false;
-      return studioEditorZoomController.syncRulers();
-    }
-
-    // 4. Zoom Engine (Center workspace stage)
-    function applyZoom(scaleVal) {
-      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
-        studioEditorZoomAccessors.applyZoom(scaleVal);
-        return;
-      }
-      if (!studioEditorZoomController
-        || typeof studioEditorZoomController.apply !== 'function') return;
-      studioEditorZoomController.apply(scaleVal);
-    }
-
-    function zoomIn() {
-      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
-        return studioEditorZoomAccessors.zoomIn();
-      }
-      if (!studioEditorZoomController
-        || typeof studioEditorZoomController.zoomIn !== 'function') return false;
-      return studioEditorZoomController.zoomIn(applyZoom);
-    }
-
-    function zoomOut() {
-      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
-        return studioEditorZoomAccessors.zoomOut();
-      }
-      if (!studioEditorZoomController
-        || typeof studioEditorZoomController.zoomOut !== 'function') return false;
-      return studioEditorZoomController.zoomOut(applyZoom);
-    }
-
-    function zoomSelectChange(val) {
-      if (typeof studioEditorZoomAccessors !== 'undefined' && studioEditorZoomAccessors) {
-        return studioEditorZoomAccessors.zoomSelectChange(val);
-      }
-      if (!studioEditorZoomController
-        || typeof studioEditorZoomController.zoomSelectChange !== 'function') return false;
-      return studioEditorZoomController.zoomSelectChange(val, applyZoom);
     }
 
     // 5. Undo/Redo Engine

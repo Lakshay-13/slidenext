@@ -1,19 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
 const zoomController = require('../shared/studio-editor-zoom-controller.js');
-
-const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
-
-function extractFunctionSource(fileContent, startMarker, endMarker) {
-  const start = fileContent.indexOf(startMarker);
-  assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
-  const end = fileContent.indexOf(endMarker, start);
-  assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
-}
+const zoomAccessorsApi = require('../shared/studio-editor-zoom-accessors.js');
 
 function createRulerContainer(ownerDocument) {
   return {
@@ -29,12 +17,6 @@ function createRulerContainer(ownerDocument) {
 }
 
 test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper offset', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const source = extractFunctionSource(
-    fileContent,
-    'function syncCanvasRulers() {',
-    '\n\n    // 4. Zoom Engine'
-  );
   const ownerDocument = {
     createElement() {
       return {
@@ -76,10 +58,13 @@ test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper o
     documentRef: context.document,
     getZoomFactor: () => context.zoomFactor
   });
-  vm.createContext(context);
-  vm.runInContext(source, context);
+  const globalApi = zoomAccessorsApi.createStudioEditorZoomGlobalApi({
+    accessors: zoomAccessorsApi.createStudioEditorZoomAccessors({
+      zoomController: context.studioEditorZoomController
+    })
+  });
 
-  assert.equal(context.syncCanvasRulers(), true);
+  assert.equal(globalApi.syncCanvasRulers(), true);
   assert.equal(horizontal.children[0].style.left, '-20px');
   assert.equal(horizontal.children[1].textContent, '0');
   assert.equal(horizontal.children[2].style.left, '-10px');
@@ -89,12 +74,6 @@ test('syncCanvasRulers renders zoomed ticks against the visible canvas wrapper o
 });
 
 test('syncCanvasRulers delegates ruler rendering to the shared coordinator', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const source = extractFunctionSource(
-    fileContent,
-    'function syncCanvasRulers() {',
-    '\n\n    // 4. Zoom Engine'
-  );
   const calls = [];
   const context = {
     document: {},
@@ -112,10 +91,13 @@ test('syncCanvasRulers delegates ruler rendering to the shared coordinator', () 
     getZoomFactor: () => context.zoomFactor
   });
 
-  vm.createContext(context);
-  vm.runInContext(source, context);
+  const globalApi = zoomAccessorsApi.createStudioEditorZoomGlobalApi({
+    accessors: zoomAccessorsApi.createStudioEditorZoomAccessors({
+      zoomController: context.studioEditorZoomController
+    })
+  });
 
-  assert.equal(context.syncCanvasRulers(), 'delegated');
+  assert.equal(globalApi.syncCanvasRulers(), 'delegated');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].documentRef, context.document);
   assert.equal(calls[0].zoomFactor, 0.75);

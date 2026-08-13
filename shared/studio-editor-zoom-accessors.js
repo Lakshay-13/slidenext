@@ -29,5 +29,22 @@
     };
   }
 
-  return { createStudioEditorZoomAccessors };
+  function createStudioEditorZoomGlobalApi(options = {}) {
+    const accessors = options.accessors || createStudioEditorZoomAccessors(options);
+
+    return {
+      syncCanvasRulers: () => accessors.syncCanvasRulers(),
+      applyZoom: (scaleValue) => {
+        accessors.applyZoom(scaleValue);
+      },
+      zoomIn: () => accessors.zoomIn(),
+      zoomOut: () => accessors.zoomOut(),
+      zoomSelectChange: (value) => accessors.zoomSelectChange(value)
+    };
+  }
+
+  return {
+    createStudioEditorZoomAccessors,
+    createStudioEditorZoomGlobalApi
+  };
 });
