@@ -415,8 +415,6 @@
     const applyDeletion = typeof options.applyDeletion === 'function'
       ? options.applyDeletion
       : () => ({ didApply: false, transaction: null });
-    const mutation = applyDeletion(container, deletedSlide);
-    if (!mutation || !mutation.didApply) return false;
     const slidePresenceTransaction = createStudioSlidePresenceTransaction
       ? createStudioSlidePresenceTransaction([{
           slideId: deletedSlideId,
@@ -428,6 +426,10 @@
           after: { exists: false, index, markup: '' }
         }])
       : null;
+    const mutation = applyDeletion(container, deletedSlide, {
+      skipMarkupTransactionCapture: !!slidePresenceTransaction
+    });
+    if (!mutation || !mutation.didApply) return false;
     const appliedMutation = slidePresenceTransaction
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
@@ -680,6 +682,7 @@
       const mutation = applyStudioSlideDeletionMutation(container, slideNode, {
         createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
         containerElementId,
+        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
         getElementId: options.getElementId
       });
       return {
@@ -695,7 +698,8 @@
       };
     }
 
-    const markupCapture = createStudioMarkupTransactionCapture
+    const markupCapture = options.skipMarkupTransactionCapture !== true
+      && createStudioMarkupTransactionCapture
       ? createStudioMarkupTransactionCapture([{
           element: container,
           elementId: containerElementId

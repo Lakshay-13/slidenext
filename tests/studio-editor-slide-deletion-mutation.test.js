@@ -26,6 +26,7 @@ test('applyStudioSlideDeletionMutationWithTransaction delegates deletion and mar
         createStudioMarkupTransactionCapture: studioTransaction.createStudioMarkupTransactionCapture
       },
       containerElementId: 'container-1',
+      skipMarkupTransactionCapture: true,
       getElementId: () => 'slide-1'
     }
   );
@@ -36,6 +37,7 @@ test('applyStudioSlideDeletionMutationWithTransaction delegates deletion and mar
   assert.equal(typeof delegated.options.applyStudioSlideDeletionMutation, 'function');
   assert.equal(typeof delegated.options.createStudioMarkupTransactionCapture, 'function');
   assert.equal(delegated.options.containerElementId, 'container-1');
+  assert.equal(delegated.options.skipMarkupTransactionCapture, true);
 });
 
 test('applyStudioSlideDeletionMutationWithTransaction fails closed without a shared slide-command adapter', () => {

@@ -41,6 +41,7 @@
       applyStudioSlideDeletionMutation,
       createStudioMarkupTransactionCapture,
       containerElementId: options.containerElementId,
+      skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
       getElementId: options.getElementId
     });
   }

@@ -747,6 +747,7 @@ test('deleteStudioSlideNode prefers a scoped slide-presence transaction when the
   const firstSlide = { id: 'slide-1' };
   let slides = [firstSlide, deletedSlide];
   let finalizedTransaction = null;
+  let deletionOptions = null;
 
   const result = slideCommands.deleteStudioSlideNode(1, {
     getIframeDoc: () => doc,
@@ -758,7 +759,8 @@ test('deleteStudioSlideNode prefers a scoped slide-presence transaction when the
     }),
     getSlideId: (slide) => slide.id,
     createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
-    applyDeletion: () => {
+    applyDeletion: (_container, _slide, options) => {
+      deletionOptions = options;
       slides = [firstSlide];
       return { didApply: true, transaction: { type: 'legacy-markup' } };
     },
@@ -769,6 +771,7 @@ test('deleteStudioSlideNode prefers a scoped slide-presence transaction when the
   });
 
   assert.equal(result, true);
+  assert.equal(deletionOptions.skipMarkupTransactionCapture, true);
   assert.deepEqual(finalizedTransaction, {
     kind: 'slidenext.editor.transaction',
     version: 1,
@@ -1177,6 +1180,7 @@ test('applyStudioSlideDeletionWithTransaction delegates the shared slide mutatio
     },
     createStudioMarkupTransactionCapture() {},
     containerElementId: 'deck-slides',
+    skipMarkupTransactionCapture: true,
     getElementId() {}
   });
 
@@ -1185,6 +1189,7 @@ test('applyStudioSlideDeletionWithTransaction delegates the shared slide mutatio
     transaction: { type: 'markup' }
   });
   assert.equal(delegatedOptions.containerElementId, 'deck-slides');
+  assert.equal(delegatedOptions.skipMarkupTransactionCapture, true);
   assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
 });
 
