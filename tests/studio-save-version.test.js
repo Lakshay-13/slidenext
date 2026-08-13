@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -24,12 +25,16 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function loadCaptureEditorPersistableDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
-  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
-    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
-  );
-  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  context.captureEditorPersistableDeckBuildState =
+    buildStateAction.createStudioEditorPersistableDeckBuildStateAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getBuildPersistableDeckHtml: () => context.buildPersistableDeckHtml || null
+    });
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,

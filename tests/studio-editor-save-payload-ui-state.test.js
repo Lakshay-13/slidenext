@@ -12,6 +12,7 @@ const metadataPersistenceAction = require('../shared/studio-editor-metadata-pers
 const sanitizerAction = require('../shared/studio-editor-persistable-deck-sanitizer-action.js');
 const reusablePersistedHtmlSanitizerAction = require('../shared/studio-editor-reusable-persisted-html-sanitizer-action.js');
 const playbackStateAction = require('../shared/studio-editor-persisted-deck-playback-state-action.js');
+const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -127,6 +128,19 @@ function loadCapturePersistedDeckPlaybackState(context) {
             : null)
         );
       }
+  });
+}
+
+function loadCaptureEditorPersistableDeckBuildState(context) {
+  context.captureEditorPersistableDeckBuildState =
+    buildStateAction.createStudioEditorPersistableDeckBuildStateAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getBuildPersistableDeckHtml: () => context.buildPersistableDeckHtml || null
     });
 }
 
@@ -150,6 +164,9 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
   }
   if (typeof context.capturePersistedDeckPlaybackState !== 'function') {
     loadCapturePersistedDeckPlaybackState(context);
+  }
+  if (typeof context.captureEditorPersistableDeckBuildState !== 'function') {
+    loadCaptureEditorPersistableDeckBuildState(context);
   }
   if (typeof context.sanitizeEditorReusablePersistedHtml !== 'function') {
     loadSanitizeEditorReusablePersistedHtml(context);
@@ -2624,12 +2641,6 @@ test('resolveEditorCapturedPersistableDeckState delegates to the persistence con
 
 test('captureEditorPersistableDeckBuildState delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
-    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
-  );
-
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let factoryOptions = null;
@@ -2651,7 +2662,7 @@ test('captureEditorPersistableDeckBuildState delegates through the editor persis
   };
 
   vm.createContext(context);
-  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  loadCaptureEditorPersistableDeckBuildState(context);
 
   assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, {
     canonicalDeck
@@ -2665,11 +2676,6 @@ test('captureEditorPersistableDeckBuildState delegates through the editor persis
 
 test('captureEditorPersistableDeckBuildState creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
-    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -2690,7 +2696,7 @@ test('captureEditorPersistableDeckBuildState creates the shared persistence-stat
   };
 
   vm.createContext(context);
-  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  loadCaptureEditorPersistableDeckBuildState(context);
 
   const iframeDoc = { label: 'iframe-doc' };
   assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, { id: 1 }), { id: 1 });
@@ -2701,11 +2707,6 @@ test('captureEditorPersistableDeckBuildState creates the shared persistence-stat
 
 test('captureEditorPersistableDeckBuildState delegates to the persistence controller when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
-    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
-  );
   const iframeDoc = { label: 'iframe-doc' };
   const buildPersistableDeckHtml = () => '<html>built</html>';
   let delegatedArgs = null;
@@ -2720,7 +2721,7 @@ test('captureEditorPersistableDeckBuildState delegates to the persistence contro
   };
 
   vm.createContext(context);
-  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  loadCaptureEditorPersistableDeckBuildState(context);
 
   const buildOptions = { id: 1 };
   assert.deepEqual(context.captureEditorPersistableDeckBuildState(iframeDoc, buildOptions), { delegated: true });
@@ -2731,12 +2732,6 @@ test('captureEditorPersistableDeckBuildState delegates to the persistence contro
 
 test('captureEditorPersistableDeckBuildState reuses the shared build-state capturer when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const captureEditorPersistableDeckBuildStateSource = extractFunctionSource(
-    fileContent,
-    'function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {',
-    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
-  );
-
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -2773,7 +2768,7 @@ test('captureEditorPersistableDeckBuildState reuses the shared build-state captu
   };
 
   vm.createContext(context);
-  vm.runInContext(captureEditorPersistableDeckBuildStateSource, context);
+  loadCaptureEditorPersistableDeckBuildState(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.captureEditorPersistableDeckBuildState(iframeDoc, {
@@ -2954,7 +2949,7 @@ test('buildPersistableDeckHtml falls back to the persisted html baseline when th
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let sharedBuildCalls = 0;
@@ -3021,7 +3016,7 @@ test('buildPersistableDeckHtml fails closed when the shared persistence runtime 
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
   const context = {
     EDITOR_CHROME_NODE_IDS: ['editorSelectionOverlay'],
@@ -3062,7 +3057,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when the editor 
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let buildEditorCanonicalDeckCalls = 0;
@@ -3145,7 +3140,7 @@ test('buildPersistableDeckHtml falls back to the editor canonical deck when a pr
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let buildEditorCanonicalDeckCalls = 0;
@@ -3221,7 +3216,7 @@ test('buildPersistableDeckHtml reports the resolved canonical deck when the edit
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -4394,7 +4389,7 @@ test('buildPersistableDeckHtml delegates the no-document persistence flow throug
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let delegatedArgs = null;
@@ -4480,7 +4475,7 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html resolver
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let delegatedArgs = null;
@@ -4550,7 +4545,7 @@ test('buildPersistableDeckHtml reports canonical deck and playback state when th
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -4617,7 +4612,7 @@ test('buildPersistableDeckHtml delegates document dispatch through the persisten
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
   const doc = { label: 'iframe-doc' };
   const calls = [];
@@ -4664,7 +4659,7 @@ test('buildPersistableDeckHtml reuses the local persisted deck state-with-conten
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const calls = [];
@@ -4740,7 +4735,7 @@ test('buildPersistableDeckHtml reuses the local reusable persisted html sanitize
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   let delegatedArgs = null;
@@ -4827,7 +4822,7 @@ test('buildPersistableDeckHtml delegates the live-document persistence flow thro
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -4901,7 +4896,7 @@ test('buildPersistableDeckHtml resolves the canonical deck without a reporting c
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
@@ -4942,7 +4937,7 @@ test('buildPersistableDeckHtml reuses the local persistable deck sanitizer optio
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -5039,7 +5034,7 @@ test('buildPersistableDeckHtml prefers the shared persisted-content resolver bef
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -5115,7 +5110,7 @@ test('buildPersistableDeckHtml sanitizes reusable persisted html when a DOM pars
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -5215,7 +5210,7 @@ test('buildPersistableDeckHtml captures the live playback state before persistin
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -5281,7 +5276,7 @@ test('buildPersistableDeckHtml forwards metadata-derived persistence cleanup opt
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -5375,7 +5370,7 @@ test('buildPersistableDeckHtml reuses the local metadata persistence resolver wh
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -5451,7 +5446,7 @@ test('buildPersistableDeckHtml does not reuse stale persisted playback state whe
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -5508,7 +5503,7 @@ test('buildPersistableDeckHtml reuses a provided canonical deck when playback-st
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
   const iframeDoc = {
     label: 'iframe-doc',
@@ -6179,7 +6174,7 @@ test('buildPersistableDeckHtml reports the resolved live canonical deck when req
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -6244,7 +6239,7 @@ test('buildPersistableDeckHtml reports canonical deck and playback state for liv
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const iframeDoc = { label: 'iframe-doc' };
@@ -6316,7 +6311,7 @@ test('buildPersistableDeckHtml renders canonical deck html when the editor frame
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -6451,7 +6446,7 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -6553,7 +6548,7 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -6653,7 +6648,7 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const canonicalDeck = {
@@ -6745,7 +6740,7 @@ test('buildPersistableDeckHtml prefers rendered canonical html when the current 
   const buildPersistableDeckHtmlSource = extractFunctionSource(
     fileContent,
     'function buildPersistableDeckHtml(doc = getIframeDoc()) {',
-    '\n\n    function captureEditorPersistableDeckBuildState(doc = getIframeDoc(), buildOptions = {}) {'
+    '\n\n    function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {'
   );
 
   const persistedCanonicalDeck = {
