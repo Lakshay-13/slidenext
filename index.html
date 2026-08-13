@@ -1436,6 +1436,7 @@
   <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
+  <script src="/shared/studio-editor-master-slide-state.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-state.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
@@ -10615,49 +10616,35 @@
     }
 
     function updateMasterSlideActionState(doc = getIframeDoc()) {
-      const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
-        ? SlideNextStudioEditorMasterSlideView
+      const masterSlideStateApi = typeof SlideNextStudioEditorMasterSlideState !== 'undefined'
+        ? SlideNextStudioEditorMasterSlideState
         : null;
-      if (!masterSlideView || typeof masterSlideView.syncStudioMasterSlideState !== 'function') {
+      if (!masterSlideStateApi
+        || typeof masterSlideStateApi.createStudioEditorMasterSlideStateController !== 'function') {
         return false;
       }
-      if (typeof masterSlideView.createStudioMasterSlideStateSync === 'function') {
-        if (typeof updateMasterSlideActionState.sync !== 'function') {
-          updateMasterSlideActionState.sync = masterSlideView.createStudioMasterSlideStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => {
-              const canUse = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
-              const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(sourceDoc) : '';
-              const activeSlide = findEditorCanonicalSlideById(canonicalDeck, activeSlideId);
-              return {
-                masterSlides: canonicalDeck && canonicalDeck.masterSlides,
-                activeMasterSlideId: activeSlide && activeSlide.masterSlideId,
-                canUseMasterActions: canUse,
-                applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
-                removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null
-              };
-            },
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateMasterSlideActionState.sync === 'function') {
-          return updateMasterSlideActionState.sync(doc);
-        }
+      if (!updateMasterSlideActionState.controller) {
+        const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
+          ? SlideNextStudioEditorMasterSlideView
+          : null;
+        updateMasterSlideActionState.controller = masterSlideStateApi.createStudioEditorMasterSlideStateController({
+          masterSlideView,
+          getDocument: () => getIframeDoc(),
+          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+          getActiveSlideId: (sourceDoc) => typeof getActiveSlideId === 'function'
+            ? getActiveSlideId(sourceDoc)
+            : '',
+          findCanonicalSlide: (canonicalDeck, slideId) => findEditorCanonicalSlideById(canonicalDeck, slideId),
+          applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
+          removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null,
+          documentRef: document
+        });
       }
-      const canUse = !!getActiveSlide(doc);
-      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
-      const activeSlideId = typeof getActiveSlideId === 'function' ? getActiveSlideId(doc) : '';
-      const activeSlide = findEditorCanonicalSlideById(canonicalDeck, activeSlideId);
-      masterSlideView.syncStudioMasterSlideState({
-        documentRef: document,
-        masterSlides: canonicalDeck && canonicalDeck.masterSlides,
-        activeMasterSlideId: activeSlide && activeSlide.masterSlideId,
-        canUseMasterActions: canUse,
-        applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
-        removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null
-      });
-      return canUse;
+      return updateMasterSlideActionState.controller
+        && typeof updateMasterSlideActionState.controller.sync === 'function'
+        ? updateMasterSlideActionState.controller.sync(doc)
+        : false;
     }
 
     function updateBlockActionState(doc = getIframeDoc()) {
