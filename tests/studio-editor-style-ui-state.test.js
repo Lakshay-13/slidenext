@@ -11,6 +11,7 @@ const styleState = require('../shared/studio-editor-style.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
+const styleTransaction = require('../shared/studio-editor-style-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const styleController = require('../shared/studio-editor-style-controller.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -40,6 +41,7 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
 function loadStyleMutationHelper(fileContent, context) {
   context.SlideNextStudioEditorCanonicalStyle = canonicalStyle;
   context.SlideNextStudioEditorStyleMutation = styleMutation;
+  context.SlideNextStudioEditorStyleTransaction = styleTransaction;
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {',

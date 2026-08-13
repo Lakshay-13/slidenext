@@ -1565,6 +1565,7 @@
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
+  <script src="/shared/studio-editor-style-transaction.js"></script>
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-style-shell-runtime.js"></script>
@@ -10093,36 +10094,29 @@
     }
 
     function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorStyleMutation !== 'undefined'
-        ? SlideNextStudioEditorStyleMutation
+      const transactionApi = typeof SlideNextStudioEditorStyleTransaction !== 'undefined'
+        ? SlideNextStudioEditorStyleTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioStyleMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioStyleMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorStyleMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorStyleMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return { didApply: false, displayValue: `${value}`, transaction: null };
       }
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation(styleApi, selection, prop, value, {
+      return applyTransaction(styleApi, selection, prop, value, {
+        mutationApi: typeof SlideNextStudioEditorStyleMutation !== 'undefined'
+          ? SlideNextStudioEditorStyleMutation
+          : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
         chartApi: typeof SlideNextStudioEditorChartMutation !== 'undefined'
           ? SlideNextStudioEditorChartMutation
           : null,
-        getElementId,
-        applyStudioStyleMutation: styleApi
-          && typeof styleApi.applyStudioStyleMutation === 'function'
-          ? styleApi.applyStudioStyleMutation
+        getElementId: options.getElementId,
+        assignElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
           : null
       });
     }
