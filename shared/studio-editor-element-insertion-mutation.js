@@ -26,6 +26,10 @@
       && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
       ? transactionApi.createStudioMarkupTransactionCapture
       : null;
+    const createStudioElementPresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioElementPresenceTransaction === 'function'
+      ? transactionApi.createStudioElementPresenceTransaction
+      : null;
     const mutation = applyStudioElementInsertion(type, {
       documentRef: options.documentRef,
       slide: options.slide,
@@ -35,6 +39,7 @@
         ? options.prepareElement
         : null,
       createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      createElementPresenceTransaction: createStudioElementPresenceTransaction,
       transactionElementId: options.transactionElementId || '',
       getElementId: options.getElementId
     });

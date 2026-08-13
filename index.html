@@ -6895,6 +6895,57 @@
             }
             generateThumbnails();
             return true;
+          },
+          applyElementPresenceState: (elementId, parentId, snapshot) => {
+            const resolvedDoc = sourceDoc || getIframeDoc();
+            const normalizedElementId = typeof elementId === 'string' ? elementId.trim() : '';
+            const normalizedParentId = typeof parentId === 'string' ? parentId.trim() : '';
+            if (!normalizedElementId || !normalizedParentId || !snapshot || typeof snapshot !== 'object') {
+              return false;
+            }
+            const parent = typeof getElementByEditorId === 'function'
+              ? (normalizedParentId.startsWith('slide:') && typeof getSlideById === 'function'
+                ? getSlideById(normalizedParentId.slice('slide:'.length), resolvedDoc)
+                : getElementByEditorId(normalizedParentId, resolvedDoc))
+              : null;
+            if (!parent) return false;
+            const currentElement = typeof getElementByEditorId === 'function'
+              ? getElementByEditorId(normalizedElementId, resolvedDoc)
+              : null;
+            if (snapshot.exists !== true) {
+              if (!currentElement) return false;
+              if (typeof currentElement.remove === 'function') {
+                currentElement.remove();
+              } else if (currentElement.parentNode && typeof currentElement.parentNode.removeChild === 'function') {
+                currentElement.parentNode.removeChild(currentElement);
+              } else {
+                return false;
+              }
+            } else {
+              let element = currentElement;
+              if (!element) {
+                if (!resolvedDoc || typeof resolvedDoc.createElement !== 'function'
+                  || typeof snapshot.markup !== 'string' || !snapshot.markup.trim()) {
+                  return false;
+                }
+                const template = resolvedDoc.createElement('template');
+                if (!template) return false;
+                template.innerHTML = snapshot.markup;
+                element = template.content && template.content.firstElementChild;
+                if (!element) return false;
+              }
+              const childNodes = parent.children || parent.childNodes || [];
+              const beforeNode = childNodes[snapshot.index] || null;
+              if (beforeNode && beforeNode !== element && typeof parent.insertBefore === 'function') {
+                parent.insertBefore(element, beforeNode);
+              } else if (typeof parent.appendChild === 'function') {
+                parent.appendChild(element);
+              } else {
+                return false;
+              }
+              makeElementsHoverable(element);
+            }
+            return true;
           }
         });
         return !!(rollbackResult && rollbackResult.didApply);

@@ -385,6 +385,50 @@ test('rollbackEditorSlideMutation removes a scoped added slide-presence transact
   assert.equal(present, false);
 });
 
+test('rollbackEditorSlideMutation removes a scoped inserted element-presence transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let present = true;
+  const element = {
+    remove() {
+      present = false;
+    }
+  };
+  const parent = { children: [element] };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return { id: 'slidesContainer' };
+    }
+  };
+  const context = {
+    getIframeDoc: () => iframeDoc,
+    getSlideById(id, doc) {
+      assert.equal(id, 'slide-1');
+      assert.equal(doc, iframeDoc);
+      return parent;
+    },
+    getElementByEditorId(id, doc) {
+      assert.equal(doc, iframeDoc);
+      assert.equal(id, 'node-2');
+      return present ? element : null;
+    },
+    makeElementsHoverable() {},
+    generateThumbnails() {}
+  };
+  vm.createContext(context);
+  loadRollbackEditorSlideMutation(fileContent, context);
+
+  const transaction = studioTransaction.createStudioElementPresenceTransaction([{
+    elementId: 'node-2',
+    parentId: 'slide:slide-1',
+    before: { exists: false, index: 0, markup: '' },
+    after: { exists: true, index: 0, markup: '<h2 data-editor-id="node-2"></h2>' }
+  }]);
+
+  assert.equal(context.rollbackEditorSlideMutation(transaction, iframeDoc), true);
+  assert.equal(present, false);
+});
+
 test('finalizeSlideMutationPersistence delegates lifecycle ordering to the shared mutation module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { kind: 'slidenext.editor.transaction' };

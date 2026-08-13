@@ -157,6 +157,53 @@
       return true;
     }
 
+    function applyElementPresenceState(elementId, parentId, snapshot) {
+      const normalizedElementId = typeof elementId === 'string' ? elementId.trim() : '';
+      const normalizedParentId = typeof parentId === 'string' ? parentId.trim() : '';
+      if (!normalizedElementId || !normalizedParentId || !snapshot || typeof snapshot !== 'object') {
+        return false;
+      }
+      const iframeDoc = getIframeDoc();
+      const parent = resolveElementById(normalizedParentId, iframeDoc);
+      if (!parent) return false;
+      const currentElement = resolveElementById(normalizedElementId, iframeDoc);
+
+      if (snapshot.exists !== true) {
+        if (!currentElement) return false;
+        if (typeof currentElement.remove === 'function') {
+          currentElement.remove();
+        } else if (currentElement.parentNode && typeof currentElement.parentNode.removeChild === 'function') {
+          currentElement.parentNode.removeChild(currentElement);
+        } else {
+          return false;
+        }
+      } else {
+        let element = currentElement;
+        if (!element) {
+          if (!iframeDoc || typeof iframeDoc.createElement !== 'function'
+            || typeof snapshot.markup !== 'string' || !snapshot.markup.trim()) {
+            return false;
+          }
+          const template = iframeDoc.createElement('template');
+          if (!template) return false;
+          template.innerHTML = snapshot.markup;
+          element = template.content && template.content.firstElementChild;
+          if (!element) return false;
+        }
+        const childNodes = parent.children || parent.childNodes || [];
+        const beforeNode = childNodes[snapshot.index] || null;
+        if (beforeNode && beforeNode !== element && typeof parent.insertBefore === 'function') {
+          parent.insertBefore(element, beforeNode);
+        } else if (typeof parent.appendChild === 'function') {
+          parent.appendChild(element);
+        } else {
+          return false;
+        }
+        makeElementsHoverable(element);
+      }
+      return true;
+    }
+
     function syncRestoredCanonicalState(historyEntry, iframeDoc) {
       let restoredCanonicalDeck = historyEntry && isValidCanonicalDeck(
         historyEntry.canonicalDeck,
@@ -234,6 +281,7 @@
               return true;
             },
             applySlidePresenceState,
+            applyElementPresenceState,
             applyVisibilityState: elementStateApi
               && typeof elementStateApi.applyStudioElementVisibilityState === 'function'
               ? elementStateApi.applyStudioElementVisibilityState

@@ -167,6 +167,48 @@ test('slide-presence transactions replay a scoped slide snapshot without resolvi
   ]);
 });
 
+test('element-presence transactions replay a scoped inserted node without resolving an element', () => {
+  const elementPresenceTransaction = transaction.createStudioElementPresenceTransaction([{
+    elementId: 'node-2',
+    parentId: 'slide:slide-1',
+    before: { exists: false, index: 0, markup: '' },
+    after: { exists: true, index: 0, markup: '<h2 data-editor-id="node-2">Heading</h2>' }
+  }]);
+  const applied = [];
+
+  assert.deepEqual(transaction.applyStudioEditorTransaction(elementPresenceTransaction, 'redo', {
+    getElementById() {
+      throw new Error('element-presence should not resolve an element');
+    },
+    applyElementPresenceState(elementId, parentId, snapshot) {
+      applied.push([elementId, parentId, snapshot]);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'redo'
+  });
+  assert.deepEqual(transaction.applyStudioEditorTransaction(elementPresenceTransaction, 'undo', {
+    applyElementPresenceState(elementId, parentId, snapshot) {
+      applied.push([elementId, parentId, snapshot]);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'undo'
+  });
+  assert.deepEqual(applied, [
+    ['node-2', 'slide:slide-1', {
+      exists: true,
+      index: 0,
+      markup: '<h2 data-editor-id="node-2">Heading</h2>'
+    }],
+    ['node-2', 'slide:slide-1', { exists: false, index: 0, markup: '' }]
+  ]);
+});
+
 test('applyStudioEditorTransaction replays active-slide operations without resolving an element', () => {
   const activeSlideIds = [];
   const activeSlideTransaction = transaction.createStudioActiveSlideTransaction('slide-1', 'slide-2');

@@ -136,3 +136,49 @@ test('applyStudioElementInsertion prepares, appends, and captures the inserted e
     'createTransaction'
   ]);
 });
+
+test('applyStudioElementInsertion prefers a scoped element-presence transaction when the node is serializable', () => {
+  const documentRef = createDocument();
+  const slide = {
+    children: [],
+    appendChild(element) {
+      this.children.push(element);
+      return element;
+    }
+  };
+  const calls = [];
+
+  const result = insertion.applyStudioElementInsertion('h2', {
+    documentRef,
+    slide,
+    transactionElementId: 'slide:slide-1',
+    getElementId: () => 'node-2',
+    prepareElement(element) {
+      element.outerHTML = '<h2 data-editor-id="node-2">Heading</h2>';
+    },
+    createMarkupTransactionCapture() {
+      return {
+        createTransaction() {
+          return { id: 'legacy-markup' };
+        }
+      };
+    },
+    createElementPresenceTransaction(items) {
+      calls.push(items);
+      return { id: 'element-presence' };
+    }
+  });
+
+  assert.deepEqual(result.transaction, { id: 'element-presence' });
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0][0], {
+    elementId: 'node-2',
+    parentId: 'slide:slide-1',
+    before: { exists: false, index: 0, markup: '' },
+    after: {
+      exists: true,
+      index: 0,
+      markup: '<h2 data-editor-id="node-2">Heading</h2>'
+    }
+  });
+});

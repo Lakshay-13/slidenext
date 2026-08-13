@@ -922,6 +922,9 @@
     const applySlidePresenceState = typeof options.applySlidePresenceState === 'function'
       ? options.applySlidePresenceState
       : null;
+    const applyElementPresenceState = typeof options.applyElementPresenceState === 'function'
+      ? options.applyElementPresenceState
+      : null;
     const applyMarkupState = typeof options.applyMarkupState === 'function'
       ? options.applyMarkupState
       : () => false;
@@ -936,6 +939,7 @@
           applyActiveSlideState,
           applySlideOrderState,
           applySlidePresenceState,
+          applyElementPresenceState,
           applyMarkupState
         }
       );
@@ -971,6 +975,7 @@
               applyActiveSlideState,
               applySlideOrderState,
               applySlidePresenceState,
+              applyElementPresenceState,
               applyMarkupState
             }
           );

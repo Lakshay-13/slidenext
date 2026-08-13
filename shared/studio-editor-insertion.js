@@ -254,6 +254,9 @@ function trainEpoch(model, data) {
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const transactionElementId = typeof options.transactionElementId === 'string'
       ? options.transactionElementId.trim()
       : '';
@@ -268,11 +271,28 @@ function trainEpoch(model, data) {
 
     slide.appendChild(element);
 
+    const elementId = typeof options.getElementId === 'function'
+      ? options.getElementId(element)
+      : element && element.dataset && element.dataset.editorId;
+    const childNodes = slide.children || slide.childNodes || [];
+    const insertionIndex = Array.prototype.indexOf.call(childNodes, element);
+    const elementPresenceTransaction = createElementPresenceTransaction
+      ? createElementPresenceTransaction([{
+          elementId,
+          parentId: transactionElementId,
+          before: { exists: false, index: Math.max(0, insertionIndex), markup: '' },
+          after: {
+            exists: true,
+            index: Math.max(0, insertionIndex),
+            markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+          }
+        }])
+      : null;
+
     return {
       element,
-      transaction: markupCapture
-        ? markupCapture.createTransaction()
-        : null
+      transaction: elementPresenceTransaction
+        || (markupCapture ? markupCapture.createTransaction() : null)
     };
   }
 
