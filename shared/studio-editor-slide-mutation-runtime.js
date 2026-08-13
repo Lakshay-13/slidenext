@@ -51,6 +51,7 @@
     const slideInsertionController = insertionApi
       ? insertionApi.createStudioEditorSlideInsertionController({
           ...shared,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           resolveInsertionActionState: options.resolveInsertionActionState,
           createBlankSlide: options.createBlankSlide,
           saveHistoryState: options.saveHistoryState,

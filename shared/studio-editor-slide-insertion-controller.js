@@ -51,6 +51,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
@@ -98,6 +101,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline,
               importSlideToCanonicalSlide,
               getSlideId
