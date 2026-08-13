@@ -1531,6 +1531,7 @@
   <script src="/shared/studio-editor-version-persistence-success-action.js"></script>
   <script src="/shared/studio-editor-persistence-action-current-action.js"></script>
   <script src="/shared/studio-editor-persistence-stale-action.js"></script>
+  <script src="/shared/studio-editor-persistence-capture-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2226,6 +2227,41 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistenceStaleGlobalApi);
+    const studioEditorPersistenceCaptureAction =
+      typeof SlideNextStudioEditorPersistenceCaptureAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceCaptureAction
+      && typeof SlideNextStudioEditorPersistenceCaptureAction
+        .createStudioEditorPersistenceCaptureAction === 'function'
+      ? SlideNextStudioEditorPersistenceCaptureAction
+        .createStudioEditorPersistenceCaptureAction({
+          getDocument: getIframeDoc,
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getCapturePersistableDeckState: () => captureEditorPersistableDeckState
+        })
+      : null;
+    const studioEditorPersistenceCaptureGlobalApi =
+      typeof SlideNextStudioEditorPersistenceCaptureAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceCaptureAction
+      && typeof SlideNextStudioEditorPersistenceCaptureAction
+        .createStudioEditorPersistenceCaptureGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistenceCaptureAction
+        .createStudioEditorPersistenceCaptureGlobalApi({
+          resolveCurrentStudioPersistenceStateFromCapture:
+            studioEditorPersistenceCaptureAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistenceCaptureGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11534,88 +11570,9 @@
     }
 
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
-      const nextOptions = options && typeof options === 'object'
-        ? options
-        : {};
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.resolvePersistenceStateFromCapture === 'function') {
-        const resolvedState = studioEditorPersistenceController.resolvePersistenceStateFromCapture(doc, nextOptions);
-        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
-          return resolvedState;
-        }
-      }
-      const createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter
+      return studioEditorPersistenceCaptureAction
+        ? studioEditorPersistenceCaptureAction(...arguments)
         : null;
-      if (createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter) {
-        if (typeof resolveCurrentStudioPersistenceStateFromCapture.adapter !== 'function') {
-          resolveCurrentStudioPersistenceStateFromCapture.adapter = createStudioEditorPersistenceStateFromDocumentCaptureResolverAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            getPresentationUrl: getStudioCurrentPresentationUrl,
-            capturePersistableDeckState: captureEditorPersistableDeckState
-          });
-        }
-        const resolvedState = typeof resolveCurrentStudioPersistenceStateFromCapture.adapter === 'function'
-          ? resolveCurrentStudioPersistenceStateFromCapture.adapter(doc, nextOptions)
-          : null;
-        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
-          return resolvedState;
-        }
-      }
-      const createStudioPersistenceStateFromDocumentCaptureResolver = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceStateFromDocumentCaptureResolver === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistenceStateFromDocumentCaptureResolver
-        : null;
-      if (createStudioPersistenceStateFromDocumentCaptureResolver) {
-        return createStudioPersistenceStateFromDocumentCaptureResolver({
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          capturePersistableDeckState: captureEditorPersistableDeckState,
-          resolvePersistenceStateFromDocumentCapture: (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture === 'function'
-          )
-            ? SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture
-            : null
-        })(doc, nextOptions);
-      }
-
-      if (typeof nextOptions.resolvePersistenceStateFromCapture !== 'function') {
-        return null;
-      }
-      const resolveStudioPersistenceStateFromDocumentCapture = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.resolveStudioPersistenceStateFromDocumentCapture
-        : null;
-      if (!resolveStudioPersistenceStateFromDocumentCapture) return null;
-      return resolveStudioPersistenceStateFromDocumentCapture(
-        doc,
-        typeof nextOptions.presentationUrl === 'string' && nextOptions.presentationUrl
-          ? nextOptions.presentationUrl
-          : getStudioCurrentPresentationUrl(),
-        {
-          capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
-            ? nextOptions.capturePersistableDeckState
-            : captureEditorPersistableDeckState,
-          persistenceOptions: nextOptions.persistenceOptions && typeof nextOptions.persistenceOptions === 'object' && !Array.isArray(nextOptions.persistenceOptions)
-            ? { ...nextOptions.persistenceOptions }
-            : {}
-        },
-        nextOptions.resolvePersistenceStateFromCapture
-      );
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {

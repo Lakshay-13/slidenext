@@ -16,6 +16,7 @@ const persistenceSuccessAction = require('../shared/studio-editor-persistence-su
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
 const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
+const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -626,6 +627,20 @@ function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
 }
 
 function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceCaptureAction =
+    persistenceCaptureAction.createStudioEditorPersistenceCaptureAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getCapturePersistableDeckState: () => context.captureEditorPersistableDeckState || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',

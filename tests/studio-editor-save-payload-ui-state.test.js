@@ -25,6 +25,7 @@ const persistenceSuccessAction = require('../shared/studio-editor-persistence-su
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
 const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
+const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -422,6 +423,29 @@ function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
     fileContent,
     'function isCurrentStudioPersistenceTaskStale(',
     '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
+  );
+  vm.runInContext(source, context);
+}
+
+function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceCaptureAction =
+    persistenceCaptureAction.createStudioEditorPersistenceCaptureAction({
+      getDocument: () => typeof context.getIframeDoc === 'function'
+        ? context.getIframeDoc()
+        : null,
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getCapturePersistableDeckState: () => context.captureEditorPersistableDeckState || null
+    });
+  const source = extractFunctionSource(
+    fileContent,
+    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
+    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
   );
   vm.runInContext(source, context);
 }
@@ -1502,11 +1526,6 @@ test('createCurrentStudioPersistenceHandlerOptions creates the shared persistenc
 
 test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-state resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
-    fileContent,
-    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
-  );
 
   const doc = { label: 'iframe-doc' };
   let delegatedArgs = null;
@@ -1540,7 +1559,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveCurrentStudioPersistenceStateFromCapture(doc, {
@@ -1568,11 +1587,6 @@ test('resolveCurrentStudioPersistenceStateFromCapture reuses the shared capture-
 
 test('resolveCurrentStudioPersistenceStateFromCapture delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
-    fileContent,
-    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
-  );
 
   const doc = { label: 'iframe-doc' };
   const context = {
@@ -1599,7 +1613,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture delegates through the edit
   const resolvePersistenceStateFromCapture = () => {};
 
   vm.createContext(context);
-  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
 
   const result = context.resolveCurrentStudioPersistenceStateFromCapture(doc, {
     presentationUrl: 'presentations/custom/index.html',
@@ -1613,11 +1627,6 @@ test('resolveCurrentStudioPersistenceStateFromCapture delegates through the edit
 
 test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
-    fileContent,
-    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -1638,7 +1647,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
 
   assert.deepEqual(
     context.resolveCurrentStudioPersistenceStateFromCapture({ id: 'one' }, { presentationUrl: 'presentations/one/index.html' }),
@@ -1654,11 +1663,6 @@ test('resolveCurrentStudioPersistenceStateFromCapture creates the shared capture
 
 test('resolveCurrentStudioPersistenceStateFromCapture fails closed when the shared resolver is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveCurrentStudioPersistenceStateFromCaptureSource = extractFunctionSource(
-    fileContent,
-    'function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {',
-    '\n\n    async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {'
-  );
   const context = {
     SlideNextStudioEditorPersistence: {},
     getStudioCurrentPresentationUrl() {
@@ -1670,7 +1674,7 @@ test('resolveCurrentStudioPersistenceStateFromCapture fails closed when the shar
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveCurrentStudioPersistenceStateFromCaptureSource, context);
+  loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, context);
 
   assert.equal(
     context.resolveCurrentStudioPersistenceStateFromCapture({ id: 'capture' }, {
