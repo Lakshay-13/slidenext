@@ -9744,8 +9744,12 @@
       };
     }
 
-    function buildLegacyGroupSelectionActionState(doc = null) {
-      const buildDisabledGroupActionState = () => ({
+    function buildGroupSelectionActionState(doc = null) {
+      if (studioEditorGroupStateController
+        && typeof studioEditorGroupStateController.buildActionState === 'function') {
+        return studioEditorGroupStateController.buildActionState(doc);
+      }
+      return {
         slide: null,
         selection: [],
         layoutItems: [],
@@ -9757,173 +9761,7 @@
           nextItems: []
         },
         canGroup: false
-      });
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
-        : null;
-      const hasGroupActionStateBuilder = !!groupApi && (
-        typeof groupApi.buildStudioGroupPlan === 'function'
-        || typeof groupApi.buildStudioGroupSelectionActionState === 'function'
-        || typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function'
-      );
-      if (!hasGroupActionStateBuilder) {
-        return buildDisabledGroupActionState();
-      }
-      const positionedLayoutItemsBuilder = typeof buildEditorPositionedLayoutItems === 'function'
-        ? buildEditorPositionedLayoutItems
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(...args)
-          : () => [];
-      const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
-        ? getEditorClosestPositionedAncestor
-        : () => null;
-      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
-        ? isElementFreeformPositioned
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
-          : () => false;
-      if (groupApi && typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function') {
-        if (typeof buildLegacyGroupSelectionActionState.builder !== 'function') {
-          buildLegacyGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getLiveSelectedElements,
-            getSlideMetrics,
-            buildPositionedLayoutItems(selection, options) {
-              return positionedLayoutItemsBuilder(selection, options);
-            },
-            getClosestPositionedAncestor: closestPositionedAncestorResolver,
-            getRectOnSlide,
-            getLockedState(sourceDoc) {
-              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
-                && typeof buildEditorCanonicalDeck === 'function';
-              return canReadCanonicalState
-                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-                : isElementLocked;
-            },
-            getFreeformPositioned(sourceDoc) {
-              return typeof getEditorCanonicalFreeformReader === 'function'
-                ? getEditorCanonicalFreeformReader(
-                    sourceDoc,
-                    freeformPositionFallback
-                  )
-                : freeformPositionFallback;
-            }
-          });
-        }
-        if (typeof buildLegacyGroupSelectionActionState.builder === 'function') {
-          return buildLegacyGroupSelectionActionState.builder(doc);
-        }
-      }
-      const buildStudioGroupPlan = typeof groupApi.buildStudioGroupPlan === 'function'
-        ? groupApi.buildStudioGroupPlan
-        : null;
-      if (typeof groupApi.buildStudioGroupSelectionActionState !== 'function' && !buildStudioGroupPlan) {
-        return buildDisabledGroupActionState();
-      }
-      const resolvedDoc = doc || getIframeDoc();
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', resolvedDoc, isElementLocked)
-        : isElementLocked;
-      if (groupApi && typeof groupApi.buildStudioGroupSelectionActionState === 'function') {
-        return groupApi.buildStudioGroupSelectionActionState(getStudioSelectedElements(resolvedDoc), {
-          doc: resolvedDoc,
-          getActiveSlide,
-          getLiveSelectedElements,
-          getSlideMetrics,
-          buildPositionedLayoutItems(selection, options) {
-            return positionedLayoutItemsBuilder(selection, options);
-          },
-          getClosestPositionedAncestor: closestPositionedAncestorResolver,
-          getRectOnSlide,
-          isLocked: readLockedState,
-          isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
-            ? getEditorCanonicalFreeformReader(
-                resolvedDoc,
-                freeformPositionFallback
-              )
-            : freeformPositionFallback
-        });
-      }
-      const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(getStudioSelectedElements(resolvedDoc), resolvedDoc);
-      if (!resolvedDoc || !slide || selection.length < 2) {
-        return {
-          slide,
-          selection,
-          layoutItems: [],
-          parent: null,
-          groupPlan: {
-            canGroup: false,
-            selection: [],
-            bounds: null,
-            nextItems: []
-          },
-          canGroup: false
-        };
-      }
-
-      const slideMetrics = getSlideMetrics(slide);
-      const layoutItems = positionedLayoutItemsBuilder(selection, {
-        getClosestPositionedAncestor: closestPositionedAncestorResolver,
-        getRectOnSlide,
-        slideMetrics
-      });
-      const parent = selection.length > 0
-        ? closestPositionedAncestorResolver(selection[0])
-        : null;
-      const sameDirectParent = !!parent && selection.every((element) => {
-        return element.parentElement === parent
-          && closestPositionedAncestorResolver(element) === parent;
-      });
-      const groupPlan = buildStudioGroupPlan(layoutItems, {
-        isLocked: readLockedState,
-        isFreeformPositioned: typeof getEditorCanonicalFreeformReader === 'function'
-          ? getEditorCanonicalFreeformReader(
-              resolvedDoc,
-              freeformPositionFallback
-            )
-          : freeformPositionFallback
-      });
-
-      return {
-        slide,
-        selection,
-        layoutItems,
-        parent: sameDirectParent ? parent : null,
-        groupPlan,
-        canGroup: !!(sameDirectParent
-          && groupPlan.canGroup
-          && groupPlan.selection.length === selection.length)
       };
-    }
-
-    function buildGroupSelectionActionState(doc = null) {
-      if (studioEditorGroupStateController
-        && typeof studioEditorGroupStateController.buildActionState === 'function') {
-        return studioEditorGroupStateController.buildActionState(doc);
-      }
-      return typeof buildLegacyGroupSelectionActionState === 'function'
-        ? buildLegacyGroupSelectionActionState(doc)
-        : {
-            slide: null,
-            selection: [],
-            layoutItems: [],
-            parent: null,
-            groupPlan: {
-              canGroup: false,
-              selection: [],
-              bounds: null,
-              nextItems: []
-            },
-            canGroup: false
-          };
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
