@@ -1672,6 +1672,7 @@
   <script src="/shared/studio-editor-positioned-layout-items-adapter.js"></script>
   <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
   <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
+  <script src="/shared/studio-editor-pointer-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8866,10 +8867,22 @@
         : null;
     }
 
-    const studioEditorPointerOnSlideReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorPointerOnSlideAdapter = typeof SlideNextStudioEditorPointerOnSlideAdapter !== 'undefined'
+      && SlideNextStudioEditorPointerOnSlideAdapter
+      && typeof SlideNextStudioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide === 'function'
+      ? SlideNextStudioEditorPointerOnSlideAdapter
+      : null;
+
+    const studioEditorPointerOnSlideReader = studioEditorPointerOnSlideAdapter
+      && typeof studioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.getStudioPointerOnSlide === 'function'
-      ? (event, slideMetrics) => SlideNextStudioEditorTransform.getStudioPointerOnSlide(event, slideMetrics)
+      ? (event, slideMetrics) => studioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide(
+          event,
+          slideMetrics,
+          { transformApi: SlideNextStudioEditorTransform }
+        )
       : null;
 
     function getPointerOnSlide(e, slideMetrics) {

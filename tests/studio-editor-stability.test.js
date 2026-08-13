@@ -1119,7 +1119,9 @@ test('editor composes pointer conversion through the shared transform module', (
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorPointerOnSlideReader =/);
+  assert.match(source, /const studioEditorPointerOnSlideAdapter =/);
   assert.match(source, /getStudioPointerOnSlide/);
+  assert.match(source, /typeof SlideNextStudioEditorPointerOnSlideAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorPointerOnSlideReader === 'function'/);
   assert.doesNotMatch(source, /getPointerOnSlide\.reader/);
 });
@@ -1128,7 +1130,7 @@ test('getPointerOnSlide delegates the event and metrics to the shared transform 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const pointerOnSlideSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPointerOnSlideReader =',
+    'const studioEditorPointerOnSlideAdapter =',
     '\n\n    const studioEditorSelectionBoundsResolver ='
   );
   const event = { clientX: 110, clientY: 220 };
@@ -1136,6 +1138,7 @@ test('getPointerOnSlide delegates the event and metrics to the shared transform 
   const calls = [];
   const pointer = { x: 55, y: 73 };
   const context = {
+    SlideNextStudioEditorPointerOnSlideAdapter: require('../shared/studio-editor-pointer-on-slide-adapter.js'),
     SlideNextStudioEditorTransform: {
       getStudioPointerOnSlide(eventValue, metricsValue) {
         calls.push([eventValue, metricsValue]);
@@ -1155,10 +1158,13 @@ test('getPointerOnSlide fails closed when the shared transform module is unavail
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const pointerOnSlideSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPointerOnSlideReader =',
+    'const studioEditorPointerOnSlideAdapter =',
     '\n\n    const studioEditorSelectionBoundsResolver ='
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorPointerOnSlideAdapter: require('../shared/studio-editor-pointer-on-slide-adapter.js'),
+    SlideNextStudioEditorTransform: null
+  };
 
   vm.createContext(context);
   vm.runInContext(pointerOnSlideSource, context);
