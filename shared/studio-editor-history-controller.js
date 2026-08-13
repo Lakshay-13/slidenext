@@ -143,6 +143,7 @@
         setPendingCanonicalDeck,
         setLiveCanonicalDeck,
         getLiveCanonicalDeck,
+        getDocument,
         isCanonicalDeck,
         getTimer,
         setTimer,

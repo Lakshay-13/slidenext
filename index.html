@@ -4850,8 +4850,9 @@
               : null;
             setEditorLiveCanonicalDeck(nextCanonicalDeck, liveEditorDoc, liveSessionToken);
           },
-          getLiveCanonicalDeck: () => {
-            const liveEditorDoc = typeof getIframeDoc === 'function' ? getIframeDoc() : null;
+          getLiveCanonicalDeck: (sourceDocument = null) => {
+            const liveEditorDoc = sourceDocument
+              || (typeof getIframeDoc === 'function' ? getIframeDoc() : null);
             const liveSessionToken = typeof getStudioEditorSessionToken === 'function'
               ? getStudioEditorSessionToken()
               : null;
@@ -4864,6 +4865,7 @@
             : null,
           getTimer: getStudioUndoDebounceTimer,
           setTimer: setStudioUndoDebounceTimer,
+          getDocument: getIframeDoc,
           captureState: () => captureState(),
           scheduleOptions: {
             clearScheduledCapture: clearTimeout,

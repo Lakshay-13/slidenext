@@ -785,6 +785,9 @@
     const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
       ? options.getLiveCanonicalDeck
       : null;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : isStudioHistoryCanonicalDeckLike;
@@ -821,12 +824,18 @@
     };
 
     return function saveHistoryState(debounce = false, transaction = null, canonicalDeck = null) {
+      let sourceDocument = null;
+      try {
+        sourceDocument = getDocument();
+      } catch (error) {
+        sourceDocument = null;
+      }
       const hasCanonicalDeck = arguments.length > 2;
       let previousLiveCanonicalDeck = null;
       let canRestoreLiveCanonicalDeck = false;
       if (hasCanonicalDeck && getLiveCanonicalDeck) {
         try {
-          previousLiveCanonicalDeck = getLiveCanonicalDeck();
+          previousLiveCanonicalDeck = getLiveCanonicalDeck(sourceDocument);
           canRestoreLiveCanonicalDeck = true;
         } catch (error) {
           canRestoreLiveCanonicalDeck = false;
@@ -848,7 +857,7 @@
       let shouldSetLiveCanonicalDeck = true;
       if (!hasCanonicalDeck && getLiveCanonicalDeck) {
         try {
-          liveCanonicalDeck = getLiveCanonicalDeck();
+          liveCanonicalDeck = getLiveCanonicalDeck(sourceDocument);
         } catch (error) {
           shouldSetLiveCanonicalDeck = false;
         }

@@ -5,6 +5,7 @@ const historyController = require('../shared/studio-editor-history-controller.js
 
 test('history controller preserves optional canonical deck arguments and reuses adapters', () => {
   const calls = [];
+  const documentRef = { id: 'editor-document' };
   let createCalls = 0;
   const historyApi = {
     createStudioHistorySaveHandler(options) {
@@ -17,7 +18,8 @@ test('history controller preserves optional canonical deck arguments and reuses 
   };
   const controller = historyController.createStudioEditorHistoryController({
     historyApi,
-    historyStateApi: historyState
+    historyStateApi: historyState,
+    getDocument: () => documentRef
   });
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
 
@@ -28,6 +30,7 @@ test('history controller preserves optional canonical deck arguments and reuses 
     [true, { id: 'transaction' }],
     [false, null, canonicalDeck]
   ]);
+  assert.equal(calls[0].options.getDocument(), documentRef);
 });
 
 test('history controller flushes pending state through the shared save adapter', () => {

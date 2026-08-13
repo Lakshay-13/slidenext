@@ -1080,10 +1080,15 @@ test('createStudioHistorySaveHandler clears pending transactions when no transac
 
 test('createStudioHistorySaveHandler preserves the live canonical deck without a new sidecar', () => {
   const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const sourceDocument = { id: 'editor-document' };
   let capturedLiveCanonicalDeck = null;
   let pendingCanonicalDeck = liveCanonicalDeck;
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
-    getLiveCanonicalDeck() {
+    getDocument() {
+      return sourceDocument;
+    },
+    getLiveCanonicalDeck(documentRef) {
+      assert.equal(documentRef, sourceDocument);
       return liveCanonicalDeck;
     },
     setLiveCanonicalDeck(nextCanonicalDeck) {

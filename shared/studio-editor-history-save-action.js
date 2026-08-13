@@ -27,6 +27,9 @@
     const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
       ? options.getLiveCanonicalDeck
       : () => null;
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -57,6 +60,7 @@
         setPendingCanonicalDeck,
         setLiveCanonicalDeck,
         getLiveCanonicalDeck,
+        getDocument,
         isCanonicalDeck,
         getTimer,
         setTimer,

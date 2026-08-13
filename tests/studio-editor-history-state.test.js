@@ -6,6 +6,7 @@ const historyState = require('../shared/studio-editor-history-state.js');
 test('createStudioEditorHistorySaveAdapter lazily creates and reuses the shared history handler', () => {
   let createCalls = 0;
   const delegatedCalls = [];
+  const documentRef = { id: 'editor-document' };
   const historyApi = {
     createStudioHistorySaveHandler(options) {
       createCalls += 1;
@@ -15,7 +16,10 @@ test('createStudioEditorHistorySaveAdapter lazily creates and reuses the shared 
       };
     }
   };
-  const adapter = historyState.createStudioEditorHistorySaveAdapter({ historyApi });
+  const adapter = historyState.createStudioEditorHistorySaveAdapter({
+    historyApi,
+    getDocument: () => documentRef
+  });
 
   assert.deepEqual(adapter(true, { id: 'first' }), { didCapture: true });
   assert.deepEqual(adapter(false, { id: 'second' }, { kind: 'deck' }), { didCapture: true });
@@ -24,6 +28,7 @@ test('createStudioEditorHistorySaveAdapter lazily creates and reuses the shared 
     [true, { id: 'first' }],
     [false, { id: 'second' }, { kind: 'deck' }]
   ]);
+  assert.equal(delegatedCalls[0][1].getDocument(), documentRef);
 });
 
 test('createStudioEditorHistorySaveAdapter fails closed when shared history is unavailable', () => {

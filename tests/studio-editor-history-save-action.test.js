@@ -32,6 +32,7 @@ test('history save action prefers the live controller and preserves optional sid
 test('history save action lazily builds and reuses the shared save adapter', () => {
   let createCalls = 0;
   let capturedOptions = null;
+  const documentRef = { id: 'editor-document' };
   const delegated = [];
   const historyStateApi = {
     createStudioEditorHistorySaveAdapter(options) {
@@ -52,6 +53,7 @@ test('history save action lazily builds and reuses the shared save adapter', () 
     setPendingCanonicalDeck() {},
     setLiveCanonicalDeck() {},
     getLiveCanonicalDeck: () => null,
+    getDocument: () => documentRef,
     getTimer: () => 'timer',
     setTimer() {},
     captureState() {},
@@ -68,6 +70,7 @@ test('history save action lazily builds and reuses the shared save adapter', () 
   ]);
   assert.equal(capturedOptions.historyApi.name, 'history');
   assert.equal(capturedOptions.transactionApi.name, 'transaction');
+  assert.equal(capturedOptions.getDocument(), documentRef);
 });
 
 test('history save action fails closed when the shared adapter is unavailable', () => {
