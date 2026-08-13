@@ -31,6 +31,7 @@ test('history controller preserves optional canonical deck arguments and reuses 
 });
 
 test('history controller flushes pending state through the shared save adapter', () => {
+  const documentRef = { id: 'editor-document' };
   let pendingTransaction = { id: 'pending' };
   let pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const initialPendingTransaction = pendingTransaction;
@@ -49,8 +50,12 @@ test('history controller flushes pending state through the shared save adapter',
   const controller = historyController.createStudioEditorHistoryController({
     historyApi,
     historyStateApi: historyState,
+    getDocument: () => documentRef,
     getPendingTransaction: () => pendingTransaction,
-    getPendingCanonicalDeck: () => pendingCanonicalDeck
+    getPendingCanonicalDeck(sourceDocument) {
+      assert.equal(sourceDocument, documentRef);
+      return pendingCanonicalDeck;
+    }
   });
 
   assert.equal(controller.flushPending(), true);
@@ -85,6 +90,8 @@ test('history controller forwards history steps and restore entries', () => {
   const steps = [];
   const restores = [];
   const pendingTransactions = [];
+  const pendingDocuments = [];
+  const documentRef = { id: 'editor-document' };
   const canonicalStateApi = { id: 'canonical-state-api' };
   const historyApi = {
     createStudioHistoryStepRunner(options) {
@@ -110,6 +117,11 @@ test('history controller forwards history steps and restore entries', () => {
     historyStateApi: historyState,
     canonicalStateApi,
     restoreApi,
+    getDocument: () => documentRef,
+    getPendingCanonicalDeck(sourceDocument) {
+      pendingDocuments.push(sourceDocument);
+      return null;
+    },
     restoreHandlerOptions: { marker: 'restore-options' }
   });
 
@@ -117,6 +129,7 @@ test('history controller forwards history steps and restore entries', () => {
   assert.deepEqual(controller.redo(), { didRedo: true });
   assert.deepEqual(steps, ['didUndo', 'didRedo']);
   assert.deepEqual(pendingTransactions, [false, false]);
+  assert.deepEqual(pendingDocuments, [documentRef, documentRef]);
   assert.deepEqual(restores, [
     ['options', {
       restoreApi,

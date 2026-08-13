@@ -280,7 +280,7 @@
 
     function flushPending() {
       const pendingTransaction = getPendingTransaction();
-      const pendingCanonicalDeck = getPendingCanonicalDeck();
+      const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
@@ -337,7 +337,7 @@
             flushPendingHistory: flushPending,
             hasPendingHistory: () => {
               const pendingTransaction = getPendingTransaction();
-              const pendingCanonicalDeck = getPendingCanonicalDeck();
+              const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
               return (pendingTransaction !== undefined && pendingTransaction !== null)
                 || (pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null);
             }
