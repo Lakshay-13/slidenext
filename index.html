@@ -1377,6 +1377,7 @@
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
+  <script src="/shared/studio-editor-element-insertion-transaction.js"></script>
   <script src="/shared/studio-editor-element-insertion-controller.js"></script>
   <script src="/shared/studio-editor-element-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-element-insertion-shell-runtime.js"></script>
@@ -11081,17 +11082,20 @@
 
     // Insert New elements (perfectly centered on native 1080p slide)
     function applyEditorElementInsertionWithTransaction(type, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorElementInsertionMutation !== 'undefined'
-        ? SlideNextStudioEditorElementInsertionMutation
+      const transactionApi = typeof SlideNextStudioEditorElementInsertionTransaction !== 'undefined'
+        ? SlideNextStudioEditorElementInsertionTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioElementInsertionMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioElementInsertionMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorElementInsertionMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorElementInsertionMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return { element: null, transaction: null };
       }
-      return applyMutation(type, {
+      return applyTransaction(type, {
+        mutationApi: typeof SlideNextStudioEditorElementInsertionMutation !== 'undefined'
+          ? SlideNextStudioEditorElementInsertionMutation
+          : null,
         insertionApi: typeof SlideNextStudioEditorInsertion !== 'undefined'
           ? SlideNextStudioEditorInsertion
           : null,

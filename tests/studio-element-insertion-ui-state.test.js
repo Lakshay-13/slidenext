@@ -8,6 +8,7 @@ const insertion = require('../shared/studio-editor-insertion.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const elementInsertionMutation = require('../shared/studio-editor-element-insertion-mutation.js');
+const elementInsertionTransaction = require('../shared/studio-editor-element-insertion-transaction.js');
 const elementInsertionController = require('../shared/studio-editor-element-insertion-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -27,6 +28,7 @@ function loadElementInsertionHelper(fileContent, context) {
     '\n\n    function insertElement(type) {'
   );
   context.SlideNextStudioEditorElementInsertionMutation = elementInsertionMutation;
+  context.SlideNextStudioEditorElementInsertionTransaction = elementInsertionTransaction;
   vm.runInContext(helperSource, context);
 }
 
