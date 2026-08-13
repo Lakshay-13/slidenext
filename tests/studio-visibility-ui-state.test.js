@@ -10,6 +10,7 @@ const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
 const visibilityMutation = require('../shared/studio-editor-visibility-mutation.js');
+const lockVisibilityRollback = require('../shared/studio-editor-lock-visibility-rollback.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const lockVisibilityController = require('../shared/studio-editor-lock-visibility-controller.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -66,6 +67,7 @@ function loadVisibilityMutationHelper(fileContent, context) {
 }
 
 function loadLockVisibilityRollbackHelper(fileContent, context) {
+  context.SlideNextStudioEditorLockVisibilityRollback = lockVisibilityRollback;
   const helperSource = extractFunctionSource(
     fileContent,
     'function rollbackEditorLockVisibilityMutation(transaction, sourceDoc = getIframeDoc()) {',
