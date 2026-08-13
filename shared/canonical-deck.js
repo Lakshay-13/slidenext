@@ -1697,11 +1697,23 @@
         if (patch) {
           const currentAttributes = asPlainObject(node.attributes);
           const nextAttributes = { ...currentAttributes, ...patch };
-          if (Object.keys(patch).some((key) => currentAttributes[key] !== patch[key])) {
+          const didChangeAttributes = Object.keys(patch)
+            .some((key) => currentAttributes[key] !== patch[key]);
+          if (didChangeAttributes) {
             nextNode = {
               ...nextNode,
               attributes: nextAttributes
             };
+            nodeChanged = true;
+          }
+          const isImageNode = node.type === 'image'
+            || normalizeString(node.tagName).toLowerCase() === 'img';
+          if (isImageNode
+            && Object.prototype.hasOwnProperty.call(patch, 'src')
+            && currentAttributes.src !== patch.src
+            && Object.prototype.hasOwnProperty.call(node, 'assetId')) {
+            nextNode = { ...nextNode };
+            delete nextNode.assetId;
             nodeChanged = true;
           }
         }

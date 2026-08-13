@@ -323,6 +323,34 @@ test('buildStudioCanonicalStyleMutation uses the requested image source instead 
   assert.equal(result.slides[0].nodes[0].attributes.src, 'assets/requested-source.png');
 });
 
+test('buildStudioCanonicalStyleMutation clears stale image asset bindings when replacing a source', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'old-asset', type: 'image', src: 'old.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'node-1',
+        type: 'image',
+        tagName: 'img',
+        assetId: 'old-asset',
+        attributes: { src: 'old.png' }
+      }]
+    }]
+  });
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    selection: [{ dataset: { editorId: 'node-1' } }],
+    prop: 'src',
+    value: 'new.png',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].assetId, undefined);
+  assert.equal(result.slides[0].nodes[0].attributes.src, 'new.png');
+});
+
 test('buildStudioCanonicalStyleMutation uses the normalized style value instead of stale DOM state', () => {
   const sourceDeck = createSourceDeck();
   const element = createElement();

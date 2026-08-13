@@ -1049,6 +1049,36 @@ test('updateCanonicalNodeAttributes immutably updates nested source attributes',
   assert.equal(updatedDeck.slides[0].nodes[0].children[0].attributes.src, 'child-after.png');
 });
 
+test('updateCanonicalNodeAttributes clears an asset binding when an image source changes', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero-asset', type: 'image', src: 'old.png' }],
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        tagName: 'img',
+        assetId: 'hero-asset',
+        attributes: { src: 'old.png' }
+      }]
+    }]
+  });
+
+  assert.equal(canonicalDeck.updateCanonicalNodeAttributes(sourceDeck, [{
+    id: 'image-1',
+    attributes: { src: 'old.png' }
+  }]), null);
+
+  const updatedDeck = canonicalDeck.updateCanonicalNodeAttributes(sourceDeck, [{
+    id: 'image-1',
+    attributes: { src: 'new.png' }
+  }]);
+
+  assert.equal(sourceDeck.slides[0].nodes[0].assetId, 'hero-asset');
+  assert.equal(updatedDeck.slides[0].nodes[0].assetId, undefined);
+  assert.equal(updatedDeck.slides[0].nodes[0].attributes.src, 'new.png');
+});
+
 test('updateCanonicalNodeAttributes returns null for no-op or invalid attribute updates', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     slides: [{
