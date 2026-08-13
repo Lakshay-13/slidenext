@@ -597,6 +597,7 @@ test('block controller prefers scoped element-presence transactions for serializ
     }
   };
   let transaction = null;
+  let markupCaptureCalls = 0;
   const controller = blockController.createStudioEditorBlockController({
     canonicalDeckApi: canonicalDeck,
     renderApi: {
@@ -609,6 +610,10 @@ test('block controller prefers scoped element-presence transactions for serializ
     getActiveSlide: () => slide,
     getActiveSlideId: () => 'slide-1',
     createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
+    createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
+      return { createTransaction: () => ({ kind: 'legacy-markup' }) };
+    },
     finalizeInsertedElements(_elements, _versionLabel, nextTransaction) {
       transaction = nextTransaction;
       return true;
@@ -616,6 +621,7 @@ test('block controller prefers scoped element-presence transactions for serializ
   });
 
   assert.equal(controller.insertBlock('hero'), true);
+  assert.equal(markupCaptureCalls, 0);
   assert.deepEqual(transaction.operations[0], {
     type: 'element-presence',
     elementId: 'hero-heading',

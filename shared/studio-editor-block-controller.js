@@ -326,19 +326,12 @@
         .filter(Boolean);
       if (insertedElements.length !== insertedNodes.length || insertedElements.length === 0) return false;
 
-      const markupCapture = createMarkupTransactionCapture
-        ? createMarkupTransactionCapture([{
-            element: activeSlide,
-            elementId: slideId
-          }], { getElementId })
-        : null;
-      insertedElements.forEach((element) => activeSlide.appendChild(element));
+      const childNodes = activeSlide.children || activeSlide.childNodes;
+      const insertionStartIndex = childNodes && Number.isInteger(childNodes.length)
+        ? childNodes.length
+        : -1;
       const presenceElementIds = new Set();
-      const presenceItems = insertedElements.map((element) => {
-        const childNodes = activeSlide.children || activeSlide.childNodes;
-        const insertionIndex = childNodes
-          ? Array.prototype.indexOf.call(childNodes, element)
-          : -1;
+      const presenceItems = insertedElements.map((element, offset) => {
         let elementId = '';
         try {
           elementId = getElementId(element) || '';
@@ -348,10 +341,14 @@
         return {
           elementId,
           parentId: `slide:${slideId}`,
-          before: { exists: false, index: insertionIndex, markup: '' },
+          before: {
+            exists: false,
+            index: insertionStartIndex >= 0 ? insertionStartIndex + offset : -1,
+            markup: ''
+          },
           after: {
             exists: true,
-            index: insertionIndex,
+            index: insertionStartIndex >= 0 ? insertionStartIndex + offset : -1,
             markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
           }
         };
@@ -367,6 +364,13 @@
       const presenceTransaction = canUsePresenceTransaction
         ? createElementPresenceTransaction(presenceItems)
         : null;
+      const markupCapture = !presenceTransaction && createMarkupTransactionCapture
+        ? createMarkupTransactionCapture([{
+            element: activeSlide,
+            elementId: slideId
+          }], { getElementId })
+        : null;
+      insertedElements.forEach((element) => activeSlide.appendChild(element));
       const transaction = presenceTransaction
         || (markupCapture && typeof markupCapture.createTransaction === 'function'
           ? markupCapture.createTransaction()
