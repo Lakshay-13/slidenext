@@ -420,8 +420,87 @@
       }
       return slide;
     };
+    const resolveId = (resolver, element) => {
+      if (!element) return '';
+      try {
+        return resolver(element) || '';
+      } catch (error) {
+        return '';
+      }
+    };
+    const projectedChildren = new Map();
+    const getProjectedChildren = (parent) => {
+      if (!parent) return null;
+      if (!projectedChildren.has(parent)) {
+        const childNodes = parent.children || parent.childNodes;
+        if (!childNodes) return null;
+        projectedChildren.set(parent, Array.from(childNodes));
+      }
+      return projectedChildren.get(parent);
+    };
+    const presenceItems = [];
+    const canBuildPresencePlan = plans.every((plan) => {
+      const { clone, insertionTarget, absolutePlacement } = plan || {};
+      if (!clone || !insertionTarget) return false;
+
+      const usesAbsoluteInsertion = insertionTarget.mode === 'absolute' && absolutePlacement;
+      if (usesAbsoluteInsertion) {
+        if (!clone.style) return false;
+        clone.style.position = 'absolute';
+        clone.style.margin = '0';
+        clone.style.left = `${absolutePlacement.nextLeft}px`;
+        clone.style.top = `${absolutePlacement.nextTop}px`;
+      }
+
+      const usesAfterSourceInsertion = insertionTarget.mode === 'after-source'
+        && insertionTarget.anchor;
+      const parent = usesAbsoluteInsertion
+        ? insertionTarget.parent || slide
+        : usesAfterSourceInsertion
+          ? insertionTarget.anchor.parentElement || slide
+          : slide;
+      const children = getProjectedChildren(parent);
+      if (!children) return false;
+
+      const insertionIndex = usesAfterSourceInsertion
+        ? children.indexOf(insertionTarget.anchor) + 1
+        : children.length;
+      if (usesAfterSourceInsertion && insertionIndex <= 0) return false;
+      children.splice(insertionIndex, 0, clone);
+
+      presenceItems.push({
+        elementId: resolveId(getElementId, clone),
+        parentId: resolveId(getParentId, parent),
+        before: {
+          exists: false,
+          index: insertionIndex,
+          markup: ''
+        },
+        after: {
+          exists: true,
+          index: insertionIndex,
+          markup: typeof clone.outerHTML === 'string' ? clone.outerHTML : ''
+        }
+      });
+      return true;
+    });
+    const presenceElementIds = new Set();
+    const canUsePresenceTransaction = canBuildPresencePlan
+      && !!createElementPresenceTransaction
+      && presenceItems.length === plans.length
+      && presenceItems.every((item) => {
+        if (!item.elementId || presenceElementIds.has(item.elementId)) return false;
+        presenceElementIds.add(item.elementId);
+        return !!item.parentId
+          && item.before.index >= 0
+          && !!item.after.markup.trim();
+      });
+    const elementPresenceTransaction = canUsePresenceTransaction
+      ? createElementPresenceTransaction(presenceItems)
+      : null;
+
     const markupCaptureTargets = [];
-    if (createMarkupTransactionCapture) {
+    if (!elementPresenceTransaction && createMarkupTransactionCapture) {
       const parentSet = new Set();
       plans.forEach(({ insertionTarget }) => {
         const parent = getInsertionParent(insertionTarget);
@@ -433,11 +512,10 @@
         });
       });
     }
-    const markupCapture = createMarkupTransactionCapture
+    const markupCapture = !elementPresenceTransaction && createMarkupTransactionCapture
       ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
       : null;
     const inserted = [];
-    const insertedPlans = [];
 
     plans.forEach((plan) => {
       const { clone, insertionTarget, absolutePlacement } = plan;
@@ -454,54 +532,7 @@
         slide.appendChild(clone);
       }
       inserted.push(clone);
-      insertedPlans.push(plan);
     });
-
-    const resolveId = (resolver, element) => {
-      if (!element) return '';
-      try {
-        return resolver(element) || '';
-      } catch (error) {
-        return '';
-      }
-    };
-    const presenceItems = inserted.map((element, index) => {
-      const plan = insertedPlans[index] || {};
-      const fallbackParent = getInsertionParent(plan.insertionTarget);
-      const parent = element && (element.parentElement || element.parentNode)
-        || fallbackParent;
-      const childNodes = parent && (parent.children || parent.childNodes);
-      const insertionIndex = childNodes
-        ? Array.prototype.indexOf.call(childNodes, element)
-        : -1;
-      return {
-        elementId: resolveId(getElementId, element),
-        parentId: resolveId(getParentId, parent),
-        before: {
-          exists: false,
-          index: insertionIndex,
-          markup: ''
-        },
-        after: {
-          exists: true,
-          index: insertionIndex,
-          markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
-        }
-      };
-    });
-    const presenceElementIds = new Set();
-    const canUsePresenceTransaction = !!createElementPresenceTransaction
-      && presenceItems.length === inserted.length
-      && presenceItems.every((item) => {
-        if (!item.elementId || presenceElementIds.has(item.elementId)) return false;
-        presenceElementIds.add(item.elementId);
-        return !!item.parentId
-          && item.before.index >= 0
-          && !!item.after.markup.trim();
-      });
-    const elementPresenceTransaction = canUsePresenceTransaction
-      ? createElementPresenceTransaction(presenceItems)
-      : null;
 
     return {
       inserted,

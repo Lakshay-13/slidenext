@@ -733,6 +733,7 @@ test('applyStudioClipboardInsertion prefers scoped element-presence transactions
     style: {},
     outerHTML: '<div data-editor-id="node-1">Pasted</div>'
   };
+  let markupCaptureCalls = 0;
 
   const result = clipboardState.applyStudioClipboardInsertion([{
     clone,
@@ -740,6 +741,10 @@ test('applyStudioClipboardInsertion prefers scoped element-presence transactions
     absolutePlacement: null
   }], {
     slide,
+    createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
+      return null;
+    },
     createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
     getElementId: (element) => element && element.dataset && element.dataset.editorId,
     getParentId: (element) => element === slide ? 'slide:slide-1' : ''
@@ -756,4 +761,5 @@ test('applyStudioClipboardInsertion prefers scoped element-presence transactions
       markup: '<div data-editor-id="node-1">Pasted</div>'
     }
   });
+  assert.equal(markupCaptureCalls, 0);
 });
