@@ -38,6 +38,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
     updateLayersList() {},
     buildEditorDeckSnapshot() {},
     buildEditorCanonicalDeck() {},
+    resolveCanonicalDeck() {},
     saveHistoryState() {},
     getActiveSlide() {},
     getSlideId() {},
@@ -82,6 +83,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
   assert.equal(calls[0][1].getWindow, callbacks.getWindow);
   assert.equal(calls[1][1].activeSlideView, callbacks.activeSlideView);
   assert.equal(calls[1][1].buildEditorCanonicalDeck, callbacks.buildEditorCanonicalDeck);
+  assert.equal(calls[1][1].resolveCanonicalDeck, callbacks.resolveCanonicalDeck);
   assert.equal(calls[1][1].setCustomGradientType, callbacks.setCustomGradientType);
   assert.equal(calls[1][1].setCurrentSlideId, callbacks.setCurrentSlideId);
   assert.equal(calls[2][1].activeSlideController, activeSlideController);

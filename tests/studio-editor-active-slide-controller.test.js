@@ -124,6 +124,7 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
   };
   const wallpaperSlides = [];
   const lookupCalls = [];
+  let buildCanonicalDeckCalls = 0;
   const controller = activeSlideController.createStudioEditorActiveSlideController({
     activeSlideView: {
       syncStudioActiveSlideChrome(doc, options) {
@@ -149,6 +150,10 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
       }
     },
     buildEditorCanonicalDeck() {
+      buildCanonicalDeckCalls += 1;
+      return { slides: [canonicalSlide] };
+    },
+    resolveCanonicalDeck() {
       return { slides: [canonicalSlide] };
     },
     canonicalDeckApi: {
@@ -168,4 +173,5 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
     { slides: [canonicalSlide] },
     'slide-1'
   ]]);
+  assert.equal(buildCanonicalDeckCalls, 0);
 });

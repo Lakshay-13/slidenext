@@ -74,6 +74,9 @@
     const buildEditorCanonicalDeck = typeof options.buildEditorCanonicalDeck === 'function'
       ? options.buildEditorCanonicalDeck
       : null;
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
@@ -154,13 +157,22 @@
           return canonicalWallpaperSlide || activeSlide;
         }
         didResolveCanonicalWallpaperSlide = true;
-        if (!buildEditorCanonicalDeck || !activeSlide) return activeSlide;
+        if ((!buildEditorCanonicalDeck && !resolveCanonicalDeck) || !activeSlide) return activeSlide;
 
         let canonicalDeck = null;
-        try {
-          canonicalDeck = buildEditorCanonicalDeck(doc);
-        } catch (err) {
-          canonicalDeck = null;
+        if (resolveCanonicalDeck) {
+          try {
+            canonicalDeck = resolveCanonicalDeck(doc);
+          } catch (err) {
+            canonicalDeck = null;
+          }
+        }
+        if (!canonicalDeck && buildEditorCanonicalDeck) {
+          try {
+            canonicalDeck = buildEditorCanonicalDeck(doc);
+          } catch (err) {
+            canonicalDeck = null;
+          }
         }
         const activeSlideId = getSlideId(activeSlide) || activeSlide.id
           || (activeSlide.dataset && activeSlide.dataset.slideId) || '';

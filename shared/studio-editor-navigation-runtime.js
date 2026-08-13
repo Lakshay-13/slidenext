@@ -58,6 +58,7 @@
           updateLayersList: options.updateLayersList,
           buildEditorDeckSnapshot: options.buildEditorDeckSnapshot,
           buildEditorCanonicalDeck: options.buildEditorCanonicalDeck,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
           saveHistoryState: options.saveHistoryState,
           getSlides: options.getSlides,
           getActiveSlide: options.getActiveSlide,
