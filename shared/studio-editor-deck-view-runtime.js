@@ -77,6 +77,7 @@
           resolveReadyState: options.resolveReadyState,
           resolvePresentationUrl: options.resolvePresentationUrl,
           resolveActiveSlideIndex: options.resolveActiveSlideIndex,
+          getSourceDocument: options.getDocument,
           buildPreviewHtml: options.previewBuildHtml,
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           buildCanonicalDeck: options.previewBuildCanonicalDeck,

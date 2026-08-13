@@ -218,6 +218,8 @@ test('launches preview with one validated canonical deck snapshot', () => {
 
 test('launches preview from pending canonical state without rebuilding the document', () => {
   const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending-slide' }] };
+  const shellDocument = { id: 'shell-document' };
+  const sourceDocument = { id: 'editor-document' };
   let buildCalls = 0;
   const controller = previewController.createStudioEditorPreviewController({
     previewApi: {
@@ -226,10 +228,16 @@ test('launches preview from pending canonical state without rebuilding the docum
         return true;
       }
     },
+    documentRef: shellDocument,
     resolveReadyState: () => ({ canLaunchPreview: true }),
     resolvePresentationUrl: () => '/presentations/demo/index.html',
-    getPendingCanonicalDeck: () => pendingCanonicalDeck,
-    buildCanonicalDeck() {
+    getSourceDocument: () => sourceDocument,
+    getPendingCanonicalDeck(documentRef) {
+      assert.equal(documentRef, sourceDocument);
+      return pendingCanonicalDeck;
+    },
+    buildCanonicalDeck(documentRef) {
+      assert.equal(documentRef, sourceDocument);
       buildCalls += 1;
       throw new Error('document rebuild should not be needed');
     },

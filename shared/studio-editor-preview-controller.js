@@ -46,6 +46,9 @@
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
+    const getSourceDocument = typeof options.getSourceDocument === 'function'
+      ? options.getSourceDocument
+      : () => documentRef;
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canLaunchPreview: false });
@@ -147,10 +150,11 @@
       if (typeof presentationUrl !== 'string' || !presentationUrl) return false;
       if (!previewApi || typeof previewApi.launchStudioPresentation !== 'function') return false;
 
+      const sourceDocument = getSourceDocument() || documentRef;
       let canonicalDeck = null;
       if (getPendingCanonicalDeck) {
         try {
-          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
           canonicalDeck = isCanonicalDeck(pendingCanonicalDeck) ? pendingCanonicalDeck : null;
         } catch (error) {
           canonicalDeck = null;
@@ -159,7 +163,7 @@
       if (buildCanonicalDeck) {
         if (!canonicalDeck) {
           try {
-            const candidate = buildCanonicalDeck();
+            const candidate = buildCanonicalDeck(sourceDocument);
             canonicalDeck = isCanonicalDeck(candidate) ? candidate : null;
           } catch (error) {
             canonicalDeck = null;
