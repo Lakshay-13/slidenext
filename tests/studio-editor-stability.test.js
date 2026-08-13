@@ -2109,7 +2109,9 @@ test('editor composes active-slide ID lookup through the shared DOM module', () 
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorActiveSlideIdResolver =/);
+  assert.match(source, /const studioEditorActiveSlideIdAdapter =/);
   assert.match(source, /getStudioActiveSlideId/);
+  assert.match(source, /typeof SlideNextStudioEditorActiveSlideIdAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorActiveSlideIdResolver === 'function'/);
   assert.doesNotMatch(source, /getActiveSlideId\.resolver/);
   const getActiveSlideIdSource = extractFunctionSource(
@@ -2124,7 +2126,7 @@ test('getActiveSlideId delegates the document and DOM options to the shared DOM 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const activeSlideIdSource = extractFunctionSource(
     fileContent,
-    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorActiveSlideIdAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getActiveSlideIdSource = extractFunctionSource(
@@ -2136,6 +2138,7 @@ test('getActiveSlideId delegates the document and DOM options to the shared DOM 
   const options = { editorElementIdAttr: 'data-editor-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorActiveSlideIdAdapter: require('../shared/studio-editor-active-slide-id-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioActiveSlideId(docValue, optionsValue) {
         calls.push([docValue, optionsValue]);
@@ -2163,7 +2166,7 @@ test('getActiveSlideId prefers the stored slide ID when no document is supplied'
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const activeSlideIdSource = extractFunctionSource(
     fileContent,
-    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorActiveSlideIdAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getActiveSlideIdSource = extractFunctionSource(
@@ -2172,6 +2175,7 @@ test('getActiveSlideId prefers the stored slide ID when no document is supplied'
     '\n\n    function applyActiveSlideMetadataEdit'
   );
   const context = {
+    SlideNextStudioEditorActiveSlideIdAdapter: require('../shared/studio-editor-active-slide-id-adapter.js'),
     studioEditorStateBridge: {
       getSlideId() {
         return ' state-slide ';
@@ -2200,7 +2204,7 @@ test('getActiveSlideId fails closed when the shared DOM module is unavailable', 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const activeSlideIdSource = extractFunctionSource(
     fileContent,
-    'const studioEditorActiveSlideIdResolver =',
+    'const studioEditorActiveSlideIdAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getActiveSlideIdSource = extractFunctionSource(
@@ -2209,6 +2213,7 @@ test('getActiveSlideId fails closed when the shared DOM module is unavailable', 
     '\n\n    function applyActiveSlideMetadataEdit'
   );
   const context = {
+    SlideNextStudioEditorActiveSlideIdAdapter: require('../shared/studio-editor-active-slide-id-adapter.js'),
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {
       return {};
