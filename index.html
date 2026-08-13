@@ -1416,6 +1416,7 @@
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-lock-transaction.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
+  <script src="/shared/studio-editor-visibility-toolbar-state.js"></script>
   <script src="/shared/studio-editor-visibility-mutation.js"></script>
   <script src="/shared/studio-editor-visibility-transaction.js"></script>
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
@@ -9622,37 +9623,32 @@
     }
 
     function updateVisibilityActionState(doc = getIframeDoc()) {
-      const visibilityState = typeof SlideNextStudioEditorVisibilityState !== 'undefined'
-        ? SlideNextStudioEditorVisibilityState
+      const visibilityToolbarState = typeof SlideNextStudioEditorVisibilityToolbarState !== 'undefined'
+        ? SlideNextStudioEditorVisibilityToolbarState
         : null;
-      if (!visibilityState || typeof visibilityState.syncStudioVisibilityToolbarState !== 'function') {
+      if (!visibilityToolbarState
+        || typeof visibilityToolbarState.createStudioEditorVisibilityToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof visibilityState.createStudioVisibilityToolbarStateSync === 'function') {
-        if (typeof updateVisibilityActionState.sync !== 'function') {
-          updateVisibilityActionState.sync = visibilityState.createStudioVisibilityToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getHiddenState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-              ? getEditorCanonicalVisibilityReader('hidden', sourceDoc, isElementHidden)
-              : isElementHidden,
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateVisibilityActionState.sync === 'function') {
-          return updateVisibilityActionState.sync(doc);
-        }
+      if (!updateVisibilityActionState.controller) {
+        const visibilityView = typeof SlideNextStudioEditorVisibilityState !== 'undefined'
+          ? SlideNextStudioEditorVisibilityState
+          : null;
+        updateVisibilityActionState.controller = visibilityToolbarState.createStudioEditorVisibilityToolbarStateController({
+          visibilityView,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getHiddenState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('hidden', sourceDoc, isElementHidden)
+            : isElementHidden,
+          documentRef: document
+        });
       }
-      const readHiddenState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden)
-        : isElementHidden;
-      return visibilityState.syncStudioVisibilityToolbarState({
-        documentRef: document,
-        elements: getStudioSelectedElements(doc),
-        isHidden: readHiddenState,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      return updateVisibilityActionState.controller
+        && typeof updateVisibilityActionState.controller.sync === 'function'
+        ? updateVisibilityActionState.controller.sync(doc)
+        : false;
     }
 
     function buildMotionSelectionActionState(doc = null) {

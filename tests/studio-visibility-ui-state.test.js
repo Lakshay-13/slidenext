@@ -10,6 +10,7 @@ const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader
 const studioElementState = require('../shared/studio-element-state.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const visibilityState = require('../shared/studio-editor-visibility-state.js');
+const visibilityToolbarState = require('../shared/studio-editor-visibility-toolbar-state.js');
 const visibilityMutation = require('../shared/studio-editor-visibility-mutation.js');
 const visibilityTransaction = require('../shared/studio-editor-visibility-transaction.js');
 const lockVisibilityRollback = require('../shared/studio-editor-lock-visibility-rollback.js');
@@ -109,6 +110,12 @@ function installLockVisibilityController(context) {
   });
 }
 
+function runVisibilityActionStateSource(source, context) {
+  context.SlideNextStudioEditorVisibilityToolbarState = visibilityToolbarState;
+  vm.createContext(context);
+  vm.runInContext(source, context);
+}
+
 test('updateVisibilityActionState enables the visibility control only when the iframe has a live active slide', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const updateVisibilityActionStateSource = extractFunctionSource(
@@ -156,8 +163,7 @@ test('updateVisibilityActionState enables the visibility control only when the i
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateVisibilityActionStateSource, context);
+  runVisibilityActionStateSource(updateVisibilityActionStateSource, context);
 
   context.updateVisibilityActionState(null);
   assert.equal(toggleVisibilitySelectionBtn.disabled, true);
@@ -235,8 +241,7 @@ test('updateVisibilityActionState reuses the shared visibility toolbar helper wh
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateVisibilityActionStateSource, context);
+  runVisibilityActionStateSource(updateVisibilityActionStateSource, context);
 
   context.updateVisibilityActionState({
     activeSlide: {}
@@ -309,8 +314,7 @@ test('updateVisibilityActionState prefers canonical hidden metadata when availab
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateVisibilityActionStateSource, context);
+  runVisibilityActionStateSource(updateVisibilityActionStateSource, context);
 
   context.updateVisibilityActionState({ activeSlide: {} });
   assert.equal(toggleVisibilitySelectionBtn.disabled, false);
@@ -344,13 +348,12 @@ test('updateVisibilityActionState delegates toolbar state assembly to the shared
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateVisibilityActionStateSource, context);
+  runVisibilityActionStateSource(updateVisibilityActionStateSource, context);
 
   const doc = { activeSlide: {} };
   assert.equal(context.updateVisibilityActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
-  assert.match(updateVisibilityActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
+  assert.match(updateVisibilityActionStateSource, /getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\)/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].isHidden, context.isElementHidden);

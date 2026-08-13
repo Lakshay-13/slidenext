@@ -8,14 +8,20 @@ const elementState = require('../shared/studio-element-state.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const VISIBILITY_TOOLBAR_STATE_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-visibility-toolbar-state.js'
+);
 
 test('editor forwards the visibility toolbar document into the selection reader', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toolbarStateSource = fs.readFileSync(VISIBILITY_TOOLBAR_STATE_PATH, 'utf8');
 
-  assert.match(
-    source,
-    /visibilityState\.createStudioVisibilityToolbarStateSync\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
-  );
+  assert.match(source, /createStudioEditorVisibilityToolbarStateController/);
+  assert.match(toolbarStateSource, /getSelectedElements\(doc\)/);
+  assert.match(toolbarStateSource, /getDocumentRef: \(\) => documentRef/);
 });
 
 test('getStudioVisibilitySelection ignores disconnected stale selections', () => {
