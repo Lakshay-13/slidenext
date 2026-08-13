@@ -1524,6 +1524,7 @@
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-save-request-body-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-checker-action.js"></script>
+  <script src="/shared/studio-editor-persisted-save-request-checker-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -1988,6 +1989,38 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistedHtmlCheckerGlobalApi);
+    const studioEditorPersistedSaveRequestCheckerAction =
+      typeof SlideNextStudioEditorPersistedSaveRequestCheckerAction !== 'undefined'
+      && SlideNextStudioEditorPersistedSaveRequestCheckerAction
+      && typeof SlideNextStudioEditorPersistedSaveRequestCheckerAction
+        .createStudioEditorPersistedSaveRequestCheckerAction === 'function'
+      ? SlideNextStudioEditorPersistedSaveRequestCheckerAction
+        .createStudioEditorPersistedSaveRequestCheckerAction({
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getPersistedDeckState: getCurrentEditorPersistedDeckState
+        })
+      : null;
+    const studioEditorPersistedSaveRequestCheckerGlobalApi =
+      typeof SlideNextStudioEditorPersistedSaveRequestCheckerAction !== 'undefined'
+      && SlideNextStudioEditorPersistedSaveRequestCheckerAction
+      && typeof SlideNextStudioEditorPersistedSaveRequestCheckerAction
+        .createStudioEditorPersistedSaveRequestCheckerGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistedSaveRequestCheckerAction
+        .createStudioEditorPersistedSaveRequestCheckerGlobalApi({
+          isCurrentDeckStatePersisted
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistedSaveRequestCheckerGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11251,71 +11284,9 @@
     }
 
     function isCurrentDeckStatePersisted(saveRequestBody, cleanHtml = saveRequestBody && saveRequestBody.htmlContent) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.isPersistedSaveRequest === 'function') {
-        const result = studioEditorPersistenceController.isPersistedSaveRequest(saveRequestBody, cleanHtml);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorPersistedSaveRequestCheckerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistedSaveRequestCheckerAdapter
-        : null;
-      if (createStudioEditorPersistedSaveRequestCheckerAdapter) {
-        if (typeof isCurrentDeckStatePersisted.adapter !== 'function') {
-          isCurrentDeckStatePersisted.adapter = createStudioEditorPersistedSaveRequestCheckerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            readPersistedDeckState: getCurrentEditorPersistedDeckState
-          });
-        }
-        const result = typeof isCurrentDeckStatePersisted.adapter === 'function'
-          ? isCurrentDeckStatePersisted.adapter(saveRequestBody, cleanHtml)
-          : null;
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-
-      const createStudioPersistedSaveRequestChecker = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistedSaveRequestChecker === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistedSaveRequestChecker
-        : null;
-      if (createStudioPersistedSaveRequestChecker) {
-        return createStudioPersistedSaveRequestChecker({
-          readPersistedDeckState: getCurrentEditorPersistedDeckState,
-          isPersistedSaveRequest: (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest === 'function'
-          )
-            ? SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest
-            : null
-        })(saveRequestBody, cleanHtml);
-      }
-
-      const isStudioPersistedSaveRequest = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.isStudioPersistedSaveRequest
-        : null;
-      if (!isStudioPersistedSaveRequest) return false;
-      return isStudioPersistedSaveRequest(
-        saveRequestBody,
-        getCurrentEditorPersistedDeckState(),
-        cleanHtml
-      );
+      return studioEditorPersistedSaveRequestCheckerAction
+        ? studioEditorPersistedSaveRequestCheckerAction(...arguments)
+        : false;
     }
 
     function createCurrentStudioPersistenceHandlerOptions(options = {}) {
