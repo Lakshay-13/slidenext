@@ -473,3 +473,29 @@ test('createStudioCanonicalLayerOrderMutationBuilder reuses an explicit baseline
   assert.equal(result.slides[0].nodes[0].layout.zIndex, 7);
   assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
 });
+
+test('createStudioCanonicalLayerOrderMutationBuilder preserves pending baseline resolution', () => {
+  const pendingDeck = createSourceDeck();
+  const sourceDocument = { id: 'editor-doc' };
+  let pendingDocument = null;
+  const buildCanonicalLayerOrderMutation = canonicalLayout.createStudioCanonicalLayerOrderMutationBuilder({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck(documentRef) {
+      pendingDocument = documentRef;
+      return pendingDeck;
+    }
+  });
+
+  const result = buildCanonicalLayerOrderMutation({
+    sourceDocument,
+    orderedElements: [{
+      dataset: { editorId: 'node-1' },
+      style: { zIndex: '7' }
+    }]
+  });
+
+  assert.equal(pendingDocument, sourceDocument);
+  assert.equal(result.slides[0].nodes[0].layout.zIndex, 7);
+  assert.equal(pendingDeck.slides[0].nodes[0].layout.zIndex, 0);
+});
