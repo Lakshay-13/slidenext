@@ -73,6 +73,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.equal(calls[1][1].restoreDeckViewAfterSlideMutation, callbacks.restoreDeckViewAfterSlideMutation);
   assert.equal(calls[1][1].rollbackMutation, callbacks.rollbackMutation);
   assert.equal(calls[2][1].applyDeletion, callbacks.applyDeletion);
+  assert.equal(calls[2][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[2][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[2][1].rollbackMutation, callbacks.rollbackMutation);
   assert.equal(calls[2][1].alert, callbacks.alert);

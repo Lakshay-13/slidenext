@@ -53,6 +53,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const applyDeletion = typeof options.applyDeletion === 'function'
       ? options.applyDeletion
       : () => ({ didApply: false, transaction: null });
@@ -84,6 +87,7 @@
               canonicalDeckApi,
               buildCanonicalDeck,
               buildCanonicalDeckBaseline,
+              getPendingCanonicalDeck,
               getCanonicalDeckBaseline
             })
           : null;

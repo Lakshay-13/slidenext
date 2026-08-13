@@ -528,6 +528,23 @@ test('buildStudioCanonicalDeleteSlideBaseline prefers a valid live canonical dec
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalDeleteSlideBaseline prefers pending canonical state over live state', () => {
+  const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'pending-slide' }] });
+
+  const result = canonicalSlide.buildStudioCanonicalDeleteSlideBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => liveDeck,
+    buildCanonicalDeck() {
+      throw new Error('pending state should prevent a compatibility rebuild');
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+});
+
 test('buildStudioCanonicalDeleteSlideBaseline falls back when the live canonical deck is invalid', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didBuildFromDocument = false;

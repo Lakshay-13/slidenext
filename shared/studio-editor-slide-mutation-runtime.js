@@ -65,6 +65,7 @@
     const slideDeletionController = deletionApi
       ? deletionApi.createStudioEditorSlideDeletionController({
           ...shared,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           alert: options.alert,
           captureSlideMutationState: options.captureSlideMutationState,
           applyDeletion: options.applyDeletion,
