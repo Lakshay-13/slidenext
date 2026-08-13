@@ -128,6 +128,32 @@ test('launch controller rejects stale metadata without opening the editor', asyn
   assert.equal(editor.classList.contains('active'), false);
 });
 
+test('launch controller falls back to the legacy URL when the source adapter declines', async () => {
+  const { editor, iframe } = createLaunchElements();
+  const controller = launchControllerApi.createStudioEditorLaunchController({
+    createFrameLoadHandler: () => () => {},
+    loadPresentationMetadata: async () => null,
+    getCurrentPresentationUrl: () => '/presentations/demo/index.html',
+    getCurrentSessionToken: () => 5,
+    resolveLaunchSource: () => ({
+      kind: 'srcdoc',
+      srcdoc: '<html>canonical</html>'
+    }),
+    setFrameSource() {
+      return false;
+    }
+  });
+
+  assert.equal(await controller.launch({
+    presentationUrl: '/presentations/demo/index.html',
+    editor,
+    iframe,
+    sessionToken: 5
+  }), true);
+  assert.equal(iframe.src, '/presentations/demo/index.html');
+  assert.equal(iframe.srcdoc, '');
+});
+
 test('launch controller applies saved zoom only after the live frame guard passes', async () => {
   const { editor, iframe } = createLaunchElements();
   const scheduled = [];

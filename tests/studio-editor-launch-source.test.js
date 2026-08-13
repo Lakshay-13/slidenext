@@ -93,6 +93,41 @@ test('launch source applier centralizes canonical srcdoc and legacy URL assignme
   assert.equal(launchSource.applyStudioEditorLaunchSource(null, '/deck/index.html'), false);
 });
 
+test('index frame source adapter delegates to the shared launch source applier', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const startMarker = 'function setCurrentStudioEditorFrameSource(iframe, presentationUrl, source = {}) {';
+  const endMarker = '\n\n    function setStudioFrameLoadingState(';
+  const startIndex = fileContent.indexOf(startMarker);
+  const endIndex = fileContent.indexOf(endMarker, startIndex);
+  assert.notEqual(startIndex, -1);
+  assert.notEqual(endIndex, -1);
+
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorLaunchSource: {
+      applyStudioEditorLaunchSource(...args) {
+        calls.push(args);
+        return true;
+      }
+    }
+  };
+  vm.runInNewContext(fileContent.slice(startIndex, endIndex), context);
+
+  const iframe = {};
+  const source = { kind: 'srcdoc', srcdoc: '<html>canonical</html>' };
+  assert.equal(
+    context.setCurrentStudioEditorFrameSource(iframe, '/presentations/demo/index.html', source),
+    true
+  );
+  assert.deepEqual(calls, [[iframe, '/presentations/demo/index.html', source]]);
+
+  context.SlideNextStudioEditorLaunchSource = null;
+  assert.equal(
+    context.setCurrentStudioEditorFrameSource(iframe, '/presentations/demo/index.html', source),
+    false
+  );
+});
+
 test('index launch source adapter renders a real canonical deck through the shared HTML builder', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const startMarker = 'function resolveCurrentStudioEditorLaunchSource(metadata, presentationUrl = \'\') {';

@@ -121,7 +121,10 @@
         editor.classList.remove('hidden');
         void editor.offsetWidth;
         if (setFrameSource) {
-          setFrameSource(iframe, presentationUrl, launchSource);
+          const didSetFrameSource = setFrameSource(iframe, presentationUrl, launchSource);
+          if (didSetFrameSource === false) {
+            iframe.src = presentationUrl;
+          }
         } else {
           iframe.src = presentationUrl;
         }
