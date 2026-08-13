@@ -29,11 +29,16 @@ test('addAsset commits a canonical asset and notifies the library view', () => {
   assert.deepEqual(versionLabels, ['Auto: Added Asset "Hero Image"']);
 });
 
-test('asset mutations prefer a valid live canonical baseline', () => {
+test('asset mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }],
+    assets: [{ id: 'pending-existing', name: 'Pending Existing', type: 'image', src: '/pending.png' }]
+  });
   let didBuildFromDocument = false;
   const controller = assetController.createStudioEditorAssetController({
     canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
     canonicalStateApi: canonicalState,
     getCanonicalDeckBaseline: () => liveDeck,
     getCanonicalDeck: () => {
@@ -50,7 +55,8 @@ test('asset mutations prefer a valid live canonical baseline', () => {
     src: '/images/live.png'
   });
 
-  assert.equal(nextDeck.assets[0].id, 'live-image');
+  assert.equal(nextDeck.assets[0].id, 'pending-existing');
+  assert.equal(nextDeck.assets[1].id, 'live-image');
   assert.equal(didBuildFromDocument, false);
 });
 
@@ -65,6 +71,9 @@ test('asset controller delegates canonical deck resolution to shared state', () 
         return () => deck;
       }
     },
+    getPendingCanonicalDeck() {
+      return deck;
+    },
     getCanonicalDeckBaseline() {
       throw new Error('shared resolver should own baseline resolution');
     },
@@ -78,6 +87,7 @@ test('asset controller delegates canonical deck resolution to shared state', () 
 
   assert.equal(result.assets[0].id, 'shared-asset');
   assert.equal(typeof resolverOptions.getCanonicalDeck, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

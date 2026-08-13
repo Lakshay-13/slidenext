@@ -20,6 +20,7 @@ test('asset runtime composes controller dependencies without changing them', () 
     canonicalDeckApi: {},
     canonicalStateApi: {},
     getCanonicalDeck: () => null,
+    getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
     getDocument: () => null,
     getActiveSlideId: () => '',
@@ -41,6 +42,7 @@ test('asset runtime composes controller dependencies without changing them', () 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].getDocument, options.getDocument);
   assert.equal(calls[0].getSelectedImage, options.getSelectedImage);
   assert.equal(calls[0].getElementId, options.getElementId);
@@ -76,5 +78,9 @@ test('index wires asset persistence through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorAssetController\.createStudioEditorAssetController\(/
+  );
+  assert.match(
+    fileContent,
+    /getCanonicalDeckBaseline: \(\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
   );
 });

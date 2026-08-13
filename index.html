@@ -4047,6 +4047,7 @@
             getIframeDoc(),
             getStudioEditorSessionToken()
           ),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getDocument: () => getIframeDoc(),
           getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
           getSelectedImage: (doc) => {

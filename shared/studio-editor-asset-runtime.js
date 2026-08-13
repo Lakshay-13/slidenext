@@ -21,6 +21,7 @@
             || (root && root.SlideNextStudioEditorCanonicalState)
             || null,
           getCanonicalDeck: options.getCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           getDocument: options.getDocument,
           getActiveSlideId: options.getActiveSlideId,
