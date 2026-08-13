@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const canonicalDeckModel = require('../shared/canonical-deck.js');
+const canonicalPersistenceAdapter = require('../shared/studio-editor-canonical-persistence-adapter.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const persistedHtmlAction = require('../shared/studio-editor-persisted-html-action.js');
@@ -43,6 +44,19 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function installSlideIndexAccessor(context) {
   context.getStudioCurrentSlideIndex = () => context.currentSlideIndex;
+}
+
+function installCanonicalPersistenceAdapter(context) {
+  context.studioEditorCanonicalPersistenceAdapter = canonicalPersistenceAdapter
+    .createStudioEditorCanonicalPersistenceAdapter({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      isCanonicalDeck: (value) => !!value && Array.isArray(value.slides),
+      buildCanonicalDeckForDocument: (doc) => typeof context.buildEditorCanonicalDeck === 'function'
+        ? context.buildEditorCanonicalDeck(doc)
+        : null
+    });
 }
 
 function createEditorDeckViewSharedOptionsForTest(context, doc) {
@@ -167,6 +181,8 @@ function loadResolveEditorCapturedPersistableDeckState(context) {
 }
 
 function loadCaptureEditorPersistableDeckState(context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  installCanonicalPersistenceAdapter(context);
   context.captureEditorPersistableDeckState =
     persistableDeckStateAction.createStudioEditorPersistableDeckStateAction({
       getDocument: () => typeof context.getIframeDoc === 'function'
@@ -206,6 +222,7 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 
 function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  installCanonicalPersistenceAdapter(context);
   if (typeof context.resolveEditorMetadataPersistenceOptions !== 'function') {
     loadResolveEditorMetadataPersistenceOptions(context);
   }
@@ -262,6 +279,7 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
 
 function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  installCanonicalPersistenceAdapter(context);
   if (typeof context.resolveEditorCanonicalDeckOverride !== 'function') {
     const resolveEditorCanonicalDeckOverrideSource = extractFunctionSource(
       fileContent,

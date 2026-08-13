@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
+const canonicalPersistenceAdapter = require('../shared/studio-editor-canonical-persistence-adapter.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
@@ -27,6 +28,46 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function installSlideIndexAccessor(context) {
   context.getStudioCurrentSlideIndex = () => context.currentSlideIndex;
+}
+
+function installCanonicalPersistenceAdapter(context, force = false) {
+  if (!force && Object.prototype.hasOwnProperty.call(context, 'studioEditorCanonicalPersistenceAdapter')) {
+    return;
+  }
+  const persistenceApi = context.SlideNextStudioEditorPersistence || null;
+  const persistenceStateApi = context.SlideNextStudioEditorPersistenceState || null;
+  const canResolveValidator = !!persistenceStateApi
+    || !!(persistenceApi
+      && (typeof persistenceApi.resolveStudioCanonicalDeckOverride === 'function'
+        || typeof persistenceApi.createStudioFallbackCanonicalDeckResolver === 'function'));
+  context.studioEditorCanonicalPersistenceAdapter = canonicalPersistenceAdapter
+    .createStudioEditorCanonicalPersistenceAdapter({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi,
+      persistenceStateApi,
+      isCanonicalDeck: canResolveValidator
+        && typeof context.getEditorCanonicalDeckValidator === 'function'
+        ? context.getEditorCanonicalDeckValidator()
+        : canResolveValidator
+          && context.SlideNextCanonicalDeck
+          && typeof context.SlideNextCanonicalDeck.isCanonicalDeck === 'function'
+            ? context.SlideNextCanonicalDeck.isCanonicalDeck
+            : null,
+      resolveCanonicalDeckOverrideForFallback:
+        typeof context.resolveEditorCanonicalDeckOverride === 'function'
+          ? context.resolveEditorCanonicalDeckOverride
+          : null,
+      buildCanonicalDeckForDocument: (doc) => typeof context.buildEditorCanonicalDeck === 'function'
+        ? context.buildEditorCanonicalDeck(doc)
+        : null
+    });
+}
+
+function runEditorContext(source, context) {
+  if (source.includes('studioEditorCanonicalPersistenceAdapter')) {
+    installCanonicalPersistenceAdapter(context);
+  }
+  return vm.runInContext(source, context);
 }
 
 function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
@@ -107,7 +148,7 @@ function loadBuildEditorCanonicalDeck(fileContent, context, helperSource) {
     canonicalDeckBuilder: context.studioEditorCanonicalDeckBuilder,
     getDocument: context.getIframeDoc
   });
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 }
 
 function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) {
@@ -119,7 +160,7 @@ function loadCreateEditorCanonicalDeckResolverWithBuilder(fileContent, context) 
     'function createEditorCanonicalDeckResolverWithBuilder(\n      doc = getIframeDoc(),\n      buildCanonicalDeck = (sourceDoc) => buildEditorCanonicalDeck(sourceDoc)\n    ) {',
     '\n\n    function createEditorCanonicalDeckViewStateOptions(options = {}) {'
   );
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 }
 
 function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
@@ -130,7 +171,7 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
       'function resolveEditorCanonicalDeckOverride(canonicalDeck = null, options = {}) {',
       '\n\n    function getEditorCanonicalDeckValidator() {'
     );
-    vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+    runEditorContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
   if (typeof context.getEditorCanonicalDeckValidator !== 'function') {
     const getEditorCanonicalDeckValidatorSource = extractFunctionSource(
@@ -148,6 +189,7 @@ function loadCreateEditorDeckViewSharedOptions(fileContent, context) {
     );
     vm.runInContext(createEditorDeckViewSharedOptionsSource, context);
   }
+  installCanonicalPersistenceAdapter(context, true);
 }
 
 function loadResolveEditorFallbackCanonicalDeck(fileContent, context) {
@@ -852,7 +894,7 @@ test('resolveEditorCanonicalDeckOverride delegates through the editor persistenc
   );
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(
     context.resolveEditorCanonicalDeckOverride(override, { buildCanonicalDeck }),
@@ -889,7 +931,7 @@ test('resolveEditorCanonicalDeckOverride creates the shared canonical override a
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const firstResult = context.resolveEditorCanonicalDeckOverride({ id: 'one' }, { marker: 1 });
   const secondResult = context.resolveEditorCanonicalDeckOverride({ id: 'two' }, { marker: 2 });
@@ -916,7 +958,7 @@ test('resolveEditorCanonicalDeckOverride returns null when the persistence runti
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(
     context.resolveEditorCanonicalDeckOverride({ id: 'override' }, {
@@ -943,7 +985,7 @@ test('getEditorCanonicalDeckValidator returns the shared canonical deck validato
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(
     context.getEditorCanonicalDeckValidator(),
@@ -1012,7 +1054,7 @@ test('createEditorDeckViewSharedOptions reuses the shared deck canonical overrid
   installSlideIndexAccessor(context);
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const options = context.createEditorDeckViewSharedOptions(iframeDoc);
 
@@ -1116,7 +1158,7 @@ test('createEditorDeckViewSharedOptions delegates shared option composition thro
   installSlideIndexAccessor(context);
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const options = context.createEditorDeckViewSharedOptions(iframeDoc);
 
@@ -1194,7 +1236,7 @@ test('resolveEditorFallbackCanonicalDeck uses shared fallback resolution with th
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 
@@ -1257,7 +1299,7 @@ test('resolveEditorFallbackCanonicalDeck rebuilds malformed canonical deck input
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 
@@ -1292,7 +1334,7 @@ test('resolveEditorFallbackCanonicalDeck fails closed when the shared helper is 
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(
     context.resolveEditorFallbackCanonicalDeck(null, {
@@ -1339,7 +1381,7 @@ test('resolveEditorFallbackCanonicalDeck fails closed when only the legacy share
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 
@@ -1398,7 +1440,7 @@ test('resolveEditorFallbackCanonicalDeck reuses the shared fallback deck resolve
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const result = context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck);
 
@@ -1454,7 +1496,7 @@ test('resolveEditorFallbackCanonicalDeck delegates through the editor persistenc
   );
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(
     context.resolveEditorFallbackCanonicalDeck(iframeDoc, malformedCanonicalDeck),
@@ -1506,7 +1548,7 @@ test('resolveEditorFallbackCanonicalDeck reuses the adapter without stale docume
   );
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.deepEqual(
     context.resolveEditorFallbackCanonicalDeck(firstDoc, { id: 'malformed-one' }),
@@ -1650,7 +1692,7 @@ test('resolveEditorFallbackActiveSlideId forwards canonical override resolution 
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
+  runEditorContext(resolveEditorCanonicalDeckOverrideSource, context);
   loadCreateEditorDeckViewSharedOptions(fileContent, context);
   loadResolveEditorFallbackCanonicalDeck(fileContent, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
@@ -2042,7 +2084,7 @@ test('createEditorCanonicalDeckResolverWithBuilder caches the first canonical de
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const resolveCanonicalDeck = context.createEditorCanonicalDeckResolverWithBuilder(iframeDoc, (nextDoc) => {
     calls.push(['buildCanonicalDeck', nextDoc]);
@@ -2067,7 +2109,7 @@ test('createEditorCanonicalDeckResolverWithBuilder fails closed when the shared 
   const context = {};
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const resolveCanonicalDeck = context.createEditorCanonicalDeckResolverWithBuilder(
     { label: 'iframe-doc' },
@@ -2107,7 +2149,7 @@ test('createEditorCanonicalDeckResolverWithBuilder reuses the shared canonical r
   const buildCanonicalDeck = () => canonicalDeck;
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const resolveCanonicalDeck = context.createEditorCanonicalDeckResolverWithBuilder(
     iframeDoc,
@@ -2946,7 +2988,7 @@ test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and li
   const context = {};
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const options = context.createEditorCanonicalDeckViewStateOptions({
     buildCanonicalDeck: customBuildCanonicalDeck,
@@ -2985,7 +3027,7 @@ test('createEditorCanonicalDeckViewStateOptions defaults to the live-first canon
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const options = context.createEditorCanonicalDeckViewStateOptions({});
   assert.equal(options.buildCanonicalDeck(documentRef), canonicalDeck);
@@ -3023,7 +3065,7 @@ test('createEditorCanonicalDeckViewStateOptions delegates callback normalization
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   assert.equal(context.createEditorCanonicalDeckViewStateOptions({
     buildCanonicalDeck: customBuildCanonicalDeck,
@@ -3058,7 +3100,7 @@ test('createEditorCanonicalDeckViewStateOptions falls back when shared normaliza
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const options = context.createEditorCanonicalDeckViewStateOptions({
     buildCanonicalDeck: customBuildCanonicalDeck,
@@ -3685,7 +3727,7 @@ test('editor canonical resolver delegates to the shared view-state module before
   };
 
   vm.createContext(context);
-  vm.runInContext(helperSource, context);
+  runEditorContext(helperSource, context);
 
   const resolver = context.createEditorCanonicalDeckResolverWithBuilder(
     iframeDoc,

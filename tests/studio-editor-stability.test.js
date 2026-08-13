@@ -7,6 +7,7 @@ const canonicalTransform = require('../shared/studio-editor-canonical-transform.
 const deckView = require('../shared/studio-deck-view.js');
 const history = require('../shared/studio-history.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalPersistenceAdapter = require('../shared/studio-editor-canonical-persistence-adapter.js');
 const transformState = require('../shared/studio-editor-transform.js');
 const studioEvents = require('../shared/studio-editor-events.js');
 const interactionOptions = require('../shared/studio-editor-interaction-options.js');
@@ -212,6 +213,14 @@ test('canonical override fallback preserves the shared persistence dependency co
     },
     getEditorCanonicalDeckValidator: () => isCanonicalDeck
   };
+
+  context.studioEditorCanonicalPersistenceAdapter = canonicalPersistenceAdapter
+    .createStudioEditorCanonicalPersistenceAdapter({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState,
+      isCanonicalDeck
+    });
 
   vm.createContext(context);
   vm.runInContext(resolverSource, context);
