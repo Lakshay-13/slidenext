@@ -6109,7 +6109,12 @@
     }
 
     function closePresentation() {
-      resetStudioPresentationUiState();
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.closeModal === 'function') {
+        return studioEditorPreviewController.closeModal();
+      }
+      return false;
     }
 
     function toggleIframeFullscreen() {

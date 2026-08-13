@@ -79,6 +79,28 @@ test('opens the presentation modal through the shared preview controller', () =>
   }]);
 });
 
+test('closes the presentation modal through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      resetStudioPresentationUiState(options) {
+        calls.push(options);
+      }
+    },
+    documentRef: iframeDocument
+  });
+
+  assert.equal(controller.closeModal(), true);
+  assert.deepEqual(calls, [{ document: iframeDocument }]);
+});
+
+test('fails closed when the preview reset API is unavailable', () => {
+  const controller = previewController.createStudioEditorPreviewController({ previewApi: {} });
+
+  assert.equal(controller.closeModal(), false);
+});
+
 test('toggles presentation fullscreen through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };

@@ -152,6 +152,30 @@ test('source history restore propagates canonical frame restore failures', () =>
   assert.deepEqual(calls, [{ id: 'failed-entry' }]);
 });
 
+test('closePresentation delegates preview reset to the shared controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const closePresentationSource = extractFunctionSource(
+    fileContent,
+    'function closePresentation() {',
+    '\n\n    function toggleIframeFullscreen() {'
+  );
+  let calls = 0;
+  const context = {
+    studioEditorPreviewController: {
+      closeModal() {
+        calls += 1;
+        return 'close-result';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(closePresentationSource, context);
+
+  assert.equal(context.closePresentation(), 'close-result');
+  assert.equal(calls, 1);
+});
+
 test('source history capture prefers the current canonical deck before source replacement', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   const calls = [];

@@ -172,6 +172,16 @@
       });
     }
 
+    function closeModal() {
+      if (!previewApi || typeof previewApi.resetStudioPresentationUiState !== 'function') {
+        return false;
+      }
+      previewApi.resetStudioPresentationUiState({
+        document: documentRef
+      });
+      return true;
+    }
+
     function toggleFullscreen() {
       if (!previewApi || typeof previewApi.toggleStudioPresentationFullscreen !== 'function') {
         return false;
@@ -213,6 +223,7 @@
       launch,
       launchPreview: launch,
       openModal,
+      closeModal,
       toggleFullscreen,
       syncFullscreenIcon,
       launchUrl,
