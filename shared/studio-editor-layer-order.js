@@ -173,6 +173,43 @@
     return zIndexInput;
   }
 
+  function createStudioLayerOrderZIndexInputSynchronizer(options = {}) {
+    const getDocument = typeof options.getDocument === 'function'
+      ? options.getDocument
+      : () => null;
+    const getDocumentRef = typeof options.getDocumentRef === 'function'
+      ? options.getDocumentRef
+      : () => options.documentRef || null;
+    const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+      ? options.resolveCanonicalDeck
+      : null;
+    const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+      ? options.resolveCanonicalNode
+      : null;
+
+    return function syncStudioEditorLayerOrderZIndexInput(target) {
+      if (!target) return null;
+      const targetId = target.dataset && target.dataset.editorId;
+      const targetDocument = target.ownerDocument || (targetId ? getDocument() : null);
+      let canonicalDeck = null;
+      if (targetId && resolveCanonicalDeck) {
+        try {
+          canonicalDeck = resolveCanonicalDeck(targetDocument);
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const canonicalTarget = resolveCanonicalNode
+        ? resolveCanonicalNode(target, canonicalDeck)
+        : null;
+      return syncStudioLayerOrderZIndexInput({
+        documentRef: getDocumentRef(),
+        target,
+        canonicalTarget
+      });
+    };
+  }
+
   function syncStudioLayerOrderToolbarState(options = {}) {
     const canMutateDeck = typeof options.canMutateDeck === 'function'
       ? options.canMutateDeck
@@ -393,6 +430,7 @@
     buildStudioLayerOrderToolbarState,
     renderStudioLayerOrderToolbarState,
     syncStudioLayerOrderZIndexInput,
+    createStudioLayerOrderZIndexInputSynchronizer,
     syncStudioLayerOrderToolbarState,
     buildStudioLayerOrderMutationPlan,
     buildStudioReorderedLayerOrder,

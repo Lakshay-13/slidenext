@@ -10939,7 +10939,27 @@
       });
     }
 
+    const studioEditorLayerOrderZIndexSynchronizer = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+      && SlideNextStudioEditorLayerOrder
+      && typeof SlideNextStudioEditorLayerOrder.createStudioLayerOrderZIndexInputSynchronizer === 'function'
+      ? SlideNextStudioEditorLayerOrder.createStudioLayerOrderZIndexInputSynchronizer({
+          getDocument: () => getIframeDoc(),
+          getDocumentRef: () => document,
+          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(sourceDoc)
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck(sourceDoc)
+              : null,
+          resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
+            ? resolveEditorCanonicalNodeForElement
+            : null
+        })
+      : null;
+
     function syncLayerOrderZIndexInput(target) {
+      if (typeof studioEditorLayerOrderZIndexSynchronizer === 'function') {
+        return studioEditorLayerOrderZIndexSynchronizer(target);
+      }
       const layerOrderView = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
         ? SlideNextStudioEditorLayerOrder
         : null;

@@ -206,6 +206,43 @@ test('syncStudioLayerOrderZIndexInput prefers canonical node layout data', () =>
   assert.equal(zIndexInput.value, '7');
 });
 
+test('createStudioLayerOrderZIndexInputSynchronizer resolves canonical inspector state before syncing', () => {
+  const zIndexInput = { value: '' };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'elZIndex' ? zIndexInput : null;
+    }
+  };
+  const targetDocument = { id: 'iframe-document' };
+  const target = {
+    ownerDocument: targetDocument,
+    dataset: { editorId: 'element-1' },
+    style: { zIndex: '12' }
+  };
+  const canonicalDeck = { slides: [] };
+  const canonicalTarget = { layout: { zIndex: 7 } };
+  let resolvedDocument = null;
+  let resolvedNode = null;
+
+  const sync = layerOrder.createStudioLayerOrderZIndexInputSynchronizer({
+    getDocument: () => ({ id: 'fallback-document' }),
+    getDocumentRef: () => documentRef,
+    resolveCanonicalDeck(sourceDocument) {
+      resolvedDocument = sourceDocument;
+      return canonicalDeck;
+    },
+    resolveCanonicalNode(element, deck) {
+      resolvedNode = { element, deck };
+      return canonicalTarget;
+    }
+  });
+
+  assert.equal(sync(target), zIndexInput);
+  assert.equal(resolvedDocument, targetDocument);
+  assert.deepEqual(resolvedNode, { element: target, deck: canonicalDeck });
+  assert.equal(zIndexInput.value, '7');
+});
+
 test('syncStudioLayerOrderToolbarState builds and renders layer controls in one shared operation', () => {
   const element = { id: 'element-1', isConnected: true, locked: false };
   const controls = {
