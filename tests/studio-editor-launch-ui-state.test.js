@@ -51,6 +51,19 @@ test('editor routes session readers through the shared session controller', () =
   assert.doesNotMatch(source, /createStudioSessionStateReaders/);
 });
 
+test('editor routes session reader options through the shared session controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function createCurrentStudioSessionReaderOptions(options = {}) {',
+    '\n\n    function captureCurrentStudioSessionState() {'
+  );
+
+  assert.match(source, /studioEditorSessionStateController\.readerOptions\(options\)/);
+  assert.doesNotMatch(source, /createStudioEditorSessionReaderOptionsAdapter/);
+  assert.doesNotMatch(source, /createStudioSessionReaderOptionsBuilder/);
+});
+
 test('retryStudioEditorFrame reuses the current presentation session', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const retrySource = extractFunctionSource(
@@ -657,7 +670,7 @@ test('createCurrentStudioSessionStateReaders returns neutral readers without the
   assert.equal(readers.getCurrentSessionToken(), 0);
 });
 
-test('createCurrentStudioSessionReaderOptions reuses the shared session-reader options builder when available', () => {
+test('createCurrentStudioSessionReaderOptions delegates through the session controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   let delegatedArgs = null;
   const context = {
@@ -667,20 +680,15 @@ test('createCurrentStudioSessionReaderOptions reuses the shared session-reader o
         getCurrentSessionToken: () => 12
       };
     },
-    SlideNextStudioEditorSession: {
-      ...editorSession,
-      createStudioEditorSessionReaderOptionsAdapter(options = {}) {
+    studioEditorSessionStateController: {
+      readerOptions(options = {}) {
         delegatedArgs = options;
-        return editorSession.createStudioEditorSessionReaderOptionsAdapter(options);
-      },
-      createStudioSessionReaderOptionsBuilder(options = {}) {
-        const sessionStateReaders = options.readCurrentSessionState();
-        return (nextOptions = {}) => ({
-          getCurrentPresentationUrl: sessionStateReaders.getCurrentPresentationUrl,
-          getCurrentSessionToken: sessionStateReaders.getCurrentSessionToken,
-          onLoad: nextOptions.onLoad,
-          readCurrentSessionState: typeof options.readCurrentSessionState
-        });
+        return {
+          getCurrentPresentationUrl: () => '/presentations/onboarding-presentation/index.html',
+          getCurrentSessionToken: () => 12,
+          onLoad: options.onLoad,
+          readCurrentSessionState: 'function'
+        };
       }
     }
   };
@@ -706,44 +714,31 @@ test('createCurrentStudioSessionReaderOptions reuses the shared session-reader o
       readCurrentSessionState: 'function'
     }
   );
-  assert.equal(delegatedArgs.readCurrentSessionState, context.createCurrentStudioSessionStateReaders);
+  assert.equal(delegatedArgs.onLoad, 'load-sentinel');
 });
 
-test('createCurrentStudioSessionReaderOptions creates the shared reader-options adapter once', () => {
+test('createCurrentStudioSessionReaderOptions returns neutral options without the controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  let adapterCreateCalls = 0;
   const context = {
-    currentPresentationUrl: '/presentations/onboarding-presentation/index.html',
-    studioEditorSessionToken: 12,
-    createCurrentStudioSessionStateReaders() {
-      return {
-        getCurrentPresentationUrl: () => context.currentPresentationUrl,
-        getCurrentSessionToken: () => context.studioEditorSessionToken
-      };
-    },
     SlideNextStudioEditorSession: {
       createStudioEditorSessionReaderOptionsAdapter(options) {
-        adapterCreateCalls += 1;
-        return editorSession.createStudioEditorSessionReaderOptionsAdapter(options);
+        throw new Error('legacy session reader-options adapter should not run');
+      },
+      createStudioSessionReaderOptionsBuilder() {
+        throw new Error('legacy session reader-options builder should not run');
       }
     }
   };
 
   vm.createContext(context);
+  loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
 
-  const firstOptions = context.createCurrentStudioSessionReaderOptions({ onLoad: 'first' });
-  context.currentPresentationUrl = '/presentations/ai-tools-presentation/index.html';
-  context.studioEditorSessionToken = 13;
-  const secondOptions = context.createCurrentStudioSessionReaderOptions({ onLoad: 'second' });
+  const options = context.createCurrentStudioSessionReaderOptions({ onLoad: 'first' });
 
-  assert.equal(adapterCreateCalls, 1);
-  assert.equal(firstOptions.onLoad, 'first');
-  assert.equal(firstOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(firstOptions.getCurrentSessionToken(), 13);
-  assert.equal(secondOptions.onLoad, 'second');
-  assert.equal(secondOptions.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
-  assert.equal(secondOptions.getCurrentSessionToken(), 13);
+  assert.equal(options.onLoad, 'first');
+  assert.equal(options.getCurrentPresentationUrl(), '');
+  assert.equal(options.getCurrentSessionToken(), 0);
 });
 
 test('createCurrentStudioPresentationMetadataLoadOptions merges live session readers with metadata sync behavior', () => {

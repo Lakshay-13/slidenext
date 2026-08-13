@@ -6667,41 +6667,6 @@
         && typeof studioEditorSessionStateController.readerOptions === 'function') {
         return studioEditorSessionStateController.readerOptions(options);
       }
-      const createStudioEditorSessionReaderOptionsAdapter = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioEditorSessionReaderOptionsAdapter === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioEditorSessionReaderOptionsAdapter
-        : null;
-      if (createStudioEditorSessionReaderOptionsAdapter) {
-        if (typeof createCurrentStudioSessionReaderOptions.adapter !== 'function') {
-          createCurrentStudioSessionReaderOptions.adapter = createStudioEditorSessionReaderOptionsAdapter({
-            sessionApi: SlideNextStudioEditorSession,
-            readCurrentSessionState: createCurrentStudioSessionStateReaders
-          });
-        }
-        if (typeof createCurrentStudioSessionReaderOptions.adapter === 'function') {
-          return createCurrentStudioSessionReaderOptions.adapter(options);
-        }
-        if (createCurrentStudioSessionReaderOptions.adapter && typeof createCurrentStudioSessionReaderOptions.adapter === 'object') {
-          return createCurrentStudioSessionReaderOptions.adapter;
-        }
-      }
-
-      const createStudioSessionReaderOptionsBuilder = (
-        typeof SlideNextStudioEditorSession !== 'undefined'
-        && SlideNextStudioEditorSession
-        && typeof SlideNextStudioEditorSession.createStudioSessionReaderOptionsBuilder === 'function'
-      )
-        ? SlideNextStudioEditorSession.createStudioSessionReaderOptionsBuilder
-        : null;
-      if (createStudioSessionReaderOptionsBuilder) {
-        return createStudioSessionReaderOptionsBuilder({
-          readCurrentSessionState: createCurrentStudioSessionStateReaders
-        })(options);
-      }
-
       return {
         ...createCurrentStudioSessionStateReaders(),
         ...options
