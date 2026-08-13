@@ -182,6 +182,15 @@
       });
     }
 
+    function syncFullscreenIcon() {
+      if (!previewApi || typeof previewApi.syncStudioFullscreenIcon !== 'function') {
+        return false;
+      }
+      return previewApi.syncStudioFullscreenIcon({
+        document: documentRef
+      });
+    }
+
     function launchUrl(url, startSlideIdx) {
       if (!previewApi || typeof previewApi.launchPresentationUrl !== 'function') return false;
       return previewApi.launchPresentationUrl({
@@ -205,6 +214,7 @@
       launchPreview: launch,
       openModal,
       toggleFullscreen,
+      syncFullscreenIcon,
       launchUrl,
       launchHtml,
       createStudioEditorPreviewFallbackHtmlTransformer,

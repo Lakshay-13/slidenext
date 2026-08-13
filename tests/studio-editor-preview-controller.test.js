@@ -101,6 +101,23 @@ test('toggles presentation fullscreen through the shared preview controller', ()
   }]);
 });
 
+test('syncs the fullscreen icon through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      syncStudioFullscreenIcon(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    documentRef: iframeDocument
+  });
+
+  assert.equal(controller.syncFullscreenIcon(), true);
+  assert.deepEqual(calls, [{ document: iframeDocument }]);
+});
+
 test('launches legacy HTML through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };

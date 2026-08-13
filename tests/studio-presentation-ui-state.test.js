@@ -295,6 +295,31 @@ test('toggleIframeFullscreen delegates to the shared preview controller', () => 
   assert.equal(calls, 1);
 });
 
+test('syncIframeFullscreenIcon delegates to the shared preview controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const syncIframeFullscreenIconSource = extractFunctionSource(
+    fileContent,
+    'function syncIframeFullscreenIcon() {',
+    '\n\n    // Sync fullscreen button icon when native fullscreen changes'
+  );
+  let calls = 0;
+  const context = {
+    studioEditorPreviewController: {
+      syncFullscreenIcon() {
+        calls += 1;
+        return 'icon-result';
+      }
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(syncIframeFullscreenIconSource, context);
+
+  assert.equal(context.syncIframeFullscreenIcon(), 'icon-result');
+  assert.equal(calls, 1);
+});
+
 test('launchPreview does not open preview flows when deck-ready state disables preview', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(

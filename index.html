@@ -6121,13 +6121,18 @@
       return false;
     }
 
+    function syncIframeFullscreenIcon() {
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.syncFullscreenIcon === 'function') {
+        return studioEditorPreviewController.syncFullscreenIcon();
+      }
+      return false;
+    }
+
     // Sync fullscreen button icon when native fullscreen changes (e.g. Esc press)
     document.addEventListener('fullscreenchange', () => {
-      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
-        ? SlideNextStudioPreview
-        : null;
-      if (!previewApi || typeof previewApi.syncStudioFullscreenIcon !== 'function') return;
-      previewApi.syncStudioFullscreenIcon({ document });
+      syncIframeFullscreenIcon();
     });
 
     // 3. Studio Presentation Workspace Mode
