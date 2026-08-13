@@ -1655,6 +1655,7 @@
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-editor-history-restore-action.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
+  <script src="/shared/studio-editor-element-snapshot-controller.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
@@ -2688,6 +2689,33 @@
         })
       : {};
     Object.assign(globalThis, presentationDashboardGlobalApi);
+    const studioEditorElementSnapshotController = typeof SlideNextStudioEditorElementSnapshotController !== 'undefined'
+      && SlideNextStudioEditorElementSnapshotController
+      && typeof SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController === 'function'
+      ? SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController({
+          snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
+            ? SlideNextStudioElementSnapshot
+            : null,
+          getElementId: assignEditorElementId,
+          isElementLocked,
+          isElementHidden,
+          isSelectedElement: candidate => {
+            const isStudioLiveSelectedElement = (
+              typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+              && SlideNextStudioEditorLiveSelection
+              && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
+            )
+              ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+              : null;
+            return isStudioLiveSelectedElement
+              ? isStudioLiveSelectedElement(
+                getStudioSelectedElements(candidate && candidate.ownerDocument),
+                candidate
+              )
+              : false;
+          }
+        })
+      : null;
     const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewShellRuntime !== 'undefined'
       && SlideNextStudioEditorDeckViewShellRuntime
       && typeof SlideNextStudioEditorDeckViewShellRuntime.createStudioEditorDeckViewShellRuntime === 'function'
@@ -7952,6 +7980,11 @@
     }
 
     function buildEditorElementSnapshot(el) {
+      if (typeof studioEditorElementSnapshotController !== 'undefined'
+        && studioEditorElementSnapshotController
+        && typeof studioEditorElementSnapshotController.build === 'function') {
+        return studioEditorElementSnapshotController.build(el);
+      }
       if (typeof buildEditorElementSnapshot.builder !== 'function') {
         const createStudioEditorElementSnapshotBuilder = (
           typeof SlideNextStudioElementSnapshot !== 'undefined'
@@ -8023,6 +8056,13 @@
     }
 
     function buildEditorLayerSnapshot(slide) {
+      if (typeof studioEditorElementSnapshotController !== 'undefined'
+        && studioEditorElementSnapshotController
+        && typeof studioEditorElementSnapshotController.buildLayer === 'function') {
+        return studioEditorElementSnapshotController.buildLayer(
+          getNormalizedSlideLayerOrder(slide)
+        );
+      }
       const buildStudioLayerSnapshot = (
         typeof SlideNextStudioElementSnapshot !== 'undefined'
         && SlideNextStudioElementSnapshot
