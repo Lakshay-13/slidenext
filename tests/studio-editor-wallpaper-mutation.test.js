@@ -81,6 +81,38 @@ test('applyStudioWallpaperSlidesMutationWithTransaction prefers the live canonic
   assert.equal(didBuildFromDocument, false);
 });
 
+test('applyStudioWallpaperSlidesMutationWithTransaction prefers pending canonical state over live state', () => {
+  const sourceSlide = {
+    dataset: { slideId: 'slide-1' },
+    style: { background: 'white' }
+  };
+  const liveDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', layout: { background: { style: 'live' } } }]
+  });
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', layout: { background: { style: 'pending' } } }]
+  });
+
+  const result = wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction(
+    [sourceSlide],
+    'black',
+    {
+      applyStudioWallpaperToSlides: studioWallpaperView.applyStudioWallpaperToSlides,
+      canonicalDeckApi: canonicalDeck,
+      canonicalWallpaperApi: canonicalWallpaper,
+      getPendingCanonicalDeck: () => pendingDeck,
+      getCanonicalDeckBaseline: () => liveDeck,
+      buildCanonicalDeckBaseline: () => {
+        throw new Error('pending state should prevent a compatibility rebuild');
+      },
+      getSlideId: (slide) => slide.dataset.slideId
+    }
+  );
+
+  assert.equal(result.canonicalDeck.slides[0].layout.background.style, 'black');
+  assert.equal(result.canonicalDeck.slides[0].id, 'slide-1');
+});
+
 test('applyStudioWallpaperSlidesMutationWithTransaction fails closed without slides or an apply adapter', () => {
   assert.deepEqual(
     wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction([], 'black'),

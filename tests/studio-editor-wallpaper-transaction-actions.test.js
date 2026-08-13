@@ -27,6 +27,7 @@ test('wallpaper transaction actions forward canonical and DOM mutation adapters'
     applyStudioWallpaperToSlides() {}
   };
   const buildCanonicalDeck = () => baseline;
+  const getPendingCanonicalDeck = () => baseline;
   const getCanonicalDeckBaseline = () => baseline;
   const actions = transactionActions.createStudioEditorWallpaperTransactionActions({
     wallpaperMutationApi,
@@ -36,6 +37,7 @@ test('wallpaper transaction actions forward canonical and DOM mutation adapters'
     canonicalWallpaperApi,
     getSlideId: () => 'slide-1',
     buildCanonicalDeck,
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline
   });
 
@@ -54,6 +56,7 @@ test('wallpaper transaction actions forward canonical and DOM mutation adapters'
   assert.equal(received.options.applyStudioWallpaperToSlides, wallpaperViewApi.applyStudioWallpaperToSlides);
   assert.equal(received.options.buildCanonicalDeckBaseline(sourceDocument, { mode: 'current' }), baseline);
   assert.equal(received.options.getCanonicalDeckBaseline(sourceDocument), baseline);
+  assert.equal(received.options.getPendingCanonicalDeck(sourceDocument), baseline);
 });
 
 test('wallpaper transaction actions wrap active-slide mutations without changing the shared contract', () => {
