@@ -1533,6 +1533,7 @@
   <script src="/shared/studio-editor-persistence-stale-action.js"></script>
   <script src="/shared/studio-editor-persistence-capture-action.js"></script>
   <script src="/shared/studio-editor-version-checkpoint-state-action.js"></script>
+  <script src="/shared/studio-editor-save-version-checkpoint-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2291,6 +2292,35 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionCheckpointStateGlobalApi);
+    const studioEditorSaveVersionCheckpointAction =
+      typeof SlideNextStudioEditorSaveVersionCheckpointAction !== 'undefined'
+      && SlideNextStudioEditorSaveVersionCheckpointAction
+      && typeof SlideNextStudioEditorSaveVersionCheckpointAction
+        .createStudioEditorSaveVersionCheckpointAction === 'function'
+      ? SlideNextStudioEditorSaveVersionCheckpointAction
+        .createStudioEditorSaveVersionCheckpointAction({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getIsPersistedState: () => isCurrentDeckStatePersisted,
+          getBuildSaveRequestBody: () => buildEditorSaveRequestBody,
+          getResolvePlaybackState: () => capturePersistedDeckPlaybackState,
+          getFetch: () => fetch,
+          getApplyPersistenceSuccess: () => applyCurrentStudioPersistenceSuccess
+        })
+      : null;
+    const studioEditorSaveVersionCheckpointGlobalApi =
+      typeof SlideNextStudioEditorSaveVersionCheckpointAction !== 'undefined'
+      && SlideNextStudioEditorSaveVersionCheckpointAction
+      && typeof SlideNextStudioEditorSaveVersionCheckpointAction
+        .createStudioEditorSaveVersionCheckpointGlobalApi === 'function'
+      ? SlideNextStudioEditorSaveVersionCheckpointAction
+        .createStudioEditorSaveVersionCheckpointGlobalApi({
+          saveVersionCheckpoint: studioEditorSaveVersionCheckpointAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorSaveVersionCheckpointGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11605,33 +11635,9 @@
     }
 
     async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {
-      const executeStudioVersionCheckpointPersistenceRequestWithSuccess = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.executeStudioVersionCheckpointPersistenceRequestWithSuccess
+      return studioEditorSaveVersionCheckpointAction
+        ? studioEditorSaveVersionCheckpointAction(...arguments)
         : null;
-      if (!executeStudioVersionCheckpointPersistenceRequestWithSuccess) return null;
-      const versionCheckpointResult = await executeStudioVersionCheckpointPersistenceRequestWithSuccess(
-        versionLabel,
-        cleanHtml,
-        presentationUrl,
-        {
-          ...options,
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody,
-          resolvePlaybackState: capturePersistedDeckPlaybackState,
-          fetchImpl: fetch,
-          applyPersistenceSuccess: (persistenceContext, successOptions = {}) => {
-            return applyCurrentStudioPersistenceSuccess(persistenceContext, successOptions);
-          },
-          successOptions: {
-            presentationUrl
-          }
-        }
-      );
-      return versionCheckpointResult ? versionCheckpointResult.data : null;
     }
 
     async function executeCurrentStudioVersionCheckpointSaveWithFailure(

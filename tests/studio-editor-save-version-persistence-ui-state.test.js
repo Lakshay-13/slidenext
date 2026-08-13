@@ -11,6 +11,7 @@ const playbackStateAction = require('../shared/studio-editor-persisted-deck-play
 const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
+const saveVersionCheckpointAction = require('../shared/studio-editor-save-version-checkpoint-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -84,6 +85,28 @@ function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
     fileContent,
     'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
     '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadSaveVersionCheckpoint(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorSaveVersionCheckpointAction =
+    saveVersionCheckpointAction.createStudioEditorSaveVersionCheckpointAction({
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getIsPersistedState: () => context.isCurrentDeckStatePersisted || null,
+      getBuildSaveRequestBody: () => context.buildEditorSaveRequestBody || null,
+      getResolvePlaybackState: () => context.capturePersistedDeckPlaybackState || null,
+      getFetch: () => context.fetch || null,
+      getApplyPersistenceSuccess: () => context.applyCurrentStudioPersistenceSuccess || null
+    });
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
+    '\n\n    // 6. AutoSave debouncing pipeline'
   );
   vm.runInContext(helperSource, context);
 }
@@ -408,12 +431,6 @@ test('setCurrentPresentationCanonicalDeck delegates metadata application through
 
 test('saveVersionCheckpoint refreshes persisted html and canonical metadata after a successful save rewrite through the shared helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
-
   const canonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -498,7 +515,7 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   const result = await context.saveVersionCheckpoint(
     'Checkpoint A',
@@ -542,11 +559,6 @@ test('saveVersionCheckpoint refreshes persisted html and canonical metadata afte
 
 test('saveVersionCheckpoint fails closed when the shared request executor is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
   const context = {
     SlideNextStudioEditorPersistence: {},
     getStudioCurrentPresentationUrl() {
@@ -567,7 +579,7 @@ test('saveVersionCheckpoint fails closed when the shared request executor is una
   };
 
   vm.createContext(context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   assert.equal(
     await context.saveVersionCheckpoint(
@@ -581,12 +593,6 @@ test('saveVersionCheckpoint fails closed when the shared request executor is una
 
 test('saveVersionCheckpoint clears the persisted playback baseline after a successful save rewrite without live playback markers', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
-
   const canonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -650,7 +656,7 @@ test('saveVersionCheckpoint clears the persisted playback baseline after a succe
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   await context.saveVersionCheckpoint(
     'Checkpoint Null Playback',
@@ -689,12 +695,6 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function resolveEditorLiveActiveSlide(doc = getIframeDoc()) {'
   );
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
-
   const iframeDoc = { label: 'iframe-doc' };
   const canonicalDeck = {
     kind: 'slidenext.deck',
@@ -793,7 +793,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   vm.runInContext(getPersistedActiveSlideIdSource, context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   loadCapturePersistedDeckPlaybackState(context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   const result = await context.saveVersionCheckpoint(
     'Checkpoint Canonical Playback',
@@ -827,12 +827,6 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
 
 test('saveVersionCheckpoint preserves the persisted playback baseline when no live iframe document is available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
-
   const canonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -898,7 +892,7 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   await context.saveVersionCheckpoint(
     'Checkpoint Persisted Playback',
@@ -927,12 +921,6 @@ test('saveVersionCheckpoint preserves the persisted playback baseline when no li
 
 test('saveVersionCheckpoint keeps save rewrites enabled when canonical state changed despite matching persisted html', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const saveVersionCheckpointSource = extractFunctionSource(
-    fileContent,
-    'async function saveVersionCheckpoint(versionLabel, cleanHtml, presentationUrl = getStudioCurrentPresentationUrl(), options = {}) {',
-    '\n\n    // 6. AutoSave debouncing pipeline'
-  );
-
   const currentCanonicalDeck = {
     kind: 'slidenext.deck',
     schemaVersion: 1,
@@ -1006,7 +994,7 @@ test('saveVersionCheckpoint keeps save rewrites enabled when canonical state cha
   vm.createContext(context);
   loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context);
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
-  vm.runInContext(saveVersionCheckpointSource, context);
+  loadSaveVersionCheckpoint(fileContent, context);
 
   await context.saveVersionCheckpoint(
     'Checkpoint B',
