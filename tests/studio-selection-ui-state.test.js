@@ -15,6 +15,7 @@ const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapt
 const committedSelectionIdsAdapter = require('../shared/studio-editor-committed-selection-ids-adapter.js');
 const idListEqualityAdapter = require('../shared/studio-editor-id-list-equality-adapter.js');
 const selectionOptionsAdapter = require('../shared/studio-editor-selection-options-adapter.js');
+const liveSelectionAdapter = require('../shared/studio-editor-live-selection-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -152,6 +153,14 @@ test('editor composes ID-list equality through the shared selection API', () => 
   assert.match(source, /areStudioEditorIdListsEqual/);
   assert.match(source, /if \(!compareIdLists\) return false/);
   assert.doesNotMatch(source, /areEditorIdListsEqual\.checker/);
+});
+
+test('editor composes live selection filtering through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorLiveSelectionAdapter =/);
+  assert.match(source, /getStudioEditorLiveSelection/);
+  assert.match(source, /if \(!getLiveSelection\) return \[\]/);
 });
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -911,6 +920,7 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
 
   vm.createContext(context);
   context.SlideNextStudioEditorSelectionOptionsAdapter = selectionOptionsAdapter;
+  context.studioEditorLiveSelectionAdapter = liveSelectionAdapter;
   vm.runInContext(getEditorSelectionOptionsSource, context);
   vm.runInContext(getLiveSelectedElementsSource, context);
 
@@ -927,7 +937,8 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
   );
   const context = {
     selectedElements: [{ id: 'stale' }],
-    SlideNextStudioEditorLiveSelection: null
+    SlideNextStudioEditorLiveSelection: null,
+    studioEditorLiveSelectionAdapter: null
   };
   installSelectionAccessors(context);
 
@@ -935,6 +946,30 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
   vm.runInContext(getLiveSelectedElementsSource, context);
 
   assert.equal(context.getLiveSelectedElements([], { id: 'doc' }).length, 0);
+});
+
+test('getStudioEditorLiveSelection composes shared live-selection filtering', () => {
+  const elements = [{ id: 'node-1' }];
+  const selectionOptions = { selectionOptions: true };
+  let delegated = null;
+
+  const result = liveSelectionAdapter.getStudioEditorLiveSelection(elements, {
+    selectionApi: {
+      getStudioLiveSelection(currentElements, options) {
+        delegated = { currentElements, options };
+        return elements;
+      }
+    },
+    getSelectionOptions: () => selectionOptions
+  });
+
+  assert.equal(result, elements);
+  assert.equal(delegated.currentElements, elements);
+  assert.equal(delegated.options, selectionOptions);
+});
+
+test('getStudioEditorLiveSelection fails closed without the shared live-selection API', () => {
+  assert.equal(liveSelectionAdapter.getStudioEditorLiveSelection([], {}), null);
 });
 
 test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {

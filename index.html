@@ -1667,6 +1667,7 @@
   <script src="/shared/studio-editor-committed-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-id-list-equality-adapter.js"></script>
   <script src="/shared/studio-editor-selection-options-adapter.js"></script>
+  <script src="/shared/studio-editor-live-selection-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -9066,15 +9067,28 @@
       }
     }
 
+    const studioEditorLiveSelectionAdapter = typeof SlideNextStudioEditorLiveSelectionAdapter !== 'undefined'
+      && SlideNextStudioEditorLiveSelectionAdapter
+      && typeof SlideNextStudioEditorLiveSelectionAdapter.getStudioEditorLiveSelection === 'function'
+      ? SlideNextStudioEditorLiveSelectionAdapter
+      : null;
+
     function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
-      const liveSelectionApi = typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-        ? SlideNextStudioEditorLiveSelection
+      const getLiveSelection = studioEditorLiveSelectionAdapter
+        && typeof studioEditorLiveSelectionAdapter.getStudioEditorLiveSelection === 'function'
+        ? studioEditorLiveSelectionAdapter.getStudioEditorLiveSelection
         : null;
-      if (!liveSelectionApi || typeof liveSelectionApi.getStudioLiveSelection !== 'function') return [];
-      return liveSelectionApi.getStudioLiveSelection(
+      if (!getLiveSelection) return [];
+      const liveElements = getLiveSelection(
         elements,
-        getEditorSelectionOptions({ doc })
+        {
+          selectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+            ? SlideNextStudioEditorLiveSelection
+            : null,
+          getSelectionOptions: () => getEditorSelectionOptions({ doc })
+        }
       );
+      return liveElements || [];
     }
 
     function getTransformSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
