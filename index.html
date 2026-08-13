@@ -1589,6 +1589,7 @@
   <script src="/shared/presentation-dashboard-runtime.js"></script>
   <script src="/shared/presentation-dashboard-accessors.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
+  <script src="/shared/studio-editor-style-toolbar-state.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-transaction.js"></script>
@@ -10071,43 +10072,36 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
-      const styleApi = typeof SlideNextStudioEditorStyle !== 'undefined'
-        ? SlideNextStudioEditorStyle
+      const styleToolbarState = typeof SlideNextStudioEditorStyleToolbarState !== 'undefined'
+        ? SlideNextStudioEditorStyleToolbarState
         : null;
-      if (!styleApi || typeof styleApi.syncStudioStyleToolbarState !== 'function') {
+      if (!styleToolbarState
+        || typeof styleToolbarState.createStudioEditorStyleToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof styleApi.createStudioStyleToolbarStateSync === 'function') {
-        if (typeof updateStyleActionState.sync !== 'function') {
-          updateStyleActionState.sync = styleApi.createStudioStyleToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getLockedState(sourceDoc) {
-              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
-                && typeof buildEditorCanonicalDeck === 'function';
-              return canReadCanonicalState
-                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-                : isElementLocked;
-            },
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateStyleActionState.sync === 'function') {
-          return updateStyleActionState.sync(doc);
-        }
+      if (!updateStyleActionState.controller) {
+        const styleView = typeof SlideNextStudioEditorStyle !== 'undefined'
+          ? SlideNextStudioEditorStyle
+          : null;
+        updateStyleActionState.controller = styleToolbarState.createStudioEditorStyleToolbarStateController({
+          styleView,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getLockedState(sourceDoc) {
+            const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
+              && typeof buildEditorCanonicalDeck === 'function';
+            return canReadCanonicalState
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+              : isElementLocked;
+          },
+          documentRef: document
+        });
       }
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        && typeof buildEditorCanonicalDeck === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
-        : isElementLocked;
-      const toolbarOptions = {
-        documentRef: document,
-        elements: getStudioSelectedElements(doc),
-        isLocked: readLockedState,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      };
-      return styleApi.syncStudioStyleToolbarState(toolbarOptions);
+      return updateStyleActionState.controller
+        && typeof updateStyleActionState.controller.sync === 'function'
+        ? updateStyleActionState.controller.sync(doc)
+        : false;
     }
 
     function buildLayerOrderSelectionActionState(elements, options = {}) {

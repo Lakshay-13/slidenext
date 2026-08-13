@@ -7,14 +7,20 @@ const styleState = require('../shared/studio-editor-style.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const STYLE_TOOLBAR_STATE_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-style-toolbar-state.js'
+);
 
 test('editor forwards the style toolbar document into the selection reader', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toolbarStateSource = fs.readFileSync(STYLE_TOOLBAR_STATE_PATH, 'utf8');
 
-  assert.match(
-    source,
-    /styleApi\.createStudioStyleToolbarStateSync\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
-  );
+  assert.match(source, /createStudioEditorStyleToolbarStateController/);
+  assert.match(toolbarStateSource, /getSelectedElements\(doc\)/);
+  assert.match(toolbarStateSource, /getDocumentRef: \(\) => documentRef/);
 });
 
 function createElement(tagName = 'div') {

@@ -9,6 +9,7 @@ const canonicalStyle = require('../shared/studio-editor-canonical-style.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const styleState = require('../shared/studio-editor-style.js');
+const styleToolbarState = require('../shared/studio-editor-style-toolbar-state.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
@@ -27,6 +28,12 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
   return source;
+}
+
+function runStyleActionStateSource(source, context) {
+  context.SlideNextStudioEditorStyleToolbarState = styleToolbarState;
+  vm.createContext(context);
+  vm.runInContext(source, context);
 }
 
 function loadFinalizeEditorDeckMutation(fileContent, context) {
@@ -236,8 +243,7 @@ test('updateStyleActionState disables style controls whenever the current select
     selectedElements: []
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateStyleActionStateSource, context);
+  runStyleActionStateSource(updateStyleActionStateSource, context);
 
   context.updateStyleActionState(null);
   assert.deepEqual(getDisabledStates(controls), {
@@ -378,8 +384,7 @@ test('updateStyleActionState reuses the shared style toolbar helper when availab
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateStyleActionStateSource, context);
+  runStyleActionStateSource(updateStyleActionStateSource, context);
 
   context.updateStyleActionState({
     activeSlide: {}
@@ -438,13 +443,12 @@ test('updateStyleActionState delegates toolbar state assembly to the shared styl
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateStyleActionStateSource, context);
+  runStyleActionStateSource(updateStyleActionStateSource, context);
 
   const doc = { activeSlide: {} };
   assert.equal(context.updateStyleActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
-  assert.match(updateStyleActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
+  assert.match(updateStyleActionStateSource, /getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\)/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].controlConfigs, undefined);
@@ -494,8 +498,10 @@ test('updateStyleActionState prefers canonical lock metadata for style controls'
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(`${visibilityReaderSource}\n${updateStyleActionStateSource}`, context);
+  runStyleActionStateSource(
+    `${visibilityReaderSource}\n${updateStyleActionStateSource}`,
+    context
+  );
 
   assert.equal(context.updateStyleActionState(doc), 'delegated');
   assert.equal(receivedOptions.isLocked(selectedElement), true);
