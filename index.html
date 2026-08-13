@@ -1437,6 +1437,7 @@
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
+  <script src="/shared/studio-editor-template-state.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-template-shell-runtime.js"></script>
@@ -10586,43 +10587,31 @@
     }
 
     function updateTemplateActionState(doc = getIframeDoc()) {
-      const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
-        ? SlideNextStudioEditorTemplateView
+      const templateStateApi = typeof SlideNextStudioEditorTemplateState !== 'undefined'
+        ? SlideNextStudioEditorTemplateState
         : null;
-      if (!templateView || typeof templateView.syncStudioTemplateState !== 'function') {
+      if (!templateStateApi
+        || typeof templateStateApi.createStudioEditorTemplateStateController !== 'function') {
         return false;
       }
-      if (typeof templateView.createStudioTemplateStateSync === 'function') {
-        if (typeof updateTemplateActionState.sync !== 'function') {
-          updateTemplateActionState.sync = templateView.createStudioTemplateStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => {
-              const canSave = !!getActiveSlide(sourceDoc);
-              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
-              return {
-                templates: canonicalDeck && canonicalDeck.templates,
-                canUseTemplateActions: canSave,
-                insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
-                removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
-              };
-            },
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateTemplateActionState.sync === 'function') {
-          return updateTemplateActionState.sync(doc);
-        }
+      if (!updateTemplateActionState.controller) {
+        const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
+          ? SlideNextStudioEditorTemplateView
+          : null;
+        updateTemplateActionState.controller = templateStateApi.createStudioEditorTemplateStateController({
+          templateView,
+          getDocument: () => getIframeDoc(),
+          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+          insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
+          removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null,
+          documentRef: document
+        });
       }
-      const canSave = !!getActiveSlide(doc);
-      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
-      templateView.syncStudioTemplateState({
-        documentRef: document,
-        templates: canonicalDeck && canonicalDeck.templates,
-        canUseTemplateActions: canSave,
-        insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
-        removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null
-      });
-      return canSave;
+      return updateTemplateActionState.controller
+        && typeof updateTemplateActionState.controller.sync === 'function'
+        ? updateTemplateActionState.controller.sync(doc)
+        : false;
     }
 
     function updateMasterSlideActionState(doc = getIframeDoc()) {
