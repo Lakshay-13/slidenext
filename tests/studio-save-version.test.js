@@ -20,6 +20,7 @@ const persistenceCaptureAction = require('../shared/studio-editor-persistence-ca
 const versionCheckpointStateAction = require('../shared/studio-editor-version-checkpoint-state-action.js');
 const versionCheckpointSaveAction = require('../shared/studio-editor-version-checkpoint-save-action.js');
 const autoVersion = require('../shared/studio-editor-auto-version-controller.js');
+const submitSaveVersionAction = require('../shared/studio-editor-submit-save-version-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -663,6 +664,30 @@ function loadExecuteSaveAutoVersion(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadSubmitSaveVersion(fileContent, context) {
+  context.studioEditorSubmitSaveVersionAction =
+    submitSaveVersionAction.createStudioEditorSubmitSaveVersionAction({
+      getDocumentRef: () => context.document,
+      getCaptureSessionState: () => context.captureCurrentStudioSessionState,
+      getIframeDocument: () => context.getIframeDoc(),
+      getResolveCheckpointState: () => context.resolveCurrentStudioVersionCheckpointPersistenceState,
+      getCloseModal: () => context.closeSaveVersionModal,
+      getSetSaveButtonState: () => context.setStudioSaveButtonState,
+      getExecuteCheckpointSave: () => context.executeCurrentStudioVersionCheckpointSaveWithFailure,
+      getApplyPersistenceFailure: () => context.applyCurrentStudioPersistenceFailure,
+      getRunPersistenceActionIfCurrent: () => context.runCurrentStudioPersistenceActionIfCurrent,
+      getResetSaveButtonState: () => context.resetStudioSaveButtonState,
+      getSetAutoSaveStatus: () => context.setStudioAutoSaveStatus,
+      getAlert: () => context.alert
+    });
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'async function submitSaveVersion() {',
+    '\n\n    // Automatically save a labeled checkpoint version in the background'
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   context.studioEditorPersistenceActionCurrentAction =
@@ -1130,11 +1155,6 @@ test('executeCurrentStudioVersionCheckpointSaveWithFailure reuses the shared fai
 
 test('submitSaveVersion keeps the save button idle when editor content is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -1229,7 +1249,7 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 
@@ -1243,11 +1263,6 @@ test('submitSaveVersion keeps the save button idle when editor content is unavai
 
 test('submitSaveVersion can save the persisted html baseline when the editor frame is unavailable', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -1343,7 +1358,7 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 
@@ -1367,11 +1382,6 @@ test('submitSaveVersion can save the persisted html baseline when the editor fra
 
 test('submitSaveVersion can save rendered canonical html when the editor frame has no persisted html baseline', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -1467,7 +1477,7 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 
@@ -1491,11 +1501,6 @@ test('submitSaveVersion can save rendered canonical html when the editor frame h
 
 test('submitSaveVersion ignores stale same-url session completions', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -1591,7 +1596,7 @@ test('submitSaveVersion ignores stale same-url session completions', async () =>
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   const savePromise = context.submitSaveVersion();
   assert.equal(closeModalCalls, 1);
@@ -1917,11 +1922,6 @@ test('executeSaveAutoVersion skips redundant auto version saves when the capture
 
 test('submitSaveVersion reuses the local version checkpoint failure-aware helper when available', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -2021,7 +2021,7 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 
@@ -2039,11 +2039,6 @@ test('submitSaveVersion reuses the local version checkpoint failure-aware helper
 
 test('submitSaveVersion reuses the shared version checkpoint success helper when the failure-aware helper delegates to it', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -2151,7 +2146,7 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 
@@ -2183,11 +2178,6 @@ test('submitSaveVersion reuses the shared version checkpoint success helper when
 
 test('submitSaveVersion reports network save errors through the shared persistence failure helper', async () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const submitSaveVersionSource = extractFunctionSource(
-    fileContent,
-    'async function submitSaveVersion() {',
-    '\n\n    // Automatically save a labeled checkpoint version in the background'
-  );
 
   const alerts = [];
   let closeModalCalls = 0;
@@ -2293,7 +2283,7 @@ test('submitSaveVersion reports network save errors through the shared persisten
   loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context);
   loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
   loadCaptureCurrentStudioSessionState(fileContent, context);
-  vm.runInContext(submitSaveVersionSource, context);
+  loadSubmitSaveVersion(fileContent, context);
 
   await context.submitSaveVersion();
 

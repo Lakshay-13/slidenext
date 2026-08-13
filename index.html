@@ -1535,6 +1535,7 @@
   <script src="/shared/studio-editor-version-checkpoint-state-action.js"></script>
   <script src="/shared/studio-editor-save-version-checkpoint-action.js"></script>
   <script src="/shared/studio-editor-version-checkpoint-save-action.js"></script>
+  <script src="/shared/studio-editor-submit-save-version-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2350,6 +2351,27 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionCheckpointSaveGlobalApi);
+    const studioEditorSubmitSaveVersionAction =
+      typeof SlideNextStudioEditorSubmitSaveVersionAction !== 'undefined'
+      && SlideNextStudioEditorSubmitSaveVersionAction
+      && typeof SlideNextStudioEditorSubmitSaveVersionAction
+        .createStudioEditorSubmitSaveVersionAction === 'function'
+      ? SlideNextStudioEditorSubmitSaveVersionAction
+        .createStudioEditorSubmitSaveVersionAction({
+          getDocumentRef: () => document,
+          getCaptureSessionState: () => captureCurrentStudioSessionState,
+          getIframeDocument: () => getIframeDoc(),
+          getResolveCheckpointState: () => resolveCurrentStudioVersionCheckpointPersistenceState,
+          getCloseModal: () => closeSaveVersionModal,
+          getSetSaveButtonState: () => setStudioSaveButtonState,
+          getExecuteCheckpointSave: () => executeCurrentStudioVersionCheckpointSaveWithFailure,
+          getApplyPersistenceFailure: () => applyCurrentStudioPersistenceFailure,
+          getRunPersistenceActionIfCurrent: () => runCurrentStudioPersistenceActionIfCurrent,
+          getResetSaveButtonState: () => resetStudioSaveButtonState,
+          getSetAutoSaveStatus: () => setStudioAutoSaveStatus,
+          getAlert: () => alert
+        })
+      : null;
     const studioEditorTriggerAutoSaveAction =
       typeof SlideNextStudioEditorTriggerAutoSaveAction !== 'undefined'
       && SlideNextStudioEditorTriggerAutoSaveAction
@@ -12208,63 +12230,9 @@
     }
     
     async function submitSaveVersion() {
-      const input = document.getElementById('versionCheckpointName');
-      const versionName = input.value.trim();
-      if (!versionName) {
-        alert("Please enter a version name.");
-        return;
-      }
-
-      const { presentationUrl: scheduledPresentationUrl, sessionToken: scheduledSessionToken } = captureCurrentStudioSessionState();
-      const iframeDoc = getIframeDoc();
-      const versionCheckpointPersistenceState = resolveCurrentStudioVersionCheckpointPersistenceState(
-        iframeDoc,
-        scheduledPresentationUrl,
-        scheduledSessionToken
-      );
-      if (!versionCheckpointPersistenceState) {
-        alert('Save version failed: editor content is unavailable.');
-        return;
-      }
-
-      closeSaveVersionModal();
-
-      setStudioSaveButtonState('saving-version');
-      
-      try {
-        await executeCurrentStudioVersionCheckpointSaveWithFailure(
-          versionName,
-          versionCheckpointPersistenceState,
-          scheduledPresentationUrl,
-          {
-            onSuccess: () => {
-              alert('Successfully saved named version backup checkpoint!');
-              setStudioAutoSaveStatus('saved');
-            },
-            onFailure: (data = {}) => {
-              alert(`Save version failed: ${data.error}`);
-              setStudioAutoSaveStatus('save-version-failed');
-            }
-          }
-        );
-      } catch (err) {
-        applyCurrentStudioPersistenceFailure(
-          versionCheckpointPersistenceState.persistenceContext,
-          {
-            onFailure: () => {
-              alert(`Network error saving version: ${err.message}`);
-              setStudioAutoSaveStatus('network-error');
-            }
-          }
-        );
-      } finally {
-        runCurrentStudioPersistenceActionIfCurrent(
-          versionCheckpointPersistenceState.persistenceContext,
-          () => {
-            resetStudioSaveButtonState();
-          }
-        );
-      }
+      return studioEditorSubmitSaveVersionAction
+        ? studioEditorSubmitSaveVersionAction(...arguments)
+        : null;
     }
 
     // Automatically save a labeled checkpoint version in the background
