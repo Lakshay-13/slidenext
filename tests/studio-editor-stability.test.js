@@ -3271,7 +3271,7 @@ test('applySlideLayerOrder fails closed when the shared adapter is unavailable',
   assert.deepEqual(JSON.parse(JSON.stringify(context.applySlideLayerOrder({}, []))), []);
 });
 
-test('editor composes editable-target resolution through the shared DOM module', () => {
+test('editor composes editable-target resolution through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditableTargetSource = extractFunctionSource(
     source,
@@ -3279,16 +3279,18 @@ test('editor composes editable-target resolution through the shared DOM module',
     '\n\n    function resolveInlineTextEditTarget'
   );
 
+  assert.match(source, /const studioEditorEditableTargetAdapter =/);
+  assert.match(source, /SlideNextStudioEditorEditableTargetAdapter/);
   assert.match(source, /const studioEditorEditableTargetResolver =/);
   assert.match(source, /typeof editableTargetResolver === 'function'/);
   assert.doesNotMatch(resolveEditableTargetSource, /SlideNextStudioEditorDom\.resolveStudioEditableTarget/);
 });
 
-test('resolveEditableTarget delegates the node and DOM options to the shared DOM module', () => {
+test('resolveEditableTarget delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const editableTargetResolverSource = extractFunctionSource(
     fileContent,
-    'const studioEditorEditableTargetResolver =',
+    'const studioEditorEditableTargetAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const resolveEditableTargetSource = extractFunctionSource(
@@ -3301,6 +3303,7 @@ test('resolveEditableTarget delegates the node and DOM options to the shared DOM
   const options = { selectableSelector: '[data-editor-id]' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorEditableTargetAdapter: require('../shared/studio-editor-editable-target-adapter.js'),
     SlideNextStudioEditorDom: {
       resolveStudioEditableTarget(nodeValue, optionsValue) {
         calls.push([nodeValue, optionsValue]);
@@ -3321,11 +3324,11 @@ test('resolveEditableTarget delegates the node and DOM options to the shared DOM
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
 });
 
-test('resolveEditableTarget fails closed when the shared DOM module is unavailable', () => {
+test('resolveEditableTarget fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const editableTargetResolverSource = extractFunctionSource(
     fileContent,
-    'const studioEditorEditableTargetResolver =',
+    'const studioEditorEditableTargetAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const resolveEditableTargetSource = extractFunctionSource(

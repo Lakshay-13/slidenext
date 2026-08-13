@@ -1683,6 +1683,7 @@
   <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
   <script src="/shared/studio-editor-slide-editable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
+  <script src="/shared/studio-editor-editable-target-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -4313,10 +4314,24 @@
         )
       : null;
 
-    const studioEditorEditableTargetResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorEditableTargetAdapter = typeof SlideNextStudioEditorEditableTargetAdapter !== 'undefined'
+      && SlideNextStudioEditorEditableTargetAdapter
+      && typeof SlideNextStudioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget === 'function'
+      ? SlideNextStudioEditorEditableTargetAdapter
+      : null;
+
+    const studioEditorEditableTargetResolver = studioEditorEditableTargetAdapter
+      && typeof studioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
-      ? (node, options) => SlideNextStudioEditorDom.resolveStudioEditableTarget(node, options)
+      ? (node, options) => studioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget(
+          node,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorBlankSlideFactory = typeof SlideNextStudioEditorDom !== 'undefined'
