@@ -1380,6 +1380,7 @@
   <script src="/shared/studio-editor-layout-mode.js"></script>
   <script src="/shared/studio-editor-layout-mode-view.js"></script>
   <script src="/shared/studio-editor-layout-mode-controller.js"></script>
+  <script src="/shared/studio-editor-layout-ui-bridge.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
@@ -3385,6 +3386,19 @@
       : null;
     const studioEditorLayoutModeController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.layoutModeController
+      : null;
+    const studioEditorLayoutUiBridge = typeof SlideNextStudioEditorLayoutUiBridge !== 'undefined'
+      && SlideNextStudioEditorLayoutUiBridge
+      && typeof SlideNextStudioEditorLayoutUiBridge.createStudioEditorLayoutUiBridge === 'function'
+      ? SlideNextStudioEditorLayoutUiBridge.createStudioEditorLayoutUiBridge({
+          layoutModeController: studioEditorLayoutModeController,
+          layoutConversionController: studioEditorLayoutConversionController,
+          layoutConversionViewApi: typeof SlideNextStudioEditorLayoutConversionView !== 'undefined'
+            ? SlideNextStudioEditorLayoutConversionView
+            : null,
+          documentRef: document,
+          getDocument: () => getIframeDoc()
+        })
       : null;
 
     const studioEditorElementVisibilityStateReader = typeof SlideNextStudioElementState !== 'undefined'
@@ -7225,6 +7239,11 @@
     }
 
     function syncStudioEditorLayoutModeControl(doc = getIframeDoc()) {
+      if (typeof studioEditorLayoutUiBridge !== 'undefined'
+        && studioEditorLayoutUiBridge
+        && typeof studioEditorLayoutUiBridge.syncLayoutModeControl === 'function') {
+        return studioEditorLayoutUiBridge.syncLayoutModeControl(doc);
+      }
       if (typeof studioEditorLayoutModeController === 'undefined'
         || !studioEditorLayoutModeController
         || typeof studioEditorLayoutModeController.sync !== 'function') {
@@ -9206,6 +9225,11 @@
     }
 
     function updateLayoutConversionActionState(doc = null) {
+      if (typeof studioEditorLayoutUiBridge !== 'undefined'
+        && studioEditorLayoutUiBridge
+        && typeof studioEditorLayoutUiBridge.syncLayoutConversionControl === 'function') {
+        return studioEditorLayoutUiBridge.syncLayoutConversionControl(doc);
+      }
       const viewApi = typeof SlideNextStudioEditorLayoutConversionView !== 'undefined'
         ? SlideNextStudioEditorLayoutConversionView
         : null;
