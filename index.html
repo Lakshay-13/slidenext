@@ -1525,6 +1525,7 @@
   <script src="/shared/studio-editor-save-request-body-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-checker-action.js"></script>
   <script src="/shared/studio-editor-persisted-save-request-checker-action.js"></script>
+  <script src="/shared/studio-editor-persistence-handler-options-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2021,6 +2022,41 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistedSaveRequestCheckerGlobalApi);
+    const studioEditorPersistenceHandlerOptionsAction =
+      typeof SlideNextStudioEditorPersistenceHandlerOptionsAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceHandlerOptionsAction
+      && typeof SlideNextStudioEditorPersistenceHandlerOptionsAction
+        .createStudioEditorPersistenceHandlerOptionsAction === 'function'
+      ? SlideNextStudioEditorPersistenceHandlerOptionsAction
+        .createStudioEditorPersistenceHandlerOptionsAction({
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getCreateSessionReaderOptions: () => createCurrentStudioSessionReaderOptions,
+          getApplyPersistedDeckState: () => applyCurrentStudioPersistedDeckState
+        })
+      : null;
+    const studioEditorPersistenceHandlerOptionsGlobalApi =
+      typeof SlideNextStudioEditorPersistenceHandlerOptionsAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceHandlerOptionsAction
+      && typeof SlideNextStudioEditorPersistenceHandlerOptionsAction
+        .createStudioEditorPersistenceHandlerOptionsGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistenceHandlerOptionsAction
+        .createStudioEditorPersistenceHandlerOptionsGlobalApi({
+          createCurrentStudioPersistenceHandlerOptions:
+            studioEditorPersistenceHandlerOptionsAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistenceHandlerOptionsGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11290,73 +11326,9 @@
     }
 
     function createCurrentStudioPersistenceHandlerOptions(options = {}) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.createPersistenceHandlerOptions === 'function') {
-        const result = studioEditorPersistenceController.createPersistenceHandlerOptions(options);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorPersistenceHandlerOptionsAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceHandlerOptionsAdapter
+      return studioEditorPersistenceHandlerOptionsAction
+        ? studioEditorPersistenceHandlerOptionsAction(...arguments)
         : null;
-      if (createStudioEditorPersistenceHandlerOptionsAdapter) {
-        if (typeof createCurrentStudioPersistenceHandlerOptions.adapter !== 'function') {
-          createCurrentStudioPersistenceHandlerOptions.adapter = createStudioEditorPersistenceHandlerOptionsAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            getPresentationUrl: getStudioCurrentPresentationUrl,
-            createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
-            applyPersistedDeckState: applyCurrentStudioPersistedDeckState
-          });
-        }
-        const result = typeof createCurrentStudioPersistenceHandlerOptions.adapter === 'function'
-          ? createCurrentStudioPersistenceHandlerOptions.adapter(options)
-          : null;
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioPersistenceHandlerOptionsBuilder = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptionsBuilder === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistenceHandlerOptionsBuilder
-        : null;
-      if (createStudioPersistenceHandlerOptionsBuilder) {
-        return createStudioPersistenceHandlerOptionsBuilder({
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          createSessionReaderOptions: createCurrentStudioSessionReaderOptions,
-          applyPersistedDeckState: applyCurrentStudioPersistedDeckState
-        })(options);
-      }
-
-      const persistencePresentationUrl = typeof options.presentationUrl === 'string' && options.presentationUrl
-        ? options.presentationUrl
-        : getStudioCurrentPresentationUrl();
-      return createCurrentStudioSessionReaderOptions({
-        setPersistedHtml: (nextHtml) => {
-          applyCurrentStudioPersistedDeckState({ cleanHtml: nextHtml });
-        },
-        setPersistedCanonicalDeck: (nextCanonicalDeck) => {
-          applyCurrentStudioPersistedDeckState(
-            { canonicalDeck: nextCanonicalDeck },
-            { presentationUrl: persistencePresentationUrl }
-          );
-        },
-        setPersistedPlaybackState: (nextPlaybackState) => {
-          applyCurrentStudioPersistedDeckState({ playbackState: nextPlaybackState });
-        },
-        onSuccess: options.onSuccess,
-        onFailure: options.onFailure
-      });
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {

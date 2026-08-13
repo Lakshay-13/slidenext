@@ -8,6 +8,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const playbackStateAction = require('../shared/studio-editor-persisted-deck-playback-state-action.js');
+const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -68,15 +69,33 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
+    '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   loadCreateCurrentStudioSessionStateReaders(fileContent, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.createCurrentStudioPersistenceHandlerOptions =
+    persistenceHandlerOptionsAction.createStudioEditorPersistenceHandlerOptionsAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getCreateSessionReaderOptions: () => context.createCurrentStudioSessionReaderOptions || null,
+      getApplyPersistedDeckState: () => context.applyCurrentStudioPersistedDeckState || null
+    });
+  if (typeof context.applyCurrentStudioPersistenceSuccess !== 'function') {
+    loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
+  }
 }
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {

@@ -19,6 +19,7 @@ const persistableDeckHtmlAction = require('../shared/studio-editor-persistable-d
 const saveRequestBodyAction = require('../shared/studio-editor-save-request-body-action.js');
 const persistedHtmlCheckerAction = require('../shared/studio-editor-persisted-html-checker-action.js');
 const persistedSaveRequestCheckerAction = require('../shared/studio-editor-persisted-save-request-checker-action.js');
+const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -311,6 +312,21 @@ function loadIsCurrentDeckStatePersisted(fileContent, context, helperSource) {
       persistenceApi: context.SlideNextStudioEditorPersistence || null,
       persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
       getPersistedDeckState: context.getCurrentEditorPersistedDeckState || (() => ({}))
+    });
+}
+
+function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context, helperSource) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.createCurrentStudioPersistenceHandlerOptions =
+    persistenceHandlerOptionsAction.createStudioEditorPersistenceHandlerOptionsAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getCreateSessionReaderOptions: () => context.createCurrentStudioSessionReaderOptions || null,
+      getApplyPersistedDeckState: () => context.applyCurrentStudioPersistedDeckState || null
     });
 }
 
@@ -1272,7 +1288,11 @@ test('createCurrentStudioPersistenceHandlerOptions reuses the shared handler-opt
   };
 
   vm.createContext(context);
-  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(
+    fileContent,
+    context,
+    createCurrentStudioPersistenceHandlerOptionsSource
+  );
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.createCurrentStudioPersistenceHandlerOptions({
@@ -1319,7 +1339,11 @@ test('createCurrentStudioPersistenceHandlerOptions delegates through the editor 
   };
 
   vm.createContext(context);
-  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(
+    fileContent,
+    context,
+    createCurrentStudioPersistenceHandlerOptionsSource
+  );
 
   const result = context.createCurrentStudioPersistenceHandlerOptions({
     presentationUrl: 'presentations/custom/index.html',
@@ -1359,7 +1383,11 @@ test('createCurrentStudioPersistenceHandlerOptions creates the shared persistenc
   };
 
   vm.createContext(context);
-  vm.runInContext(createCurrentStudioPersistenceHandlerOptionsSource, context);
+  loadCreateCurrentStudioPersistenceHandlerOptions(
+    fileContent,
+    context,
+    createCurrentStudioPersistenceHandlerOptionsSource
+  );
 
   assert.deepEqual(
     context.createCurrentStudioPersistenceHandlerOptions({ presentationUrl: 'presentations/one/index.html' }),

@@ -10,6 +10,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
+const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -216,6 +217,33 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
+    '\n\n    function applyCurrentStudioPersistenceSuccess('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',
+    '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  vm.runInContext(helperSource, context);
+}
+
+function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {',
+    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
+  );
+  vm.runInContext(helperSource, context);
+}
+
 function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) {
   if (typeof context.createCurrentStudioSessionStateReaders !== 'function') {
     loadCreateCurrentStudioSessionStateReaders(fileContent, context);
@@ -226,12 +254,27 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
   if (typeof context.applyCurrentStudioPersistedDeckState !== 'function') {
     loadApplyCurrentStudioPersistedDeckState(fileContent, context);
   }
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createCurrentStudioPersistenceHandlerOptions(options = {}) {',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
-  vm.runInContext(helperSource, context);
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.createCurrentStudioPersistenceHandlerOptions =
+    persistenceHandlerOptionsAction.createStudioEditorPersistenceHandlerOptionsAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getCreateSessionReaderOptions: () => context.createCurrentStudioSessionReaderOptions || null,
+      getApplyPersistedDeckState: () => context.applyCurrentStudioPersistedDeckState || null
+    });
+  if (typeof context.applyCurrentStudioPersistenceFailure !== 'function') {
+    loadApplyCurrentStudioPersistenceFailure(fileContent, context);
+  }
+  if (typeof context.applyCurrentStudioPersistenceSuccess !== 'function') {
+    loadApplyCurrentStudioPersistenceSuccess(fileContent, context);
+  }
+  if (typeof context.applyCurrentStudioVersionPersistenceSuccess !== 'function') {
+    loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
+  }
 }
 
 function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
