@@ -2471,8 +2471,14 @@ test('buildEditorSaveRequestBody reuses the local canonical override helper when
   const context = {
     SlideNextStudioEditorPersistence: editorPersistence,
     __resolveEditorCanonicalDeckOverride(nextCanonicalDeck, options = {}) {
-      calls.push(['resolveEditorCanonicalDeckOverride', nextCanonicalDeck, options.buildCanonicalDeck]);
+      calls.push([
+        'resolveEditorCanonicalDeckOverride',
+        nextCanonicalDeck,
+        options.sourceDocument,
+        options.buildCanonicalDeck
+      ]);
       assert.equal(nextCanonicalDeck, null);
+      assert.equal(options.sourceDocument, doc);
       assert.equal(typeof options.buildCanonicalDeck, 'function');
       return canonicalDeck;
     },
@@ -2516,7 +2522,8 @@ test('buildEditorSaveRequestBody reuses the local canonical override helper when
   assert.equal(calls[0][0], 'captureEditorPersistableDeckState');
   assert.equal(calls[1][0], 'resolveEditorCanonicalDeckOverride');
   assert.equal(calls[1][1], null);
-  assert.equal(typeof calls[1][2], 'function');
+  assert.equal(calls[1][2], doc);
+  assert.equal(typeof calls[1][3], 'function');
 });
 
 test('resolveEditorPersistedDeckStateWithContent fails closed when the shared resolver factory is unavailable', () => {

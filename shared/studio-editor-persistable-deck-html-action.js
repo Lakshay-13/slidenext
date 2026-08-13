@@ -71,6 +71,7 @@
       const buildCanonicalDeck = resolveDependency(getBuildCanonicalDeck);
       if (typeof resolveOverride === 'function') {
         const resolvedCanonicalDeck = resolveOverride(providedCanonicalDeck, {
+          sourceDocument: doc,
           buildCanonicalDeck: () => allowBuild && buildCanonicalDeck
             ? buildCanonicalDeck(doc)
             : null
