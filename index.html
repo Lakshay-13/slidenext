@@ -12416,71 +12416,21 @@
       const versionDeleteController = typeof SlideNextStudioEditorVersionDeleteController !== 'undefined'
         ? SlideNextStudioEditorVersionDeleteController
         : null;
-      if (versionDeleteController
-        && typeof versionDeleteController.deleteStudioVersion === 'function') {
-        return versionDeleteController.deleteStudioVersion({
-          filename,
-          confirmAction: confirm,
-          createVersionActionContext: createCurrentStudioVersionActionContext,
-          versionActionsApi: SlideNextStudioVersionActions,
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
-          applyFailure: applyCurrentStudioVersionActionFailure,
-          refreshVersionEntries: loadVersions,
-          alertAction: alert
-        });
+      if (!versionDeleteController
+        || typeof versionDeleteController.deleteStudioVersion !== 'function') {
+        return false;
       }
-      if (!confirm('Are you sure you want to delete this version? This action cannot be undone.')) {
-        return;
-      }
-      const deleteContext = createCurrentStudioVersionActionContext();
-      const createStudioDeleteVersionRequestExecutor = (
-        typeof SlideNextStudioVersionActions !== 'undefined'
-        && SlideNextStudioVersionActions
-        && typeof SlideNextStudioVersionActions.createStudioDeleteVersionRequestExecutor === 'function'
-      )
-        ? SlideNextStudioVersionActions.createStudioDeleteVersionRequestExecutor
-        : null;
-      const executeDeleteVersionRequest = createStudioDeleteVersionRequestExecutor
-        ? createStudioDeleteVersionRequestExecutor({
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          executeDeleteVersionRequest: (
-            typeof SlideNextStudioVersionActions !== 'undefined'
-            && SlideNextStudioVersionActions
-            && typeof SlideNextStudioVersionActions.executeStudioDeleteVersionRequest === 'function'
-          )
-            ? SlideNextStudioVersionActions.executeStudioDeleteVersionRequest
-            : null
-        })
-        : (versionFilename, nextContext) => SlideNextStudioVersionActions.executeStudioDeleteVersionRequest(
-          versionFilename,
-          nextContext,
-          createCurrentStudioVersionRequestOptions()
-        );
-      
-      try {
-        const data = await executeDeleteVersionRequest(
-          filename,
-          deleteContext
-        );
-        if (data.success) {
-          applyCurrentStudioVersionListMutationSuccess(deleteContext, {
-            refreshVersionEntries: loadVersions
-          });
-        } else {
-          applyCurrentStudioVersionActionFailure(deleteContext, {
-            onFailure: () => {
-              alert(`Delete failed: ${data.error}`);
-            }
-          });
-        }
-      } catch (err) {
-        applyCurrentStudioVersionActionFailure(deleteContext, {
-          onFailure: () => {
-            alert(`Error deleting version: ${err.message}`);
-          }
-        });
-      }
+      return versionDeleteController.deleteStudioVersion({
+        filename,
+        confirmAction: confirm,
+        createVersionActionContext: createCurrentStudioVersionActionContext,
+        versionActionsApi: SlideNextStudioVersionActions,
+        createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+        applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
+        applyFailure: applyCurrentStudioVersionActionFailure,
+        refreshVersionEntries: loadVersions,
+        alertAction: alert
+      });
     }
 
     // Presentation Live Preview from workspace

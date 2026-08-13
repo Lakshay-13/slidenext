@@ -10,6 +10,7 @@ const versionActions = require('../shared/studio-version-actions.js');
 const versionHistory = require('../shared/studio-version-history.js');
 const versionView = require('../shared/studio-version-view.js');
 const versionRestoreController = require('../shared/studio-editor-version-restore-controller.js');
+const versionDeleteController = require('../shared/studio-editor-version-delete-controller.js');
 const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
@@ -189,6 +190,7 @@ function loadShowCurrentStudioVersionModal(fileContent, context) {
 
 function loadCreateCurrentStudioVersionRequestOptions(fileContent, context) {
   context.SlideNextStudioEditorVersionRestoreController ??= versionRestoreController;
+  context.SlideNextStudioEditorVersionDeleteController ??= versionDeleteController;
   const helperSource = extractFunctionSource(
     fileContent,
     'function createCurrentStudioVersionRequestOptions(options = {}) {',
