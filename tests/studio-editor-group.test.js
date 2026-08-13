@@ -548,3 +548,76 @@ test('applyStudioUngroupMutation restores child positions and captures the paren
     }]
   });
 });
+
+test('applyStudioUngroupMutation prefers scoped presence transactions for serializable wrappers', () => {
+  const child = {
+    dataset: { editorId: 'child-1' },
+    style: {},
+    outerHTML: '<div data-editor-id="child-1">Child</div>',
+    getBoundingClientRect() {
+      return { left: 110, top: 135, right: 190, bottom: 175 };
+    }
+  };
+  const parent = {
+    dataset: { editorId: 'parent-2' },
+    children: [],
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 500, bottom: 400 };
+    },
+    insertBefore(element, beforeNode) {
+      const index = this.children.indexOf(beforeNode);
+      this.children.splice(index < 0 ? this.children.length : index, 0, element);
+      element.parentElement = this;
+    }
+  };
+  const groupNode = {
+    dataset: { editorId: 'group-1' },
+    children: [child],
+    parentElement: parent,
+    outerHTML: '<div data-editor-id="group-1"><div data-editor-id="child-1">Child</div></div>',
+    getBoundingClientRect() {
+      return { left: 100, top: 120, right: 380, bottom: 280 };
+    },
+    remove() {
+      const index = parent.children.indexOf(this);
+      if (index >= 0) parent.children.splice(index, 1);
+      this.parentElement = null;
+    }
+  };
+  child.parentElement = groupNode;
+  parent.children = [groupNode];
+
+  const result = group.applyStudioUngroupMutation({
+    groups: [groupNode],
+    slideMetrics: { scaleX: 1 },
+    getRectOnSlide: (rect) => rect,
+    getElementId: (element) => element && element.dataset && element.dataset.editorId,
+    createElementPresenceTransaction: studioTransaction.createStudioElementPresenceTransaction
+  });
+
+  assert.equal(result.didApply, true);
+  assert.deepEqual(result.transaction.operations, [
+    {
+      type: 'element-presence',
+      elementId: 'group-1',
+      parentId: 'parent-2',
+      before: {
+        exists: true,
+        index: 0,
+        markup: '<div data-editor-id="group-1"><div data-editor-id="child-1">Child</div></div>'
+      },
+      after: { exists: false, index: 0, markup: '' }
+    },
+    {
+      type: 'element-presence',
+      elementId: 'child-1',
+      parentId: 'parent-2',
+      before: { exists: false, index: 0, markup: '' },
+      after: {
+        exists: true,
+        index: 0,
+        markup: '<div data-editor-id="child-1">Child</div>'
+      }
+    }
+  ]);
+});

@@ -232,6 +232,25 @@ test('applyStudioUngroupMutationWithTransaction delegates layout and markup tran
   assert.equal(typeof delegated.getElementId, 'function');
 });
 
+test('applyStudioUngroupMutationWithTransaction forwards scoped presence transaction dependencies', () => {
+  const createStudioElementPresenceTransaction = () => ({ id: 'tx-presence' });
+  let delegated = null;
+  groupMutation.applyStudioUngroupMutationWithTransaction({
+    groupApi: {
+      buildStudioUngroupedLayout() {
+        return { canUngroup: true, nextItems: [] };
+      },
+      applyStudioUngroupMutation(options) {
+        delegated = options;
+        return { didApply: true, restoredElements: [], restoredGroups: [], transaction: null };
+      }
+    },
+    transactionApi: { createStudioElementPresenceTransaction }
+  });
+
+  assert.equal(delegated.createElementPresenceTransaction, createStudioElementPresenceTransaction);
+});
+
 test('applyStudioUngroupMutationWithTransaction fails closed without a shared group adapter', () => {
   assert.deepEqual(
     groupMutation.applyStudioUngroupMutationWithTransaction({}),

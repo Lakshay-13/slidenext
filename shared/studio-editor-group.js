@@ -502,12 +502,36 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const buildUngroupedLayout = typeof options.buildUngroupedLayout === 'function'
       ? options.buildUngroupedLayout
       : buildStudioUngroupedLayout;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
+    const resolveElementId = (element) => {
+      if (!element) return '';
+      try {
+        return getElementId(element) || '';
+      } catch (error) {
+        return '';
+      }
+    };
+    const groupSnapshots = groups.map((group) => {
+      const parent = group && group.parentElement;
+      const childNodes = parent && (parent.children || parent.childNodes);
+      return {
+        group,
+        parent,
+        elementId: resolveElementId(group),
+        parentId: resolveElementId(parent),
+        index: childNodes ? Array.prototype.indexOf.call(childNodes, group) : -1,
+        markup: group && typeof group.outerHTML === 'string' ? group.outerHTML : ''
+      };
+    });
+    const groupSnapshotByElement = new Map(groupSnapshots.map((snapshot) => [snapshot.group, snapshot]));
     if (groups.length === 0) {
       return {
         didApply: false,
@@ -591,13 +615,59 @@
       }
     });
 
+    const presenceItems = [];
+    restoredGroups.forEach(({ group, parent, restoredElements: groupElements }) => {
+      const before = groupSnapshotByElement.get(group);
+      if (!before) return;
+      presenceItems.push({
+        elementId: before.elementId,
+        parentId: before.parentId,
+        before: {
+          exists: true,
+          index: before.index,
+          markup: before.markup
+        },
+        after: { exists: false, index: before.index, markup: '' }
+      });
+      groupElements.forEach((element) => {
+        const childNodes = parent.children || parent.childNodes;
+        const index = childNodes ? Array.prototype.indexOf.call(childNodes, element) : -1;
+        presenceItems.push({
+          elementId: resolveElementId(element),
+          parentId: before.parentId,
+          before: { exists: false, index, markup: '' },
+          after: {
+            exists: true,
+            index,
+            markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+          }
+        });
+      });
+    });
+    const presenceIds = new Set();
+    const canUsePresenceTransaction = !!createElementPresenceTransaction
+      && restoredGroups.length === groups.length
+      && presenceItems.length > 0
+      && presenceItems.every((item) => {
+        if (!item.elementId || presenceIds.has(item.elementId)) return false;
+        presenceIds.add(item.elementId);
+        return !!item.parentId
+          && item.before.index >= 0
+          && (item.before.exists !== true || !!item.before.markup.trim())
+          && (item.after.exists !== true || !!item.after.markup.trim());
+      });
+    const presenceTransaction = canUsePresenceTransaction
+      ? createElementPresenceTransaction(presenceItems)
+      : null;
+
     return {
       didApply: restoredElements.length > 0,
       restoredElements,
       restoredGroups,
-      transaction: restoredElements.length > 0 && markupCapture
-        ? markupCapture.createTransaction()
-        : null
+      transaction: presenceTransaction
+        || (restoredElements.length > 0 && markupCapture
+          ? markupCapture.createTransaction()
+          : null)
     };
   }
 
