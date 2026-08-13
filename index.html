@@ -1685,6 +1685,7 @@
   <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
   <script src="/shared/studio-editor-editable-target-adapter.js"></script>
   <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
+  <script src="/shared/studio-editor-hoverable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -4205,10 +4206,24 @@
         )
       : null;
 
-    const studioEditorHoverableElementDecorator = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorHoverableElementsAdapter = typeof SlideNextStudioEditorHoverableElementsAdapter !== 'undefined'
+      && SlideNextStudioEditorHoverableElementsAdapter
+      && typeof SlideNextStudioEditorHoverableElementsAdapter.makeStudioEditorElementsHoverable === 'function'
+      ? SlideNextStudioEditorHoverableElementsAdapter
+      : null;
+
+    const studioEditorHoverableElementDecorator = studioEditorHoverableElementsAdapter
+      && typeof studioEditorHoverableElementsAdapter.makeStudioEditorElementsHoverable === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.makeStudioElementsHoverable === 'function'
-      ? (root, options) => SlideNextStudioEditorDom.makeStudioElementsHoverable(root, options)
+      ? (root, options) => studioEditorHoverableElementsAdapter.makeStudioEditorElementsHoverable(
+          root,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorElementIdentityAdapter = typeof SlideNextStudioEditorElementIdentityAdapter !== 'undefined'

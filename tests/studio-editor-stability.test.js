@@ -2725,9 +2725,11 @@ test('getSlideIndexById fails closed when the shared DOM module is unavailable',
   assert.equal(context.getSlideIndexById('slide-1'), -1);
 });
 
-test('editor composes hoverable-element decoration through the shared DOM module', () => {
+test('editor composes hoverable-element decoration through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /const studioEditorHoverableElementsAdapter =/);
+  assert.match(source, /SlideNextStudioEditorHoverableElementsAdapter/);
   assert.match(source, /const studioEditorHoverableElementDecorator =/);
   assert.match(source, /typeof hoverableElementDecorator === 'function'/);
   const makeElementsHoverableSource = extractFunctionSource(
@@ -2738,11 +2740,11 @@ test('editor composes hoverable-element decoration through the shared DOM module
   assert.doesNotMatch(makeElementsHoverableSource, /SlideNextStudioEditorDom\.makeStudioElementsHoverable/);
 });
 
-test('makeElementsHoverable delegates the root and DOM options to the shared DOM module', () => {
+test('makeElementsHoverable delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const hoverableElementDecoratorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorHoverableElementDecorator =',
+    'const studioEditorHoverableElementsAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const makeElementsHoverableSource = extractFunctionSource(
@@ -2754,6 +2756,7 @@ test('makeElementsHoverable delegates the root and DOM options to the shared DOM
   const options = { selectableSelector: '[data-editor-id]' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorHoverableElementsAdapter: require('../shared/studio-editor-hoverable-elements-adapter.js'),
     SlideNextStudioEditorDom: {
       makeStudioElementsHoverable(rootValue, optionsValue) {
         calls.push([rootValue, optionsValue]);
@@ -2774,11 +2777,11 @@ test('makeElementsHoverable delegates the root and DOM options to the shared DOM
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
 });
 
-test('makeElementsHoverable fails closed when the shared DOM module is unavailable', () => {
+test('makeElementsHoverable fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const hoverableElementDecoratorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorHoverableElementDecorator =',
+    'const studioEditorHoverableElementsAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const makeElementsHoverableSource = extractFunctionSource(
