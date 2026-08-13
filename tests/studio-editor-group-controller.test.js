@@ -53,6 +53,8 @@ test('group controller forwards canonical baselines and commits the canonical si
   const second = { dataset: { editorId: 'node-2' } };
   const group = { dataset: { editorId: 'group-1' } };
   const baseline = { id: 'canonical-baseline' };
+  const pendingBaseline = { id: 'pending-baseline' };
+  let builderFactoryOptions = null;
   let baselineOptions = null;
   let deckOptions = null;
   let finalizedOptions = null;
@@ -61,7 +63,8 @@ test('group controller forwards canonical baselines and commits the canonical si
       groupCanonicalNodes() {}
     },
     canonicalGroupApi: {
-      createStudioCanonicalGroupMutationBuilders() {
+      createStudioCanonicalGroupMutationBuilders(options) {
+        builderFactoryOptions = options;
         return {
           buildCanonicalGroupBaseline(options) {
             baselineOptions = options;
@@ -81,6 +84,7 @@ test('group controller forwards canonical baselines and commits the canonical si
     },
     buildCanonicalDeck: () => ({ id: 'mutation-builder' }),
     buildCanonicalDeckBaseline: () => baseline,
+    getPendingCanonicalDeck: () => pendingBaseline,
     getCanonicalDeckBaseline: () => baseline,
     buildGroupSelectionActionState: () => ({
       canGroup: true,
@@ -98,6 +102,7 @@ test('group controller forwards canonical baselines and commits the canonical si
   });
 
   assert.equal(controller.group(), true);
+  assert.equal(builderFactoryOptions.getPendingCanonicalDeck(), pendingBaseline);
   assert.equal(baselineOptions.sourceDocument.id, 'doc');
   assert.equal(deckOptions.canonicalDeckBeforeMutation, baseline);
   assert.equal(finalizedOptions.canonicalDeck.id, 'canonical-sidecar');

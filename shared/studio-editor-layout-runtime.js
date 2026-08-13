@@ -69,6 +69,7 @@
           transactionApi: options.transactionApi,
           getTransactionElementById: options.getTransactionElementById,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           deckImportApi: options.deckImportApi,
           buildGroupSelectionActionState: options.buildGroupSelectionActionState,

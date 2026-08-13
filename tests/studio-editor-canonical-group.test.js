@@ -95,11 +95,13 @@ test('buildStudioCanonicalGroupBaseline builds from the source document', () => 
 
 test('group and ungroup baselines delegate to the shared canonical-state reader', () => {
   const sourceDeck = createSourceDeck();
+  const pendingDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
   let readerCalls = 0;
   const canonicalStateApi = {
     createStudioEditorCanonicalDeckBaselineReader(options) {
       readerCalls += 1;
+      assert.equal(options.getPendingCanonicalDeck, getPendingCanonicalDeck);
       assert.equal(typeof options.getCanonicalDeckBaseline, 'function');
       assert.equal(options.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
       assert.equal(typeof options.buildCanonicalDeckBaseline, 'function');
@@ -109,10 +111,12 @@ test('group and ungroup baselines delegate to the shared canonical-state reader'
       };
     }
   };
+  const getPendingCanonicalDeck = () => pendingDeck;
 
   const groupBaseline = canonicalGroup.buildStudioCanonicalGroupBaseline({
     canonicalDeckApi: canonicalDeck,
     canonicalStateApi,
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline() {
       return null;
     },
@@ -124,6 +128,7 @@ test('group and ungroup baselines delegate to the shared canonical-state reader'
   const ungroupBaseline = canonicalGroup.buildStudioCanonicalUngroupBaseline({
     canonicalDeckApi: canonicalDeck,
     canonicalStateApi,
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline() {
       return null;
     },
@@ -136,6 +141,29 @@ test('group and ungroup baselines delegate to the shared canonical-state reader'
   assert.equal(groupBaseline, sourceDeck);
   assert.equal(ungroupBaseline, sourceDeck);
   assert.equal(readerCalls, 2);
+});
+
+test('group and ungroup baselines prefer a valid pending canonical deck', () => {
+  const pendingDeck = createSourceDeck();
+  let liveReads = 0;
+  let rebuilds = 0;
+  const options = {
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => {
+      liveReads += 1;
+      return createSourceDeck();
+    },
+    buildCanonicalDeckBaseline: () => {
+      rebuilds += 1;
+      return createSourceDeck();
+    }
+  };
+
+  assert.equal(canonicalGroup.buildStudioCanonicalGroupBaseline(options), pendingDeck);
+  assert.equal(canonicalGroup.buildStudioCanonicalUngroupBaseline(options), pendingDeck);
+  assert.equal(liveReads, 0);
+  assert.equal(rebuilds, 0);
 });
 
 test('buildStudioCanonicalGroupBaseline prefers a valid live canonical deck', () => {

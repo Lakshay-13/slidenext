@@ -313,6 +313,10 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
   );
+  assert.match(
+    controllerSource,
+    /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
+  );
   assert.match(groupStateControllerSource, /getFreeformPositioned: \(sourceDoc\) =>/);
   assert.match(groupStateControllerSource, /getEditorCanonicalFreeformReader\(/);
   assert.doesNotMatch(

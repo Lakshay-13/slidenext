@@ -17,6 +17,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -26,6 +29,7 @@
       : null;
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: canonicalDeckApi && typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -52,6 +56,14 @@
       }
     };
     const readCanonicalDeckBaseline = (sourceDocument) => {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (err) {
+          // Fall through to the live baseline and document rebuild paths.
+        }
+      }
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
@@ -97,6 +109,7 @@
     return readStudioCanonicalGroupBaseline({
       canonicalDeckApi,
       canonicalStateApi,
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
       getCanonicalDeckBaseline,
       buildCanonicalDeck,
       sourceDocument: options.sourceDocument
@@ -126,6 +139,7 @@
     return readStudioCanonicalGroupBaseline({
       canonicalDeckApi,
       canonicalStateApi,
+      getPendingCanonicalDeck: options.getPendingCanonicalDeck,
       getCanonicalDeckBaseline,
       buildCanonicalDeck,
       sourceDocument: options.sourceDocument
@@ -197,6 +211,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -205,6 +222,7 @@
         ...groupOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -221,6 +239,7 @@
         ...groupOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,
@@ -305,6 +324,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const importElementToCanonicalNode = typeof options.importElementToCanonicalNode === 'function'
       ? options.importElementToCanonicalNode
       : null;
@@ -313,6 +335,7 @@
         ...ungroupOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -329,6 +352,7 @@
         ...ungroupOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline,
