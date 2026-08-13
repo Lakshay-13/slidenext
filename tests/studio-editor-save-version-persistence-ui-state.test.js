@@ -9,6 +9,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const playbackStateAction = require('../shared/studio-editor-persisted-deck-playback-state-action.js');
 const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
+const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -70,6 +71,14 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 }
 
 function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceSuccessAction =
+    persistenceSuccessAction.createStudioEditorPersistenceSuccessAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getCreateHandlerOptions: () => context.createCurrentStudioPersistenceHandlerOptions || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {',

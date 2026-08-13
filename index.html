@@ -1527,6 +1527,7 @@
   <script src="/shared/studio-editor-persisted-save-request-checker-action.js"></script>
   <script src="/shared/studio-editor-persistence-handler-options-action.js"></script>
   <script src="/shared/studio-editor-persistence-failure-action.js"></script>
+  <script src="/shared/studio-editor-persistence-success-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2090,6 +2091,38 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistenceFailureGlobalApi);
+    const studioEditorPersistenceSuccessAction =
+      typeof SlideNextStudioEditorPersistenceSuccessAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceSuccessAction
+      && typeof SlideNextStudioEditorPersistenceSuccessAction
+        .createStudioEditorPersistenceSuccessAction === 'function'
+      ? SlideNextStudioEditorPersistenceSuccessAction
+        .createStudioEditorPersistenceSuccessAction({
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getCreateHandlerOptions: () => createCurrentStudioPersistenceHandlerOptions
+        })
+      : null;
+    const studioEditorPersistenceSuccessGlobalApi =
+      typeof SlideNextStudioEditorPersistenceSuccessAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceSuccessAction
+      && typeof SlideNextStudioEditorPersistenceSuccessAction
+        .createStudioEditorPersistenceSuccessGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistenceSuccessAction
+        .createStudioEditorPersistenceSuccessGlobalApi({
+          applyCurrentStudioPersistenceSuccess: studioEditorPersistenceSuccessAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistenceSuccessGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11371,69 +11404,9 @@
     }
 
     function applyCurrentStudioPersistenceSuccess(persistenceContext, options = {}) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.handlePersistenceSuccess === 'function') {
-        const result = studioEditorPersistenceController.handlePersistenceSuccess(persistenceContext, options);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorPersistenceSuccessHandlerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceSuccessHandlerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceSuccessHandlerAdapter
-        : null;
-      if (createStudioEditorPersistenceSuccessHandlerAdapter) {
-        if (typeof applyCurrentStudioPersistenceSuccess.adapter !== 'function') {
-          applyCurrentStudioPersistenceSuccess.adapter = createStudioEditorPersistenceSuccessHandlerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            createHandlerOptions: createCurrentStudioPersistenceHandlerOptions
-          });
-        }
-        const result = typeof applyCurrentStudioPersistenceSuccess.adapter === 'function'
-          ? applyCurrentStudioPersistenceSuccess.adapter(persistenceContext, options)
-          : null;
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioPersistenceSuccessHandler = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceSuccessHandler === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistenceSuccessHandler
-        : null;
-      if (createStudioPersistenceSuccessHandler) {
-        return createStudioPersistenceSuccessHandler({
-          createHandlerOptions: createCurrentStudioPersistenceHandlerOptions,
-          handlePersistenceSuccess: (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess === 'function'
-          )
-            ? SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess
-            : null
-        })(persistenceContext, options);
-      }
-
-      const handleStudioPersistenceSuccess = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.handleStudioPersistenceSuccess
-        : null;
-      if (!handleStudioPersistenceSuccess) return false;
-      return handleStudioPersistenceSuccess(
-        persistenceContext,
-        createCurrentStudioPersistenceHandlerOptions(options)
-      );
+      return studioEditorPersistenceSuccessAction
+        ? studioEditorPersistenceSuccessAction(...arguments)
+        : false;
     }
 
     function applyCurrentStudioVersionPersistenceSuccess(persistenceContext, options = {}) {

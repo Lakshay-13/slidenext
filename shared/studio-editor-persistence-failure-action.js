@@ -21,9 +21,7 @@
     }
 
     function applyCurrentStudioPersistenceFailure(persistenceContext, nextOptions = {}) {
-      const resolvedOptions = nextOptions && typeof nextOptions === 'object'
-        ? nextOptions
-        : {};
+      const resolvedOptions = nextOptions;
       const persistenceController = typeof getPersistenceController === 'function'
         ? getPersistenceController()
         : null;
