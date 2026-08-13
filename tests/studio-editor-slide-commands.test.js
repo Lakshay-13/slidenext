@@ -156,6 +156,7 @@ test('duplicateStudioSlideNode preserves canonical duplication and mutation life
       assert.equal(sourceContainer, container);
       assert.equal(slide, duplicateSlide);
       assert.equal(options.beforeNode, targetSlide);
+      assert.equal(options.skipMarkupTransactionCapture, false);
       calls.push('applyInsertion');
       return { didApply: true, transaction: { type: 'markup' } };
     },
@@ -209,6 +210,7 @@ test('duplicateStudioSlideNode prefers a scoped slide-presence transaction when 
   const targetSlide = { id: 'slide-3' };
   const slides = [sourceSlide, targetSlide];
   const finalizedTransactions = [];
+  let insertionOptions = null;
 
   const result = slideCommands.duplicateStudioSlideNode({
     getIframeDoc: () => doc,
@@ -217,7 +219,10 @@ test('duplicateStudioSlideNode prefers a scoped slide-presence transaction when 
     getSlides: () => slides,
     getActiveSlide: () => sourceSlide,
     assignSlideId: () => 'slide-2',
-    applyInsertion: () => ({ didApply: true, transaction: { type: 'legacy-markup' } }),
+    applyInsertion: (_container, _slide, options) => {
+      insertionOptions = options;
+      return { didApply: true, transaction: { type: 'legacy-markup' } };
+    },
     createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
     finalizeMutation: (label, transaction) => {
       assert.equal(label, 'Auto: Duplicated Slide');
@@ -226,6 +231,7 @@ test('duplicateStudioSlideNode prefers a scoped slide-presence transaction when 
   });
 
   assert.equal(result, true);
+  assert.equal(insertionOptions.skipMarkupTransactionCapture, true);
   assert.deepEqual(finalizedTransactions, [{
     kind: 'slidenext.editor.transaction',
     version: 1,

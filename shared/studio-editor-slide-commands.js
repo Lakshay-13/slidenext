@@ -162,10 +162,6 @@
     const applyInsertion = typeof options.applyInsertion === 'function'
       ? options.applyInsertion
       : () => ({ didApply: false, transaction: null });
-    const mutation = applyInsertion(container, duplicateSlide, {
-      beforeNode: slides[insertionIndex] || null
-    });
-    if (!mutation || !mutation.didApply) return false;
     const slidePresenceTransaction = createStudioSlidePresenceTransaction
       ? createStudioSlidePresenceTransaction([{
           slideId: duplicateSlideId,
@@ -177,6 +173,11 @@
           }
         }])
       : null;
+    const mutation = applyInsertion(container, duplicateSlide, {
+      beforeNode: slides[insertionIndex] || null,
+      skipMarkupTransactionCapture: !!slidePresenceTransaction
+    });
+    if (!mutation || !mutation.didApply) return false;
     const appliedMutation = slidePresenceTransaction
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
