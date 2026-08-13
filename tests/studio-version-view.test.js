@@ -9,6 +9,9 @@ function createClassList() {
     add(value) {
       values.add(value);
     },
+    remove(value) {
+      values.delete(value);
+    },
     contains(value) {
       return values.has(value);
     },
@@ -22,6 +25,44 @@ function createClassList() {
     }
   };
 }
+
+test('version view delegates modal chrome through the shared visibility controller', () => {
+  const calls = [];
+  const modalVisibility = {
+    createStudioModalChromeController(options) {
+      calls.push(['create', options.modalVisibility === modalVisibility]);
+      return {
+        show(...args) {
+          calls.push(['show', ...args]);
+          return 'shown';
+        },
+        hide(...args) {
+          calls.push(['hide', ...args]);
+          return 'hidden';
+        },
+        hideImmediately(...args) {
+          calls.push(['hideImmediately', ...args]);
+          return 'hidden-immediately';
+        }
+      };
+    }
+  };
+  const modal = {};
+  const content = {};
+  const options = { delayMs: 10, modalVisibility };
+
+  assert.equal(versionView.showStudioVersionModal(modal, content, options), 'shown');
+  assert.equal(versionView.hideStudioVersionModal(modal, content, options), 'hidden');
+  assert.equal(versionView.hideStudioVersionModalImmediately(modal, content, options), 'hidden-immediately');
+  assert.deepEqual(calls, [
+    ['create', true],
+    ['show', modal, content, { delayMs: 10 }],
+    ['create', true],
+    ['hide', modal, content],
+    ['create', true],
+    ['hideImmediately', modal, content]
+  ]);
+});
 
 test('hideStudioVersionsDropdown hides the version menu', () => {
   const dropdown = { classList: createClassList() };

@@ -163,6 +163,7 @@ function loadHideCurrentStudioVersionsDropdown(fileContent, context) {
 }
 
 function loadHideCurrentStudioVersionModal(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     'function hideCurrentStudioVersionModal(modal, content) {',
@@ -172,6 +173,7 @@ function loadHideCurrentStudioVersionModal(fileContent, context) {
 }
 
 function loadHideCurrentStudioVersionModalImmediately(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     'function hideCurrentStudioVersionModalImmediately(modal, content) {',
@@ -181,6 +183,7 @@ function loadHideCurrentStudioVersionModalImmediately(fileContent, context) {
 }
 
 function loadShowCurrentStudioVersionModal(fileContent, context) {
+  context.SlideNextStudioVersionView ??= versionView;
   const helperSource = extractFunctionSource(
     fileContent,
     'function showCurrentStudioVersionModal(modal, content, options = {}) {',
@@ -507,7 +510,8 @@ test('version modal chrome wrappers reuse the shared controller when available',
     }
   };
   const context = {
-    SlideNextStudioModalVisibility: modalVisibility
+    SlideNextStudioModalVisibility: modalVisibility,
+    SlideNextStudioVersionView: versionView
   };
   vm.createContext(context);
   vm.runInContext(showSource, context);

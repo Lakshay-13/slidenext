@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory();
+  const modalVisibility = typeof module === 'object' && module.exports
+    ? require('./studio-modal-visibility.js')
+    : root && root.SlideNextStudioModalVisibility;
+  const api = factory(modalVisibility);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioVersionView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (defaultModalVisibility) {
   function hideStudioVersionsDropdown(options = {}) {
     const documentRef = options.documentRef;
     const dropdown = documentRef && typeof documentRef.getElementById === 'function'
@@ -29,6 +32,46 @@
     const shouldOpen = dropdown.classList.contains('hidden');
     dropdown.classList.toggle('hidden');
     return { didToggle: true, shouldOpen };
+  }
+
+  function resolveModalVisibility(options = {}) {
+    return options.modalVisibility && typeof options.modalVisibility === 'object'
+      ? options.modalVisibility
+      : defaultModalVisibility;
+  }
+
+  function createVersionModalChromeController(options = {}) {
+    const visibility = resolveModalVisibility(options);
+    const createController = visibility
+      && typeof visibility.createStudioModalChromeController === 'function'
+      ? visibility.createStudioModalChromeController
+      : defaultModalVisibility
+        && typeof defaultModalVisibility.createStudioModalChromeController === 'function'
+        ? defaultModalVisibility.createStudioModalChromeController
+        : null;
+    return createController
+      ? createController({ modalVisibility: visibility })
+      : null;
+  }
+
+  function showStudioVersionModal(modal, content, options = {}) {
+    const controller = createVersionModalChromeController(options);
+    if (!controller || typeof controller.show !== 'function') return false;
+    const showOptions = options && typeof options === 'object' ? { ...options } : {};
+    delete showOptions.modalVisibility;
+    return controller.show(modal, content, showOptions);
+  }
+
+  function hideStudioVersionModal(modal, content, options = {}) {
+    const controller = createVersionModalChromeController(options);
+    if (!controller || typeof controller.hide !== 'function') return false;
+    return controller.hide(modal, content);
+  }
+
+  function hideStudioVersionModalImmediately(modal, content, options = {}) {
+    const controller = createVersionModalChromeController(options);
+    if (!controller || typeof controller.hideImmediately !== 'function') return false;
+    return controller.hideImmediately(modal, content);
   }
 
   function resetStudioVersionUiState(options = {}) {
@@ -174,6 +217,9 @@
   return {
     hideStudioVersionsDropdown,
     toggleStudioVersionsDropdown,
+    showStudioVersionModal,
+    hideStudioVersionModal,
+    hideStudioVersionModalImmediately,
     resetStudioVersionUiState,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,

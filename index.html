@@ -11468,108 +11468,40 @@
     }
 
     function showCurrentStudioVersionModal(modal, content, options = {}) {
-      const createStudioModalChromeController = (
-        typeof SlideNextStudioModalVisibility !== 'undefined'
-        && SlideNextStudioModalVisibility
-        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
-      )
-        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
         : null;
-      if (createStudioModalChromeController) {
-        return createStudioModalChromeController({
-          modalVisibility: SlideNextStudioModalVisibility
-        }).show(modal, content, options);
-      }
-
-      if (!modal) {
-        return;
-      }
-      const showOptions = options && typeof options === 'object'
-        ? options
-        : {};
-      const applyChrome = () => {
-        modal.classList.remove('opacity-0');
-        modal.classList.add('opacity-100');
-        if (content) {
-          content.classList.remove('scale-95');
-          content.classList.add('scale-100');
-        }
-        if (typeof showOptions.onShown === 'function') {
-          showOptions.onShown();
-        }
-      };
-
-      SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
-      modal.classList.remove('hidden');
-      if (showOptions.forceReflow) {
-        modal.offsetHeight;
-      }
-      if (typeof showOptions.delayMs === 'number' && showOptions.delayMs > 0) {
-        SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
-          delayMs: showOptions.delayMs,
-          callback: applyChrome
-        });
-        return;
-      }
-      applyChrome();
+      if (!versionView || typeof versionView.showStudioVersionModal !== 'function') return false;
+      return versionView.showStudioVersionModal(modal, content, {
+        ...(options && typeof options === 'object' ? options : {}),
+        modalVisibility: typeof SlideNextStudioModalVisibility !== 'undefined'
+          ? SlideNextStudioModalVisibility
+          : null
+      });
     }
 
     function hideCurrentStudioVersionModal(modal, content) {
-      const createStudioModalChromeController = (
-        typeof SlideNextStudioModalVisibility !== 'undefined'
-        && SlideNextStudioModalVisibility
-        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
-      )
-        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
         : null;
-      if (createStudioModalChromeController) {
-        return createStudioModalChromeController({
-          modalVisibility: SlideNextStudioModalVisibility
-        }).hide(modal, content);
-      }
-
-      if (modal) {
-        modal.classList.remove('opacity-100');
-        modal.classList.add('opacity-0');
-      }
-      if (content) {
-        content.classList.remove('scale-100');
-        content.classList.add('scale-95');
-      }
-      if (modal) {
-        SlideNextStudioModalVisibility.scheduleStudioModalHide(modal, {
-          hideDelayMs: 200,
-          onHide: () => {
-            modal.classList.add('hidden');
-          }
-        });
-      }
+      if (!versionView || typeof versionView.hideStudioVersionModal !== 'function') return false;
+      return versionView.hideStudioVersionModal(modal, content, {
+        modalVisibility: typeof SlideNextStudioModalVisibility !== 'undefined'
+          ? SlideNextStudioModalVisibility
+          : null
+      });
     }
 
     function hideCurrentStudioVersionModalImmediately(modal, content) {
-      const createStudioModalChromeController = (
-        typeof SlideNextStudioModalVisibility !== 'undefined'
-        && SlideNextStudioModalVisibility
-        && typeof SlideNextStudioModalVisibility.createStudioModalChromeController === 'function'
-      )
-        ? SlideNextStudioModalVisibility.createStudioModalChromeController
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
         : null;
-      if (createStudioModalChromeController) {
-        return createStudioModalChromeController({
-          modalVisibility: SlideNextStudioModalVisibility
-        }).hideImmediately(modal, content);
-      }
-
-      if (modal) {
-        SlideNextStudioModalVisibility.cancelStudioModalHide(modal);
-        modal.classList.add('hidden');
-        modal.classList.add('opacity-0');
-        modal.classList.remove('opacity-100');
-      }
-      if (content) {
-        content.classList.add('scale-95');
-        content.classList.remove('scale-100');
-      }
+      if (!versionView || typeof versionView.hideStudioVersionModalImmediately !== 'function') return false;
+      return versionView.hideStudioVersionModalImmediately(modal, content, {
+        modalVisibility: typeof SlideNextStudioModalVisibility !== 'undefined'
+          ? SlideNextStudioModalVisibility
+          : null
+      });
     }
 
     function hideCurrentStudioVersionsDropdown() {
