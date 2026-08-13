@@ -464,7 +464,7 @@
     [...first.operations, ...second.operations].forEach((operation) => {
       const operationKey = operation.type === 'property' || operation.type === 'dataset'
         ? `${operation.type}:${operation.elementId}:${operation.property}`
-        : operation.type === 'active-slide'
+        : operation.type === 'active-slide' || operation.type === 'slide-order'
           ? operation.type
         : `${operation.type}:${operation.elementId}`;
       const existingOperation = operationsByKey.get(operationKey);

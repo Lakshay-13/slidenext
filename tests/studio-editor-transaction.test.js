@@ -538,6 +538,27 @@ test('mergeStudioEditorTransactions coalesces mixed style and property changes',
   ]);
 });
 
+test('mergeStudioEditorTransactions coalesces deck-wide slide-order changes', () => {
+  const first = transaction.createStudioSlideOrderTransaction(
+    ['slide-1', 'slide-2', 'slide-3'],
+    ['slide-2', 'slide-1', 'slide-3']
+  );
+  const second = transaction.createStudioSlideOrderTransaction(
+    ['slide-2', 'slide-1', 'slide-3'],
+    ['slide-2', 'slide-3', 'slide-1']
+  );
+
+  assert.deepEqual(transaction.mergeStudioEditorTransactions(first, second), {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'slide-order',
+      before: ['slide-1', 'slide-2', 'slide-3'],
+      after: ['slide-2', 'slide-3', 'slide-1']
+    }]
+  });
+});
+
 test('normalizeStudioEditorTransaction rejects other transaction formats', () => {
   assert.equal(transaction.normalizeStudioEditorTransaction({ kind: 'other' }), null);
   assert.equal(transaction.isStudioEditorTransaction({ kind: 'other' }), false);
