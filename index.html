@@ -1627,6 +1627,7 @@
   <script src="/shared/studio-editor-history-redo-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
+  <script src="/shared/studio-editor-history-restore-action.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
@@ -3915,6 +3916,69 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistoryFlushGlobalApi);
+    const studioEditorHistoryRestoreOptionsApi = typeof SlideNextStudioEditorHistoryRestoreOptions !== 'undefined'
+      ? SlideNextStudioEditorHistoryRestoreOptions
+      : null;
+    const studioEditorHistoryRestoreOptions = studioEditorHistoryRestoreOptionsApi
+      && typeof studioEditorHistoryRestoreOptionsApi.createStudioEditorHistoryRestoreOptions === 'function'
+      ? studioEditorHistoryRestoreOptionsApi.createStudioEditorHistoryRestoreOptions({
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
+          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
+            ? SlideNextStudioElementState
+            : null,
+          getIframeDoc,
+          getCurrentSlideIndex: getStudioCurrentSlideIndex,
+          getSlideById,
+          getElementByEditorId,
+          makeElementsHoverable,
+          generateThumbnails,
+          restoreCommittedSelectionByIdsOnActiveSlide,
+          observeDeckActiveSlideState,
+          syncSelectionOverlay,
+          capturePersistedDeckPlaybackState,
+          applyPersistedDeckState: (nextState, nextOptions) => applyCurrentStudioPersistedDeckState(
+            nextState,
+            nextOptions
+          ),
+          setEditorLiveCanonicalDeck,
+          getSessionToken: getStudioEditorSessionToken,
+          setCurrentPresentationCanonicalDeck,
+          buildEditorCanonicalDeck,
+          getEditorCanonicalDeckValidator,
+          applyEditorSelectionState,
+          createEditorDeckViewBuildOptions,
+          syncIframeTheme,
+          setupIframeDragging,
+          bindDeckNavigationSync,
+          getSlides,
+          setActiveSlideById,
+          setActiveSlide
+        })
+      : {};
+    const studioEditorHistoryRestoreAction = typeof SlideNextStudioEditorHistoryRestoreAction !== 'undefined'
+      && SlideNextStudioEditorHistoryRestoreAction
+      && typeof SlideNextStudioEditorHistoryRestoreAction.createStudioEditorHistoryRestoreAction === 'function'
+      ? SlideNextStudioEditorHistoryRestoreAction.createStudioEditorHistoryRestoreAction({
+          getHistoryController: () => studioEditorHistoryController,
+          restoreApi: typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
+            ? SlideNextStudioEditorHistoryRestore
+            : null,
+          historyApi: typeof SlideNextStudioHistory !== 'undefined'
+            ? SlideNextStudioHistory
+            : null,
+          ...studioEditorHistoryRestoreOptions
+        })
+      : null;
+    const studioEditorHistoryRestoreGlobalApi = typeof SlideNextStudioEditorHistoryRestoreAction !== 'undefined'
+      && SlideNextStudioEditorHistoryRestoreAction
+      && typeof SlideNextStudioEditorHistoryRestoreAction.createStudioEditorHistoryRestoreGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryRestoreAction.createStudioEditorHistoryRestoreGlobalApi({
+          restoreFrameFromHistoryEntry: studioEditorHistoryRestoreAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryRestoreGlobalApi);
     const studioEditorHistoryStepAction = typeof SlideNextStudioEditorHistoryStepAction !== 'undefined'
       && SlideNextStudioEditorHistoryStepAction
       && typeof SlideNextStudioEditorHistoryStepAction.createStudioEditorHistoryStepAction === 'function'
@@ -10772,99 +10836,6 @@
       }
       if (typeof updateEditorPersistedDeckState.adapter !== 'function') return {};
       return updateEditorPersistedDeckState.adapter(nextState);
-    }
-
-    function restoreFrameFromHistoryEntry(entry) {
-      if (typeof studioEditorHistoryController !== 'undefined'
-        && studioEditorHistoryController
-        && typeof studioEditorHistoryController.restore === 'function') {
-        return studioEditorHistoryController.restore(
-          entry,
-          arguments.length > 1 ? arguments[1] : null
-        );
-      }
-      if (typeof restoreFrameFromHistoryEntry.restoreHandler !== 'function') {
-        const createStudioEditorHistoryRestoreStateAdapter = typeof SlideNextStudioEditorHistoryRestore !== 'undefined'
-          && SlideNextStudioEditorHistoryRestore
-          && typeof SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreStateAdapter === 'function'
-          ? SlideNextStudioEditorHistoryRestore.createStudioEditorHistoryRestoreStateAdapter
-          : null;
-        if (!createStudioEditorHistoryRestoreStateAdapter) return false;
-        restoreFrameFromHistoryEntry.restoreHandler = createStudioEditorHistoryRestoreStateAdapter({
-          restoreApi: SlideNextStudioEditorHistoryRestore,
-          historyApi: SlideNextStudioHistory,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
-            ? SlideNextStudioElementState
-            : null,
-          getIframeDoc,
-          getCurrentSlideIndex: getStudioCurrentSlideIndex,
-          resolveElementById: (editorId, iframeDoc) => {
-            if (editorId === 'slides-container') {
-              return iframeDoc && iframeDoc.getElementById('slidesContainer');
-            }
-            if (typeof editorId === 'string'
-              && editorId.startsWith('slide:')
-              && typeof getSlideById === 'function') {
-              return getSlideById(editorId.slice('slide:'.length), iframeDoc);
-            }
-            return getElementByEditorId(editorId, iframeDoc);
-          },
-          makeElementsHoverable: typeof makeElementsHoverable === 'function' ? makeElementsHoverable : null,
-          generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
-          restoreCommittedSelectionByIdsOnActiveSlide: typeof restoreCommittedSelectionByIdsOnActiveSlide === 'function'
-            ? restoreCommittedSelectionByIdsOnActiveSlide
-            : null,
-          observeDeckActiveSlideState: typeof observeDeckActiveSlideState === 'function'
-            ? observeDeckActiveSlideState
-            : null,
-          syncSelectionOverlay: typeof syncSelectionOverlay === 'function' ? syncSelectionOverlay : null,
-          capturePersistedDeckPlaybackState: typeof capturePersistedDeckPlaybackState === 'function'
-            ? capturePersistedDeckPlaybackState
-            : null,
-          applyPersistedDeckState: typeof applyCurrentStudioPersistedDeckState === 'function'
-            ? (nextState, nextOptions) => applyCurrentStudioPersistedDeckState(nextState, nextOptions)
-            : null,
-          setEditorLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
-            ? setEditorLiveCanonicalDeck
-            : null,
-          getSessionToken: getStudioEditorSessionToken,
-          setCurrentPresentationCanonicalDeck: typeof setCurrentPresentationCanonicalDeck === 'function'
-            ? setCurrentPresentationCanonicalDeck
-            : null,
-          buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
-            ? (sourceDoc, buildOptions) => buildEditorCanonicalDeck(
-                sourceDoc || getIframeDoc(),
-                buildOptions
-              )
-            : null,
-          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-            ? getEditorCanonicalDeckValidator()
-            : null,
-          applyEditorSelectionState: typeof applyEditorSelectionState === 'function'
-            ? applyEditorSelectionState
-            : null,
-          buildDeckViewOptions: typeof createEditorDeckViewBuildOptions === 'function'
-            ? (nextHistoryEntry) => createEditorDeckViewBuildOptions(null, {
-                activeSlideId: nextHistoryEntry.activeSlideId,
-                buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
-                buildFallbackHtml: () => ''
-              })
-            : null,
-          syncIframeTheme: typeof syncIframeTheme === 'function' ? syncIframeTheme : null,
-          setupIframeDragging: typeof setupIframeDragging === 'function' ? setupIframeDragging : null,
-          bindDeckNavigationSync: typeof bindDeckNavigationSync === 'function' ? bindDeckNavigationSync : null,
-          getSlides: typeof getSlides === 'function' ? getSlides : null,
-          setActiveSlideById: typeof setActiveSlideById === 'function' ? setActiveSlideById : null,
-          setActiveSlide: typeof setActiveSlide === 'function' ? setActiveSlide : null
-        });
-      }
-      return restoreFrameFromHistoryEntry.restoreHandler(
-        entry,
-        arguments.length > 1 ? arguments[1] : null
-      );
     }
 
     function resolveEditorReusablePersistedHtml(persistedDeckState, options = {}) {

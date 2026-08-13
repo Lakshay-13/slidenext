@@ -18,6 +18,7 @@ const historyStepAction = require('../shared/studio-editor-history-step-action.j
 const historyUndoAction = require('../shared/studio-editor-history-undo-action.js');
 const historyRedoAction = require('../shared/studio-editor-history-redo-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
+const historyRestoreAction = require('../shared/studio-editor-history-restore-action.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -240,6 +241,79 @@ function loadUpdateHistoryButtons(context) {
     getRedoStack: typeof context.getStudioRedoStack === 'function'
       ? context.getStudioRedoStack
       : () => context.redoStack || []
+  });
+}
+
+function loadRestoreFrameFromHistoryEntry(context) {
+  const getIframeDoc = typeof context.getIframeDoc === 'function'
+    ? context.getIframeDoc
+    : () => null;
+  const getSlideById = typeof context.getSlideById === 'function'
+    ? context.getSlideById
+    : null;
+  const getElementByEditorId = typeof context.getElementByEditorId === 'function'
+    ? context.getElementByEditorId
+    : null;
+  context.restoreFrameFromHistoryEntry = historyRestoreAction.createStudioEditorHistoryRestoreAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    restoreApi: context.SlideNextStudioEditorHistoryRestore || historyRestore,
+    historyApi: context.SlideNextStudioHistory || null,
+    transactionApi: context.SlideNextStudioEditorTransaction || null,
+    elementStateApi: context.SlideNextStudioElementState || null,
+    getIframeDoc,
+    getCurrentSlideIndex: context.getStudioCurrentSlideIndex
+      || (() => context.currentSlideIndex || 0),
+    resolveElementById: (editorId, iframeDoc) => {
+      if (editorId === 'slides-container') {
+        return iframeDoc && typeof iframeDoc.getElementById === 'function'
+          ? iframeDoc.getElementById('slidesContainer')
+          : null;
+      }
+      if (typeof editorId === 'string'
+        && editorId.startsWith('slide:')
+        && getSlideById) {
+        return getSlideById(editorId.slice('slide:'.length), iframeDoc);
+      }
+      return getElementByEditorId
+        ? getElementByEditorId(editorId, iframeDoc)
+        : null;
+    },
+    makeElementsHoverable: context.makeElementsHoverable,
+    generateThumbnails: context.generateThumbnails,
+    restoreCommittedSelectionByIdsOnActiveSlide:
+      context.restoreCommittedSelectionByIdsOnActiveSlide,
+    observeDeckActiveSlideState: context.observeDeckActiveSlideState,
+    syncSelectionOverlay: context.syncSelectionOverlay,
+    capturePersistedDeckPlaybackState: context.capturePersistedDeckPlaybackState,
+    applyPersistedDeckState: typeof context.applyCurrentStudioPersistedDeckState === 'function'
+      ? (nextState, nextOptions) => context.applyCurrentStudioPersistedDeckState(nextState, nextOptions)
+      : context.applyPersistedDeckState,
+    setEditorLiveCanonicalDeck: context.setEditorLiveCanonicalDeck,
+    getSessionToken: context.getStudioEditorSessionToken,
+    setCurrentPresentationCanonicalDeck: context.setCurrentPresentationCanonicalDeck,
+    buildCanonicalDeck: typeof context.buildEditorCanonicalDeck === 'function'
+      ? (sourceDoc, buildOptions) => context.buildEditorCanonicalDeck(
+          sourceDoc || getIframeDoc(),
+          buildOptions
+        )
+      : null,
+    isCanonicalDeck: typeof context.getEditorCanonicalDeckValidator === 'function'
+      ? context.getEditorCanonicalDeckValidator()
+      : null,
+    applyEditorSelectionState: context.applyEditorSelectionState,
+    buildDeckViewOptions: typeof context.createEditorDeckViewBuildOptions === 'function'
+      ? (nextHistoryEntry) => context.createEditorDeckViewBuildOptions(null, {
+          activeSlideId: nextHistoryEntry.activeSlideId,
+          buildCanonicalDeck: () => nextHistoryEntry.canonicalDeck,
+          buildFallbackHtml: () => ''
+        })
+      : null,
+    syncIframeTheme: context.syncIframeTheme,
+    setupIframeDragging: context.setupIframeDragging,
+    bindDeckNavigationSync: context.bindDeckNavigationSync,
+    getSlides: context.getSlides,
+    setActiveSlideById: context.setActiveSlideById,
+    setActiveSlide: context.setActiveSlide
   });
 }
 
@@ -1597,12 +1671,6 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
   );
-  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function restoreFrameFromHistoryEntry(entry) {',
-    '\n\n    function buildPersistableDeckHtml('
-  );
-
   const iframeDoc = {
     documentElement: {
       innerHTML: ''
@@ -1736,7 +1804,7 @@ test('restoreFrameFromHistoryEntry threads the shared iframe accessor through hi
   vm.runInContext('createEditorDeckViewBuildOptions = __createEditorDeckViewBuildOptions;', context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   context.SlideNextStudioEditorHistoryRestore = historyRestore;
-  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+  loadRestoreFrameFromHistoryEntry(context);
 
   context.restoreFrameFromHistoryEntry({
     html: '<html>snapshot</html>',
@@ -1840,12 +1908,6 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
   );
-  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function restoreFrameFromHistoryEntry(entry) {',
-    '\n\n    function buildPersistableDeckHtml('
-  );
-
   const iframeDoc = {
     documentElement: {
       innerHTML: ''
@@ -1923,7 +1985,7 @@ test('restoreFrameFromHistoryEntry clears stale persisted playback state when th
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   context.SlideNextStudioEditorHistoryRestore = historyRestore;
-  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+  loadRestoreFrameFromHistoryEntry(context);
 
   context.restoreFrameFromHistoryEntry({
     html: '<html>snapshot</html>',
@@ -1944,11 +2006,6 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
-  );
-  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function restoreFrameFromHistoryEntry(entry) {',
-    '\n\n    function buildPersistableDeckHtml('
   );
   const element = {
     style: { left: '30px', top: '40px' }
@@ -2014,7 +2071,7 @@ test('restoreFrameFromHistoryEntry applies a valid transaction without replacing
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   context.SlideNextStudioEditorHistoryRestore = historyRestore;
-  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+  loadRestoreFrameFromHistoryEntry(context);
 
   const result = context.restoreFrameFromHistoryEntry({
     html: '<html>snapshot</html>',
@@ -2044,11 +2101,6 @@ test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions wit
     fileContent,
     'function applyCurrentStudioPersistedDeckState(nextState = {}, options = {}) {',
     '\n\n    function setCurrentPresentationCanonicalDeck('
-  );
-  const restoreFrameFromHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function restoreFrameFromHistoryEntry(entry) {',
-    '\n\n    function buildPersistableDeckHtml('
   );
   const slide = { innerHTML: '<p>After</p>' };
   const iframeDoc = {
@@ -2104,7 +2156,7 @@ test('restoreFrameFromHistoryEntry resolves slide-scoped markup transactions wit
   vm.createContext(context);
   vm.runInContext(persistedDeckStateHelperSource, context);
   context.SlideNextStudioEditorHistoryRestore = historyRestore;
-  vm.runInContext(restoreFrameFromHistoryEntrySource, context);
+  loadRestoreFrameFromHistoryEntry(context);
 
   const result = context.restoreFrameFromHistoryEntry({
     html: '<html>snapshot</html>',
