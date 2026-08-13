@@ -11,6 +11,12 @@ const CLIPBOARD_ACCESSORS_PATH = path.join(
   'shared',
   'studio-editor-clipboard-accessors.js'
 );
+const CLIPBOARD_STATE_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-clipboard-state.js'
+);
 
 test('clipboard controller owns fallback clipboard state', () => {
   const initialClipboard = { items: [{ id: 'initial' }], pasteCount: 0 };
@@ -28,8 +34,11 @@ test('clipboard controller owns fallback clipboard state', () => {
 
 test('editor routes clipboard reads through the clipboard controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const stateSource = fs.readFileSync(CLIPBOARD_STATE_PATH, 'utf8');
 
-  assert.match(source, /clipboard: getStudioEditorClipboard\(\)/);
+  assert.match(source, /clipboardView,/);
+  assert.match(source, /syncBlockState: \(sourceDoc\) => updateBlockActionState\(sourceDoc\)/);
+  assert.match(stateSource, /getClipboard\(doc\)/);
   assert.match(source, /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(resolvedDoc\), getStudioEditorClipboard\(\)/);
   assert.match(source, /studioEditorClipboardGlobalApi/);
   assert.match(source, /Object\.assign\(globalThis, studioEditorClipboardGlobalApi\)/);

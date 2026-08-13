@@ -7,15 +7,20 @@ const clipboardState = require('../shared/studio-editor-clipboard.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const CLIPBOARD_STATE_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-clipboard-state.js'
+);
 
 test('editor forwards the clipboard toolbar document into selection reads', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const stateSource = fs.readFileSync(CLIPBOARD_STATE_PATH, 'utf8');
 
-  assert.match(
-    source,
-    /createStudioClipboardToolbarStateSync\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
-  );
-  assert.match(source, /elements: getStudioSelectedElements\(doc\),/);
+  assert.match(source, /createStudioEditorClipboardStateController/);
+  assert.match(stateSource, /getSelectedElements\(doc\)/);
+  assert.match(stateSource, /getDocumentRef: \(\) => documentRef/);
 });
 
 function createClassList() {

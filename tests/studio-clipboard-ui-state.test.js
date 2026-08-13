@@ -9,6 +9,7 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
+const clipboardToolbarState = require('../shared/studio-editor-clipboard-state.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
 const clipboardTransaction = require('../shared/studio-editor-clipboard-transaction.js');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
@@ -87,6 +88,12 @@ function installClipboardController(context) {
     insertClipboardPayload: context.insertClipboardPayload,
     finalizeInsertedElements: context.finalizeInsertedElements
   });
+}
+
+function runClipboardActionStateSource(source, context) {
+  context.SlideNextStudioEditorClipboardState = clipboardToolbarState;
+  vm.createContext(context);
+  vm.runInContext(source, context);
 }
 
 function createControls() {
@@ -917,8 +924,10 @@ test('updateClipboardActionState enables paste on a live slide and enables copy 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(`${buildClipboardSelectionMutationPlanSource}\n${updateClipboardActionStateSource}`, context);
+  runClipboardActionStateSource(
+    `${buildClipboardSelectionMutationPlanSource}\n${updateClipboardActionStateSource}`,
+    context
+  );
 
   context.updateClipboardActionState(null);
   assert.deepEqual(getControlStates(controls), {
@@ -1018,8 +1027,7 @@ test('updateClipboardActionState reuses the shared clipboard toolbar helper when
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateClipboardActionStateSource, context);
+  runClipboardActionStateSource(updateClipboardActionStateSource, context);
 
   context.updateClipboardActionState({
     activeSlide: {}
@@ -1065,8 +1073,7 @@ test('updateClipboardActionState delegates toolbar state assembly to the shared 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateClipboardActionStateSource, context);
+  runClipboardActionStateSource(updateClipboardActionStateSource, context);
 
   const doc = { activeSlide: {} };
   assert.equal(context.updateClipboardActionState(doc), 'delegated');
@@ -1122,8 +1129,7 @@ test('updateClipboardActionState caches the shared clipboard toolbar synchronize
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateClipboardActionStateSource, context);
+  runClipboardActionStateSource(updateClipboardActionStateSource, context);
 
   const activeDoc = { id: 'active-doc', activeSlide: {} };
   assert.equal(context.updateClipboardActionState(activeDoc), true);
@@ -1187,8 +1193,10 @@ test('updateClipboardActionState prefers canonical lock metadata when available'
     document: {}
   };
 
-  vm.createContext(context);
-  vm.runInContext(`${visibilityReaderSource}\n${updateClipboardActionStateSource}`, context);
+  runClipboardActionStateSource(
+    `${visibilityReaderSource}\n${updateClipboardActionStateSource}`,
+    context
+  );
 
   assert.equal(context.updateClipboardActionState(doc), true);
   assert.equal(calls.length, 1);
@@ -1218,8 +1226,7 @@ test('updateClipboardActionState fails closed when the shared clipboard view is 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateClipboardActionStateSource, context);
+  runClipboardActionStateSource(updateClipboardActionStateSource, context);
 
   assert.equal(context.updateClipboardActionState({}), false);
   assert.deepEqual(getControlStates(controls), {

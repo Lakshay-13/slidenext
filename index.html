@@ -1404,6 +1404,7 @@
   <script src="/shared/studio-editor-clipboard-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-state.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
   <script src="/shared/studio-editor-removal-transaction.js"></script>
@@ -10510,40 +10511,34 @@
     }
 
     function updateClipboardActionState(doc = getIframeDoc()) {
-      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
-        ? SlideNextStudioEditorClipboard
+      const clipboardStateApi = typeof SlideNextStudioEditorClipboardState !== 'undefined'
+        ? SlideNextStudioEditorClipboardState
         : null;
-      if (!clipboardApi || typeof clipboardApi.syncStudioClipboardToolbarState !== 'function') {
+      if (!clipboardStateApi
+        || typeof clipboardStateApi.createStudioEditorClipboardStateController !== 'function') {
         return false;
       }
-      updateBlockActionState(doc);
-      if (typeof clipboardApi.createStudioClipboardToolbarStateSync === 'function') {
-        if (typeof updateClipboardActionState.sync !== 'function') {
-          updateClipboardActionState.sync = clipboardApi.createStudioClipboardToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getClipboard: () => getStudioEditorClipboard(),
-            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-              : isElementLocked,
-            getActiveSlide,
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateClipboardActionState.sync === 'function') {
-          return updateClipboardActionState.sync(doc);
-        }
+      if (!updateClipboardActionState.controller) {
+        const clipboardView = typeof SlideNextStudioEditorClipboard !== 'undefined'
+          ? SlideNextStudioEditorClipboard
+          : null;
+        updateClipboardActionState.controller = clipboardStateApi.createStudioEditorClipboardStateController({
+          clipboardView,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getClipboard: (sourceDoc) => getStudioEditorClipboard(sourceDoc),
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
+          getActiveSlide,
+          syncBlockState: (sourceDoc) => updateBlockActionState(sourceDoc),
+          documentRef: document
+        });
       }
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
-        : isElementLocked;
-      return clipboardApi.syncStudioClipboardToolbarState({
-        documentRef: document,
-        elements: getStudioSelectedElements(doc),
-        clipboard: getStudioEditorClipboard(),
-        isLocked: readLockedState,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      return updateClipboardActionState.controller
+        && typeof updateClipboardActionState.controller.sync === 'function'
+        ? updateClipboardActionState.controller.sync(doc)
+        : false;
     }
 
     function updateAssetLibraryState(doc = getIframeDoc()) {
