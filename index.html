@@ -1660,6 +1660,7 @@
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8523,23 +8524,29 @@
       });
     }
 
-    const studioEditorSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide === 'function'
-      ? (selectedIds, doc, options) => SlideNextStudioEditorSelection.restoreStudioSelectionByIdsOnActiveSlide(
-          selectedIds,
-          doc,
-          options
-        )
+    const studioEditorSelectionRestoreAdapter = typeof SlideNextStudioEditorSelectionRestoreAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionRestoreAdapter
+      && typeof SlideNextStudioEditorSelectionRestoreAdapter.restoreStudioEditorSelectionByIdsOnActiveSlide === 'function'
+      ? SlideNextStudioEditorSelectionRestoreAdapter
       : null;
 
     function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {
-      if (typeof studioEditorSelectionRestorer !== 'function') return false;
-      const nextSelectionState = studioEditorSelectionRestorer(
+      const restoreSelection = studioEditorSelectionRestoreAdapter
+        && typeof studioEditorSelectionRestoreAdapter.restoreStudioEditorSelectionByIdsOnActiveSlide === 'function'
+        ? studioEditorSelectionRestoreAdapter.restoreStudioEditorSelectionByIdsOnActiveSlide
+        : null;
+      if (!restoreSelection) return false;
+      const nextSelectionState = restoreSelection(
         selectedIds,
         doc,
-        getEditorSelectionOptions({ doc })
+        {
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          getSelectionOptions: () => getEditorSelectionOptions({ doc })
+        }
       );
+      if (!nextSelectionState) return false;
       applyEditorSelectionState(nextSelectionState);
       return nextSelectionState.restored;
     }
