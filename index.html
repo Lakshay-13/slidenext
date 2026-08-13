@@ -6113,14 +6113,12 @@
     }
 
     function toggleIframeFullscreen() {
-      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
-        ? SlideNextStudioPreview
-        : null;
-      if (!previewApi || typeof previewApi.toggleStudioPresentationFullscreen !== 'function') return false;
-      return previewApi.toggleStudioPresentationFullscreen({
-        document,
-        consoleRef: console
-      });
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.toggleFullscreen === 'function') {
+        return studioEditorPreviewController.toggleFullscreen();
+      }
+      return false;
     }
 
     // Sync fullscreen button icon when native fullscreen changes (e.g. Esc press)

@@ -79,6 +79,28 @@ test('opens the presentation modal through the shared preview controller', () =>
   }]);
 });
 
+test('toggles presentation fullscreen through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const consoleRef = { error() {} };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      toggleStudioPresentationFullscreen(options) {
+        calls.push(options);
+        return 'fullscreen';
+      }
+    },
+    documentRef: iframeDocument,
+    consoleRef
+  });
+
+  assert.equal(controller.toggleFullscreen(), 'fullscreen');
+  assert.deepEqual(calls, [{
+    document: iframeDocument,
+    consoleRef
+  }]);
+});
+
 test('launches legacy HTML through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };

@@ -270,6 +270,31 @@ test('openPresentationModalWithLoader delegates to the shared preview controller
   assert.deepEqual(calls, [5]);
 });
 
+test('toggleIframeFullscreen delegates to the shared preview controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const toggleIframeFullscreenSource = extractFunctionSource(
+    fileContent,
+    'function toggleIframeFullscreen() {',
+    '\n\n    // Sync fullscreen button icon when native fullscreen changes'
+  );
+  let calls = 0;
+  const context = {
+    studioEditorPreviewController: {
+      toggleFullscreen() {
+        calls += 1;
+        return 'fullscreen-result';
+      }
+    },
+    document: {}
+  };
+
+  vm.createContext(context);
+  vm.runInContext(toggleIframeFullscreenSource, context);
+
+  assert.equal(context.toggleIframeFullscreen(), 'fullscreen-result');
+  assert.equal(calls, 1);
+});
+
 test('launchPreview does not open preview flows when deck-ready state disables preview', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(
