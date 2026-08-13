@@ -24,6 +24,7 @@ const persistenceFailureAction = require('../shared/studio-editor-persistence-fa
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
+const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -399,6 +400,28 @@ function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
     fileContent,
     'function runCurrentStudioPersistenceActionIfCurrent(',
     '\n\n    function isCurrentStudioPersistenceTaskStale('
+  );
+  vm.runInContext(source, context);
+}
+
+function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceStaleAction =
+    persistenceStaleAction.createStudioEditorPersistenceStaleAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getSessionToken: () => typeof context.getStudioEditorSessionToken === 'function'
+        ? context.getStudioEditorSessionToken()
+        : context.studioEditorSessionToken || null
+    });
+  const source = extractFunctionSource(
+    fileContent,
+    'function isCurrentStudioPersistenceTaskStale(',
+    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
   );
   vm.runInContext(source, context);
 }
@@ -1659,11 +1682,6 @@ test('resolveCurrentStudioPersistenceStateFromCapture fails closed when the shar
 
 test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
-    fileContent,
-    'function isCurrentStudioPersistenceTaskStale(',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
 
   let delegatedArgs = null;
   const context = {
@@ -1685,7 +1703,7 @@ test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker w
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.isCurrentStudioPersistenceTaskStale(
@@ -1707,12 +1725,6 @@ test('isCurrentStudioPersistenceTaskStale reuses the shared stale-task checker w
 
 test('isCurrentStudioPersistenceTaskStale delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
-    fileContent,
-    'function isCurrentStudioPersistenceTaskStale(',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
-
   const context = {
     currentPresentationUrl: 'presentations/onboarding-presentation/index.html',
     studioEditorSessionToken: 12,
@@ -1733,7 +1745,7 @@ test('isCurrentStudioPersistenceTaskStale delegates through the editor persisten
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.isCurrentStudioPersistenceTaskStale(
@@ -1751,11 +1763,6 @@ test('isCurrentStudioPersistenceTaskStale delegates through the editor persisten
 
 test('isCurrentStudioPersistenceTaskStale creates the shared stale-task adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
-    fileContent,
-    'function isCurrentStudioPersistenceTaskStale(',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -1774,7 +1781,7 @@ test('isCurrentStudioPersistenceTaskStale creates the shared stale-task adapter 
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
 
   assert.deepEqual(
     context.isCurrentStudioPersistenceTaskStale('presentations/one/index.html', 1),
@@ -1793,11 +1800,6 @@ test('isCurrentStudioPersistenceTaskStale creates the shared stale-task adapter 
 
 test('isCurrentStudioPersistenceTaskStale fails closed when the shared checker is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const isCurrentStudioPersistenceTaskStaleSource = extractFunctionSource(
-    fileContent,
-    'function isCurrentStudioPersistenceTaskStale(',
-    '\n\n    function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {'
-  );
   const context = {
     SlideNextStudioEditorPersistence: {},
     getStudioCurrentPresentationUrl() {
@@ -1809,7 +1811,7 @@ test('isCurrentStudioPersistenceTaskStale fails closed when the shared checker i
   };
 
   vm.createContext(context);
-  vm.runInContext(isCurrentStudioPersistenceTaskStaleSource, context);
+  loadIsCurrentStudioPersistenceTaskStale(fileContent, context);
 
   assert.equal(
     context.isCurrentStudioPersistenceTaskStale('presentations/deck/index.html', 12),

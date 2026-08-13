@@ -15,6 +15,7 @@ const persistenceFailureAction = require('../shared/studio-editor-persistence-fa
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
+const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -308,6 +309,18 @@ function loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context) 
 
 function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceStaleAction =
+    persistenceStaleAction.createStudioEditorPersistenceStaleAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+        ? context.getStudioCurrentPresentationUrl()
+        : context.currentPresentationUrl || '',
+      getSessionToken: () => typeof context.getStudioEditorSessionToken === 'function'
+        ? context.getStudioEditorSessionToken()
+        : context.studioEditorSessionToken || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function isCurrentStudioPersistenceTaskStale(',

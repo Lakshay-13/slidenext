@@ -1530,6 +1530,7 @@
   <script src="/shared/studio-editor-persistence-success-action.js"></script>
   <script src="/shared/studio-editor-version-persistence-success-action.js"></script>
   <script src="/shared/studio-editor-persistence-action-current-action.js"></script>
+  <script src="/shared/studio-editor-persistence-stale-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2192,6 +2193,39 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistenceActionCurrentGlobalApi);
+    const studioEditorPersistenceStaleAction =
+      typeof SlideNextStudioEditorPersistenceStaleAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceStaleAction
+      && typeof SlideNextStudioEditorPersistenceStaleAction
+        .createStudioEditorPersistenceStaleAction === 'function'
+      ? SlideNextStudioEditorPersistenceStaleAction
+        .createStudioEditorPersistenceStaleAction({
+          getPersistenceController: () => (
+            typeof studioEditorPersistenceController !== 'undefined'
+              ? studioEditorPersistenceController
+              : null
+          ),
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken
+        })
+      : null;
+    const studioEditorPersistenceStaleGlobalApi =
+      typeof SlideNextStudioEditorPersistenceStaleAction !== 'undefined'
+      && SlideNextStudioEditorPersistenceStaleAction
+      && typeof SlideNextStudioEditorPersistenceStaleAction
+        .createStudioEditorPersistenceStaleGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistenceStaleAction
+        .createStudioEditorPersistenceStaleGlobalApi({
+          isCurrentStudioPersistenceTaskStale: studioEditorPersistenceStaleAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistenceStaleGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11494,72 +11528,9 @@
       presentationUrl = getStudioCurrentPresentationUrl(),
       sessionToken = getStudioEditorSessionToken()
     ) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.isPersistenceTaskStale === 'function') {
-        const result = studioEditorPersistenceController.isPersistenceTaskStale(presentationUrl, sessionToken);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorPersistenceTaskStaleCheckerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistenceTaskStaleCheckerAdapter
-        : null;
-      if (createStudioEditorPersistenceTaskStaleCheckerAdapter) {
-        if (typeof isCurrentStudioPersistenceTaskStale.adapter !== 'function') {
-          isCurrentStudioPersistenceTaskStale.adapter = createStudioEditorPersistenceTaskStaleCheckerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            getPresentationUrl: getStudioCurrentPresentationUrl,
-            getSessionToken: getStudioEditorSessionToken
-          });
-        }
-        const result = typeof isCurrentStudioPersistenceTaskStale.adapter === 'function'
-          ? isCurrentStudioPersistenceTaskStale.adapter(presentationUrl, sessionToken)
-          : null;
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioPersistenceTaskStaleChecker = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistenceTaskStaleChecker === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistenceTaskStaleChecker
-        : null;
-      if (createStudioPersistenceTaskStaleChecker) {
-        return createStudioPersistenceTaskStaleChecker({
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          getSessionToken: getStudioEditorSessionToken,
-          isPersistenceTaskStale: (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale === 'function'
-          )
-            ? SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale
-            : null
-        })(presentationUrl, sessionToken);
-      }
-
-      const isStudioPersistenceTaskStale = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.isStudioPersistenceTaskStale
-        : null;
-      if (!isStudioPersistenceTaskStale) return true;
-      return isStudioPersistenceTaskStale(presentationUrl, {
-        currentPresentationUrl: getStudioCurrentPresentationUrl(),
-        currentSessionToken: getStudioEditorSessionToken(),
-        sessionToken
-      });
+      return studioEditorPersistenceStaleAction
+        ? studioEditorPersistenceStaleAction(...arguments)
+        : true;
     }
 
     function resolveCurrentStudioPersistenceStateFromCapture(doc = getIframeDoc(), options = {}) {
