@@ -70,6 +70,7 @@
         : isElementLocked;
       return {
         assets: canonicalDeck && canonicalDeck.assets,
+        canAddAsset: !!canonicalDeck,
         selectedElement,
         isElementLocked: lockedState,
         applyAsset,

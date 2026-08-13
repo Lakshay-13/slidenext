@@ -111,6 +111,14 @@
 
   function syncStudioAssetState(options = {}) {
     const actionState = resolveStudioAssetActionState(options);
+    const canAddAsset = options.canAddAsset !== false;
+    const documentRef = options.documentRef;
+    if (documentRef && typeof documentRef.getElementById === 'function') {
+      ['assetNameInput', 'assetSourceInput', 'addAssetBtn'].forEach((id) => {
+        const control = documentRef.getElementById(id);
+        if (control) control.disabled = !canAddAsset;
+      });
+    }
     return renderStudioAssetLibrary({
       ...options,
       canApply: actionState.canApplyAsset

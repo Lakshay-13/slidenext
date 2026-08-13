@@ -235,6 +235,47 @@ test('shared asset state sync derives image eligibility before rendering the lib
   assert.equal(list.children[0].children[1].disabled, true);
 });
 
+test('shared asset state disables asset creation controls without a canonical deck', () => {
+  const controls = {
+    assetNameInput: { disabled: false },
+    assetSourceInput: { disabled: false },
+    addAssetBtn: { disabled: false }
+  };
+  const list = {
+    children: [],
+    textContent: '',
+    appendChild(child) {
+      this.children.push(child);
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || list;
+    },
+    createElement() {
+      return { textContent: '' };
+    }
+  };
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets: [],
+    canAddAsset: false
+  }), true);
+  assert.equal(controls.assetNameInput.disabled, true);
+  assert.equal(controls.assetSourceInput.disabled, true);
+  assert.equal(controls.addAssetBtn.disabled, true);
+
+  assert.equal(assetView.syncStudioAssetState({
+    documentRef,
+    assets: [],
+    canAddAsset: true
+  }), true);
+  assert.equal(controls.assetNameInput.disabled, false);
+  assert.equal(controls.assetSourceInput.disabled, false);
+  assert.equal(controls.addAssetBtn.disabled, false);
+});
+
 test('createStudioAssetStateSync resolves asset state through callbacks', () => {
   const doc = { id: 'iframe-doc' };
   const list = {
@@ -284,6 +325,21 @@ test('createStudioAssetStateSync fails closed when asset state resolution throws
   });
 
   assert.equal(syncState(), false);
+});
+
+test('asset state exposes canonical-deck availability for asset creation controls', () => {
+  const deck = { assets: [] };
+  const controller = assetState.createStudioEditorAssetStateController({
+    getCanonicalDeck: () => deck,
+    getSelectedElements: () => []
+  });
+  assert.equal(controller.buildActionState({}).canAddAsset, true);
+
+  const unavailableController = assetState.createStudioEditorAssetStateController({
+    getCanonicalDeck: () => null,
+    getSelectedElements: () => []
+  });
+  assert.equal(unavailableController.buildActionState({}).canAddAsset, false);
 });
 
 test('addAssetToLibrary validates the source and delegates a normalized image asset', () => {
