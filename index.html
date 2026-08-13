@@ -1516,6 +1516,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
+  <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -4263,6 +4264,39 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistableDeckSanitizerGlobalApi);
+    const studioEditorReusablePersistedHtmlSanitizerAction =
+      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
+      && SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+      && typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+        .createStudioEditorReusablePersistedHtmlSanitizerAction === 'function'
+      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+        .createStudioEditorReusablePersistedHtmlSanitizerAction({
+          getPersistenceController: () => studioEditorPersistenceController,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+            ? SlideNextDeckPersistence
+            : null,
+          buildEditorPersistableDeckSanitizerOptions: studioEditorPersistableDeckSanitizerAction,
+          getDeckSanitizerOptions: getEditorDeckSanitizerOptions,
+          DOMParser: typeof DOMParser === 'function' ? DOMParser : null
+        })
+      : null;
+    const studioEditorReusablePersistedHtmlSanitizerGlobalApi =
+      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
+      && SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+      && typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+        .createStudioEditorReusablePersistedHtmlSanitizerGlobalApi === 'function'
+      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+        .createStudioEditorReusablePersistedHtmlSanitizerGlobalApi({
+          sanitizeEditorReusablePersistedHtml: studioEditorReusablePersistedHtmlSanitizerAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorReusablePersistedHtmlSanitizerGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorSessionRuntimeOptions
       : null;
@@ -10918,131 +10952,6 @@
     }
 
     // 5. Undo/Redo Engine
-    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
-      const nextPersistedHtml = typeof persistedHtml === 'string'
-        ? persistedHtml
-        : '';
-      const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
-        ? options.buildPersistableDeckHtml
-        : (
-            typeof SlideNextDeckPersistence !== 'undefined'
-            && SlideNextDeckPersistence
-            && typeof SlideNextDeckPersistence.buildPersistableDeckHtml === 'function'
-          )
-          ? SlideNextDeckPersistence.buildPersistableDeckHtml
-          : null;
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.sanitizeReusablePersistedHtml === 'function') {
-        const sanitizedHtml = studioEditorPersistenceController.sanitizeReusablePersistedHtml(nextPersistedHtml, {
-          ...options,
-          buildPersistableDeckHtml,
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
-              : () => ({}),
-          DOMParser: typeof DOMParser === 'function'
-            ? DOMParser
-            : null
-        });
-        if (sanitizedHtml !== null && typeof sanitizedHtml !== 'undefined') {
-          return sanitizedHtml;
-        }
-      }
-      const createStudioEditorReusablePersistedHtmlSanitizerAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorReusablePersistedHtmlSanitizerAdapter
-        : null;
-      if (createStudioEditorReusablePersistedHtmlSanitizerAdapter) {
-        if (typeof sanitizeEditorReusablePersistedHtml.adapter !== 'function') {
-          sanitizeEditorReusablePersistedHtml.adapter = createStudioEditorReusablePersistedHtmlSanitizerAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            buildPersistableDeckHtml,
-            resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-              ? options.resolveMetadataPersistenceOptions
-              : () => ({}),
-            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-              ? options.getDeckSanitizerOptions
-              : typeof getEditorDeckSanitizerOptions === 'function'
-                ? getEditorDeckSanitizerOptions
-                : () => ({}),
-            DOMParser: typeof DOMParser === 'function'
-              ? DOMParser
-              : null
-          });
-        }
-        return typeof sanitizeEditorReusablePersistedHtml.adapter === 'function'
-          ? sanitizeEditorReusablePersistedHtml.adapter(nextPersistedHtml, options)
-          : nextPersistedHtml;
-      }
-
-      const sanitizeStudioReusablePersistedHtml = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.sanitizeStudioReusablePersistedHtml === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.sanitizeStudioReusablePersistedHtml
-        : null;
-      if (sanitizeStudioReusablePersistedHtml) {
-        return sanitizeStudioReusablePersistedHtml(nextPersistedHtml, {
-          playbackState: Object.prototype.hasOwnProperty.call(options, 'playbackState')
-            ? options.playbackState
-            : null,
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
-              : () => ({}),
-          buildPersistableDeckHtml,
-          DOMParser: typeof DOMParser === 'function'
-            ? DOMParser
-            : null
-        });
-      }
-
-      if (!nextPersistedHtml || typeof DOMParser !== 'function' || !buildPersistableDeckHtml) {
-        return nextPersistedHtml;
-      }
-
-      try {
-        const parsedDoc = new DOMParser().parseFromString(nextPersistedHtml, 'text/html');
-        if (!parsedDoc || !parsedDoc.documentElement) {
-          return nextPersistedHtml;
-        }
-        const resolveMetadataPersistenceOptions = typeof options.resolveMetadataPersistenceOptions === 'function'
-          ? options.resolveMetadataPersistenceOptions
-          : () => ({});
-        const persistableDeckSanitizerOptions = buildEditorPersistableDeckSanitizerOptions(
-          Object.prototype.hasOwnProperty.call(options, 'playbackState')
-            ? options.playbackState
-            : null,
-          {
-            resolveMetadataPersistenceOptions,
-            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-              ? options.getDeckSanitizerOptions
-              : undefined
-          }
-        );
-        return buildPersistableDeckHtml(parsedDoc, {
-          ...persistableDeckSanitizerOptions
-        });
-      } catch (err) {
-        return nextPersistedHtml;
-      }
-    }
-
     function buildPersistableDeckHtml(doc = getIframeDoc()) {
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
