@@ -50,9 +50,14 @@
 
     if (isValidCanonicalDeck(liveCanonicalDeck)) return liveCanonicalDeck;
     if (typeof options.buildCanonicalDeck !== 'function') return null;
+    const buildOptions = options.buildOptions
+      && typeof options.buildOptions === 'object'
+      && !Array.isArray(options.buildOptions)
+      ? options.buildOptions
+      : {};
     let rebuiltCanonicalDeck = null;
     try {
-      rebuiltCanonicalDeck = options.buildCanonicalDeck(sourceDoc);
+      rebuiltCanonicalDeck = options.buildCanonicalDeck(sourceDoc, buildOptions);
     } catch (error) {
       return null;
     }

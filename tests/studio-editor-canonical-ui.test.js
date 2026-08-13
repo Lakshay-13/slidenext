@@ -67,6 +67,26 @@ test('canonical UI reader falls back to the document builder when live state is 
   assert.equal(buildCalls, 1);
 });
 
+test('canonical UI reader forwards explicit rebuild options to the document builder', () => {
+  const sourceDoc = { id: 'deterministic-doc' };
+  const rebuildOptions = {
+    preferLiveCanonicalDeck: false,
+    canonicalDeckBaseline: { slides: [{ id: 'baseline-slide' }] }
+  };
+  let captured = null;
+
+  const result = canonicalUi.resolveStudioEditorCanonicalDeck(sourceDoc, {
+    buildOptions: rebuildOptions,
+    buildCanonicalDeck(doc, options) {
+      captured = { doc, options };
+      return { slides: [{ id: 'rebuilt-slide' }] };
+    }
+  });
+
+  assert.deepEqual(captured, { doc: sourceDoc, options: rebuildOptions });
+  assert.deepEqual(result, { slides: [{ id: 'rebuilt-slide' }] });
+});
+
 test('canonical UI reader rejects malformed live state before rebuilding', () => {
   const rebuiltCanonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
   let buildCalls = 0;

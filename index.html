@@ -7918,6 +7918,12 @@
     }
 
     function resolveEditorUiCanonicalDeck(doc = getIframeDoc()) {
+      const buildOptions = arguments.length > 1
+        && arguments[1]
+        && typeof arguments[1] === 'object'
+        && !Array.isArray(arguments[1])
+        ? arguments[1]
+        : {};
       const canonicalUiApi = typeof SlideNextStudioEditorCanonicalUi !== 'undefined'
         ? SlideNextStudioEditorCanonicalUi
         : null;
@@ -7936,13 +7942,14 @@
           buildCanonicalDeck: typeof buildEditorCanonicalDeck === 'function'
             ? buildEditorCanonicalDeck
             : null,
+          buildOptions,
           isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
             ? getEditorCanonicalDeckValidator()
             : null
         });
       }
       return typeof buildEditorCanonicalDeck === 'function'
-        ? buildEditorCanonicalDeck(doc)
+        ? buildEditorCanonicalDeck(doc, buildOptions)
         : null;
     }
 
