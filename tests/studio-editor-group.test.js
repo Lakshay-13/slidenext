@@ -17,7 +17,11 @@ test('editor forwards the group and ungroup documents into the selection reader'
   );
   assert.match(
     source,
-    /groupApi\.createStudioUngroupSelectionActionStateBuilder\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
+    /const studioEditorUngroupStateController =[\s\S]+?createStudioEditorUngroupStateController\(\{[\s\S]+?getDocument: \(\) => getIframeDoc\(\),[\s\S]+?getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\),/
+  );
+  assert.match(
+    source,
+    /studioEditorUngroupStateController\.buildActionState\(doc\)/
   );
 });
 function buildItems() {
