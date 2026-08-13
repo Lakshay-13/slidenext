@@ -1674,6 +1674,7 @@
   <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-pointer-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-freeform-position-adapter.js"></script>
+  <script src="/shared/studio-editor-positioned-layout-item-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -10674,10 +10675,24 @@
       });
     }
 
-    const studioEditorPositionedLayoutItemBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorPositionedLayoutItemAdapter = typeof SlideNextStudioEditorPositionedLayoutItemAdapter !== 'undefined'
+      && SlideNextStudioEditorPositionedLayoutItemAdapter
+      && typeof SlideNextStudioEditorPositionedLayoutItemAdapter.buildStudioEditorPositionedLayoutItem === 'function'
+      ? SlideNextStudioEditorPositionedLayoutItemAdapter
+      : null;
+
+    const studioEditorPositionedLayoutItemBuilder = studioEditorPositionedLayoutItemAdapter
+      && typeof studioEditorPositionedLayoutItemAdapter.buildStudioEditorPositionedLayoutItem === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem === 'function'
-      ? (element, options) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItem(element, options)
+      ? (element, options) => studioEditorPositionedLayoutItemAdapter.buildStudioEditorPositionedLayoutItem(
+          element,
+          {
+            transformApi: SlideNextStudioEditorTransform,
+            layoutOptions: options
+          }
+        )
       : null;
 
     function buildEditorPositionedLayoutItem(element, options) {

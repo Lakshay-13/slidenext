@@ -1839,7 +1839,9 @@ test('editor composes clipboard positioned-item building through the shared tran
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorPositionedLayoutItemBuilder =/);
+  assert.match(source, /const studioEditorPositionedLayoutItemAdapter =/);
   assert.match(source, /buildStudioPositionedLayoutItem/);
+  assert.match(source, /typeof SlideNextStudioEditorPositionedLayoutItemAdapter !== 'undefined'/);
   assert.match(source, /buildPositionedLayoutItem: buildEditorPositionedLayoutItem/);
   assert.match(source, /typeof studioEditorPositionedLayoutItemBuilder === 'function'/);
   assert.doesNotMatch(source, /buildEditorPositionedLayoutItem\.builder/);
@@ -1849,7 +1851,7 @@ test('buildEditorPositionedLayoutItem delegates the element and options to the s
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemBuilder =',
+    'const studioEditorPositionedLayoutItemAdapter =',
     '\n\n    function buildClipboardPayload('
   );
   const element = { id: 'element-1' };
@@ -1857,6 +1859,7 @@ test('buildEditorPositionedLayoutItem delegates the element and options to the s
   const calls = [];
   const layoutItem = { element, absLeft: 10, absTop: 20 };
   const context = {
+    SlideNextStudioEditorPositionedLayoutItemAdapter: require('../shared/studio-editor-positioned-layout-item-adapter.js'),
     SlideNextStudioEditorTransform: {
       buildStudioPositionedLayoutItem(elementValue, optionsValue) {
         calls.push([elementValue, optionsValue]);
@@ -1878,10 +1881,13 @@ test('buildEditorPositionedLayoutItem fails closed when the shared transform mod
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemBuilder =',
+    'const studioEditorPositionedLayoutItemAdapter =',
     '\n\n    function buildClipboardPayload('
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorPositionedLayoutItemAdapter: require('../shared/studio-editor-positioned-layout-item-adapter.js'),
+    SlideNextStudioEditorTransform: null
+  };
 
   vm.createContext(context);
   vm.runInContext(positionedItemSource, context);
