@@ -1444,6 +1444,7 @@
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
+  <script src="/shared/studio-editor-asset-state.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
@@ -10543,105 +10544,45 @@
     }
 
     function updateAssetLibraryState(doc = getIframeDoc()) {
-      const canonicalDeck = resolveEditorUiCanonicalDeck(doc);
-      const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
-        ? SlideNextStudioEditorAssetView
+      const assetStateApi = typeof SlideNextStudioEditorAssetState !== 'undefined'
+        ? SlideNextStudioEditorAssetState
         : null;
-      if (!assetView || typeof assetView.syncStudioAssetState !== 'function') {
+      if (!assetStateApi
+        || typeof assetStateApi.createStudioEditorAssetStateController !== 'function') {
         return false;
       }
-      if (typeof assetView.createStudioAssetStateSync === 'function') {
-        if (typeof updateAssetLibraryState.sync !== 'function') {
-          updateAssetLibraryState.sync = assetView.createStudioAssetStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => {
-              const canonicalDeck = resolveEditorUiCanonicalDeck(sourceDoc);
-              const selectedElements = getStudioSelectedElements(sourceDoc);
-              const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
-                ? selectedElements[0]
-                : null;
-              const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-                : isElementLocked;
-              return {
-                assets: canonicalDeck && canonicalDeck.assets,
-                selectedElement: candidate,
-                isElementLocked: readLockedState,
-                applyAsset: typeof applyAssetToSelectedImage === 'function'
-                  ? applyAssetToSelectedImage
-                  : null,
-                insertAsset: typeof insertAssetToActiveSlide === 'function'
-                  ? insertAssetToActiveSlide
-                  : null,
-                removeAsset: typeof removeAssetFromLibrary === 'function'
-                  ? removeAssetFromLibrary
-                  : null,
-                resolvePreviewSource: (source) => {
-                  if (typeof source !== 'string' || !source.trim()) return '';
-                  const baseUri = typeof document.baseURI === 'string' && document.baseURI
-                    ? document.baseURI
-                    : typeof window !== 'undefined' && typeof window.location?.href === 'string'
-                      ? window.location.href
-                      : '';
-                  if (!baseUri) return source;
-                  try {
-                    const presentationUri = typeof getStudioCurrentPresentationUrl === 'function'
-                      && getStudioCurrentPresentationUrl()
-                      ? new URL(getStudioCurrentPresentationUrl(), baseUri).href
-                      : baseUri;
-                    return new URL(source, presentationUri).href;
-                  } catch (error) {
-                    return source;
-                  }
-                }
-              };
-            },
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateAssetLibraryState.sync === 'function') {
-          return updateAssetLibraryState.sync(doc);
-        }
+      if (!updateAssetLibraryState.controller) {
+        const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
+          ? SlideNextStudioEditorAssetView
+          : null;
+        updateAssetLibraryState.controller = assetStateApi.createStudioEditorAssetStateController({
+          assetView,
+          getDocument: () => getIframeDoc(),
+          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getLockedState: (sourceDoc, fallbackReader) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, fallbackReader)
+            : fallbackReader,
+          isElementLocked,
+          applyAsset: typeof applyAssetToSelectedImage === 'function'
+            ? applyAssetToSelectedImage
+            : null,
+          insertAsset: typeof insertAssetToActiveSlide === 'function'
+            ? insertAssetToActiveSlide
+            : null,
+          removeAsset: typeof removeAssetFromLibrary === 'function'
+            ? removeAssetFromLibrary
+            : null,
+          documentRef: document,
+          getCurrentPresentationUrl: typeof getStudioCurrentPresentationUrl === 'function'
+            ? getStudioCurrentPresentationUrl
+            : () => ''
+        });
       }
-      const selectedElements = getStudioSelectedElements(doc);
-      const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
-        ? selectedElements[0]
-        : null;
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
-        : isElementLocked;
-      return assetView.syncStudioAssetState({
-        documentRef: document,
-        assets: canonicalDeck && canonicalDeck.assets,
-        selectedElement: candidate,
-        isElementLocked: readLockedState,
-        applyAsset: typeof applyAssetToSelectedImage === 'function'
-          ? applyAssetToSelectedImage
-          : null,
-        insertAsset: typeof insertAssetToActiveSlide === 'function'
-          ? insertAssetToActiveSlide
-          : null,
-        removeAsset: typeof removeAssetFromLibrary === 'function'
-          ? removeAssetFromLibrary
-          : null,
-        resolvePreviewSource: (source) => {
-          if (typeof source !== 'string' || !source.trim()) return '';
-          const baseUri = typeof document.baseURI === 'string' && document.baseURI
-            ? document.baseURI
-            : typeof window !== 'undefined' && typeof window.location?.href === 'string'
-              ? window.location.href
-              : '';
-          if (!baseUri) return source;
-          try {
-            const presentationUri = getStudioCurrentPresentationUrl()
-              ? new URL(getStudioCurrentPresentationUrl(), baseUri).href
-              : baseUri;
-            return new URL(source, presentationUri).href;
-          } catch (error) {
-            return source;
-          }
-        }
-      });
+      return updateAssetLibraryState.controller
+        && typeof updateAssetLibraryState.controller.sync === 'function'
+        ? updateAssetLibraryState.controller.sync(doc)
+        : false;
     }
 
     function updateTemplateActionState(doc = getIframeDoc()) {

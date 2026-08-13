@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const assetView = require('../shared/studio-editor-asset-view.js');
+const assetState = require('../shared/studio-editor-asset-state.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
@@ -23,6 +24,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function runSourceWithCanonicalUi(source, context) {
   context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
+  context.SlideNextStudioEditorAssetState = assetState;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
     fileContent,
