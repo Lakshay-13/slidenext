@@ -194,7 +194,7 @@ test('renderThemeTokenPresets forwards readiness to the shared theme view', () =
     },
     document: { id: 'chrome-document' }
   };
-  loadFunction(fileContent, 'function renderThemeTokenPresets() {', '\n\n    function finalizeWallpaperMutation', context);
+  loadFunction(fileContent, 'function renderThemeTokenPresets() {', '\n\n    function flushPendingWallpaperVersion()', context);
 
   assert.equal(context.renderThemeTokenPresets(), 'rendered');
   assert.equal(calls[0].documentRef, context.document);

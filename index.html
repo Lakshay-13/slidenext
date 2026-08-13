@@ -1482,6 +1482,7 @@
   <script src="/shared/studio-editor-thumbnail-controller.js"></script>
   <script src="/shared/studio-editor-mutation.js"></script>
   <script src="/shared/studio-editor-deck-mutation.js"></script>
+  <script src="/shared/studio-editor-wallpaper-finalization.js"></script>
   <script src="/shared/studio-editor-transaction.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
@@ -1939,6 +1940,33 @@
         })
       : {};
     Object.assign(globalThis, studioEditorWallpaperStateGlobalApi);
+    const studioEditorWallpaperFinalization = typeof SlideNextStudioEditorWallpaperFinalization !== 'undefined'
+      && SlideNextStudioEditorWallpaperFinalization
+      && typeof SlideNextStudioEditorWallpaperFinalization.createStudioEditorWallpaperFinalization === 'function'
+      ? SlideNextStudioEditorWallpaperFinalization.createStudioEditorWallpaperFinalization({
+          deckMutationApi: typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+            ? SlideNextStudioEditorDeckMutation
+            : null,
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
+          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
+            ? finalizeEditorDeckMutation
+            : null,
+          generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
+          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
+        })
+      : null;
+    const studioEditorWallpaperFinalizationGlobalApi = typeof SlideNextStudioEditorWallpaperFinalization !== 'undefined'
+      && SlideNextStudioEditorWallpaperFinalization
+      && typeof SlideNextStudioEditorWallpaperFinalization.createStudioEditorWallpaperFinalizationGlobalApi === 'function'
+      ? SlideNextStudioEditorWallpaperFinalization.createStudioEditorWallpaperFinalizationGlobalApi({
+          finalizeWallpaperMutation: studioEditorWallpaperFinalization
+        })
+      : {};
+    Object.assign(globalThis, studioEditorWallpaperFinalizationGlobalApi);
     const studioEditorWallpaperGradientActions = typeof SlideNextStudioEditorWallpaperGradientActions !== 'undefined'
       && SlideNextStudioEditorWallpaperGradientActions
       && typeof SlideNextStudioEditorWallpaperGradientActions.createStudioEditorWallpaperGradientActions === 'function'
@@ -10215,33 +10243,6 @@
         presetData: themeTokenPresetsData,
         canUseThemeTokenControls: !!readyState.canUseDeckActions
       });
-    }
-
-    function finalizeWallpaperMutation(versionLabel = '', transaction = null, canonicalDeck = null) {
-      const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
-        ? SlideNextStudioEditorDeckMutation
-        : null;
-      if (!deckMutationApi
-        || typeof deckMutationApi.finalizeStudioEditorWallpaperMutation !== 'function') {
-        return false;
-      }
-      return deckMutationApi.finalizeStudioEditorWallpaperMutation(
-        versionLabel,
-        transaction,
-        canonicalDeck,
-        {
-          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
-            ? SlideNextStudioEditorMutation
-            : null,
-          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
-            ? finalizeEditorDeckMutation
-            : null,
-          generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null,
-          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
-          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
-          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
-        }
-      );
     }
 
     function flushPendingWallpaperVersion() {

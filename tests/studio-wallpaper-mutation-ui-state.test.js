@@ -8,6 +8,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalWallpaper = require('../shared/studio-editor-canonical-wallpaper.js');
 const studioWallpaperView = require('../shared/studio-editor-wallpaper-view.js');
 const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
+const wallpaperFinalization = require('../shared/studio-editor-wallpaper-finalization.js');
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -70,13 +71,22 @@ function createWallpaperGradientActions(context) {
 }
 
 function loadFinalizeWallpaperMutation(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function finalizeWallpaperMutation(versionLabel = \'\', transaction = null, canonicalDeck = null) {',
-    '\n\n    function applyPresetWallpaper(val, isCustomInput = false) {'
-  );
   context.SlideNextStudioEditorDeckMutation = deckMutation;
-  vm.runInContext(helperSource, context);
+  context.finalizeWallpaperMutation = wallpaperFinalization.createStudioEditorWallpaperFinalization({
+    deckMutationApi: context.SlideNextStudioEditorDeckMutation,
+    mutationApi: context.SlideNextStudioEditorMutation,
+    finalizeMutation: context.finalizeEditorDeckMutation,
+    generateThumbnails: context.generateThumbnails,
+    saveHistoryState: context.saveHistoryState,
+    triggerAutoSave: context.triggerAutoSave,
+    triggerAutoVersion: context.triggerAutoVersion
+  });
+  const flushSource = extractFunctionSource(
+    fileContent,
+    'function flushPendingWallpaperVersion() {',
+    '\n\n    function applyEditorWallpaperSlidesMutationWithTransaction(slides, background, options = {}) {'
+  );
+  vm.runInContext(flushSource, context);
 }
 
 function loadApplyEditorWallpaperMutationWithTransaction(fileContent, context) {
