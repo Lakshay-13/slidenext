@@ -16,6 +16,7 @@ const buildStateAction = require('../shared/studio-editor-persistable-deck-build
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const persistableDeckHtmlAction = require('../shared/studio-editor-persistable-deck-html-action.js');
+const saveRequestBodyAction = require('../shared/studio-editor-save-request-body-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -260,7 +261,25 @@ function loadBuildEditorSaveRequestBody(fileContent, context, helperSource) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  vm.runInContext(helperSource, context);
+  context.buildEditorSaveRequestBody = saveRequestBodyAction.createStudioEditorSaveRequestBodyAction({
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : null,
+    getPresentationUrl: () => typeof context.getStudioCurrentPresentationUrl === 'function'
+      ? context.getStudioCurrentPresentationUrl()
+      : context.currentPresentationUrl || '',
+    getSessionToken: () => typeof context.getStudioEditorSessionToken === 'function'
+      ? context.getStudioEditorSessionToken()
+      : context.sessionToken || null,
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    getCapturePersistableDeckState: () => context.captureEditorPersistableDeckState || null,
+    getResolveCanonicalDeckOverride: () => context.resolveEditorCanonicalDeckOverride || null,
+    getBuildCanonicalDeck: () => context.buildEditorCanonicalDeck || null,
+    getResolveLiveCanonicalDeck: () => context.resolveEditorLiveCanonicalDeck || null,
+    getBuildPersistableDeckHtml: () => context.buildPersistableDeckHtml || null
+  });
 }
 
 test('buildEditorSaveRequestBody includes a canonical deck sidecar for save requests', () => {
@@ -400,7 +419,7 @@ test('buildEditorSaveRequestBody delegates to the persistence controller when av
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(
     context.buildEditorSaveRequestBody(doc, '<html>provided</html>', {
@@ -864,7 +883,7 @@ test('buildEditorSaveRequestBody delegates through the editor persistence-state 
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorSaveRequestBodySource, context);
+  loadBuildEditorSaveRequestBody(fileContent, context, buildEditorSaveRequestBodySource);
 
   assert.deepEqual(context.buildEditorSaveRequestBody(doc, null, {
     presentationUrl: 'presentations/custom/index.html',
