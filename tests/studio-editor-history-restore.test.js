@@ -216,6 +216,67 @@ test('history restore replays structured slide order through slide ids', () => {
   assert.deepEqual(order, ['slide-2', 'slide-1']);
 });
 
+test('history restore replays slide-presence transactions by creating and removing only the changed slide', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const slideOne = { id: 'slide-1' };
+  const slideTwo = {
+    id: 'slide-2',
+    remove() {
+      slides = [slideOne];
+    }
+  };
+  let slides = [slideOne];
+  const slidesContainer = {
+    appendChild(slide) {
+      slides = [slideOne, slide];
+    },
+    insertBefore(slide) {
+      slides = [slide, slideOne];
+    }
+  };
+  const generatedMarkup = '<section id="slide-2"></section>';
+  const slidePresenceTransaction = transactionApi.createStudioSlidePresenceTransaction([{
+    slideId: 'slide-2',
+    before: { exists: false, index: 1, markup: '' },
+    after: { exists: true, index: 1, markup: generatedMarkup }
+  }]);
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi,
+    transactionApi,
+    getIframeDoc: () => iframeDoc,
+    getSlides: () => slides,
+    resolveElementById(editorId) {
+      if (editorId === 'slides-container') return slidesContainer;
+      if (editorId === 'slide:slide-1') return slideOne;
+      if (editorId === 'slide:slide-2') return slides.includes(slideTwo) ? slideTwo : null;
+      return null;
+    },
+    makeElementsHoverable() {},
+    generateThumbnails() {}
+  });
+
+  iframeDoc.createElement = (tagName) => {
+    assert.equal(tagName, 'template');
+    return {
+      content: { firstElementChild: slideTwo },
+      set innerHTML(value) {
+        assert.equal(value, generatedMarkup);
+      }
+    };
+  };
+
+  assert.equal(restoreHandler(
+    { html: '', selectedElementIds: [] },
+    { direction: 'redo', transaction: slidePresenceTransaction }
+  ).didRestoreTransaction, true);
+  assert.deepEqual(slides, [slideOne, slideTwo]);
+  assert.equal(restoreHandler(
+    { html: '', selectedElementIds: [] },
+    { direction: 'undo', transaction: slidePresenceTransaction }
+  ).didRestoreTransaction, true);
+  assert.deepEqual(slides, [slideOne]);
+});
+
 test('history restore applies active-slide transactions without rebuilding the frame', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const calls = [];

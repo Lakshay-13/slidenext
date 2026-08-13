@@ -26,6 +26,9 @@ test('slide insertion controller assembles canonical and editor mutation depende
       importSlideToCanonicalSlide() {}
     },
     canonicalDeckApi: { id: 'canonical-api' },
+    transactionApi: {
+      createStudioSlidePresenceTransaction() {}
+    },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     resolveInsertionActionState: () => ({ canAddSlide: true }),
@@ -55,7 +58,9 @@ test('slide insertion controller assembles canonical and editor mutation depende
   assert.equal(options.getIframeDoc().id, 'doc');
   assert.equal(options.resolveInsertionActionState().canAddSlide, true);
   assert.equal(options.getSlides()[0].id, 'slide-1');
+  assert.equal(options.getSlideId({ id: 'slide-2' }), 'slide-2');
   assert.equal(options.createBlankSlide().id, 'slide-2');
+  assert.equal(typeof options.createStudioSlidePresenceTransaction, 'function');
   assert.deepEqual(options.buildCanonicalAddSlideBaseline(), { id: 'baseline' });
   assert.deepEqual(options.buildCanonicalAddSlideDeck(), { slides: [] });
   assert.equal(typeof options.applyInsertion, 'function');

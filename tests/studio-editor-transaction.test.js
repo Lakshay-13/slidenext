@@ -130,6 +130,43 @@ test('applyStudioEditorTransaction replays slide-order operations without resolv
   ]);
 });
 
+test('slide-presence transactions replay a scoped slide snapshot without resolving an element', () => {
+  const slidePresenceTransaction = transaction.createStudioSlidePresenceTransaction([{
+    slideId: 'slide-2',
+    before: { exists: false, index: 1, markup: '' },
+    after: { exists: true, index: 1, markup: '<section id="slide-2"></section>' }
+  }]);
+  const applied = [];
+
+  assert.deepEqual(transaction.applyStudioEditorTransaction(slidePresenceTransaction, 'redo', {
+    getElementById() {
+      throw new Error('slide-presence should not resolve an element');
+    },
+    applySlidePresenceState(slideId, snapshot) {
+      applied.push([slideId, snapshot]);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'redo'
+  });
+  assert.deepEqual(transaction.applyStudioEditorTransaction(slidePresenceTransaction, 'undo', {
+    applySlidePresenceState(slideId, snapshot) {
+      applied.push([slideId, snapshot]);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'undo'
+  });
+  assert.deepEqual(applied, [
+    ['slide-2', { exists: true, index: 1, markup: '<section id="slide-2"></section>' }],
+    ['slide-2', { exists: false, index: 1, markup: '' }]
+  ]);
+});
+
 test('applyStudioEditorTransaction replays active-slide operations without resolving an element', () => {
   const activeSlideIds = [];
   const activeSlideTransaction = transaction.createStudioActiveSlideTransaction('slide-1', 'slide-2');

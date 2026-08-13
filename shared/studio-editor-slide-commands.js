@@ -219,6 +219,12 @@
       : () => null;
     const newSlide = createBlankSlide(iframeDoc, newIndex);
     if (!newSlide) return false;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const createStudioSlidePresenceTransaction = typeof options.createStudioSlidePresenceTransaction === 'function'
+      ? options.createStudioSlidePresenceTransaction
+      : null;
 
     const buildCanonicalAddSlideBaseline = typeof options.buildCanonicalAddSlideBaseline === 'function'
       ? options.buildCanonicalAddSlideBaseline
@@ -274,6 +280,20 @@
       : () => ({ didApply: false, transaction: null });
     const mutation = applyInsertion(container, newSlide);
     if (!mutation || !mutation.didApply) return false;
+    const slidePresenceTransaction = createStudioSlidePresenceTransaction
+      ? createStudioSlidePresenceTransaction([{
+          slideId: getSlideId(newSlide),
+          before: { exists: false, index: newIndex, markup: '' },
+          after: {
+            exists: true,
+            index: newIndex,
+            markup: typeof newSlide.outerHTML === 'string' ? newSlide.outerHTML : ''
+          }
+        }])
+      : null;
+    const appliedMutation = slidePresenceTransaction
+      ? { ...mutation, transaction: slidePresenceTransaction }
+      : mutation;
 
     if (typeof options.generateThumbnails === 'function') {
       options.generateThumbnails();
@@ -291,12 +311,12 @@
       ? invokeStudioSlideCommandFinalizer(
           finalizeMutation,
           'Auto: Added Slide',
-          mutation.transaction,
+          appliedMutation.transaction,
           canonicalDeckAfterAddition
         )
-      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Added Slide', mutation.transaction);
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Added Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
         options.generateThumbnails();
       }

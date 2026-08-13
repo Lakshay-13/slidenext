@@ -20,6 +20,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     canonicalSlideApi: {},
     canonicalDeckApi: {},
     deckImportApi: {},
+    transactionApi: {},
     getIframeDoc() {},
     getSlides() {},
     getSlideId() {},
@@ -60,6 +61,7 @@ test('slide mutation runtime composes the four structural slide controllers', ()
 
   assert.deepEqual(result, controllers);
   assert.equal(calls[0][1].canonicalDeckApi, callbacks.canonicalDeckApi);
+  assert.equal(calls[1][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
   assert.equal(calls[0][1].rollbackMutation, callbacks.rollbackMutation);
   assert.equal(calls[1][1].createBlankSlide, callbacks.createBlankSlide);

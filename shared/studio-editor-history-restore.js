@@ -111,6 +111,52 @@
       ? options.setActiveSlide
       : () => {};
 
+    function applySlidePresenceState(slideId, snapshot) {
+      const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
+      if (!normalizedSlideId || !snapshot || typeof snapshot !== 'object') return false;
+      const iframeDoc = getIframeDoc();
+      const slidesContainer = resolveElementById('slides-container', iframeDoc);
+      if (!slidesContainer) return false;
+      const currentSlide = resolveElementById(`slide:${normalizedSlideId}`, iframeDoc);
+
+      if (snapshot.exists !== true) {
+        if (!currentSlide) return false;
+        if (typeof currentSlide.remove === 'function') {
+          currentSlide.remove();
+        } else if (currentSlide.parentNode && typeof currentSlide.parentNode.removeChild === 'function') {
+          currentSlide.parentNode.removeChild(currentSlide);
+        } else {
+          return false;
+        }
+      } else {
+        let slide = currentSlide;
+        if (!slide) {
+          if (!iframeDoc || typeof iframeDoc.createElement !== 'function'
+            || typeof snapshot.markup !== 'string' || !snapshot.markup.trim()) {
+            return false;
+          }
+          const template = iframeDoc.createElement('template');
+          if (!template) return false;
+          template.innerHTML = snapshot.markup;
+          slide = template.content && template.content.firstElementChild;
+          if (!slide) return false;
+        }
+        const slides = getSlides(iframeDoc);
+        const beforeNode = Array.isArray(slides) ? slides[snapshot.index] : null;
+        if (beforeNode && beforeNode !== slide && typeof slidesContainer.insertBefore === 'function') {
+          slidesContainer.insertBefore(slide, beforeNode);
+        } else if (typeof slidesContainer.appendChild === 'function') {
+          slidesContainer.appendChild(slide);
+        } else {
+          return false;
+        }
+        makeElementsHoverable(slide);
+      }
+
+      generateThumbnails();
+      return true;
+    }
+
     function syncRestoredCanonicalState(historyEntry, iframeDoc) {
       let restoredCanonicalDeck = historyEntry && isValidCanonicalDeck(
         historyEntry.canonicalDeck,
@@ -187,6 +233,7 @@
               generateThumbnails();
               return true;
             },
+            applySlidePresenceState,
             applyVisibilityState: elementStateApi
               && typeof elementStateApi.applyStudioElementVisibilityState === 'function'
               ? elementStateApi.applyStudioElementVisibilityState

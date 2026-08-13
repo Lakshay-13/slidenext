@@ -20,6 +20,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const addStudioSlideNode = slideCommandsApi
       && typeof slideCommandsApi.addStudioSlideNode === 'function'
       ? slideCommandsApi.addStudioSlideNode
@@ -51,6 +54,10 @@
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
+    const createStudioSlidePresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioSlidePresenceTransaction === 'function'
+      ? transactionApi.createStudioSlidePresenceTransaction
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : () => {};
@@ -105,7 +112,9 @@
         resolveInsertionActionState,
         getSlideContainer,
         getSlides,
+        getSlideId,
         createBlankSlide,
+        createStudioSlidePresenceTransaction,
         buildCanonicalAddSlideBaseline: canonicalAddSlideBuilders
           ? canonicalAddSlideBuilders.buildCanonicalAddSlideBaseline
           : null,

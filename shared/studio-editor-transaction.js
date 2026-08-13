@@ -394,6 +394,47 @@
     };
   }
 
+  function normalizeStudioSlidePresenceSnapshot(snapshot) {
+    if (!snapshot || typeof snapshot !== 'object') return null;
+    const index = Number.isInteger(snapshot.index) && snapshot.index >= 0
+      ? snapshot.index
+      : -1;
+    const markup = typeof snapshot.markup === 'string' ? snapshot.markup : '';
+    if (index < 0 || (snapshot.exists === true && !markup.trim())) return null;
+    return {
+      exists: snapshot.exists === true,
+      index,
+      markup
+    };
+  }
+
+  function createStudioSlidePresenceTransaction(items = []) {
+    const sourceItems = Array.isArray(items) ? items : [];
+    const operations = sourceItems.reduce((nextOperations, item) => {
+      if (!item || typeof item !== 'object') return nextOperations;
+      const slideId = typeof item.slideId === 'string' ? item.slideId.trim() : '';
+      const before = normalizeStudioSlidePresenceSnapshot(item.before);
+      const after = normalizeStudioSlidePresenceSnapshot(item.after);
+      if (!slideId || !before || !after || JSON.stringify(before) === JSON.stringify(after)) {
+        return nextOperations;
+      }
+      nextOperations.push({
+        type: 'slide-presence',
+        slideId,
+        before,
+        after
+      });
+      return nextOperations;
+    }, []);
+
+    if (operations.length === 0) return null;
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -439,6 +480,12 @@
           ? createStudioActiveSlideTransaction(operation.before, operation.after)
         : operation.type === 'slide-order'
           ? createStudioSlideOrderTransaction(operation.before, operation.after)
+        : operation.type === 'slide-presence'
+          ? createStudioSlidePresenceTransaction([{
+              slideId: operation.slideId,
+              before: operation.before,
+              after: operation.after
+            }])
           : null;
       if (nextTransaction) {
         nextOperations.push(...nextTransaction.operations);
@@ -469,6 +516,8 @@
         ? `${operation.type}:${operation.elementId}:${operation.property}`
         : operation.type === 'active-slide' || operation.type === 'slide-order'
           ? operation.type
+        : operation.type === 'slide-presence'
+          ? `${operation.type}:${operation.slideId}`
         : `${operation.type}:${operation.elementId}`;
       const existingOperation = operationsByKey.get(operationKey);
       if (!existingOperation) {
@@ -490,6 +539,13 @@
                 type: 'slide-order',
                 before: [...operation.before],
                 after: [...operation.after]
+              }
+          : operation.type === 'slide-presence'
+            ? {
+                type: 'slide-presence',
+                slideId: operation.slideId,
+                before: { ...operation.before },
+                after: { ...operation.after }
               }
           : {
               type: 'style',
@@ -513,6 +569,8 @@
         existingOperation.after = operation.after;
       } else if (operation.type === 'slide-order') {
         existingOperation.after = [...operation.after];
+      } else if (operation.type === 'slide-presence') {
+        existingOperation.after = { ...operation.after };
       } else {
         existingOperation.before = {
           ...operation.before,
@@ -548,6 +606,9 @@
     const applySlideOrderState = typeof options.applySlideOrderState === 'function'
       ? options.applySlideOrderState
       : null;
+    const applySlidePresenceState = typeof options.applySlidePresenceState === 'function'
+      ? options.applySlidePresenceState
+      : null;
     if (!normalizedTransaction || !nextDirection) {
       return {
         didApply: false,
@@ -558,7 +619,9 @@
 
     const resolvedOperations = normalizedTransaction.operations.map((operation) => ({
       operation,
-      element: operation.type === 'active-slide' || operation.type === 'slide-order'
+      element: operation.type === 'active-slide'
+        || operation.type === 'slide-order'
+        || operation.type === 'slide-presence'
         ? null
         : getElementById(operation.elementId)
     }));
@@ -571,8 +634,10 @@
     if (resolvedOperations.some(({ operation, element }) => {
       return (operation.type === 'active-slide' && !applyActiveSlideState)
         || (operation.type === 'slide-order' && !applySlideOrderState)
+        || (operation.type === 'slide-presence' && !applySlidePresenceState)
         || (operation.type !== 'active-slide'
           && operation.type !== 'slide-order'
+          && operation.type !== 'slide-presence'
           && !element)
         || (operation.type === 'style' && !element.style)
         || (operation.type === 'dataset' && !element.dataset)
@@ -594,6 +659,10 @@
       if (operation.type === 'slide-order') {
         const slideIds = direction === 'undo' ? operation.before : operation.after;
         return applySlideOrderState(slideIds) !== false;
+      }
+      if (operation.type === 'slide-presence') {
+        const snapshot = direction === 'undo' ? operation.before : operation.after;
+        return applySlidePresenceState(operation.slideId, snapshot) !== false;
       }
       if (operation.type === 'property') {
         element[operation.property] = direction === 'undo' ? operation.before : operation.after;
@@ -673,6 +742,8 @@
     createStudioMarkupTransactionCapture,
     createStudioActiveSlideTransaction,
     createStudioSlideOrderTransaction,
+    normalizeStudioSlidePresenceSnapshot,
+    createStudioSlidePresenceTransaction,
     normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,

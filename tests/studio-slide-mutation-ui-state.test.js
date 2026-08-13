@@ -344,6 +344,47 @@ test('rollbackEditorSlideMutation resolves slide-prefixed metadata transactions'
   assert.equal(slide.dataset.speakerNotes, 'before');
 });
 
+test('rollbackEditorSlideMutation removes a scoped added slide-presence transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  let present = true;
+  const slide = {
+    remove() {
+      present = false;
+    }
+  };
+  const container = { id: 'slidesContainer' };
+  const iframeDoc = {
+    getElementById(id) {
+      assert.equal(id, 'slidesContainer');
+      return container;
+    }
+  };
+  const context = {
+    getIframeDoc: () => iframeDoc,
+    getSlideById(id, doc) {
+      assert.equal(id, 'slide-2');
+      assert.equal(doc, iframeDoc);
+      return present ? slide : null;
+    },
+    generateThumbnails() {},
+    makeElementsHoverable() {},
+    getElementByEditorId() {
+      return null;
+    }
+  };
+  vm.createContext(context);
+  loadRollbackEditorSlideMutation(fileContent, context);
+
+  const transaction = studioTransaction.createStudioSlidePresenceTransaction([{
+    slideId: 'slide-2',
+    before: { exists: false, index: 1, markup: '' },
+    after: { exists: true, index: 1, markup: '<section id="slide-2"></section>' }
+  }]);
+
+  assert.equal(context.rollbackEditorSlideMutation(transaction, iframeDoc), true);
+  assert.equal(present, false);
+});
+
 test('finalizeSlideMutationPersistence delegates lifecycle ordering to the shared mutation module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const transaction = { kind: 'slidenext.editor.transaction' };

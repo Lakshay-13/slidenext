@@ -6848,6 +6848,53 @@
             if (slideElements.some((slide) => !slide)) return false;
             slideElements.forEach((slide) => slidesContainer.appendChild(slide));
             return true;
+          },
+          applySlidePresenceState: (slideId, snapshot) => {
+            const resolvedDoc = sourceDoc || getIframeDoc();
+            const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
+            if (!normalizedSlideId || !snapshot || typeof snapshot !== 'object') return false;
+            const slidesContainer = resolvedDoc && typeof resolvedDoc.getElementById === 'function'
+              ? resolvedDoc.getElementById('slidesContainer')
+              : null;
+            if (!slidesContainer) return false;
+            const currentSlide = typeof getSlideById === 'function'
+              ? getSlideById(normalizedSlideId, resolvedDoc)
+              : null;
+            if (snapshot.exists !== true) {
+              if (!currentSlide) return false;
+              if (typeof currentSlide.remove === 'function') {
+                currentSlide.remove();
+              } else if (currentSlide.parentNode && typeof currentSlide.parentNode.removeChild === 'function') {
+                currentSlide.parentNode.removeChild(currentSlide);
+              } else {
+                return false;
+              }
+            } else {
+              let slide = currentSlide;
+              if (!slide) {
+                if (!resolvedDoc || typeof resolvedDoc.createElement !== 'function'
+                  || typeof snapshot.markup !== 'string' || !snapshot.markup.trim()) {
+                  return false;
+                }
+                const template = resolvedDoc.createElement('template');
+                if (!template) return false;
+                template.innerHTML = snapshot.markup;
+                slide = template.content && template.content.firstElementChild;
+                if (!slide) return false;
+              }
+              const currentSlides = typeof getSlides === 'function' ? getSlides(resolvedDoc) : [];
+              const beforeNode = Array.isArray(currentSlides) ? currentSlides[snapshot.index] : null;
+              if (beforeNode && beforeNode !== slide && typeof slidesContainer.insertBefore === 'function') {
+                slidesContainer.insertBefore(slide, beforeNode);
+              } else if (typeof slidesContainer.appendChild === 'function') {
+                slidesContainer.appendChild(slide);
+              } else {
+                return false;
+              }
+              makeElementsHoverable(slide);
+            }
+            generateThumbnails();
+            return true;
           }
         });
         return !!(rollbackResult && rollbackResult.didApply);

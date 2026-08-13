@@ -398,6 +398,37 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
   ]);
 });
 
+test('addStudioSlideNode prefers a scoped slide-presence transaction when the new slide is serializable', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2', outerHTML: '<section id="slide-2"></section>' };
+  let finalizedTransaction = null;
+
+  const result = slideCommands.addStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => [{ id: 'slide-1' }],
+    getSlideId: (slide) => slide.id,
+    createBlankSlide: () => newSlide,
+    buildCanonicalAddSlideBaseline: () => null,
+    buildCanonicalAddSlideDeck: () => null,
+    applyInsertion: () => ({ didApply: true, transaction: { type: 'markup' } }),
+    createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
+    finalizeMutation: (_label, transaction) => {
+      finalizedTransaction = transaction;
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(finalizedTransaction.operations, [{
+    type: 'slide-presence',
+    slideId: 'slide-2',
+    before: { exists: false, index: 1, markup: '' },
+    after: { exists: true, index: 1, markup: '<section id="slide-2"></section>' }
+  }]);
+});
+
 test('addStudioSlideNode fails closed before DOM insertion when canonical addition is unavailable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
