@@ -31,6 +31,7 @@ test('buildStudioTransformInteractionOptions delegates snap targets and preserve
     getGridSizePx() {
       return 12;
     },
+    snapEnabled: false,
     onSessionFinalize() {}
   }, {
     marker: 'override'
@@ -44,6 +45,7 @@ test('buildStudioTransformInteractionOptions delegates snap targets and preserve
     getRectOnSlide: snapCalls[0][2].getRectOnSlide
   }]]);
   assert.equal(options.getGridSizePx(), 12);
+  assert.equal(options.snapEnabled, false);
   assert.equal(options.onSessionFinalize instanceof Function, true);
   assert.equal(options.marker, 'override');
 });

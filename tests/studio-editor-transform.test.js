@@ -1088,6 +1088,27 @@ test('snapStudioTransformBounds aligns dragged bounds to slide edges and centers
     },
     guides: []
   });
+
+  assert.deepEqual(transformState.snapStudioTransformBounds({
+    left: 49,
+    top: 38,
+    right: 149,
+    bottom: 88
+  }, {
+    type: 'drag',
+    slideBounds: { width: 200, height: 120 }
+  }, {
+    snapEnabled: false,
+    snapDistancePx: 5
+  }), {
+    bounds: {
+      left: 49,
+      top: 38,
+      right: 149,
+      bottom: 88
+    },
+    guides: []
+  });
 });
 
 test('snapStudioTransformBounds uses the shared interaction threshold when no override is supplied', () => {
@@ -2270,6 +2291,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
         options.clientX,
         options.clientY,
         options.lockAspectRatio,
+        options.snapEnabled,
         options.gridSizePx,
         options.snapDistancePx
       ]);
@@ -2292,6 +2314,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     getGridSizePx() {
       return 20;
     },
+    snapEnabled: false,
     onSessionStart(nextBounds) {
       calls.push(['session-start', nextBounds]);
     },
@@ -2332,7 +2355,7 @@ test('createStudioTransformPointerHandlers coordinates the shared pointer lifecy
     ['session-start', startBounds],
     ['down-prevented'],
     ['down-stopped'],
-    ['frame', session, 40, 50, true, 20, 9],
+    ['frame', session, 40, 50, true, false, 20, 9],
     ['apply', session, bounds, 12],
     ['session-frame', bounds],
     ['move-prevented'],

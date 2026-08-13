@@ -77,7 +77,8 @@
           dragStartThresholdPx: options.dragStartThresholdPx,
           minSizePx: options.minSizePx,
           dragOverflowMarginPx: options.dragOverflowMarginPx,
-          snapDistancePx: options.snapDistancePx
+          snapDistancePx: options.snapDistancePx,
+          snapEnabled: options.snapEnabled
         })
       : null;
 

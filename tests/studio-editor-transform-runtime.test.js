@@ -66,7 +66,8 @@ test('transform runtime composes the full controller dependency bundle', () => {
     dragStartThresholdPx: 4,
     minSizePx: 24,
     dragOverflowMarginPx: 280,
-    snapDistancePx: 12
+    snapDistancePx: 12,
+    snapEnabled: false
   };
 
   assert.deepEqual(
@@ -83,6 +84,7 @@ test('transform runtime composes the full controller dependency bundle', () => {
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getCanonicalDeckBaseline, options.getCanonicalDeckBaseline);
   assert.equal(calls[0].snapDistancePx, options.snapDistancePx);
+  assert.equal(calls[0].snapEnabled, options.snapEnabled);
 });
 
 test('index wires transform behavior through the runtime module', () => {

@@ -64,6 +64,7 @@
       minSizePx: options.minSizePx,
       dragOverflowMarginPx: options.dragOverflowMarginPx,
       snapDistancePx: options.snapDistancePx,
+      snapEnabled: options.snapEnabled,
       getGridSizePx: options.getGridSizePx,
       onSessionStart: options.onSessionStart,
       onSessionFrame: options.onSessionFrame,

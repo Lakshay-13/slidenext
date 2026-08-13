@@ -300,6 +300,7 @@
               minSizePx,
               dragOverflowMarginPx,
               snapDistancePx,
+              snapEnabled: options.snapEnabled,
               getGridSizePx,
               onSessionStart: (startBounds) => {
                 canonicalDeckBeforeTransform = captureCanonicalTransformBaseline();

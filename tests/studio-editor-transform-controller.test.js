@@ -35,7 +35,8 @@ test('transform controller delegates modern transform and marquee setup with sha
     isFreeformPositioned,
     dragStartThresholdPx: 3,
     minSizePx: 12,
-    snapDistancePx: 8
+    snapDistancePx: 8,
+    snapEnabled: false
   });
 
   assert.equal(controller.setup(doc), true);
@@ -43,6 +44,7 @@ test('transform controller delegates modern transform and marquee setup with sha
   assert.equal(calls[1][0], 'transformOptions');
   assert.equal(calls[1][1].dragStartThresholdPx, 3);
   assert.equal(calls[1][1].getGridSizePx(), 20);
+  assert.equal(calls[1][1].snapEnabled, false);
   assert.equal(calls[1][1].itemOptions.isFreeformPositioned, isFreeformPositioned);
   assert.equal(calls[2][0], 'marqueeOptions');
   assert.equal(calls[3][0], 'attach');

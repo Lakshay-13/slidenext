@@ -1630,6 +1630,7 @@
         dragStartThresholdPx,
         minSizePx,
         dragOverflowMarginPx,
+        ...(typeof options.snapEnabled === 'boolean' ? { snapEnabled: options.snapEnabled } : {}),
         snapDistancePx: options.snapDistancePx,
         gridSizePx: getGridSizePx(),
         lockAspectRatio: !!event.shiftKey
@@ -1789,6 +1790,7 @@
         dragStartThresholdPx,
         minSizePx,
         dragOverflowMarginPx,
+        ...(typeof options.snapEnabled === 'boolean' ? { snapEnabled: options.snapEnabled } : {}),
         snapDistancePx: options.snapDistancePx,
         gridSizePx: getGridSizePx(),
         lockAspectRatio: !!event.shiftKey
