@@ -85,6 +85,7 @@
     const thumbnailController = thumbnailApi
       ? thumbnailApi.createStudioEditorThumbnailController({
           thumbnailView: options.thumbnailView,
+          deckViewApi: options.deckViewApi,
           documentRef: options.documentRef,
           getDocument: options.getDocument,
           buildDeckSnapshot: options.buildDeckSnapshot,

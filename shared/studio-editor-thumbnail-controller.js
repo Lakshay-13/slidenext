@@ -11,6 +11,9 @@
     const thumbnailView = options.thumbnailView
       || (root && root.SlideNextStudioEditorThumbnailView)
       || null;
+    const deckViewApi = options.deckViewApi
+      || (root && root.SlideNextStudioDeckView)
+      || null;
     const documentRef = options.documentRef && typeof options.documentRef === 'object'
       ? options.documentRef
       : null;
@@ -118,9 +121,21 @@
       });
     }
 
+    function syncActiveSlideCard(activeSlideId = '') {
+      if (!deckViewApi
+        || typeof deckViewApi.syncStudioDeckActiveThumbnailCardState !== 'function') {
+        return false;
+      }
+      return deckViewApi.syncStudioDeckActiveThumbnailCardState({
+        documentRef,
+        activeSlideId
+      });
+    }
+
     return {
       render,
-      attach
+      attach,
+      syncActiveSlideCard
     };
   }
 

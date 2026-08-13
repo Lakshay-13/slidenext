@@ -79,6 +79,36 @@ test('thumbnail controller supports the legacy thumbnail view fallback', () => {
   assert.equal(typeof calls[0].setupDragAndDropThumbnail, 'function');
 });
 
+test('thumbnail controller delegates active-card synchronization to the deck view', () => {
+  const calls = [];
+  const documentRef = { id: 'editor-document' };
+  const deckViewApi = {
+    syncStudioDeckActiveThumbnailCardState(options) {
+      calls.push(options);
+      return true;
+    }
+  };
+  const controller = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView: {},
+    deckViewApi,
+    documentRef
+  });
+
+  assert.equal(controller.syncActiveSlideCard('slide-2'), true);
+  assert.deepEqual(calls, [{
+    documentRef,
+    activeSlideId: 'slide-2'
+  }]);
+});
+
+test('thumbnail controller fails closed when active-card synchronization is unavailable', () => {
+  const controller = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView: {}
+  });
+
+  assert.equal(controller.syncActiveSlideCard('slide-1'), false);
+});
+
 test('thumbnail controller fails closed when the thumbnail view is unavailable', () => {
   const controller = thumbnailController.createStudioEditorThumbnailController({
     thumbnailView: null

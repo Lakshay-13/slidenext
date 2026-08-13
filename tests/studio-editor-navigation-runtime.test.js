@@ -89,6 +89,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
   assert.equal(calls[2][1].updateAssetLibraryState, callbacks.updateAssetLibraryState);
   assert.equal(calls[2][1].syncLayoutModeControl, callbacks.syncLayoutModeControl);
   assert.equal(calls[3][1].buildDeckSnapshot, callbacks.buildDeckSnapshot);
+  assert.equal(calls[3][1].deckViewApi, callbacks.deckViewApi);
   assert.equal(calls[3][1].onSelectSlide, callbacks.onSelectSlide);
   assert.equal(calls[3][1].reorderSlidesById, callbacks.reorderSlidesById);
 });

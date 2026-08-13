@@ -64,6 +64,30 @@ test('updateActiveThumbnailCardState fails closed when the editor shell is unava
   assert.equal(context.updateActiveThumbnailCardState('slide-1'), false);
 });
 
+test('updateActiveThumbnailCardState delegates to the thumbnail controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const source = extractFunctionSource(
+    fileContent,
+    'function updateActiveThumbnailCardState(activeSlideId) {',
+    '\n\n    function syncStudioChromeToActiveSlide'
+  );
+  const calls = [];
+  const context = {
+    studioEditorThumbnailController: {
+      syncActiveSlideCard(activeSlideId) {
+        calls.push(activeSlideId);
+        return 'sync-result';
+      }
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.updateActiveThumbnailCardState('slide-2'), 'sync-result');
+  assert.deepEqual(calls, ['slide-2']);
+});
+
 test('setStudioThumbnailSlideCount updates the shared slide counter control', () => {
   const slideCountLabel = { textContent: '' };
   const documentRef = {

@@ -6766,16 +6766,12 @@
     }
 
     function updateActiveThumbnailCardState(activeSlideId) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      if (!deckView || typeof deckView.syncStudioDeckActiveThumbnailCardState !== 'function') {
+      if (typeof studioEditorThumbnailController === 'undefined'
+        || !studioEditorThumbnailController
+        || typeof studioEditorThumbnailController.syncActiveSlideCard !== 'function') {
         return false;
       }
-      return deckView.syncStudioDeckActiveThumbnailCardState({
-        documentRef: document,
-        activeSlideId
-      });
+      return studioEditorThumbnailController.syncActiveSlideCard(activeSlideId);
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
