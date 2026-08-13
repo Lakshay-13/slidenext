@@ -1505,6 +1505,7 @@
   <script src="/shared/studio-editor-frame-accessors.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
+  <script src="/shared/studio-editor-slide-deletion-transaction.js"></script>
   <script src="/shared/studio-editor-slide-deletion-controller.js"></script>
   <script src="/shared/studio-editor-slide-insertion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-insertion-transaction.js"></script>
@@ -7063,20 +7064,23 @@
     }
 
     function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorSlideDeletionMutation !== 'undefined'
-        ? SlideNextStudioEditorSlideDeletionMutation
+      const transactionApi = typeof SlideNextStudioEditorSlideDeletionTransaction !== 'undefined'
+        ? SlideNextStudioEditorSlideDeletionTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioSlideDeletionMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioSlideDeletionMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorSlideDeletionMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorSlideDeletionMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           didApply: false,
           transaction: null
         };
       }
-      return applyMutation(container, slideNode, {
+      return applyTransaction(container, slideNode, {
+        mutationApi: typeof SlideNextStudioEditorSlideDeletionMutation !== 'undefined'
+          ? SlideNextStudioEditorSlideDeletionMutation
+          : null,
         slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
           ? SlideNextStudioEditorSlideCommands
           : null,
