@@ -1675,6 +1675,7 @@
   <script src="/shared/studio-editor-pointer-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-freeform-position-adapter.js"></script>
   <script src="/shared/studio-editor-positioned-layout-item-adapter.js"></script>
+  <script src="/shared/studio-editor-closest-positioned-ancestor-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -4024,10 +4025,21 @@
         : [];
     }
 
-    const studioEditorClosestPositionedAncestorResolver = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorClosestPositionedAncestorAdapter = typeof SlideNextStudioEditorClosestPositionedAncestorAdapter !== 'undefined'
+      && SlideNextStudioEditorClosestPositionedAncestorAdapter
+      && typeof SlideNextStudioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor === 'function'
+      ? SlideNextStudioEditorClosestPositionedAncestorAdapter
+      : null;
+
+    const studioEditorClosestPositionedAncestorResolver = studioEditorClosestPositionedAncestorAdapter
+      && typeof studioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
-      ? (element) => SlideNextStudioEditorDom.getStudioClosestPositionedAncestor(element)
+      ? (element) => studioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor(
+          element,
+          { domApi: SlideNextStudioEditorDom }
+        )
       : null;
 
     function getEditorClosestPositionedAncestor(element) {

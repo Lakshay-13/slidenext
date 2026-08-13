@@ -1914,7 +1914,9 @@ test('editor composes positioned-ancestor lookup through the shared DOM module',
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorClosestPositionedAncestorResolver =/);
+  assert.match(source, /const studioEditorClosestPositionedAncestorAdapter =/);
   assert.match(source, /getStudioClosestPositionedAncestor/);
+  assert.match(source, /typeof SlideNextStudioEditorClosestPositionedAncestorAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorClosestPositionedAncestorResolver === 'function'/);
   assert.doesNotMatch(source, /getEditorClosestPositionedAncestor\.resolver/);
 });
@@ -1923,13 +1925,14 @@ test('getEditorClosestPositionedAncestor delegates the element to the shared DOM
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const ancestorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClosestPositionedAncestorResolver =',
+    'const studioEditorClosestPositionedAncestorAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const element = { id: 'element-1' };
   const ancestor = { id: 'parent-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorClosestPositionedAncestorAdapter: require('../shared/studio-editor-closest-positioned-ancestor-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor(value) {
         calls.push(value);
@@ -1949,10 +1952,13 @@ test('getEditorClosestPositionedAncestor fails closed when the shared DOM module
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const ancestorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClosestPositionedAncestorResolver =',
+    'const studioEditorClosestPositionedAncestorAdapter =',
     'const studioEditorTransformRuntime ='
   );
-  const context = { SlideNextStudioEditorDom: null };
+  const context = {
+    SlideNextStudioEditorClosestPositionedAncestorAdapter: require('../shared/studio-editor-closest-positioned-ancestor-adapter.js'),
+    SlideNextStudioEditorDom: null
+  };
 
   vm.createContext(context);
   vm.runInContext(ancestorSource, context);
