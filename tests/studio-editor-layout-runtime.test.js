@@ -94,6 +94,7 @@ test('layout runtime composes layout controllers', () => {
   assert.equal(calls[0][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[0][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[1][1].alignmentApi, callbacks.alignmentEngineApi);
+  assert.equal(calls[1][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[1][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
   assert.equal(calls[1][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[2][1].canonicalGroupApi, callbacks.canonicalGroupApi);
