@@ -1385,6 +1385,7 @@
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
   <script src="/shared/studio-editor-clipboard-mutation.js"></script>
+  <script src="/shared/studio-editor-clipboard-transaction.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-shell-runtime.js"></script>
@@ -10525,36 +10526,34 @@
     }
 
     function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
-        ? SlideNextStudioEditorClipboardMutation
+      const transactionApi = typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
+        ? SlideNextStudioEditorClipboardTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioClipboardInsertionWithTransaction === 'function'
-        ? mutationApi.applyStudioClipboardInsertionWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorClipboardInsertionWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorClipboardInsertionWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return {
           inserted: [],
           transaction: null
         };
       }
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation(insertionPlans, slide, {
+      return applyTransaction(insertionPlans, slide, {
+        mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
+          ? SlideNextStudioEditorClipboardMutation
+          : null,
         clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
           ? SlideNextStudioEditorClipboard
           : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
-        getElementId
+        getElementId: options.getElementId,
+        assignEditorElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null,
+        getParentId: options.getParentId
       });
     }
 

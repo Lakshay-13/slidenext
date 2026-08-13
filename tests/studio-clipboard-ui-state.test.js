@@ -9,6 +9,7 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
+const clipboardTransaction = require('../shared/studio-editor-clipboard-transaction.js');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -63,6 +64,7 @@ function loadClipboardInsertionHelper(fileContent, context) {
     '\n\n    function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {'
   );
   context.SlideNextStudioEditorClipboardMutation = clipboardMutation;
+  context.SlideNextStudioEditorClipboardTransaction = clipboardTransaction;
   vm.runInContext(helperSource, context);
 }
 
