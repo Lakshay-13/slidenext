@@ -715,3 +715,45 @@ test('applyStudioClipboardInsertion applies insertion modes and captures parent 
   assert.equal(result.transaction.operations[0].before, '<div data-editor-id="source"></div>');
   assert.equal(result.transaction.operations[0].after, '<div data-editor-id="source"></div><div>absolute</div><div>after-source</div><div>appended</div>');
 });
+
+test('applyStudioClipboardInsertion prefers scoped element-presence transactions for serializable clones', () => {
+  const source = { id: 'source' };
+  const slide = {
+    dataset: { editorId: 'slide:slide-1' },
+    children: [source],
+    appendChild(element) {
+      element.parentElement = this;
+      element.parentNode = this;
+      this.children.push(element);
+    }
+  };
+  const clone = {
+    id: 'clone-1',
+    dataset: { editorId: 'node-1' },
+    style: {},
+    outerHTML: '<div data-editor-id="node-1">Pasted</div>'
+  };
+
+  const result = clipboardState.applyStudioClipboardInsertion([{
+    clone,
+    insertionTarget: { mode: 'append-to-slide' },
+    absolutePlacement: null
+  }], {
+    slide,
+    createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
+    getElementId: (element) => element && element.dataset && element.dataset.editorId,
+    getParentId: (element) => element === slide ? 'slide:slide-1' : ''
+  });
+
+  assert.deepEqual(result.transaction.operations[0], {
+    type: 'element-presence',
+    elementId: 'node-1',
+    parentId: 'slide:slide-1',
+    before: { exists: false, index: 1, markup: '' },
+    after: {
+      exists: true,
+      index: 1,
+      markup: '<div data-editor-id="node-1">Pasted</div>'
+    }
+  });
+});

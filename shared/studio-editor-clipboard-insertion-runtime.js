@@ -25,6 +25,7 @@
             || null,
           getIframeDoc: options.getIframeDoc,
           getActiveSlide: options.getActiveSlide,
+          getEditorSlideId: options.getEditorSlideId,
           getSlideMetrics: options.getSlideMetrics,
           makeElementsHoverable: options.makeElementsHoverable,
           getRectOnSlide: options.getRectOnSlide,

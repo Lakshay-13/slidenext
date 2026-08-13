@@ -395,9 +395,15 @@
     const createMarkupTransactionCapture = typeof options.createMarkupTransactionCapture === 'function'
       ? options.createMarkupTransactionCapture
       : null;
+    const createElementPresenceTransaction = typeof options.createElementPresenceTransaction === 'function'
+      ? options.createElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
+    const getParentId = typeof options.getParentId === 'function'
+      ? options.getParentId
+      : getElementId;
     if (!slide || plans.length === 0) {
       return {
         inserted: [],
@@ -431,8 +437,10 @@
       ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
       : null;
     const inserted = [];
+    const insertedPlans = [];
 
-    plans.forEach(({ clone, insertionTarget, absolutePlacement }) => {
+    plans.forEach((plan) => {
+      const { clone, insertionTarget, absolutePlacement } = plan;
       if (insertionTarget.mode === 'absolute' && absolutePlacement) {
         const parent = insertionTarget.parent || slide;
         clone.style.position = 'absolute';
@@ -446,13 +454,61 @@
         slide.appendChild(clone);
       }
       inserted.push(clone);
+      insertedPlans.push(plan);
     });
+
+    const resolveId = (resolver, element) => {
+      if (!element) return '';
+      try {
+        return resolver(element) || '';
+      } catch (error) {
+        return '';
+      }
+    };
+    const presenceItems = inserted.map((element, index) => {
+      const plan = insertedPlans[index] || {};
+      const fallbackParent = getInsertionParent(plan.insertionTarget);
+      const parent = element && (element.parentElement || element.parentNode)
+        || fallbackParent;
+      const childNodes = parent && (parent.children || parent.childNodes);
+      const insertionIndex = childNodes
+        ? Array.prototype.indexOf.call(childNodes, element)
+        : -1;
+      return {
+        elementId: resolveId(getElementId, element),
+        parentId: resolveId(getParentId, parent),
+        before: {
+          exists: false,
+          index: insertionIndex,
+          markup: ''
+        },
+        after: {
+          exists: true,
+          index: insertionIndex,
+          markup: typeof element.outerHTML === 'string' ? element.outerHTML : ''
+        }
+      };
+    });
+    const presenceElementIds = new Set();
+    const canUsePresenceTransaction = !!createElementPresenceTransaction
+      && presenceItems.length === inserted.length
+      && presenceItems.every((item) => {
+        if (!item.elementId || presenceElementIds.has(item.elementId)) return false;
+        presenceElementIds.add(item.elementId);
+        return !!item.parentId
+          && item.before.index >= 0
+          && !!item.after.markup.trim();
+      });
+    const elementPresenceTransaction = canUsePresenceTransaction
+      ? createElementPresenceTransaction(presenceItems)
+      : null;
 
     return {
       inserted,
-      transaction: markupCapture
+      transaction: elementPresenceTransaction
+        || (markupCapture
         ? markupCapture.createTransaction()
-        : null
+        : null)
     };
   }
 

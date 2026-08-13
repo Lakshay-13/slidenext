@@ -38,6 +38,7 @@ test('clipboard insertion controller plans insertion and forwards its transactio
       assert.equal(currentDocument, documentRef);
       return slide;
     },
+    getEditorSlideId: (currentSlide) => currentSlide.id,
     getSlideMetrics: () => ({ logicalWidth: 1280, logicalHeight: 720 }),
     getOffsetPx: () => 24,
     getElementId: (element) => element.id
@@ -60,6 +61,7 @@ test('clipboard insertion controller plans insertion and forwards its transactio
   assert.equal(calls[1][3].clipboardApi, clipboardApi);
   assert.equal(calls[1][3].transactionApi, null);
   assert.equal(calls[1][3].getElementId({ id: 'node-1' }), 'node-1');
+  assert.equal(calls[1][3].getParentId(slide), 'slide:slide-1');
   assert.deepEqual(transaction, { id: 'tx-1' });
 });
 

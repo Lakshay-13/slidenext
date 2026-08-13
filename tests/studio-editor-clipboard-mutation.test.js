@@ -33,7 +33,33 @@ test('applyStudioClipboardInsertionWithTransaction delegates insertion and marku
   assert.equal(delegated.currentPlans, insertionPlans);
   assert.equal(delegated.options.slide, slide);
   assert.equal(typeof delegated.options.createMarkupTransactionCapture, 'function');
+  assert.equal(delegated.options.createElementPresenceTransaction, null);
   assert.equal(typeof delegated.options.getElementId, 'function');
+});
+
+test('applyStudioClipboardInsertionWithTransaction forwards scoped presence transaction dependencies', () => {
+  const createStudioElementPresenceTransaction = () => ({ id: 'tx-presence' });
+  let delegated = null;
+
+  clipboardMutation.applyStudioClipboardInsertionWithTransaction(
+    [{ id: 'plan-1' }],
+    { id: 'slide-1' },
+    {
+      clipboardApi: {
+        applyStudioClipboardInsertion(_plans, options) {
+          delegated = options;
+          return { inserted: [], transaction: null };
+        }
+      },
+      transactionApi: {
+        createStudioElementPresenceTransaction
+      },
+      getParentId: (element) => element && element.id
+    }
+  );
+
+  assert.equal(delegated.createElementPresenceTransaction, createStudioElementPresenceTransaction);
+  assert.equal(delegated.getParentId({ id: 'parent-1' }), 'parent-1');
 });
 
 test('applyStudioClipboardInsertionWithTransaction fails closed without a shared clipboard adapter', () => {

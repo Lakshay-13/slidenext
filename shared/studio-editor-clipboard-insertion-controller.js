@@ -27,6 +27,9 @@
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
       : () => null;
+    const getEditorSlideId = typeof options.getEditorSlideId === 'function'
+      ? options.getEditorSlideId
+      : (slide) => slide && slide.id;
     const getSlideMetrics = typeof options.getSlideMetrics === 'function'
       ? options.getSlideMetrics
       : () => null;
@@ -58,7 +61,19 @@
       return applyMutation(insertionPlans, slide, {
         clipboardApi,
         transactionApi,
-        getElementId
+        getElementId,
+        getParentId: (parent) => {
+          if (parent === slide) {
+            let slideId = '';
+            try {
+              slideId = getEditorSlideId(slide) || '';
+            } catch (error) {
+              slideId = '';
+            }
+            return slideId ? `slide:${slideId}` : '';
+          }
+          return getElementId(parent);
+        }
       });
     }
 

@@ -29,6 +29,10 @@
       && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
       ? transactionApi.createStudioMarkupTransactionCapture
       : null;
+    const createStudioElementPresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioElementPresenceTransaction === 'function'
+      ? transactionApi.createStudioElementPresenceTransaction
+      : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
@@ -36,6 +40,8 @@
     const mutation = applyStudioClipboardInsertion(insertionPlans, {
       slide,
       createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
+      createElementPresenceTransaction: createStudioElementPresenceTransaction,
+      getParentId: options.getParentId,
       getElementId
     });
     return mutation && typeof mutation === 'object'
