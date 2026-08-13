@@ -56,6 +56,31 @@ test('buildStudioCanonicalLayoutBaseline prefers a valid live canonical deck', (
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalLayoutBaseline prefers pending canonical state before the live baseline', () => {
+  const pendingDeck = createSourceDeck();
+  const liveDeck = createSourceDeck();
+  let didBuildFromDocument = false;
+  const result = canonicalLayout.buildStudioCanonicalLayoutBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck(documentRef) {
+      assert.deepEqual(documentRef, { id: 'editor-doc' });
+      return pendingDeck;
+    },
+    getCanonicalDeckBaseline() {
+      return liveDeck;
+    },
+    buildCanonicalDeckBaseline() {
+      didBuildFromDocument = true;
+      return createSourceDeck();
+    },
+    sourceDocument: { id: 'editor-doc' }
+  });
+
+  assert.equal(result, pendingDeck);
+  assert.equal(didBuildFromDocument, false);
+});
+
 test('buildStudioCanonicalLayoutBaseline delegates baseline resolution to the shared canonical-state reader', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
@@ -74,6 +99,9 @@ test('buildStudioCanonicalLayoutBaseline delegates baseline resolution to the sh
     getCanonicalDeckBaseline() {
       return null;
     },
+    getPendingCanonicalDeck() {
+      return null;
+    },
     buildCanonicalDeckBaseline() {
       return null;
     },
@@ -82,6 +110,7 @@ test('buildStudioCanonicalLayoutBaseline delegates baseline resolution to the sh
 
   assert.equal(result, sourceDeck);
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof readerOptions.getPendingCanonicalDeck, 'function');
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
   assert.equal(typeof readerOptions.buildCanonicalDeckBaseline, 'function');
 });
@@ -101,12 +130,14 @@ test('buildStudioCanonicalLayoutBaseline prefers the shared canonical deck resol
       }
     },
     getCanonicalDeckBaseline: () => ({ invalid: true }),
+    getPendingCanonicalDeck: () => null,
     buildCanonicalDeckBaseline: () => ({ invalid: true }),
     sourceDocument: { id: 'editor-doc' }
   });
 
   assert.equal(result, sourceDeck);
   assert.equal(typeof resolverOptions.getCanonicalDeckBaseline, 'function');
+  assert.equal(typeof resolverOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof resolverOptions.buildCanonicalDeckBaseline, 'function');
   assert.equal(resolverOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
 });

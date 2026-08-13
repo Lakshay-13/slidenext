@@ -38,6 +38,7 @@
           updateMotionActionState: options.updateMotionActionState,
           assignElementId: options.assignElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyPositionLayout: options.applyPositionLayout,
           rollbackPositionMutation: options.rollbackPositionMutation,

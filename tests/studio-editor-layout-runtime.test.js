@@ -37,6 +37,7 @@ test('layout runtime composes layout controllers', () => {
     getNormalizedSlideLayerOrder() {},
     assignElementId() {},
     buildCanonicalDeckBaseline() {},
+    getPendingCanonicalDeck() {},
     getCanonicalDeckBaseline() {},
     getEditorSlideId() {},
     getTransactionElementById() {},
@@ -91,6 +92,7 @@ test('layout runtime composes layout controllers', () => {
   assert.equal(calls[0][1].nudgeApi, callbacks.nudgeEngineApi);
   assert.equal(calls[0][1].applyPositionLayout, callbacks.applyPositionLayout);
   assert.equal(calls[0][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
+  assert.equal(calls[0][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[1][1].alignmentApi, callbacks.alignmentEngineApi);
   assert.equal(calls[1][1].getCanonicalDeckBaseline, callbacks.getCanonicalDeckBaseline);
   assert.equal(calls[1][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);

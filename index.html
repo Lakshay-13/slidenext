@@ -3339,6 +3339,7 @@
           getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()

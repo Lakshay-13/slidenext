@@ -35,6 +35,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const applyPositionLayout = typeof options.applyPositionLayout === 'function'
       ? options.applyPositionLayout
       : () => ({ didApply: false, transaction: null });
@@ -80,6 +83,7 @@
             canonicalDeckApi,
             buildCanonicalDeck,
             buildCanonicalDeckBaseline,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline
           })
         : null;
@@ -91,6 +95,7 @@
           hasCanonicalBaseline = !!canonicalLayoutApi.buildStudioCanonicalLayoutBaseline({
             canonicalDeckApi,
             buildCanonicalDeckBaseline,
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline,
             sourceDocument: doc
           });
