@@ -112,6 +112,28 @@ test('asset mutations fall back when the live canonical baseline is invalid', ()
   assert.equal(didBuildFromDocument, true);
 });
 
+test('asset controller scopes the legacy baseline fallback to the current document', () => {
+  const documentRef = { id: 'asset-frame' };
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getDocument: () => documentRef,
+    getCanonicalDeckBaseline: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return sourceDeck;
+    },
+    getCanonicalDeck: () => {
+      throw new Error('legacy baseline should satisfy the mutation');
+    }
+  });
+
+  const result = controller.addAsset({ id: 'scoped-asset', src: '/scoped.png' });
+
+  assert.equal(result.assets[0].id, 'scoped-asset');
+});
+
 test('asset mutations require strict canonical baseline validation', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   let didUseFallback = false;
