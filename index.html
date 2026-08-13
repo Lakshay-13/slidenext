@@ -1741,6 +1741,7 @@
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-navigation-runtime.js"></script>
   <script src="/shared/studio-editor-navigation-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-navigation-ui-bridge.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-editor-preview-controller.js"></script>
@@ -3099,6 +3100,14 @@
       : null;
     const studioEditorThumbnailController = studioEditorNavigationRuntime
       ? studioEditorNavigationRuntime.thumbnailController
+      : null;
+    const studioEditorNavigationUiBridge = typeof SlideNextStudioEditorNavigationUiBridge !== 'undefined'
+      && SlideNextStudioEditorNavigationUiBridge
+      && typeof SlideNextStudioEditorNavigationUiBridge.createStudioEditorNavigationUiBridge === 'function'
+      ? SlideNextStudioEditorNavigationUiBridge.createStudioEditorNavigationUiBridge({
+          navigationSync: studioEditorNavigationSync,
+          thumbnailController: studioEditorThumbnailController
+        })
       : null;
     const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationShellRuntime !== 'undefined'
       && SlideNextStudioEditorSlideMutationShellRuntime
@@ -7224,6 +7233,11 @@
     }
 
     function updateActiveThumbnailCardState(activeSlideId) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.updateActiveThumbnailCardState === 'function') {
+        return studioEditorNavigationUiBridge.updateActiveThumbnailCardState(activeSlideId);
+      }
       if (typeof studioEditorThumbnailController === 'undefined'
         || !studioEditorThumbnailController
         || typeof studioEditorThumbnailController.syncActiveSlideCard !== 'function') {
@@ -7233,6 +7247,11 @@
     }
 
     function syncStudioChromeToActiveSlide(doc = getIframeDoc(), options = {}) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.syncStudioChromeToActiveSlide === 'function') {
+        return studioEditorNavigationUiBridge.syncStudioChromeToActiveSlide(doc, options);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.sync !== 'function') return false;
       return studioEditorNavigationSync.sync(doc, options);
@@ -7253,24 +7272,44 @@
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.bindDeckNavigationSync === 'function') {
+        return studioEditorNavigationUiBridge.bindDeckNavigationSync(doc);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.bind !== 'function') return false;
       return studioEditorNavigationSync.bind(doc);
     }
 
     function teardownDeckActiveSlideSync() {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.teardownDeckActiveSlideSync === 'function') {
+        return studioEditorNavigationUiBridge.teardownDeckActiveSlideSync();
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.teardown !== 'function') return false;
       return studioEditorNavigationSync.teardown();
     }
 
     function scheduleStudioChromeSync(doc = getIframeDoc()) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.scheduleStudioChromeSync === 'function') {
+        return studioEditorNavigationUiBridge.scheduleStudioChromeSync(doc);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.schedule !== 'function') return false;
       return studioEditorNavigationSync.schedule(doc);
     }
 
     function observeDeckActiveSlideState(doc = getIframeDoc()) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.observeDeckActiveSlideState === 'function') {
+        return studioEditorNavigationUiBridge.observeDeckActiveSlideState(doc);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.observe !== 'function') return false;
       return studioEditorNavigationSync.observe(doc);
@@ -7278,12 +7317,22 @@
 
     // Toggle active slide viewport display
     function setActiveSlide(index, options = {}) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.setActiveSlide === 'function') {
+        return studioEditorNavigationUiBridge.setActiveSlide(index, options);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.setActiveSlide !== 'function') return false;
       return studioEditorNavigationSync.setActiveSlide(index, options);
     }
 
     function navigateEditorSlide(direction = 0) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.navigateEditorSlide === 'function') {
+        return studioEditorNavigationUiBridge.navigateEditorSlide(direction);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.navigate !== 'function') return false;
       return studioEditorNavigationSync.navigate(direction);
@@ -7291,6 +7340,11 @@
 
     // Sync presentation's internal dots and counter
     function updateIframeNavigationUI(doc, slides) {
+      if (typeof studioEditorNavigationUiBridge !== 'undefined'
+        && studioEditorNavigationUiBridge
+        && typeof studioEditorNavigationUiBridge.updateIframeNavigationUI === 'function') {
+        return studioEditorNavigationUiBridge.updateIframeNavigationUI(doc, slides);
+      }
       if (!studioEditorNavigationSync
         || typeof studioEditorNavigationSync.updateIframeNavigationUi !== 'function') return false;
       return studioEditorNavigationSync.updateIframeNavigationUi(doc, slides);
