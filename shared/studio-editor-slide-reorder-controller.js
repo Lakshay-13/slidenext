@@ -42,6 +42,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
       ? options.captureSlideMutationState
       : null;
@@ -89,6 +92,10 @@
           : null,
         buildCanonicalReorderSlideDeck: canonicalReorderSlideBuilders
           ? canonicalReorderSlideBuilders.buildCanonicalReorderSlideDeck
+          : null,
+        createStudioSlideOrderTransaction: transactionApi
+          && typeof transactionApi.createStudioSlideOrderTransaction === 'function'
+          ? transactionApi.createStudioSlideOrderTransaction
           : null,
         captureSlideMutationState,
         applyReorder,

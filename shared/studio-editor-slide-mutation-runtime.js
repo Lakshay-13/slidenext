@@ -29,6 +29,7 @@
       canonicalSlideApi: options.canonicalSlideApi,
       canonicalDeckApi: options.canonicalDeckApi,
       deckImportApi: options.deckImportApi,
+      transactionApi: options.transactionApi,
       getIframeDoc: options.getIframeDoc,
       getSlides: options.getSlides,
       getSlideId: options.getSlideId,

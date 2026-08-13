@@ -181,6 +181,41 @@ test('history restore forwards the explicit canonical HTML builder to frame setu
   assert.equal(receivedBuilder, buildDeckSourceHtml);
 });
 
+test('history restore replays structured slide order through slide ids', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const slideOne = { id: 'slide-1' };
+  const slideTwo = { id: 'slide-2' };
+  const order = [];
+  const slidesContainer = {
+    appendChild(slide) {
+      order.push(slide.id);
+    }
+  };
+  const slideOrderTransaction = transactionApi.createStudioSlideOrderTransaction(
+    ['slide-1', 'slide-2'],
+    ['slide-2', 'slide-1']
+  );
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi,
+    transactionApi,
+    getIframeDoc: () => iframeDoc,
+    resolveElementById(editorId) {
+      if (editorId === 'slides-container') return slidesContainer;
+      if (editorId === 'slide:slide-1') return slideOne;
+      if (editorId === 'slide:slide-2') return slideTwo;
+      return null;
+    }
+  });
+
+  const result = restoreHandler(
+    { html: '', selectedElementIds: [] },
+    { direction: 'redo', transaction: slideOrderTransaction }
+  );
+
+  assert.equal(result.didRestoreTransaction, true);
+  assert.deepEqual(order, ['slide-2', 'slide-1']);
+});
+
 test('history restore applies active-slide transactions without rebuilding the frame', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const calls = [];

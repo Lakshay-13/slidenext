@@ -71,6 +71,61 @@ test('createStudioActiveSlideTransaction stores a reversible view-only operation
   assert.equal(transaction.createStudioActiveSlideTransaction('slide-1', 'slide-1'), null);
 });
 
+test('createStudioSlideOrderTransaction stores only a changed complete slide order', () => {
+  const slideOrderTransaction = transaction.createStudioSlideOrderTransaction(
+    [' slide-1 ', 'slide-2'],
+    ['slide-2', 'slide-1']
+  );
+
+  assert.deepEqual(slideOrderTransaction, {
+    kind: transaction.STUDIO_EDITOR_TRANSACTION_KIND,
+    version: transaction.STUDIO_EDITOR_TRANSACTION_VERSION,
+    operations: [{
+      type: 'slide-order',
+      before: ['slide-1', 'slide-2'],
+      after: ['slide-2', 'slide-1']
+    }]
+  });
+  assert.equal(transaction.createStudioSlideOrderTransaction(['slide-1'], ['slide-2']), null);
+  assert.equal(transaction.createStudioSlideOrderTransaction(['slide-1'], ['slide-1']), null);
+});
+
+test('applyStudioEditorTransaction replays slide-order operations without resolving element ids', () => {
+  const order = [];
+  const slideOrderTransaction = transaction.createStudioSlideOrderTransaction(
+    ['slide-1', 'slide-2'],
+    ['slide-2', 'slide-1']
+  );
+
+  assert.deepEqual(transaction.applyStudioEditorTransaction(slideOrderTransaction, 'redo', {
+    getElementById() {
+      throw new Error('slide-order should not resolve an element');
+    },
+    applySlideOrderState(slideIds) {
+      order.push(slideIds);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'redo'
+  });
+  assert.deepEqual(transaction.applyStudioEditorTransaction(slideOrderTransaction, 'undo', {
+    applySlideOrderState(slideIds) {
+      order.push(slideIds);
+      return true;
+    }
+  }), {
+    didApply: true,
+    appliedCount: 1,
+    direction: 'undo'
+  });
+  assert.deepEqual(order, [
+    ['slide-2', 'slide-1'],
+    ['slide-1', 'slide-2']
+  ]);
+});
+
 test('applyStudioEditorTransaction replays active-slide operations without resolving an element', () => {
   const activeSlideIds = [];
   const activeSlideTransaction = transaction.createStudioActiveSlideTransaction('slide-1', 'slide-2');

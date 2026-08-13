@@ -3057,6 +3057,9 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
@@ -6832,6 +6835,18 @@
             if (typeof makeElementsHoverable === 'function') {
               makeElementsHoverable(element);
             }
+            return true;
+          },
+          applySlideOrderState: (slideIds) => {
+            if (!Array.isArray(slideIds)) return false;
+            const resolvedDoc = sourceDoc || getIframeDoc();
+            const slidesContainer = resolvedDoc && typeof resolvedDoc.getElementById === 'function'
+              ? resolvedDoc.getElementById('slidesContainer')
+              : null;
+            if (!slidesContainer || typeof slidesContainer.appendChild !== 'function') return false;
+            const slideElements = slideIds.map((slideId) => getSlideById(slideId, resolvedDoc));
+            if (slideElements.some((slide) => !slide)) return false;
+            slideElements.forEach((slide) => slidesContainer.appendChild(slide));
             return true;
           }
         });

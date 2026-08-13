@@ -436,6 +436,15 @@
     const draggedNode = slides[fromIndex];
     const targetNode = slides[toIndex];
     if (!draggedNode || !targetNode || fromIndex === toIndex) return false;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : (slide) => slide && slide.id || '';
+    const createStudioSlideOrderTransaction = typeof options.createStudioSlideOrderTransaction === 'function'
+      ? options.createStudioSlideOrderTransaction
+      : null;
+    const beforeSlideIds = createStudioSlideOrderTransaction
+      ? slides.map(getSlideId)
+      : null;
 
     const buildCanonicalReorderSlideDeck = typeof options.buildCanonicalReorderSlideDeck === 'function'
       ? options.buildCanonicalReorderSlideDeck
@@ -456,7 +465,7 @@
           sourceDocument: iframeDoc,
           sourceSlide: draggedNode,
           targetSlide: targetNode,
-          getSlideId: options.getSlideId
+          getSlideId
         })
       : null;
     if (canonicalDeckBeforeReorder && !canonicalDeckAfterReorder) return false;
@@ -472,6 +481,20 @@
     const beforeNode = fromIndex < toIndex ? targetNode.nextSibling : targetNode;
     const mutation = applyReorder(container, draggedNode, beforeNode);
     if (!mutation || !mutation.didApply) return false;
+    const afterSlideIds = beforeSlideIds
+      ? (() => {
+          const reorderedSlideIds = beforeSlideIds.slice();
+          const [movedSlideId] = reorderedSlideIds.splice(fromIndex, 1);
+          reorderedSlideIds.splice(toIndex, 0, movedSlideId);
+          return reorderedSlideIds;
+        })()
+      : null;
+    const slideOrderTransaction = createStudioSlideOrderTransaction
+      ? createStudioSlideOrderTransaction(beforeSlideIds, afterSlideIds)
+      : null;
+    const appliedMutation = slideOrderTransaction
+      ? { ...mutation, transaction: slideOrderTransaction }
+      : mutation;
 
     if (typeof options.generateThumbnails === 'function') {
       options.generateThumbnails();
@@ -494,12 +517,12 @@
       ? invokeStudioSlideCommandFinalizer(
           finalizeMutation,
           'Auto: Reordered Slides',
-          mutation.transaction,
+          appliedMutation.transaction,
           canonicalDeckAfterReorder
         )
-      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Reordered Slides', mutation.transaction);
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Reordered Slides', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
         options.generateThumbnails();
       }

@@ -177,6 +177,16 @@
                 preserveSelection: true
               }) !== false;
             },
+            applySlideOrderState: (slideIds) => {
+              if (!Array.isArray(slideIds)) return false;
+              const slidesContainer = resolveElementById('slides-container', iframeDoc);
+              if (!slidesContainer || typeof slidesContainer.appendChild !== 'function') return false;
+              const slideElements = slideIds.map((slideId) => resolveElementById(`slide:${slideId}`, iframeDoc));
+              if (slideElements.some((slide) => !slide)) return false;
+              slideElements.forEach((slide) => slidesContainer.appendChild(slide));
+              generateThumbnails();
+              return true;
+            },
             applyVisibilityState: elementStateApi
               && typeof elementStateApi.applyStudioElementVisibilityState === 'function'
               ? elementStateApi.applyStudioElementVisibilityState

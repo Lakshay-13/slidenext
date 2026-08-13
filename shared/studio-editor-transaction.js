@@ -40,6 +40,18 @@
     return '';
   }
 
+  function normalizeTransactionIdList(values) {
+    if (!Array.isArray(values)) return [];
+    const seenIds = new Set();
+    return values.reduce((ids, value) => {
+      const id = typeof value === 'string' ? value.trim() : '';
+      if (!id || seenIds.has(id)) return ids;
+      seenIds.add(id);
+      ids.push(id);
+      return ids;
+    }, []);
+  }
+
   function createStudioStyleTransaction(items = [], options = {}) {
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
@@ -357,6 +369,28 @@
     };
   }
 
+  function createStudioSlideOrderTransaction(beforeSlideIds, afterSlideIds) {
+    const before = normalizeTransactionIdList(beforeSlideIds);
+    const after = normalizeTransactionIdList(afterSlideIds);
+    if (before.length === 0 || before.length !== after.length
+      || before.every((slideId, index) => slideId === after[index])) {
+      return null;
+    }
+    const beforeSet = new Set(before);
+    if (beforeSet.size !== after.length || after.some((slideId) => !beforeSet.has(slideId))) {
+      return null;
+    }
+    return {
+      kind: STUDIO_EDITOR_TRANSACTION_KIND,
+      version: STUDIO_EDITOR_TRANSACTION_VERSION,
+      operations: [{
+        type: 'slide-order',
+        before,
+        after
+      }]
+    };
+  }
+
   function normalizeStudioEditorTransaction(transaction) {
     if (!transaction || typeof transaction !== 'object') return null;
     if (transaction.kind !== STUDIO_EDITOR_TRANSACTION_KIND
@@ -400,6 +434,8 @@
             }])
         : operation.type === 'active-slide'
           ? createStudioActiveSlideTransaction(operation.before, operation.after)
+        : operation.type === 'slide-order'
+          ? createStudioSlideOrderTransaction(operation.before, operation.after)
           : null;
       if (nextTransaction) {
         nextOperations.push(...nextTransaction.operations);
@@ -444,8 +480,14 @@
               }
           : operation.type === 'markup'
             ? { ...operation }
-          : operation.type === 'active-slide'
-            ? { ...operation }
+        : operation.type === 'active-slide'
+          ? { ...operation }
+          : operation.type === 'slide-order'
+            ? {
+                type: 'slide-order',
+                before: [...operation.before],
+                after: [...operation.after]
+              }
           : {
               type: 'style',
               elementId: operation.elementId,
@@ -466,6 +508,8 @@
         existingOperation.after = operation.after;
       } else if (operation.type === 'active-slide') {
         existingOperation.after = operation.after;
+      } else if (operation.type === 'slide-order') {
+        existingOperation.after = [...operation.after];
       } else {
         existingOperation.before = {
           ...operation.before,
@@ -498,6 +542,9 @@
     const applyActiveSlideState = typeof options.applyActiveSlideState === 'function'
       ? options.applyActiveSlideState
       : null;
+    const applySlideOrderState = typeof options.applySlideOrderState === 'function'
+      ? options.applySlideOrderState
+      : null;
     if (!normalizedTransaction || !nextDirection) {
       return {
         didApply: false,
@@ -508,7 +555,9 @@
 
     const resolvedOperations = normalizedTransaction.operations.map((operation) => ({
       operation,
-      element: operation.type === 'active-slide' ? null : getElementById(operation.elementId)
+      element: operation.type === 'active-slide' || operation.type === 'slide-order'
+        ? null
+        : getElementById(operation.elementId)
     }));
     const applyVisibilityState = typeof options.applyVisibilityState === 'function'
       ? options.applyVisibilityState
@@ -518,7 +567,10 @@
       : null;
     if (resolvedOperations.some(({ operation, element }) => {
       return (operation.type === 'active-slide' && !applyActiveSlideState)
-        || (operation.type !== 'active-slide' && !element)
+        || (operation.type === 'slide-order' && !applySlideOrderState)
+        || (operation.type !== 'active-slide'
+          && operation.type !== 'slide-order'
+          && !element)
         || (operation.type === 'style' && !element.style)
         || (operation.type === 'dataset' && !element.dataset)
         || (operation.type === 'visibility' && !applyVisibilityState)
@@ -535,6 +587,10 @@
       if (operation.type === 'active-slide') {
         const slideId = direction === 'undo' ? operation.before : operation.after;
         return applyActiveSlideState(slideId) !== false;
+      }
+      if (operation.type === 'slide-order') {
+        const slideIds = direction === 'undo' ? operation.before : operation.after;
+        return applySlideOrderState(slideIds) !== false;
       }
       if (operation.type === 'property') {
         element[operation.property] = direction === 'undo' ? operation.before : operation.after;
@@ -603,6 +659,7 @@
     STUDIO_EDITOR_TRANSACTION_VERSION,
     normalizeStylePatch,
     normalizeTransactionValue,
+    normalizeTransactionIdList,
     createStudioStyleTransaction,
     createStudioPositionTransaction,
     applyStudioPositionLayoutWithTransaction,
@@ -612,6 +669,7 @@
     createStudioMarkupTransaction,
     createStudioMarkupTransactionCapture,
     createStudioActiveSlideTransaction,
+    createStudioSlideOrderTransaction,
     normalizeVisibilityState,
     normalizeStudioEditorTransaction,
     isStudioEditorTransaction,

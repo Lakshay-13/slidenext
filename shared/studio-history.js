@@ -916,6 +916,9 @@
     const applyActiveSlideState = typeof options.applyActiveSlideState === 'function'
       ? options.applyActiveSlideState
       : null;
+    const applySlideOrderState = typeof options.applySlideOrderState === 'function'
+      ? options.applySlideOrderState
+      : null;
     const applyMarkupState = typeof options.applyMarkupState === 'function'
       ? options.applyMarkupState
       : () => false;
@@ -928,6 +931,7 @@
           getElementById,
           applyVisibilityState,
           applyActiveSlideState,
+          applySlideOrderState,
           applyMarkupState
         }
       );
@@ -961,6 +965,7 @@
               getElementById,
               applyVisibilityState,
               applyActiveSlideState,
+              applySlideOrderState,
               applyMarkupState
             }
           );

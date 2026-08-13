@@ -34,6 +34,11 @@ test('slide reorder controller assembles canonical and persistence dependencies'
       }
     },
     canonicalDeckApi: { id: 'canonical-api' },
+    transactionApi: {
+      createStudioSlideOrderTransaction() {
+        return { type: 'slide-order' };
+      }
+    },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     getSlides: () => [{ id: 'slide-1' }],
@@ -60,6 +65,7 @@ test('slide reorder controller assembles canonical and persistence dependencies'
   assert.equal(calls[1][3].getIframeDoc().id, 'doc');
   assert.equal(calls[1][3].getSlides()[0].id, 'slide-1');
   assert.equal(calls[1][3].getSlideId({ id: 'slide-2' }), 'slide-2');
+  assert.equal(typeof calls[1][3].createStudioSlideOrderTransaction, 'function');
   assert.equal(calls[1][3].captureSlideMutationState().id, 'restore');
   assert.deepEqual(
     calls[1][3].buildCanonicalReorderSlideBaseline(),

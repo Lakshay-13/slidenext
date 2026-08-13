@@ -832,6 +832,39 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
   ]);
 });
 
+test('reorderStudioSlideNodes prefers a structured slide-order transaction when ids are available', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const firstSlide = { id: 'slide-1', nextSibling: null };
+  const secondSlide = { id: 'slide-2', nextSibling: null };
+  let slides = [firstSlide, secondSlide];
+  let finalizedTransaction = null;
+
+  const result = slideCommands.reorderStudioSlideNodes(0, 1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => container,
+    getSlides: () => slides,
+    getSlideId: (slide) => slide.id,
+    createStudioSlideOrderTransaction: studioTransaction.createStudioSlideOrderTransaction,
+    buildCanonicalReorderSlideDeck: () => ({ slides: [{ id: 'slide-2' }, { id: 'slide-1' }] }),
+    captureSlideMutationState: () => ({}),
+    applyReorder: () => {
+      slides = [secondSlide, firstSlide];
+      return { didApply: true, transaction: { type: 'legacy-markup' } };
+    },
+    finalizeMutation: (_label, nextTransaction) => {
+      finalizedTransaction = nextTransaction;
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(finalizedTransaction.operations, [{
+    type: 'slide-order',
+    before: ['slide-1', 'slide-2'],
+    after: ['slide-2', 'slide-1']
+  }]);
+});
+
 test('reorderStudioSlideNodes fails closed before DOM reorder when canonical reordering is unavailable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
