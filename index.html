@@ -12235,80 +12235,24 @@
       const versionRestoreController = typeof SlideNextStudioEditorVersionRestoreController !== 'undefined'
         ? SlideNextStudioEditorVersionRestoreController
         : null;
-      if (versionRestoreController
-        && typeof versionRestoreController.restoreStudioVersion === 'function') {
-        return versionRestoreController.restoreStudioVersion({
-          filename,
-          confirmAction: confirm,
-          createVersionActionContext: createCurrentStudioVersionActionContext,
-          versionActionsApi: SlideNextStudioVersionActions,
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          applyRestoreSuccess: applyCurrentStudioRestoreVersionSuccess,
-          applyFailure: applyCurrentStudioVersionActionFailure,
-          hideVersionsDropdown: hideCurrentStudioVersionsDropdown,
-          relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
-            launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
-          },
-          alertAction: alert
-        });
+      if (!versionRestoreController
+        || typeof versionRestoreController.restoreStudioVersion !== 'function') {
+        return false;
       }
-      if (!confirm(`Are you sure you want to restore to version: ${filename}? Unsaved work will be overwritten.`)) {
-        return;
-      }
-      const restoreContext = createCurrentStudioVersionActionContext();
-      const createStudioRestoreVersionRequestExecutor = (
-        typeof SlideNextStudioVersionActions !== 'undefined'
-        && SlideNextStudioVersionActions
-        && typeof SlideNextStudioVersionActions.createStudioRestoreVersionRequestExecutor === 'function'
-      )
-        ? SlideNextStudioVersionActions.createStudioRestoreVersionRequestExecutor
-        : null;
-      const executeRestoreVersionRequest = createStudioRestoreVersionRequestExecutor
-        ? createStudioRestoreVersionRequestExecutor({
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          executeRestoreVersionRequest: (
-            typeof SlideNextStudioVersionActions !== 'undefined'
-            && SlideNextStudioVersionActions
-            && typeof SlideNextStudioVersionActions.executeStudioRestoreVersionRequest === 'function'
-          )
-            ? SlideNextStudioVersionActions.executeStudioRestoreVersionRequest
-            : null
-        })
-        : (versionFilename, nextContext) => SlideNextStudioVersionActions.executeStudioRestoreVersionRequest(
-          versionFilename,
-          nextContext,
-          createCurrentStudioVersionRequestOptions()
-        );
-      
-      try {
-        const data = await executeRestoreVersionRequest(
-          filename,
-          restoreContext
-        );
-        if (data.success) {
-          applyCurrentStudioRestoreVersionSuccess(restoreContext, {
-            onSuccess: () => {
-              alert('Rollback successfully restored!');
-            },
-            hideVersionsDropdown: hideCurrentStudioVersionsDropdown,
-            relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
-              launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
-            }
-          });
-        } else {
-          applyCurrentStudioVersionActionFailure(restoreContext, {
-            onFailure: () => {
-              alert(`Restore failed: ${data.error}`);
-            }
-          });
-        }
-      } catch (err) {
-        applyCurrentStudioVersionActionFailure(restoreContext, {
-          onFailure: () => {
-            alert(`Network error restoring version: ${err.message}`);
-          }
-        });
-      }
+      return versionRestoreController.restoreStudioVersion({
+        filename,
+        confirmAction: confirm,
+        createVersionActionContext: createCurrentStudioVersionActionContext,
+        versionActionsApi: SlideNextStudioVersionActions,
+        createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+        applyRestoreSuccess: applyCurrentStudioRestoreVersionSuccess,
+        applyFailure: applyCurrentStudioVersionActionFailure,
+        hideVersionsDropdown: hideCurrentStudioVersionsDropdown,
+        relaunchEditor: (presentationUrl, presentationTitle, presentationCategory) => {
+          launchStudioEditor(presentationUrl, presentationTitle, presentationCategory);
+        },
+        alertAction: alert
+      });
     }
 
     function promptRenameVersion(filename, currentLabel) {
