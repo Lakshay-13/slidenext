@@ -11,6 +11,7 @@ const buildStateAction = require('../shared/studio-editor-persistable-deck-build
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
+const persistenceFailureAction = require('../shared/studio-editor-persistence-failure-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -218,6 +219,14 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 }
 
 function loadApplyCurrentStudioPersistenceFailure(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceFailureAction =
+    persistenceFailureAction.createStudioEditorPersistenceFailureAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getCreateHandlerOptions: () => context.createCurrentStudioPersistenceHandlerOptions || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function applyCurrentStudioPersistenceFailure(persistenceContext, options = {}) {',
