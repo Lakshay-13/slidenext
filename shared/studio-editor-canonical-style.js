@@ -173,13 +173,7 @@
       const element = selection[0];
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{
         id: resolveElementId(element, getElementId),
-        attributes: {
-          src: element && typeof element.getAttribute === 'function'
-            ? element.getAttribute('src') || `${value}`
-            : element && typeof element.src === 'string'
-              ? element.src
-              : `${value}`
-        }
+        attributes: { src: `${value}` }
       }]));
     }
 

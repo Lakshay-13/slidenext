@@ -193,7 +193,7 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
   assert.equal(sourceDeck.slides[0].nodes[0].text, 'Before');
 
   const sourceDeckUpdate = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'src', value: 'fallback.png' });
-  assert.equal(sourceDeckUpdate.slides[0].nodes[0].attributes.src, 'after.png');
+  assert.equal(sourceDeckUpdate.slides[0].nodes[0].attributes.src, 'fallback.png');
 
   const styleDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'color', value: '#ffffff' });
   assert.equal(styleDeck.slides[0].nodes[0].style, 'color: #ffffff;');
@@ -279,6 +279,23 @@ test('buildStudioCanonicalStyleMutation uses the requested chart title without r
 
   assert.equal(buildCalls, 0);
   assert.equal(result.slides[0].nodes[0].attributes['data-chart-title'], 'Updated trend');
+});
+
+test('buildStudioCanonicalStyleMutation uses the requested image source instead of stale DOM state', () => {
+  const sourceDeck = createSourceDeck();
+  const element = createElement();
+  element.src = 'stale-dom-source.png';
+
+  const result = canonicalStyle.buildStudioCanonicalStyleMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    selection: [element],
+    prop: 'src',
+    value: 'assets/requested-source.png',
+    getElementId: (node) => node.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].attributes.src, 'assets/requested-source.png');
 });
 
 test('buildStudioCanonicalStyleMutation fails closed when the canonical style mutation throws', () => {
