@@ -16,6 +16,7 @@ const slideReorderTransaction = require('../shared/studio-editor-slide-reorder-t
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const slideMutationRollback = require('../shared/studio-editor-slide-mutation-rollback.js');
 const slideMutationRollbackAdapter = require('../shared/studio-editor-slide-mutation-rollback-adapter.js');
+const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const deckView = require('../shared/studio-deck-view.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
@@ -28,9 +29,9 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 test('editor composes committed selection restore through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorCommittedSelectionRestorer =/);
-  assert.match(source, /restoreCommittedStudioSelectionByIdsOnActiveSlide/);
-  assert.match(source, /if \(typeof studioEditorCommittedSelectionRestorer !== 'function'\)/);
+  assert.match(source, /const studioEditorCommittedSelectionRestoreAdapter =/);
+  assert.match(source, /restoreStudioEditorCommittedSelectionByIdsOnActiveSlide/);
+  assert.match(source, /if \(!restoreSelection\) return false/);
   assert.doesNotMatch(source, /restoreCommittedSelectionByIdsOnActiveSlide\.restorer/);
 });
 
@@ -245,9 +246,10 @@ function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
 function loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorCommittedSelectionRestorer =',
-    '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
+    'const studioEditorCommittedSelectionRestoreAdapter =',
+    '\n\n    const studioEditorPreservedSelectionRestorer ='
   );
+  context.SlideNextStudioEditorCommittedSelectionRestoreAdapter = committedSelectionRestoreAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -729,14 +731,7 @@ test('restoreCommittedSelectionByIdsOnActiveSlide fails closed when the shared s
   };
 
   vm.createContext(context);
-  vm.runInContext(
-    extractFunctionSource(
-      fileContent,
-      'const studioEditorCommittedSelectionRestorer =',
-      '\n\n    function restoreSelectionAfterPreservedSlideMutation(selectedIds, doc = getIframeDoc()) {'
-    ),
-    context
-  );
+  loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context);
 
   assert.equal(context.restoreCommittedSelectionByIdsOnActiveSlide(['node-1'], { id: 'doc' }), false);
 });

@@ -10,6 +10,7 @@ const selectionStateAdapter = require('../shared/studio-editor-selection-state-a
 const selectionCommitAdapter = require('../shared/studio-editor-selection-commit-adapter.js');
 const selectionClassAdapter = require('../shared/studio-editor-selection-class-adapter.js');
 const selectionRestoreAdapter = require('../shared/studio-editor-selection-restore-adapter.js');
+const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -53,6 +54,14 @@ test('editor composes active-slide selection restore through the shared selectio
   assert.match(source, /restoreStudioEditorSelectionByIdsOnActiveSlide/);
   assert.match(source, /if \(!restoreSelection\) return false/);
   assert.doesNotMatch(source, /restoreSelectionByIdsOnActiveSlide\.restorer/);
+});
+
+test('editor composes committed selection restore through the shared selection API', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.match(source, /const studioEditorCommittedSelectionRestoreAdapter =/);
+  assert.match(source, /restoreStudioEditorCommittedSelectionByIdsOnActiveSlide/);
+  assert.match(source, /if \(!restoreSelection\) return false/);
 });
 
 test('editor composes committed selection ID reading through the shared selection API', () => {
@@ -244,9 +253,10 @@ function loadRestoreSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'const studioEditorSelectionRestoreAdapter =',
-    '\n\n    function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {'
+    '\n\n    const studioEditorPreservedSelectionRestorer ='
   );
   context.SlideNextStudioEditorSelectionRestoreAdapter = selectionRestoreAdapter;
+  context.SlideNextStudioEditorCommittedSelectionRestoreAdapter = committedSelectionRestoreAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -292,6 +302,62 @@ test('restoreSelectionByIdsOnActiveSlide fails closed when shared selection is u
   loadRestoreSelectionByIdsOnActiveSlide(fileContent, context);
 
   assert.equal(context.restoreSelectionByIdsOnActiveSlide(['node-1'], { id: 'doc' }), false);
+});
+
+test('restoreCommittedSelectionByIdsOnActiveSlide delegates shared restore options', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { id: 'doc' };
+  const selectedIds = ['node-1'];
+  const nextSelectionState = { restored: true };
+  let delegatedArgs = null;
+  const context = {
+    SlideNextStudioEditorSelection: {
+      restoreCommittedStudioSelectionByIdsOnActiveSlide(...args) {
+        delegatedArgs = args;
+        return nextSelectionState;
+      }
+    },
+    getEditorSelectionOptions(options) {
+      return { doc: options.doc, selectionOptions: true };
+    },
+    applyEditorSelectionState() {},
+    syncSelectionOverlay() {},
+    hideDragHud() {},
+    syncInspectorForSelection() {},
+    updateLayersList() {}
+  };
+
+  vm.createContext(context);
+  loadRestoreSelectionByIdsOnActiveSlide(fileContent, context);
+
+  assert.equal(
+    context.restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, iframeDoc, {
+      hideDragHudOnClear: true
+    }),
+    true
+  );
+  assert.equal(delegatedArgs[0], selectedIds);
+  assert.equal(delegatedArgs[1], iframeDoc);
+  assert.equal(delegatedArgs[2].doc, iframeDoc);
+  assert.equal(delegatedArgs[2].selectionOptions, true);
+  assert.equal(delegatedArgs[2].applySelectionState, context.applyEditorSelectionState);
+  assert.equal(delegatedArgs[2].syncSelectionOverlay, context.syncSelectionOverlay);
+  assert.equal(delegatedArgs[2].hideDragHud, context.hideDragHud);
+  assert.equal(delegatedArgs[2].hideDragHudOnClear, true);
+  assert.equal(delegatedArgs[2].syncInspectorForSelection, context.syncInspectorForSelection);
+  assert.equal(delegatedArgs[2].updateLayersList, context.updateLayersList);
+});
+
+test('restoreCommittedSelectionByIdsOnActiveSlide fails closed when shared selection is unavailable', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const context = {
+    SlideNextStudioEditorSelection: null
+  };
+
+  vm.createContext(context);
+  loadRestoreSelectionByIdsOnActiveSlide(fileContent, context);
+
+  assert.equal(context.restoreCommittedSelectionByIdsOnActiveSlide(['node-1'], { id: 'doc' }), false);
 });
 
 test('commitEditorSelectionState delegates to the shared selection commit helper', () => {

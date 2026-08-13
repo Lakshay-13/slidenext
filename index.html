@@ -1661,6 +1661,7 @@
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
+  <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8551,28 +8552,41 @@
       return nextSelectionState.restored;
     }
 
-    const studioEditorCommittedSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide === 'function'
-      ? (selectedIds, doc, options = {}) => SlideNextStudioEditorSelection.restoreCommittedStudioSelectionByIdsOnActiveSlide(
-          selectedIds,
-          doc,
-          {
-            ...getEditorSelectionOptions({ doc }),
-            applySelectionState: applyEditorSelectionState,
-            syncSelectionOverlay,
-            hideDragHud,
-            hideDragHudOnClear: !!options.hideDragHudOnClear,
-            syncInspectorForSelection,
-            updateLayersList
-          }
-        )
+    const studioEditorCommittedSelectionRestoreAdapter = typeof SlideNextStudioEditorCommittedSelectionRestoreAdapter !== 'undefined'
+      && SlideNextStudioEditorCommittedSelectionRestoreAdapter
+      && typeof SlideNextStudioEditorCommittedSelectionRestoreAdapter.restoreStudioEditorCommittedSelectionByIdsOnActiveSlide === 'function'
+      ? SlideNextStudioEditorCommittedSelectionRestoreAdapter
       : null;
 
     function restoreCommittedSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc(), options = {}) {
-      if (typeof studioEditorCommittedSelectionRestorer !== 'function') return false;
-      const nextSelectionState = studioEditorCommittedSelectionRestorer(selectedIds, doc, options);
-      return nextSelectionState.restored;
+      const restoreSelection = studioEditorCommittedSelectionRestoreAdapter
+        && typeof studioEditorCommittedSelectionRestoreAdapter.restoreStudioEditorCommittedSelectionByIdsOnActiveSlide === 'function'
+        ? studioEditorCommittedSelectionRestoreAdapter.restoreStudioEditorCommittedSelectionByIdsOnActiveSlide
+        : null;
+      if (!restoreSelection) return false;
+      const nextSelectionState = restoreSelection(
+        selectedIds,
+        doc,
+        {
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          getSelectionOptions: () => getEditorSelectionOptions({ doc }),
+          applySelectionState: typeof applyEditorSelectionState === 'function'
+            ? applyEditorSelectionState
+            : null,
+          syncSelectionOverlay: typeof syncSelectionOverlay === 'function'
+            ? syncSelectionOverlay
+            : null,
+          hideDragHud: typeof hideDragHud === 'function' ? hideDragHud : null,
+          hideDragHudOnClear: !!options.hideDragHudOnClear,
+          syncInspectorForSelection: typeof syncInspectorForSelection === 'function'
+            ? syncInspectorForSelection
+            : null,
+          updateLayersList: typeof updateLayersList === 'function' ? updateLayersList : null
+        }
+      );
+      return nextSelectionState ? nextSelectionState.restored : false;
     }
 
     const studioEditorPreservedSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'
