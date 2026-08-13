@@ -22,6 +22,7 @@
     return {
       transactionApi: options.transactionApi || null,
       elementStateApi: options.elementStateApi || null,
+      canonicalStateApi: options.canonicalStateApi || null,
       getIframeDoc,
       getCurrentSlideIndex: getFunction('getCurrentSlideIndex') || (() => 0),
       resolveElementById: (editorId, iframeDoc) => {

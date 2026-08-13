@@ -299,11 +299,16 @@
           && typeof restoreApi.createStudioEditorHistoryRestoreStateAdapter === 'function'
           ? restoreApi.createStudioEditorHistoryRestoreStateAdapter
           : null;
+        const resolvedRestoreHandlerOptions = restoreHandlerOptions();
         restoreHandler = createRestoreAdapter
           ? createRestoreAdapter({
               restoreApi,
               historyApi,
-              ...restoreHandlerOptions()
+              ...(resolvedRestoreHandlerOptions
+                && typeof resolvedRestoreHandlerOptions === 'object'
+                ? resolvedRestoreHandlerOptions
+                : {}),
+              canonicalStateApi
             })
           : null;
       }

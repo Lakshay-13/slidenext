@@ -85,6 +85,7 @@ test('history controller forwards history steps and restore entries', () => {
   const steps = [];
   const restores = [];
   const pendingTransactions = [];
+  const canonicalStateApi = { id: 'canonical-state-api' };
   const historyApi = {
     createStudioHistoryStepRunner(options) {
       pendingTransactions.push(options.hasPendingHistory());
@@ -97,6 +98,7 @@ test('history controller forwards history steps and restore entries', () => {
   };
   const restoreApi = {
     createStudioEditorHistoryRestoreStateAdapter(options) {
+      restores.push(['options', options]);
       return (entry, historyStep) => {
         restores.push([entry, historyStep, options.marker]);
         return { didRestore: true };
@@ -106,6 +108,7 @@ test('history controller forwards history steps and restore entries', () => {
   const controller = historyController.createStudioEditorHistoryController({
     historyApi,
     historyStateApi: historyState,
+    canonicalStateApi,
     restoreApi,
     restoreHandlerOptions: { marker: 'restore-options' }
   });
@@ -115,6 +118,12 @@ test('history controller forwards history steps and restore entries', () => {
   assert.deepEqual(steps, ['didUndo', 'didRedo']);
   assert.deepEqual(pendingTransactions, [false, false]);
   assert.deepEqual(restores, [
+    ['options', {
+      restoreApi,
+      historyApi,
+      marker: 'restore-options',
+      canonicalStateApi
+    }],
     [{ id: 'didUndo' }, { id: 'step' }, 'restore-options'],
     [{ id: 'didRedo' }, { id: 'step' }, 'restore-options']
   ]);

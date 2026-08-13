@@ -40,8 +40,10 @@ test('history restore options expose canonical rebuild and view callbacks', () =
   const buildCalls = [];
   const buildViewCalls = [];
   const buildDeckSourceHtml = () => '<main>canonical</main>';
+  const canonicalStateApi = { id: 'canonical-state-api' };
   const options = restoreOptions.createStudioEditorHistoryRestoreOptions({
     getIframeDoc: () => iframeDoc,
+    canonicalStateApi,
     buildEditorCanonicalDeck(doc) {
       buildCalls.push(doc);
       return canonicalDeck;
@@ -57,6 +59,7 @@ test('history restore options expose canonical rebuild and view callbacks', () =
   assert.equal(options.buildCanonicalDeck(), canonicalDeck);
   assert.deepEqual(buildCalls, [iframeDoc]);
   assert.equal(options.isCanonicalDeck, validator);
+  assert.equal(options.canonicalStateApi, canonicalStateApi);
 
   const historyEntry = { activeSlideId: 'slide-2', canonicalDeck };
   assert.deepEqual(options.buildDeckViewOptions(historyEntry), {
