@@ -7,6 +7,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioGroup = require('../shared/studio-editor-group.js');
 const groupMutation = require('../shared/studio-editor-group-mutation.js');
 const groupTransaction = require('../shared/studio-editor-group-transaction.js');
+const ungroupTransaction = require('../shared/studio-editor-ungroup-transaction.js');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
@@ -51,6 +52,7 @@ function loadUngroupMutationHelper(fileContent, context) {
     ...(context.SlideNextStudioEditorGroup || {})
   };
   context.SlideNextStudioEditorGroupMutation = groupMutation;
+  context.SlideNextStudioEditorUngroupTransaction = ungroupTransaction;
   vm.runInContext(helperSource, context);
 }
 
