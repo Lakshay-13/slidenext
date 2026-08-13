@@ -3440,23 +3440,26 @@ test('resolveInlineTextEditTarget fails closed when the shared inline-edit modul
   assert.equal(context.resolveInlineTextEditTarget({}, {}), null);
 });
 
-test('editor composes blank-slide creation through the shared DOM module', () => {
+test('editor composes blank-slide creation through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /const studioEditorBlankSlideAdapter =/);
+  assert.match(source, /SlideNextStudioEditorBlankSlideAdapter/);
   assert.match(source, /const studioEditorBlankSlideFactory =/);
   assert.match(source, /typeof studioEditorBlankSlideFactory === 'function'/);
   assert.doesNotMatch(source, /createBlankSlide: \(doc\) => SlideNextStudioEditorDom\.createStudioBlankSlide/);
 });
 
-test('blank-slide factory delegates the document and creation options to the shared DOM module', () => {
+test('blank-slide factory delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const blankSlideFactorySource = extractFunctionSource(
     fileContent,
-    'const studioEditorBlankSlideFactory =',
+    'const studioEditorBlankSlideAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const calls = [];
   const context = {
+    SlideNextStudioEditorBlankSlideAdapter: require('../shared/studio-editor-blank-slide-adapter.js'),
     SlideNextStudioEditorDom: {
       createStudioBlankSlide(docValue, optionsValue) {
         calls.push([docValue, optionsValue]);
@@ -3480,11 +3483,11 @@ test('blank-slide factory delegates the document and creation options to the sha
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), { slideClassName: 'slide' });
 });
 
-test('blank-slide factory fails closed when the shared DOM module is unavailable', () => {
+test('blank-slide factory fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const blankSlideFactorySource = extractFunctionSource(
     fileContent,
-    'const studioEditorBlankSlideFactory =',
+    'const studioEditorBlankSlideAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const context = {

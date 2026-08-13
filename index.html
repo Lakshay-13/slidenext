@@ -1684,6 +1684,7 @@
   <script src="/shared/studio-editor-slide-editable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
   <script src="/shared/studio-editor-editable-target-adapter.js"></script>
+  <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -4334,10 +4335,24 @@
         )
       : null;
 
-    const studioEditorBlankSlideFactory = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorBlankSlideAdapter = typeof SlideNextStudioEditorBlankSlideAdapter !== 'undefined'
+      && SlideNextStudioEditorBlankSlideAdapter
+      && typeof SlideNextStudioEditorBlankSlideAdapter.createStudioEditorBlankSlide === 'function'
+      ? SlideNextStudioEditorBlankSlideAdapter
+      : null;
+
+    const studioEditorBlankSlideFactory = studioEditorBlankSlideAdapter
+      && typeof studioEditorBlankSlideAdapter.createStudioEditorBlankSlide === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.createStudioBlankSlide === 'function'
-      ? (doc, options) => SlideNextStudioEditorDom.createStudioBlankSlide(doc, options)
+      ? (doc, options) => studioEditorBlankSlideAdapter.createStudioEditorBlankSlide(
+          doc,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformShellRuntime !== 'undefined'
