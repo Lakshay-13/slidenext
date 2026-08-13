@@ -8,6 +8,7 @@ const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
 const layerOrderMutation = require('../shared/studio-editor-layer-order-mutation.js');
+const layerOrderTransaction = require('../shared/studio-editor-layer-order-transaction.js');
 const layerOrderRollback = require('../shared/studio-editor-layer-order-rollback.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -98,6 +99,7 @@ function loadLayerOrderMutationHelper(fileContent, context) {
     'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {'
   );
   context.SlideNextStudioEditorLayerOrderMutation = layerOrderMutation;
+  context.SlideNextStudioEditorLayerOrderTransaction = layerOrderTransaction;
   vm.runInContext(helperSource, context);
 }
 
