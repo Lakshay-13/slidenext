@@ -194,6 +194,54 @@ test('duplicateStudioSlideNode preserves canonical duplication and mutation life
   ]);
 });
 
+test('duplicateStudioSlideNode prefers a scoped slide-presence transaction when the clone is serializable', () => {
+  const doc = { id: 'editor-doc' };
+  const sourceSlide = {
+    classList: { remove() {} },
+    cloneNode() {
+      return duplicateSlide;
+    }
+  };
+  const duplicateSlide = {
+    outerHTML: '<section id="slide-2" class="slide"></section>',
+    classList: { remove() {} }
+  };
+  const targetSlide = { id: 'slide-3' };
+  const slides = [sourceSlide, targetSlide];
+  const finalizedTransactions = [];
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
+    getSlideContainer: () => ({ id: 'slides-container' }),
+    getSlides: () => slides,
+    getActiveSlide: () => sourceSlide,
+    assignSlideId: () => 'slide-2',
+    applyInsertion: () => ({ didApply: true, transaction: { type: 'legacy-markup' } }),
+    createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
+    finalizeMutation: (label, transaction) => {
+      assert.equal(label, 'Auto: Duplicated Slide');
+      finalizedTransactions.push(transaction);
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(finalizedTransactions, [{
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'slide-presence',
+      slideId: 'slide-2',
+      before: { exists: false, index: 1, markup: '' },
+      after: {
+        exists: true,
+        index: 1,
+        markup: '<section id="slide-2" class="slide"></section>'
+      }
+    }]
+  }]);
+});
+
 test('duplicateStudioSlideNode fails closed before DOM insertion when canonical duplication is unavailable', () => {
   const doc = { id: 'editor-doc' };
   const duplicateSlide = { classList: { remove() {} } };
@@ -265,7 +313,11 @@ test('duplicateStudioSlideNode rolls back DOM and active slide when persistence 
       return duplicateSlide;
     }
   };
-  const duplicateSlide = { id: 'slide-2', classList: { remove() {} } };
+  const duplicateSlide = {
+    id: 'slide-2',
+    outerHTML: '<section id="slide-2" class="slide"></section>',
+    classList: { remove() {} }
+  };
   const targetSlide = { id: 'slide-3' };
   let slides = [sourceSlide, targetSlide];
   const container = { id: 'slides-container' };
@@ -281,6 +333,7 @@ test('duplicateStudioSlideNode rolls back DOM and active slide when persistence 
     buildCanonicalDuplicateSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-3' }] }),
     buildCanonicalDuplicateSlideDeck: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }, { id: 'slide-3' }] }),
     saveHistoryState: () => {},
+    createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
     applyInsertion: () => {
       slides = [sourceSlide, duplicateSlide, targetSlide];
       return { didApply: true, transaction: { type: 'markup' } };
@@ -291,7 +344,8 @@ test('duplicateStudioSlideNode rolls back DOM and active slide when persistence 
       throw new Error('duplicate slide finalization failed');
     },
     rollbackMutation: (transaction, sourceDoc) => {
-      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(transaction.operations[0].type, 'slide-presence');
+      assert.equal(transaction.operations[0].slideId, 'slide-2');
       assert.equal(sourceDoc, doc);
       slides = [sourceSlide, targetSlide];
       calls.push('rollbackMutation');

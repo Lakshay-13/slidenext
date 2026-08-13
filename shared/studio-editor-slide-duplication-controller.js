@@ -17,6 +17,9 @@
     const deckImportApi = options.deckImportApi
       || (root && root.SlideNextDeckImport)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
@@ -72,6 +75,10 @@
     const rollbackMutation = typeof options.rollbackMutation === 'function'
       ? options.rollbackMutation
       : null;
+    const createStudioSlidePresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioSlidePresenceTransaction === 'function'
+      ? transactionApi.createStudioSlidePresenceTransaction
+      : null;
 
     function duplicate() {
       if (!duplicateStudioSlideNode) return false;
@@ -105,6 +112,7 @@
         sanitizeDuplicatedSubtree,
         assignSlideId,
         makeElementsHoverable,
+        createStudioSlidePresenceTransaction,
         buildCanonicalDuplicateSlideBaseline: canonicalDuplicateSlideBuilders
           ? canonicalDuplicateSlideBuilders.buildCanonicalDuplicateSlideBaseline
           : null,

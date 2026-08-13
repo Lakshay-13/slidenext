@@ -25,6 +25,9 @@ test('slide duplication controller assembles canonical and editor mutation depen
     deckImportApi: {
       importSlideToCanonicalSlide() {}
     },
+    transactionApi: {
+      createStudioSlidePresenceTransaction() {}
+    },
     canonicalDeckApi: { id: 'canonical-api' },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
@@ -59,6 +62,7 @@ test('slide duplication controller assembles canonical and editor mutation depen
   assert.equal(typeof options.sanitizeDuplicatedSubtree, 'function');
   assert.equal(options.assignSlideId(), 'slide-2');
   assert.equal(typeof options.makeElementsHoverable, 'function');
+  assert.equal(typeof options.createStudioSlidePresenceTransaction, 'function');
   assert.deepEqual(options.buildCanonicalDuplicateSlideBaseline(), { id: 'baseline' });
   assert.deepEqual(options.buildCanonicalDuplicateSlideDeck(), { slides: [] });
   assert.equal(typeof options.applyInsertion, 'function');

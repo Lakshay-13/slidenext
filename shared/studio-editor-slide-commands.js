@@ -115,6 +115,9 @@
     const duplicateSlide = duplicatePreparation.slide;
     const duplicateSlideId = duplicatePreparation.slideId;
     const insertionIndex = sourceIndex + 1;
+    const createStudioSlidePresenceTransaction = typeof options.createStudioSlidePresenceTransaction === 'function'
+      ? options.createStudioSlidePresenceTransaction
+      : null;
 
     const buildCanonicalDuplicateSlideBaseline = typeof options.buildCanonicalDuplicateSlideBaseline === 'function'
       ? options.buildCanonicalDuplicateSlideBaseline
@@ -163,6 +166,20 @@
       beforeNode: slides[insertionIndex] || null
     });
     if (!mutation || !mutation.didApply) return false;
+    const slidePresenceTransaction = createStudioSlidePresenceTransaction
+      ? createStudioSlidePresenceTransaction([{
+          slideId: duplicateSlideId,
+          before: { exists: false, index: insertionIndex, markup: '' },
+          after: {
+            exists: true,
+            index: insertionIndex,
+            markup: typeof duplicateSlide.outerHTML === 'string' ? duplicateSlide.outerHTML : ''
+          }
+        }])
+      : null;
+    const appliedMutation = slidePresenceTransaction
+      ? { ...mutation, transaction: slidePresenceTransaction }
+      : mutation;
 
     if (typeof options.generateThumbnails === 'function') {
       options.generateThumbnails();
@@ -180,12 +197,12 @@
       ? invokeStudioSlideCommandFinalizer(
           finalizeMutation,
           'Auto: Duplicated Slide',
-          mutation.transaction,
+          appliedMutation.transaction,
           canonicalDeckAfterDuplication
         )
-      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Duplicated Slide', mutation.transaction);
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Duplicated Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
         options.generateThumbnails();
       }
