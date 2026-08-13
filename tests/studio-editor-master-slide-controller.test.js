@@ -171,6 +171,29 @@ test('master slide mutations fall back when the live canonical baseline is inval
   assert.equal(didUseFallback, true);
 });
 
+test('master slide controller scopes the legacy baseline fallback to the current document', () => {
+  const documentRef = { id: 'master-frame' };
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Scoped' }]
+  });
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    getDocument: () => documentRef,
+    getCanonicalDeckBaseline: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return sourceDeck;
+    },
+    getCanonicalDeck: () => {
+      throw new Error('legacy baseline should satisfy the mutation');
+    },
+    getActiveSlideId: () => 'slide-1'
+  });
+
+  const result = controller.saveActiveSlide({ id: 'scoped-master' });
+
+  assert.equal(result.masterSlides[0].id, 'scoped-master');
+});
+
 test('master slide mutations require strict canonical baseline validation', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Fallback' }]
