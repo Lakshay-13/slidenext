@@ -29,5 +29,21 @@
     };
   }
 
-  return { createPresentationDashboardAccessors };
+  function createPresentationDashboardGlobalApi(options = {}) {
+    const accessors = options.accessors || createPresentationDashboardAccessors(options);
+
+    return {
+      setPresentationLibraryLoadingState: () => accessors.setLoadingState(),
+      loadPresentations: () => accessors.load(),
+      openCreatePresentationModal: () => accessors.openCreate(),
+      closeCreatePresentationModal: () => accessors.closeCreate(),
+      submitCreatePresentation: (event) => accessors.submitCreate(event),
+      filterCategory: (category) => accessors.filter(category)
+    };
+  }
+
+  return {
+    createPresentationDashboardAccessors,
+    createPresentationDashboardGlobalApi
+  };
 });

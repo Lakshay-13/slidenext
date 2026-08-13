@@ -70,6 +70,36 @@ test('dashboard accessors preserve command fallbacks without controllers', async
   assert.equal(await accessors.submitCreate({}), null);
 });
 
+test('dashboard global api preserves the editor shell function names', async () => {
+  const calls = [];
+  const accessors = {
+    setLoadingState: () => calls.push('loading'),
+    load: () => calls.push('load'),
+    filter: (category) => calls.push(['filter', category]),
+    openCreate: () => calls.push('open'),
+    closeCreate: () => calls.push('close'),
+    submitCreate: (event) => calls.push(['submit', event])
+  };
+  const globalApi = accessorsApi.createPresentationDashboardGlobalApi({ accessors });
+  const event = { id: 'event' };
+
+  globalApi.setPresentationLibraryLoadingState();
+  await globalApi.loadPresentations();
+  globalApi.filterCategory('Research');
+  globalApi.openCreatePresentationModal();
+  globalApi.closeCreatePresentationModal();
+  await globalApi.submitCreatePresentation(event);
+
+  assert.deepEqual(calls, [
+    'loading',
+    'load',
+    ['filter', 'Research'],
+    'open',
+    'close',
+    ['submit', event]
+  ]);
+});
+
 test('dashboard accessors publish the global consumed by the editor shell', () => {
   const context = { globalThis: {} };
   vm.runInNewContext(fs.readFileSync(ACCESSORS_PATH, 'utf8'), context);
@@ -78,6 +108,11 @@ test('dashboard accessors publish the global consumed by the editor shell', () =
   assert.equal(
     typeof context.globalThis.SlideNextPresentationDashboardAccessors
       .createPresentationDashboardAccessors,
+    'function'
+  );
+  assert.equal(
+    typeof context.globalThis.SlideNextPresentationDashboardAccessors
+      .createPresentationDashboardGlobalApi,
     'function'
   );
 });
@@ -91,4 +126,12 @@ test('editor loads dashboard accessors after the dashboard runtime', () => {
   );
   assert.match(fileContent, /createPresentationDashboardAccessors\(/);
   assert.match(fileContent, /presentationDashboardAccessors/);
+  assert.match(fileContent, /createPresentationDashboardGlobalApi\(/);
+  assert.match(fileContent, /Object\.assign\(globalThis, presentationDashboardGlobalApi\)/);
+  assert.doesNotMatch(fileContent, /function setPresentationLibraryLoadingState\(\)/);
+  assert.doesNotMatch(fileContent, /async function loadPresentations\(\)/);
+  assert.doesNotMatch(fileContent, /function openCreatePresentationModal\(\)/);
+  assert.doesNotMatch(fileContent, /function closeCreatePresentationModal\(\)/);
+  assert.doesNotMatch(fileContent, /async function submitCreatePresentation\(event\)/);
+  assert.doesNotMatch(fileContent, /function filterCategory\(cat\)/);
 });
