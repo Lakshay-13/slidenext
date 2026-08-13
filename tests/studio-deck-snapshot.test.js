@@ -579,6 +579,26 @@ test('createStudioDeckSnapshotBuilder prefers its explicit canonical builder ove
   assert.equal(buildDeckSnapshot(doc, buildOptions), explicitDeck);
 });
 
+test('createStudioDeckSnapshotBuilder prefers pending canonical state before rebuilding the document', () => {
+  const pendingCanonicalDeck = {
+    slides: [{ id: 'pending-slide', nodes: [] }]
+  };
+  let buildCalls = 0;
+  const buildDeckSnapshot = deckSnapshot.createStudioDeckSnapshotBuilder({
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      throw new Error('document rebuild should not be needed');
+    },
+    resolveCanonicalDeckViewState: () => null
+  });
+
+  const result = buildDeckSnapshot({ label: 'stale-document' });
+
+  assert.equal(result.slides[0].id, 'pending-slide');
+  assert.equal(buildCalls, 0);
+});
+
 test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides when requested', () => {
   const doc = { label: 'doc' };
   const slideElsById = new Map([

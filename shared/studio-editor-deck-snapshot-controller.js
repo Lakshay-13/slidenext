@@ -16,6 +16,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
@@ -92,6 +95,7 @@
       const buildDeckSnapshot = createDeckSnapshotBuilder({
         getDocument,
         buildCanonicalDeck,
+        getPendingCanonicalDeck,
         createDeckViewStateOptions,
         resolveCanonicalDeckViewState,
         resolveFallbackActiveSlideId,

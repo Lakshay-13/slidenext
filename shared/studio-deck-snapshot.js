@@ -198,6 +198,9 @@
     const resolveLiveActiveSlide = typeof options.resolveLiveActiveSlide === 'function'
       ? options.resolveLiveActiveSlide
       : undefined;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const buildDeckSnapshot = typeof options.buildDeckSnapshot === 'function'
       ? options.buildDeckSnapshot
       : buildStudioDeckSnapshot;
@@ -228,6 +231,16 @@
             }
           : {})
       });
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          if (isCanonicalDeckLike(pendingCanonicalDeck)) {
+            snapshotBuildOptions.canonicalDeck = pendingCanonicalDeck;
+          }
+        } catch (error) {
+          // Preserve the normal canonical and DOM snapshot fallbacks.
+        }
+      }
 
       return buildDeckSnapshot(doc, {
         includeLayers: !!buildOptions.includeLayers,
@@ -253,12 +266,16 @@
     const buildDomSnapshot = typeof options.buildDomSnapshot === 'function'
       ? options.buildDomSnapshot
       : (sourceDoc) => buildStudioDeckSnapshotFromDom(sourceDoc, options.domSnapshotOptions || options);
-    let canonicalDeck = null;
+    let canonicalDeck = isCanonicalDeckLike(options.canonicalDeck)
+      ? options.canonicalDeck
+      : null;
     if (buildCanonicalDeck) {
-      try {
-        canonicalDeck = buildCanonicalDeck(doc);
-      } catch (err) {
-        canonicalDeck = null;
+      if (!canonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(doc);
+        } catch (err) {
+          canonicalDeck = null;
+        }
       }
     }
 
