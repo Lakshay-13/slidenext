@@ -59,6 +59,30 @@ test('mutation canonical builder forwards the pre-mutation baseline when availab
   });
 });
 
+test('mutation canonical builder prefers pending state over the live baseline', () => {
+  const documentRef = { id: 'post-mutation-document' };
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending' }] };
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'live' }] };
+  let capturedOptions = null;
+  const buildMutationDeck = canonicalMutation
+    .createStudioEditorMutationCanonicalDeckBuilder({
+      canonicalStateApi: canonicalState,
+      buildCanonicalDeck(_sourceDoc, options) {
+        capturedOptions = options;
+        return pendingCanonicalDeck;
+      },
+      getPendingCanonicalDeck() {
+        return pendingCanonicalDeck;
+      },
+      getCanonicalDeckBaseline() {
+        return liveCanonicalDeck;
+      }
+    });
+
+  assert.equal(buildMutationDeck(documentRef), pendingCanonicalDeck);
+  assert.equal(capturedOptions.canonicalDeckBaseline, pendingCanonicalDeck);
+});
+
 test('mutation canonical builder preserves explicit rebuild options and baselines', () => {
   const documentRef = { id: 'post-mutation-document' };
   const explicitBaseline = { kind: 'slidenext.deck', slides: [{ id: 'explicit' }] };
@@ -110,6 +134,9 @@ test('mutation canonical builder delegates baseline resolution to canonical stat
       isCanonicalDeck(value) {
         return !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides);
       },
+      getPendingCanonicalDeck() {
+        return canonicalDeckBaseline;
+      },
       buildCanonicalDeck(sourceDocument, options) {
         assert.equal(sourceDocument, documentRef);
         capturedOptions = options;
@@ -123,6 +150,7 @@ test('mutation canonical builder delegates baseline resolution to canonical stat
   assert.equal(buildMutationDeck(documentRef), canonicalDeckBaseline);
   assert.equal(readerDocument, documentRef);
   assert.equal(readerOptions.isCanonicalDeck !== null, true);
+  assert.equal(typeof readerOptions.getPendingCanonicalDeck, 'function');
   assert.equal(typeof readerOptions.getCanonicalDeckBaseline, 'function');
   assert.deepEqual(capturedOptions, {
     preferLiveCanonicalDeck: false,

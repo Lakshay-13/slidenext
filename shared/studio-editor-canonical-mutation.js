@@ -21,6 +21,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -45,12 +48,21 @@
     const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader
       ? (() => {
           const sharedReader = createCanonicalDeckBaselineReader({
+            getPendingCanonicalDeck,
             getCanonicalDeckBaseline,
             isCanonicalDeck
           });
           return typeof sharedReader === 'function' ? sharedReader : () => null;
         })()
       : (sourceDocument) => {
+          if (getPendingCanonicalDeck) {
+            try {
+              const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+              if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+            } catch (err) {
+              // Fall through to the live baseline path.
+            }
+          }
           if (!getCanonicalDeckBaseline) return null;
           try {
             const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);

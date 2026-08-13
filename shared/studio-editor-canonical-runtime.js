@@ -66,6 +66,7 @@
     const mutationCanonicalDeckBuilder = canonicalMutationApi
       ? canonicalMutationApi.createStudioEditorMutationCanonicalDeckBuilder({
           buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           isCanonicalDeck
         })
