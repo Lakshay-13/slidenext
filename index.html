@@ -5071,6 +5071,8 @@
       ? studioEditorSessionRuntimeOptionsApi.createStudioEditorSessionRuntimeOptions({
           documentRef: document,
           getPresentationUrl: getStudioCurrentPresentationUrl,
+          getPresentationTitle: getStudioPresentationTitle,
+          getPresentationCategory: getStudioPresentationCategory,
           getSessionToken: getStudioEditorSessionToken,
           setPresentationUrl: (value) => setStudioCurrentPresentationUrl(value),
           setPresentationTitle: (value) => setStudioPresentationTitle(value),
@@ -5091,6 +5093,8 @@
           resetVersionUiState: (options = {}) => resetStudioVersionUiState(options),
           resetSaveButtonState: () => resetStudioSaveButtonState(),
           updateDeckReadyToolbarActionState: () => updateDeckReadyToolbarActionState(),
+          setAutoSaveStatus: setStudioAutoSaveStatus,
+          setFrameLoadingState: setStudioFrameLoadingState,
           setCurrentPresentationMetadata: (value) => setStudioCurrentPresentationMetadata(value),
           getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
           buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
@@ -6609,23 +6613,23 @@
       const isEditorActive = () => editor.classList.contains('active');
       const frameLoadSessionStateReaders = createCurrentStudioSessionStateReaders();
       
-      const studioCategoryLabel = document.getElementById('studioCategoryLabel');
-      if (studioCategoryLabel) {
-        studioCategoryLabel.textContent = getStudioPresentationCategory();
-      }
-      const studioTitleLabel = document.getElementById('studioTitleLabel');
-      if (studioTitleLabel) {
-        studioTitleLabel.textContent = getStudioPresentationTitle();
-      }
-      
-      setStudioAutoSaveStatus('loading');
-      setStudioFrameLoadingState('loading');
-      const didResetEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
+      const didPrepareEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
         && studioEditorSessionUiController
-        && typeof studioEditorSessionUiController.reset === 'function'
-        ? studioEditorSessionUiController.reset({ isLoading: true })
+        && typeof studioEditorSessionUiController.prepareLaunch === 'function'
+        ? studioEditorSessionUiController.prepareLaunch()
         : false;
-      if (!didResetEditorUiState) {
+      if (!didPrepareEditorUiState) {
+        const studioCategoryLabel = document.getElementById('studioCategoryLabel');
+        if (studioCategoryLabel) {
+          studioCategoryLabel.textContent = getStudioPresentationCategory();
+        }
+        const studioTitleLabel = document.getElementById('studioTitleLabel');
+        if (studioTitleLabel) {
+          studioTitleLabel.textContent = getStudioPresentationTitle();
+        }
+
+        setStudioAutoSaveStatus('loading');
+        setStudioFrameLoadingState('loading');
         resetStudioPresentationUiState();
         resetStudioSourceViewUiState();
         resetStudioDeckUiState({ isLoading: true });

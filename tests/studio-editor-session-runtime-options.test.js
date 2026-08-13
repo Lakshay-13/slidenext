@@ -16,6 +16,8 @@ test('session runtime options preserves injected dependencies and callbacks', ()
   const callbacks = {
     documentRef: {},
     getPresentationUrl() {},
+    getPresentationTitle() {},
+    getPresentationCategory() {},
     getSessionToken() {},
     setPresentationUrl() {},
     setPresentationTitle() {},
@@ -36,6 +38,8 @@ test('session runtime options preserves injected dependencies and callbacks', ()
     resetVersionUiState() {},
     resetSaveButtonState() {},
     updateDeckReadyToolbarActionState() {},
+    setAutoSaveStatus() {},
+    setFrameLoadingState() {},
     setCurrentPresentationMetadata() {},
     getCurrentPresentationMetadata() {},
     buildPresentationMetadataSeed() {},

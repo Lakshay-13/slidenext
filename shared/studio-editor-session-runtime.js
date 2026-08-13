@@ -79,7 +79,10 @@
           resetDeckUiState: options.resetDeckUiState,
           resetVersionUiState: options.resetVersionUiState,
           resetSaveButtonState: options.resetSaveButtonState,
-          updateDeckReadyToolbarActionState: options.updateDeckReadyToolbarActionState
+          updateDeckReadyToolbarActionState: options.updateDeckReadyToolbarActionState,
+          documentRef: options.documentRef,
+          setAutoSaveStatus: options.setAutoSaveStatus,
+          setFrameLoadingState: options.setFrameLoadingState
         })
       : null;
 
