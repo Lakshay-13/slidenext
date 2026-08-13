@@ -338,6 +338,35 @@ test('createStudioEditorHistoryEntryBuilder forwards the canonical validator', (
   assert.equal(receivedValidator, isCanonicalDeck);
 });
 
+test('createStudioEditorHistoryEntryBuilder prefers the shared canonical deck validator', () => {
+  const pendingCanonicalDeck = { kind: 'candidate', slides: [] };
+  const fallbackCanonicalDeck = { kind: 'fallback', slides: [] };
+  let validatorCalls = 0;
+  let buildCalls = 0;
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        return { canonicalDeck: options.buildCanonicalDeck('history-doc') };
+      }
+    },
+    canonicalStateApi: {
+      isStudioEditorCanonicalDeckLike(value) {
+        validatorCalls += 1;
+        return value === fallbackCanonicalDeck;
+      }
+    },
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return fallbackCanonicalDeck;
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), { canonicalDeck: fallbackCanonicalDeck });
+  assert.equal(validatorCalls, 1);
+  assert.equal(buildCalls, 1);
+});
+
 test('createStudioEditorHistoryEntryAdapter reuses the shared entry builder', () => {
   let createCalls = 0;
   let capturedOptions = null;

@@ -113,13 +113,16 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    const defaultCanonicalDeckValidator = canonicalStateApi
+      && typeof canonicalStateApi.isStudioEditorCanonicalDeckLike === 'function'
+      ? canonicalStateApi.isStudioEditorCanonicalDeckLike
+      : (candidate) => !!candidate
+        && typeof candidate === 'object'
+        && !Array.isArray(candidate)
+        && Array.isArray(candidate.slides);
     const isValidCanonicalDeck = (value) => {
       if (!value) return false;
-      const validate = isCanonicalDeck
-        || ((candidate) => !!candidate
-          && typeof candidate === 'object'
-          && !Array.isArray(candidate)
-          && Array.isArray(candidate.slides));
+      const validate = isCanonicalDeck || defaultCanonicalDeckValidator;
       try {
         return validate(value) === true;
       } catch (error) {
