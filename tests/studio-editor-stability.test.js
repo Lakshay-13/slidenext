@@ -2233,6 +2233,8 @@ test('editor composes chrome-node pruning through the shared DOM module', () => 
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorChromeNodePruner =/);
+  assert.match(source, /const studioEditorChromeNodePrunerAdapter =/);
+  assert.match(source, /typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorChromeNodePruner === 'function'/);
   const pruneEditorChromeNodesSource = extractFunctionSource(
     source,
@@ -2246,7 +2248,7 @@ test('pruneEditorChromeNodes delegates the document and chrome options to the sh
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const chromeNodePrunerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorChromeNodePruner =',
+    'const studioEditorChromeNodePrunerAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const pruneEditorChromeNodesSource = extractFunctionSource(
@@ -2258,6 +2260,7 @@ test('pruneEditorChromeNodes delegates the document and chrome options to the sh
   const activeSlide = { id: 'slide-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorChromeNodePrunerAdapter: require('../shared/studio-editor-chrome-node-pruner-adapter.js'),
     SlideNextStudioEditorDom: {
       pruneStudioChromeNodes(docValue, optionsValue) {
         calls.push([docValue, optionsValue]);
@@ -2286,7 +2289,7 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const chromeNodePrunerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorChromeNodePruner =',
+    'const studioEditorChromeNodePrunerAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const pruneEditorChromeNodesSource = extractFunctionSource(
@@ -2295,6 +2298,7 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
     '\n\n    function setActiveSlideById'
   );
   const context = {
+    SlideNextStudioEditorChromeNodePrunerAdapter: require('../shared/studio-editor-chrome-node-pruner-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
       return {};

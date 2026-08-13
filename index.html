@@ -1678,6 +1678,7 @@
   <script src="/shared/studio-editor-closest-positioned-ancestor-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-id-adapter.js"></script>
+  <script src="/shared/studio-editor-chrome-node-pruner-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -4090,10 +4091,24 @@
         )
       : null;
 
-    const studioEditorChromeNodePruner = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorChromeNodePrunerAdapter = typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'
+      && SlideNextStudioEditorChromeNodePrunerAdapter
+      && typeof SlideNextStudioEditorChromeNodePrunerAdapter.pruneStudioEditorChromeNodes === 'function'
+      ? SlideNextStudioEditorChromeNodePrunerAdapter
+      : null;
+
+    const studioEditorChromeNodePruner = studioEditorChromeNodePrunerAdapter
+      && typeof studioEditorChromeNodePrunerAdapter.pruneStudioEditorChromeNodes === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.pruneStudioChromeNodes === 'function'
-      ? (doc, options) => SlideNextStudioEditorDom.pruneStudioChromeNodes(doc, options)
+      ? (doc, options) => studioEditorChromeNodePrunerAdapter.pruneStudioEditorChromeNodes(
+          doc,
+          {
+            domApi: SlideNextStudioEditorDom,
+            chromeOptions: options
+          }
+        )
       : null;
 
     const studioEditorSlideIdAssigner = typeof SlideNextStudioEditorDom !== 'undefined'
