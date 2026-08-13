@@ -2029,6 +2029,28 @@ test('resolveStudioFallbackCanonicalDeck rebuilds malformed canonical deck overr
   ]);
 });
 
+test('resolveStudioFallbackCanonicalDeck passes source document to the default override rebuild', () => {
+  const sourceDocument = { label: 'iframe-doc' };
+  const fallbackCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [] }]
+  });
+  const malformedCanonicalDeck = { metadata: { title: 'Broken Deck' } };
+  let receivedDocument = null;
+
+  assert.equal(
+    editorPersistence.resolveStudioFallbackCanonicalDeck(malformedCanonicalDeck, {
+      sourceDocument,
+      buildCanonicalDeck(documentRef) {
+        receivedDocument = documentRef;
+        return fallbackCanonicalDeck;
+      },
+      isCanonicalDeck: canonicalDeckModel.isCanonicalDeck
+    }),
+    fallbackCanonicalDeck
+  );
+  assert.equal(receivedDocument, sourceDocument);
+});
+
 test('createStudioFallbackCanonicalDeckResolver delegates fallback canonical resolution through the shared helper', () => {
   const fallbackCanonicalDeck = canonicalDeckModel.createCanonicalDeck({
     metadata: {

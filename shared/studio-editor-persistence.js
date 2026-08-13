@@ -684,6 +684,7 @@
       ? options.resolveCanonicalDeckOverride
       : (nextCanonicalDeck, overrideOptions = {}) => resolveStudioCanonicalDeckOverride({
           canonicalDeck: nextCanonicalDeck,
+          sourceDocument: overrideOptions.sourceDocument || null,
           buildCanonicalDeck: overrideOptions.buildCanonicalDeck,
           createCanonicalDeck: options.createCanonicalDeck,
           isCanonicalDeck: options.isCanonicalDeck,
