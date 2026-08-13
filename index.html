@@ -3443,6 +3443,7 @@
           assignLockElementId: (...args) => assignEditorElementId(...args),
           assignVisibilityElementId: (...args) => assignEditorElementId(...args),
           buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()

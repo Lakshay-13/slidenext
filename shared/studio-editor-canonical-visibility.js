@@ -23,6 +23,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
@@ -34,6 +37,7 @@
       : null;
     if (createCanonicalDeckBaselineReader) {
       const readCanonicalDeckBaseline = createCanonicalDeckBaselineReader({
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         isCanonicalDeck: typeof canonicalDeckApi.isCanonicalDeck === 'function'
           ? canonicalDeckApi.isCanonicalDeck
@@ -60,6 +64,14 @@
       }
     };
     const readCanonicalDeckBaseline = (sourceDocument) => {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (err) {
+          // Fall through to the live baseline and document rebuild paths.
+        }
+      }
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
@@ -123,6 +135,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
@@ -134,6 +149,7 @@
       canonicalStateApi,
       buildCanonicalDeck,
       buildCanonicalDeckBaseline,
+      getPendingCanonicalDeck,
       getCanonicalDeckBaseline,
       sourceDocument: options.sourceDocument
     });
@@ -157,6 +173,9 @@
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
@@ -165,6 +184,7 @@
         ...baselineOptions,
         canonicalDeckApi,
         canonicalStateApi,
+        getPendingCanonicalDeck,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
         getCanonicalDeckBaseline
@@ -182,6 +202,7 @@
         canonicalDeckApi,
         buildCanonicalDeck,
         buildCanonicalDeckBaseline,
+        getPendingCanonicalDeck,
         getCanonicalDeckBaseline,
         canonicalDeckBeforeMutation
       });

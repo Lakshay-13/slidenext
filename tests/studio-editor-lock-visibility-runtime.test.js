@@ -33,6 +33,7 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
     assignLockElementId: () => '',
     assignVisibilityElementId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyLockMutation: () => ({}),
     applyVisibilityMutation: () => ({}),
@@ -48,6 +49,7 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].getSelectedElements, options.getSelectedElements);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyLockMutation, options.applyLockMutation);
   assert.equal(calls[0].finalizeSelectionToggleMutation, options.finalizeSelectionToggleMutation);
   assert.equal(calls[0].rollbackSelectionToggleMutation, options.rollbackSelectionToggleMutation);

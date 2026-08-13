@@ -40,6 +40,7 @@
           assignLockElementId: options.assignLockElementId,
           assignVisibilityElementId: options.assignVisibilityElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyLockMutation: options.applyLockMutation,
           applyVisibilityMutation: options.applyVisibilityMutation,

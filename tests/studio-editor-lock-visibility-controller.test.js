@@ -9,6 +9,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   let builderOptions = null;
   const selected = [{ id: 'node-1', dataset: { editorId: 'node-1' } }];
   const documentRef = { id: 'doc' };
+  const pendingDeck = { id: 'pending-deck' };
   const controller = lockVisibilityController.createStudioEditorLockVisibilityController({
     lockStateApi: {
       buildStudioLockMutationPlan(elements, options) {
@@ -42,6 +43,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
     assignVisibilityElementId: (element) => element.dataset.editorId,
     buildCanonicalDeck: () => ({ slides: [] }),
     buildCanonicalDeckBaseline: () => ({ slides: [] }),
+    getPendingCanonicalDeck: () => pendingDeck,
     applyLockMutation: (...args) => {
       calls.push(['lockMutation', ...args]);
       return { didApply: true, transaction: { id: 'lock-tx' } };
@@ -76,6 +78,7 @@ test('lock and visibility controller builds sidecars and finalizes both toggles'
   assert.equal(calls[7][2].doc, documentRef);
   assert.equal(typeof builderOptions.buildCanonicalDeck, 'function');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.equal(builderOptions.getPendingCanonicalDeck(), pendingDeck);
 });
 
 test('lock and visibility toggles read selection from the active iframe document', () => {

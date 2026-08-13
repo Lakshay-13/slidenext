@@ -54,11 +54,34 @@ test('buildStudioCanonicalVisibilityBaseline prefers a valid live canonical deck
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalVisibilityBaseline prefers a valid pending canonical deck', () => {
+  const pendingDeck = createSourceDeck();
+  let liveReads = 0;
+  let rebuilds = 0;
+  const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => {
+      liveReads += 1;
+      return createSourceDeck();
+    },
+    buildCanonicalDeckBaseline: () => {
+      rebuilds += 1;
+      return createSourceDeck();
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+  assert.equal(liveReads, 0);
+  assert.equal(rebuilds, 0);
+});
+
 test('buildStudioCanonicalVisibilityBaseline delegates baseline resolution to canonical state', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
   const getCanonicalDeckBaseline = () => sourceDeck;
   const buildCanonicalDeckBaseline = () => sourceDeck;
+  const getPendingCanonicalDeck = () => sourceDeck;
   let readerOptions = null;
   let readerDocument = null;
   const result = canonicalVisibility.buildStudioCanonicalVisibilityBaseline({
@@ -72,6 +95,7 @@ test('buildStudioCanonicalVisibilityBaseline delegates baseline resolution to ca
         };
       }
     },
+    getPendingCanonicalDeck,
     getCanonicalDeckBaseline,
     buildCanonicalDeckBaseline,
     sourceDocument
@@ -79,6 +103,7 @@ test('buildStudioCanonicalVisibilityBaseline delegates baseline resolution to ca
 
   assert.equal(result, sourceDeck);
   assert.equal(readerDocument, sourceDocument);
+  assert.equal(readerOptions.getPendingCanonicalDeck, getPendingCanonicalDeck);
   assert.equal(readerOptions.getCanonicalDeckBaseline, getCanonicalDeckBaseline);
   assert.equal(readerOptions.buildCanonicalDeckBaseline, buildCanonicalDeckBaseline);
   assert.equal(readerOptions.isCanonicalDeck, canonicalDeck.isCanonicalDeck);
