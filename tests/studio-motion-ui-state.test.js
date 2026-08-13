@@ -7,6 +7,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioNudge = require('../shared/studio-editor-nudge.js');
+const motionState = require('../shared/studio-editor-motion-state.js');
 const studioTransform = require('../shared/studio-editor-transform.js');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
@@ -47,7 +48,54 @@ function loadBuildMotionSelectionActionState(fileContent, context) {
     'function buildMotionSelectionActionState(doc = null) {',
     '\n\n    function updateMotionActionState(doc = getIframeDoc()) {'
   );
+  installMotionStateController(context);
   vm.runInContext(helperSource, context);
+}
+
+function installMotionStateController(context) {
+  if (context.studioEditorMotionStateController) return;
+  context.SlideNextStudioEditorMotionState = motionState;
+  const domApi = context.SlideNextStudioEditorDom;
+  const transformApi = context.SlideNextStudioEditorTransform;
+  const injectedActionState = typeof context.buildMotionSelectionActionState === 'function'
+    ? context.buildMotionSelectionActionState
+    : null;
+  context.studioEditorMotionStateController = motionState.createStudioEditorMotionStateController({
+    nudgeApi: context.SlideNextStudioEditorNudge,
+    getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null,
+    getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+      ? context.getStudioSelectedElements(doc)
+      : Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: (doc) => typeof context.getActiveSlide === 'function'
+      ? context.getActiveSlide(doc)
+      : null,
+    getNudgeSelectionState: (elements, doc) => typeof context.getNudgeSelectionState === 'function'
+      ? context.getNudgeSelectionState(elements, doc)
+      : { selection: [], canNudge: false },
+    getSlideMetrics: (slide) => typeof context.getSlideMetrics === 'function'
+      ? context.getSlideMetrics(slide)
+      : null,
+    buildPositionedLayoutItems: (selection, options) => transformApi
+      && typeof transformApi.buildStudioPositionedLayoutItems === 'function'
+      ? transformApi.buildStudioPositionedLayoutItems(selection, options)
+      : [],
+    getClosestPositionedAncestor: (element) => typeof context.getEditorClosestPositionedAncestor === 'function'
+      ? context.getEditorClosestPositionedAncestor(element)
+      : domApi && typeof domApi.getStudioClosestPositionedAncestor === 'function'
+        ? domApi.getStudioClosestPositionedAncestor(element)
+        : null,
+    getRectOnSlide: (...args) => typeof context.getRectOnSlide === 'function'
+      ? context.getRectOnSlide(...args)
+      : null,
+    getActionState: injectedActionState,
+    documentRef: context.document
+  });
+}
+
+function runMotionActionStateSource(source, context) {
+  installMotionStateController(context);
+  vm.createContext(context);
+  vm.runInContext(source, context);
 }
 
 function loadGetNudgeSelectionState(fileContent, context) {
@@ -361,10 +409,7 @@ test('buildMotionSelectionActionState resolves nudge geometry from the current d
   assert.equal(motionActionState.nudgeLayoutItems, nudgeLayoutItems);
   assert.equal(motionActionState.canResolveNudgeLayout, true);
   assert.equal(motionActionState.canNudge, true);
-  assert.match(
-    fileContent,
-    /getNudgeSelectionState\(\s*getStudioSelectedElements\(resolvedDoc\),\s*resolvedDoc\s*\)/
-  );
+  assert.match(fileContent, /createStudioEditorMotionStateController/);
   assert.deepEqual(calls, [
     ['getIframeDoc'],
     ['getActiveSlide', doc],
@@ -558,7 +603,7 @@ test('updateMotionActionState enables nudge controls only when the iframe has a 
 
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
-  vm.runInContext(updateMotionActionStateSource, context);
+  runMotionActionStateSource(updateMotionActionStateSource, context);
 
   context.updateMotionActionState(null);
   assert.deepEqual(getControlStates(controls), {
@@ -628,8 +673,7 @@ test('updateMotionActionState delegates toolbar state assembly to the shared nud
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateMotionActionStateSource, context);
+  runMotionActionStateSource(updateMotionActionStateSource, context);
 
   assert.equal(context.updateMotionActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
@@ -670,8 +714,7 @@ test('updateMotionActionState caches the shared nudge toolbar synchronizer when 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateMotionActionStateSource, context);
+  runMotionActionStateSource(updateMotionActionStateSource, context);
 
   assert.equal(context.updateMotionActionState(doc), true);
   assert.equal(context.updateMotionActionState(doc), true);

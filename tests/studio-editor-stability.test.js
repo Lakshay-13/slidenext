@@ -2021,10 +2021,10 @@ test('motion and group action-state builders reuse the composed positioned-ances
     '\n\n    function updateGroupActionState'
   );
 
-  for (const source of [motionSource, groupSource]) {
-    assert.match(source, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
-    assert.doesNotMatch(source, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
-  }
+  assert.match(motionSource, /studioEditorMotionStateController\.buildActionState/);
+  assert.doesNotMatch(motionSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
+  assert.match(groupSource, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
+  assert.doesNotMatch(groupSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
 });
 
 test('editor composes active-slide lookup through the shared DOM module', () => {

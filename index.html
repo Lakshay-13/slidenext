@@ -1458,6 +1458,7 @@
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
+  <script src="/shared/studio-editor-motion-state.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
   <script src="/shared/studio-editor-alignment.js"></script>
   <script src="/shared/studio-editor-alignment-controller.js"></script>
@@ -3463,6 +3464,24 @@
             && typeof buildEditorCanonicalDeck === 'function'
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
             : isElementLocked,
+          documentRef: document
+        })
+      : null;
+    const studioEditorMotionStateController = typeof SlideNextStudioEditorMotionState !== 'undefined'
+      && SlideNextStudioEditorMotionState
+      && typeof SlideNextStudioEditorMotionState.createStudioEditorMotionStateController === 'function'
+      ? SlideNextStudioEditorMotionState.createStudioEditorMotionStateController({
+          nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
+            ? SlideNextStudioEditorNudge
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getNudgeSelectionState: (elements, sourceDoc) => getNudgeSelectionState(elements, sourceDoc),
+          getSlideMetrics,
+          buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
+          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
+          getRectOnSlide,
           documentRef: document
         })
       : null;
@@ -9616,74 +9635,16 @@
     }
 
     function buildMotionSelectionActionState(doc = null) {
-      const positionedLayoutItemsBuilder = typeof buildEditorPositionedLayoutItems === 'function'
-        ? buildEditorPositionedLayoutItems
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(...args)
-          : () => [];
-      const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'
-        ? getEditorClosestPositionedAncestor
-        : () => null;
-      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
-        ? SlideNextStudioEditorNudge
-        : null;
-      if (nudgeApi && typeof nudgeApi.createStudioNudgeActionStateBuilder === 'function') {
-        if (typeof buildMotionSelectionActionState.builder !== 'function') {
-          buildMotionSelectionActionState.builder = nudgeApi.createStudioNudgeActionStateBuilder({
-            getDocument: () => getIframeDoc(),
-            getActiveSlide,
-            getNudgeSelectionState: (elements, sourceDoc) => getNudgeSelectionState(elements, sourceDoc),
-            getSlideMetrics,
-            buildPositionedLayoutItems(selection, currentSlideMetrics) {
-              return positionedLayoutItemsBuilder(selection, {
-                getClosestPositionedAncestor: closestPositionedAncestorResolver,
-                getRectOnSlide,
-                slideMetrics: currentSlideMetrics
-              });
-            }
-          });
-        }
-        if (typeof buildMotionSelectionActionState.builder === 'function') {
-          return buildMotionSelectionActionState.builder(doc);
-        }
-      }
-
-      const resolvedDoc = doc || getIframeDoc();
-      const slide = getActiveSlide(resolvedDoc);
-      const nudgeSelectionState = getNudgeSelectionState(
-        getStudioSelectedElements(resolvedDoc),
-        resolvedDoc
-      );
-      const slideMetrics = slide ? getSlideMetrics(slide) : null;
-      const buildStudioNudgeActionState = (
-        typeof SlideNextStudioEditorNudge !== 'undefined'
-        && SlideNextStudioEditorNudge
-        && typeof SlideNextStudioEditorNudge.buildStudioNudgeActionState === 'function'
-      )
-        ? SlideNextStudioEditorNudge.buildStudioNudgeActionState
-        : null;
-      if (buildStudioNudgeActionState) {
-        return buildStudioNudgeActionState(nudgeSelectionState, {
-          doc: resolvedDoc,
-          slide,
-          slideMetrics,
-          buildPositionedLayoutItems(selection, currentSlideMetrics) {
-            return positionedLayoutItemsBuilder(selection, {
-              getClosestPositionedAncestor: closestPositionedAncestorResolver,
-              getRectOnSlide,
-              slideMetrics: currentSlideMetrics
-            });
-          }
-        });
+      if (studioEditorMotionStateController
+        && typeof studioEditorMotionStateController.buildActionState === 'function') {
+        return studioEditorMotionStateController.buildActionState(doc);
       }
       return {
-        doc: resolvedDoc,
-        slide,
-        slideMetrics,
+        doc: doc || getIframeDoc(),
+        slide: null,
+        slideMetrics: null,
         slideBounds: null,
-        nudgeSelectionState,
+        nudgeSelectionState: { selection: [], canNudge: false },
         nudgeLayoutItems: [],
         canResolveNudgeLayout: false,
         canNudge: false
@@ -9691,29 +9652,10 @@
     }
 
     function updateMotionActionState(doc = getIframeDoc()) {
-      const nudgeState = typeof SlideNextStudioEditorNudge !== 'undefined'
-        ? SlideNextStudioEditorNudge
-        : null;
-      if (!nudgeState || typeof nudgeState.syncStudioNudgeToolbarState !== 'function') {
-        return false;
-      }
-      if (typeof nudgeState.createStudioNudgeToolbarStateSync === 'function') {
-        if (typeof updateMotionActionState.sync !== 'function') {
-          updateMotionActionState.sync = nudgeState.createStudioNudgeToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => buildMotionSelectionActionState(sourceDoc),
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateMotionActionState.sync === 'function') {
-          return updateMotionActionState.sync(doc);
-        }
-      }
-      const motionActionState = buildMotionSelectionActionState(doc);
-      return nudgeState.syncStudioNudgeToolbarState({
-        documentRef: document,
-        canNudge: motionActionState.canNudge
-      });
+      return studioEditorMotionStateController
+        && typeof studioEditorMotionStateController.sync === 'function'
+        ? studioEditorMotionStateController.sync(doc)
+        : false;
     }
 
     function buildAlignmentActionState(doc = null) {
