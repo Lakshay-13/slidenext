@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const deckPersistence = require('../shared/deck-persistence.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const persistedDeckStateAction = require('../shared/studio-editor-persisted-deck-state-action.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -54,6 +55,34 @@ function loadApplyCurrentStudioPersistedDeckState(fileContent, context) {
 
 function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+}
+
+function loadUpdateEditorPersistedDeckState(context) {
+  context.updateEditorPersistedDeckState = persistedDeckStateAction.createStudioEditorPersistedDeckStateAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    resolveCanonicalDeck(canonicalDeck) {
+      return typeof context.resolveEditorStoredCanonicalDeck === 'function'
+        ? context.resolveEditorStoredCanonicalDeck({ canonicalDeck }) || null
+        : null;
+    },
+    normalizePlaybackState(playbackState) {
+      return context.SlideNextDeckPersistence
+        && typeof context.SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+        ? context.SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+        : (playbackState || null);
+    },
+    setPersistedDeckHtml(cleanHtml) {
+      context.lastPersistedDeckHtml = cleanHtml;
+    },
+    setPersistedCanonicalDeck(canonicalDeck) {
+      context.lastPersistedCanonicalDeck = canonicalDeck;
+    },
+    setPersistedPlaybackState(playbackState) {
+      context.persistedDeckPlaybackState = playbackState;
+    }
+  });
 }
 
 test('getCurrentEditorPersistedDeckState returns the current persisted html, canonical deck, and playback baselines', () => {
@@ -351,11 +380,6 @@ test('getCurrentEditorPersistedDeckState.resolveWithContent does not use the sna
 
 test('updateEditorPersistedDeckState updates only the provided persisted baseline fields', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resolveEditorMetadataPersistenceOptions(options = {}) {'
-  );
 
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
@@ -373,7 +397,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadUpdateEditorPersistedDeckState(context);
 
   context.updateEditorPersistedDeckState({
     cleanHtml: '<html>new</html>',
@@ -387,11 +411,6 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
 
 test('updateEditorPersistedDeckState reuses the shared persisted-state updater builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resolveEditorMetadataPersistenceOptions(options = {}) {'
-  );
 
   let delegatedArgs = null;
   let updaterCreateCalls = 0;
@@ -411,7 +430,7 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadUpdateEditorPersistedDeckState(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.updateEditorPersistedDeckState({
@@ -439,11 +458,6 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
 
 test('updateEditorPersistedDeckState does not mutate state when the shared updater is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resolveEditorMetadataPersistenceOptions(options = {}) {'
-  );
 
   const context = {
     lastPersistedDeckHtml: '<html>old</html>',
@@ -454,7 +468,7 @@ test('updateEditorPersistedDeckState does not mutate state when the shared updat
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadUpdateEditorPersistedDeckState(context);
 
   const result = context.updateEditorPersistedDeckState({
     cleanHtml: '<html>new</html>'
@@ -467,11 +481,6 @@ test('updateEditorPersistedDeckState does not mutate state when the shared updat
 
 test('updateEditorPersistedDeckState normalizes the persisted canonical baseline through the shared deck context', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resolveEditorMetadataPersistenceOptions(options = {}) {'
-  );
 
   const rawCanonicalDeck = {
     metadata: {
@@ -512,7 +521,7 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
+  loadUpdateEditorPersistedDeckState(context);
 
   context.updateEditorPersistedDeckState({
     canonicalDeck: rawCanonicalDeck
@@ -525,11 +534,6 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
 
 test('applyCurrentStudioPersistedDeckState updates persisted baselines together and syncs canonical metadata only when allowed', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateEditorPersistedDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function resolveEditorMetadataPersistenceOptions(options = {}) {'
-  );
 
   const rawCanonicalDeck = {
     metadata: {
@@ -562,8 +566,8 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
 
   vm.createContext(context);
   loadResolveEditorStoredCanonicalDeck(fileContent, context);
-  vm.runInContext(updateEditorPersistedDeckStateSource, context);
   loadApplyCurrentStudioPersistedDeckState(fileContent, context);
+  loadUpdateEditorPersistedDeckState(context);
 
   const result = context.applyCurrentStudioPersistedDeckState({
     cleanHtml: '<html>new</html>',
