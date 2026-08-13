@@ -1681,6 +1681,7 @@
   <script src="/shared/studio-editor-chrome-node-pruner-adapter.js"></script>
   <script src="/shared/studio-editor-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-editable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
@@ -4258,10 +4259,24 @@
         )
       : null;
 
-    const studioEditorSlideEditableElementsReader = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorSlideEditableElementsAdapter = typeof SlideNextStudioEditorSlideEditableElementsAdapter !== 'undefined'
+      && SlideNextStudioEditorSlideEditableElementsAdapter
+      && typeof SlideNextStudioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements === 'function'
+      ? SlideNextStudioEditorSlideEditableElementsAdapter
+      : null;
+
+    const studioEditorSlideEditableElementsReader = studioEditorSlideEditableElementsAdapter
+      && typeof studioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioSlideEditableElements === 'function'
-      ? (slide, options) => SlideNextStudioEditorDom.getStudioSlideEditableElements(slide, options)
+      ? (slide, options) => studioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements(
+          slide,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorNormalizedSlideLayerOrderReader = typeof SlideNextStudioEditorDom !== 'undefined'

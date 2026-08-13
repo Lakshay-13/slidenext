@@ -3040,7 +3040,7 @@ test('getElementByEditorId fails closed when the shared DOM module is unavailabl
   assert.equal(context.getElementByEditorId('element-1'), null);
 });
 
-test('editor composes slide editable-element collection through the shared DOM module', () => {
+test('editor composes slide editable-element collection through the shared adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getSlideEditableElementsSource = extractFunctionSource(
     source,
@@ -3048,16 +3048,18 @@ test('editor composes slide editable-element collection through the shared DOM m
     '\n\n    function getNormalizedSlideLayerOrder'
   );
 
+  assert.match(source, /const studioEditorSlideEditableElementsAdapter =/);
+  assert.match(source, /SlideNextStudioEditorSlideEditableElementsAdapter/);
   assert.match(source, /const studioEditorSlideEditableElementsReader =/);
   assert.match(source, /typeof slideEditableElementsReader === 'function'/);
   assert.doesNotMatch(getSlideEditableElementsSource, /SlideNextStudioEditorDom\.getStudioSlideEditableElements/);
 });
 
-test('getSlideEditableElements delegates the slide and DOM options to the shared DOM module', () => {
+test('getSlideEditableElements delegates through the shared adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideEditableElementsReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideEditableElementsReader =',
+    'const studioEditorSlideEditableElementsAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideEditableElementsSource = extractFunctionSource(
@@ -3069,6 +3071,7 @@ test('getSlideEditableElements delegates the slide and DOM options to the shared
   const options = { selectableSelector: '[data-editor-id]' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideEditableElementsAdapter: require('../shared/studio-editor-slide-editable-elements-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideEditableElements(slideValue, optionsValue) {
         calls.push([slideValue, optionsValue]);
@@ -3089,11 +3092,11 @@ test('getSlideEditableElements delegates the slide and DOM options to the shared
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), options);
 });
 
-test('getSlideEditableElements fails closed when the shared DOM module is unavailable', () => {
+test('getSlideEditableElements fails closed when the shared adapter is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideEditableElementsReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideEditableElementsReader =',
+    'const studioEditorSlideEditableElementsAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideEditableElementsSource = extractFunctionSource(
