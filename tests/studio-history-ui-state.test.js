@@ -15,6 +15,7 @@ const historyCaptureAction = require('../shared/studio-editor-history-capture-ac
 const historyButtonsAction = require('../shared/studio-editor-history-buttons-action.js');
 const historyFlushAction = require('../shared/studio-editor-history-flush-action.js');
 const historyStepAction = require('../shared/studio-editor-history-step-action.js');
+const historyUndoAction = require('../shared/studio-editor-history-undo-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -413,12 +414,6 @@ test('updateHistoryButtons returns false when the shared history state is unavai
 
 test('editorUndo reuses the shared history step runner when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const editorUndoSource = extractFunctionSource(
-    fileContent,
-    'function editorUndo() {',
-    '\n\n    function editorRedo() {'
-  );
-
   const stepResult = {
     didUndo: true,
     undoStack: ['undo-next'],
@@ -452,7 +447,11 @@ test('editorUndo reuses the shared history step runner when available', () => {
 
   vm.createContext(context);
   loadHistoryStepAdapter(fileContent, context);
-  vm.runInContext(editorUndoSource, context);
+  context.editorUndo = historyUndoAction.createStudioEditorHistoryUndoAction({
+    getHistoryStepAdapter: context.getEditorHistoryStepAdapter,
+    getUndoStack: () => context.undoStack,
+    getRedoStack: () => context.redoStack
+  });
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.editorUndo())),
@@ -539,11 +538,6 @@ test('editorRedo reuses the shared history step runner when available', () => {
 
 test('editor undo and redo fail closed when the shared history step runner is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const editorUndoSource = extractFunctionSource(
-    fileContent,
-    'function editorUndo() {',
-    '\n\n    function editorRedo() {'
-  );
   const editorRedoSource = extractFunctionSource(
     fileContent,
     'function editorRedo() {',
@@ -557,7 +551,11 @@ test('editor undo and redo fail closed when the shared history step runner is un
 
   vm.createContext(context);
   loadHistoryStepAdapter(fileContent, context);
-  vm.runInContext(editorUndoSource, context);
+  context.editorUndo = historyUndoAction.createStudioEditorHistoryUndoAction({
+    getHistoryStepAdapter: context.getEditorHistoryStepAdapter,
+    getUndoStack: () => context.undoStack,
+    getRedoStack: () => context.redoStack
+  });
   vm.runInContext(editorRedoSource, context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(context.editorUndo())), {

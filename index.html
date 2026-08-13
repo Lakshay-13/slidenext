@@ -1623,6 +1623,7 @@
   <script src="/shared/studio-editor-history-buttons-action.js"></script>
   <script src="/shared/studio-editor-history-flush-action.js"></script>
   <script src="/shared/studio-editor-history-step-action.js"></script>
+  <script src="/shared/studio-editor-history-undo-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3948,6 +3949,23 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistoryStepGlobalApi);
+    const studioEditorHistoryUndoAction = typeof SlideNextStudioEditorHistoryUndoAction !== 'undefined'
+      && SlideNextStudioEditorHistoryUndoAction
+      && typeof SlideNextStudioEditorHistoryUndoAction.createStudioEditorHistoryUndoAction === 'function'
+      ? SlideNextStudioEditorHistoryUndoAction.createStudioEditorHistoryUndoAction({
+          getHistoryStepAdapter: getEditorHistoryStepAdapter,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack
+        })
+      : null;
+    const studioEditorHistoryUndoGlobalApi = typeof SlideNextStudioEditorHistoryUndoAction !== 'undefined'
+      && SlideNextStudioEditorHistoryUndoAction
+      && typeof SlideNextStudioEditorHistoryUndoAction.createStudioEditorHistoryUndoGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryUndoAction.createStudioEditorHistoryUndoGlobalApi({
+          editorUndo: studioEditorHistoryUndoAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryUndoGlobalApi);
     const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorPersistenceRuntimeOptions
       : null;
@@ -10736,18 +10754,6 @@
       }
       if (typeof updateEditorPersistedDeckState.adapter !== 'function') return {};
       return updateEditorPersistedDeckState.adapter(nextState);
-    }
-
-    function editorUndo() {
-      const historyStepAdapter = getEditorHistoryStepAdapter();
-      return historyStepAdapter && typeof historyStepAdapter.undo === 'function'
-        ? historyStepAdapter.undo()
-        : {
-            didUndo: false,
-            undoStack: getStudioUndoStack(),
-            redoStack: getStudioRedoStack(),
-            restoreEntry: null
-          };
     }
 
     function editorRedo() {
