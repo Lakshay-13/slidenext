@@ -188,7 +188,8 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
   };
 
   const textDeck = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'text', value: 'Fallback' });
-  assert.equal(textDeck.slides[0].nodes[0].text, 'After');
+  assert.equal(textDeck.slides[0].nodes[0].text, 'Fallback');
+  assert.equal(textDeck.slides[0].nodes[0].html, '');
   assert.equal(sourceDeck.slides[0].nodes[0].text, 'Before');
 
   const sourceDeckUpdate = canonicalStyle.buildStudioCanonicalStyleMutation({ ...options, prop: 'src', value: 'fallback.png' });
@@ -207,131 +208,76 @@ test('buildStudioCanonicalStyleMutation maps text, source, style, and z-index ed
   assert.equal(zIndexDeck.slides[0].nodes[0].layout.zIndex, 9);
 });
 
-test('buildStudioCanonicalStyleMutation rebuilds text edits from the live source document when available', () => {
+test('buildStudioCanonicalStyleMutation uses the requested text without rebuilding the live document', () => {
   const sourceDeck = createSourceDeck();
-  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
-    slides: [{
-      id: 'slide-1',
-      nodes: [{
-        id: 'node-1',
-        text: 'After',
-        html: '<p><strong>After</strong></p>'
-      }]
-    }]
-  });
-  const sourceDocument = { id: 'editor-doc', documentElement: {} };
-  let receivedDocument = null;
-  let receivedBuildOptions = null;
+  let buildCalls = 0;
 
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck(documentRef, buildOptions) {
-      receivedDocument = documentRef;
-      receivedBuildOptions = buildOptions;
-      return rebuiltDeck;
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return null;
     },
-    sourceDocument,
     selection: [createElement()],
     prop: 'text',
-    value: 'Fallback',
+    value: 'Requested text',
     getElementId: (element) => element.dataset.editorId
   });
 
-  assert.equal(receivedDocument, sourceDocument);
-  assert.deepEqual(receivedBuildOptions, {
-    preferLiveCanonicalDeck: false,
-    canonicalDeckBaseline: sourceDeck
-  });
-  assert.equal(result, rebuiltDeck);
-  assert.equal(result.slides[0].nodes[0].html, '<p><strong>After</strong></p>');
+  assert.equal(buildCalls, 0);
+  assert.equal(result.slides[0].nodes[0].text, 'Requested text');
+  assert.equal(result.slides[0].nodes[0].html, '');
 });
 
-test('buildStudioCanonicalStyleMutation rebuilds chart data from the live source document when available', () => {
+test('buildStudioCanonicalStyleMutation uses the requested chart data without rebuilding the live document', () => {
   const sourceDeck = createSourceDeck();
-  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
-    slides: [{
-      id: 'slide-1',
-      nodes: [{
-        id: 'node-1',
-        type: 'chart',
-        attributes: { 'data-chart-values': '10,20,15,30' }
-      }]
-    }]
-  });
-  const sourceDocument = { id: 'editor-doc', documentElement: {} };
-  let receivedBuildOptions = null;
+  let buildCalls = 0;
   const chart = {
-    dataset: { editorId: 'node-1', chartValues: '10,20,15,30' },
-    getAttribute(name) {
-      return name === 'data-chart-values' ? this.dataset.chartValues : null;
-    }
+    dataset: { editorId: 'node-1', chartValues: 'stale-value' }
   };
 
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck: (_documentRef, buildOptions) => {
-      receivedBuildOptions = buildOptions;
-      return rebuiltDeck;
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return null;
     },
-    sourceDocument,
     selection: [chart],
     prop: 'chartValues',
-    value: '10,20,15,30',
+    value: '42,68,55,86',
     getElementId: (element) => element.dataset.editorId
   });
 
-  assert.equal(result, rebuiltDeck);
-  assert.deepEqual(receivedBuildOptions, {
-    preferLiveCanonicalDeck: false,
-    canonicalDeckBaseline: sourceDeck
-  });
-  assert.equal(result.slides[0].nodes[0].attributes['data-chart-values'], '10,20,15,30');
+  assert.equal(buildCalls, 0);
+  assert.equal(result.slides[0].nodes[0].attributes['data-chart-values'], '42,68,55,86');
 });
 
-test('buildStudioCanonicalStyleMutation rebuilds chart titles from the live source document when available', () => {
+test('buildStudioCanonicalStyleMutation uses the requested chart title without rebuilding the live document', () => {
   const sourceDeck = createSourceDeck();
-  const rebuiltDeck = canonicalDeck.createCanonicalDeck({
-    slides: [{
-      id: 'slide-1',
-      nodes: [{
-        id: 'node-1',
-        type: 'chart',
-        attributes: { 'data-chart-title': 'Updated trend' }
-      }]
-    }]
-  });
-  const sourceDocument = { id: 'editor-doc', documentElement: {} };
-  let receivedBuildOptions = null;
-  const title = { textContent: 'Updated trend' };
+  let buildCalls = 0;
   const chart = {
     dataset: { editorId: 'node-1' },
-    textContent: 'Updated trend',
     querySelector() {
-      return title;
+      throw new Error('DOM title lookup should not be needed');
     }
   };
 
   const result = canonicalStyle.buildStudioCanonicalStyleMutation({
     canonicalDeckApi: canonicalDeck,
     canonicalDeckBeforeMutation: sourceDeck,
-    buildCanonicalDeck: (_documentRef, buildOptions) => {
-      receivedBuildOptions = buildOptions;
-      return rebuiltDeck;
+    buildCanonicalDeck() {
+      buildCalls += 1;
+      return null;
     },
-    sourceDocument,
     selection: [chart],
     prop: 'chartTitle',
     value: 'Updated trend',
     getElementId: (element) => element.dataset.editorId
   });
 
-  assert.equal(result, rebuiltDeck);
-  assert.deepEqual(receivedBuildOptions, {
-    preferLiveCanonicalDeck: false,
-    canonicalDeckBaseline: sourceDeck
-  });
+  assert.equal(buildCalls, 0);
   assert.equal(result.slides[0].nodes[0].attributes['data-chart-title'], 'Updated trend');
 });
 

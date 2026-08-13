@@ -140,109 +140,31 @@
     }
 
     if (prop === 'text' && typeof canonicalDeckApi.updateCanonicalNodeText === 'function') {
-      const sourceDocument = options.sourceDocument;
-      const isDocumentLike = !!(sourceDocument
-        && (sourceDocument.documentElement
-          || typeof sourceDocument.querySelector === 'function'));
-      if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
-        const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument, {
-            preferLiveCanonicalDeck: false,
-            canonicalDeckBaseline: canonicalDeckBeforeMutation
-          })
-        );
-        const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
-          ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
-          : (candidate) => !!candidate
-            && typeof candidate === 'object'
-            && !Array.isArray(candidate)
-            && Array.isArray(candidate.slides);
-        if (isValidCanonicalDeck(rebuiltCanonicalDeck)) {
-          return rebuiltCanonicalDeck;
-        }
-      }
       const element = selection[0];
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeText(canonicalDeckBeforeMutation, [{
         id: resolveElementId(element, getElementId),
-        text: element && typeof element.textContent === 'string'
-          ? element.textContent
-          : `${value}`
+        text: `${value}`
       }]));
     }
 
     if (prop === 'chartValues' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
-      const sourceDocument = options.sourceDocument;
-      const isDocumentLike = !!(sourceDocument
-        && (sourceDocument.documentElement
-          || typeof sourceDocument.querySelector === 'function'));
-      if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
-        const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument, {
-            preferLiveCanonicalDeck: false,
-            canonicalDeckBaseline: canonicalDeckBeforeMutation
-          })
-        );
-        const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
-          ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
-          : (candidate) => !!candidate
-            && typeof candidate === 'object'
-            && !Array.isArray(candidate)
-            && Array.isArray(candidate.slides);
-        if (isValidCanonicalDeck(rebuiltCanonicalDeck)) {
-          return rebuiltCanonicalDeck;
-        }
-      }
       const element = selection[0];
-      const chartValues = element && typeof element.getAttribute === 'function'
-        ? element.getAttribute('data-chart-values') || `${value}`
-        : element && element.dataset && typeof element.dataset.chartValues === 'string'
-          ? element.dataset.chartValues
-          : `${value}`;
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(
         canonicalDeckBeforeMutation,
         [{
           id: resolveElementId(element, getElementId),
-          attributes: { 'data-chart-values': chartValues }
+          attributes: { 'data-chart-values': `${value}` }
         }]
       ));
     }
 
     if (prop === 'chartTitle' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
-      const sourceDocument = options.sourceDocument;
-      const isDocumentLike = !!(sourceDocument
-        && (sourceDocument.documentElement
-          || typeof sourceDocument.querySelector === 'function'));
-      if (typeof options.buildCanonicalDeck === 'function' && isDocumentLike) {
-        const rebuiltCanonicalDeck = runCanonicalStyleMutation(
-          () => options.buildCanonicalDeck(sourceDocument, {
-            preferLiveCanonicalDeck: false,
-            canonicalDeckBaseline: canonicalDeckBeforeMutation
-          })
-        );
-        const isValidCanonicalDeck = typeof canonicalDeckApi.isCanonicalDeck === 'function'
-          ? (candidate) => canonicalDeckApi.isCanonicalDeck(candidate) === true
-          : (candidate) => !!candidate
-            && typeof candidate === 'object'
-            && !Array.isArray(candidate)
-            && Array.isArray(candidate.slides);
-        if (isValidCanonicalDeck(rebuiltCanonicalDeck)) {
-          return rebuiltCanonicalDeck;
-        }
-      }
       const element = selection[0];
-      const titleElement = element && typeof element.querySelector === 'function'
-        ? element.querySelector('.editor-chart-title')
-        : null;
-      const chartTitle = titleElement && typeof titleElement.textContent === 'string'
-        ? titleElement.textContent
-        : element && typeof element.textContent === 'string'
-          ? element.textContent
-          : `${value}`;
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(
         canonicalDeckBeforeMutation,
         [{
           id: resolveElementId(element, getElementId),
-          attributes: { 'data-chart-title': chartTitle }
+          attributes: { 'data-chart-title': `${value}` }
         }]
       ));
     }
