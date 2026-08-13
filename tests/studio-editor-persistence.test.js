@@ -650,6 +650,7 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
     activeSlideIds: ['slide-1'],
     slideCounterText: '1 / 1'
   };
+  const sourceDocument = { label: 'iframe-doc' };
   let buildCanonicalDeckCalls = 0;
   let resolvePlaybackStateCalls = 0;
 
@@ -677,8 +678,10 @@ test('resolveStudioCapturedPersistableDeckState rebuilds canonical and playback 
 
   assert.deepEqual(
     editorPersistence.resolveStudioCapturedPersistableDeckState('<html>persisted</html>', {
-      buildCanonicalDeck() {
+      sourceDocument,
+      buildCanonicalDeck(documentRef) {
         buildCanonicalDeckCalls += 1;
+        assert.equal(documentRef, sourceDocument);
         return canonicalDeck;
       },
       resolvePlaybackState(nextCanonicalDeck) {
@@ -883,8 +886,8 @@ test('captureStudioPersistableDeckState reuses captured build-state values and s
           };
         },
         canonicalDeck,
-        buildCanonicalDeck() {
-          calls.push(['buildCanonicalDeck']);
+        buildCanonicalDeck(documentRef) {
+          calls.push(['buildCanonicalDeck', documentRef]);
           return canonicalDeck;
         },
         resolvePlaybackState(nextCanonicalDeck) {
@@ -910,7 +913,7 @@ test('captureStudioPersistableDeckState reuses captured build-state values and s
   assert.deepEqual(calls[0][1], { label: 'iframe-doc' });
   assert.deepEqual(calls[0][2], { canonicalDeck });
   assert.deepEqual(calls.slice(1), [
-    ['buildCanonicalDeck'],
+    ['buildCanonicalDeck', { label: 'iframe-doc' }],
     ['resolvePlaybackState', canonicalDeck]
   ]);
 });

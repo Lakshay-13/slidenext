@@ -620,6 +620,7 @@ test('createStudioEditorCapturedPersistableDeckStateResolverAdapter preserves bu
 
 test('createStudioEditorCapturedPersistableDeckStateResolverAdapter uses the direct helper without a builder', () => {
   let delegatedArgs = null;
+  const sourceDocument = { label: 'iframe-doc' };
   const resolveStudioCapturedPersistableDeckState = (cleanHtml, options) => {
     delegatedArgs = { cleanHtml, options };
     return { direct: true };
@@ -630,12 +631,14 @@ test('createStudioEditorCapturedPersistableDeckStateResolverAdapter uses the dir
 
   assert.deepEqual(adapter('<html>persisted</html>', {
     canonicalDeck: { id: 'deck-1' },
-    playbackState: { activeSlideIds: ['slide-1'] }
+    playbackState: { activeSlideIds: ['slide-1'] },
+    sourceDocument
   }), { direct: true });
   assert.equal(delegatedArgs.cleanHtml, '<html>persisted</html>');
   assert.deepEqual(delegatedArgs.options, {
     canonicalDeck: { id: 'deck-1' },
     playbackState: { activeSlideIds: ['slide-1'] },
+    sourceDocument,
     buildCanonicalDeck: delegatedArgs.options.buildCanonicalDeck,
     resolvePlaybackState: delegatedArgs.options.resolvePlaybackState
   });

@@ -604,6 +604,9 @@
           playbackState: Object.prototype.hasOwnProperty.call(resolvedOptions, 'playbackState')
             ? resolvedOptions.playbackState
             : undefined,
+          sourceDocument: Object.prototype.hasOwnProperty.call(resolvedOptions, 'sourceDocument')
+            ? resolvedOptions.sourceDocument
+            : null,
           buildCanonicalDeck,
           resolvePlaybackState
         }

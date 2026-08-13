@@ -144,6 +144,7 @@
           playbackState: Object.prototype.hasOwnProperty.call(capturedBuildState, 'playbackState')
             ? capturedBuildState.playbackState
             : undefined,
+          sourceDocument: doc,
           ...captureCallbacks
         }
       );

@@ -372,6 +372,9 @@
     const nextCleanHtml = normalizeString(cleanHtml);
     const resolvedCanonicalDeck = options.canonicalDeck || null;
     const resolvedPlaybackState = options.playbackState;
+    const sourceDocument = Object.prototype.hasOwnProperty.call(options, 'sourceDocument')
+      ? options.sourceDocument
+      : null;
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
@@ -382,7 +385,7 @@
     let canonicalDeck = resolvedCanonicalDeck;
     if (nextCleanHtml && !canonicalDeck && buildCanonicalDeck) {
       try {
-        canonicalDeck = buildCanonicalDeck();
+        canonicalDeck = buildCanonicalDeck(sourceDocument);
       } catch (err) {
         // Keep the clean HTML save path available for legacy decks.
         canonicalDeck = null;
@@ -423,7 +426,10 @@
           : buildCanonicalDeck,
         resolvePlaybackState: typeof nextOptions.resolvePlaybackState === 'function'
           ? nextOptions.resolvePlaybackState
-          : resolvePlaybackState
+          : resolvePlaybackState,
+        sourceDocument: Object.prototype.hasOwnProperty.call(nextOptions, 'sourceDocument')
+          ? nextOptions.sourceDocument
+          : null
       });
     };
   }
@@ -512,7 +518,8 @@
           ? capturedBuildState.playbackState
           : undefined,
         buildCanonicalDeck: options.buildCanonicalDeck,
-        resolvePlaybackState: options.resolvePlaybackState
+        resolvePlaybackState: options.resolvePlaybackState,
+        sourceDocument: doc
       }
     );
   }
