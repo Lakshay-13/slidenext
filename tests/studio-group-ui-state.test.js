@@ -13,6 +13,7 @@ const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const groupController = require('../shared/studio-editor-group-controller.js');
+const ungroupState = require('../shared/studio-editor-ungroup-state.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -77,6 +78,25 @@ function installGroupController(context) {
     commitSelectionState: context.commitEditorSelectionState,
     finalizeDeckMutation: context.finalizeEditorDeckMutation,
     prepareGroup: context.makeElementsHoverable
+  });
+}
+
+function installUngroupStateController(context) {
+  context.SlideNextStudioEditorUngroupState = ungroupState;
+  context.studioEditorUngroupStateController = ungroupState.createStudioEditorUngroupStateController({
+    groupApi: context.SlideNextStudioEditorGroup,
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : context.doc || null,
+    getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+      ? context.getStudioSelectedElements(doc)
+      : Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: context.getActiveSlide,
+    getLiveSelectedElements: context.getLiveSelectedElements,
+    isEditorGroupElement: context.isEditorGroupElement,
+    getActionState: typeof context.buildUngroupSelectionActionState === 'function'
+      ? context.buildUngroupSelectionActionState
+      : null
   });
 }
 
@@ -487,17 +507,11 @@ test('buildUngroupSelectionActionState delegates group-wrapper filtering to the 
   };
 
   vm.createContext(context);
+  installUngroupStateController(context);
   vm.runInContext(source, context);
 
   assert.deepEqual(context.buildUngroupSelectionActionState(doc), { canUngroup: true });
-  assert.match(
-    source,
-    /buildStudioUngroupSelectionActionState\(getStudioSelectedElements\(resolvedDoc\),/
-  );
-  assert.match(
-    source,
-    /getLiveSelectedElements\(getStudioSelectedElements\(resolvedDoc\), resolvedDoc\)/
-  );
+  assert.match(source, /studioEditorUngroupStateController\.buildActionState/);
   assert.equal(delegatedOptions.elements, selection);
   assert.equal(delegatedOptions.options.doc, doc);
   assert.equal(delegatedOptions.options.getActiveSlide, context.getActiveSlide);

@@ -1466,6 +1466,7 @@
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
+  <script src="/shared/studio-editor-ungroup-state.js"></script>
   <script src="/shared/studio-editor-ungroup-transaction.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
@@ -3499,6 +3500,20 @@
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
             : isElementLocked,
           documentRef: document
+        })
+      : null;
+    const studioEditorUngroupStateController = typeof SlideNextStudioEditorUngroupState !== 'undefined'
+      && SlideNextStudioEditorUngroupState
+      && typeof SlideNextStudioEditorUngroupState.createStudioEditorUngroupStateController === 'function'
+      ? SlideNextStudioEditorUngroupState.createStudioEditorUngroupStateController({
+          groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
+            ? SlideNextStudioEditorGroup
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getLiveSelectedElements,
+          isEditorGroupElement
         })
       : null;
     const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
@@ -9884,42 +9899,15 @@
     }
 
     function buildUngroupSelectionActionState(doc = null) {
-      const resolvedDoc = doc || getIframeDoc();
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
-        : null;
-      if (groupApi && typeof groupApi.createStudioUngroupSelectionActionStateBuilder === 'function') {
-        if (typeof buildUngroupSelectionActionState.builder !== 'function') {
-          buildUngroupSelectionActionState.builder = groupApi.createStudioUngroupSelectionActionStateBuilder({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getLiveSelectedElements,
-            isEditorGroupElement
-          });
-        }
-        if (typeof buildUngroupSelectionActionState.builder === 'function') {
-          return buildUngroupSelectionActionState.builder(doc);
-        }
+      if (studioEditorUngroupStateController
+        && typeof studioEditorUngroupStateController.buildActionState === 'function') {
+        return studioEditorUngroupStateController.buildActionState(doc);
       }
-      if (groupApi && typeof groupApi.buildStudioUngroupSelectionActionState === 'function') {
-        return groupApi.buildStudioUngroupSelectionActionState(getStudioSelectedElements(resolvedDoc), {
-          doc: resolvedDoc,
-          getActiveSlide,
-          getLiveSelectedElements,
-          isEditorGroupElement
-        });
-      }
-      const slide = getActiveSlide(resolvedDoc);
-      const selection = getLiveSelectedElements(getStudioSelectedElements(resolvedDoc), resolvedDoc);
-      const groups = selection.filter(isEditorGroupElement).filter((group) => {
-        return !!(group.parentElement && group.children && group.children.length > 0);
-      });
       return {
-        slide,
-        selection,
-        groups,
-        canUngroup: !!(slide && selection.length > 0 && groups.length === selection.length)
+        slide: null,
+        selection: [],
+        groups: [],
+        canUngroup: false
       };
     }
 
