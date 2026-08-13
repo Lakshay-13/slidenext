@@ -34,7 +34,13 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
-    const fallbackCanonicalDeckValidator = isCanonicalDeck || isCanonicalDeckLike;
+    const sharedCanonicalDeckValidator = canonicalStateApi
+      && typeof canonicalStateApi.isStudioEditorCanonicalDeckLike === 'function'
+      ? canonicalStateApi.isStudioEditorCanonicalDeckLike
+      : null;
+    const fallbackCanonicalDeckValidator = isCanonicalDeck
+      || sharedCanonicalDeckValidator
+      || isCanonicalDeckLike;
 
     const canonicalState = canonicalStateApi
       ? canonicalStateApi.createStudioEditorCanonicalState({

@@ -81,6 +81,24 @@ test('canonical runtime composes state, builders, and bridge with shared depende
   assert.equal(calls[3][1].getDocument, callbacks.getDocument);
 });
 
+test('canonical runtime prefers the shared deck validator when no custom validator is provided', () => {
+  let capturedValidator = null;
+  const sharedValidator = () => true;
+  const state = { name: 'state' };
+  const result = canonicalRuntime.createStudioEditorCanonicalRuntime({
+    canonicalStateApi: {
+      isStudioEditorCanonicalDeckLike: sharedValidator,
+      createStudioEditorCanonicalState(options) {
+        capturedValidator = options.isCanonicalDeck;
+        return state;
+      }
+    }
+  });
+
+  assert.equal(result.canonicalState, state);
+  assert.equal(capturedValidator, sharedValidator);
+});
+
 test('index wires canonical editor composition through the runtime module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
