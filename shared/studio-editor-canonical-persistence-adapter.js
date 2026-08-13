@@ -101,7 +101,7 @@
         && typeof persistenceController.resolveFallbackCanonicalDeck === 'function') {
         const resolvedCanonicalDeck = persistenceController.resolveFallbackCanonicalDeck(
           canonicalDeck,
-          { buildCanonicalDeck }
+          { buildCanonicalDeck, sourceDocument: doc }
         );
         if (resolvedCanonicalDeck !== null && typeof resolvedCanonicalDeck !== 'undefined') {
           return resolvedCanonicalDeck;
@@ -122,7 +122,10 @@
           });
         }
         return typeof fallbackCanonicalDeckAdapter === 'function'
-          ? fallbackCanonicalDeckAdapter(canonicalDeck, { buildCanonicalDeck })
+          ? fallbackCanonicalDeckAdapter(canonicalDeck, {
+              buildCanonicalDeck,
+              sourceDocument: doc
+            })
           : null;
       }
 
@@ -133,6 +136,7 @@
       if (!createFallbackCanonicalDeckResolver) return null;
       const resolver = createFallbackCanonicalDeckResolver({
         buildCanonicalDeck,
+        sourceDocument: doc,
         resolveCanonicalDeckOverride: resolveCanonicalDeckOverrideForFallback
           || resolveCanonicalDeckOverride,
         isCanonicalDeck

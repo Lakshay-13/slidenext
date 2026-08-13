@@ -81,13 +81,14 @@ test('canonical persistence adapter forwards document rebuilds through the fallb
   const documentRef = {};
   const inputDeck = createDeck('input');
   const rebuiltDeck = createDeck('rebuilt');
-  let capturedBuild = null;
+  let capturedOptions = null;
   const adapter = adapterApi.createStudioEditorCanonicalPersistenceAdapter({
     getPersistenceController: () => null,
     persistenceStateApi: {
       createStudioEditorFallbackCanonicalDeckAdapter(options) {
+        capturedOptions = options;
         return (canonicalDeck, nextOptions) => {
-          capturedBuild = nextOptions.buildCanonicalDeck;
+          capturedOptions.nextOptions = nextOptions;
           return canonicalDeck ? nextOptions.buildCanonicalDeck() : null;
         };
       }
@@ -100,7 +101,8 @@ test('canonical persistence adapter forwards document rebuilds through the fallb
   });
 
   assert.equal(adapter.resolveFallbackCanonicalDeck(documentRef, inputDeck), rebuiltDeck);
-  assert.equal(typeof capturedBuild, 'function');
+  assert.equal(typeof capturedOptions.nextOptions.buildCanonicalDeck, 'function');
+  assert.equal(capturedOptions.nextOptions.sourceDocument, documentRef);
 });
 
 test('canonical persistence adapter supports the legacy persistence API when state adapters are absent', () => {

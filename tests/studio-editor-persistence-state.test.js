@@ -211,11 +211,13 @@ test('createStudioEditorFallbackCanonicalDeckAdapter preserves conditional canon
     isCanonicalDeck: (canonicalDeck) => canonicalDeck === fallbackDeck
   });
   const malformedDeck = { id: 'malformed' };
+  const sourceDocument = { label: 'iframe-doc' };
 
-  assert.equal(adapter(malformedDeck), fallbackDeck);
+  assert.equal(adapter(malformedDeck, { sourceDocument }), fallbackDeck);
   assert.equal(adapter(null), null);
   assert.equal(resolverOptions.length, 2);
   assert.equal(typeof resolverOptions[0].buildCanonicalDeck, 'function');
+  assert.equal(resolverOptions[0].sourceDocument, sourceDocument);
   assert.equal(resolverOptions[1].buildCanonicalDeck, null);
 });
 

@@ -251,6 +251,9 @@
         buildCanonicalDeck: canonicalDeck && currentBuildCanonicalDeck
           ? () => currentBuildCanonicalDeck()
           : null,
+        sourceDocument: Object.prototype.hasOwnProperty.call(resolvedOptions, 'sourceDocument')
+          ? resolvedOptions.sourceDocument
+          : null,
         resolveCanonicalDeckOverride: currentResolveCanonicalDeckOverride,
         isCanonicalDeck: currentIsCanonicalDeck
       });
