@@ -248,13 +248,14 @@
       ? candidateCanonicalDeck
       : null;
     const transaction = normalizeStudioHistoryTransaction(options.transaction);
-    const html = isStudioHistoryViewTransaction(transaction)
+    const isReplayableTransaction = isStudioHistoryTransaction(transaction);
+    const html = isReplayableTransaction
       ? ''
       : canonicalDeck && (transaction || options.preferCanonicalDeck === true)
         ? ''
         : normalizeStudioHistoryFrameHtml(buildHistoryHtml(doc, options));
 
-    if (!doc && !html && !canonicalDeck && !isStudioHistoryViewTransaction(transaction)) {
+    if (!doc && !html && !canonicalDeck && !isReplayableTransaction) {
       return null;
     }
 
@@ -274,10 +275,17 @@
     return transaction && typeof transaction === 'object' ? transaction : null;
   }
 
-  function isStudioHistoryViewTransaction(transaction) {
+  function isStudioHistoryTransaction(transaction) {
     return !!transaction
+      && typeof transaction === 'object'
+      && transaction.kind === 'slidenext.editor.transaction'
+      && transaction.version === 1
       && Array.isArray(transaction.operations)
-      && transaction.operations.length > 0
+      && transaction.operations.length > 0;
+  }
+
+  function isStudioHistoryViewTransaction(transaction) {
+    return isStudioHistoryTransaction(transaction)
       && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
   }
 
@@ -1108,6 +1116,7 @@
     buildStudioHistoryEntry,
     createStudioHistoryEntry,
     normalizeStudioHistoryTransaction,
+    isStudioHistoryTransaction,
     isStudioHistoryViewTransaction,
     normalizeStudioHistoryEntry,
     areStudioHistoryEntriesEqual,

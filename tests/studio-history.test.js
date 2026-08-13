@@ -97,6 +97,40 @@ test('createStudioHistoryEntry preserves optional transaction metadata', () => {
   assert.deepEqual(studioHistory.normalizeStudioHistoryEntry(entry), entry);
 });
 
+test('createStudioHistoryEntry keeps replayable transactions free of HTML snapshots without a canonical sidecar', () => {
+  let buildHistoryHtmlCalls = 0;
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'style',
+      elementId: 'node-1',
+      before: { left: '0px' },
+      after: { left: '10px' }
+    }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    transaction,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedElementIds: () => [],
+    buildHistoryHtml() {
+      buildHistoryHtmlCalls += 1;
+      return '<html>should not be serialized</html>';
+    }
+  });
+
+  assert.equal(studioHistory.isStudioHistoryTransaction(transaction), true);
+  assert.equal(buildHistoryHtmlCalls, 0);
+  assert.deepEqual(entry, {
+    html: '',
+    activeSlideId: 'slide-1',
+    selectedElementIds: [],
+    canonicalDeck: null,
+    transaction
+  });
+});
+
 test('createStudioHistoryEntry keeps active-slide transactions free of content snapshots', () => {
   let buildHistoryHtmlCalls = 0;
   const transaction = {
