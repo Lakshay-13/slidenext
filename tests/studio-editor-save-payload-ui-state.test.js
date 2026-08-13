@@ -22,6 +22,7 @@ const persistedSaveRequestCheckerAction = require('../shared/studio-editor-persi
 const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const persistenceFailureAction = require('../shared/studio-editor-persistence-failure-action.js');
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
+const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -362,6 +363,24 @@ function loadApplyCurrentStudioPersistenceSuccess(fileContent, context) {
     fileContent,
     'function applyCurrentStudioPersistenceSuccess(',
     '\n\n    function applyCurrentStudioVersionPersistenceSuccess('
+  );
+  vm.runInContext(source, context);
+}
+
+function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorVersionPersistenceSuccessAction =
+    versionPersistenceSuccessAction.createStudioEditorVersionPersistenceSuccessAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getCreateSessionReaderOptions: () => context.createCurrentStudioSessionReaderOptions || null,
+      getRefreshVersionEntries: () => context.loadVersions || null
+    });
+  const source = extractFunctionSource(
+    fileContent,
+    'function applyCurrentStudioVersionPersistenceSuccess(',
+    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
   );
   vm.runInContext(source, context);
 }
@@ -2245,11 +2264,6 @@ test('applyCurrentStudioPersistenceSuccess fails closed when the shared success 
 
 test('applyCurrentStudioVersionPersistenceSuccess reuses the shared version-success handler when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionPersistenceSuccess(',
-    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
-  );
 
   let delegatedArgs = null;
   const context = {
@@ -2275,7 +2289,7 @@ test('applyCurrentStudioVersionPersistenceSuccess reuses the shared version-succ
   };
 
   vm.createContext(context);
-  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.applyCurrentStudioVersionPersistenceSuccess(
@@ -2316,11 +2330,6 @@ test('applyCurrentStudioVersionPersistenceSuccess reuses the shared version-succ
 
 test('applyCurrentStudioVersionPersistenceSuccess delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionPersistenceSuccess(',
-    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
-  );
   const context = {
     loadVersions: 'loadVersions-sentinel',
     SlideNextStudioEditorPersistenceState: editorPersistenceState,
@@ -2347,7 +2356,7 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the editor p
   const persistenceContext = { presentationUrl: 'presentations/deck/index.html' };
 
   vm.createContext(context);
-  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 
   const result = context.applyCurrentStudioVersionPersistenceSuccess(persistenceContext, {
     onSuccess: 'callback-sentinel'
@@ -2363,11 +2372,6 @@ test('applyCurrentStudioVersionPersistenceSuccess delegates through the editor p
 
 test('applyCurrentStudioVersionPersistenceSuccess creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionPersistenceSuccess(',
-    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -2388,7 +2392,7 @@ test('applyCurrentStudioVersionPersistenceSuccess creates the shared persistence
   };
 
   vm.createContext(context);
-  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 
   assert.deepEqual(
     context.applyCurrentStudioVersionPersistenceSuccess({ id: 'one' }, { id: 1 }),
@@ -2404,11 +2408,6 @@ test('applyCurrentStudioVersionPersistenceSuccess creates the shared persistence
 
 test('applyCurrentStudioVersionPersistenceSuccess fails closed when the shared version-success handler is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const applyCurrentStudioVersionPersistenceSuccessSource = extractFunctionSource(
-    fileContent,
-    'function applyCurrentStudioVersionPersistenceSuccess(',
-    '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
-  );
   const context = {
     SlideNextStudioEditorPersistence: {},
     createCurrentStudioSessionReaderOptions() {
@@ -2420,7 +2419,7 @@ test('applyCurrentStudioVersionPersistenceSuccess fails closed when the shared v
   };
 
   vm.createContext(context);
-  vm.runInContext(applyCurrentStudioVersionPersistenceSuccessSource, context);
+  loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context);
 
   assert.equal(
     context.applyCurrentStudioVersionPersistenceSuccess({ id: 'version-success' }),

@@ -10,6 +10,7 @@ const editorSession = require('../shared/studio-editor-session.js');
 const playbackStateAction = require('../shared/studio-editor-persisted-deck-playback-state-action.js');
 const persistenceHandlerOptionsAction = require('../shared/studio-editor-persistence-handler-options-action.js');
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
+const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
