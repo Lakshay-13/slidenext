@@ -5261,6 +5261,7 @@
             ? SlideNextStudioEditorPersistenceState
             : null,
           isCanonicalDeck: getEditorCanonicalDeckValidator(),
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           buildCanonicalDeckForDocument: (doc) => buildEditorCanonicalDeck(doc)
         })
       : null;

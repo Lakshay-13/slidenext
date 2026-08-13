@@ -47,6 +47,36 @@ test('canonical persistence adapter prefers the controller and preserves null fa
   ]);
 });
 
+test('canonical persistence adapter prefers pending state before rebuilding an implicit override', () => {
+  const pendingDeck = createDeck('pending');
+  let controllerCalls = 0;
+  let rebuildCalls = 0;
+  const adapter = adapterApi.createStudioEditorCanonicalPersistenceAdapter({
+    getPendingCanonicalDeck(sourceDocument) {
+      assert.equal(sourceDocument, null);
+      return pendingDeck;
+    },
+    getPersistenceController: () => ({
+      resolveCanonicalDeckOverride() {
+        controllerCalls += 1;
+        return null;
+      }
+    }),
+    buildCanonicalDeckForDocument() {
+      rebuildCalls += 1;
+      return createDeck('rebuilt');
+    },
+    isCanonicalDeck: (value) => !!value && value.kind === 'slidenext.deck'
+  });
+
+  assert.equal(
+    adapter.resolveCanonicalDeckOverride(null, { buildCanonicalDeck: () => createDeck('fallback') }),
+    pendingDeck
+  );
+  assert.equal(controllerCalls, 0);
+  assert.equal(rebuildCalls, 0);
+});
+
 test('canonical persistence adapter forwards document rebuilds through the fallback chain', () => {
   const documentRef = {};
   const inputDeck = createDeck('input');

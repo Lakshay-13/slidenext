@@ -24,6 +24,9 @@
     const buildCanonicalDeckForDocument = typeof options.buildCanonicalDeckForDocument === 'function'
       ? options.buildCanonicalDeckForDocument
       : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveCanonicalDeckOverrideForFallback =
       typeof options.resolveCanonicalDeckOverrideForFallback === 'function'
         ? options.resolveCanonicalDeckOverrideForFallback
@@ -32,6 +35,21 @@
     let fallbackCanonicalDeckAdapter = null;
 
     function resolveCanonicalDeckOverride(canonicalDeck = null, nextOptions = {}) {
+      if (!canonicalDeck && getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(
+            nextOptions && typeof nextOptions === 'object'
+              ? nextOptions.sourceDocument || nextOptions.documentRef || null
+              : null
+          );
+          const isValidPendingDeck = typeof isCanonicalDeck === 'function'
+            ? isCanonicalDeck(pendingCanonicalDeck)
+            : !!(pendingCanonicalDeck && Array.isArray(pendingCanonicalDeck.slides));
+          if (isValidPendingDeck) return pendingCanonicalDeck;
+        } catch (error) {
+          // Continue through the normal persistence override chain.
+        }
+      }
       const persistenceController = getPersistenceController();
       if (persistenceController
         && typeof persistenceController.resolveCanonicalDeckOverride === 'function') {
