@@ -354,7 +354,7 @@ test('updateEditorPersistedDeckState updates only the provided persisted baselin
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
+    '\n\n    function editorUndo() {'
   );
 
   const context = {
@@ -390,7 +390,7 @@ test('updateEditorPersistedDeckState reuses the shared persisted-state updater b
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
+    '\n\n    function editorUndo() {'
   );
 
   let delegatedArgs = null;
@@ -442,7 +442,7 @@ test('updateEditorPersistedDeckState does not mutate state when the shared updat
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
+    '\n\n    function editorUndo() {'
   );
 
   const context = {
@@ -470,7 +470,7 @@ test('updateEditorPersistedDeckState normalizes the persisted canonical baseline
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
+    '\n\n    function editorUndo() {'
   );
 
   const rawCanonicalDeck = {
@@ -528,7 +528,7 @@ test('applyCurrentStudioPersistedDeckState updates persisted baselines together 
   const updateEditorPersistedDeckStateSource = extractFunctionSource(
     fileContent,
     'function updateEditorPersistedDeckState(nextState = {}) {',
-    '\n\n    function getEditorHistoryStepAdapter() {'
+    '\n\n    function editorUndo() {'
   );
 
   const rawCanonicalDeck = {

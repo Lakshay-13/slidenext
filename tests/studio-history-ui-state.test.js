@@ -14,6 +14,7 @@ const historyEntryAction = require('../shared/studio-editor-history-entry-action
 const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
 const historyButtonsAction = require('../shared/studio-editor-history-buttons-action.js');
 const historyFlushAction = require('../shared/studio-editor-history-flush-action.js');
+const historyStepAction = require('../shared/studio-editor-history-step-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -110,12 +111,35 @@ function loadSaveHistoryState(fileContent, context) {
 }
 
 function loadHistoryStepAdapter(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function getEditorHistoryStepAdapter() {',
-    '\n\n    function editorUndo() {'
-  );
-  vm.runInContext(helperSource, context);
+  context.getEditorHistoryStepAdapter = historyStepAction.createStudioEditorHistoryStepAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyStateApi: context.SlideNextStudioEditorHistoryState || historyState,
+    historyApi: context.SlideNextStudioHistory || null,
+    getUndoStack: typeof context.getStudioUndoStack === 'function'
+      ? context.getStudioUndoStack
+      : () => context.undoStack || [],
+    getRedoStack: typeof context.getStudioRedoStack === 'function'
+      ? context.getStudioRedoStack
+      : () => context.redoStack || [],
+    setUndoStack: typeof context.setStudioUndoStack === 'function'
+      ? context.setStudioUndoStack
+      : (nextUndoStack) => {
+          context.undoStack = nextUndoStack;
+        },
+    setRedoStack: typeof context.setStudioRedoStack === 'function'
+      ? context.setStudioRedoStack
+      : (nextRedoStack) => {
+          context.redoStack = nextRedoStack;
+        },
+    restoreHistoryEntry: context.restoreFrameFromHistoryEntry,
+    updateHistoryButtons: context.updateHistoryButtons,
+    triggerAutoSave: context.triggerAutoSave,
+    flushPendingHistory: context.flushPendingEditorHistory || null,
+    hasPendingHistory: () => (
+      context.pendingEditorTransaction !== null
+      || context.pendingEditorCanonicalDeck !== null
+    )
+  });
 }
 
 function loadBuildHistoryFrameHtml(fileContent, context) {

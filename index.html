@@ -1622,6 +1622,7 @@
   <script src="/shared/studio-editor-history-capture-action.js"></script>
   <script src="/shared/studio-editor-history-buttons-action.js"></script>
   <script src="/shared/studio-editor-history-flush-action.js"></script>
+  <script src="/shared/studio-editor-history-step-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3912,6 +3913,41 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistoryFlushGlobalApi);
+    const studioEditorHistoryStepAction = typeof SlideNextStudioEditorHistoryStepAction !== 'undefined'
+      && SlideNextStudioEditorHistoryStepAction
+      && typeof SlideNextStudioEditorHistoryStepAction.createStudioEditorHistoryStepAction === 'function'
+      ? SlideNextStudioEditorHistoryStepAction.createStudioEditorHistoryStepAction({
+          getHistoryController: () => studioEditorHistoryController,
+          historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
+            ? SlideNextStudioEditorHistoryState
+            : null,
+          historyApi: typeof SlideNextStudioHistory !== 'undefined'
+            ? SlideNextStudioHistory
+            : null,
+          getUndoStack: getStudioUndoStack,
+          getRedoStack: getStudioRedoStack,
+          setUndoStack: setStudioUndoStack,
+          setRedoStack: setStudioRedoStack,
+          restoreHistoryEntry: restoreFrameFromHistoryEntry,
+          updateHistoryButtons,
+          triggerAutoSave,
+          flushPendingHistory: typeof flushPendingEditorHistory === 'function'
+            ? flushPendingEditorHistory
+            : null,
+          hasPendingHistory: () => (
+            getStudioPendingEditorTransaction() !== null
+            || getStudioPendingEditorCanonicalDeck() !== null
+          )
+        })
+      : null;
+    const studioEditorHistoryStepGlobalApi = typeof SlideNextStudioEditorHistoryStepAction !== 'undefined'
+      && SlideNextStudioEditorHistoryStepAction
+      && typeof SlideNextStudioEditorHistoryStepAction.createStudioEditorHistoryStepGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryStepAction.createStudioEditorHistoryStepGlobalApi({
+          getEditorHistoryStepAdapter: studioEditorHistoryStepAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryStepGlobalApi);
     const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorPersistenceRuntimeOptions
       : null;
@@ -10700,48 +10736,6 @@
       }
       if (typeof updateEditorPersistedDeckState.adapter !== 'function') return {};
       return updateEditorPersistedDeckState.adapter(nextState);
-    }
-
-    function getEditorHistoryStepAdapter() {
-      if (typeof studioEditorHistoryController !== 'undefined'
-        && studioEditorHistoryController
-        && typeof studioEditorHistoryController.undo === 'function') {
-        return studioEditorHistoryController;
-      }
-      if (typeof getEditorHistoryStepAdapter.adapter !== 'object'
-        || !getEditorHistoryStepAdapter.adapter) {
-        const createStudioEditorHistoryStepStateAdapter = (
-          typeof SlideNextStudioEditorHistoryState !== 'undefined'
-          && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepStateAdapter === 'function'
-        )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryStepStateAdapter
-          : null;
-        if (!createStudioEditorHistoryStepStateAdapter) return null;
-        getEditorHistoryStepAdapter.adapter = createStudioEditorHistoryStepStateAdapter({
-          historyStateApi: SlideNextStudioEditorHistoryState,
-          historyApi: SlideNextStudioHistory,
-          getUndoStack: getStudioUndoStack,
-          getRedoStack: getStudioRedoStack,
-          setUndoStack(nextUndoStack) {
-            setStudioUndoStack(nextUndoStack);
-          },
-          setRedoStack(nextRedoStack) {
-            setStudioRedoStack(nextRedoStack);
-          },
-          restoreHistoryEntry: restoreFrameFromHistoryEntry,
-          updateHistoryButtons,
-          triggerAutoSave,
-          flushPendingHistory: typeof flushPendingEditorHistory === 'function'
-            ? flushPendingEditorHistory
-            : null,
-          hasPendingHistory: () => (
-            getStudioPendingEditorTransaction() !== null
-            || getStudioPendingEditorCanonicalDeck() !== null
-          )
-        });
-      }
-      return getEditorHistoryStepAdapter.adapter;
     }
 
     function editorUndo() {
