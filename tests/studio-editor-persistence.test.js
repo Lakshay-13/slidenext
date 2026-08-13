@@ -1796,7 +1796,8 @@ test('createStudioSaveRequestBodyBuilder reuses call-time overrides before build
       options: {
         isAutoSave: false,
         versionLabel: 'Auto: Updated Deck',
-        canonicalDeck
+        canonicalDeck,
+        sourceDocument: doc
       }
     }
   );
@@ -1810,12 +1811,14 @@ test('createStudioSaveRequestBodyBuilder reuses call-time overrides before build
     ['buildSaveRequestBody', '/presentations/onboarding-presentation/index.html', '<html>captured</html>', {
       isAutoSave: false,
       versionLabel: 'Auto: Updated Deck',
-      canonicalDeck
+      canonicalDeck,
+      sourceDocument: doc
     }]
   ]);
 });
 
 test('createStudioSaveRequestBodyBuilder prefers live canonical state over captured DOM state', () => {
+  const sourceDocument = { label: 'iframe-doc' };
   const liveCanonicalDeck = {
     metadata: { title: 'Live Deck' },
     slides: [{ id: 'slide-live' }]
@@ -1826,7 +1829,10 @@ test('createStudioSaveRequestBodyBuilder prefers live canonical state over captu
   };
   const builder = editorPersistence.createStudioSaveRequestBodyBuilder({
     getPresentationUrl: () => '/presentations/live/index.html',
-    getLiveCanonicalDeck: () => liveCanonicalDeck,
+    getLiveCanonicalDeck: (documentRef) => {
+      assert.equal(documentRef, sourceDocument);
+      return liveCanonicalDeck;
+    },
     capturePersistableDeckState: () => ({
       cleanHtml: '<html>captured</html>',
       canonicalDeck: capturedCanonicalDeck
@@ -1837,7 +1843,7 @@ test('createStudioSaveRequestBodyBuilder prefers live canonical state over captu
     })
   });
 
-  assert.deepEqual(builder(null, null), {
+  assert.deepEqual(builder(sourceDocument, null), {
     cleanHtml: '<html>captured</html>',
     canonicalDeck: liveCanonicalDeck
   });
@@ -1856,6 +1862,7 @@ test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical
     ]
   };
   let buildCanonicalDeckCalls = 0;
+  const sourceDocument = { label: 'iframe-doc' };
 
   assert.deepEqual(
     editorPersistence.resolveStudioSaveRequestCanonicalDeck({
@@ -1864,8 +1871,10 @@ test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical
           title: 'Broken Deck'
         }
       },
-      buildCanonicalDeck() {
+      sourceDocument,
+      buildCanonicalDeck(documentRef) {
         buildCanonicalDeckCalls += 1;
+        assert.equal(documentRef, sourceDocument);
         return fallbackCanonicalDeck;
       }
     }),

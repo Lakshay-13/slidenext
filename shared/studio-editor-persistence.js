@@ -588,6 +588,7 @@
   }
 
   function resolveStudioSaveRequestCanonicalDeck(options = {}) {
+    const sourceDocument = options.sourceDocument || null;
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
@@ -609,7 +610,7 @@
     if (getLiveCanonicalDeck) {
       let liveCanonicalDeck = null;
       try {
-        liveCanonicalDeck = getLiveCanonicalDeck();
+        liveCanonicalDeck = getLiveCanonicalDeck(sourceDocument);
       } catch (err) {
         liveCanonicalDeck = null;
       }
@@ -633,7 +634,7 @@
 
     let fallbackCanonicalDeck = null;
     try {
-      fallbackCanonicalDeck = buildCanonicalDeck();
+      fallbackCanonicalDeck = buildCanonicalDeck(sourceDocument);
     } catch (err) {
       return null;
     }
@@ -660,6 +661,7 @@
 
     return resolveStudioSaveRequestCanonicalDeck({
       canonicalDeck: options.canonicalDeck,
+      sourceDocument: options.sourceDocument,
       buildCanonicalDeck,
       createCanonicalDeck: options.createCanonicalDeck,
       isCanonicalDeck: isCanonicalDeck || isStructurallyValidStudioCanonicalDeck,
@@ -681,8 +683,9 @@
           resolvePresentationCanonicalDeck: options.resolvePresentationCanonicalDeck
         });
     const nextCanonicalDeck = resolveCanonicalDeckOverride(canonicalDeck, {
+      sourceDocument: options.sourceDocument || null,
       buildCanonicalDeck: canonicalDeck && buildCanonicalDeck
-        ? () => buildCanonicalDeck()
+        ? () => buildCanonicalDeck(options.sourceDocument || null)
         : null
     });
     const hasValidCanonicalDeck = typeof options.isCanonicalDeck === 'function'
@@ -693,7 +696,7 @@
     }
 
     return nextCanonicalDeck && buildCanonicalDeck
-      ? buildCanonicalDeck()
+      ? buildCanonicalDeck(options.sourceDocument || null)
       : null;
   }
 
@@ -779,7 +782,7 @@
     let liveCanonicalDeck = null;
     if (!providedCanonicalDeck && getLiveCanonicalDeck) {
       try {
-        liveCanonicalDeck = getLiveCanonicalDeck();
+        liveCanonicalDeck = getLiveCanonicalDeck(doc);
       } catch (err) {
         liveCanonicalDeck = null;
       }
@@ -1053,11 +1056,12 @@
           ? nextOptions.buildPersistableDeckHtml
           : buildPersistableDeckHtml
       });
-      const saveRequestOptions = {
-        isAutoSave: !!nextOptions.isAutoSave,
-        versionLabel: nextOptions.versionLabel,
-        canonicalDeck: resolvedDeckState.canonicalDeck
-      };
+    const saveRequestOptions = {
+      isAutoSave: !!nextOptions.isAutoSave,
+      versionLabel: nextOptions.versionLabel,
+      canonicalDeck: resolvedDeckState.canonicalDeck,
+      sourceDocument: doc
+    };
       const resolvedLiveCanonicalDeckReader = typeof nextOptions.getLiveCanonicalDeck === 'function'
         ? nextOptions.getLiveCanonicalDeck
         : getLiveCanonicalDeck;
