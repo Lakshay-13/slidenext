@@ -6690,6 +6690,37 @@
     }
 
     // Initialize Frame Hooks
+    function syncStudioEditorCanvasDimensions() {
+      const canvasApi = typeof SlideNextStudioEditorCanvas !== 'undefined'
+        ? SlideNextStudioEditorCanvas
+        : null;
+      if (!canvasApi || typeof canvasApi.applyStudioCanvasDimensions !== 'function') {
+        return { didApply: false };
+      }
+      let canonicalDeck = null;
+      try {
+        canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
+          ? resolveEditorUiCanonicalDeck(getIframeDoc())
+          : null;
+      } catch (error) {
+        canonicalDeck = null;
+      }
+      const zoomFactor = typeof studioEditorZoomController !== 'undefined'
+        && studioEditorZoomController
+        && typeof studioEditorZoomController.getZoomFactor === 'function'
+        ? studioEditorZoomController.getZoomFactor()
+        : 1;
+      try {
+        return canvasApi.applyStudioCanvasDimensions({
+          documentRef: document,
+          canonicalDeck,
+          zoomFactor
+        });
+      } catch (error) {
+        return { didApply: false };
+      }
+    }
+
     function initStudioFrame() {
       if (typeof studioEditorFrameController !== 'undefined'
         && studioEditorFrameController
@@ -6701,6 +6732,9 @@
           didInitialize = false;
         }
         if (didInitialize && typeof setStudioFrameLoadingState === 'function') {
+          if (typeof syncStudioEditorCanvasDimensions === 'function') {
+            syncStudioEditorCanvasDimensions();
+          }
           setStudioFrameLoadingState('ready');
         } else if (!didInitialize) {
           reportStudioFrameInitializationError();

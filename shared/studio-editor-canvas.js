@@ -24,6 +24,17 @@
       : null;
   }
 
+  function readCanonicalCanvasSize(canonicalDeck) {
+    const layout = canonicalDeck && canonicalDeck.layout;
+    const size = layout && layout.size;
+    const unit = typeof size?.unit === 'string' ? size.unit.trim().toLowerCase() : 'px';
+    if (!size || (unit && unit !== 'px')) return null;
+
+    const width = normalizeDimension(size.width, null);
+    const height = normalizeDimension(size.height, null);
+    return width !== null && height !== null ? { width, height } : null;
+  }
+
   function resolveStudioCanvasDimensions(options = {}) {
     const documentRef = options.documentRef;
     const wrapper = options.wrapper || (documentRef && typeof documentRef.getElementById === 'function'
@@ -31,22 +42,56 @@
       : null);
     const wrapperWidth = readCanvasDimension(wrapper, 'clientWidth', 'width');
     const wrapperHeight = readCanvasDimension(wrapper, 'clientHeight', 'height');
+    const canonicalSize = readCanonicalCanvasSize(options.canonicalDeck);
 
     return {
       width: normalizeDimension(
         options.width,
-        wrapperWidth || DEFAULT_STUDIO_CANVAS_WIDTH_PX
+        canonicalSize?.width || wrapperWidth || DEFAULT_STUDIO_CANVAS_WIDTH_PX
       ),
       height: normalizeDimension(
         options.height,
-        wrapperHeight || DEFAULT_STUDIO_CANVAS_HEIGHT_PX
+        canonicalSize?.height || wrapperHeight || DEFAULT_STUDIO_CANVAS_HEIGHT_PX
       )
     };
+  }
+
+  function applyStudioCanvasDimensions(options = {}) {
+    const documentRef = options.documentRef;
+    const getElementById = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById.bind(documentRef)
+      : null;
+    const wrapper = options.wrapper || (getElementById ? getElementById('canvasWrapper') : null);
+    const frame = options.frame || (getElementById ? getElementById('studioFrame') : null);
+    const scroller = options.scroller || (getElementById
+      ? getElementById('canvasScrollContainer')
+      : null);
+    if (!wrapper && !frame && !scroller) {
+      return { didApply: false, dimensions: resolveStudioCanvasDimensions(options) };
+    }
+
+    const dimensions = resolveStudioCanvasDimensions({
+      ...options,
+      wrapper
+    });
+    const zoomFactor = normalizeDimension(options.zoomFactor, 1);
+    [wrapper, frame].forEach((element) => {
+      if (!element || !element.style) return;
+      element.style.width = `${dimensions.width}px`;
+      element.style.height = `${dimensions.height}px`;
+    });
+    if (scroller && scroller.style) {
+      scroller.style.width = `${dimensions.width * zoomFactor}px`;
+      scroller.style.height = `${dimensions.height * zoomFactor}px`;
+    }
+
+    return { didApply: true, dimensions, zoomFactor };
   }
 
   return {
     DEFAULT_STUDIO_CANVAS_WIDTH_PX,
     DEFAULT_STUDIO_CANVAS_HEIGHT_PX,
-    resolveStudioCanvasDimensions
+    resolveStudioCanvasDimensions,
+    applyStudioCanvasDimensions
   };
 });
