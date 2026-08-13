@@ -1006,8 +1006,10 @@ test('editor composes slide metrics through the shared transform module', () => 
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorSlideMetricsReader =/);
+  assert.match(source, /const studioEditorSlideMetricsAdapter =/);
+  assert.match(source, /getStudioEditorSlideMetrics/);
   assert.match(source, /getStudioSlideMetrics/);
-  assert.match(source, /typeof studioEditorSlideMetricsReader === 'function'/);
+  assert.match(source, /typeof SlideNextStudioEditorSlideMetricsAdapter !== 'undefined'/);
   assert.doesNotMatch(source, /getSlideMetrics\.reader/);
 });
 
@@ -1015,13 +1017,14 @@ test('getSlideMetrics delegates the slide to the shared transform module', () =>
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideMetricsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideMetricsReader =',
+    'const studioEditorSlideMetricsAdapter =',
     '\n\n    function getRectOnSlide(rect, slideMetrics) {'
   );
   const slide = { id: 'slide-1' };
   const calls = [];
   const metrics = { logicalWidth: 1280, logicalHeight: 720 };
   const context = {
+    SlideNextStudioEditorSlideMetricsAdapter: require('../shared/studio-editor-slide-metrics-adapter.js'),
     SlideNextStudioEditorTransform: {
       getStudioSlideMetrics(value) {
         calls.push(value);
@@ -1041,10 +1044,13 @@ test('getSlideMetrics fails closed when the shared transform module is unavailab
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideMetricsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideMetricsReader =',
+    'const studioEditorSlideMetricsAdapter =',
     '\n\n    function getRectOnSlide(rect, slideMetrics) {'
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorTransform: null,
+    SlideNextStudioEditorSlideMetricsAdapter: require('../shared/studio-editor-slide-metrics-adapter.js')
+  };
 
   vm.createContext(context);
   vm.runInContext(slideMetricsSource, context);

@@ -1670,6 +1670,7 @@
   <script src="/shared/studio-editor-live-selection-adapter.js"></script>
   <script src="/shared/studio-editor-transform-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-positioned-layout-items-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8817,10 +8818,21 @@
         : false;
     }
 
-    const studioEditorSlideMetricsReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorSlideMetricsAdapter = typeof SlideNextStudioEditorSlideMetricsAdapter !== 'undefined'
+      && SlideNextStudioEditorSlideMetricsAdapter
+      && typeof SlideNextStudioEditorSlideMetricsAdapter.getStudioEditorSlideMetrics === 'function'
+      ? SlideNextStudioEditorSlideMetricsAdapter
+      : null;
+
+    const studioEditorSlideMetricsReader = studioEditorSlideMetricsAdapter
+      && typeof studioEditorSlideMetricsAdapter.getStudioEditorSlideMetrics === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.getStudioSlideMetrics === 'function'
-      ? (slide) => SlideNextStudioEditorTransform.getStudioSlideMetrics(slide)
+      ? (slide) => studioEditorSlideMetricsAdapter.getStudioEditorSlideMetrics(
+          slide,
+          { transformApi: SlideNextStudioEditorTransform }
+        )
       : null;
 
     function getSlideMetrics(slide) {
