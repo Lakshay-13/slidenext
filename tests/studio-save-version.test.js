@@ -18,6 +18,7 @@ const persistenceActionCurrentAction = require('../shared/studio-editor-persiste
 const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
 const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
 const versionCheckpointStateAction = require('../shared/studio-editor-version-checkpoint-state-action.js');
+const versionCheckpointSaveAction = require('../shared/studio-editor-version-checkpoint-save-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -602,6 +603,14 @@ function loadApplyCurrentStudioPersistedCanonicalDeck(fileContent, context) {
 
 function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, context) {
   loadCreateCurrentStudioPersistenceHandlerOptions(fileContent, context);
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorVersionCheckpointSaveAction =
+    versionCheckpointSaveAction.createStudioEditorVersionCheckpointSaveAction({
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      getSaveVersionCheckpoint: () => context.saveVersionCheckpoint || null,
+      getApplyVersionPersistenceSuccess: () => context.applyCurrentStudioVersionPersistenceSuccess || null,
+      getApplyPersistenceFailure: () => context.applyCurrentStudioPersistenceFailure || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'async function executeCurrentStudioVersionCheckpointSaveWithFailure(',

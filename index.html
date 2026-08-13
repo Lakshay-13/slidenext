@@ -1534,6 +1534,7 @@
   <script src="/shared/studio-editor-persistence-capture-action.js"></script>
   <script src="/shared/studio-editor-version-checkpoint-state-action.js"></script>
   <script src="/shared/studio-editor-save-version-checkpoint-action.js"></script>
+  <script src="/shared/studio-editor-version-checkpoint-save-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -2321,6 +2322,33 @@
         })
       : {};
     Object.assign(globalThis, studioEditorSaveVersionCheckpointGlobalApi);
+    const studioEditorVersionCheckpointSaveAction =
+      typeof SlideNextStudioEditorVersionCheckpointSaveAction !== 'undefined'
+      && SlideNextStudioEditorVersionCheckpointSaveAction
+      && typeof SlideNextStudioEditorVersionCheckpointSaveAction
+        .createStudioEditorVersionCheckpointSaveAction === 'function'
+      ? SlideNextStudioEditorVersionCheckpointSaveAction
+        .createStudioEditorVersionCheckpointSaveAction({
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getSaveVersionCheckpoint: () => saveVersionCheckpoint,
+          getApplyVersionPersistenceSuccess: () => applyCurrentStudioVersionPersistenceSuccess,
+          getApplyPersistenceFailure: () => applyCurrentStudioPersistenceFailure
+        })
+      : null;
+    const studioEditorVersionCheckpointSaveGlobalApi =
+      typeof SlideNextStudioEditorVersionCheckpointSaveAction !== 'undefined'
+      && SlideNextStudioEditorVersionCheckpointSaveAction
+      && typeof SlideNextStudioEditorVersionCheckpointSaveAction
+        .createStudioEditorVersionCheckpointSaveGlobalApi === 'function'
+      ? SlideNextStudioEditorVersionCheckpointSaveAction
+        .createStudioEditorVersionCheckpointSaveGlobalApi({
+          executeCurrentStudioVersionCheckpointSaveWithFailure:
+            studioEditorVersionCheckpointSaveAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorVersionCheckpointSaveGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11646,44 +11674,9 @@
       presentationUrl = getStudioCurrentPresentationUrl(),
       options = {}
     ) {
-      const onSuccess = typeof options.onSuccess === 'function'
-        ? options.onSuccess
+      return studioEditorVersionCheckpointSaveAction
+        ? studioEditorVersionCheckpointSaveAction(...arguments)
         : null;
-      const onFailure = typeof options.onFailure === 'function'
-        ? options.onFailure
-        : null;
-      return SlideNextStudioEditorPersistence.executeStudioVersionCheckpointSaveWithFailure(
-        versionLabel,
-        versionCheckpointPersistenceState,
-        presentationUrl,
-        {
-          saveVersionCheckpoint,
-          applyVersionCheckpointSaveSuccess: (nextVersionCheckpointPersistenceState, successOptions = {}) => {
-            if (!nextVersionCheckpointPersistenceState || !nextVersionCheckpointPersistenceState.persistenceContext) {
-              return false;
-            }
-            return applyCurrentStudioVersionPersistenceSuccess(
-              nextVersionCheckpointPersistenceState.persistenceContext,
-              {
-                onSuccess: successOptions.onSuccess
-              }
-            );
-          },
-          successOptions: {
-            onSuccess
-          },
-          applyPersistenceFailure: (persistenceContext, failureOptions = {}) => {
-            return applyCurrentStudioPersistenceFailure(persistenceContext, failureOptions);
-          },
-          buildFailureOptions: (data) => ({
-            onFailure: onFailure
-              ? () => {
-                  onFailure(data);
-                }
-              : undefined
-          })
-        }
-      );
     }
 
     // 6. AutoSave debouncing pipeline
