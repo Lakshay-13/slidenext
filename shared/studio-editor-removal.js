@@ -165,9 +165,6 @@
         });
       });
     }
-    const markupCapture = createMarkupTransactionCapture
-      ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
-      : null;
     const liveSelection = selection.filter((element) => element && element.isConnected);
     const presenceItems = liveSelection.map((element) => {
       const parent = element.parentElement || element.parentNode;
@@ -184,6 +181,18 @@
         after: { exists: false, index, markup: '' }
       };
     });
+    const canUsePresenceTransaction = !!createElementPresenceTransaction
+      && presenceItems.length > 0
+      && presenceItems.every((item) => item.elementId
+        && item.parentId
+        && item.before.index >= 0
+        && item.before.markup);
+    const presenceTransaction = canUsePresenceTransaction
+      ? createElementPresenceTransaction(presenceItems)
+      : null;
+    const markupCapture = !presenceTransaction && createMarkupTransactionCapture
+      ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
+      : null;
     let removedCount = 0;
     selection.forEach((element) => {
       if (!element || !element.isConnected) return;
@@ -194,14 +203,10 @@
     return {
       didRemove: removedCount > 0,
       removedCount,
-      transaction: removedCount > 0
-        && createElementPresenceTransaction
-        && removedCount === liveSelection.length
-        && presenceItems.every((item) => item.elementId && item.parentId && item.before.index >= 0 && item.before.markup)
-        ? createElementPresenceTransaction(presenceItems)
-        : removedCount > 0 && markupCapture
+      transaction: presenceTransaction
+        || (removedCount > 0 && markupCapture
           ? markupCapture.createTransaction()
-          : null
+          : null)
     };
   }
 

@@ -169,14 +169,19 @@ test('removeStudioElements prefers scoped element-presence transactions for seri
     }
   };
   parent.children = [element];
+  let markupCaptureCalls = 0;
 
   const result = removal.removeStudioElements([element], {
-    createMarkupTransactionCapture: transactionState.createStudioMarkupTransactionCapture,
+    createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
+      return transactionState.createStudioMarkupTransactionCapture(...arguments);
+    },
     createElementPresenceTransaction: transactionState.createStudioElementPresenceTransaction,
     getElementId: (target) => target && target.dataset && target.dataset.editorId
   });
 
   assert.equal(result.didRemove, true);
+  assert.equal(markupCaptureCalls, 0);
   assert.deepEqual(result.transaction.operations[0], {
     type: 'element-presence',
     elementId: 'node-1',
