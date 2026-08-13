@@ -1176,7 +1176,9 @@ test('editor composes freeform-position reads through the shared transform modul
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorFreeformPositionReader =/);
+  assert.match(source, /const studioEditorFreeformPositionAdapter =/);
   assert.match(source, /isStudioFreeformPositioned/);
+  assert.match(source, /typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorFreeformPositionReader === 'function'/);
   assert.doesNotMatch(source, /isElementFreeformPositioned\.reader/);
 });
@@ -1185,13 +1187,14 @@ test('isElementFreeformPositioned delegates the element and options to the share
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const freeformReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorFreeformPositionReader =',
+    'const studioEditorFreeformPositionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const element = { id: 'element-1' };
   const options = { view: { id: 'view-1' } };
   const calls = [];
   const context = {
+    SlideNextStudioEditorFreeformPositionAdapter: require('../shared/studio-editor-freeform-position-adapter.js'),
     SlideNextStudioEditorTransform: {
       isStudioFreeformPositioned(elementValue, optionsValue) {
         calls.push([elementValue, optionsValue]);
@@ -1213,10 +1216,13 @@ test('isElementFreeformPositioned fails closed when the shared transform module 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const freeformReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorFreeformPositionReader =',
+    'const studioEditorFreeformPositionAdapter =',
     'const studioEditorTransformRuntime ='
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorFreeformPositionAdapter: require('../shared/studio-editor-freeform-position-adapter.js'),
+    SlideNextStudioEditorTransform: null
+  };
 
   vm.createContext(context);
   vm.runInContext(freeformReaderSource, context);

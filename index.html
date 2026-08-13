@@ -1673,6 +1673,7 @@
   <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
   <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-pointer-on-slide-adapter.js"></script>
+  <script src="/shared/studio-editor-freeform-position-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -3948,10 +3949,24 @@
       ? studioEditorGridSnapRuntime.gridSnapController
       : null;
 
-    const studioEditorFreeformPositionReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorFreeformPositionAdapter = typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'
+      && SlideNextStudioEditorFreeformPositionAdapter
+      && typeof SlideNextStudioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned === 'function'
+      ? SlideNextStudioEditorFreeformPositionAdapter
+      : null;
+
+    const studioEditorFreeformPositionReader = studioEditorFreeformPositionAdapter
+      && typeof studioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
-      ? (element, options) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(element, options)
+      ? (element, options) => studioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned(
+          element,
+          {
+            transformApi: SlideNextStudioEditorTransform,
+            positionOptions: options
+          }
+        )
       : null;
 
     function isElementFreeformPositioned(element, options) {
