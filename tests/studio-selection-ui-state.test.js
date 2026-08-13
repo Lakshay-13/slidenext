@@ -12,6 +12,7 @@ const selectionClassAdapter = require('../shared/studio-editor-selection-class-a
 const selectionRestoreAdapter = require('../shared/studio-editor-selection-restore-adapter.js');
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapter.js');
+const committedSelectionIdsAdapter = require('../shared/studio-editor-committed-selection-ids-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -68,9 +69,9 @@ test('editor composes committed selection restore through the shared selection A
 test('editor composes committed selection ID reading through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorCommittedSelectionIdsReader =/);
-  assert.match(source, /getStudioCommittedSelectedElementIds/);
-  assert.match(source, /if \(typeof studioEditorCommittedSelectionIdsReader !== 'function'\)/);
+  assert.match(source, /const studioEditorCommittedSelectionIdsAdapter =/);
+  assert.match(source, /getStudioEditorCommittedSelectedElementIds/);
+  assert.match(source, /if \(!readSelectionIds\) return \[\]/);
   assert.doesNotMatch(source, /getCommittedSelectedEditorElementIds\.reader/);
 });
 
@@ -204,9 +205,10 @@ function loadGetCommittedSelectedEditorElementIds(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorCommittedSelectionIdsReader =',
+    'const studioEditorCommittedSelectionIdsAdapter =',
     '\n\n    function areEditorIdListsEqual(a = [], b = []) {'
   );
+  context.SlideNextStudioEditorCommittedSelectionIdsAdapter = committedSelectionIdsAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -224,7 +226,7 @@ function loadGetSelectedEditorElementIds(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'const studioEditorSelectionIdsAdapter =',
-    '\n\n    const studioEditorCommittedSelectionIdsReader ='
+    '\n\n    const studioEditorCommittedSelectionIdsAdapter ='
   );
   context.SlideNextStudioEditorSelectionIdsAdapter = selectionIdsAdapter;
   vm.runInContext(helperSource, context);
@@ -621,7 +623,7 @@ test('getCommittedSelectedEditorElementIds delegates to shared selection', () =>
   assert.deepEqual(context.getCommittedSelectedEditorElementIds(iframeDoc), ['node-1']);
   assert.match(
     fileContent,
-    /studioEditorCommittedSelectionIdsReader\(\s*getStudioSelectedElements\(doc\),\s*doc,/
+    /readSelectionIds\(\s*getStudioSelectedElements\(doc\),\s*doc,/
   );
   assert.equal(delegatedArgs[0], selectedElements);
   assert.equal(delegatedArgs[1], iframeDoc);
@@ -675,6 +677,39 @@ test('getCommittedSelectedEditorElementIds fails closed when the shared selectio
   loadGetCommittedSelectedEditorElementIds(fileContent, context);
 
   assert.equal(context.getCommittedSelectedEditorElementIds({ id: 'doc' }).length, 0);
+});
+
+test('getStudioEditorCommittedSelectedElementIds composes committed selection ID dependencies', () => {
+  const selectedElements = [{ id: 'node-1' }];
+  const doc = { id: 'doc' };
+  const selectionOptions = { selectionOptions: true };
+  let delegated = null;
+
+  const result = committedSelectionIdsAdapter.getStudioEditorCommittedSelectedElementIds(
+    selectedElements,
+    doc,
+    {
+      selectionApi: {
+        getStudioCommittedSelectedElementIds(elements, currentDoc, options) {
+          delegated = { elements, currentDoc, options };
+          return ['node-1'];
+        }
+      },
+      getSelectionOptions: () => selectionOptions
+    }
+  );
+
+  assert.deepEqual(result, ['node-1']);
+  assert.equal(delegated.elements, selectedElements);
+  assert.equal(delegated.currentDoc, doc);
+  assert.equal(delegated.options, selectionOptions);
+});
+
+test('getStudioEditorCommittedSelectedElementIds fails closed without the shared selection API', () => {
+  assert.equal(
+    committedSelectionIdsAdapter.getStudioEditorCommittedSelectedElementIds([], {}, {}),
+    null
+  );
 });
 
 test('areEditorIdListsEqual delegates to shared selection', () => {

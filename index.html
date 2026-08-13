@@ -1664,6 +1664,7 @@
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-selection-ids-adapter.js"></script>
+  <script src="/shared/studio-editor-committed-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8168,14 +8169,10 @@
       return selectedIds || [];
     }
 
-    const studioEditorCommittedSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds === 'function'
-      ? (elements, doc, options) => SlideNextStudioEditorSelection.getStudioCommittedSelectedElementIds(
-          elements,
-          doc,
-          options
-        )
+    const studioEditorCommittedSelectionIdsAdapter = typeof SlideNextStudioEditorCommittedSelectionIdsAdapter !== 'undefined'
+      && SlideNextStudioEditorCommittedSelectionIdsAdapter
+      && typeof SlideNextStudioEditorCommittedSelectionIdsAdapter.getStudioEditorCommittedSelectedElementIds === 'function'
+      ? SlideNextStudioEditorCommittedSelectionIdsAdapter
       : null;
 
     function getCommittedSelectedEditorElementIds(doc = getIframeDoc()) {
@@ -8193,12 +8190,22 @@
             && activeSlide.contains(element);
         });
       }
-      if (typeof studioEditorCommittedSelectionIdsReader !== 'function') return [];
-      return studioEditorCommittedSelectionIdsReader(
+      const readSelectionIds = studioEditorCommittedSelectionIdsAdapter
+        && typeof studioEditorCommittedSelectionIdsAdapter.getStudioEditorCommittedSelectedElementIds === 'function'
+        ? studioEditorCommittedSelectionIdsAdapter.getStudioEditorCommittedSelectedElementIds
+        : null;
+      if (!readSelectionIds) return [];
+      const selectedIds = readSelectionIds(
         getStudioSelectedElements(doc),
         doc,
-        getEditorSelectionOptions({ doc })
+        {
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          getSelectionOptions: () => getEditorSelectionOptions({ doc })
+        }
       );
+      return selectedIds || [];
     }
 
     const studioEditorIdListEqualityChecker = typeof SlideNextStudioEditorSelection !== 'undefined'
