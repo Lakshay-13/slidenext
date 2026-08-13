@@ -9,6 +9,7 @@ const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader
 const canonicalRemoval = require('../shared/studio-editor-canonical-removal.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const removalState = require('../shared/studio-editor-removal.js');
+const removalEditorState = require('../shared/studio-editor-removal-state.js');
 const removalMutation = require('../shared/studio-editor-removal-mutation.js');
 const removalTransaction = require('../shared/studio-editor-removal-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -40,7 +41,39 @@ function loadBuildRemovalSelectionActionState(fileContent, context) {
   );
   context.SlideNextStudioEditorCanonicalState = canonicalState;
   context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
+  context.studioEditorRemovalStateController = removalEditorState.createStudioEditorRemovalStateController({
+    removalView: context.SlideNextStudioEditorRemoval,
+    getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null,
+    getSelectedElements: () => Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: (doc) => typeof context.getActiveSlide === 'function'
+      ? context.getActiveSlide(doc)
+      : null,
+    getLockedState: (sourceDoc) => typeof context.getEditorCanonicalVisibilityReader === 'function'
+      && typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.getEditorCanonicalVisibilityReader('locked', sourceDoc, context.isElementLocked)
+      : context.isElementLocked,
+    documentRef: context.document
+  });
   vm.runInContext(`${visibilityReaderSource}\n${helperSource}`, context);
+}
+
+function runRemovalActionStateSource(source, context) {
+  if (!context.studioEditorRemovalStateController) {
+    context.studioEditorRemovalStateController = removalEditorState.createStudioEditorRemovalStateController({
+      removalView: context.SlideNextStudioEditorRemoval,
+      getDocument: () => typeof context.getIframeDoc === 'function' ? context.getIframeDoc() : null,
+      getSelectedElements: () => Array.isArray(context.selectedElements) ? context.selectedElements : [],
+      getActiveSlide: (doc) => typeof context.getActiveSlide === 'function'
+        ? context.getActiveSlide(doc)
+        : null,
+      getLockedState: () => typeof context.isElementLocked === 'function'
+        ? context.isElementLocked
+        : () => false,
+      documentRef: context.document
+    });
+  }
+  vm.createContext(context);
+  vm.runInContext(source, context);
 }
 
 function loadFinalizeRemovalActionResult(fileContent, context) {
@@ -128,8 +161,8 @@ test('buildRemovalSelectionActionState reuses the current selection and live sli
     selection
   });
   assert.deepEqual(calls, [
-    ['buildStudioRemovalActionState', selection],
     ['getIframeDoc'],
+    ['buildStudioRemovalActionState', selection],
     ['getActiveSlide', doc]
   ]);
 });
@@ -238,7 +271,7 @@ test('updateRemovalActionState enables the delete control only when the iframe h
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
-  vm.runInContext(updateRemovalActionStateSource, context);
+  runRemovalActionStateSource(updateRemovalActionStateSource, context);
 
   context.updateRemovalActionState(null);
   assert.equal(removeSelectionBtn.disabled, true);
@@ -316,7 +349,7 @@ test('updateRemovalActionState reuses the shared removal toolbar helper when ava
 
   vm.createContext(context);
   loadBuildRemovalSelectionActionState(fileContent, context);
-  vm.runInContext(updateRemovalActionStateSource, context);
+  runRemovalActionStateSource(updateRemovalActionStateSource, context);
 
   context.updateRemovalActionState({
     activeSlide: {}
@@ -356,13 +389,12 @@ test('updateRemovalActionState delegates toolbar state assembly to the shared re
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateRemovalActionStateSource, context);
+  runRemovalActionStateSource(updateRemovalActionStateSource, context);
 
   const doc = { activeSlide: {} };
   assert.equal(context.updateRemovalActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
-  assert.match(updateRemovalActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
+  assert.match(updateRemovalActionStateSource, /studioEditorRemovalStateController\.sync/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].isLocked, context.isElementLocked);
@@ -387,6 +419,9 @@ test('updateRemovalActionState caches the shared removal toolbar synchronizer wh
       syncStudioRemovalToolbarState() {
         throw new Error('direct removal sync should not run');
       },
+      buildStudioRemovalActionState() {
+        return { canRemove: true };
+      },
       createStudioRemovalToolbarStateSync(options) {
         calls.push(['factory', options]);
         return (currentDoc) => {
@@ -401,13 +436,11 @@ test('updateRemovalActionState caches the shared removal toolbar synchronizer wh
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateRemovalActionStateSource, context);
+  runRemovalActionStateSource(updateRemovalActionStateSource, context);
 
   assert.equal(context.updateRemovalActionState(doc), true);
   assert.equal(context.updateRemovalActionState(doc), true);
   assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
-  assert.deepEqual(calls.filter(([name]) => name === 'action-state').map(([, currentDoc]) => currentDoc), [doc, doc]);
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
 

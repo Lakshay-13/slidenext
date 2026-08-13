@@ -7,14 +7,20 @@ const removal = require('../shared/studio-editor-removal.js');
 const transactionState = require('../shared/studio-editor-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const REMOVAL_STATE_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'studio-editor-removal-state.js'
+);
 
 test('editor forwards the removal action document into the selection reader', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const removalStateSource = fs.readFileSync(REMOVAL_STATE_PATH, 'utf8');
 
-  assert.match(
-    source,
-    /removalApi\.createStudioRemovalActionStateBuilder\(\{\s+getDocument: \(\) => getIframeDoc\(\),\s+getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/
-  );
+  assert.match(source, /createStudioEditorRemovalStateController/);
+  assert.match(removalStateSource, /getSelectedElements\(doc\)/);
+  assert.match(removalStateSource, /getDocumentRef: \(\) => documentRef/);
 });
 
 test('getStudioRemovableSelection ignores disconnected stale selections', () => {
