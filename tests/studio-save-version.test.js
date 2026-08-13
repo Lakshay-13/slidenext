@@ -22,6 +22,7 @@ const versionCheckpointSaveAction = require('../shared/studio-editor-version-che
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
+const triggerAutoSaveAction = require('../shared/studio-editor-trigger-auto-save-action.js');
 const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
 const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
@@ -334,6 +335,29 @@ function loadIsCurrentStudioPersistenceTaskStale(fileContent, context) {
 
 function loadTriggerAutoSave(fileContent, context) {
   context.SlideNextStudioEditorAutoSave ??= editorAutoSave;
+  context.studioEditorTriggerAutoSaveAction =
+    triggerAutoSaveAction.createStudioEditorTriggerAutoSaveAction({
+      getCreateAdapter: () => context.SlideNextStudioEditorAutoSave
+        && context.SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter,
+      getAdapterOptions: () => ({
+        persistenceApi: context.SlideNextStudioEditorPersistence || null,
+        captureSessionState: context.captureCurrentStudioSessionState,
+        setStatus: context.setStudioAutoSaveStatus,
+        getTimer: context.getStudioAutoSaveDebounceTimer,
+        clearTimer: context.clearTimeout,
+        setTimer: context.setStudioAutoSaveDebounceTimer,
+        schedule: (callback, delayMs) => context.setTimeout(callback, delayMs),
+        isTaskStale: context.isCurrentStudioPersistenceTaskStale,
+        getDocument: context.getIframeDoc,
+        resolvePersistenceState: context.resolveCurrentStudioPersistenceStateFromCapture,
+        isPersistedState: context.isCurrentDeckStatePersisted,
+        buildSaveRequestBody: context.buildEditorSaveRequestBody,
+        applyPersistenceSuccess: context.applyCurrentStudioPersistenceSuccess,
+        applyPersistenceFailure: context.applyCurrentStudioPersistenceFailure,
+        fetchImpl: context.fetch,
+        logger: context.console || null
+      })
+    });
   const helperSource = autoSaveTimerFixture.extractAutoSaveTimerAwareFunctionSource(
     fileContent,
     'function triggerAutoSave() {',

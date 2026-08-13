@@ -1540,6 +1540,7 @@
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
+  <script src="/shared/studio-editor-trigger-auto-save-action.js"></script>
   <script src="/shared/studio-editor-autosave-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-runtime.js"></script>
@@ -2349,6 +2350,57 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionCheckpointSaveGlobalApi);
+    const studioEditorTriggerAutoSaveAction =
+      typeof SlideNextStudioEditorTriggerAutoSaveAction !== 'undefined'
+      && SlideNextStudioEditorTriggerAutoSaveAction
+      && typeof SlideNextStudioEditorTriggerAutoSaveAction
+        .createStudioEditorTriggerAutoSaveAction === 'function'
+      ? SlideNextStudioEditorTriggerAutoSaveAction
+        .createStudioEditorTriggerAutoSaveAction({
+          getCreateAdapter: () => (
+            typeof SlideNextStudioEditorAutoSave !== 'undefined'
+            && SlideNextStudioEditorAutoSave
+            && typeof SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter === 'function'
+              ? SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter
+              : null
+          ),
+          getAdapterOptions: () => ({
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            captureSessionState: captureCurrentStudioSessionState,
+            setStatus: setStudioAutoSaveStatus,
+            getTimer: getStudioAutoSaveDebounceTimer,
+            clearTimer: clearTimeout,
+            setTimer: setStudioAutoSaveDebounceTimer,
+            schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+            isTaskStale: isCurrentStudioPersistenceTaskStale,
+            getDocument: getIframeDoc,
+            resolvePersistenceState: resolveCurrentStudioPersistenceStateFromCapture,
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            applyPersistenceSuccess: typeof applyCurrentStudioPersistenceSuccess === 'function'
+              ? applyCurrentStudioPersistenceSuccess
+              : null,
+            applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
+              ? applyCurrentStudioPersistenceFailure
+              : null,
+            fetchImpl: typeof fetch !== 'undefined' ? fetch : null,
+            logger: typeof console !== 'undefined' ? console : null
+          })
+        })
+      : null;
+    const studioEditorTriggerAutoSaveGlobalApi =
+      typeof SlideNextStudioEditorTriggerAutoSaveAction !== 'undefined'
+      && SlideNextStudioEditorTriggerAutoSaveAction
+      && typeof SlideNextStudioEditorTriggerAutoSaveAction
+        .createStudioEditorTriggerAutoSaveGlobalApi === 'function'
+      ? SlideNextStudioEditorTriggerAutoSaveAction
+        .createStudioEditorTriggerAutoSaveGlobalApi({
+          triggerAutoSave: studioEditorTriggerAutoSaveAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorTriggerAutoSaveGlobalApi);
     const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
       && SlideNextStudioEditorAutoVersionShellRuntime
       && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
@@ -11681,42 +11733,9 @@
 
     // 6. AutoSave debouncing pipeline
     function triggerAutoSave() {
-      if (typeof triggerAutoSave.adapter !== 'function') {
-        const createStudioEditorAutoSaveAdapter = (
-          typeof SlideNextStudioEditorAutoSave !== 'undefined'
-          && SlideNextStudioEditorAutoSave
-          && typeof SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter === 'function'
-        )
-          ? SlideNextStudioEditorAutoSave.createStudioEditorAutoSaveAdapter
-          : null;
-        if (!createStudioEditorAutoSaveAdapter) return;
-        triggerAutoSave.adapter = createStudioEditorAutoSaveAdapter({
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          captureSessionState: captureCurrentStudioSessionState,
-          setStatus: setStudioAutoSaveStatus,
-          getTimer: getStudioAutoSaveDebounceTimer,
-          clearTimer: clearTimeout,
-          setTimer: setStudioAutoSaveDebounceTimer,
-          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
-          isTaskStale: isCurrentStudioPersistenceTaskStale,
-          getDocument: getIframeDoc,
-          resolvePersistenceState: resolveCurrentStudioPersistenceStateFromCapture,
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody,
-          applyPersistenceSuccess: typeof applyCurrentStudioPersistenceSuccess === 'function'
-            ? applyCurrentStudioPersistenceSuccess
-            : null,
-          applyPersistenceFailure: typeof applyCurrentStudioPersistenceFailure === 'function'
-            ? applyCurrentStudioPersistenceFailure
-            : null,
-          fetchImpl: fetch,
-          logger: typeof console !== 'undefined' ? console : null
-        });
-      }
-      if (typeof triggerAutoSave.adapter !== 'function') return;
-      return triggerAutoSave.adapter();
+      return studioEditorTriggerAutoSaveAction
+        ? studioEditorTriggerAutoSaveAction(...arguments)
+        : undefined;
     }
 
     // Custom styled checkpoint version modal controls
