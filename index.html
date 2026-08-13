@@ -1679,6 +1679,7 @@
   <script src="/shared/studio-editor-active-slide-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-chrome-node-pruner-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -4111,16 +4112,39 @@
         )
       : null;
 
-    const studioEditorSlideIdAssigner = typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.assignStudioSlideId === 'function'
-      ? (slide, options) => SlideNextStudioEditorDom.assignStudioSlideId(slide, options)
+    const studioEditorSlideIdAdapter = typeof SlideNextStudioEditorSlideIdAdapter !== 'undefined'
+      && SlideNextStudioEditorSlideIdAdapter
+      && typeof SlideNextStudioEditorSlideIdAdapter.assignStudioEditorSlideId === 'function'
+      && typeof SlideNextStudioEditorSlideIdAdapter.getStudioEditorSlideId === 'function'
+      ? SlideNextStudioEditorSlideIdAdapter
       : null;
 
-    const studioEditorSlideIdReader = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorSlideIdAssigner = studioEditorSlideIdAdapter
+      && typeof studioEditorSlideIdAdapter.assignStudioEditorSlideId === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
+      && SlideNextStudioEditorDom
+      && typeof SlideNextStudioEditorDom.assignStudioSlideId === 'function'
+      ? (slide, options) => studioEditorSlideIdAdapter.assignStudioEditorSlideId(
+          slide,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
+      : null;
+
+    const studioEditorSlideIdReader = studioEditorSlideIdAdapter
+      && typeof studioEditorSlideIdAdapter.getStudioEditorSlideId === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioSlideId === 'function'
-      ? (slide, options) => SlideNextStudioEditorDom.getStudioSlideId(slide, options)
+      ? (slide, options) => studioEditorSlideIdAdapter.getStudioEditorSlideId(
+          slide,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorSlidesReader = typeof SlideNextStudioEditorDom !== 'undefined'
