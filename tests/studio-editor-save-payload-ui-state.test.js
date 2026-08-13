@@ -9,6 +9,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const persistedHtmlAction = require('../shared/studio-editor-persisted-html-action.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
+const sanitizerAction = require('../shared/studio-editor-persistable-deck-sanitizer-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -71,6 +72,17 @@ function loadResolveEditorMetadataPersistenceOptions(context) {
   });
 }
 
+function loadBuildEditorPersistableDeckSanitizerOptions(context) {
+  context.buildEditorPersistableDeckSanitizerOptions = sanitizerAction.createStudioEditorPersistableDeckSanitizerAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    getDeckSanitizerOptions: typeof context.getEditorDeckSanitizerOptions === 'function'
+      ? context.getEditorDeckSanitizerOptions
+      : null
+  });
+}
+
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
@@ -87,12 +99,7 @@ function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
     loadResolveEditorMetadataPersistenceOptions(context);
   }
   if (typeof context.buildEditorPersistableDeckSanitizerOptions !== 'function') {
-    const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-      fileContent,
-      'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-      '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-    );
-    vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+    loadBuildEditorPersistableDeckSanitizerOptions(context);
   }
   if (typeof context.sanitizeEditorReusablePersistedHtml !== 'function') {
     const sanitizeEditorReusablePersistedHtmlSource = extractFunctionSource(
@@ -3770,11 +3777,6 @@ test('resolveEditorMetadataPersistenceOptions fails closed when the shared helpe
 
 test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chrome filters, and playback state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
 
   const calls = [];
   const playbackState = {
@@ -3785,7 +3787,7 @@ test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chro
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
@@ -3824,11 +3826,6 @@ test('buildEditorPersistableDeckSanitizerOptions composes metadata cleanup, chro
 
 test('buildEditorPersistableDeckSanitizerOptions fails closed when the shared helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
   const context = {
     getEditorDeckSanitizerOptions() {
       throw new Error('page-local sanitizer fallback should not run');
@@ -3836,7 +3833,7 @@ test('buildEditorPersistableDeckSanitizerOptions fails closed when the shared he
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions({
@@ -3848,11 +3845,6 @@ test('buildEditorPersistableDeckSanitizerOptions fails closed when the shared he
 
 test('buildEditorPersistableDeckSanitizerOptions delegates through the shared persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
 
   const playbackState = {
     activeSlideIds: ['slide-2']
@@ -3882,7 +3874,7 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the shared pe
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
@@ -3910,11 +3902,6 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the shared pe
 
 test('buildEditorPersistableDeckSanitizerOptions reuses the shared sanitizer-options builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
 
   const playbackState = {
     activeSlideIds: ['slide-2']
@@ -3950,7 +3937,7 @@ test('buildEditorPersistableDeckSanitizerOptions reuses the shared sanitizer-opt
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
@@ -3987,11 +3974,6 @@ test('buildEditorPersistableDeckSanitizerOptions reuses the shared sanitizer-opt
 
 test('buildEditorPersistableDeckSanitizerOptions delegates to the persistence controller when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
   const playbackState = { activeSlideIds: ['slide-2'] };
   const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
   const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
@@ -4006,7 +3988,7 @@ test('buildEditorPersistableDeckSanitizerOptions delegates to the persistence co
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   assert.deepEqual(context.buildEditorPersistableDeckSanitizerOptions(playbackState, {
     resolveMetadataPersistenceOptions,
@@ -4019,11 +4001,6 @@ test('buildEditorPersistableDeckSanitizerOptions delegates to the persistence co
 
 test('buildEditorPersistableDeckSanitizerOptions delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
 
   const playbackState = {
     activeSlideIds: ['slide-2']
@@ -4052,7 +4029,7 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the editor pe
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   const resolveMetadataPersistenceOptions = () => ({ emptyContainerIds: ['pixelMatrix'] });
   const getDeckSanitizerOptions = () => ({ chromeNodeIds: ['editorSelectionOverlay'] });
@@ -4079,11 +4056,6 @@ test('buildEditorPersistableDeckSanitizerOptions delegates through the editor pe
 
 test('buildEditorPersistableDeckSanitizerOptions creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
-    fileContent,
-    'function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {',
-    '\n\n    function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {'
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -4101,7 +4073,7 @@ test('buildEditorPersistableDeckSanitizerOptions creates the shared persistence-
   };
 
   vm.createContext(context);
-  vm.runInContext(buildEditorPersistableDeckSanitizerOptionsSource, context);
+  loadBuildEditorPersistableDeckSanitizerOptions(context);
 
   const firstPlaybackState = { activeSlideIds: ['slide-1'] };
   const secondPlaybackState = { activeSlideIds: ['slide-2'] };

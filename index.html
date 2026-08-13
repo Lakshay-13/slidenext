@@ -1515,6 +1515,7 @@
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -4240,6 +4241,28 @@
         })
       : {};
     Object.assign(globalThis, studioEditorMetadataPersistenceGlobalApi);
+    const studioEditorPersistableDeckSanitizerAction = typeof SlideNextStudioEditorPersistableDeckSanitizerAction !== 'undefined'
+      && SlideNextStudioEditorPersistableDeckSanitizerAction
+      && typeof SlideNextStudioEditorPersistableDeckSanitizerAction.createStudioEditorPersistableDeckSanitizerAction === 'function'
+      ? SlideNextStudioEditorPersistableDeckSanitizerAction.createStudioEditorPersistableDeckSanitizerAction({
+          getPersistenceController: () => studioEditorPersistenceController,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getDeckSanitizerOptions: getEditorDeckSanitizerOptions
+        })
+      : null;
+    const studioEditorPersistableDeckSanitizerGlobalApi = typeof SlideNextStudioEditorPersistableDeckSanitizerAction !== 'undefined'
+      && SlideNextStudioEditorPersistableDeckSanitizerAction
+      && typeof SlideNextStudioEditorPersistableDeckSanitizerAction.createStudioEditorPersistableDeckSanitizerGlobalApi === 'function'
+      ? SlideNextStudioEditorPersistableDeckSanitizerAction.createStudioEditorPersistableDeckSanitizerGlobalApi({
+          buildEditorPersistableDeckSanitizerOptions: studioEditorPersistableDeckSanitizerAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorPersistableDeckSanitizerGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorSessionRuntimeOptions
       : null;
@@ -10895,99 +10918,6 @@
     }
 
     // 5. Undo/Redo Engine
-    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.buildPersistableDeckSanitizerOptions === 'function') {
-        const sanitizerOptions = studioEditorPersistenceController.buildPersistableDeckSanitizerOptions(
-          playbackState,
-          {
-            ...options,
-            resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-              ? options.resolveMetadataPersistenceOptions
-              : () => ({}),
-            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-              ? options.getDeckSanitizerOptions
-              : typeof getEditorDeckSanitizerOptions === 'function'
-                ? getEditorDeckSanitizerOptions
-                : () => ({})
-          }
-        );
-        if (sanitizerOptions !== null && typeof sanitizerOptions !== 'undefined') {
-          return sanitizerOptions;
-        }
-      }
-      const createStudioEditorPersistableDeckSanitizerOptionsAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorPersistableDeckSanitizerOptionsAdapter
-        : null;
-      if (createStudioEditorPersistableDeckSanitizerOptionsAdapter) {
-        if (typeof buildEditorPersistableDeckSanitizerOptions.adapter !== 'function') {
-          buildEditorPersistableDeckSanitizerOptions.adapter = createStudioEditorPersistableDeckSanitizerOptionsAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-              ? options.resolveMetadataPersistenceOptions
-              : () => ({}),
-            getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-              ? options.getDeckSanitizerOptions
-              : typeof getEditorDeckSanitizerOptions === 'function'
-                ? getEditorDeckSanitizerOptions
-                : () => ({})
-          });
-        }
-        return typeof buildEditorPersistableDeckSanitizerOptions.adapter === 'function'
-          ? buildEditorPersistableDeckSanitizerOptions.adapter(playbackState, options)
-          : {};
-      }
-
-      const createStudioPersistableDeckSanitizerOptionsBuilder = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioPersistableDeckSanitizerOptionsBuilder === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioPersistableDeckSanitizerOptionsBuilder
-        : null;
-      if (createStudioPersistableDeckSanitizerOptionsBuilder) {
-        return createStudioPersistableDeckSanitizerOptionsBuilder({
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
-              : () => ({})
-        })(playbackState, options);
-      }
-
-      const buildStudioPersistableDeckSanitizerOptions = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.buildStudioPersistableDeckSanitizerOptions === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.buildStudioPersistableDeckSanitizerOptions
-        : null;
-      if (buildStudioPersistableDeckSanitizerOptions) {
-        return buildStudioPersistableDeckSanitizerOptions(playbackState, {
-          resolveMetadataPersistenceOptions: typeof options.resolveMetadataPersistenceOptions === 'function'
-            ? options.resolveMetadataPersistenceOptions
-            : () => ({}),
-          getDeckSanitizerOptions: typeof options.getDeckSanitizerOptions === 'function'
-            ? options.getDeckSanitizerOptions
-            : typeof getEditorDeckSanitizerOptions === 'function'
-              ? getEditorDeckSanitizerOptions
-              : () => ({})
-        });
-      }
-
-      return {};
-    }
-
     function sanitizeEditorReusablePersistedHtml(persistedHtml, options = {}) {
       const nextPersistedHtml = typeof persistedHtml === 'string'
         ? persistedHtml
