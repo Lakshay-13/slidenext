@@ -12,6 +12,7 @@ const liveSelection = require('../shared/studio-editor-live-selection.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
+const positionLayoutRollback = require('../shared/studio-editor-position-layout-rollback.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -92,6 +93,16 @@ function loadPositionMutationHelper(fileContent, context) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
+  vm.runInContext(helperSource, context);
+}
+
+function loadPositionRollbackHelper(fileContent, context) {
+  const helperSource = extractFunctionSource(
+    fileContent,
+    'function rollbackEditorPositionLayoutMutation(transaction, sourceDoc = getIframeDoc()) {',
+    'function alignSelectedElements(action = \'\') {'
+  );
+  context.SlideNextStudioEditorPositionLayoutRollback = positionLayoutRollback;
   vm.runInContext(helperSource, context);
 }
 
@@ -1090,4 +1101,34 @@ test('nudgeSelectedElements forwards a reversible style transaction to history',
       after: { left: '120px', top: '80px' }
     }]
   }]]);
+});
+
+test('rollbackEditorPositionLayoutMutation reverses a rejected position transaction', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const documentRef = { id: 'iframe-doc' };
+  const target = {
+    dataset: { editorId: 'node-1' },
+    style: { left: '120px', top: '80px' }
+  };
+  const context = {
+    SlideNextStudioEditorTransaction: studioTransaction,
+    getIframeDoc() {
+      return documentRef;
+    },
+    getElementByEditorId(editorId, sourceDoc) {
+      return editorId === 'node-1' && sourceDoc === documentRef ? target : null;
+    }
+  };
+
+  vm.createContext(context);
+  loadPositionRollbackHelper(fileContent, context);
+  const mutation = studioTransaction.createStudioPositionTransaction([{
+    element: target,
+    before: { left: '10px', top: '20px' },
+    after: { left: '120px', top: '80px' }
+  }]);
+
+  assert.equal(context.rollbackEditorPositionLayoutMutation(mutation, documentRef), true);
+  assert.equal(target.style.left, '10px');
+  assert.equal(target.style.top, '20px');
 });
