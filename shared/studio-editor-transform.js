@@ -1688,6 +1688,9 @@
       if (!shouldHandlePointerEvent(session, event)) {
         return false;
       }
+      if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        handlePointerMove(event);
+      }
       finalizeSession();
       return true;
     }
@@ -1845,6 +1848,9 @@
 
     function handlePointerUp(event = {}) {
       if (!shouldHandlePointerEvent(session, event)) return false;
+      if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
+        handlePointerMove(event);
+      }
       finalizeSession();
       return true;
     }

@@ -2444,6 +2444,38 @@ test('transform handlers reject concurrent pointer starts without replacing the 
   });
 });
 
+test('transform handlers apply final pointer coordinates before completing a gesture', () => {
+  [
+    transformState.createStudioTransformPointerHandlers,
+    transformState.createStudioTransformFallbackPointerHandlers
+  ].forEach((createHandlers) => {
+    const session = { pointerId: 7 };
+    const frameCoordinates = [];
+    const handlers = createHandlers({
+      getActiveSlide: () => ({ id: 'slide-1' }),
+      resolveTransformSessionStart: () => ({ session, startBounds: {} }),
+      buildTransformFrameState(_session, options) {
+        frameCoordinates.push([options.clientX, options.clientY]);
+        return { isActive: true, bounds: {} };
+      },
+      applyTransformBounds() {}
+    });
+
+    assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
+    assert.equal(handlers.handlePointerMove({
+      pointerId: 7,
+      clientX: 10,
+      clientY: 12
+    }), true);
+    assert.equal(handlers.handlePointerUp({
+      pointerId: 7,
+      clientX: 20,
+      clientY: 24
+    }), true);
+    assert.deepEqual(frameCoordinates, [[10, 12], [20, 24]]);
+  });
+});
+
 test('transform pointer cancellation restores styles and does not persist either handler path', () => {
   [
     transformState.createStudioTransformPointerHandlers,
