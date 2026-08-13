@@ -7,6 +7,7 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 test('layer order controller applies the planned order and forwards mutation callbacks', () => {
   const calls = [];
   let builderOptions = null;
+  let mutationOptions = null;
   let baselineOptions = null;
   const first = { id: 'first', isConnected: true };
   const second = { id: 'second', isConnected: true };
@@ -17,7 +18,10 @@ test('layer order controller applies the planned order and forwards mutation cal
     canonicalLayoutApi: {
       createStudioCanonicalLayerOrderMutationBuilder(options) {
         builderOptions = options;
-        return () => ({ id: 'canonical-deck' });
+        return (options) => {
+          mutationOptions = options;
+          return { id: 'canonical-deck' };
+        };
       },
       buildStudioCanonicalLayoutBaseline(options) {
         baselineOptions = options;
@@ -53,6 +57,8 @@ test('layer order controller applies the planned order and forwards mutation cal
   assert.equal(calls[0][2], 'front');
   assert.equal(calls[1][0], 'apply');
   assert.deepEqual(calls[1][3], [second, first]);
+  assert.deepEqual(mutationOptions.orderedElements, [first, second]);
+  assert.deepEqual(mutationOptions.nextOrder, [second, first]);
   assert.deepEqual(transaction, { id: 'tx' });
   assert.equal(builderOptions.canonicalDeckApi.id, 'deck-api');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');

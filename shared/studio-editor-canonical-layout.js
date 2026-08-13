@@ -192,12 +192,18 @@
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : [];
+    const nextOrder = Array.isArray(options.nextOrder) ? options.nextOrder : null;
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
-    const layoutUpdates = orderedElements.map((element) => {
+    const elementsToUpdate = nextOrder || orderedElements;
+    const layoutUpdates = elementsToUpdate.map((element, index) => {
       const elementId = getElementId(element);
-      const zIndex = element && element.style ? Number(element.style.zIndex) : NaN;
+      const zIndex = nextOrder
+        ? index
+        : element && element.style
+          ? Number(element.style.zIndex)
+          : NaN;
       return elementId && Number.isFinite(zIndex)
         ? { id: elementId, layout: { zIndex } }
         : null;

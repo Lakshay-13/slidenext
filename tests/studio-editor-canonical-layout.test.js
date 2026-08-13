@@ -285,6 +285,29 @@ test('buildStudioCanonicalLayerOrderMutation maps z-indexes using the pre-mutati
   assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
 });
 
+test('buildStudioCanonicalLayerOrderMutation maps the explicit next order without reading stale DOM z-indexes', () => {
+  const sourceDeck = createSourceDeck();
+  const first = {
+    dataset: { editorId: 'node-1' },
+    style: { zIndex: '99' }
+  };
+  const second = {
+    dataset: { editorId: 'node-2' },
+    style: { zIndex: '-20' }
+  };
+
+  const result = canonicalLayout.buildStudioCanonicalLayerOrderMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalDeckBeforeMutation: sourceDeck,
+    orderedElements: [first, second],
+    nextOrder: [second, first],
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.zIndex, 1);
+  assert.equal(sourceDeck.slides[0].nodes[0].layout.zIndex, 0);
+});
+
 test('buildStudioCanonicalLayerOrderMutation fails closed when no z-index updates are valid', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayerOrderMutation({

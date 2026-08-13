@@ -228,8 +228,9 @@
       let canonicalDeck = null;
       try {
         canonicalDeck = buildCanonicalLayerOrderMutation
-          ? buildCanonicalLayerOrderMutation({
+            ? buildCanonicalLayerOrderMutation({
               orderedElements: initialOrder,
+              nextOrder: reorderResult.nextOrder,
               canonicalDeckApi,
               canonicalDeckBeforeMutation: canonicalDeckBefore,
               getElementId: getLayerOrderElementId
