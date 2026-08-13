@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
+const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,18 +19,21 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 test('createHistoryEntry delegates editor dependencies through the shared history adapter', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function createHistoryEntry(doc) {',
-    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
-  );
   let capturedOptions = null;
   let adapterCalls = 0;
-  const context = {
-    SlideNextEditorHistory: {},
-    SlideNextStudioHistory: { id: 'history-api' },
-    SlideNextStudioEditorHistoryState: {
+  const getIframeDoc = () => ({ id: 'iframe-doc' });
+  const getPendingCanonicalDeck = () => ({ id: 'pending-deck' });
+  const getPendingTransaction = () => ({ id: 'pending-transaction' });
+  const buildEditorCanonicalDeck = () => ({ id: 'canonical-deck' });
+  const buildEditorMutationCanonicalDeck = () => ({ id: 'mutation-deck' });
+  const getEditorHistoryOptions = () => ({ id: 'history-options' });
+  const resolveEditorFallbackActiveSlideId = () => 'slide-1';
+  const buildHistoryFrameHtml = () => '<html></html>';
+  const getActiveSlideId = () => 'slide-1';
+  const getCommittedSelectedEditorElementIds = () => ['element-1'];
+  const createHistoryEntry = historyEntryAction.createStudioEditorHistoryEntryAction({
+    historyApi: { id: 'history-api' },
+    historyStateApi: {
       createStudioEditorHistoryEntryAdapter(options) {
         capturedOptions = options;
         return doc => {
@@ -38,35 +42,32 @@ test('createHistoryEntry delegates editor dependencies through the shared histor
         };
       }
     },
-    getIframeDoc: () => ({ id: 'iframe-doc' }),
-    pendingEditorCanonicalDeck: { id: 'pending-deck' },
-    pendingEditorTransaction: { id: 'pending-transaction' },
-    buildEditorCanonicalDeck: () => ({ id: 'canonical-deck' }),
-    buildEditorMutationCanonicalDeck: () => ({ id: 'mutation-deck' }),
-    getEditorHistoryOptions: () => ({ id: 'history-options' }),
-    resolveEditorFallbackActiveSlideId: () => 'slide-1',
-    buildHistoryFrameHtml: () => '<html></html>',
-    getActiveSlideId: () => 'slide-1',
-    getCommittedSelectedEditorElementIds: () => ['element-1']
-  };
+    getDocument: getIframeDoc,
+    getPendingCanonicalDeck,
+    getPendingTransaction,
+    buildCanonicalDeck: buildEditorCanonicalDeck,
+    buildMutationCanonicalDeck: buildEditorMutationCanonicalDeck,
+    getHistoryOptions: getEditorHistoryOptions,
+    resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId,
+    buildHistoryHtml: buildHistoryFrameHtml,
+    getActiveSlideId,
+    getSelectedElementIds: getCommittedSelectedEditorElementIds
+  });
 
-  vm.createContext(context);
-  vm.runInContext(helperSource, context);
-
-  assert.deepEqual(context.createHistoryEntry('doc-1'), {
+  assert.deepEqual(createHistoryEntry('doc-1'), {
     doc: 'doc-1',
     source: 'shared-adapter'
   });
-  assert.deepEqual(context.createHistoryEntry('doc-2'), {
+  assert.deepEqual(createHistoryEntry('doc-2'), {
     doc: 'doc-2',
     source: 'shared-adapter'
   });
   assert.equal(adapterCalls, 2);
   assert.equal(capturedOptions.historyApi.id, 'history-api');
-  assert.deepEqual(capturedOptions.getDocument(), { id: 'iframe-doc' });
-  assert.equal(capturedOptions.getPendingCanonicalDeck().id, 'pending-deck');
-  assert.equal(capturedOptions.getPendingTransaction().id, 'pending-transaction');
-  assert.equal(capturedOptions.buildMutationCanonicalDeck, context.buildEditorMutationCanonicalDeck);
+  assert.deepEqual(capturedOptions.getDocument(), getIframeDoc());
+  assert.equal(capturedOptions.getPendingCanonicalDeck().id, getPendingCanonicalDeck().id);
+  assert.equal(capturedOptions.getPendingTransaction().id, getPendingTransaction().id);
+  assert.equal(capturedOptions.buildMutationCanonicalDeck, buildEditorMutationCanonicalDeck);
 });
 
 test('captureState delegates editor stacks and pending cleanup through the shared history adapter', () => {

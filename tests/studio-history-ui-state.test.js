@@ -10,6 +10,7 @@ const deckView = require('../shared/studio-deck-view.js');
 const historyState = require('../shared/studio-editor-history-state.js');
 const historySaveAction = require('../shared/studio-editor-history-save-action.js');
 const historyFrameAction = require('../shared/studio-editor-history-frame-action.js');
+const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -128,6 +129,41 @@ function loadBuildHistoryFrameHtml(fileContent, context) {
     getDocument: context.getIframeDoc,
     getHistoryOptions: context.getEditorHistoryOptions,
     buildPersistableDeckHtml: context.buildPersistableDeckHtml
+  });
+}
+
+function loadCreateHistoryEntry(context) {
+  context.createHistoryEntry = historyEntryAction.createStudioEditorHistoryEntryAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyStateApi: context.SlideNextStudioEditorHistoryState || historyState,
+    canonicalStateApi: context.SlideNextStudioEditorCanonicalState || null,
+    historyApi: context.SlideNextStudioHistory || null,
+    getDocument: typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc
+      : null,
+    getPendingCanonicalDeck: () => typeof context.getStudioPendingEditorCanonicalDeck === 'function'
+      ? context.getStudioPendingEditorCanonicalDeck()
+      : context.pendingEditorCanonicalDeck || null,
+    buildCanonicalDeck: (doc, options) => typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.buildEditorCanonicalDeck(doc, options)
+      : null,
+    buildMutationCanonicalDeck: context.buildEditorMutationCanonicalDeck,
+    getCanonicalDeckBaseline: (doc) => typeof context.resolveEditorLiveCanonicalDeck === 'function'
+      ? context.resolveEditorLiveCanonicalDeck(doc)
+      : null,
+    isCanonicalDeck: typeof context.getEditorCanonicalDeckValidator === 'function'
+      ? context.getEditorCanonicalDeckValidator()
+      : null,
+    getHistoryOptions: (options) => typeof context.getEditorHistoryOptions === 'function'
+      ? context.getEditorHistoryOptions(options)
+      : {},
+    resolveFallbackActiveSlideId: context.resolveEditorFallbackActiveSlideId,
+    buildHistoryHtml: context.buildHistoryFrameHtml,
+    getActiveSlideId: context.getActiveSlideId,
+    getSelectedElementIds: context.getCommittedSelectedEditorElementIds,
+    getPendingTransaction: () => typeof context.getStudioPendingEditorTransaction === 'function'
+      ? context.getStudioPendingEditorTransaction()
+      : context.pendingEditorTransaction || null
   });
 }
 
@@ -495,11 +531,6 @@ test('editor undo and redo fail closed when the shared history step runner is un
 
 test('createHistoryEntry fails closed when the shared history entry builder is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function createHistoryEntry(doc) {',
-    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
-  );
 
   const iframeDoc = { id: 'doc' };
   const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
@@ -545,7 +576,7 @@ test('createHistoryEntry fails closed when the shared history entry builder is u
   };
 
   vm.createContext(context);
-  vm.runInContext(createHistoryEntrySource, context);
+  loadCreateHistoryEntry(context);
 
   const entry = context.createHistoryEntry();
 
@@ -559,11 +590,6 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
     fileContent,
     'function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {',
     '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
-  );
-  const createHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function createHistoryEntry(doc) {',
-    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
   );
 
   const canonicalDeck = {
@@ -629,7 +655,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   vm.createContext(context);
   vm.runInContext(resolveEditorFallbackActiveSlideIdSource, context);
   loadBuildHistoryFrameHtml(fileContent, context);
-  vm.runInContext(createHistoryEntrySource, context);
+  loadCreateHistoryEntry(context);
 
   const entry = context.createHistoryEntry();
 
@@ -649,11 +675,6 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
 
 test('createHistoryEntry reuses the shared history entry builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const createHistoryEntrySource = extractFunctionSource(
-    fileContent,
-    'function createHistoryEntry(doc) {',
-    '\n\n    function updateEditorPersistedDeckState(nextState = {}) {'
-  );
 
   const resultEntry = {
     html: '<body><main>persisted</main></body>',
@@ -683,7 +704,7 @@ test('createHistoryEntry reuses the shared history entry builder when available'
   };
 
   vm.createContext(context);
-  vm.runInContext(createHistoryEntrySource, context);
+  loadCreateHistoryEntry(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.createHistoryEntry())),
@@ -697,7 +718,10 @@ test('createHistoryEntry reuses the shared history entry builder when available'
     doc: 'history-doc',
     options: { preferLiveCanonicalDeck: false }
   });
-  assert.equal(delegatedArgs.options.getHistoryOptions, context.getEditorHistoryOptions);
+  assert.deepEqual(
+    delegatedArgs.options.getHistoryOptions({ mode: 'history' }),
+    context.getEditorHistoryOptions({ mode: 'history' })
+  );
   assert.equal(delegatedArgs.options.resolveFallbackActiveSlideId, context.resolveEditorFallbackActiveSlideId);
   assert.equal(delegatedArgs.options.buildHistoryHtml, context.buildHistoryFrameHtml);
   assert.equal(delegatedArgs.options.getActiveSlideId, context.getActiveSlideId);

@@ -1618,6 +1618,7 @@
   <script src="/shared/studio-editor-history-controller-shell-runtime.js"></script>
   <script src="/shared/studio-editor-history-save-action.js"></script>
   <script src="/shared/studio-editor-history-frame-action.js"></script>
+  <script src="/shared/studio-editor-history-entry-action.js"></script>
   <script src="/shared/studio-editor-history-restore.js"></script>
   <script src="/shared/studio-editor-history-restore-options.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
@@ -3788,6 +3789,53 @@
         })
       : {};
     Object.assign(globalThis, studioEditorHistoryFrameGlobalApi);
+    const studioEditorHistoryEntryAction = typeof SlideNextStudioEditorHistoryEntryAction !== 'undefined'
+      && SlideNextStudioEditorHistoryEntryAction
+      && typeof SlideNextStudioEditorHistoryEntryAction.createStudioEditorHistoryEntryAction === 'function'
+      ? SlideNextStudioEditorHistoryEntryAction.createStudioEditorHistoryEntryAction({
+          getHistoryController: () => studioEditorHistoryController,
+          historyStateApi: typeof SlideNextStudioEditorHistoryState !== 'undefined'
+            ? SlideNextStudioEditorHistoryState
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
+          historyApi: typeof SlideNextStudioHistory !== 'undefined'
+            ? SlideNextStudioHistory
+            : null,
+          getDocument: getIframeDoc,
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+          buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(
+            sourceDoc,
+            buildOptions
+          ),
+          buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+            ? buildEditorMutationCanonicalDeck
+            : null,
+          getCanonicalDeckBaseline: (sourceDoc) => typeof resolveEditorLiveCanonicalDeck === 'function'
+            ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), getStudioEditorSessionToken())
+            : null,
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
+          getHistoryOptions: (options) => getEditorHistoryOptions(options),
+          resolveFallbackActiveSlideId: typeof resolveEditorFallbackActiveSlideId === 'function'
+            ? resolveEditorFallbackActiveSlideId
+            : null,
+          buildHistoryHtml: (doc, options) => buildHistoryFrameHtml(doc, options),
+          getActiveSlideId,
+          getSelectedElementIds: getCommittedSelectedEditorElementIds,
+          getPendingTransaction: getStudioPendingEditorTransaction
+        })
+      : null;
+    const studioEditorHistoryEntryGlobalApi = typeof SlideNextStudioEditorHistoryEntryAction !== 'undefined'
+      && SlideNextStudioEditorHistoryEntryAction
+      && typeof SlideNextStudioEditorHistoryEntryAction.createStudioEditorHistoryEntryGlobalApi === 'function'
+      ? SlideNextStudioEditorHistoryEntryAction.createStudioEditorHistoryEntryGlobalApi({
+          createHistoryEntry: studioEditorHistoryEntryAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorHistoryEntryGlobalApi);
     const studioEditorPersistenceRuntimeOptionsApi = typeof SlideNextStudioEditorPersistenceRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorPersistenceRuntimeOptions
       : null;
@@ -10532,59 +10580,6 @@
     }
 
     // 5. Undo/Redo Engine
-    function createHistoryEntry(doc) {
-      if (typeof studioEditorHistoryController !== 'undefined'
-        && studioEditorHistoryController
-        && typeof studioEditorHistoryController.createEntry === 'function') {
-        return studioEditorHistoryController.createEntry(doc);
-      }
-      if (typeof createHistoryEntry.builder !== 'function') {
-        const createStudioEditorHistoryEntryAdapter = (
-          typeof SlideNextStudioEditorHistoryState !== 'undefined'
-          && SlideNextStudioEditorHistoryState
-          && typeof SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryAdapter === 'function'
-        )
-          ? SlideNextStudioEditorHistoryState.createStudioEditorHistoryEntryAdapter
-          : null;
-        if (!createStudioEditorHistoryEntryAdapter) return null;
-        createHistoryEntry.builder = createStudioEditorHistoryEntryAdapter({
-          historyStateApi: SlideNextStudioEditorHistoryState,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          historyApi: SlideNextStudioHistory,
-          getDocument: getIframeDoc,
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          buildCanonicalDeck: buildEditorCanonicalDeck,
-          buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
-            ? buildEditorMutationCanonicalDeck
-            : null,
-          getCanonicalDeckBaseline: (sourceDoc) => (
-            typeof resolveEditorLiveCanonicalDeck === 'function'
-              ? resolveEditorLiveCanonicalDeck(sourceDoc || getIframeDoc(), getStudioEditorSessionToken())
-              : null
-          ),
-          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-            ? getEditorCanonicalDeckValidator()
-            : null,
-          getHistoryOptions: getEditorHistoryOptions,
-          resolveFallbackActiveSlideId: typeof resolveEditorFallbackActiveSlideId === 'function'
-            ? resolveEditorFallbackActiveSlideId
-            : null,
-          buildHistoryHtml: buildHistoryFrameHtml,
-          getActiveSlideId,
-          getSelectedElementIds: getCommittedSelectedEditorElementIds,
-          preferCanonicalDeck: true,
-          getPendingTransaction: () => (
-            getStudioPendingEditorTransaction()
-          )
-        });
-      }
-      return typeof createHistoryEntry.builder === 'function'
-        ? createHistoryEntry.builder(doc)
-        : null;
-    }
-
     function updateEditorPersistedDeckState(nextState = {}) {
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
