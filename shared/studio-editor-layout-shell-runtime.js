@@ -32,6 +32,11 @@
       'nudgeApi',
       'SlideNextStudioEditorNudgeController'
     );
+    runtimeOptions.layoutModeControllerApi = resolveApi(
+      options,
+      'layoutModeControllerApi',
+      'SlideNextStudioEditorLayoutModeController'
+    );
     runtimeOptions.alignmentApi = resolveApi(
       options,
       'alignmentApi',

@@ -24,6 +24,10 @@
       && typeof options.conversionApi.createStudioEditorLayoutConversionController === 'function'
       ? options.conversionApi
       : null;
+    const layoutModeControllerApi = options.layoutModeControllerApi
+      && typeof options.layoutModeControllerApi.createStudioEditorLayoutModeController === 'function'
+      ? options.layoutModeControllerApi
+      : null;
 
     const nudgeController = nudgeApi
       ? nudgeApi.createStudioEditorNudgeController({
@@ -105,12 +109,22 @@
           updateActionState: options.updateConversionActionState
         })
       : null;
+    const layoutModeController = layoutModeControllerApi
+      ? layoutModeControllerApi.createStudioEditorLayoutModeController({
+          layoutModeApi: options.layoutModeApi,
+          layoutModeViewApi: options.layoutModeViewApi,
+          documentRef: options.documentRef,
+          resolveCanonicalDeck: options.resolveCanonicalDeck,
+          resolveActiveSlideId: options.resolveActiveSlideId
+        })
+      : null;
 
     return {
       nudgeController,
       alignmentController,
       groupController,
-      conversionController
+      conversionController,
+      layoutModeController
     };
   }
 

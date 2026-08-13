@@ -7,13 +7,14 @@ const layoutRuntime = require('../shared/studio-editor-layout-runtime.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
-test('layout runtime composes nudge, alignment, grouping, and conversion controllers', () => {
+test('layout runtime composes layout controllers', () => {
   const calls = [];
   const controllers = {
     nudgeController: { name: 'nudge' },
     alignmentController: { name: 'alignment' },
     groupController: { name: 'group' },
     conversionController: { name: 'conversion' }
+    ,layoutModeController: { name: 'layout-mode' }
   };
   const callbacks = {
     nudgeEngineApi: {},
@@ -56,6 +57,11 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
     isFreeformPositioned() {},
     buildCanonicalDeck() {},
     updateConversionActionState() {}
+    ,layoutModeApi: {}
+    ,layoutModeViewApi: {}
+    ,documentRef: {}
+    ,resolveCanonicalDeck() {}
+    ,resolveActiveSlideId() {}
   };
   const api = (name, factoryName, result) => ({
     [factoryName](options) {
@@ -73,6 +79,11 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
       'createStudioEditorLayoutConversionController',
       controllers.conversionController
     ),
+    layoutModeControllerApi: api(
+      'layout-mode',
+      'createStudioEditorLayoutModeController',
+      controllers.layoutModeController
+    ),
     ...callbacks
   });
 
@@ -89,6 +100,11 @@ test('layout runtime composes nudge, alignment, grouping, and conversion control
   assert.equal(calls[3][1].conversionApi, callbacks.conversionEngineApi);
   assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[3][1].buildPositionedLayoutItems, callbacks.buildPositionedLayoutItems);
+  assert.equal(calls[4][1].layoutModeApi, callbacks.layoutModeApi);
+  assert.equal(calls[4][1].layoutModeViewApi, callbacks.layoutModeViewApi);
+  assert.equal(calls[4][1].documentRef, callbacks.documentRef);
+  assert.equal(calls[4][1].resolveCanonicalDeck, callbacks.resolveCanonicalDeck);
+  assert.equal(calls[4][1].resolveActiveSlideId, callbacks.resolveActiveSlideId);
 });
 
 test('index wires layout editing through the runtime module', () => {
@@ -113,6 +129,10 @@ test('index wires layout editing through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-layout-conversion-view\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-layout-mode-controller\.js"><\/script>/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorNudgeController\.createStudioEditorNudgeController\(/
@@ -124,6 +144,10 @@ test('index wires layout editing through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorGroupController\.createStudioEditorGroupController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorLayoutModeController\.createStudioEditorLayoutModeController\(/
   );
   assert.match(fileContent, /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/);
 });

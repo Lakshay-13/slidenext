@@ -1373,6 +1373,7 @@
   <script src="/shared/studio-editor-layer-accessors.js"></script>
   <script src="/shared/studio-editor-layout-mode.js"></script>
   <script src="/shared/studio-editor-layout-mode-view.js"></script>
+  <script src="/shared/studio-editor-layout-mode-controller.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
@@ -3153,6 +3154,21 @@
           layoutRuntimeApi: typeof SlideNextStudioEditorLayoutRuntime !== 'undefined'
             ? SlideNextStudioEditorLayoutRuntime
             : null,
+          layoutModeControllerApi: typeof SlideNextStudioEditorLayoutModeController !== 'undefined'
+            ? SlideNextStudioEditorLayoutModeController
+            : null,
+          layoutModeApi: typeof SlideNextStudioEditorLayoutMode !== 'undefined'
+            ? SlideNextStudioEditorLayoutMode
+            : null,
+          layoutModeViewApi: typeof SlideNextStudioEditorLayoutModeView !== 'undefined'
+            ? SlideNextStudioEditorLayoutModeView
+            : null,
+          documentRef: document,
+          resolveCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          resolveActiveSlideId: (sourceDoc) => {
+            const activeSlide = getActiveSlide(sourceDoc);
+            return activeSlide ? getEditorSlideId(activeSlide) : '';
+          },
           nudgeApi: typeof SlideNextStudioEditorNudgeController !== 'undefined'
             ? SlideNextStudioEditorNudgeController
             : null,
@@ -3256,6 +3272,9 @@
       : null;
     const studioEditorLayoutConversionController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.conversionController
+      : null;
+    const studioEditorLayoutModeController = studioEditorLayoutRuntime
+      ? studioEditorLayoutRuntime.layoutModeController
       : null;
 
     const studioEditorElementVisibilityStateReader = typeof SlideNextStudioElementState !== 'undefined'
@@ -6781,35 +6800,12 @@
     }
 
     function syncStudioEditorLayoutModeControl(doc = getIframeDoc()) {
-      const layoutModeView = typeof SlideNextStudioEditorLayoutModeView !== 'undefined'
-        ? SlideNextStudioEditorLayoutModeView
-        : null;
-      const layoutModeApi = typeof SlideNextStudioEditorLayoutMode !== 'undefined'
-        ? SlideNextStudioEditorLayoutMode
-        : null;
-      if (!layoutModeView
-        || typeof layoutModeView.syncStudioEditorLayoutModeLabel !== 'function'
-        || !layoutModeApi
-        || typeof layoutModeApi.resolveStudioCanonicalLayoutMode !== 'function') {
+      if (typeof studioEditorLayoutModeController === 'undefined'
+        || !studioEditorLayoutModeController
+        || typeof studioEditorLayoutModeController.sync !== 'function') {
         return false;
       }
-
-      let canonicalDeck = null;
-      try {
-        canonicalDeck = resolveEditorUiCanonicalDeck(doc);
-      } catch (error) {
-        canonicalDeck = null;
-      }
-      const activeSlide = getActiveSlide(doc);
-      const activeSlideId = activeSlide ? getEditorSlideId(activeSlide) : '';
-      const mode = layoutModeApi.resolveStudioCanonicalLayoutMode(canonicalDeck, activeSlideId, {
-        fallbackMode: ''
-      });
-      return layoutModeView.syncStudioEditorLayoutModeLabel({
-        documentRef: document,
-        layoutModeApi,
-        mode
-      });
+      return studioEditorLayoutModeController.sync(doc);
     }
 
     function bindDeckNavigationSync(doc = getIframeDoc()) {
