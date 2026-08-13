@@ -11,6 +11,7 @@ const selectionCommitAdapter = require('../shared/studio-editor-selection-commit
 const selectionClassAdapter = require('../shared/studio-editor-selection-class-adapter.js');
 const selectionRestoreAdapter = require('../shared/studio-editor-selection-restore-adapter.js');
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
+const selectionIdsAdapter = require('../shared/studio-editor-selection-ids-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -76,9 +77,9 @@ test('editor composes committed selection ID reading through the shared selectio
 test('editor composes live selection ID reading through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionIdsReader =/);
-  assert.match(source, /getStudioSelectedElementIds/);
-  assert.match(source, /if \(typeof studioEditorSelectionIdsReader !== 'function'\)/);
+  assert.match(source, /const studioEditorSelectionIdsAdapter =/);
+  assert.match(source, /getStudioEditorSelectedElementIds/);
+  assert.match(source, /if \(!readSelectionIds\) return \[\]/);
   assert.doesNotMatch(source, /getSelectedEditorElementIds\.reader/);
 });
 
@@ -222,9 +223,10 @@ function loadGetSelectedEditorElementIds(fileContent, context) {
   installSelectionAccessors(context);
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSelectionIdsReader =',
+    'const studioEditorSelectionIdsAdapter =',
     '\n\n    const studioEditorCommittedSelectionIdsReader ='
   );
+  context.SlideNextStudioEditorSelectionIdsAdapter = selectionIdsAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -253,7 +255,7 @@ function loadRestoreSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'const studioEditorSelectionRestoreAdapter =',
-    '\n\n    const studioEditorPreservedSelectionRestorer ='
+    '\n\n    const studioEditorPreservedSelectionRestoreAdapter ='
   );
   context.SlideNextStudioEditorSelectionRestoreAdapter = selectionRestoreAdapter;
   context.SlideNextStudioEditorCommittedSelectionRestoreAdapter = committedSelectionRestoreAdapter;
@@ -569,6 +571,30 @@ test('getSelectedEditorElementIds fails closed when the shared selection API is 
   loadGetSelectedEditorElementIds(fileContent, context);
 
   assert.equal(context.getSelectedEditorElementIds().length, 0);
+});
+
+test('getStudioEditorSelectedElementIds composes live selection ID dependencies', () => {
+  const selectedElements = [{ id: 'node-1' }];
+  const selectionOptions = { selectionOptions: true };
+  let delegated = null;
+
+  const result = selectionIdsAdapter.getStudioEditorSelectedElementIds(selectedElements, {
+    selectionApi: {
+      getStudioSelectedElementIds(elements, options) {
+        delegated = { elements, options };
+        return ['node-1'];
+      }
+    },
+    getSelectionOptions: () => selectionOptions
+  });
+
+  assert.deepEqual(result, ['node-1']);
+  assert.equal(delegated.elements, selectedElements);
+  assert.equal(delegated.options, selectionOptions);
+});
+
+test('getStudioEditorSelectedElementIds fails closed without the shared selection API', () => {
+  assert.equal(selectionIdsAdapter.getStudioEditorSelectedElementIds([], {}), null);
 });
 
 test('getCommittedSelectedEditorElementIds delegates to shared selection', () => {

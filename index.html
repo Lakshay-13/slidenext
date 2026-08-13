@@ -1663,6 +1663,7 @@
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-ids-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8140,10 +8141,10 @@
       });
     }
 
-    const studioEditorSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.getStudioSelectedElementIds === 'function'
-      ? (elements, options) => SlideNextStudioEditorSelection.getStudioSelectedElementIds(elements, options)
+    const studioEditorSelectionIdsAdapter = typeof SlideNextStudioEditorSelectionIdsAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionIdsAdapter
+      && typeof SlideNextStudioEditorSelectionIdsAdapter.getStudioEditorSelectedElementIds === 'function'
+      ? SlideNextStudioEditorSelectionIdsAdapter
       : null;
 
     function getSelectedEditorElementIds(elements = getStudioSelectedElements()) {
@@ -8153,8 +8154,18 @@
         && typeof studioEditorStateBridge.getSelectedElementIds === 'function') {
         return studioEditorStateBridge.getSelectedElementIds();
       }
-      if (typeof studioEditorSelectionIdsReader !== 'function') return [];
-      return studioEditorSelectionIdsReader(elements, getEditorSelectionOptions());
+      const readSelectionIds = studioEditorSelectionIdsAdapter
+        && typeof studioEditorSelectionIdsAdapter.getStudioEditorSelectedElementIds === 'function'
+        ? studioEditorSelectionIdsAdapter.getStudioEditorSelectedElementIds
+        : null;
+      if (!readSelectionIds) return [];
+      const selectedIds = readSelectionIds(elements, {
+        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+          ? SlideNextStudioEditorSelection
+          : null,
+        getSelectionOptions: () => getEditorSelectionOptions()
+      });
+      return selectedIds || [];
     }
 
     const studioEditorCommittedSelectionIdsReader = typeof SlideNextStudioEditorSelection !== 'undefined'

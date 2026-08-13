@@ -3396,7 +3396,7 @@ test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snap
   const buildEditorLayerSnapshotSource = extractFunctionSource(
     fileContent,
     'function buildEditorLayerSnapshot(slide) {',
-    '\n\n    const studioEditorSelectionIdsReader ='
+    '\n\n    const studioEditorSelectionIdsAdapter ='
   );
   const context = {
     SlideNextStudioElementSnapshot: {},
