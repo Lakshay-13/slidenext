@@ -2,14 +2,17 @@
   const historyResultApi = typeof module === 'object' && module.exports
     ? require('./studio-editor-history-result.js')
     : root && root.SlideNextStudioEditorHistoryResult;
-  const api = factory(historyResultApi);
+  const transactionApi = typeof module === 'object' && module.exports
+    ? require('./studio-editor-transaction.js')
+    : root && root.SlideNextStudioEditorTransaction;
+  const api = factory(historyResultApi, transactionApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioHistory = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi, transactionApi) {
   const isStudioHistoryCaptureFailure = historyResultApi
     && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
     ? historyResultApi.isStudioHistoryCaptureFailure
@@ -276,6 +279,13 @@
   }
 
   function isStudioHistoryTransaction(transaction) {
+    if (transactionApi && typeof transactionApi.normalizeStudioEditorTransaction === 'function') {
+      try {
+        return !!transactionApi.normalizeStudioEditorTransaction(transaction);
+      } catch (error) {
+        return false;
+      }
+    }
     return !!transaction
       && typeof transaction === 'object'
       && transaction.kind === 'slidenext.editor.transaction'

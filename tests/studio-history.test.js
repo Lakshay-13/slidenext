@@ -131,6 +131,31 @@ test('createStudioHistoryEntry keeps replayable transactions free of HTML snapsh
   });
 });
 
+test('createStudioHistoryEntry keeps an unsupported transaction operation replay-safe with an HTML fallback', () => {
+  let buildHistoryHtmlCalls = 0;
+  const transaction = {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'unsupported-operation',
+      elementId: 'node-1'
+    }]
+  };
+
+  const entry = studioHistory.createStudioHistoryEntry({ id: 'doc' }, {
+    transaction,
+    buildHistoryHtml() {
+      buildHistoryHtmlCalls += 1;
+      return '<main>legacy-fallback</main>';
+    }
+  });
+
+  assert.equal(studioHistory.isStudioHistoryTransaction(transaction), false);
+  assert.equal(buildHistoryHtmlCalls, 1);
+  assert.equal(entry.html, '<main>legacy-fallback</main>');
+  assert.equal(entry.transaction, transaction);
+});
+
 test('createStudioHistoryEntry keeps active-slide transactions free of content snapshots', () => {
   let buildHistoryHtmlCalls = 0;
   const transaction = {
