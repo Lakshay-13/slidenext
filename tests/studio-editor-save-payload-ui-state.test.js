@@ -23,6 +23,7 @@ const persistenceHandlerOptionsAction = require('../shared/studio-editor-persist
 const persistenceFailureAction = require('../shared/studio-editor-persistence-failure-action.js');
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
+const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -381,6 +382,23 @@ function loadApplyCurrentStudioVersionPersistenceSuccess(fileContent, context) {
     fileContent,
     'function applyCurrentStudioVersionPersistenceSuccess(',
     '\n\n    function runCurrentStudioPersistenceActionIfCurrent('
+  );
+  vm.runInContext(source, context);
+}
+
+function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceActionCurrentAction =
+    persistenceActionCurrentAction.createStudioEditorPersistenceActionCurrentAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getReadCurrentSessionState: () => context.createCurrentStudioSessionStateReaders || null
+    });
+  const source = extractFunctionSource(
+    fileContent,
+    'function runCurrentStudioPersistenceActionIfCurrent(',
+    '\n\n    function isCurrentStudioPersistenceTaskStale('
   );
   vm.runInContext(source, context);
 }
@@ -1801,11 +1819,7 @@ test('isCurrentStudioPersistenceTaskStale fails closed when the shared checker i
 
 test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-action runner when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
-    fileContent,
-    'function runCurrentStudioPersistenceActionIfCurrent(',
-    '\n\n    function isCurrentStudioPersistenceTaskStale('
-  );
+
 
   let delegatedArgs = null;
   const context = {
@@ -1834,7 +1848,7 @@ test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-actio
   };
 
   vm.createContext(context);
-  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.runCurrentStudioPersistenceActionIfCurrent(
@@ -1864,11 +1878,7 @@ test('runCurrentStudioPersistenceActionIfCurrent reuses the shared current-actio
 
 test('runCurrentStudioPersistenceActionIfCurrent delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
-    fileContent,
-    'function runCurrentStudioPersistenceActionIfCurrent(',
-    '\n\n    function isCurrentStudioPersistenceTaskStale('
-  );
+
   const persistenceContext = { presentationUrl: 'presentations/deck/index.html' };
   const action = 'action-sentinel';
   const context = {
@@ -1894,7 +1904,7 @@ test('runCurrentStudioPersistenceActionIfCurrent delegates through the editor pe
   };
 
   vm.createContext(context);
-  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
 
   const result = context.runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action);
   assert.equal(result.persistenceContext, persistenceContext);
@@ -1905,11 +1915,7 @@ test('runCurrentStudioPersistenceActionIfCurrent delegates through the editor pe
 
 test('runCurrentStudioPersistenceActionIfCurrent creates the shared current-action adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
-    fileContent,
-    'function runCurrentStudioPersistenceActionIfCurrent(',
-    '\n\n    function isCurrentStudioPersistenceTaskStale('
-  );
+
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -1929,7 +1935,7 @@ test('runCurrentStudioPersistenceActionIfCurrent creates the shared current-acti
   };
 
   vm.createContext(context);
-  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
 
   assert.deepEqual(
     context.runCurrentStudioPersistenceActionIfCurrent({ id: 'one' }, 'action-one'),
@@ -1945,11 +1951,7 @@ test('runCurrentStudioPersistenceActionIfCurrent creates the shared current-acti
 
 test('runCurrentStudioPersistenceActionIfCurrent fails closed when the shared runner is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runCurrentStudioPersistenceActionIfCurrentSource = extractFunctionSource(
-    fileContent,
-    'function runCurrentStudioPersistenceActionIfCurrent(',
-    '\n\n    function isCurrentStudioPersistenceTaskStale('
-  );
+
   const context = {
     SlideNextStudioEditorPersistence: {},
     createCurrentStudioSessionStateReaders() {
@@ -1958,7 +1960,7 @@ test('runCurrentStudioPersistenceActionIfCurrent fails closed when the shared ru
   };
 
   vm.createContext(context);
-  vm.runInContext(runCurrentStudioPersistenceActionIfCurrentSource, context);
+  loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context);
 
   assert.equal(
     context.runCurrentStudioPersistenceActionIfCurrent({ id: 'persistence' }, 'action'),

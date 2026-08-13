@@ -14,6 +14,7 @@ const persistenceHandlerOptionsAction = require('../shared/studio-editor-persist
 const persistenceFailureAction = require('../shared/studio-editor-persistence-failure-action.js');
 const persistenceSuccessAction = require('../shared/studio-editor-persistence-success-action.js');
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
+const persistenceActionCurrentAction = require('../shared/studio-editor-persistence-action-current-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -595,6 +596,14 @@ function loadExecuteCurrentStudioVersionCheckpointSaveWithFailure(fileContent, c
 }
 
 function loadRunCurrentStudioPersistenceActionIfCurrent(fileContent, context) {
+  context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.studioEditorPersistenceActionCurrentAction =
+    persistenceActionCurrentAction.createStudioEditorPersistenceActionCurrentAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+      getReadCurrentSessionState: () => context.createCurrentStudioSessionStateReaders || null
+    });
   const helperSource = extractFunctionSource(
     fileContent,
     'function runCurrentStudioPersistenceActionIfCurrent(persistenceContext, action) {',
