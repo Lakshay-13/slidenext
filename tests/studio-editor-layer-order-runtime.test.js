@@ -26,6 +26,7 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
     isElementLocked: () => false,
     assignElementId: () => '',
     buildCanonicalDeckBaseline: () => ({}),
+    getPendingCanonicalDeck: () => ({}),
     getCanonicalDeckBaseline: () => ({}),
     applyLayerOrderMutation: () => ({}),
     rollbackLayerOrderMutation: () => ({})
@@ -39,6 +40,7 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
   assert.equal(calls[0].canonicalLayoutApi, options.canonicalLayoutApi);
   assert.equal(calls[0].getNormalizedSlideLayerOrder, options.getNormalizedSlideLayerOrder);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
+  assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyLayerOrderMutation, options.applyLayerOrderMutation);
   assert.equal(calls[0].rollbackLayerOrderMutation, options.rollbackLayerOrderMutation);
 });

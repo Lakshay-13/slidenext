@@ -14,6 +14,7 @@ test('layer order controller applies the planned order and forwards mutation cal
   const slide = { contains: (element) => element === first || element === second };
   const controller = layerOrderController.createStudioEditorLayerOrderController({
     canonicalDeckApi: { id: 'deck-api' },
+    getPendingCanonicalDeck: () => ({ id: 'pending-baseline' }),
     getCanonicalDeckBaseline: () => ({ id: 'live-baseline' }),
     canonicalLayoutApi: {
       createStudioCanonicalLayerOrderMutationBuilder(options) {
@@ -62,9 +63,11 @@ test('layer order controller applies the planned order and forwards mutation cal
   assert.deepEqual(transaction, { id: 'tx' });
   assert.equal(builderOptions.canonicalDeckApi.id, 'deck-api');
   assert.equal(typeof builderOptions.buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(builderOptions.getPendingCanonicalDeck(), { id: 'pending-baseline' });
   assert.deepEqual(builderOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
   assert.equal(baselineOptions.sourceDocument.id, 'doc');
   assert.equal(typeof baselineOptions.buildCanonicalDeckBaseline, 'function');
+  assert.deepEqual(baselineOptions.getPendingCanonicalDeck(), { id: 'pending-baseline' });
   assert.deepEqual(baselineOptions.getCanonicalDeckBaseline(), { id: 'live-baseline' });
 });
 

@@ -29,6 +29,7 @@
           isElementLocked: options.isElementLocked,
           assignElementId: options.assignElementId,
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyLayerOrderMutation: options.applyLayerOrderMutation,
           rollbackLayerOrderMutation: options.rollbackLayerOrderMutation
