@@ -399,3 +399,48 @@ test('PDF and PPTX exports use structural canonical validation without an inject
   assert.equal(validPdfExport(), true);
   assert.equal(await validPptxExport(), true);
 });
+
+test('export cleanup fails closed when the editor ready-state reader throws after the action starts', async () => {
+  let readyStateCalls = 0;
+  const pdfButton = { disabled: false, setAttribute() {} };
+  const pptxButton = { disabled: false, setAttribute() {} };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'exportPdfBtn' ? pdfButton : pptxButton;
+    }
+  };
+  const resolveReadyState = () => {
+    readyStateCalls += 1;
+    if (readyStateCalls > 1) throw new Error('editor session replaced');
+    return { canUseDeckActions: true };
+  };
+
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState,
+    documentRef,
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      openStudioPdfPrintWindow(options) {
+        options.onPrint();
+        return true;
+      }
+    }
+  });
+  assert.doesNotThrow(() => exportPdf());
+
+  readyStateCalls = 0;
+  const exportPptx = exportActions.createStudioPptxExportAction({
+    resolveReadyState,
+    documentRef,
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pptxExport: {
+      async exportStudioPptx() {
+        return { success: true };
+      }
+    }
+  });
+  assert.equal(await exportPptx(), true);
+  assert.equal(pdfButton.disabled, true);
+  assert.equal(pptxButton.disabled, true);
+});

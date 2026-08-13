@@ -35,6 +35,20 @@
     }
   }
 
+  function resolveStudioExportReadyState(resolveReadyState) {
+    if (typeof resolveReadyState !== 'function') {
+      return { canUseDeckActions: false };
+    }
+    try {
+      const readyState = resolveReadyState();
+      return readyState && typeof readyState === 'object'
+        ? readyState
+        : { canUseDeckActions: false };
+    } catch (error) {
+      return { canUseDeckActions: false };
+    }
+  }
+
   function resolveStudioExportCanonicalDeck(options = {}) {
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
@@ -153,7 +167,7 @@
         : '';
 
     return function exportPdf() {
-      const actionState = resolveReadyState();
+      const actionState = resolveStudioExportReadyState(resolveReadyState);
       if (!actionState || !actionState.canUseDeckActions) return false;
 
       const failPdfExport = (error) => {
@@ -203,7 +217,7 @@
         setStudioExportButtonState(
           exportButton,
           false,
-          !resolveReadyState().canUseDeckActions
+          !resolveStudioExportReadyState(resolveReadyState).canUseDeckActions
         );
       };
 
@@ -340,7 +354,7 @@
       : 'slidenext-presentation.pptx';
 
     return async function exportPptx() {
-      const actionState = resolveReadyState();
+      const actionState = resolveStudioExportReadyState(resolveReadyState);
       if (!actionState || !actionState.canUseDeckActions) return false;
 
       const canonicalDeck = resolveStudioExportCanonicalDeck({
@@ -400,7 +414,7 @@
         setStudioExportButtonState(
           exportButton,
           false,
-          !resolveReadyState().canUseDeckActions
+          !resolveStudioExportReadyState(resolveReadyState).canUseDeckActions
         );
       }
     };
