@@ -28,6 +28,7 @@ test('applyStudioSlideReorderMutationWithTransaction delegates reorder and marku
         createStudioMarkupTransactionCapture: studioTransaction.createStudioMarkupTransactionCapture
       },
       containerElementId: 'container-1',
+      skipMarkupTransactionCapture: true,
       getElementId: () => 'slide-1'
     }
   );
@@ -39,6 +40,7 @@ test('applyStudioSlideReorderMutationWithTransaction delegates reorder and marku
   assert.equal(typeof delegated.options.applyStudioSlideReorderMutation, 'function');
   assert.equal(typeof delegated.options.createStudioMarkupTransactionCapture, 'function');
   assert.equal(delegated.options.containerElementId, 'container-1');
+  assert.equal(delegated.options.skipMarkupTransactionCapture, true);
 });
 
 test('applyStudioSlideReorderMutationWithTransaction fails closed without a shared slide-command adapter', () => {

@@ -948,10 +948,11 @@ test('reorderStudioSlideNodes preserves insertion target, canonical order, and a
         preservedSelectionIds: ['element-1']
       };
     },
-    applyReorder(sourceContainer, draggedNode, beforeNode) {
+    applyReorder(sourceContainer, draggedNode, beforeNode, options) {
       assert.equal(sourceContainer, container);
       assert.equal(draggedNode, firstSlide);
       assert.equal(beforeNode, null);
+      assert.equal(options.skipMarkupTransactionCapture, false);
       slides = [secondSlide, thirdSlide, firstSlide];
       calls.push('applyReorder');
       return { didApply: true, transaction: { type: 'markup' } };
@@ -994,6 +995,7 @@ test('reorderStudioSlideNodes prefers a structured slide-order transaction when 
   const secondSlide = { id: 'slide-2', nextSibling: null };
   let slides = [firstSlide, secondSlide];
   let finalizedTransaction = null;
+  let reorderOptions = null;
 
   const result = slideCommands.reorderStudioSlideNodes(0, 1, {
     getIframeDoc: () => doc,
@@ -1003,7 +1005,8 @@ test('reorderStudioSlideNodes prefers a structured slide-order transaction when 
     createStudioSlideOrderTransaction: studioTransaction.createStudioSlideOrderTransaction,
     buildCanonicalReorderSlideDeck: () => ({ slides: [{ id: 'slide-2' }, { id: 'slide-1' }] }),
     captureSlideMutationState: () => ({}),
-    applyReorder: () => {
+    applyReorder: (_container, _draggedNode, _beforeNode, options) => {
+      reorderOptions = options;
       slides = [secondSlide, firstSlide];
       return { didApply: true, transaction: { type: 'legacy-markup' } };
     },
@@ -1013,6 +1016,7 @@ test('reorderStudioSlideNodes prefers a structured slide-order transaction when 
   });
 
   assert.equal(result, true);
+  assert.equal(reorderOptions.skipMarkupTransactionCapture, true);
   assert.deepEqual(finalizedTransaction.operations, [{
     type: 'slide-order',
     before: ['slide-1', 'slide-2'],
@@ -1230,6 +1234,7 @@ test('applyStudioSlideReorderWithTransaction delegates the shared slide mutation
     },
     createStudioMarkupTransactionCapture() {},
     containerElementId: 'deck-slides',
+    skipMarkupTransactionCapture: true,
     getElementId() {}
   });
 
@@ -1238,6 +1243,7 @@ test('applyStudioSlideReorderWithTransaction delegates the shared slide mutation
     transaction: { type: 'markup' }
   });
   assert.equal(delegatedOptions.containerElementId, 'deck-slides');
+  assert.equal(delegatedOptions.skipMarkupTransactionCapture, true);
   assert.equal(typeof delegatedOptions.createMarkupTransactionCapture, 'function');
 });
 

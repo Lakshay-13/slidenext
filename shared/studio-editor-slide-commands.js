@@ -504,6 +504,17 @@
     const beforeSlideIds = createStudioSlideOrderTransaction
       ? slides.map(getSlideId)
       : null;
+    const afterSlideIds = beforeSlideIds
+      ? (() => {
+          const reorderedSlideIds = beforeSlideIds.slice();
+          const [movedSlideId] = reorderedSlideIds.splice(fromIndex, 1);
+          reorderedSlideIds.splice(toIndex, 0, movedSlideId);
+          return reorderedSlideIds;
+        })()
+      : null;
+    const slideOrderTransaction = createStudioSlideOrderTransaction
+      ? createStudioSlideOrderTransaction(beforeSlideIds, afterSlideIds)
+      : null;
 
     const buildCanonicalReorderSlideDeck = typeof options.buildCanonicalReorderSlideDeck === 'function'
       ? options.buildCanonicalReorderSlideDeck
@@ -538,19 +549,10 @@
       ? options.applyReorder
       : () => ({ didApply: false, transaction: null });
     const beforeNode = fromIndex < toIndex ? targetNode.nextSibling : targetNode;
-    const mutation = applyReorder(container, draggedNode, beforeNode);
+    const mutation = applyReorder(container, draggedNode, beforeNode, {
+      skipMarkupTransactionCapture: !!slideOrderTransaction
+    });
     if (!mutation || !mutation.didApply) return false;
-    const afterSlideIds = beforeSlideIds
-      ? (() => {
-          const reorderedSlideIds = beforeSlideIds.slice();
-          const [movedSlideId] = reorderedSlideIds.splice(fromIndex, 1);
-          reorderedSlideIds.splice(toIndex, 0, movedSlideId);
-          return reorderedSlideIds;
-        })()
-      : null;
-    const slideOrderTransaction = createStudioSlideOrderTransaction
-      ? createStudioSlideOrderTransaction(beforeSlideIds, afterSlideIds)
-      : null;
     const appliedMutation = slideOrderTransaction
       ? { ...mutation, transaction: slideOrderTransaction }
       : mutation;
@@ -739,6 +741,7 @@
       const mutation = applyStudioSlideReorderMutation(container, slideNode, beforeNode, {
         createMarkupTransactionCapture: createStudioMarkupTransactionCapture,
         containerElementId,
+        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
         getElementId: options.getElementId
       });
       return {
@@ -754,7 +757,8 @@
       };
     }
 
-    const markupCapture = createStudioMarkupTransactionCapture
+    const markupCapture = options.skipMarkupTransactionCapture !== true
+      && createStudioMarkupTransactionCapture
       ? createStudioMarkupTransactionCapture([{
           element: container,
           elementId: containerElementId
