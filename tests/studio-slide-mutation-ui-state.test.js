@@ -17,6 +17,7 @@ const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const slideMutationRollback = require('../shared/studio-editor-slide-mutation-rollback.js');
 const slideMutationRollbackAdapter = require('../shared/studio-editor-slide-mutation-rollback-adapter.js');
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
+const preservedSelectionRestoreAdapter = require('../shared/studio-editor-preserved-selection-restore-adapter.js');
 const deckView = require('../shared/studio-deck-view.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
@@ -38,9 +39,9 @@ test('editor composes committed selection restore through the shared selection A
 test('editor composes preserved selection restore through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorPreservedSelectionRestorer =/);
-  assert.match(source, /restoreStudioSelectionAfterSlideMutation/);
-  assert.match(source, /if \(typeof studioEditorPreservedSelectionRestorer !== 'function'\)/);
+  assert.match(source, /const studioEditorPreservedSelectionRestoreAdapter =/);
+  assert.match(source, /restoreStudioEditorPreservedSelectionAfterSlideMutation/);
+  assert.match(source, /if \(!restoreSelection\) return false/);
   assert.doesNotMatch(source, /restoreSelectionAfterPreservedSlideMutation\.restorer/);
 });
 
@@ -237,9 +238,10 @@ function installSlideRoutingController(context) {
 function loadRestoreSelectionAfterPreservedSlideMutation(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPreservedSelectionRestorer =',
+    'const studioEditorPreservedSelectionRestoreAdapter =',
     '\n\n    function ensureSelectionOverlay(doc, slide) {'
   );
+  context.SlideNextStudioEditorPreservedSelectionRestoreAdapter = preservedSelectionRestoreAdapter;
   vm.runInContext(helperSource, context);
 }
 
@@ -247,7 +249,7 @@ function loadRestoreCommittedSelectionByIdsOnActiveSlide(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'const studioEditorCommittedSelectionRestoreAdapter =',
-    '\n\n    const studioEditorPreservedSelectionRestorer ='
+    '\n\n    const studioEditorPreservedSelectionRestoreAdapter ='
   );
   context.SlideNextStudioEditorCommittedSelectionRestoreAdapter = committedSelectionRestoreAdapter;
   vm.runInContext(helperSource, context);
@@ -677,7 +679,7 @@ test('restoreSelectionAfterPreservedSlideMutation fails closed when the shared s
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const restoreSelectionSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPreservedSelectionRestorer =',
+    'const studioEditorPreservedSelectionRestoreAdapter =',
     '\n\n    function ensureSelectionOverlay(doc, slide) {'
   );
   const context = {
@@ -686,6 +688,7 @@ test('restoreSelectionAfterPreservedSlideMutation fails closed when the shared s
   };
 
   vm.createContext(context);
+  context.SlideNextStudioEditorPreservedSelectionRestoreAdapter = preservedSelectionRestoreAdapter;
   vm.runInContext(restoreSelectionSource, context);
 
   assert.equal(context.restoreSelectionAfterPreservedSlideMutation(['node-1'], { id: 'doc' }), false);
