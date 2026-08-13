@@ -12329,87 +12329,25 @@
       const versionRenameController = typeof SlideNextStudioEditorVersionRenameController !== 'undefined'
         ? SlideNextStudioEditorVersionRenameController
         : null;
-      if (versionRenameController
-        && typeof versionRenameController.renameStudioVersion === 'function') {
-        return versionRenameController.renameStudioVersion({
-          versionFilename,
-          newLabel,
-          renameContext,
-          isCurrentSession: isCurrentRenameSession,
-          versionActionsApi: SlideNextStudioVersionActions,
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
-          applyFailure: applyCurrentStudioVersionActionFailure,
-          closeRenameVersionModal,
-          refreshVersionEntries: loadVersions,
-          setBusy: () => setCurrentStudioRenameVersionButtonBusyState(btn),
-          setIdle: () => resetCurrentStudioRenameVersionButtonState(btn),
-          alertAction: alert
-        });
+      if (!versionRenameController
+        || typeof versionRenameController.renameStudioVersion !== 'function') {
+        return false;
       }
-      setCurrentStudioRenameVersionButtonBusyState(btn);
-      const createStudioRenameVersionRequestExecutor = (
-        typeof SlideNextStudioVersionActions !== 'undefined'
-        && SlideNextStudioVersionActions
-        && typeof SlideNextStudioVersionActions.createStudioRenameVersionRequestExecutor === 'function'
-      )
-        ? SlideNextStudioVersionActions.createStudioRenameVersionRequestExecutor
-        : null;
-      const executeRenameVersionRequest = createStudioRenameVersionRequestExecutor
-        ? createStudioRenameVersionRequestExecutor({
-          createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
-          executeRenameVersionRequest: (
-            typeof SlideNextStudioVersionActions !== 'undefined'
-            && SlideNextStudioVersionActions
-            && typeof SlideNextStudioVersionActions.executeStudioRenameVersionRequest === 'function'
-          )
-            ? SlideNextStudioVersionActions.executeStudioRenameVersionRequest
-            : null
-        })
-        : (versionFilename, nextLabel, nextContext) => SlideNextStudioVersionActions.executeStudioRenameVersionRequest(
-          versionFilename,
-          nextLabel,
-          nextContext,
-          createCurrentStudioVersionRequestOptions()
-        );
-      
-      try {
-        const data = await executeRenameVersionRequest(
-          versionFilename,
-          newLabel,
-          renameContext
-        );
-        if (data.success) {
-          applyCurrentStudioVersionListMutationSuccess(renameContext, {
-            isCurrentSession: isCurrentRenameSession,
-            onSuccess: () => {
-              closeRenameVersionModal();
-            },
-            refreshVersionEntries: loadVersions
-          });
-        } else {
-          applyCurrentStudioVersionActionFailure(renameContext, {
-            isCurrentSession: isCurrentRenameSession,
-            onFailure: () => {
-              alert(`Rename failed: ${data.error}`);
-            }
-          });
-        }
-      } catch (err) {
-        applyCurrentStudioVersionActionFailure(renameContext, {
-          isCurrentSession: isCurrentRenameSession,
-          onFailure: () => {
-            alert(`Error renaming version: ${err.message}`);
-          }
-        });
-      } finally {
-        applyCurrentStudioVersionListMutationSuccess(renameContext, {
-          isCurrentSession: isCurrentRenameSession,
-          onSuccess: () => {
-            resetCurrentStudioRenameVersionButtonState(btn);
-          }
-        });
-      }
+      return versionRenameController.renameStudioVersion({
+        versionFilename,
+        newLabel,
+        renameContext,
+        isCurrentSession: isCurrentRenameSession,
+        versionActionsApi: SlideNextStudioVersionActions,
+        createVersionRequestOptions: createCurrentStudioVersionRequestOptions,
+        applyListMutationSuccess: applyCurrentStudioVersionListMutationSuccess,
+        applyFailure: applyCurrentStudioVersionActionFailure,
+        closeRenameVersionModal,
+        refreshVersionEntries: loadVersions,
+        setBusy: () => setCurrentStudioRenameVersionButtonBusyState(btn),
+        setIdle: () => resetCurrentStudioRenameVersionButtonState(btn),
+        alertAction: typeof alert === 'function' ? alert : () => {}
+      });
     }
 
     async function deleteVersion(filename) {
