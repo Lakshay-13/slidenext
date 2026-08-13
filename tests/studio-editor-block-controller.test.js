@@ -139,6 +139,30 @@ test('block mutations fall back when the live canonical baseline is invalid', ()
   assert.equal(didBuildFromDocument, true);
 });
 
+test('block controller scopes the legacy baseline fallback to the current document', () => {
+  const documentRef = { id: 'block-frame' };
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Scoped' }] }]
+  });
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getDocument: () => documentRef,
+    getCanonicalDeckBaseline: (currentDocument) => {
+      assert.equal(currentDocument, documentRef);
+      return sourceDeck;
+    },
+    getCanonicalDeck: () => {
+      throw new Error('legacy baseline should satisfy the mutation');
+    },
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1']
+  });
+
+  const result = controller.saveSelection({ id: 'scoped-block' });
+
+  assert.equal(result.blocks[0].id, 'scoped-block');
+});
+
 test('block mutations require strict canonical baseline validation', () => {
   const fallbackDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Fallback' }] }]
