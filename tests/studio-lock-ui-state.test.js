@@ -10,6 +10,7 @@ const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioElementState = require('../shared/studio-element-state.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
+const lockToolbarState = require('../shared/studio-editor-lock-toolbar-state.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
 const lockTransaction = require('../shared/studio-editor-lock-transaction.js');
 const lockVisibilityRollback = require('../shared/studio-editor-lock-visibility-rollback.js');
@@ -106,6 +107,12 @@ function installLockVisibilityController(context) {
     finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation,
     rollbackSelectionToggleMutation: context.rollbackEditorLockVisibilityMutation
   });
+}
+
+function runLockActionStateSource(source, context) {
+  context.SlideNextStudioEditorLockToolbarState = lockToolbarState;
+  vm.createContext(context);
+  vm.runInContext(source, context);
 }
 
 test('syncSelectionUiAfterMutation refreshes selection classes before syncing selection chrome', () => {
@@ -290,8 +297,7 @@ test('updateLockActionState enables the lock control only when the iframe has a 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateLockActionStateSource, context);
+  runLockActionStateSource(updateLockActionStateSource, context);
 
   context.updateLockActionState(null);
   assert.equal(toggleLockSelectionBtn.disabled, true);
@@ -369,8 +375,7 @@ test('updateLockActionState reuses the shared lock toolbar helper when available
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateLockActionStateSource, context);
+  runLockActionStateSource(updateLockActionStateSource, context);
 
   context.updateLockActionState({
     activeSlide: {}
@@ -435,8 +440,7 @@ test('updateLockActionState prefers canonical lock metadata when available', () 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateLockActionStateSource, context);
+  runLockActionStateSource(updateLockActionStateSource, context);
 
   context.updateLockActionState({ activeSlide: {} });
   assert.equal(toggleLockSelectionBtn.disabled, false);
@@ -470,13 +474,12 @@ test('updateLockActionState delegates toolbar state assembly to the shared lock 
     }
   };
 
-  vm.createContext(context);
-  vm.runInContext(updateLockActionStateSource, context);
+  runLockActionStateSource(updateLockActionStateSource, context);
 
   const doc = { activeSlide: {} };
   assert.equal(context.updateLockActionState(doc), 'delegated');
   assert.equal(calls.length, 1);
-  assert.match(updateLockActionStateSource, /elements: getStudioSelectedElements\(doc\)/);
+  assert.match(updateLockActionStateSource, /getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\)/);
   assert.equal(calls[0].documentRef, context.document);
   assert.deepEqual(calls[0].elements, [selectedElement]);
   assert.equal(calls[0].isLocked, context.isElementLocked);

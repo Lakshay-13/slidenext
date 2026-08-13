@@ -1412,6 +1412,7 @@
   <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
+  <script src="/shared/studio-editor-lock-toolbar-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-lock-transaction.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -9504,37 +9505,32 @@
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
-      const lockState = typeof SlideNextStudioEditorLockState !== 'undefined'
-        ? SlideNextStudioEditorLockState
+      const lockToolbarState = typeof SlideNextStudioEditorLockToolbarState !== 'undefined'
+        ? SlideNextStudioEditorLockToolbarState
         : null;
-      if (!lockState || typeof lockState.syncStudioLockToolbarState !== 'function') {
+      if (!lockToolbarState
+        || typeof lockToolbarState.createStudioEditorLockToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof lockState.createStudioLockToolbarStateSync === 'function') {
-        if (typeof updateLockActionState.sync !== 'function') {
-          updateLockActionState.sync = lockState.createStudioLockToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-              : isElementLocked,
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateLockActionState.sync === 'function') {
-          return updateLockActionState.sync(doc);
-        }
+      if (!updateLockActionState.controller) {
+        const lockView = typeof SlideNextStudioEditorLockState !== 'undefined'
+          ? SlideNextStudioEditorLockState
+          : null;
+        updateLockActionState.controller = lockToolbarState.createStudioEditorLockToolbarStateController({
+          lockView,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
+          documentRef: document
+        });
       }
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
-        : isElementLocked;
-      return lockState.syncStudioLockToolbarState({
-        documentRef: document,
-        elements: getStudioSelectedElements(doc),
-        isLocked: readLockedState,
-        canMutateDeck: () => !!getActiveSlide(doc)
-      });
+      return updateLockActionState.controller
+        && typeof updateLockActionState.controller.sync === 'function'
+        ? updateLockActionState.controller.sync(doc)
+        : false;
     }
 
     function buildRemovalSelectionActionState(doc = null) {
