@@ -1460,8 +1460,9 @@
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-motion-state.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
-  <script src="/shared/studio-editor-alignment.js"></script>
-  <script src="/shared/studio-editor-alignment-controller.js"></script>
+    <script src="/shared/studio-editor-alignment.js"></script>
+    <script src="/shared/studio-editor-alignment-controller.js"></script>
+    <script src="/shared/studio-editor-alignment-state.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
@@ -3482,6 +3483,21 @@
           buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
           getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
           getRectOnSlide,
+          documentRef: document
+        })
+      : null;
+    const studioEditorAlignmentStateController = typeof SlideNextStudioEditorAlignmentState !== 'undefined'
+      && SlideNextStudioEditorAlignmentState
+      && typeof SlideNextStudioEditorAlignmentState.createStudioEditorAlignmentStateController === 'function'
+      ? SlideNextStudioEditorAlignmentState.createStudioEditorAlignmentStateController({
+          alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
+            ? SlideNextStudioEditorAlignment
+            : null,
+          getDocument: () => getIframeDoc(),
+          buildMotionActionState: (sourceDoc) => buildMotionSelectionActionState(sourceDoc),
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
           documentRef: document
         })
       : null;
@@ -9659,50 +9675,16 @@
     }
 
     function buildAlignmentActionState(doc = null) {
-      const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
-        ? SlideNextStudioEditorAlignment
-        : null;
-      if (alignmentApi && typeof alignmentApi.createStudioAlignmentActionStateBuilder === 'function') {
-        if (typeof buildAlignmentActionState.builder !== 'function') {
-          buildAlignmentActionState.builder = alignmentApi.createStudioAlignmentActionStateBuilder({
-            getDocument: () => getIframeDoc(),
-            buildMotionActionState: (...args) => buildMotionSelectionActionState(...args),
-            getLockedState(sourceDoc) {
-              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function';
-              return canReadCanonicalState
-                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-                : isElementLocked;
-            }
-          });
-        }
-        if (typeof buildAlignmentActionState.builder === 'function') {
-          return buildAlignmentActionState.builder(doc);
-        }
+      if (studioEditorAlignmentStateController
+        && typeof studioEditorAlignmentStateController.buildActionState === 'function') {
+        return studioEditorAlignmentStateController.buildActionState(doc);
       }
-
-      const motionActionState = buildMotionSelectionActionState(doc);
-      if (!alignmentApi || typeof alignmentApi.buildStudioAlignmentActionState !== 'function') {
-        return {
-          ...motionActionState,
-          alignmentActionState: {
-            selection: [],
-            canAlign: false
-          }
-        };
-      }
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc || getIframeDoc(), isElementLocked)
-        : isElementLocked;
-      const alignmentActionState = alignmentApi.buildStudioAlignmentActionState(
-        motionActionState.nudgeLayoutItems,
-        {
-          isLocked: readLockedState,
-          canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
-        }
-      );
       return {
-        ...motionActionState,
-        alignmentActionState
+        ...buildMotionSelectionActionState(doc),
+        alignmentActionState: {
+          selection: [],
+          canAlign: false
+        }
       };
     }
 
@@ -9942,38 +9924,10 @@
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
-      const alignmentApi = typeof SlideNextStudioEditorAlignment !== 'undefined'
-        ? SlideNextStudioEditorAlignment
-        : null;
-      if (!alignmentApi || typeof alignmentApi.syncStudioAlignmentToolbarState !== 'function') {
-        return false;
-      }
-      if (typeof alignmentApi.createStudioAlignmentToolbarStateSync === 'function') {
-        if (typeof updateAlignmentActionState.sync !== 'function') {
-          updateAlignmentActionState.sync = alignmentApi.createStudioAlignmentToolbarStateSync({
-            getDocument: () => getIframeDoc(),
-            getActionState: (sourceDoc) => buildAlignmentActionState(sourceDoc),
-            getDocumentRef: () => document
-          });
-        }
-        if (typeof updateAlignmentActionState.sync === 'function') {
-          return updateAlignmentActionState.sync(doc);
-        }
-      }
-      const motionActionState = buildMotionSelectionActionState(doc);
-      if (!Array.isArray(motionActionState.nudgeLayoutItems)) {
-        return false;
-      }
-      const readLockedState = typeof getEditorCanonicalVisibilityReader === 'function'
-        ? getEditorCanonicalVisibilityReader('locked', doc, isElementLocked)
-        : isElementLocked;
-      const toolbarOptions = {
-        documentRef: document,
-        items: motionActionState.nudgeLayoutItems,
-        isLocked: readLockedState,
-        canMutateDeck: () => !!motionActionState.slide && motionActionState.canNudge
-      };
-      return alignmentApi.syncStudioAlignmentToolbarState(toolbarOptions);
+      return studioEditorAlignmentStateController
+        && typeof studioEditorAlignmentStateController.sync === 'function'
+        ? studioEditorAlignmentStateController.sync(doc)
+        : false;
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {

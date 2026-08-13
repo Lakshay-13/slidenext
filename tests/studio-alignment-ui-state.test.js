@@ -10,6 +10,7 @@ const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
 const alignmentController = require('../shared/studio-editor-alignment-controller.js');
+const alignmentState = require('../shared/studio-editor-alignment-state.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
 
@@ -52,6 +53,34 @@ function installAlignmentController(context) {
   });
 }
 
+function installAlignmentStateController(context) {
+  if (context.studioEditorAlignmentStateController) return;
+  context.SlideNextStudioEditorAlignmentState = alignmentState;
+  const injectedActionState = typeof context.buildAlignmentActionState === 'function'
+    ? context.buildAlignmentActionState
+    : null;
+  context.studioEditorAlignmentStateController = alignmentState.createStudioEditorAlignmentStateController({
+    alignmentApi: context.SlideNextStudioEditorAlignment,
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : context.doc || null,
+    buildMotionActionState: (doc) => typeof context.buildMotionSelectionActionState === 'function'
+      ? context.buildMotionSelectionActionState(doc)
+      : {},
+    getLockedState: (doc) => typeof context.getEditorCanonicalVisibilityReader === 'function'
+      ? context.getEditorCanonicalVisibilityReader(
+          'locked',
+          doc,
+          typeof context.isElementLocked === 'function' ? context.isElementLocked : () => false
+        )
+      : typeof context.isElementLocked === 'function'
+        ? context.isElementLocked
+        : () => false,
+    documentRef: context.document,
+    getActionState: injectedActionState
+  });
+}
+
 test('buildAlignmentActionState reuses valid nudge layout geometry for alignment readiness', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -82,6 +111,7 @@ test('buildAlignmentActionState reuses valid nudge layout geometry for alignment
   };
   context.doc = { id: 'doc' };
   vm.createContext(context);
+  installAlignmentStateController(context);
   vm.runInContext(source, context);
 
   const result = context.buildAlignmentActionState(context.doc);
@@ -107,6 +137,7 @@ test('buildAlignmentActionState fails closed when the shared alignment runtime i
   };
 
   vm.createContext(context);
+  installAlignmentStateController(context);
   vm.runInContext(source, context);
 
   const result = context.buildAlignmentActionState();
@@ -155,6 +186,7 @@ test('updateAlignmentActionState enables all positional controls only when align
     }
   };
   vm.createContext(context);
+  installAlignmentStateController(context);
   vm.runInContext(source, context);
   context.updateAlignmentActionState({ id: 'doc' });
 
@@ -192,6 +224,7 @@ test('updateAlignmentActionState delegates toolbar state assembly to the shared 
   };
 
   vm.createContext(context);
+  installAlignmentStateController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateAlignmentActionState(doc), 'delegated');
@@ -240,6 +273,7 @@ test('updateAlignmentActionState caches the shared alignment toolbar synchronize
   };
 
   vm.createContext(context);
+  installAlignmentStateController(context);
   vm.runInContext(source, context);
 
   assert.equal(context.updateAlignmentActionState(doc), true);
@@ -311,7 +345,9 @@ test('alignment action state prefers canonical lock metadata when available', ()
   };
 
   vm.createContext(context);
-  vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
+  vm.runInContext(visibilityReaderSource, context);
+  installAlignmentStateController(context);
+  vm.runInContext(source, context);
 
   context.buildAlignmentActionState(doc);
   assert.deepEqual(calls, [{ items: layoutItems, locked: true }]);

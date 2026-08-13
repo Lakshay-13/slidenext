@@ -2008,7 +2008,7 @@ test('editor runtime wiring uses the composed positioned-ancestor resolver', () 
   );
 });
 
-test('motion and group action-state builders reuse the composed positioned-ancestor resolver', () => {
+test('motion, alignment, and group action-state builders reuse composed editor state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const motionSource = extractFunctionSource(
     fileContent,
@@ -2020,9 +2020,16 @@ test('motion and group action-state builders reuse the composed positioned-ances
     'function buildGroupSelectionActionState(doc = null) {',
     '\n\n    function updateGroupActionState'
   );
+  const alignmentSource = extractFunctionSource(
+    fileContent,
+    'function buildAlignmentActionState(doc = null) {',
+    '\n\n    function updateAlignmentActionState'
+  );
 
   assert.match(motionSource, /studioEditorMotionStateController\.buildActionState/);
   assert.doesNotMatch(motionSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
+  assert.match(alignmentSource, /studioEditorAlignmentStateController\.buildActionState/);
+  assert.doesNotMatch(alignmentSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
   assert.match(groupSource, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
   assert.doesNotMatch(groupSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
 });
