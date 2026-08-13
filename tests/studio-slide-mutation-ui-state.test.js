@@ -15,6 +15,7 @@ const slideReorderMutation = require('../shared/studio-editor-slide-reorder-muta
 const slideReorderTransaction = require('../shared/studio-editor-slide-reorder-transaction.js');
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const slideMutationRollback = require('../shared/studio-editor-slide-mutation-rollback.js');
+const slideMutationRollbackAdapter = require('../shared/studio-editor-slide-mutation-rollback-adapter.js');
 const deckView = require('../shared/studio-deck-view.js');
 const reorderController = require('../shared/studio-editor-slide-reorder-controller.js');
 const insertionController = require('../shared/studio-editor-slide-insertion-controller.js');
@@ -126,6 +127,7 @@ function loadRollbackEditorSlideMutation(fileContent, context) {
   );
   context.SlideNextStudioEditorTransaction = studioTransaction;
   context.SlideNextStudioEditorSlideMutationRollback = slideMutationRollback;
+  context.SlideNextStudioEditorSlideMutationRollbackAdapter = slideMutationRollbackAdapter;
   vm.runInContext(helperSource, context);
 }
 

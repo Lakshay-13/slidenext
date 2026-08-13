@@ -1499,6 +1499,7 @@
   <script src="/shared/studio-editor-lock-visibility-rollback.js"></script>
   <script src="/shared/studio-editor-position-layout-rollback.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback.js"></script>
+  <script src="/shared/studio-editor-slide-mutation-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
   <script src="/shared/studio-editor-position-layout-mutation.js"></script>
@@ -6825,14 +6826,20 @@
     }
 
     function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {
-      const rollbackApi = typeof SlideNextStudioEditorSlideMutationRollback !== 'undefined'
-        ? SlideNextStudioEditorSlideMutationRollback
+      const rollbackAdapter = typeof SlideNextStudioEditorSlideMutationRollbackAdapter !== 'undefined'
+        ? SlideNextStudioEditorSlideMutationRollbackAdapter
         : null;
-      if (!rollbackApi
-        || typeof rollbackApi.rollbackStudioEditorSlideMutation !== 'function') {
+      const rollbackMutation = rollbackAdapter
+        && typeof rollbackAdapter.rollbackStudioEditorSlideMutation === 'function'
+        ? rollbackAdapter.rollbackStudioEditorSlideMutation
+        : null;
+      if (!rollbackMutation) {
         return false;
       }
-      return rollbackApi.rollbackStudioEditorSlideMutation(transaction, sourceDoc, {
+      return rollbackMutation(transaction, sourceDoc, {
+        rollbackApi: typeof SlideNextStudioEditorSlideMutationRollback !== 'undefined'
+          ? SlideNextStudioEditorSlideMutationRollback
+          : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
