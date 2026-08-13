@@ -91,6 +91,37 @@ test('PDF export forwards server failure details to the status callback', async 
   ]);
 });
 
+test('PDF export preserves preflight warnings when the server response omits warning details', async () => {
+  const statuses = [];
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      preflightStudioPdfExport() {
+        return {
+          canExport: true,
+          warnings: ['PDF node image-1 references missing asset "hero"']
+        };
+      },
+      async exportStudioPdf() {
+        return { success: true, warningCount: 0, warnings: [] };
+      }
+    },
+    setStatus: (...args) => statuses.push(args)
+  });
+
+  assert.equal(await exportPdf(), true);
+  assert.deepEqual(statuses, [
+    ['exporting-pdf'],
+    [
+      'pdf-exported-with-warnings',
+      1,
+      ['PDF node image-1 references missing asset "hero"'],
+      false
+    ]
+  ]);
+});
+
 test('PDF export forwards resource progress through the existing status callback', () => {
   const statuses = [];
   let printOptions = null;

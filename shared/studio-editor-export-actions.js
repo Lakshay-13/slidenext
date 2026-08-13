@@ -35,6 +35,26 @@
     }
   }
 
+  function resolveStudioExportWarningStatus(result, fallbackWarnings = []) {
+    const serverWarnings = Array.isArray(result && result.warnings)
+      ? result.warnings.filter((warning) => typeof warning === 'string' && warning.trim())
+      : [];
+    const localWarnings = Array.isArray(fallbackWarnings)
+      ? fallbackWarnings.filter((warning) => typeof warning === 'string' && warning.trim())
+      : [];
+    const serverWarningCount = Number(result && result.warningCount);
+    const warningCount = Number.isInteger(serverWarningCount) && serverWarningCount > 0
+      ? serverWarningCount
+      : serverWarnings.length;
+    const warnings = serverWarnings.length > 0 ? serverWarnings : localWarnings;
+
+    return {
+      warningCount: Math.max(warningCount, warnings.length),
+      warnings,
+      warningsTruncated: Boolean(result && result.warningsTruncated)
+    };
+  }
+
   function resolveStudioExportReadyState(resolveReadyState) {
     if (typeof resolveReadyState !== 'function') {
       return { canUseDeckActions: false };
@@ -234,11 +254,12 @@
               }
             });
             if (!result || !result.success) return failPdfExport(result && result.error);
+            const warningStatus = resolveStudioExportWarningStatus(result, pdfWarnings);
             setStatus(
-              result.warningCount > 0 ? 'pdf-exported-with-warnings' : 'pdf-exported',
-              result.warningCount,
-              result.warnings,
-              result.warningsTruncated
+              warningStatus.warningCount > 0 ? 'pdf-exported-with-warnings' : 'pdf-exported',
+              warningStatus.warningCount,
+              warningStatus.warnings,
+              warningStatus.warningsTruncated
             );
             return true;
           } catch (error) {
