@@ -256,6 +256,22 @@
     const normalizedValue = normalizeStudioStyleMutationValue(prop, value);
     let didApply = false;
 
+    const applyStyleValue = (element, property, nextValue) => {
+      if (!element || !element.style || element.style[property] === nextValue) {
+        return false;
+      }
+      element.style[property] = nextValue;
+      return true;
+    };
+
+    const applyPropertyValue = (element, property, nextValue) => {
+      if (!element || element[property] === nextValue) {
+        return false;
+      }
+      element[property] = nextValue;
+      return true;
+    };
+
     selection.forEach((element, index) => {
       if (!element) {
         return;
@@ -263,16 +279,20 @@
 
       if (prop === 'text') {
         if (index === 0) {
-          element.textContent = value;
-          didApply = true;
+          didApply = applyPropertyValue(element, 'textContent', value) || didApply;
         }
         return;
       }
 
       if (prop === 'src') {
         if (index === 0 && typeof element.tagName === 'string' && element.tagName.toLowerCase() === 'img') {
-          element.src = value;
-          didApply = true;
+          const currentSource = typeof element.getAttribute === 'function'
+            ? element.getAttribute('src') || ''
+            : element.src;
+          if (currentSource !== value) {
+            element.src = value;
+            didApply = true;
+          }
         }
         return;
       }
@@ -282,53 +302,37 @@
       }
 
       if (prop === 'size') {
-        element.style.fontSize = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'fontSize', normalizedValue.styleValue) || didApply;
       } else if (prop === 'family') {
-        element.style.fontFamily = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'fontFamily', normalizedValue.styleValue) || didApply;
       } else if (prop === 'weight') {
-        element.style.fontWeight = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'fontWeight', normalizedValue.styleValue) || didApply;
       } else if (prop === 'italic') {
-        element.style.fontStyle = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'fontStyle', normalizedValue.styleValue) || didApply;
       } else if (prop === 'underline') {
-        element.style.textDecoration = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'textDecoration', normalizedValue.styleValue) || didApply;
       } else if (prop === 'lineHeight') {
-        element.style.lineHeight = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'lineHeight', normalizedValue.styleValue) || didApply;
       } else if (prop === 'color') {
-        element.style.color = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'color', normalizedValue.styleValue) || didApply;
       } else if (prop === 'align') {
-        element.style.textAlign = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'textAlign', normalizedValue.styleValue) || didApply;
       } else if (prop === 'opacity') {
-        element.style.opacity = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'opacity', normalizedValue.styleValue) || didApply;
       } else if (prop === 'zIndex') {
-        element.style.zIndex = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'zIndex', normalizedValue.styleValue) || didApply;
       } else if (prop === 'borderStyle') {
-        element.style.borderStyle = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'borderStyle', normalizedValue.styleValue) || didApply;
       } else if (prop === 'borderWidth') {
-        element.style.borderWidth = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'borderWidth', normalizedValue.styleValue) || didApply;
       } else if (prop === 'borderRadius') {
-        element.style.borderRadius = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'borderRadius', normalizedValue.styleValue) || didApply;
       } else if (prop === 'borderColor') {
-        element.style.borderColor = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'borderColor', normalizedValue.styleValue) || didApply;
       } else if (prop === 'objectFit') {
-        element.style.objectFit = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'objectFit', normalizedValue.styleValue) || didApply;
       } else if (prop === 'objectPosition') {
-        element.style.objectPosition = normalizedValue.styleValue;
-        didApply = true;
+        didApply = applyStyleValue(element, 'objectPosition', normalizedValue.styleValue) || didApply;
       }
     });
 

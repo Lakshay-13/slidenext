@@ -334,6 +334,46 @@ test('applyStudioStyleMutation normalizes invalid numeric inspector values', () 
   assert.equal(element.style.borderRadius, '0px');
 });
 
+test('applyStudioStyleMutation skips inspector writes when the requested value is unchanged', () => {
+  const element = createElement();
+  element.style.color = '#fff';
+  element.textContent = 'Headline';
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([element], 'color', '#fff'), {
+    didApply: false,
+    displayValue: '#fff'
+  });
+  assert.deepEqual(styleState.applyStudioStyleMutation([element], 'text', 'Headline'), {
+    didApply: false,
+    displayValue: 'Headline'
+  });
+  const transactionResult = styleState.applyStudioStyleMutationWithTransaction(
+    [element],
+    'color',
+    '#fff',
+    {
+      createStyleTransaction: transactionState.createStudioStyleTransaction,
+      getElementId: () => 'unchanged-style'
+    }
+  );
+  assert.equal(transactionResult.didApply, false);
+  assert.equal(transactionResult.transaction, null);
+  assert.equal(element.style.color, '#fff');
+  assert.equal(element.textContent, 'Headline');
+});
+
+test('applyStudioStyleMutation compares image sources against their raw attribute', () => {
+  const image = createElement('img');
+  image.src = '/asset.png';
+  image.getAttribute = (name) => name === 'src' ? '/asset.png' : null;
+
+  assert.deepEqual(styleState.applyStudioStyleMutation([image], 'src', '/asset.png'), {
+    didApply: false,
+    displayValue: '/asset.png'
+  });
+  assert.equal(image.src, '/asset.png');
+});
+
 test('applyStudioStyleMutation only edits the primary target for text and image source updates', () => {
   const first = createElement('div');
   const second = createElement('div');
