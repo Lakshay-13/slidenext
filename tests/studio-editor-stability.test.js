@@ -2476,6 +2476,8 @@ test('editor composes slide collection reads through the shared DOM module', () 
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorSlidesReader =/);
+  assert.match(source, /const studioEditorSlideCollectionAdapter =/);
+  assert.match(source, /typeof SlideNextStudioEditorSlideCollectionAdapter !== 'undefined'/);
   assert.match(source, /typeof slidesReader === 'function'/);
   const getSlidesSource = extractFunctionSource(
     source,
@@ -2489,7 +2491,7 @@ test('getSlides delegates the document and DOM options to the shared DOM module'
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slidesReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlidesReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlidesSource = extractFunctionSource(
@@ -2501,6 +2503,7 @@ test('getSlides delegates the document and DOM options to the shared DOM module'
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlides(docValue, optionsValue) {
         calls.push([docValue, optionsValue]);
@@ -2528,7 +2531,7 @@ test('getSlides fails closed when the shared DOM module is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slidesReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlidesReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlidesSource = extractFunctionSource(
@@ -2537,6 +2540,7 @@ test('getSlides fails closed when the shared DOM module is unavailable', () => {
     '\n\n    function getSlideById'
   );
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
       return {};
@@ -2556,6 +2560,7 @@ test('editor composes slide-by-ID lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorSlideByIdReader =/);
+  assert.match(source, /const studioEditorSlideCollectionAdapter =/);
   assert.match(source, /typeof slideByIdReader === 'function'/);
   const getSlideByIdSource = extractFunctionSource(
     source,
@@ -2569,7 +2574,7 @@ test('getSlideById delegates the slide ID, document, and DOM options to the shar
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideByIdReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideByIdSource = extractFunctionSource(
@@ -2582,6 +2587,7 @@ test('getSlideById delegates the slide ID, document, and DOM options to the shar
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideById(slideId, docValue, optionsValue) {
         calls.push([slideId, docValue, optionsValue]);
@@ -2610,7 +2616,7 @@ test('getSlideById fails closed when the shared DOM module is unavailable', () =
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideByIdReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideByIdSource = extractFunctionSource(
@@ -2619,6 +2625,7 @@ test('getSlideById fails closed when the shared DOM module is unavailable', () =
     '\n\n    function getSlideIndexById'
   );
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
       return {};
@@ -2638,6 +2645,7 @@ test('editor composes slide-index lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorSlideIndexByIdReader =/);
+  assert.match(source, /const studioEditorSlideCollectionAdapter =/);
   assert.match(source, /typeof slideIndexByIdReader === 'function'/);
   const getSlideIndexByIdSource = extractFunctionSource(
     source,
@@ -2651,7 +2659,7 @@ test('getSlideIndexById delegates the slide ID, document, and DOM options to the
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideIndexByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideIndexByIdReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideIndexByIdSource = extractFunctionSource(
@@ -2663,6 +2671,7 @@ test('getSlideIndexById delegates the slide ID, document, and DOM options to the
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideIndexById(slideId, docValue, optionsValue) {
         calls.push([slideId, docValue, optionsValue]);
@@ -2691,7 +2700,7 @@ test('getSlideIndexById fails closed when the shared DOM module is unavailable',
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slideIndexByIdReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSlideIndexByIdReader =',
+    'const studioEditorSlideCollectionAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const getSlideIndexByIdSource = extractFunctionSource(
@@ -2700,6 +2709,7 @@ test('getSlideIndexById fails closed when the shared DOM module is unavailable',
     '\n\n    function buildEditorDeckSnapshotFromDom'
   );
   const context = {
+    SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
       return {};

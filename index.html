@@ -1680,6 +1680,7 @@
   <script src="/shared/studio-editor-active-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-chrome-node-pruner-adapter.js"></script>
   <script src="/shared/studio-editor-slide-id-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -4147,22 +4148,56 @@
         )
       : null;
 
-    const studioEditorSlidesReader = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorSlideCollectionAdapter = typeof SlideNextStudioEditorSlideCollectionAdapter !== 'undefined'
+      && SlideNextStudioEditorSlideCollectionAdapter
+      && typeof SlideNextStudioEditorSlideCollectionAdapter.getStudioEditorSlides === 'function'
+      && typeof SlideNextStudioEditorSlideCollectionAdapter.getStudioEditorSlideById === 'function'
+      && typeof SlideNextStudioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById === 'function'
+      ? SlideNextStudioEditorSlideCollectionAdapter
+      : null;
+
+    const studioEditorSlidesReader = studioEditorSlideCollectionAdapter
+      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlides === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioSlides === 'function'
-      ? (doc, options) => SlideNextStudioEditorDom.getStudioSlides(doc, options)
+      ? (doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlides(
+          doc,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
-    const studioEditorSlideByIdReader = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorSlideByIdReader = studioEditorSlideCollectionAdapter
+      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideById === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioSlideById === 'function'
-      ? (slideId, doc, options) => SlideNextStudioEditorDom.getStudioSlideById(slideId, doc, options)
+      ? (slideId, doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlideById(
+          slideId,
+          doc,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
-    const studioEditorSlideIndexByIdReader = typeof SlideNextStudioEditorDom !== 'undefined'
+    const studioEditorSlideIndexByIdReader = studioEditorSlideCollectionAdapter
+      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById === 'function'
+      && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
       && typeof SlideNextStudioEditorDom.getStudioSlideIndexById === 'function'
-      ? (slideId, doc, options) => SlideNextStudioEditorDom.getStudioSlideIndexById(slideId, doc, options)
+      ? (slideId, doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById(
+          slideId,
+          doc,
+          {
+            domApi: SlideNextStudioEditorDom,
+            domOptions: options
+          }
+        )
       : null;
 
     const studioEditorHoverableElementDecorator = typeof SlideNextStudioEditorDom !== 'undefined'
