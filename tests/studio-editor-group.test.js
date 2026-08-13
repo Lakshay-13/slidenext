@@ -586,12 +586,17 @@ test('applyStudioUngroupMutation prefers scoped presence transactions for serial
   };
   child.parentElement = groupNode;
   parent.children = [groupNode];
+  let markupCaptureCalls = 0;
 
   const result = group.applyStudioUngroupMutation({
     groups: [groupNode],
     slideMetrics: { scaleX: 1 },
     getRectOnSlide: (rect) => rect,
     getElementId: (element) => element && element.dataset && element.dataset.editorId,
+    createMarkupTransactionCapture() {
+      markupCaptureCalls += 1;
+      return null;
+    },
     createElementPresenceTransaction: studioTransaction.createStudioElementPresenceTransaction
   });
 
@@ -620,4 +625,5 @@ test('applyStudioUngroupMutation prefers scoped presence transactions for serial
       }
     }
   ]);
+  assert.equal(markupCaptureCalls, 0);
 });

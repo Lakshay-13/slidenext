@@ -552,8 +552,81 @@
       };
     }
 
+    const preflightPresenceIds = new Set();
+    let canPreflightPresenceTransaction = !!createElementPresenceTransaction
+      && groupSnapshots.every((snapshot) => {
+        if (!snapshot.elementId
+          || preflightPresenceIds.has(snapshot.elementId)
+          || !snapshot.parentId
+          || snapshot.index < 0
+          || !snapshot.markup.trim()) {
+          return false;
+        }
+        preflightPresenceIds.add(snapshot.elementId);
+        return true;
+      });
+    if (canPreflightPresenceTransaction) {
+      try {
+        canPreflightPresenceTransaction = groups.every((group) => {
+          const snapshot = groupSnapshotByElement.get(group);
+          const parent = snapshot && snapshot.parent;
+          if (!snapshot
+            || !parent
+            || typeof parent.insertBefore !== 'function'
+            || typeof group.remove !== 'function'
+            || typeof group.getBoundingClientRect !== 'function') {
+            return false;
+          }
+          const parentChildNodes = parent.children || parent.childNodes;
+          if (!parentChildNodes || Array.prototype.indexOf.call(parentChildNodes, group) < 0) {
+            return false;
+          }
+          const groupBounds = getRectOnSlide(group.getBoundingClientRect(), slideMetrics);
+          const parentBounds = typeof parent.getBoundingClientRect === 'function'
+            ? getRectOnSlide(parent.getBoundingClientRect(), slideMetrics)
+            : null;
+          if (!groupBounds || !parentBounds) return false;
+
+          const children = Array.from(group.children || []);
+          if (children.length === 0) return false;
+          const childItems = children.map((element) => {
+            const childBounds = typeof element.getBoundingClientRect === 'function'
+              ? getRectOnSlide(element.getBoundingClientRect(), slideMetrics)
+              : null;
+            if (!childBounds) return null;
+            return {
+              element,
+              relativeLeft: childBounds.left - groupBounds.left,
+              relativeTop: childBounds.top - groupBounds.top,
+              parentLeft: parentBounds.left,
+              parentTop: parentBounds.top
+            };
+          });
+          if (childItems.some((item) => !item)) return false;
+          const ungroupPlan = buildUngroupedLayout(groupBounds, childItems);
+          if (!ungroupPlan
+            || !ungroupPlan.canUngroup
+            || !Array.isArray(ungroupPlan.nextItems)
+            || ungroupPlan.nextItems.length !== children.length) {
+            return false;
+          }
+
+          return children.every((element) => {
+            const elementId = resolveElementId(element);
+            if (!elementId || preflightPresenceIds.has(elementId)) return false;
+            preflightPresenceIds.add(elementId);
+            return !!element.style
+              && typeof element.outerHTML === 'string'
+              && !!element.outerHTML.trim();
+          });
+        });
+      } catch (error) {
+        canPreflightPresenceTransaction = false;
+      }
+    }
+
     const markupCaptureTargets = [];
-    if (createMarkupTransactionCapture) {
+    if (!canPreflightPresenceTransaction && createMarkupTransactionCapture) {
       const parentSet = new Set();
       groups.forEach((group) => {
         const parent = group && group.parentElement;
@@ -565,7 +638,7 @@
         });
       });
     }
-    const markupCapture = createMarkupTransactionCapture
+    const markupCapture = !canPreflightPresenceTransaction && createMarkupTransactionCapture
       ? createMarkupTransactionCapture(markupCaptureTargets, { getElementId })
       : null;
     const restoredElements = [];
