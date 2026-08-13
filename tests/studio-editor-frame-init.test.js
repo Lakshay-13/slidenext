@@ -9,6 +9,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
+const frameController = require('../shared/studio-editor-frame-controller.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 const toolbarAccessorsApi = require('../shared/studio-editor-toolbar-accessors.js');
@@ -102,6 +103,43 @@ function attachFrameInteractions(context) {
     getIsDragging: () => context.isDraggingElement,
     getSelectedElements: () => context.selectedElements || [],
     canMutateDeck: () => true
+  });
+  return context;
+}
+
+function loadStudioEditorFrameController(context) {
+  context.studioEditorFrameController = frameController.createStudioEditorFrameController({
+    getIframeDocument: (...args) => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc(...args)
+      : null,
+    resetLiveCanonicalDeck: (...args) => typeof context.resetEditorLiveCanonicalDeck === 'function'
+      ? context.resetEditorLiveCanonicalDeck(...args)
+      : undefined,
+    syncIframeTheme: (...args) => typeof context.syncIframeTheme === 'function'
+      ? context.syncIframeTheme(...args)
+      : undefined,
+    editorStyleApi: context.SlideNextStudioEditorStyle || null,
+    makeElementsHoverable: (...args) => typeof context.makeElementsHoverable === 'function'
+      ? context.makeElementsHoverable(...args)
+      : undefined,
+    frameInteractions: context.studioEditorFrameInteractions || null,
+    frameBootstrapApi: context.SlideNextStudioFrameBootstrap || null,
+    setupIframeDragging: context.setupIframeDragging,
+    generateThumbnails: context.generateThumbnails,
+    syncStudioChromeToActiveSlide: context.syncStudioChromeToActiveSlide,
+    setActiveSlide: context.setActiveSlide,
+    bindDeckNavigationSync: context.bindDeckNavigationSync,
+    observeDeckActiveSlideState: context.observeDeckActiveSlideState,
+    capturePersistableDeckState: context.captureEditorPersistableDeckState,
+    saveHistoryState: context.saveHistoryState,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    applyPersistenceSuccess: context.applyCurrentStudioPersistenceSuccess,
+    getPresentationUrl: () => context.currentPresentationUrl || '',
+    getSessionToken: () => context.studioEditorSessionToken,
+    setLiveCanonicalDeck: context.setEditorLiveCanonicalDeck,
+    updateDeckReadyToolbarActionState: context.updateDeckReadyToolbarActionState,
+    setStudioAutoSaveStatus: context.setStudioAutoSaveStatus,
+    syncInspectorForSelection: context.syncInspectorForSelection
   });
   return context;
 }
@@ -908,6 +946,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   context.initStudioFrame();
@@ -987,7 +1026,7 @@ test('initStudioFrame exposes an error state when the frame controller throws', 
   assert.deepEqual(statusStates, ['editor-load-failed']);
 });
 
-test('initStudioFrame exposes an error state when legacy bootstrap throws', () => {
+test('initStudioFrame exposes an error state when the shared frame bootstrap throws', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
     fileContent,
@@ -1017,6 +1056,7 @@ test('initStudioFrame exposes an error state when legacy bootstrap throws', () =
   };
 
   vm.createContext(context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   assert.equal(context.initStudioFrame(), false);
@@ -1166,6 +1206,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
 
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   context.initStudioFrame();
@@ -1210,7 +1251,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   assert.equal(buildEditorCanonicalDeckCalls, 0);
 });
 
-test('initStudioFrame keeps the legacy bootstrap alive when initial persistence capture fails', () => {
+test('initStudioFrame keeps the shared frame controller alive when initial persistence capture fails', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
     fileContent,
@@ -1275,6 +1316,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial persistence 
   };
 
   vm.createContext(context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
@@ -1290,7 +1332,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial persistence 
   ]);
 });
 
-test('initStudioFrame keeps the legacy bootstrap alive when persistence runtime is unavailable', () => {
+test('initStudioFrame keeps the shared frame controller alive when persistence runtime is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
     fileContent,
@@ -1345,6 +1387,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when persistence runtime 
   };
 
   vm.createContext(context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
@@ -1356,7 +1399,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when persistence runtime 
   ]);
 });
 
-test('initStudioFrame keeps the legacy bootstrap alive when initial history save throws', () => {
+test('initStudioFrame keeps the shared frame controller alive when initial history save throws', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const initStudioFrameSource = extractFunctionSource(
     fileContent,
@@ -1403,6 +1446,7 @@ test('initStudioFrame keeps the legacy bootstrap alive when initial history save
   };
 
   vm.createContext(context);
+  loadStudioEditorFrameController(context);
   vm.runInContext(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
