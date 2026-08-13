@@ -162,6 +162,15 @@
       });
     }
 
+    function launchUrl(url, startSlideIdx) {
+      if (!previewApi || typeof previewApi.launchPresentationUrl !== 'function') return false;
+      return previewApi.launchPresentationUrl({
+        document: documentRef,
+        startSlideIdx,
+        url
+      });
+    }
+
     function launchHtml(html, startSlideIdx) {
       if (!previewApi || typeof previewApi.launchPresentationHtml !== 'function') return false;
       return previewApi.launchPresentationHtml({
@@ -174,6 +183,7 @@
     return {
       launch,
       launchPreview: launch,
+      launchUrl,
       launchHtml,
       createStudioEditorPreviewFallbackHtmlTransformer,
       createStudioEditorPreviewDeckViewHtmlOptions

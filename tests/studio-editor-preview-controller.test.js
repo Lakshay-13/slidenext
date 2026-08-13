@@ -80,6 +80,27 @@ test('launches legacy HTML through the shared preview controller', () => {
   }]);
 });
 
+test('launches a URL through the shared preview controller', () => {
+  const calls = [];
+  const iframeDocument = { id: 'editor-document' };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchPresentationUrl(options) {
+        calls.push(options);
+        return 'url';
+      }
+    },
+    documentRef: iframeDocument
+  });
+
+  assert.equal(controller.launchUrl('/presentations/demo/index.html', 4), 'url');
+  assert.deepEqual(calls, [{
+    document: iframeDocument,
+    startSlideIdx: 4,
+    url: '/presentations/demo/index.html'
+  }]);
+});
+
 test('fails closed when the legacy HTML preview API is unavailable', () => {
   const controller = previewController.createStudioEditorPreviewController({ previewApi: {} });
 

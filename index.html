@@ -5525,17 +5525,12 @@
     }
 
     function launchPresentation(url, startSlideIdx) {
-      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
-        ? SlideNextStudioPreview
-        : null;
-      if (!previewApi || typeof previewApi.launchPresentationUrl !== 'function') {
-        return false;
+      if (typeof studioEditorPreviewController !== 'undefined'
+        && studioEditorPreviewController
+        && typeof studioEditorPreviewController.launchUrl === 'function') {
+        return studioEditorPreviewController.launchUrl(url, startSlideIdx);
       }
-      return previewApi.launchPresentationUrl({
-        document,
-        startSlideIdx,
-        url
-      });
+      return false;
     }
 
     function resolveEditorFallbackActiveSlideId(doc = getIframeDoc(), canonicalDeck = null) {

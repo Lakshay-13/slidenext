@@ -198,9 +198,10 @@ test('launchPresentation delegates url preview chrome resolution to the shared p
   };
   const calls = [];
   const context = {
-    SlideNextStudioPreview: {
-      launchPresentationUrl(options = {}) {
-        calls.push(options);
+    studioEditorPreviewController: {
+      launchUrl(url, startSlideIdx) {
+        calls.push([url, startSlideIdx]);
+        return 'controller-result';
       }
     },
     document: {
@@ -214,15 +215,12 @@ test('launchPresentation delegates url preview chrome resolution to the shared p
   vm.createContext(context);
   vm.runInContext(launchPresentationSource, context);
 
-  context.launchPresentation('/presentations/onboarding-presentation/index.html', 3);
+  assert.equal(
+    context.launchPresentation('/presentations/onboarding-presentation/index.html', 3),
+    'controller-result'
+  );
 
-  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{
-    document: {
-      body: { style: {} }
-    },
-    startSlideIdx: 3,
-    url: '/presentations/onboarding-presentation/index.html'
-  }]);
+  assert.deepEqual(calls, [['/presentations/onboarding-presentation/index.html', 3]]);
 });
 
 test('preview launch wrappers fail closed when the shared preview runtime is unavailable', () => {
