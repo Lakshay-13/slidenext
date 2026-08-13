@@ -8,6 +8,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const persistedHtmlAction = require('../shared/studio-editor-persisted-html-action.js');
+const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const deckView = require('../shared/studio-deck-view.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
@@ -52,6 +53,24 @@ function loadResolveEditorReusablePersistedHtml(context) {
   });
 }
 
+function loadResolveEditorMetadataPersistenceOptions(context) {
+  const deckLoader = context.SlideNextDeckLoader || null;
+  const presentationMetadata = context.SlideNextPresentationMetadata || null;
+  context.resolveEditorMetadataPersistenceOptions = metadataPersistenceAction.createStudioEditorMetadataPersistenceAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    getCurrentPresentationMetadata: context.getStudioCurrentPresentationMetadata
+      || (() => context.currentPresentationMetadata),
+    resolveMergedPresentationPersistenceOptions: context.resolveMergedPresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolveMergedPresentationPersistenceOptions),
+    resolvePresentationPersistenceOptions: context.resolvePresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolvePresentationPersistenceOptions),
+    mergePresentationPersistenceOptions: context.mergePresentationPersistenceOptions
+      || (presentationMetadata && presentationMetadata.mergePresentationPersistenceOptions)
+  });
+}
+
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   const helperSource = extractFunctionSource(
@@ -65,12 +84,7 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   if (typeof context.resolveEditorMetadataPersistenceOptions !== 'function') {
-    const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-      fileContent,
-      'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-      '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
-    );
-    vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+    loadResolveEditorMetadataPersistenceOptions(context);
   }
   if (typeof context.buildEditorPersistableDeckSanitizerOptions !== 'function') {
     const buildEditorPersistableDeckSanitizerOptionsSource = extractFunctionSource(
@@ -3431,11 +3445,6 @@ test('resolveEditorReusablePersistedHtml fails closed when the shared helper is 
 
 test('resolveEditorMetadataPersistenceOptions delegates through the shared metadata persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
@@ -3464,7 +3473,7 @@ test('resolveEditorMetadataPersistenceOptions delegates through the shared metad
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
@@ -3489,11 +3498,6 @@ test('resolveEditorMetadataPersistenceOptions delegates through the shared metad
 
 test('resolveEditorMetadataPersistenceOptions reuses the shared metadata persistence resolver builder when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
@@ -3518,7 +3522,7 @@ test('resolveEditorMetadataPersistenceOptions reuses the shared metadata persist
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
@@ -3542,11 +3546,6 @@ test('resolveEditorMetadataPersistenceOptions reuses the shared metadata persist
 
 test('resolveEditorMetadataPersistenceOptions delegates through the editor persistence-state adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
   const metadata = { id: 'deck-1' };
   let delegatedOptions = null;
   const context = {
@@ -3567,7 +3566,7 @@ test('resolveEditorMetadataPersistenceOptions delegates through the editor persi
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     context.resolveEditorMetadataPersistenceOptions({ persistenceOptions: { theme: 'dark' } }),
@@ -3584,11 +3583,6 @@ test('resolveEditorMetadataPersistenceOptions delegates through the editor persi
 
 test('resolveEditorMetadataPersistenceOptions creates the shared persistence-state adapter once', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
   const calls = [];
   let adapterCreateCalls = 0;
   const context = {
@@ -3607,7 +3601,7 @@ test('resolveEditorMetadataPersistenceOptions creates the shared persistence-sta
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(context.resolveEditorMetadataPersistenceOptions({ id: 1 }), { id: 1 });
   assert.deepEqual(context.resolveEditorMetadataPersistenceOptions({ id: 2 }), { id: 2 });
@@ -3617,11 +3611,6 @@ test('resolveEditorMetadataPersistenceOptions creates the shared persistence-sta
 
 test('resolveEditorMetadataPersistenceOptions delegates to the persistence controller when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
   let delegatedOptions = null;
   const context = {
     studioEditorPersistenceController: {
@@ -3633,7 +3622,7 @@ test('resolveEditorMetadataPersistenceOptions delegates to the persistence contr
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   const options = { persistenceOptions: { transientClassNames: ['revealed'] } };
   assert.deepEqual(context.resolveEditorMetadataPersistenceOptions(options), { delegated: true });
@@ -3642,11 +3631,6 @@ test('resolveEditorMetadataPersistenceOptions delegates to the persistence contr
 
 test('resolveEditorMetadataPersistenceOptions prefers the shared merged persistence resolver when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
@@ -3675,7 +3659,7 @@ test('resolveEditorMetadataPersistenceOptions prefers the shared merged persiste
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions())),
@@ -3696,11 +3680,6 @@ test('resolveEditorMetadataPersistenceOptions prefers the shared merged persiste
 
 test('resolveEditorMetadataPersistenceOptions merges explicit persistence options when the merged resolver is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const currentPresentationMetadata = {
     id: 'computer-vision-presentation',
@@ -3734,7 +3713,7 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({
@@ -3762,11 +3741,6 @@ test('resolveEditorMetadataPersistenceOptions merges explicit persistence option
 
 test('resolveEditorMetadataPersistenceOptions fails closed when the shared helper is unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildPersistableDeckHtml(doc = getIframeDoc()) {'
-  );
 
   const context = {
     currentPresentationMetadata: {
@@ -3782,7 +3756,7 @@ test('resolveEditorMetadataPersistenceOptions fails closed when the shared helpe
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
 
   assert.deepEqual(
     JSON.parse(JSON.stringify(context.resolveEditorMetadataPersistenceOptions({

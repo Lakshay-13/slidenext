@@ -19,6 +19,7 @@ const historyUndoAction = require('../shared/studio-editor-history-undo-action.j
 const historyRedoAction = require('../shared/studio-editor-history-redo-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyRestoreAction = require('../shared/studio-editor-history-restore-action.js');
+const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -319,12 +320,21 @@ function loadRestoreFrameFromHistoryEntry(context) {
 
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= studioPersistence;
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
-  );
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  const deckLoader = context.SlideNextDeckLoader || null;
+  const presentationMetadata = context.SlideNextPresentationMetadata || null;
+  context.resolveEditorMetadataPersistenceOptions = metadataPersistenceAction.createStudioEditorMetadataPersistenceAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    getCurrentPresentationMetadata: context.getStudioCurrentPresentationMetadata
+      || (() => context.currentPresentationMetadata),
+    resolveMergedPresentationPersistenceOptions: context.resolveMergedPresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolveMergedPresentationPersistenceOptions),
+    resolvePresentationPersistenceOptions: context.resolvePresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolvePresentationPersistenceOptions),
+    mergePresentationPersistenceOptions: context.mergePresentationPersistenceOptions
+      || (presentationMetadata && presentationMetadata.mergePresentationPersistenceOptions)
+  });
 }
 
 test('updateHistoryButtons delegates editor control rendering to shared history state', () => {

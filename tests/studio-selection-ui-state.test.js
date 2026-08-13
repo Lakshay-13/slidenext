@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
+const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
 const presentationMetadataFixture = require('./helpers/studio-presentation-metadata-fixture.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
@@ -139,6 +140,24 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
   return `${presentationMetadataFixture.getStudioPresentationMetadataFixtureSource()}\n${presentationUrlFixture.getStudioPresentationUrlFixtureSource()}\n${fileContent.slice(start, end)}`;
+}
+
+function loadResolveEditorMetadataPersistenceOptions(context) {
+  const deckLoader = context.SlideNextDeckLoader || null;
+  const presentationMetadata = context.SlideNextPresentationMetadata || null;
+  context.resolveEditorMetadataPersistenceOptions = metadataPersistenceAction.createStudioEditorMetadataPersistenceAction({
+    getPersistenceController: () => context.studioEditorPersistenceController || null,
+    persistenceApi: context.SlideNextStudioEditorPersistence || null,
+    persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null,
+    getCurrentPresentationMetadata: context.getStudioCurrentPresentationMetadata
+      || (() => context.currentPresentationMetadata),
+    resolveMergedPresentationPersistenceOptions: context.resolveMergedPresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolveMergedPresentationPersistenceOptions),
+    resolvePresentationPersistenceOptions: context.resolvePresentationPersistenceOptions
+      || (deckLoader && deckLoader.resolvePresentationPersistenceOptions),
+    mergePresentationPersistenceOptions: context.mergePresentationPersistenceOptions
+      || (presentationMetadata && presentationMetadata.mergePresentationPersistenceOptions)
+  });
 }
 
 function installSelectionAccessors(context) {
@@ -755,11 +774,6 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
 
 test('getEditorHistoryOptions includes editor runtime attr names for sanitized history snapshots', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
-  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -812,7 +826,7 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
@@ -845,11 +859,6 @@ test('getEditorHistoryOptions includes editor runtime attr names for sanitized h
 
 test('getEditorHistoryOptions threads sanitizer overrides and explicit persistence options into the frame sanitizer', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
-  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -905,7 +914,7 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 
@@ -945,11 +954,6 @@ test('getEditorHistoryOptions threads sanitizer overrides and explicit persisten
 
 test('getEditorHistoryOptions prefers the shared merged persistence resolver for frame sanitization', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorMetadataPersistenceOptions(options = {}) {',
-    '\n\n    function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {'
-  );
   const getEditorDeckSanitizerOptionsSource = extractFunctionSource(
     fileContent,
     'function getEditorDeckSanitizerOptions(options = {}) {',
@@ -1006,7 +1010,7 @@ test('getEditorHistoryOptions prefers the shared merged persistence resolver for
   };
 
   vm.createContext(context);
-  vm.runInContext(resolveEditorMetadataPersistenceOptionsSource, context);
+  loadResolveEditorMetadataPersistenceOptions(context);
   vm.runInContext(getEditorDeckSanitizerOptionsSource, context);
   vm.runInContext(getEditorHistoryOptionsSource, context);
 

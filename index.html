@@ -1514,6 +1514,7 @@
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
+  <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -4196,6 +4197,49 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckStateGlobalApi);
+    const studioEditorMetadataPersistenceAction = typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
+      && SlideNextStudioEditorMetadataPersistenceAction
+      && typeof SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceAction === 'function'
+      ? SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceAction({
+          getPersistenceController: () => studioEditorPersistenceController,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null,
+          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
+          resolveMergedPresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+            : null,
+          resolvePresentationPersistenceOptions: (
+            typeof SlideNextDeckLoader !== 'undefined'
+            && SlideNextDeckLoader
+            && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+            : null,
+          mergePresentationPersistenceOptions: (
+            typeof SlideNextPresentationMetadata !== 'undefined'
+            && SlideNextPresentationMetadata
+            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+          )
+            ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+            : null
+        })
+      : null;
+    const studioEditorMetadataPersistenceGlobalApi = typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
+      && SlideNextStudioEditorMetadataPersistenceAction
+      && typeof SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceGlobalApi === 'function'
+      ? SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceGlobalApi({
+          resolveEditorMetadataPersistenceOptions: studioEditorMetadataPersistenceAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorMetadataPersistenceGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorSessionRuntimeOptions
       : null;
@@ -10851,147 +10895,6 @@
     }
 
     // 5. Undo/Redo Engine
-    function resolveEditorMetadataPersistenceOptions(options = {}) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.resolveMetadataPersistenceOptions === 'function') {
-        const result = studioEditorPersistenceController.resolveMetadataPersistenceOptions(options);
-        if (result !== null && typeof result !== 'undefined') {
-          return result;
-        }
-      }
-      const createStudioEditorMetadataPersistenceOptionsAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorMetadataPersistenceOptionsAdapter
-        : null;
-      if (createStudioEditorMetadataPersistenceOptionsAdapter) {
-        if (typeof resolveEditorMetadataPersistenceOptions.adapter !== 'function') {
-          resolveEditorMetadataPersistenceOptions.adapter = createStudioEditorMetadataPersistenceOptionsAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null,
-            getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
-            resolveMergedPresentationPersistenceOptions: (
-              typeof SlideNextDeckLoader !== 'undefined'
-              && SlideNextDeckLoader
-              && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-            )
-              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-              : null,
-            resolvePresentationPersistenceOptions: (
-              typeof SlideNextDeckLoader !== 'undefined'
-              && SlideNextDeckLoader
-              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-            )
-              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
-              : null,
-            mergePresentationPersistenceOptions: (
-              typeof SlideNextPresentationMetadata !== 'undefined'
-              && SlideNextPresentationMetadata
-              && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
-            )
-              ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
-              : null
-          });
-        }
-        return typeof resolveEditorMetadataPersistenceOptions.adapter === 'function'
-          ? resolveEditorMetadataPersistenceOptions.adapter(options)
-          : {};
-      }
-      const createStudioMetadataPersistenceOptionsResolver = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioMetadataPersistenceOptionsResolver === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioMetadataPersistenceOptionsResolver
-        : null;
-      if (createStudioMetadataPersistenceOptionsResolver) {
-        return createStudioMetadataPersistenceOptionsResolver({
-          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
-          resolveMergedPresentationPersistenceOptions: (
-            typeof SlideNextDeckLoader !== 'undefined'
-            && SlideNextDeckLoader
-            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-          )
-            ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-            : null,
-          resolvePresentationPersistenceOptions: (
-            typeof SlideNextDeckLoader !== 'undefined'
-            && SlideNextDeckLoader
-            && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-          )
-            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
-            : null,
-          mergePresentationPersistenceOptions: (
-            typeof SlideNextPresentationMetadata !== 'undefined'
-            && SlideNextPresentationMetadata
-            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
-          )
-            ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
-            : null,
-          resolveMetadataPersistenceOptions: typeof options.resolveStudioMetadataPersistenceOptions === 'function'
-            ? options.resolveStudioMetadataPersistenceOptions
-            : (
-                typeof SlideNextStudioEditorPersistence !== 'undefined'
-                && SlideNextStudioEditorPersistence
-                && typeof SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions === 'function'
-              )
-              ? SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions
-              : null
-        })(options);
-      }
-
-      const resolveStudioMetadataPersistenceOptions = typeof options.resolveStudioMetadataPersistenceOptions === 'function'
-        ? options.resolveStudioMetadataPersistenceOptions
-        : (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-          )
-          && typeof SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions === 'function'
-          ? SlideNextStudioEditorPersistence.resolveStudioMetadataPersistenceOptions
-          : null;
-      if (resolveStudioMetadataPersistenceOptions) {
-        return resolveStudioMetadataPersistenceOptions({
-          currentPresentationMetadata: Object.prototype.hasOwnProperty.call(options, 'currentPresentationMetadata')
-            ? options.currentPresentationMetadata
-            : getStudioCurrentPresentationMetadata(),
-          persistenceOptions: options.persistenceOptions,
-          resolveMergedPresentationPersistenceOptions: typeof options.resolveMergedPresentationPersistenceOptions === 'function'
-            ? options.resolveMergedPresentationPersistenceOptions
-            : (
-                typeof SlideNextDeckLoader !== 'undefined'
-                && SlideNextDeckLoader
-                && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-              )
-              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-              : null,
-          resolvePresentationPersistenceOptions: typeof options.resolvePresentationPersistenceOptions === 'function'
-            ? options.resolvePresentationPersistenceOptions
-            : (
-                typeof SlideNextDeckLoader !== 'undefined'
-                && SlideNextDeckLoader
-                && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-              )
-              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
-              : null,
-          mergePresentationPersistenceOptions: typeof options.mergePresentationPersistenceOptions === 'function'
-            ? options.mergePresentationPersistenceOptions
-            : (
-                typeof SlideNextPresentationMetadata !== 'undefined'
-                && SlideNextPresentationMetadata
-                && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
-              )
-              ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
-              : null
-        });
-      }
-
-      return {};
-    }
-
     function buildEditorPersistableDeckSanitizerOptions(playbackState = null, options = {}) {
       if (typeof studioEditorPersistenceController !== 'undefined'
         && studioEditorPersistenceController
