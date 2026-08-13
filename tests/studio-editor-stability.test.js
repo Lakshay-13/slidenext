@@ -2030,12 +2030,18 @@ test('motion, alignment, and group action-state builders reuse composed editor s
     'function buildUngroupSelectionActionState(doc = null) {',
     '\n\n    function updateAlignmentActionState'
   );
+  const layerOrderSource = extractFunctionSource(
+    fileContent,
+    'function buildLayerOrderSelectionActionState(elements, options = {}) {',
+    '\n\n    function updateLayerOrderActionState'
+  );
 
   assert.match(motionSource, /studioEditorMotionStateController\.buildActionState/);
   assert.doesNotMatch(motionSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
   assert.match(alignmentSource, /studioEditorAlignmentStateController\.buildActionState/);
   assert.doesNotMatch(alignmentSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
   assert.match(ungroupSource, /studioEditorUngroupStateController\.buildActionState/);
+  assert.match(layerOrderSource, /studioEditorLayerOrderStateController\.buildActionState/);
   assert.match(groupSource, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
   assert.doesNotMatch(groupSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
 });

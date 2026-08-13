@@ -1371,6 +1371,7 @@
   <script src="/shared/studio-editor-layer-order-transaction.js"></script>
   <script src="/shared/studio-editor-layer-order-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
+  <script src="/shared/studio-editor-layer-order-state.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
@@ -3514,6 +3515,20 @@
           getActiveSlide,
           getLiveSelectedElements,
           isEditorGroupElement
+        })
+      : null;
+    const studioEditorLayerOrderStateController = typeof SlideNextStudioEditorLayerOrderState !== 'undefined'
+      && SlideNextStudioEditorLayerOrderState
+      && typeof SlideNextStudioEditorLayerOrderState.createStudioEditorLayerOrderStateController === 'function'
+      ? SlideNextStudioEditorLayerOrderState.createStudioEditorLayerOrderStateController({
+          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+            ? SlideNextStudioEditorLayerOrder
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getNormalizedSlideLayerOrder,
+          getLockedState: () => isElementLocked
         })
       : null;
     const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
@@ -9952,59 +9967,19 @@
     }
 
     function buildLayerOrderSelectionActionState(elements, options = {}) {
-      const layerOrderApi = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-        ? SlideNextStudioEditorLayerOrder
-        : null;
-      const hasLayerOrderActionStateBuilder = !!layerOrderApi && (
-        typeof layerOrderApi.createStudioLayerOrderActionStateBuilder === 'function'
-        || typeof layerOrderApi.buildStudioLayerOrderActionState === 'function'
-      );
-      if (!hasLayerOrderActionStateBuilder) {
-        return {
-          selection: [],
-          hasSelection: false,
-          hasLockedSelection: false,
-          canReorder: false,
-          canBringToFront: false,
-          canSendToBack: false,
-          canBringForward: false,
-          canSendBackward: false
-        };
-      }
-      if (layerOrderApi && typeof layerOrderApi.createStudioLayerOrderActionStateBuilder === 'function') {
-        if (typeof buildLayerOrderSelectionActionState.builder !== 'function') {
-          buildLayerOrderSelectionActionState.builder = layerOrderApi.createStudioLayerOrderActionStateBuilder({
-            getDocument: () => getIframeDoc(),
-            getSelectedElements: (doc) => getStudioSelectedElements(doc),
-            getActiveSlide,
-            getNormalizedSlideLayerOrder,
-            getLockedState: () => isElementLocked
-          });
-        }
-        if (typeof buildLayerOrderSelectionActionState.builder === 'function') {
-          return buildLayerOrderSelectionActionState.builder(elements, options);
-        }
-      }
-
-      const hasDocOverride = Object.prototype.hasOwnProperty.call(options, 'doc');
-      const resolvedDoc = hasDocOverride ? options.doc : getIframeDoc();
-      const resolvedElements = typeof elements === 'undefined'
-        ? getStudioSelectedElements(resolvedDoc)
-        : elements;
-      const hasSlideOverride = Object.prototype.hasOwnProperty.call(options, 'slide');
-      const resolvedSlide = hasSlideOverride ? options.slide : getActiveSlide(resolvedDoc);
-      const orderedElements = Array.isArray(options.orderedElements)
-        ? options.orderedElements
-        : (resolvedSlide ? getNormalizedSlideLayerOrder(resolvedSlide) : []);
-      const canMutateDeck = typeof options.canMutateDeck === 'function'
-        ? options.canMutateDeck
-        : () => !!resolvedSlide;
-
-      return layerOrderApi.buildStudioLayerOrderActionState(resolvedElements, {
-        orderedElements,
-        isLocked: typeof options.isLocked === 'function' ? options.isLocked : isElementLocked,
-        canMutateDeck
-      });
+      return studioEditorLayerOrderStateController
+        && typeof studioEditorLayerOrderStateController.buildActionState === 'function'
+        ? studioEditorLayerOrderStateController.buildActionState(elements, options)
+        : {
+            selection: [],
+            hasSelection: false,
+            hasLockedSelection: false,
+            canReorder: false,
+            canBringToFront: false,
+            canSendToBack: false,
+            canBringForward: false,
+            canSendBackward: false
+          };
     }
 
     function updateLayerOrderActionState(doc = getIframeDoc()) {

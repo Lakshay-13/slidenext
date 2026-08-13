@@ -16,6 +16,7 @@ const layerOrderRollbackAdapter = require('../shared/studio-editor-layer-order-r
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const layerOrderController = require('../shared/studio-editor-layer-order-controller.js');
+const layerOrderState = require('../shared/studio-editor-layer-order-state.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -85,6 +86,21 @@ function loadBuildLayerOrderSelectionActionState(fileContent, context) {
     'function buildLayerOrderSelectionActionState(elements, options = {}) {',
     '\n\n    function updateLayerOrderActionState(doc = getIframeDoc()) {'
   );
+  context.SlideNextStudioEditorLayerOrderState = layerOrderState;
+  context.studioEditorLayerOrderStateController = layerOrderState.createStudioEditorLayerOrderStateController({
+    layerOrderApi: context.SlideNextStudioEditorLayerOrder,
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : context.doc || null,
+    getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+      ? context.getStudioSelectedElements(doc)
+      : Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: context.getActiveSlide,
+    getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
+    getLockedState: () => typeof context.isElementLocked === 'function'
+      ? context.isElementLocked
+      : () => false
+  });
   vm.runInContext(helperSource, context);
 }
 
