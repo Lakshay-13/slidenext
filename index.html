@@ -1668,6 +1668,7 @@
   <script src="/shared/studio-editor-id-list-equality-adapter.js"></script>
   <script src="/shared/studio-editor-selection-options-adapter.js"></script>
   <script src="/shared/studio-editor-live-selection-adapter.js"></script>
+  <script src="/shared/studio-editor-transform-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -3955,10 +3956,26 @@
         : false;
     }
 
-    const studioEditorTransformSelectionStateBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorTransformSelectionStateAdapter = typeof SlideNextStudioEditorTransformSelectionStateAdapter !== 'undefined'
+      && SlideNextStudioEditorTransformSelectionStateAdapter
+      && typeof SlideNextStudioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState === 'function'
+      ? SlideNextStudioEditorTransformSelectionStateAdapter
+      : null;
+
+    const studioEditorTransformSelectionStateBuilder = studioEditorTransformSelectionStateAdapter
+      && typeof studioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.buildStudioTransformSelectionState === 'function'
-      ? (elements, options) => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(elements, options)
+      ? (elements, options) => studioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState(
+          elements,
+          {
+            transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+              ? SlideNextStudioEditorTransform
+              : null,
+            selectionOptions: options
+          }
+        )
       : null;
 
     const studioEditorPositionedLayoutItemsBuilder = typeof SlideNextStudioEditorTransform !== 'undefined'

@@ -1210,8 +1210,10 @@ test('editor composes transform selection-state building through the shared tran
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorTransformSelectionStateBuilder =/);
+  assert.match(source, /const studioEditorTransformSelectionStateAdapter =/);
+  assert.match(source, /buildStudioEditorTransformSelectionState/);
   assert.match(source, /buildStudioTransformSelectionState/);
-  assert.match(source, /typeof studioEditorTransformSelectionStateBuilder === 'function'/);
+  assert.match(source, /typeof SlideNextStudioEditorTransformSelectionStateAdapter !== 'undefined'/);
   assert.doesNotMatch(source, /getTransformSelectionState\.builder/);
 });
 
@@ -1219,7 +1221,7 @@ test('transform selection-state building delegates elements and options to the s
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectionStateSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformSelectionStateBuilder =',
+    'const studioEditorTransformSelectionStateAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const elements = [{ id: 'element-1' }];
@@ -1227,6 +1229,7 @@ test('transform selection-state building delegates elements and options to the s
   const calls = [];
   const state = { canTransform: true, selection: elements };
   const context = {
+    SlideNextStudioEditorTransformSelectionStateAdapter: require('../shared/studio-editor-transform-selection-state-adapter.js'),
     SlideNextStudioEditorTransform: {
       buildStudioTransformSelectionState(elementsValue, optionsValue) {
         calls.push([elementsValue, optionsValue]);
@@ -1249,10 +1252,11 @@ test('transform selection-state building fails closed when the shared transform 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectionStateSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformSelectionStateBuilder =',
+    'const studioEditorTransformSelectionStateAdapter =',
     'const studioEditorTransformRuntime ='
   );
   const context = { SlideNextStudioEditorTransform: null };
+  context.SlideNextStudioEditorTransformSelectionStateAdapter = require('../shared/studio-editor-transform-selection-state-adapter.js');
 
   vm.createContext(context);
   vm.runInContext(selectionStateSource, context);
