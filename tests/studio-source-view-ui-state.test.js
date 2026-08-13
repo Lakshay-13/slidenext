@@ -220,7 +220,14 @@ test('launchPresentationHtml fails closed when the shared preview runtime is una
     'function launchPresentationHtml(html, startSlideIdx) {',
     '\n\n    function restoreEditorSourceHistoryEntry(historyEntry) {'
   );
-  const context = { document: {} };
+  const context = {
+    SlideNextStudioPreview: {
+      launchPresentationHtml() {
+        throw new Error('legacy fallback should not run');
+      }
+    },
+    document: {}
+  };
 
   vm.createContext(context);
   vm.runInContext(launchPresentationHtmlSource, context);

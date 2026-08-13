@@ -6112,17 +6112,7 @@
         && typeof studioEditorPreviewController.launchHtml === 'function') {
         return studioEditorPreviewController.launchHtml(html, startSlideIdx);
       }
-      const previewApi = typeof SlideNextStudioPreview !== 'undefined'
-        ? SlideNextStudioPreview
-        : null;
-      if (!previewApi || typeof previewApi.launchPresentationHtml !== 'function') {
-        return false;
-      }
-      return previewApi.launchPresentationHtml({
-        document,
-        startSlideIdx,
-        html
-      });
+      return false;
     }
 
     function restoreEditorSourceHistoryEntry(historyEntry) {
