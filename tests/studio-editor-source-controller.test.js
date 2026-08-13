@@ -53,6 +53,25 @@ test('source history baseline capture prefers the live canonical deck', () => {
   assert.deepEqual(calls, [[false, null, liveDeck]]);
 });
 
+test('source history baseline capture prefers pending canonical state before the live baseline', () => {
+  const pendingDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending-slide' }] };
+  const calls = [];
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline: () => {
+      throw new Error('live baseline should not be needed');
+    },
+    buildCanonicalDeck: () => {
+      throw new Error('DOM rebuild should not be needed');
+    },
+    saveHistoryState: (...args) => calls.push(args)
+  });
+
+  assert.equal(capture(), true);
+  assert.deepEqual(calls, [[false, null, pendingDeck]]);
+});
+
 test('source history baseline capture falls back to rebuilding from the live document', () => {
   const rebuiltDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
   const calls = [];

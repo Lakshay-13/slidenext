@@ -67,6 +67,9 @@
     const getCurrentDocument = typeof options.getCurrentDocument === 'function'
       ? options.getCurrentDocument
       : () => null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const getCanonicalDeckBaseline = typeof options.getCanonicalDeckBaseline === 'function'
       ? options.getCanonicalDeckBaseline
       : null;
@@ -79,11 +82,24 @@
     return function captureSourceHistoryBaseline() {
       const sourceDocument = getCurrentDocument();
       let canonicalDeck = null;
-      if (getCanonicalDeckBaseline) {
+      if (getPendingCanonicalDeck) {
         try {
-          canonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          canonicalDeck = pendingCanonicalDeck
+            && Array.isArray(pendingCanonicalDeck.slides)
+            ? pendingCanonicalDeck
+            : null;
         } catch (error) {
           canonicalDeck = null;
+        }
+      }
+      if (getCanonicalDeckBaseline) {
+        if (!canonicalDeck) {
+          try {
+            canonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+          } catch (error) {
+            canonicalDeck = null;
+          }
         }
       }
       if (!canonicalDeck && buildCanonicalDeck) {
@@ -222,6 +238,7 @@
       ? options.beforeApply
       : createStudioEditorSourceHistoryBaselineCapture({
           getCurrentDocument,
+          getPendingCanonicalDeck,
           getCanonicalDeckBaseline,
           buildCanonicalDeck,
           saveHistoryState

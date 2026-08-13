@@ -104,6 +104,7 @@
           resolveSourceCss: options.resolveSourceCss,
           applySourceCss: options.applySourceCss,
           buildCanonicalDeck: options.sourceBuildCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.sourceGetCanonicalDeckBaseline,
           getCurrentDocument: options.getCurrentDocument,
           resolveActiveSlideId: options.resolveActiveSlideId,

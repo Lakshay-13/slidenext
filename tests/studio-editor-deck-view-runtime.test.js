@@ -125,6 +125,7 @@ test('deck view runtime composes export, snapshot, preview, and source controlle
     callbacks.resolveBuildPresentationBaseHref
   );
   assert.equal(findCall('source').buildCanonicalDeck, callbacks.sourceBuildCanonicalDeck);
+  assert.equal(findCall('source').getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(findCall('source').resolveSourceCss, callbacks.resolveSourceCss);
   assert.equal(findCall('source').saveHistoryState, callbacks.saveHistoryState);
   assert.equal(findCall('source').applySourceCss, callbacks.applySourceCss);
