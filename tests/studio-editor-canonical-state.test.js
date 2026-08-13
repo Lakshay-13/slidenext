@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeckBuilder = require('../shared/studio-editor-canonical-deck.js');
 const canonicalBridge = require('../shared/studio-editor-canonical-bridge.js');
+const canonicalNodeAdapter = require('../shared/studio-editor-canonical-node-adapter.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const overlayApi = require('../shared/studio-editor-overlay.js');
 
@@ -393,6 +394,7 @@ test('editor canonical node resolver prefers the shared safe reader', () => {
   const target = { dataset: { editorId: 'node-1' } };
   const expectedNode = { id: 'node-1' };
   const context = {
+    SlideNextStudioEditorCanonicalNodeAdapter: canonicalNodeAdapter,
     SlideNextStudioEditorCanonicalState: canonicalState,
     SlideNextCanonicalDeck: {
       findCanonicalNodeById(deck, elementId) {

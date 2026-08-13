@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
+const canonicalNodeAdapter = require('../shared/studio-editor-canonical-node-adapter.js');
 const canonicalLayout = require('../shared/studio-editor-canonical-layout.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const layerOrder = require('../shared/studio-editor-layer-order.js');
@@ -60,6 +61,7 @@ function loadSyncLayerOrderZIndexInput(fileContent, context) {
     'function syncLayerOrderZIndexInput(target) {',
     '\n\n    function refreshLayerOrderUi(options = {}) {'
   );
+  context.SlideNextStudioEditorCanonicalNodeAdapter = canonicalNodeAdapter;
   vm.runInContext(
     `${canonicalUiSource}\n${canonicalUiResolverSource}\n${canonicalNodeResolverSource}\n${syncSource}`,
     context
