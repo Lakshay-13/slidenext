@@ -1519,6 +1519,7 @@
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
+  <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
@@ -4363,6 +4364,33 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistableDeckBuildStateGlobalApi);
+    const studioEditorCapturedPersistableDeckStateAction =
+      typeof SlideNextStudioEditorCapturedPersistableDeckStateAction !== 'undefined'
+      && SlideNextStudioEditorCapturedPersistableDeckStateAction
+      && typeof SlideNextStudioEditorCapturedPersistableDeckStateAction
+        .createStudioEditorCapturedPersistableDeckStateAction === 'function'
+      ? SlideNextStudioEditorCapturedPersistableDeckStateAction
+        .createStudioEditorCapturedPersistableDeckStateAction({
+          getPersistenceController: () => studioEditorPersistenceController,
+          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+            ? SlideNextStudioEditorPersistenceState
+            : null
+        })
+      : null;
+    const studioEditorCapturedPersistableDeckStateGlobalApi =
+      typeof SlideNextStudioEditorCapturedPersistableDeckStateAction !== 'undefined'
+      && SlideNextStudioEditorCapturedPersistableDeckStateAction
+      && typeof SlideNextStudioEditorCapturedPersistableDeckStateAction
+        .createStudioEditorCapturedPersistableDeckStateGlobalApi === 'function'
+      ? SlideNextStudioEditorCapturedPersistableDeckStateAction
+        .createStudioEditorCapturedPersistableDeckStateGlobalApi({
+          resolveEditorCapturedPersistableDeckState: studioEditorCapturedPersistableDeckStateAction
+        })
+      : {};
+    Object.assign(globalThis, studioEditorCapturedPersistableDeckStateGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorSessionRuntimeOptions
       : null;
@@ -11194,103 +11222,6 @@
       }
       return sharedBuildPersistableDeckHtml(doc, {
         ...persistableDeckSanitizerOptions
-      });
-    }
-
-    function resolveEditorCapturedPersistableDeckState(cleanHtml = '', options = {}) {
-      const nextCleanHtml = typeof cleanHtml === 'string'
-        ? cleanHtml
-        : '';
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.resolveCapturedPersistableDeckState === 'function') {
-        const resolvedState = studioEditorPersistenceController.resolveCapturedPersistableDeckState(
-          nextCleanHtml,
-          options
-        );
-        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
-          return resolvedState;
-        }
-      }
-      const createStudioEditorCapturedPersistableDeckStateResolverAdapter = (
-        typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        && SlideNextStudioEditorPersistenceState
-        && typeof SlideNextStudioEditorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter === 'function'
-      )
-        ? SlideNextStudioEditorPersistenceState.createStudioEditorCapturedPersistableDeckStateResolverAdapter
-        : null;
-      if (createStudioEditorCapturedPersistableDeckStateResolverAdapter) {
-        if (typeof resolveEditorCapturedPersistableDeckState.adapter !== 'function') {
-          resolveEditorCapturedPersistableDeckState.adapter = createStudioEditorCapturedPersistableDeckStateResolverAdapter({
-            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-              ? SlideNextStudioEditorPersistence
-              : null
-          });
-        }
-        const resolvedState = typeof resolveEditorCapturedPersistableDeckState.adapter === 'function'
-          ? resolveEditorCapturedPersistableDeckState.adapter(nextCleanHtml, options)
-          : null;
-        if (resolvedState !== null && typeof resolvedState !== 'undefined') {
-          return resolvedState;
-        }
-      }
-
-      const createStudioCapturedPersistableDeckStateResolver = (
-        typeof SlideNextStudioEditorPersistence !== 'undefined'
-        && SlideNextStudioEditorPersistence
-        && typeof SlideNextStudioEditorPersistence.createStudioCapturedPersistableDeckStateResolver === 'function'
-      )
-        ? SlideNextStudioEditorPersistence.createStudioCapturedPersistableDeckStateResolver
-        : null;
-      if (createStudioCapturedPersistableDeckStateResolver) {
-        return createStudioCapturedPersistableDeckStateResolver({
-          buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
-            ? options.buildCanonicalDeck
-            : () => null,
-          resolvePlaybackState: typeof options.resolvePlaybackState === 'function'
-            ? options.resolvePlaybackState
-            : () => null,
-          resolveCapturedPersistableDeckState: typeof options.resolveStudioCapturedPersistableDeckState === 'function'
-            ? options.resolveStudioCapturedPersistableDeckState
-            : (
-                typeof SlideNextStudioEditorPersistence !== 'undefined'
-                && SlideNextStudioEditorPersistence
-                && typeof SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState === 'function'
-              )
-              ? SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState
-              : null
-        })(nextCleanHtml, options);
-      }
-
-      const resolvedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
-        ? options.canonicalDeck
-        : null;
-      const resolvedPlaybackState = Object.prototype.hasOwnProperty.call(options, 'playbackState')
-        ? options.playbackState
-        : undefined;
-      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck
-        : () => null;
-      const resolvePlaybackState = typeof options.resolvePlaybackState === 'function'
-        ? options.resolvePlaybackState
-        : () => null;
-      const resolveStudioCapturedPersistableDeckState = typeof options.resolveStudioCapturedPersistableDeckState === 'function'
-        ? options.resolveStudioCapturedPersistableDeckState
-        : (
-            typeof SlideNextStudioEditorPersistence !== 'undefined'
-            && SlideNextStudioEditorPersistence
-            && typeof SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState === 'function'
-          )
-          ? SlideNextStudioEditorPersistence.resolveStudioCapturedPersistableDeckState
-          : null;
-      if (!resolveStudioCapturedPersistableDeckState) {
-        return null;
-      }
-      return resolveStudioCapturedPersistableDeckState(nextCleanHtml, {
-        canonicalDeck: resolvedCanonicalDeck,
-        playbackState: resolvedPlaybackState,
-        buildCanonicalDeck,
-        resolvePlaybackState
       });
     }
 

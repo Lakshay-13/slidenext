@@ -8,6 +8,7 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const canonicalDeckModel = require('../shared/canonical-deck.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
+const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const editorAutoSave = require('../shared/studio-editor-autosave.js');
@@ -43,12 +44,12 @@ function loadCaptureEditorPersistableDeckState(fileContent, context) {
     );
     vm.runInContext(resolveEditorCanonicalDeckOverrideSource, context);
   }
-  const resolveEditorCapturedPersistableDeckStateSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
-    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
-  );
-  vm.runInContext(resolveEditorCapturedPersistableDeckStateSource, context);
+  context.resolveEditorCapturedPersistableDeckState =
+    capturedStateAction.createStudioEditorCapturedPersistableDeckStateAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null
+    });
   const captureEditorPersistableDeckStateSource = extractFunctionSource(
     fileContent,
     'function captureEditorPersistableDeckState(doc = getIframeDoc()) {',

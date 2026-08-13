@@ -7,6 +7,7 @@ const editorEvents = require('../shared/studio-editor-events.js');
 const frameInteractions = require('../shared/studio-editor-frame-interactions.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const buildStateAction = require('../shared/studio-editor-persistable-deck-build-state-action.js');
+const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 const toolbarAccessorsApi = require('../shared/studio-editor-toolbar-accessors.js');
@@ -66,12 +67,12 @@ function loadCaptureEditorPersistableDeckBuildState(fileContent, context) {
 }
 
 function loadResolveEditorCapturedPersistableDeckState(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function resolveEditorCapturedPersistableDeckState(cleanHtml = \'\', options = {}) {',
-    '\n\n    function captureEditorPersistableDeckState(doc = getIframeDoc()) {'
-  );
-  vm.runInContext(helperSource, context);
+  context.resolveEditorCapturedPersistableDeckState =
+    capturedStateAction.createStudioEditorCapturedPersistableDeckStateAction({
+      getPersistenceController: () => context.studioEditorPersistenceController || null,
+      persistenceApi: context.SlideNextStudioEditorPersistence || null,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState || null
+    });
 }
 
 function attachFrameInteractions(context) {
