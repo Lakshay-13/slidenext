@@ -10,6 +10,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioAlignment = require('../shared/studio-editor-alignment.js');
 const alignmentController = require('../shared/studio-editor-alignment-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
+const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -31,6 +32,7 @@ function loadPositionMutationHelper(fileContent, context) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
+  context.SlideNextStudioEditorPositionLayoutTransaction = positionLayoutTransaction;
   vm.runInContext(helperSource, context);
 }
 

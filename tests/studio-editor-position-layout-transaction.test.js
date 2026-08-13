@@ -1,0 +1,54 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
+
+test('applyStudioEditorPositionLayoutMutationWithTransaction composes layout dependencies', () => {
+  const nextItems = [{ element: { dataset: { editorId: 'node-1' } }, left: 10 }];
+  const applyLayout = () => {};
+  let delegated = null;
+
+  const result = positionLayoutTransaction.applyStudioEditorPositionLayoutMutationWithTransaction(
+    nextItems,
+    {
+      mutationApi: {
+        applyStudioPositionLayoutMutationWithTransaction(items, options) {
+          delegated = { items, options };
+          return { didApply: true, transaction: { id: 'tx-position' } };
+        }
+      },
+      transactionApi: { createStudioPositionTransaction() {} },
+      alignmentApi: { applyStudioAlignmentLayout() {} },
+      applyLayout,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.deepEqual(result, { didApply: true, transaction: { id: 'tx-position' } });
+  assert.equal(delegated.items, nextItems);
+  assert.equal(typeof delegated.options.transactionApi.createStudioPositionTransaction, 'function');
+  assert.equal(typeof delegated.options.alignmentApi.applyStudioAlignmentLayout, 'function');
+  assert.equal(delegated.options.applyLayout, applyLayout);
+  assert.equal(delegated.options.getElementId(nextItems[0].element), 'node-1');
+});
+
+test('applyStudioEditorPositionLayoutMutationWithTransaction leaves omitted layout overrides absent', () => {
+  let delegatedOptions = null;
+  positionLayoutTransaction.applyStudioEditorPositionLayoutMutationWithTransaction([], {
+    mutationApi: {
+      applyStudioPositionLayoutMutationWithTransaction(_items, options) {
+        delegatedOptions = options;
+        return { didApply: true, transaction: null };
+      }
+    }
+  });
+
+  assert.equal(Object.prototype.hasOwnProperty.call(delegatedOptions, 'applyLayout'), false);
+});
+
+test('applyStudioEditorPositionLayoutMutationWithTransaction fails closed without the mutation adapter', () => {
+  assert.deepEqual(
+    positionLayoutTransaction.applyStudioEditorPositionLayoutMutationWithTransaction([], {}),
+    { didApply: false, transaction: null }
+  );
+});

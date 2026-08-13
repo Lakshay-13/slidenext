@@ -1502,6 +1502,7 @@
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
   <script src="/shared/studio-editor-position-layout-mutation.js"></script>
+  <script src="/shared/studio-editor-position-layout-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-frame-accessors.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
@@ -10906,32 +10907,30 @@
     }
 
     function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {
-      const mutationApi = typeof SlideNextStudioEditorPositionLayoutMutation !== 'undefined'
-        ? SlideNextStudioEditorPositionLayoutMutation
+      const transactionApi = typeof SlideNextStudioEditorPositionLayoutTransaction !== 'undefined'
+        ? SlideNextStudioEditorPositionLayoutTransaction
         : null;
-      const applyMutation = mutationApi
-        && typeof mutationApi.applyStudioPositionLayoutMutationWithTransaction === 'function'
-        ? mutationApi.applyStudioPositionLayoutMutationWithTransaction
+      const applyTransaction = transactionApi
+        && typeof transactionApi.applyStudioEditorPositionLayoutMutationWithTransaction === 'function'
+        ? transactionApi.applyStudioEditorPositionLayoutMutationWithTransaction
         : null;
-      if (!applyMutation) {
+      if (!applyTransaction) {
         return { didApply: false, transaction: null };
       }
-      const getElementId = typeof options.getElementId === 'function'
-        ? options.getElementId
-        : (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              return assignEditorElementId(element);
-            }
-            return element && element.dataset && element.dataset.editorId;
-          };
-      return applyMutation(nextItems, {
+      return applyTransaction(nextItems, {
+        mutationApi: typeof SlideNextStudioEditorPositionLayoutMutation !== 'undefined'
+          ? SlideNextStudioEditorPositionLayoutMutation
+          : null,
         transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
           ? SlideNextStudioEditorTransaction
           : null,
         alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
           ? SlideNextStudioEditorAlignment
           : null,
-        getElementId,
+        getElementId: options.getElementId,
+        assignEditorElementId: typeof assignEditorElementId === 'function'
+          ? assignEditorElementId
+          : null,
         ...(Object.prototype.hasOwnProperty.call(options, 'applyLayout')
           ? { applyLayout: options.applyLayout }
           : {})

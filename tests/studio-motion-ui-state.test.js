@@ -12,6 +12,7 @@ const liveSelection = require('../shared/studio-editor-live-selection.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
+const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
 const positionLayoutRollback = require('../shared/studio-editor-position-layout-rollback.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -93,6 +94,7 @@ function loadPositionMutationHelper(fileContent, context) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
+  context.SlideNextStudioEditorPositionLayoutTransaction = positionLayoutTransaction;
   vm.runInContext(helperSource, context);
 }
 
