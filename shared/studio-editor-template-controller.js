@@ -120,10 +120,10 @@
             ? canonicalDeckApi.isCanonicalDeck
             : null
         })
-      : () => {
+      : (sourceDocument) => {
           if (!getCanonicalDeckBaseline) return null;
           try {
-            const liveCanonicalDeck = getCanonicalDeckBaseline();
+            const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
             return isValidCanonicalDeck(liveCanonicalDeck)
               ? liveCanonicalDeck
               : null;
@@ -145,7 +145,7 @@
         })
       : null;
 
-    function resolveCanonicalDeck(sourceDocument) {
+    function resolveCanonicalDeck(sourceDocument = getDocument()) {
       if (typeof sharedCanonicalDeckResolver === 'function') {
         return sharedCanonicalDeckResolver(sourceDocument);
       }
