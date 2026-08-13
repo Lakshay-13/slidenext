@@ -12,6 +12,7 @@ const historySaveAction = require('../shared/studio-editor-history-save-action.j
 const historyFrameAction = require('../shared/studio-editor-history-frame-action.js');
 const historyEntryAction = require('../shared/studio-editor-history-entry-action.js');
 const historyCaptureAction = require('../shared/studio-editor-history-capture-action.js');
+const historyButtonsAction = require('../shared/studio-editor-history-buttons-action.js');
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
@@ -201,6 +202,20 @@ function loadCaptureState(context) {
   });
 }
 
+function loadUpdateHistoryButtons(context) {
+  context.updateHistoryButtons = historyButtonsAction.createStudioEditorHistoryButtonsAction({
+    getHistoryController: () => context.studioEditorHistoryController || null,
+    historyApi: context.SlideNextStudioHistory || null,
+    getDocument: () => context.document || null,
+    getUndoStack: typeof context.getStudioUndoStack === 'function'
+      ? context.getStudioUndoStack
+      : () => context.undoStack || [],
+    getRedoStack: typeof context.getStudioRedoStack === 'function'
+      ? context.getStudioRedoStack
+      : () => context.redoStack || []
+  });
+}
+
 function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= studioPersistence;
   const resolveEditorMetadataPersistenceOptionsSource = extractFunctionSource(
@@ -212,13 +227,6 @@ function loadResolveEditorMetadataPersistenceOptions(fileContent, context) {
 }
 
 test('updateHistoryButtons delegates editor control rendering to shared history state', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateHistoryButtonsSource = extractFunctionSource(
-    fileContent,
-    'function updateHistoryButtons() {',
-    '\n\n    function editorUndo() {'
-  );
-
   let delegatedArgs = null;
   const context = {
     SlideNextStudioHistory: {
@@ -238,7 +246,7 @@ test('updateHistoryButtons delegates editor control rendering to shared history 
   };
 
   vm.createContext(context);
-  vm.runInContext(updateHistoryButtonsSource, context);
+  loadUpdateHistoryButtons(context);
 
   assert.deepEqual(context.updateHistoryButtons(), {
     undoDisabled: true,
@@ -250,27 +258,14 @@ test('updateHistoryButtons delegates editor control rendering to shared history 
 });
 
 test('updateHistoryButtons safely no-ops without the shared history runtime', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateHistoryButtonsSource = extractFunctionSource(
-    fileContent,
-    'function updateHistoryButtons() {',
-    '\n\n    function editorUndo() {'
-  );
-
   const context = {};
   vm.createContext(context);
-  vm.runInContext(updateHistoryButtonsSource, context);
+  loadUpdateHistoryButtons(context);
 
   assert.equal(context.updateHistoryButtons(), false);
 });
 
 test('updateHistoryButtons caches the shared history button synchronizer when available', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateHistoryButtonsSource = extractFunctionSource(
-    fileContent,
-    'function updateHistoryButtons() {',
-    '\n\n    function editorUndo() {'
-  );
   const calls = [];
   const documentRef = { id: 'editor-shell' };
   const context = {
@@ -298,7 +293,7 @@ test('updateHistoryButtons caches the shared history button synchronizer when av
   };
 
   vm.createContext(context);
-  vm.runInContext(updateHistoryButtonsSource, context);
+  loadUpdateHistoryButtons(context);
 
   assert.equal(context.updateHistoryButtons(), true);
   assert.equal(context.updateHistoryButtons(), true);
@@ -376,13 +371,6 @@ test('flushPendingEditorHistory captures pending canonical edits before stepping
 });
 
 test('updateHistoryButtons returns false when the shared history state is unavailable', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const updateHistoryButtonsSource = extractFunctionSource(
-    fileContent,
-    'function updateHistoryButtons() {',
-    '\n\n    function editorUndo() {'
-  );
-
   const context = {
     SlideNextStudioHistory: {},
     document: {
@@ -395,7 +383,7 @@ test('updateHistoryButtons returns false when the shared history state is unavai
   };
 
   vm.createContext(context);
-  vm.runInContext(updateHistoryButtonsSource, context);
+  loadUpdateHistoryButtons(context);
 
   assert.equal(context.updateHistoryButtons(), false);
 });
