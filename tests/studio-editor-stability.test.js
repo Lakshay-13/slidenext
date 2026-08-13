@@ -1062,7 +1062,9 @@ test('editor composes rectangle conversion through the shared transform module',
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorRectOnSlideReader =/);
+  assert.match(source, /const studioEditorRectOnSlideAdapter =/);
   assert.match(source, /getStudioRectOnSlide/);
+  assert.match(source, /typeof SlideNextStudioEditorRectOnSlideAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorRectOnSlideReader === 'function'/);
   assert.doesNotMatch(source, /getRectOnSlide\.reader/);
 });
@@ -1071,7 +1073,7 @@ test('getRectOnSlide delegates rectangle and metrics to the shared transform mod
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const rectOnSlideSource = extractFunctionSource(
     fileContent,
-    'const studioEditorRectOnSlideReader =',
+    'const studioEditorRectOnSlideAdapter =',
     '\n\n    function getPointerOnSlide(e, slideMetrics) {'
   );
   const rect = { left: 10, top: 20, width: 40, height: 30 };
@@ -1079,6 +1081,7 @@ test('getRectOnSlide delegates rectangle and metrics to the shared transform mod
   const calls = [];
   const converted = { left: 5, top: 7, width: 20, height: 10 };
   const context = {
+    SlideNextStudioEditorRectOnSlideAdapter: require('../shared/studio-editor-rect-on-slide-adapter.js'),
     SlideNextStudioEditorTransform: {
       getStudioRectOnSlide(rectValue, metricsValue) {
         calls.push([rectValue, metricsValue]);
@@ -1098,10 +1101,13 @@ test('getRectOnSlide fails closed when the shared transform module is unavailabl
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const rectOnSlideSource = extractFunctionSource(
     fileContent,
-    'const studioEditorRectOnSlideReader =',
+    'const studioEditorRectOnSlideAdapter =',
     '\n\n    function getPointerOnSlide(e, slideMetrics) {'
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorRectOnSlideAdapter: require('../shared/studio-editor-rect-on-slide-adapter.js'),
+    SlideNextStudioEditorTransform: null
+  };
 
   vm.createContext(context);
   vm.runInContext(rectOnSlideSource, context);

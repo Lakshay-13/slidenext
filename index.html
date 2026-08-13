@@ -1671,6 +1671,7 @@
   <script src="/shared/studio-editor-transform-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-positioned-layout-items-adapter.js"></script>
   <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
+  <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8841,10 +8842,22 @@
         : null;
     }
 
-    const studioEditorRectOnSlideReader = typeof SlideNextStudioEditorTransform !== 'undefined'
+    const studioEditorRectOnSlideAdapter = typeof SlideNextStudioEditorRectOnSlideAdapter !== 'undefined'
+      && SlideNextStudioEditorRectOnSlideAdapter
+      && typeof SlideNextStudioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide === 'function'
+      ? SlideNextStudioEditorRectOnSlideAdapter
+      : null;
+
+    const studioEditorRectOnSlideReader = studioEditorRectOnSlideAdapter
+      && typeof studioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide === 'function'
+      && typeof SlideNextStudioEditorTransform !== 'undefined'
       && SlideNextStudioEditorTransform
       && typeof SlideNextStudioEditorTransform.getStudioRectOnSlide === 'function'
-      ? (rect, slideMetrics) => SlideNextStudioEditorTransform.getStudioRectOnSlide(rect, slideMetrics)
+      ? (rect, slideMetrics) => studioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide(
+          rect,
+          slideMetrics,
+          { transformApi: SlideNextStudioEditorTransform }
+        )
       : null;
 
     function getRectOnSlide(rect, slideMetrics) {
