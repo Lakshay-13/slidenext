@@ -84,7 +84,7 @@
       let canonicalDeck = null;
       if (getPendingCanonicalDeck) {
         try {
-          const pendingCanonicalDeck = getPendingCanonicalDeck();
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
           canonicalDeck = pendingCanonicalDeck
             && Array.isArray(pendingCanonicalDeck.slides)
             ? pendingCanonicalDeck
@@ -321,7 +321,7 @@
       let canonicalDeckBaseline = null;
       if (getCanonicalDeckBaseline) {
         try {
-          canonicalDeckBaseline = getCanonicalDeckBaseline();
+          canonicalDeckBaseline = getCanonicalDeckBaseline(getCurrentDocument());
         } catch (error) {
           canonicalDeckBaseline = null;
         }

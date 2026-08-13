@@ -56,9 +56,13 @@ test('source history baseline capture prefers the live canonical deck', () => {
 test('source history baseline capture prefers pending canonical state before the live baseline', () => {
   const pendingDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending-slide' }] };
   const calls = [];
+  const sourceDocument = { id: 'live-frame' };
   const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
-    getCurrentDocument: () => ({ id: 'live-frame' }),
-    getPendingCanonicalDeck: () => pendingDeck,
+    getCurrentDocument: () => sourceDocument,
+    getPendingCanonicalDeck: (documentRef) => {
+      assert.equal(documentRef, sourceDocument);
+      return pendingDeck;
+    },
     getCanonicalDeckBaseline: () => {
       throw new Error('live baseline should not be needed');
     },
@@ -325,8 +329,13 @@ test('source controller blocks modal operations when deck actions are unavailabl
 
 test('source controller forwards the live canonical baseline to source application', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
+  const sourceDocument = { id: 'source-frame' };
   const { calls, controller } = createController({
-    getCanonicalDeckBaseline: () => canonicalDeckBaseline
+    getCurrentDocument: () => sourceDocument,
+    getCanonicalDeckBaseline: (documentRef) => {
+      assert.equal(documentRef, sourceDocument);
+      return canonicalDeckBaseline;
+    }
   });
 
   controller.applySourceHtml('<html></html>');
