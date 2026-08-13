@@ -383,6 +383,9 @@
       ? options.getSlideId
       : (slide) => slide && slide.id || '';
     const deletedSlideId = getSlideId(deletedSlide);
+    const createStudioSlidePresenceTransaction = typeof options.createStudioSlidePresenceTransaction === 'function'
+      ? options.createStudioSlidePresenceTransaction
+      : null;
     const buildCanonicalDeleteSlideBaseline = typeof options.buildCanonicalDeleteSlideBaseline === 'function'
       ? options.buildCanonicalDeleteSlideBaseline
       : null;
@@ -411,6 +414,20 @@
       : () => ({ didApply: false, transaction: null });
     const mutation = applyDeletion(container, deletedSlide);
     if (!mutation || !mutation.didApply) return false;
+    const slidePresenceTransaction = createStudioSlidePresenceTransaction
+      ? createStudioSlidePresenceTransaction([{
+          slideId: deletedSlideId,
+          before: {
+            exists: true,
+            index,
+            markup: typeof deletedSlide.outerHTML === 'string' ? deletedSlide.outerHTML : ''
+          },
+          after: { exists: false, index, markup: '' }
+        }])
+      : null;
+    const appliedMutation = slidePresenceTransaction
+      ? { ...mutation, transaction: slidePresenceTransaction }
+      : mutation;
 
     if (typeof options.generateThumbnails === 'function') {
       options.generateThumbnails();
@@ -436,12 +453,12 @@
       ? invokeStudioSlideCommandFinalizer(
           finalizeMutation,
           'Auto: Deleted Slide',
-          mutation.transaction,
+          appliedMutation.transaction,
           canonicalDeckAfterDeletion
         )
-      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Deleted Slide', mutation.transaction);
+      : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Deleted Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
       if (typeof options.generateThumbnails === 'function') {
         options.generateThumbnails();
       }

@@ -17,6 +17,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const deleteStudioSlideNode = slideCommandsApi
       && typeof slideCommandsApi.deleteStudioSlideNode === 'function'
       ? slideCommandsApi.deleteStudioSlideNode
@@ -65,6 +68,10 @@
     const rollbackMutation = typeof options.rollbackMutation === 'function'
       ? options.rollbackMutation
       : null;
+    const createStudioSlidePresenceTransaction = transactionApi
+      && typeof transactionApi.createStudioSlidePresenceTransaction === 'function'
+      ? transactionApi.createStudioSlidePresenceTransaction
+      : null;
 
     function remove(index) {
       if (!deleteStudioSlideNode) return false;
@@ -91,6 +98,7 @@
         alert,
         captureSlideMutationState,
         getSlideId,
+        createStudioSlidePresenceTransaction,
         buildCanonicalDeleteSlideBaseline: canonicalDeleteSlideBuilders
           ? canonicalDeleteSlideBuilders.buildCanonicalDeleteSlideBaseline
           : null,

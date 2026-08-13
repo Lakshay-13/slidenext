@@ -23,6 +23,9 @@ test('slide deletion controller assembles canonical and editor mutation dependen
       }
     },
     canonicalDeckApi: { id: 'canonical-api' },
+    transactionApi: {
+      createStudioSlidePresenceTransaction() {}
+    },
     getCanonicalDeckBaseline: () => liveCanonicalDeck,
     getIframeDoc: () => ({ id: 'doc' }),
     getSlides: () => [{ id: 'slide-1' }],
@@ -50,6 +53,7 @@ test('slide deletion controller assembles canonical and editor mutation dependen
   assert.equal(typeof calls[1][2].alert, 'function');
   assert.equal(typeof calls[1][2].captureSlideMutationState, 'function');
   assert.equal(typeof calls[1][2].getSlideId, 'function');
+  assert.equal(typeof calls[1][2].createStudioSlidePresenceTransaction, 'function');
   assert.equal(typeof calls[1][2].buildCanonicalDeleteSlideBaseline, 'function');
   assert.deepEqual(calls[1][2].buildCanonicalDeleteSlideDeck(), { slides: [] });
   assert.equal(typeof calls[1][2].applyDeletion, 'function');

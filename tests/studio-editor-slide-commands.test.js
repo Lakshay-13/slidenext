@@ -640,7 +640,10 @@ test('deleteStudioSlideNode preserves view state, canonical removal, and mutatio
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
   const firstSlide = { id: 'slide-1' };
-  const deletedSlide = { id: 'slide-2' };
+  const deletedSlide = {
+    id: 'slide-2',
+    outerHTML: '<section id="slide-2" class="slide"></section>'
+  };
   let slides = [firstSlide, deletedSlide];
   const calls = [];
 
@@ -723,6 +726,53 @@ test('deleteStudioSlideNode preserves view state, canonical removal, and mutatio
   ]);
 });
 
+test('deleteStudioSlideNode prefers a scoped slide-presence transaction when the removed slide is serializable', () => {
+  const doc = { id: 'editor-doc' };
+  const deletedSlide = {
+    id: 'slide-2',
+    outerHTML: '<section id="slide-2" class="slide">Removed</section>'
+  };
+  const firstSlide = { id: 'slide-1' };
+  let slides = [firstSlide, deletedSlide];
+  let finalizedTransaction = null;
+
+  const result = slideCommands.deleteStudioSlideNode(1, {
+    getIframeDoc: () => doc,
+    getSlideContainer: () => ({ id: 'slides-container' }),
+    getSlides: () => slides,
+    captureSlideMutationState: () => ({
+      preservedActiveSlideId: 'slide-2',
+      preservedSelectionIds: []
+    }),
+    getSlideId: (slide) => slide.id,
+    createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
+    applyDeletion: () => {
+      slides = [firstSlide];
+      return { didApply: true, transaction: { type: 'legacy-markup' } };
+    },
+    finalizeMutation: (label, transaction) => {
+      assert.equal(label, 'Auto: Deleted Slide');
+      finalizedTransaction = transaction;
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(finalizedTransaction, {
+    kind: 'slidenext.editor.transaction',
+    version: 1,
+    operations: [{
+      type: 'slide-presence',
+      slideId: 'slide-2',
+      before: {
+        exists: true,
+        index: 1,
+        markup: '<section id="slide-2" class="slide">Removed</section>'
+      },
+      after: { exists: false, index: 1, markup: '' }
+    }]
+  });
+});
+
 test('deleteStudioSlideNode fails closed before DOM removal when canonical deletion is unavailable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
@@ -777,7 +827,10 @@ test('deleteStudioSlideNode rolls back DOM and view state when persistence rejec
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
   const firstSlide = { id: 'slide-1' };
-  const deletedSlide = { id: 'slide-2' };
+  const deletedSlide = {
+    id: 'slide-2',
+    outerHTML: '<section id="slide-2" class="slide"></section>'
+  };
   let slides = [firstSlide, deletedSlide];
   const calls = [];
 
@@ -792,13 +845,15 @@ test('deleteStudioSlideNode rolls back DOM and view state when persistence rejec
     getSlideId: (slide) => slide.id,
     buildCanonicalDeleteSlideBaseline: () => ({ slides: [{ id: 'slide-1' }, { id: 'slide-2' }] }),
     buildCanonicalDeleteSlideDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    createStudioSlidePresenceTransaction: studioTransaction.createStudioSlidePresenceTransaction,
     applyDeletion: () => {
       slides = [firstSlide];
       return { didApply: true, transaction: { type: 'markup' } };
     },
     finalizeMutation: () => false,
     rollbackMutation: (transaction, sourceDoc) => {
-      assert.deepEqual(transaction, { type: 'markup' });
+      assert.equal(transaction.operations[0].type, 'slide-presence');
+      assert.equal(transaction.operations[0].slideId, 'slide-2');
       assert.equal(sourceDoc, doc);
       slides = [firstSlide, deletedSlide];
       calls.push('rollbackMutation');
