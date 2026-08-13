@@ -13,6 +13,7 @@ const canonicalGroup = require('../shared/studio-editor-canonical-group.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const groupController = require('../shared/studio-editor-group-controller.js');
+const groupState = require('../shared/studio-editor-group-state.js');
 const ungroupState = require('../shared/studio-editor-ungroup-state.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -97,6 +98,55 @@ function installUngroupStateController(context) {
     getActionState: typeof context.buildUngroupSelectionActionState === 'function'
       ? context.buildUngroupSelectionActionState
       : null
+  });
+}
+
+function installGroupStateController(context) {
+  context.SlideNextStudioEditorGroupState = groupState;
+  context.studioEditorGroupStateController = groupState.createStudioEditorGroupStateController({
+    groupApi: context.SlideNextStudioEditorGroup,
+    getDocument: () => typeof context.getIframeDoc === 'function'
+      ? context.getIframeDoc()
+      : context.doc || null,
+    getSelectedElements: (doc) => typeof context.getStudioSelectedElements === 'function'
+      ? context.getStudioSelectedElements(doc)
+      : Array.isArray(context.selectedElements) ? context.selectedElements : [],
+    getActiveSlide: context.getActiveSlide,
+    getLiveSelectedElements: context.getLiveSelectedElements,
+    getSlideMetrics: context.getSlideMetrics,
+    buildPositionedLayoutItems: (selection, options) => {
+      if (typeof context.buildEditorPositionedLayoutItems === 'function') {
+        return context.buildEditorPositionedLayoutItems(selection, options);
+      }
+      return context.SlideNextStudioEditorTransform
+        && typeof context.SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
+        ? context.SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems(selection, options)
+        : [];
+    },
+    getClosestPositionedAncestor: context.getEditorClosestPositionedAncestor
+      || (context.SlideNextStudioEditorDom
+        && context.SlideNextStudioEditorDom.getStudioClosestPositionedAncestor),
+    getRectOnSlide: context.getRectOnSlide,
+    getLockedState: (doc) => typeof context.getEditorCanonicalVisibilityReader === 'function'
+      && typeof context.buildEditorCanonicalDeck === 'function'
+      ? context.getEditorCanonicalVisibilityReader('locked', doc, context.isElementLocked)
+      : context.isElementLocked,
+    getFreeformPositioned: (doc) => typeof context.getEditorCanonicalFreeformReader === 'function'
+      ? context.getEditorCanonicalFreeformReader(
+          doc,
+          context.isElementFreeformPositioned
+            || (context.SlideNextStudioEditorTransform
+              && context.SlideNextStudioEditorTransform.isStudioFreeformPositioned)
+            || (() => false)
+        )
+      : context.isElementFreeformPositioned
+        || (context.SlideNextStudioEditorTransform
+          && context.SlideNextStudioEditorTransform.isStudioFreeformPositioned)
+        || (() => false),
+    isFreeformPositioned: context.isElementFreeformPositioned
+      || (context.SlideNextStudioEditorTransform
+        && context.SlideNextStudioEditorTransform.isStudioFreeformPositioned)
+      || (() => false)
   });
 }
 
@@ -272,6 +322,7 @@ test('buildGroupSelectionActionState requires a complete same-parent freeform se
     selectedElements: selection
   };
   vm.createContext(context);
+  installGroupStateController(context);
   vm.runInContext(source, context);
 
   const result = context.buildGroupSelectionActionState(doc);
@@ -298,6 +349,7 @@ test('buildGroupSelectionActionState fails closed before reading the document wh
   };
 
   vm.createContext(context);
+  installGroupStateController(context);
   vm.runInContext(source, context);
 
   assert.deepEqual(
@@ -345,6 +397,7 @@ test('buildGroupSelectionActionState fails closed when a shared group builder fa
   };
 
   vm.createContext(context);
+  installGroupStateController(context);
   vm.runInContext(source, context);
 
   assert.deepEqual(
@@ -401,16 +454,13 @@ test('buildGroupSelectionActionState delegates geometry orchestration to the sha
   };
 
   vm.createContext(context);
+  installGroupStateController(context);
   vm.runInContext(source, context);
 
   assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: true });
   assert.match(
     source,
-    /buildStudioGroupSelectionActionState\(getStudioSelectedElements\(resolvedDoc\),/
-  );
-  assert.match(
-    source,
-    /getLiveSelectedElements\(getStudioSelectedElements\(resolvedDoc\), resolvedDoc\)/
+    /studioEditorGroupStateController\.buildActionState\(doc\)/
   );
   assert.equal(delegatedOptions.elements, selection);
   assert.equal(delegatedOptions.options.doc, doc);
@@ -473,6 +523,7 @@ test('buildGroupSelectionActionState prefers canonical lock metadata for groupin
   };
 
   vm.createContext(context);
+  installGroupStateController(context);
   vm.runInContext(`${visibilityReaderSource}\n${source}`, context);
 
   assert.deepEqual(context.buildGroupSelectionActionState(doc), { canGroup: false });

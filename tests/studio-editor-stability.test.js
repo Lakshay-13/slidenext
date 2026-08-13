@@ -291,6 +291,11 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
     'function buildGroupSelectionActionState(doc = null) {',
     '\n\n    function updateGroupActionState'
   );
+  const groupStateControllerSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorGroupStateController =',
+    'const studioEditorUngroupStateController ='
+  );
 
   assert.match(
     controllerSource,
@@ -300,8 +305,8 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
     controllerSource,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\(/
   );
-  assert.match(groupActionStateSource, /getFreeformPositioned\(sourceDoc\)/);
-  assert.match(groupActionStateSource, /getEditorCanonicalFreeformReader\(/);
+  assert.match(groupStateControllerSource, /getFreeformPositioned: \(sourceDoc\) =>/);
+  assert.match(groupStateControllerSource, /getEditorCanonicalFreeformReader\(/);
   assert.doesNotMatch(
     controllerSource,
     /buildCanonicalDeck: \(sourceDoc\) => buildEditorMutationCanonicalDeck\(sourceDoc\)/
@@ -2042,7 +2047,7 @@ test('motion, alignment, and group action-state builders reuse composed editor s
   assert.doesNotMatch(alignmentSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
   assert.match(ungroupSource, /studioEditorUngroupStateController\.buildActionState/);
   assert.match(layerOrderSource, /studioEditorLayerOrderStateController\.buildActionState/);
-  assert.match(groupSource, /const closestPositionedAncestorResolver = typeof getEditorClosestPositionedAncestor === 'function'/);
+  assert.match(groupSource, /studioEditorGroupStateController\.buildActionState/);
   assert.doesNotMatch(groupSource, /SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/);
 });
 

@@ -1465,6 +1465,7 @@
     <script src="/shared/studio-editor-alignment-controller.js"></script>
     <script src="/shared/studio-editor-alignment-state.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
+  <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-ungroup-state.js"></script>
@@ -3501,6 +3502,31 @@
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
             : isElementLocked,
           documentRef: document
+        })
+      : null;
+    const studioEditorGroupStateController = typeof SlideNextStudioEditorGroupState !== 'undefined'
+      && SlideNextStudioEditorGroupState
+      && typeof SlideNextStudioEditorGroupState.createStudioEditorGroupStateController === 'function'
+      ? SlideNextStudioEditorGroupState.createStudioEditorGroupStateController({
+          groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
+            ? SlideNextStudioEditorGroup
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getLiveSelectedElements,
+          getSlideMetrics,
+          buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
+          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
+          getRectOnSlide,
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            && typeof buildEditorCanonicalDeck === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
+          getFreeformPositioned: (sourceDoc) => typeof getEditorCanonicalFreeformReader === 'function'
+            ? getEditorCanonicalFreeformReader(sourceDoc, isElementFreeformPositioned)
+            : isElementFreeformPositioned,
+          isFreeformPositioned: isElementFreeformPositioned
         })
       : null;
     const studioEditorUngroupStateController = typeof SlideNextStudioEditorUngroupState !== 'undefined'
@@ -9718,7 +9744,7 @@
       };
     }
 
-    function buildGroupSelectionActionState(doc = null) {
+    function buildLegacyGroupSelectionActionState(doc = null) {
       const buildDisabledGroupActionState = () => ({
         slide: null,
         selection: [],
@@ -9761,8 +9787,8 @@
           ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
           : () => false;
       if (groupApi && typeof groupApi.createStudioGroupSelectionActionStateBuilder === 'function') {
-        if (typeof buildGroupSelectionActionState.builder !== 'function') {
-          buildGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({
+        if (typeof buildLegacyGroupSelectionActionState.builder !== 'function') {
+          buildLegacyGroupSelectionActionState.builder = groupApi.createStudioGroupSelectionActionStateBuilder({
             getDocument: () => getIframeDoc(),
             getSelectedElements: (doc) => getStudioSelectedElements(doc),
             getActiveSlide,
@@ -9790,8 +9816,8 @@
             }
           });
         }
-        if (typeof buildGroupSelectionActionState.builder === 'function') {
-          return buildGroupSelectionActionState.builder(doc);
+        if (typeof buildLegacyGroupSelectionActionState.builder === 'function') {
+          return buildLegacyGroupSelectionActionState.builder(doc);
         }
       }
       const buildStudioGroupPlan = typeof groupApi.buildStudioGroupPlan === 'function'
@@ -9876,6 +9902,28 @@
           && groupPlan.canGroup
           && groupPlan.selection.length === selection.length)
       };
+    }
+
+    function buildGroupSelectionActionState(doc = null) {
+      if (studioEditorGroupStateController
+        && typeof studioEditorGroupStateController.buildActionState === 'function') {
+        return studioEditorGroupStateController.buildActionState(doc);
+      }
+      return typeof buildLegacyGroupSelectionActionState === 'function'
+        ? buildLegacyGroupSelectionActionState(doc)
+        : {
+            slide: null,
+            selection: [],
+            layoutItems: [],
+            parent: null,
+            groupPlan: {
+              canGroup: false,
+              selection: [],
+              bounds: null,
+              nextItems: []
+            },
+            canGroup: false
+          };
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
