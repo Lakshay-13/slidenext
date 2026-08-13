@@ -1658,6 +1658,7 @@
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8476,26 +8477,40 @@
       });
     }
 
-    const studioEditorSelectionStateCommitter = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.commitStudioSelectionState === 'function'
-      ? (nextSelectionState, options = {}) => SlideNextStudioEditorSelection.commitStudioSelectionState(
-          nextSelectionState,
-          {
-            ...getEditorSelectionOptions(),
-            applySelectionState: applyEditorSelectionState,
-            refreshSelectionClasses,
-            syncSelectionOverlay,
-            syncInspectorForSelection,
-            updateLayersList,
-            ...options
-          }
-        )
+    const studioEditorSelectionCommitAdapter = typeof SlideNextStudioEditorSelectionCommitAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionCommitAdapter
+      && typeof SlideNextStudioEditorSelectionCommitAdapter.commitStudioEditorSelectionState === 'function'
+      ? SlideNextStudioEditorSelectionCommitAdapter
       : null;
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {
-      if (typeof studioEditorSelectionStateCommitter !== 'function') return false;
-      return studioEditorSelectionStateCommitter(nextSelectionState, options);
+      const commitSelectionState = studioEditorSelectionCommitAdapter
+        && typeof studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState === 'function'
+        ? studioEditorSelectionCommitAdapter.commitStudioEditorSelectionState
+        : null;
+      if (!commitSelectionState) return false;
+      return commitSelectionState(nextSelectionState, {
+        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+          ? SlideNextStudioEditorSelection
+          : null,
+        getSelectionOptions: () => getEditorSelectionOptions(),
+        applySelectionState: typeof applyEditorSelectionState === 'function'
+          ? applyEditorSelectionState
+          : null,
+        refreshSelectionClasses: typeof refreshSelectionClasses === 'function'
+          ? refreshSelectionClasses
+          : null,
+        syncSelectionOverlay: typeof syncSelectionOverlay === 'function'
+          ? syncSelectionOverlay
+          : null,
+        syncInspectorForSelection: typeof syncInspectorForSelection === 'function'
+          ? syncInspectorForSelection
+          : null,
+        updateLayersList: typeof updateLayersList === 'function'
+          ? updateLayersList
+          : null,
+        commitOptions: options
+      });
     }
 
     const studioEditorSelectionRestorer = typeof SlideNextStudioEditorSelection !== 'undefined'

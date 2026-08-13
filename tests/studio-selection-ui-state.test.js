@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
 const selectionStateAdapter = require('../shared/studio-editor-selection-state-adapter.js');
+const selectionCommitAdapter = require('../shared/studio-editor-selection-commit-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -36,9 +37,10 @@ test('editor composes selection class refresh through the shared selection API',
 test('editor composes selection state commits through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionStateCommitter =/);
-  assert.match(source, /commitStudioSelectionState/);
-  assert.match(source, /if \(typeof studioEditorSelectionStateCommitter !== 'function'\)/);
+  assert.match(source, /const studioEditorSelectionCommitAdapter =/);
+  assert.match(source, /commitStudioEditorSelectionState/);
+  assert.match(source, /commitStudioEditorSelectionState/);
+  assert.match(source, /if \(!commitSelectionState\) return false/);
   assert.doesNotMatch(source, /commitEditorSelectionState\.committer/);
 });
 
@@ -228,9 +230,10 @@ function loadRefreshSelectionClasses(fileContent, context) {
 function loadCommitEditorSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
-    'const studioEditorSelectionStateCommitter =',
+    'const studioEditorSelectionCommitAdapter =',
     '\n\n    function restoreSelectionByIdsOnActiveSlide(selectedIds, doc = getIframeDoc()) {'
   );
+  context.SlideNextStudioEditorSelectionCommitAdapter = selectionCommitAdapter;
   vm.runInContext(helperSource, context);
 }
 
