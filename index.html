@@ -1657,6 +1657,7 @@
   <script src="/shared/studio-editor-frame-shell-runtime.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
+  <script src="/shared/studio-editor-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -8450,22 +8451,29 @@
         )
       : null;
 
-    const studioEditorSelectionStateNormalizer = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.normalizeStudioSelectionState === 'function'
-      ? (nextState) => SlideNextStudioEditorSelection.normalizeStudioSelectionState(
-          nextState,
-          getEditorSelectionOptions()
-        )
+    const studioEditorSelectionStateAdapter = typeof SlideNextStudioEditorSelectionStateAdapter !== 'undefined'
+      && SlideNextStudioEditorSelectionStateAdapter
+      && typeof SlideNextStudioEditorSelectionStateAdapter.applyStudioEditorSelectionState === 'function'
+      ? SlideNextStudioEditorSelectionStateAdapter
       : null;
 
     function applyEditorSelectionState(nextState = {}) {
-      if (typeof studioEditorSelectionStateNormalizer !== 'function') {
+      const applySelectionState = studioEditorSelectionStateAdapter
+        && typeof studioEditorSelectionStateAdapter.applyStudioEditorSelectionState === 'function'
+        ? studioEditorSelectionStateAdapter.applyStudioEditorSelectionState
+        : null;
+      if (!applySelectionState) {
         clearStudioSelectionState();
         return false;
       }
-      setStudioSelectionState(studioEditorSelectionStateNormalizer(nextState));
-      return true;
+      return applySelectionState(nextState, {
+        selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+          ? SlideNextStudioEditorSelection
+          : null,
+        getSelectionOptions: () => getEditorSelectionOptions(),
+        setSelectionState: (selectionState) => setStudioSelectionState(selectionState),
+        clearSelectionState: () => clearStudioSelectionState()
+      });
     }
 
     const studioEditorSelectionStateCommitter = typeof SlideNextStudioEditorSelection !== 'undefined'

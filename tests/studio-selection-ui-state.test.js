@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const selection = require('../shared/studio-editor-selection.js');
+const selectionStateAdapter = require('../shared/studio-editor-selection-state-adapter.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -17,9 +18,9 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 test('editor composes selection state normalization through the shared selection API', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionStateNormalizer =/);
-  assert.match(source, /normalizeStudioSelectionState/);
-  assert.match(source, /if \(typeof studioEditorSelectionStateNormalizer !== 'function'\)/);
+  assert.match(source, /const studioEditorSelectionStateAdapter =/);
+  assert.match(source, /applyStudioEditorSelectionState/);
+  assert.match(source, /if \(!applySelectionState\)/);
   assert.doesNotMatch(source, /applyEditorSelectionState\.normalizer/);
 });
 
@@ -656,8 +657,7 @@ test('applyEditorSelectionState keeps only connected selections on the active sl
 
   vm.createContext(context);
   vm.runInContext(getEditorSelectionOptionsSource, context);
-  context.studioEditorSelectionStateNormalizer = (nextState) => context.SlideNextStudioEditorSelection
-    .normalizeStudioSelectionState(nextState, context.getEditorSelectionOptions());
+  context.studioEditorSelectionStateAdapter = selectionStateAdapter;
   vm.runInContext(applyEditorSelectionStateSource, context);
 
   context.applyEditorSelectionState({
@@ -688,8 +688,9 @@ test('applyEditorSelectionState clears local selection when the shared selection
     selectedElements: [staleElement],
     selectedElement: staleElement,
     SlideNextStudioEditorSelection: null,
-    studioEditorSelectionStateNormalizer: null
+    studioEditorSelectionStateAdapter: selectionStateAdapter
   };
+  context.SlideNextStudioEditorSelectionStateAdapter = null;
   installSelectionAccessors(context);
 
   vm.createContext(context);
