@@ -1769,6 +1769,7 @@
   <script src="/shared/studio-editor-version-delete-controller.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
+  <script src="/shared/studio-editor-version-history-controller.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
@@ -5891,6 +5892,31 @@
           resetVersionUiState: resetStudioVersionUiState,
           resetSaveButtonState: resetStudioSaveButtonState,
           updateDeckReadyToolbarActionState
+        })
+      : null;
+    const studioEditorVersionHistoryController = typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
+      && SlideNextStudioEditorVersionHistoryController
+      && typeof SlideNextStudioEditorVersionHistoryController.createStudioEditorVersionHistoryController === 'function'
+      ? SlideNextStudioEditorVersionHistoryController.createStudioEditorVersionHistoryController({
+          versionHistoryApi: typeof SlideNextStudioVersionHistory !== 'undefined'
+            ? SlideNextStudioVersionHistory
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken,
+          createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
+          loadVersionHistory: typeof SlideNextStudioVersionHistory !== 'undefined'
+            && typeof SlideNextStudioVersionHistory.loadStudioVersionHistory === 'function'
+            ? SlideNextStudioVersionHistory.loadStudioVersionHistory
+            : null,
+          beforeLoad: (requestedPresentationUrl) => {
+            if (requestedPresentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
+              renderVersionHistoryLoadingState();
+            }
+          },
+          reportLoadError: (error) => {
+            console.error('Failed to load version history:', error);
+            renderVersionHistoryLoadError();
+          }
         })
       : null;
     const studioEditorPresentationMetadataController = studioEditorSessionRuntime
@@ -11253,50 +11279,10 @@
     }
 
     async function loadVersions(presentationUrl = getStudioCurrentPresentationUrl(), sessionToken = getStudioEditorSessionToken()) {
-      const createStudioVersionHistoryLoader = (
-        typeof SlideNextStudioVersionHistory !== 'undefined'
-        && SlideNextStudioVersionHistory
-        && typeof SlideNextStudioVersionHistory.createStudioVersionHistoryLoader === 'function'
-      )
-        ? SlideNextStudioVersionHistory.createStudioVersionHistoryLoader
-        : null;
-      if (createStudioVersionHistoryLoader) {
-        return createStudioVersionHistoryLoader({
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          getSessionToken: getStudioEditorSessionToken,
-          createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
-          loadVersionHistory: (
-            typeof SlideNextStudioVersionHistory !== 'undefined'
-            && SlideNextStudioVersionHistory
-            && typeof SlideNextStudioVersionHistory.loadStudioVersionHistory === 'function'
-          )
-            ? SlideNextStudioVersionHistory.loadStudioVersionHistory
-            : null,
-          beforeLoad: (requestedPresentationUrl) => {
-            if (requestedPresentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
-              renderVersionHistoryLoadingState();
-            }
-          },
-          reportLoadError: (error) => {
-            console.error('Failed to load version history:', error);
-            renderVersionHistoryLoadError();
-          }
-        })(presentationUrl, sessionToken);
-      }
-
-      if (!presentationUrl) return;
-      if (typeof renderVersionHistoryLoadingState === 'function') {
-        renderVersionHistoryLoadingState();
-      }
-      try {
-        await SlideNextStudioVersionHistory.loadStudioVersionHistory(
-          presentationUrl,
-          createCurrentStudioVersionHistoryLoadOptions(presentationUrl, sessionToken)
-        );
-      } catch (err) {
-        console.error('Failed to load version history:', err);
-        renderVersionHistoryLoadError();
-      }
+      return studioEditorVersionHistoryController
+        && typeof studioEditorVersionHistoryController.load === 'function'
+        ? studioEditorVersionHistoryController.load(presentationUrl, sessionToken)
+        : undefined;
     }
 
     // Rollback backup version

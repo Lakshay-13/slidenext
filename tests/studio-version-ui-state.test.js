@@ -8,6 +8,7 @@ const modalVisibility = require('../shared/studio-modal-visibility.js');
 const editorSession = require('../shared/studio-editor-session.js');
 const versionActions = require('../shared/studio-version-actions.js');
 const versionHistory = require('../shared/studio-version-history.js');
+const versionHistoryController = require('../shared/studio-editor-version-history-controller.js');
 const versionView = require('../shared/studio-version-view.js');
 const versionRestoreController = require('../shared/studio-editor-version-restore-controller.js');
 const versionDeleteController = require('../shared/studio-editor-version-delete-controller.js');
@@ -16,6 +17,30 @@ const sessionTokenFixture = require('./helpers/studio-session-token-fixture.js')
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+function createVersionHistoryControllerForContext(context) {
+  return versionHistoryController.createStudioEditorVersionHistoryController({
+    versionHistoryApi: context.SlideNextStudioVersionHistory,
+    getPresentationUrl: () => context.currentPresentationUrl,
+    getSessionToken: () => context.studioEditorSessionToken,
+    createLoadOptions: context.createCurrentStudioVersionHistoryLoadOptions,
+    loadVersionHistory: context.SlideNextStudioVersionHistory
+      && context.SlideNextStudioVersionHistory.loadStudioVersionHistory,
+    beforeLoad: (presentationUrl) => {
+      if (presentationUrl && typeof context.renderVersionHistoryLoadingState === 'function') {
+        context.renderVersionHistoryLoadingState();
+      }
+    },
+    reportLoadError: (error) => {
+      if (context.console && typeof context.console.error === 'function') {
+        context.console.error('Failed to load version history:', error);
+      }
+      if (typeof context.renderVersionHistoryLoadError === 'function') {
+        context.renderVersionHistoryLoadError();
+      }
+    }
+  });
+}
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -2732,6 +2757,7 @@ test('loadVersions reuses the shared session reader helper when delegating to th
   vm.createContext(context);
   loadCreateCurrentStudioSessionReaderOptions(fileContent, context);
   vm.runInContext(helperSource, context);
+  context.studioEditorVersionHistoryController = createVersionHistoryControllerForContext(context);
   vm.runInContext(loadVersionsSource, context);
 
   await context.loadVersions(
@@ -2802,6 +2828,7 @@ test('loadVersions reuses the shared version-history loader when available', asy
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);
+  context.studioEditorVersionHistoryController = createVersionHistoryControllerForContext(context);
   vm.runInContext(loadVersionsSource, context);
 
   assert.deepEqual(
@@ -2868,6 +2895,7 @@ test('loadVersions renders an error state when the shared version-history loader
 
   vm.createContext(context);
   vm.runInContext(helperSource, context);
+  context.studioEditorVersionHistoryController = createVersionHistoryControllerForContext(context);
   vm.runInContext(loadVersionsSource, context);
 
   await context.loadVersions(
