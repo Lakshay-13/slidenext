@@ -1477,6 +1477,7 @@
   <script src="/shared/studio-editor-layout-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-canvas.js"></script>
+  <script src="/shared/studio-editor-canvas-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ruler-view.js"></script>
   <script src="/shared/studio-editor-zoom.js"></script>
   <script src="/shared/studio-editor-zoom-controller.js"></script>
@@ -7223,10 +7224,15 @@
     }
 
     // Initialize Frame Hooks
-    const studioEditorCanvasSynchronizer = typeof SlideNextStudioEditorCanvas !== 'undefined'
-      && SlideNextStudioEditorCanvas
-      && typeof SlideNextStudioEditorCanvas.createStudioCanvasDimensionsSynchronizer === 'function'
-      ? SlideNextStudioEditorCanvas.createStudioCanvasDimensionsSynchronizer({
+    const studioEditorCanvasShellRuntimeApi = typeof SlideNextStudioEditorCanvasShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorCanvasShellRuntime
+      : null;
+    const studioEditorCanvasShellRuntime = studioEditorCanvasShellRuntimeApi
+      && typeof studioEditorCanvasShellRuntimeApi.createStudioEditorCanvasShellRuntime === 'function'
+      ? studioEditorCanvasShellRuntimeApi.createStudioEditorCanvasShellRuntime({
+          canvasApi: typeof SlideNextStudioEditorCanvas !== 'undefined'
+            ? SlideNextStudioEditorCanvas
+            : null,
           getDocumentRef: () => document,
           getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
             ? resolveEditorUiCanonicalDeck(getIframeDoc())
@@ -7240,8 +7246,10 @@
       : null;
 
     function syncStudioEditorCanvasDimensions() {
-      if (typeof studioEditorCanvasSynchronizer === 'function') {
-        return studioEditorCanvasSynchronizer();
+      if (typeof studioEditorCanvasShellRuntime !== 'undefined'
+        && studioEditorCanvasShellRuntime
+        && typeof studioEditorCanvasShellRuntime.sync === 'function') {
+        return studioEditorCanvasShellRuntime.sync();
       }
       const canvasApi = typeof SlideNextStudioEditorCanvas !== 'undefined'
         ? SlideNextStudioEditorCanvas
