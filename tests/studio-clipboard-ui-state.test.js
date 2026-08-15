@@ -11,6 +11,7 @@ const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardToolbarState = require('../shared/studio-editor-clipboard-state.js');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
+const clipboardSelectionController = require('../shared/studio-editor-clipboard-selection-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -58,6 +59,7 @@ function extractClipboardActionFinalizerSource(fileContent) {
 }
 
 function installClipboardController(context) {
+  installClipboardSelectionController(context);
   context.studioEditorClipboardController = clipboardController.createStudioEditorClipboardController({
     clipboardApi: context.SlideNextStudioEditorClipboard,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
@@ -77,10 +79,25 @@ function installClipboardController(context) {
   });
 }
 
+function installClipboardSelectionController(context) {
+  context.studioEditorClipboardSelectionController = clipboardSelectionController
+    .createStudioEditorClipboardSelectionController({
+      clipboardApi: context.SlideNextStudioEditorClipboard,
+      getIframeDoc: context.getIframeDoc,
+      getActiveSlide: context.getActiveSlide,
+      getSelectedElements: context.getStudioSelectedElements,
+      getClipboard: () => context.editorClipboard,
+      isElementLocked: context.isElementLocked,
+      getCanonicalVisibilityReader: context.getEditorCanonicalVisibilityReader,
+      buildPayload: context.buildClipboardPayload
+    });
+}
+
 function runClipboardActionStateSource(source, context) {
   context.SlideNextStudioEditorClipboardState = clipboardToolbarState;
   vm.createContext(context);
   vm.runInContext(source, context);
+  installClipboardSelectionController(context);
 }
 
 function createControls() {
@@ -141,6 +158,7 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
 
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+  installClipboardSelectionController(context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
     canCopy: true,
@@ -149,13 +167,9 @@ test('buildClipboardSelectionMutationPlan reuses the current selection, clipboar
     payloadItems,
     canBuildPayload: true
   });
-  assert.match(
+  assert.doesNotMatch(
     buildClipboardSelectionMutationPlanSource,
-    /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(resolvedDoc\),/
-  );
-  assert.match(
-    buildClipboardSelectionMutationPlanSource,
-    /buildStudioClipboardMutationPlan\(\s*getStudioSelectedElements\(resolvedDoc\),/
+    /buildStudioClipboard(?:Selection)?MutationPlan\(/
   );
   assert.deepEqual(calls, [
     ['getIframeDoc', { activeSlide: { id: 'slide-1' } }],
@@ -216,6 +230,7 @@ test('buildClipboardSelectionMutationPlan reuses the shared clipboard selection 
 
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+  installClipboardSelectionController(context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
     selection,
@@ -276,6 +291,7 @@ test('buildClipboardSelectionMutationPlan disables copy and duplicate for canoni
 
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+  installClipboardSelectionController(context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
     selection: [selectedElement],
@@ -294,6 +310,7 @@ test('buildClipboardSelectionMutationPlan fails closed when the shared clipboard
 
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+  installClipboardSelectionController(context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(
     context.buildClipboardSelectionMutationPlan({})
@@ -1387,6 +1404,7 @@ test('buildClipboardSelectionMutationPlan disables copy and duplicate when the s
 
   vm.createContext(context);
   vm.runInContext(buildClipboardSelectionMutationPlanSource, context);
+  installClipboardSelectionController(context);
 
   assert.deepEqual(JSON.parse(JSON.stringify(context.buildClipboardSelectionMutationPlan())), {
     canCopy: false,

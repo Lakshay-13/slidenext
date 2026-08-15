@@ -10222,63 +10222,13 @@
         && typeof studioEditorClipboardSelectionController.build === 'function') {
         return studioEditorClipboardSelectionController.build(doc);
       }
-      const resolvedDoc = doc || getIframeDoc();
-      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
-        ? SlideNextStudioEditorClipboard
-        : null;
-      const fallbackLockedReader = typeof isElementLocked === 'function'
-        ? isElementLocked
-        : () => false;
-      const readLockedState = getEditorCanonicalVisibilityReader(
-        'locked',
-        resolvedDoc,
-        fallbackLockedReader
-      );
-      const buildStudioClipboardSelectionMutationPlan = (
-        clipboardApi
-        && typeof clipboardApi.buildStudioClipboardSelectionMutationPlan === 'function'
-      )
-        ? clipboardApi.buildStudioClipboardSelectionMutationPlan
-        : null;
-      if (buildStudioClipboardSelectionMutationPlan) {
-        return buildStudioClipboardSelectionMutationPlan(getStudioSelectedElements(resolvedDoc), getStudioEditorClipboard(), {
-          isLocked: readLockedState,
-          canMutateDeck: () => !!getActiveSlide(resolvedDoc),
-          buildPayloadItems(selection) {
-            return buildClipboardPayload(selection, resolvedDoc);
-          }
-        });
-      }
-
-      if (!clipboardApi || typeof clipboardApi.buildStudioClipboardMutationPlan !== 'function') {
-        return {
-          selection: [],
-          canCopy: false,
-          canDuplicate: false,
-          canPaste: false,
-          payloadItems: [],
-          canBuildPayload: false
-        };
-      }
-      const clipboardMutationPlan = clipboardApi.buildStudioClipboardMutationPlan(
-        getStudioSelectedElements(resolvedDoc),
-        getStudioEditorClipboard(),
-        {
-          isLocked: readLockedState,
-          canMutateDeck: () => !!getActiveSlide(resolvedDoc)
-        }
-      );
-      const payloadItems = (clipboardMutationPlan.canCopy || clipboardMutationPlan.canDuplicate)
-        ? buildClipboardPayload(clipboardMutationPlan.selection, resolvedDoc)
-        : [];
-      const canBuildPayload = payloadItems.length > 0;
-
       return {
-        ...clipboardMutationPlan,
-        payloadItems,
-        canBuildPayload,
-        canCopy: clipboardMutationPlan.canCopy && canBuildPayload,
-        canDuplicate: clipboardMutationPlan.canDuplicate && canBuildPayload
+        selection: [],
+        canCopy: false,
+        canDuplicate: false,
+        canPaste: false,
+        payloadItems: [],
+        canBuildPayload: false
       };
     }
 

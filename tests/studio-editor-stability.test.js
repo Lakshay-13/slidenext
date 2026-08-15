@@ -2047,6 +2047,18 @@ test('clipboard insertion construction routes through the shared insertion contr
   assert.doesNotMatch(insertionSource, /buildStudioClipboardInsertionPlan/);
 });
 
+test('clipboard selection planning routes through the shared selection controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const selectionSource = extractFunctionSource(
+    fileContent,
+    'function buildClipboardSelectionMutationPlan(doc = null) {',
+    '\n\n    function finalizeClipboardActionResult(result) {'
+  );
+
+  assert.match(selectionSource, /studioEditorClipboardSelectionController\.build\(doc\)/);
+  assert.doesNotMatch(selectionSource, /buildStudioClipboard(?:Selection)?MutationPlan\(/);
+});
+
 test('editor runtime wiring uses the composed positioned-ancestor resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runtimeSource = extractFunctionSource(

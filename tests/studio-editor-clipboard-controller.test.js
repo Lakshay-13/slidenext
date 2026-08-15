@@ -39,7 +39,7 @@ test('editor routes clipboard reads through the clipboard controller', () => {
   assert.match(source, /clipboardView,/);
   assert.match(source, /syncBlockState: \(sourceDoc\) => updateBlockActionState\(sourceDoc\)/);
   assert.match(stateSource, /getClipboard\(doc\)/);
-  assert.match(source, /buildStudioClipboardSelectionMutationPlan\(getStudioSelectedElements\(resolvedDoc\), getStudioEditorClipboard\(\)/);
+  assert.match(source, /studioEditorClipboardSelectionController\.build\(doc\)/);
   assert.match(source, /studioEditorClipboardGlobalApi/);
   assert.match(source, /Object\.assign\(globalThis, studioEditorClipboardGlobalApi\)/);
   assert.match(
