@@ -1577,6 +1577,7 @@
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-playback-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
@@ -5858,13 +5859,19 @@
       ? studioEditorReusablePersistedHtmlSanitizerShellRuntime.reusablePersistedHtmlSanitizerGlobalApi
       : {};
     Object.assign(globalThis, studioEditorReusablePersistedHtmlSanitizerGlobalApi);
-    const studioEditorPersistedDeckPlaybackStateAction =
-      typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckPlaybackStateAction
-      && typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction
-        .createStudioEditorPersistedDeckPlaybackStateAction === 'function'
-      ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
-        .createStudioEditorPersistedDeckPlaybackStateAction({
+    const studioEditorPersistedDeckPlaybackStateShellRuntimeApi =
+      typeof SlideNextStudioEditorPersistedDeckPlaybackStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorPersistedDeckPlaybackStateShellRuntime
+      : null;
+    const studioEditorPersistedDeckPlaybackStateShellRuntime =
+      studioEditorPersistedDeckPlaybackStateShellRuntimeApi
+      && typeof studioEditorPersistedDeckPlaybackStateShellRuntimeApi
+        .createStudioEditorPersistedDeckPlaybackStateShellRuntime === 'function'
+      ? studioEditorPersistedDeckPlaybackStateShellRuntimeApi
+        .createStudioEditorPersistedDeckPlaybackStateShellRuntime({
+          actionApi: typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
+            : null,
           getDocument: getIframeDoc,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -5882,15 +5889,13 @@
           resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId
         })
       : null;
-    const studioEditorPersistedDeckPlaybackStateGlobalApi =
-      typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckPlaybackStateAction
-      && typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction
-        .createStudioEditorPersistedDeckPlaybackStateGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
-        .createStudioEditorPersistedDeckPlaybackStateGlobalApi({
-          capturePersistedDeckPlaybackState: studioEditorPersistedDeckPlaybackStateAction
-        })
+    const studioEditorPersistedDeckPlaybackStateAction = studioEditorPersistedDeckPlaybackStateShellRuntime
+      && studioEditorPersistedDeckPlaybackStateShellRuntime.isAvailable === true
+      ? studioEditorPersistedDeckPlaybackStateShellRuntime.persistedDeckPlaybackStateAction
+      : null;
+    const studioEditorPersistedDeckPlaybackStateGlobalApi = studioEditorPersistedDeckPlaybackStateShellRuntime
+      && studioEditorPersistedDeckPlaybackStateShellRuntime.isAvailable === true
+      ? studioEditorPersistedDeckPlaybackStateShellRuntime.persistedDeckPlaybackStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckPlaybackStateGlobalApi);
     const studioEditorPersistableDeckBuildStateAction =
