@@ -1728,6 +1728,7 @@
   <script src="/shared/studio-editor-history-restore-action.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-editor-element-snapshot-controller.js"></script>
+  <script src="/shared/studio-editor-element-snapshot-accessors.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
@@ -2768,6 +2769,34 @@
       && SlideNextStudioEditorElementSnapshotController
       && typeof SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController === 'function'
       ? SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController({
+          snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
+            ? SlideNextStudioElementSnapshot
+            : null,
+          getElementId: assignEditorElementId,
+          isElementLocked,
+          isElementHidden,
+          isSelectedElement: candidate => {
+            const isStudioLiveSelectedElement = (
+              typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+              && SlideNextStudioEditorLiveSelection
+              && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
+            )
+              ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+              : null;
+            return isStudioLiveSelectedElement
+              ? isStudioLiveSelectedElement(
+                getStudioSelectedElements(candidate && candidate.ownerDocument),
+                candidate
+              )
+              : false;
+          }
+        })
+      : null;
+    const studioEditorElementSnapshotAccessors = typeof SlideNextStudioEditorElementSnapshotAccessors !== 'undefined'
+      && SlideNextStudioEditorElementSnapshotAccessors
+      && typeof SlideNextStudioEditorElementSnapshotAccessors.createStudioEditorElementSnapshotAccessors === 'function'
+      ? SlideNextStudioEditorElementSnapshotAccessors.createStudioEditorElementSnapshotAccessors({
+          controller: studioEditorElementSnapshotController,
           snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
             ? SlideNextStudioElementSnapshot
             : null,
@@ -8236,6 +8265,11 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
+      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        && studioEditorElementSnapshotAccessors
+        && typeof studioEditorElementSnapshotAccessors.getDisplayMetadata === 'function') {
+        return studioEditorElementSnapshotAccessors.getDisplayMetadata(el);
+      }
       if (typeof studioEditorElementSnapshotController !== 'undefined'
         && studioEditorElementSnapshotController
         && typeof studioEditorElementSnapshotController.getDisplayMetadata === 'function') {
@@ -8258,6 +8292,11 @@
     }
 
     function buildEditorElementSnapshot(el) {
+      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        && studioEditorElementSnapshotAccessors
+        && typeof studioEditorElementSnapshotAccessors.build === 'function') {
+        return studioEditorElementSnapshotAccessors.build(el);
+      }
       if (typeof studioEditorElementSnapshotController !== 'undefined'
         && studioEditorElementSnapshotController
         && typeof studioEditorElementSnapshotController.build === 'function') {
@@ -8334,6 +8373,13 @@
     }
 
     function buildEditorLayerSnapshot(slide) {
+      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        && studioEditorElementSnapshotAccessors
+        && typeof studioEditorElementSnapshotAccessors.buildLayer === 'function') {
+        return studioEditorElementSnapshotAccessors.buildLayer(
+          getNormalizedSlideLayerOrder(slide)
+        );
+      }
       if (typeof studioEditorElementSnapshotController !== 'undefined'
         && studioEditorElementSnapshotController
         && typeof studioEditorElementSnapshotController.buildLayer === 'function') {
