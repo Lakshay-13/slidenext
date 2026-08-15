@@ -1170,7 +1170,18 @@
     return function finalizeStudioTransformSession(finalizeResult, completionPlan = {}) {
       onSessionEnd(finalizeResult, completionPlan);
       if (!completionPlan || !completionPlan.shouldPersist) return;
-      const transaction = buildTransaction(finalizeResult);
+      let transaction = null;
+      try {
+        transaction = buildTransaction(finalizeResult);
+      } catch (error) {
+        restoreStudioTransformSessionStyles(finalizeResult && finalizeResult.session);
+        try {
+          onHistoryFailure({ finalizeResult, completionPlan, transaction, error });
+        } catch (rollbackError) {
+          // Keep transaction construction failures contained when rollback is unavailable.
+        }
+        return false;
+      }
       let canonicalDeck = null;
       if (buildCanonicalDeck) {
         try {

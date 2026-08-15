@@ -253,6 +253,49 @@ test('createStudioTransformSessionFinalizer rolls back when history capture thro
   assert.deepEqual(calls, ['transaction', 'history', 'rollback']);
 });
 
+test('createStudioTransformSessionFinalizer restores styles when transaction construction throws', () => {
+  const element = {
+    style: {
+      position: 'relative',
+      margin: '8px',
+      left: '10px',
+      top: '20px',
+      width: '100px',
+      height: '50px'
+    }
+  };
+  const startStyle = { ...element.style };
+  const calls = [];
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction() {
+      throw new Error('transaction unavailable');
+    },
+    onHistoryFailure(details) {
+      calls.push(['rollback', details.transaction, details.error.message]);
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      calls.push('version');
+    }
+  });
+
+  element.style.position = 'absolute';
+  element.style.margin = '0';
+  element.style.left = '90px';
+  element.style.top = '100px';
+  const result = finalizeSession({
+    session: {
+      items: [{ element, startStyle }]
+    }
+  }, { shouldPersist: true });
+
+  assert.equal(result, false);
+  assert.deepEqual(element.style, startStyle);
+  assert.deepEqual(calls, [['rollback', null, 'transaction unavailable']]);
+});
+
 test('createStudioTransformSessionFinalizer forwards an optional canonical deck sidecar', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
