@@ -215,6 +215,25 @@ test('applyStudioWallpaperToSlides updates changed slides and builds a style tra
   assert.deepEqual(result.transaction, { type: 'style', items: transactionItems });
 });
 
+test('applyStudioWallpaperToSlides restores backgrounds when transaction creation fails', () => {
+  const activeSlide = { style: { background: 'black' } };
+  const siblingSlide = { style: { background: 'white' } };
+
+  const result = wallpaperView.applyStudioWallpaperToSlides(
+    [activeSlide, siblingSlide],
+    'linear-gradient(red, blue)',
+    {
+      createStyleTransaction() {
+        throw new Error('history transaction failed');
+      }
+    }
+  );
+
+  assert.deepEqual(result, { didChange: false, changedCount: 0, transaction: null });
+  assert.equal(activeSlide.style.background, 'black');
+  assert.equal(siblingSlide.style.background, 'white');
+});
+
 test('applyStudioWallpaperToSlides reports no change when every slide matches', () => {
   const slides = [{ style: { background: 'black' } }];
   assert.deepEqual(
