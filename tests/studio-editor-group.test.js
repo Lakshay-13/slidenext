@@ -27,7 +27,13 @@ test('editor forwards the group and ungroup documents into the selection reader'
   );
   assert.match(
     source,
-    /const studioEditorUngroupStateController =[\s\S]+?createStudioEditorUngroupStateController\(\{[\s\S]+?getDocument: \(\) => getIframeDoc\(\),[\s\S]+?getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\),/
+    /<script src="\/shared\/studio-editor-ungroup-state-shell-runtime\.js"><\/script>/
+  );
+  assert.match(source, /studioEditorUngroupStateShellRuntimeApi/);
+  assert.match(source, /createStudioEditorUngroupStateShellRuntime/);
+  assert.match(
+    source,
+    /studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime/
   );
   assert.match(
     source,

@@ -1477,6 +1477,7 @@
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-ungroup-state.js"></script>
+  <script src="/shared/studio-editor-ungroup-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ungroup-transaction.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
@@ -3801,10 +3802,18 @@
       && studioEditorGroupStateShellRuntime.isAvailable === true
       ? studioEditorGroupStateShellRuntime.groupStateController
       : null;
-    const studioEditorUngroupStateController = typeof SlideNextStudioEditorUngroupState !== 'undefined'
-      && SlideNextStudioEditorUngroupState
-      && typeof SlideNextStudioEditorUngroupState.createStudioEditorUngroupStateController === 'function'
-      ? SlideNextStudioEditorUngroupState.createStudioEditorUngroupStateController({
+    const studioEditorUngroupStateShellRuntimeApi =
+      typeof SlideNextStudioEditorUngroupStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorUngroupStateShellRuntime
+      : null;
+    const studioEditorUngroupStateShellRuntime = studioEditorUngroupStateShellRuntimeApi
+      && typeof studioEditorUngroupStateShellRuntimeApi
+        .createStudioEditorUngroupStateShellRuntime === 'function'
+      ? studioEditorUngroupStateShellRuntimeApi
+        .createStudioEditorUngroupStateShellRuntime({
+          ungroupStateApi: typeof SlideNextStudioEditorUngroupState !== 'undefined'
+            ? SlideNextStudioEditorUngroupState
+            : null,
           groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
             ? SlideNextStudioEditorGroup
             : null,
@@ -3814,6 +3823,10 @@
           getLiveSelectedElements,
           isEditorGroupElement
         })
+      : null;
+    const studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime
+      && studioEditorUngroupStateShellRuntime.isAvailable === true
+      ? studioEditorUngroupStateShellRuntime.ungroupStateController
       : null;
     const studioEditorLayerOrderStateController = typeof SlideNextStudioEditorLayerOrderState !== 'undefined'
       && SlideNextStudioEditorLayerOrderState
