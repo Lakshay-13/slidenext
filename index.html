@@ -1348,6 +1348,7 @@
   <script src="/shared/studio-editor-canonical-node-adapter.js"></script>
   <script src="/shared/studio-editor-canonical-reader-adapter.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-adapter.js"></script>
+  <script src="/shared/studio-editor-canonical-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-bridge.js"></script>
   <script src="/shared/studio-editor-canonical-ui.js"></script>
@@ -5627,14 +5628,18 @@
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
       : null;
-    const studioEditorCanonicalPersistenceAdapter = (
-      typeof SlideNextStudioEditorCanonicalPersistenceAdapter !== 'undefined'
-      && SlideNextStudioEditorCanonicalPersistenceAdapter
-      && typeof SlideNextStudioEditorCanonicalPersistenceAdapter
-        .createStudioEditorCanonicalPersistenceAdapter === 'function'
-    )
-      ? SlideNextStudioEditorCanonicalPersistenceAdapter
-        .createStudioEditorCanonicalPersistenceAdapter({
+    const studioEditorCanonicalPersistenceShellRuntimeApi =
+      typeof SlideNextStudioEditorCanonicalPersistenceShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorCanonicalPersistenceShellRuntime
+      : null;
+    const studioEditorCanonicalPersistenceShellRuntime = studioEditorCanonicalPersistenceShellRuntimeApi
+      && typeof studioEditorCanonicalPersistenceShellRuntimeApi
+        .createStudioEditorCanonicalPersistenceShellRuntime === 'function'
+      ? studioEditorCanonicalPersistenceShellRuntimeApi
+        .createStudioEditorCanonicalPersistenceShellRuntime({
+          canonicalPersistenceApi: typeof SlideNextStudioEditorCanonicalPersistenceAdapter !== 'undefined'
+            ? SlideNextStudioEditorCanonicalPersistenceAdapter
+            : null,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -5646,6 +5651,10 @@
           getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           buildCanonicalDeckForDocument: (doc) => buildEditorCanonicalDeck(doc)
         })
+      : null;
+    const studioEditorCanonicalPersistenceAdapter = studioEditorCanonicalPersistenceShellRuntime
+      && studioEditorCanonicalPersistenceShellRuntime.isAvailable === true
+      ? studioEditorCanonicalPersistenceShellRuntime.canonicalPersistenceAdapter
       : null;
     const studioEditorPersistedHtmlAction = typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
       && SlideNextStudioEditorPersistedHtmlAction
