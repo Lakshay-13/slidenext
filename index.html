@@ -1615,6 +1615,7 @@
   <script src="/shared/studio-editor-shell-controller.js"></script>
   <script src="/shared/studio-editor-launch-source.js"></script>
   <script src="/shared/studio-editor-launch-controller.js"></script>
+  <script src="/shared/studio-editor-launch-shell-controller.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-shell-runtime.js"></script>
@@ -5833,6 +5834,48 @@
           setFrameSource: (...args) => setCurrentStudioEditorFrameSource(...args)
         })
       : null;
+    const studioEditorLaunchShellController = typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
+      && SlideNextStudioEditorLaunchShellController
+      && typeof SlideNextStudioEditorLaunchShellController.createStudioEditorLaunchShellController === 'function'
+      ? SlideNextStudioEditorLaunchShellController.createStudioEditorLaunchShellController({
+          documentRef: document,
+          getPersistenceApi: () => typeof SlideNextStudioEditorPersistence !== 'undefined'
+            ? SlideNextStudioEditorPersistence
+            : null,
+          getSessionLifecycleController: () => typeof SlideNextStudioEditorSessionLifecycleController !== 'undefined'
+            ? SlideNextStudioEditorSessionLifecycleController
+            : null,
+          getSessionResetController: () => studioEditorSessionResetController,
+          getSessionUiController: () => studioEditorSessionUiController,
+          getLaunchController: () => studioEditorLaunchController,
+          getEditor: () => document.getElementById('studioEditor'),
+          getIframe: getStudioFrame,
+          advanceSessionToken: advanceStudioEditorSessionToken,
+          resetLiveCanonicalDeck: resetEditorLiveCanonicalDeck,
+          updateSessionState: updateCurrentPresentationSessionState,
+          buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
+          getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
+          setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
+          getAutoVersionTimers: getStudioAutoVersionTimers,
+          setAutoVersionTimers: setStudioAutoVersionTimers,
+          clearTimer: clearTimeout,
+          applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
+          clearHistoryStacks: clearStudioHistoryStacks,
+          updateHistoryButtons,
+          applyEditorSelectionState,
+          createSessionStateReaders: createCurrentStudioSessionStateReaders,
+          getPresentationTitle: getStudioPresentationTitle,
+          getPresentationCategory: getStudioPresentationCategory,
+          setAutoSaveStatus: setStudioAutoSaveStatus,
+          setFrameLoadingState: setStudioFrameLoadingState,
+          resetPresentationUiState: resetStudioPresentationUiState,
+          resetSourceViewUiState: resetStudioSourceViewUiState,
+          resetDeckUiState: resetStudioDeckUiState,
+          resetVersionUiState: resetStudioVersionUiState,
+          resetSaveButtonState: resetStudioSaveButtonState,
+          updateDeckReadyToolbarActionState
+        })
+      : null;
     const studioEditorPresentationMetadataController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.presentationMetadataController
       : null;
@@ -7073,126 +7116,13 @@
     }
 
     async function launchStudioEditor(url, title, category) {
-      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-        ? SlideNextStudioEditorPersistence
-        : null;
-      const sessionLifecycleController = typeof SlideNextStudioEditorSessionLifecycleController !== 'undefined'
-        ? SlideNextStudioEditorSessionLifecycleController
-        : null;
-      const preparedLaunchSession = sessionLifecycleController
-        && typeof sessionLifecycleController.prepareStudioEditorLaunchSession === 'function'
-        ? sessionLifecycleController.prepareStudioEditorLaunchSession({
-            presentationUrl: url,
-            presentationTitle: title,
-            presentationCategory: category,
-            advanceSessionToken: advanceStudioEditorSessionToken,
-            resetLiveCanonicalDeck: resetEditorLiveCanonicalDeck,
-            updateSessionState: updateCurrentPresentationSessionState,
-            buildPresentationMetadataSeed: buildCurrentPresentationMetadataSeed,
-            sessionResetController: studioEditorSessionResetController,
-            persistenceApi,
-            getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
-            setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
-            getAutoVersionTimers: getStudioAutoVersionTimers,
-            setAutoVersionTimers: setStudioAutoVersionTimers,
-            clearTimer: clearTimeout,
-            applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
-            clearHistoryStacks: clearStudioHistoryStacks,
-            updateHistoryButtons,
-            applyEditorSelectionState
-          })
-        : null;
-      let editorSessionToken = preparedLaunchSession
-        ? preparedLaunchSession.sessionToken
-        : advanceStudioEditorSessionToken();
-      if (!preparedLaunchSession) {
-        if (typeof resetEditorLiveCanonicalDeck === 'function') {
-          resetEditorLiveCanonicalDeck();
-        }
-        updateCurrentPresentationSessionState({
-          presentationUrl: url,
-          presentationTitle: title,
-          presentationCategory: category || 'General',
-          slideIndex: 0,
-          presentationMetadata: buildCurrentPresentationMetadataSeed(url, title)
-        });
-        const didResetSessionData = typeof studioEditorSessionResetController !== 'undefined'
-          && studioEditorSessionResetController
-          && typeof studioEditorSessionResetController.reset === 'function'
-          ? studioEditorSessionResetController.reset()
-          : false;
-        if (!didResetSessionData) {
-          const clearedTimerState = persistenceApi
-            && typeof persistenceApi.clearStudioPersistenceTimers === 'function'
-            ? persistenceApi.clearStudioPersistenceTimers({
-                autoSaveDebounceTimer: getStudioAutoSaveDebounceTimer(),
-                autoVersionTimers: getStudioAutoVersionTimers(),
-                clearTimer: clearTimeout
-              })
-            : {
-                autoSaveDebounceTimer: null,
-                autoVersionTimers: {}
-              };
-          setStudioAutoSaveDebounceTimer(clearedTimerState.autoSaveDebounceTimer);
-          setStudioAutoVersionTimers(clearedTimerState.autoVersionTimers);
-          applyCurrentStudioPersistedDeckState({
-            cleanHtml: '',
-            canonicalDeck: null,
-            playbackState: null
-          }, {
-            presentationUrl: '',
-            syncPresentationMetadata: false
-          });
-          clearStudioHistoryStacks();
-          updateHistoryButtons();
-        }
-        applyEditorSelectionState({});
-      }
-      
-      const editor = document.getElementById('studioEditor');
-      const iframe = getStudioFrame();
-      const isEditorActive = () => editor.classList.contains('active');
-      const frameLoadSessionStateReaders = createCurrentStudioSessionStateReaders();
-      
-      const didPrepareEditorUiState = typeof studioEditorSessionUiController !== 'undefined'
-        && studioEditorSessionUiController
-        && typeof studioEditorSessionUiController.prepareLaunch === 'function'
-        ? studioEditorSessionUiController.prepareLaunch()
-        : false;
-      if (!didPrepareEditorUiState) {
-        const studioCategoryLabel = document.getElementById('studioCategoryLabel');
-        if (studioCategoryLabel) {
-          studioCategoryLabel.textContent = getStudioPresentationCategory();
-        }
-        const studioTitleLabel = document.getElementById('studioTitleLabel');
-        if (studioTitleLabel) {
-          studioTitleLabel.textContent = getStudioPresentationTitle();
-        }
-
-        setStudioAutoSaveStatus('loading');
-        setStudioFrameLoadingState('loading');
-        resetStudioPresentationUiState();
-        resetStudioSourceViewUiState();
-        resetStudioDeckUiState({ isLoading: true });
-        resetStudioVersionUiState({ isLoading: true });
-        resetStudioSaveButtonState();
-        updateDeckReadyToolbarActionState();
-      }
-
-      if (typeof studioEditorLaunchController !== 'undefined'
-        && studioEditorLaunchController
-        && typeof studioEditorLaunchController.launch === 'function') {
-        return studioEditorLaunchController.launch({
-          presentationUrl: url,
-          presentationTitle: title,
-          editor,
-          iframe,
-          sessionToken: editorSessionToken,
-          frameLoadSessionStateReaders,
-          isEditorActive
-        });
-      }
-      return false;
+      if (!studioEditorLaunchShellController
+        || typeof studioEditorLaunchShellController.launch !== 'function') return false;
+      return studioEditorLaunchShellController.launch({
+        presentationUrl: url,
+        presentationTitle: title,
+        presentationCategory: category
+      });
     }
 
     function closeStudioEditor() {

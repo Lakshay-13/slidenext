@@ -150,6 +150,7 @@ test('session lifecycle controller uses fallback resets and shell closure when c
 test('index routes close-editor lifecycle through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-session-lifecycle-controller\.js"/);
-  assert.match(source, /sessionLifecycleController\.prepareStudioEditorLaunchSession/);
+  assert.match(source, /src="\/shared\/studio-editor-launch-shell-controller\.js"/);
+  assert.match(source, /createStudioEditorLaunchShellController/);
   assert.match(source, /sessionLifecycleController\.closeStudioEditor/);
 });

@@ -9,6 +9,7 @@ const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const launchController = require('../shared/studio-editor-launch-controller.js');
+const launchShellController = require('../shared/studio-editor-launch-shell-controller.js');
 const sessionLifecycleController = require('../shared/studio-editor-session-lifecycle-controller.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 const autoSaveTimerFixture = require('./helpers/studio-autosave-timer-fixture.js');
@@ -272,6 +273,81 @@ function loadStudioEditorLaunchController(context) {
       : null,
     getCurrentPresentationUrl: () => context.currentPresentationUrl || '',
     getCurrentSessionToken: () => context.studioEditorSessionToken
+  });
+  context.studioEditorLaunchShellController = launchShellController.createStudioEditorLaunchShellController({
+    documentRef: context.document,
+    getPersistenceApi: () => context.SlideNextStudioEditorPersistence || null,
+    getSessionLifecycleController: () => context.SlideNextStudioEditorSessionLifecycleController || null,
+    getSessionResetController: () => context.studioEditorSessionResetController || null,
+    getSessionUiController: () => context.studioEditorSessionUiController || null,
+    getLaunchController: () => context.studioEditorLaunchController,
+    getEditor: () => context.document.getElementById('studioEditor'),
+    getIframe: () => context.getStudioFrame(),
+    advanceSessionToken: () => {
+      context.studioEditorSessionToken += 1;
+      return context.studioEditorSessionToken;
+    },
+    resetLiveCanonicalDeck: () => typeof context.resetEditorLiveCanonicalDeck === 'function'
+      ? context.resetEditorLiveCanonicalDeck()
+      : false,
+    updateSessionState: (...args) => context.updateCurrentPresentationSessionState(...args),
+    buildPresentationMetadataSeed: (...args) => typeof context.buildCurrentPresentationMetadataSeed === 'function'
+      ? context.buildCurrentPresentationMetadataSeed(...args)
+      : null,
+    getAutoSaveDebounceTimer: () => context.autoSaveDebounceTimer || null,
+    setAutoSaveDebounceTimer: (value) => {
+      context.autoSaveDebounceTimer = value;
+      return value;
+    },
+    getAutoVersionTimers: () => context.autoVersionTimers || {},
+    setAutoVersionTimers: (value) => {
+      context.autoVersionTimers = value;
+      return value;
+    },
+    clearTimer: (...args) => typeof context.clearTimeout === 'function'
+      ? context.clearTimeout(...args)
+      : undefined,
+    applyPersistedDeckState: (...args) => typeof context.applyCurrentStudioPersistedDeckState === 'function'
+      ? context.applyCurrentStudioPersistedDeckState(...args)
+      : false,
+    clearHistoryStacks: () => {
+      context.undoStack = [];
+      context.redoStack = [];
+      return true;
+    },
+    updateHistoryButtons: (...args) => typeof context.updateHistoryButtons === 'function'
+      ? context.updateHistoryButtons(...args)
+      : false,
+    applyEditorSelectionState: (...args) => typeof context.applyEditorSelectionState === 'function'
+      ? context.applyEditorSelectionState(...args)
+      : false,
+    createSessionStateReaders: () => context.createCurrentStudioSessionStateReaders(),
+    getPresentationTitle: () => context.currentTitle || '',
+    getPresentationCategory: () => context.currentCategory || '',
+    setAutoSaveStatus: (...args) => typeof context.setStudioAutoSaveStatus === 'function'
+      ? context.setStudioAutoSaveStatus(...args)
+      : false,
+    setFrameLoadingState: (...args) => typeof context.setStudioFrameLoadingState === 'function'
+      ? context.setStudioFrameLoadingState(...args)
+      : false,
+    resetPresentationUiState: (...args) => typeof context.resetStudioPresentationUiState === 'function'
+      ? context.resetStudioPresentationUiState(...args)
+      : false,
+    resetSourceViewUiState: (...args) => typeof context.resetStudioSourceViewUiState === 'function'
+      ? context.resetStudioSourceViewUiState(...args)
+      : false,
+    resetDeckUiState: (...args) => typeof context.resetStudioDeckUiState === 'function'
+      ? context.resetStudioDeckUiState(...args)
+      : false,
+    resetVersionUiState: (...args) => typeof context.resetStudioVersionUiState === 'function'
+      ? context.resetStudioVersionUiState(...args)
+      : false,
+    resetSaveButtonState: (...args) => typeof context.resetStudioSaveButtonState === 'function'
+      ? context.resetStudioSaveButtonState(...args)
+      : false,
+    updateDeckReadyToolbarActionState: (...args) => typeof context.updateDeckReadyToolbarActionState === 'function'
+      ? context.updateDeckReadyToolbarActionState(...args)
+      : false
   });
 }
 

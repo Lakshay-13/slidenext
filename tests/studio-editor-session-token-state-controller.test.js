@@ -34,7 +34,7 @@ test('editor wires session token reads and invalidation through the controller',
 
   assert.match(source, /studio-editor-session-token-state-controller\.js/);
   assert.match(source, /getStudioEditorSessionToken\(\)/);
-  assert.match(source, /advanceStudioEditorSessionToken\(\)/);
+  assert.match(source, /advanceSessionToken:\s*advanceStudioEditorSessionToken/);
   assert.doesNotMatch(source, /\blet studioEditorSessionToken\b/);
   assert.doesNotMatch(source, /\+\+studioEditorSessionToken/);
 });
