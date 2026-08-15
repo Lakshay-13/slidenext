@@ -82,6 +82,16 @@
       'deckViewApi',
       'SlideNextStudioDeckView'
     );
+    runtimeOptions.deletionMutationApi = resolveApi(
+      options,
+      'deletionMutationApi',
+      'SlideNextStudioEditorSlideDeletionMutation'
+    );
+    runtimeOptions.deletionTransactionApi = resolveApi(
+      options,
+      'deletionTransactionApi',
+      'SlideNextStudioEditorSlideDeletionTransaction'
+    );
 
     return mutationRuntimeApi.createStudioEditorSlideMutationRuntime(runtimeOptions);
   }

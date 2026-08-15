@@ -24,6 +24,8 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     reorderMutationApi: {},
     reorderTransactionApi: {},
     deckViewApi: {},
+    deletionMutationApi: {},
+    deletionTransactionApi: {},
     getIframeDoc() {},
     getSlides() {},
     getSlideId() {},
@@ -69,6 +71,8 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.equal(calls[0][1].reorderMutationApi, callbacks.reorderMutationApi);
   assert.equal(calls[0][1].reorderTransactionApi, callbacks.reorderTransactionApi);
   assert.equal(calls[0][1].deckViewApi, callbacks.deckViewApi);
+  assert.equal(calls[2][1].deletionMutationApi, callbacks.deletionMutationApi);
+  assert.equal(calls[2][1].deletionTransactionApi, callbacks.deletionTransactionApi);
   assert.equal(calls[1][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[1][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
@@ -132,5 +136,9 @@ test('index wires structural slide mutations through the runtime module', () => 
   assert.doesNotMatch(
     fileContent,
     /function applyEditorSlideReorderWithTransaction\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /function applyEditorSlideDeletionWithTransaction\(/
   );
 });

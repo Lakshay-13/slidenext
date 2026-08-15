@@ -20,6 +20,15 @@
     const transactionApi = options.transactionApi
       || (root && root.SlideNextStudioEditorTransaction)
       || null;
+    const deletionTransactionApi = options.deletionTransactionApi
+      || (root && root.SlideNextStudioEditorSlideDeletionTransaction)
+      || null;
+    const deletionMutationApi = options.deletionMutationApi
+      || (root && root.SlideNextStudioEditorSlideDeletionMutation)
+      || null;
+    const deckViewApi = options.deckViewApi
+      || (root && root.SlideNextStudioDeckView)
+      || null;
     const deleteStudioSlideNode = slideCommandsApi
       && typeof slideCommandsApi.deleteStudioSlideNode === 'function'
       ? slideCommandsApi.deleteStudioSlideNode
@@ -56,9 +65,25 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyDeletion = typeof options.applyDeletion === 'function'
+    const legacyApplyDeletion = typeof options.applyDeletion === 'function'
       ? options.applyDeletion
       : () => ({ didApply: false, transaction: null });
+    const applyDeletionTransaction = deletionTransactionApi
+      && typeof deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction === 'function'
+      ? deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction
+      : null;
+    const applyDeletion = (container, slideNode, mutationOptions = {}) => {
+      if (applyDeletionTransaction) {
+        return applyDeletionTransaction(container, slideNode, {
+          mutationApi: deletionMutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyDeletion(container, slideNode, mutationOptions);
+    };
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : null;

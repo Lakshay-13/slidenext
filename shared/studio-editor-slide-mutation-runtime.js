@@ -33,6 +33,8 @@
       reorderMutationApi: options.reorderMutationApi,
       reorderTransactionApi: options.reorderTransactionApi,
       deckViewApi: options.deckViewApi,
+      deletionMutationApi: options.deletionMutationApi,
+      deletionTransactionApi: options.deletionTransactionApi,
       getIframeDoc: options.getIframeDoc,
       getSlides: options.getSlides,
       getSlideId: options.getSlideId,

@@ -99,15 +99,9 @@ function loadApplyEditorSlideInsertionWithTransaction(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadApplyEditorSlideDeletionWithTransaction(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {',
-    '\n\n    // Delete Active Slide Node'
-  );
+function loadApplyEditorSlideDeletionWithTransaction(_fileContent, context) {
   context.SlideNextStudioEditorSlideDeletionMutation = slideDeletionMutation;
   context.SlideNextStudioEditorSlideDeletionTransaction = slideDeletionTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyEditorSlideReorderWithTransaction(_fileContent, context) {
@@ -182,13 +176,16 @@ function installSlideDeletionController(context) {
     slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
     canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    deletionMutationApi: context.SlideNextStudioEditorSlideDeletionMutation,
+    deletionTransactionApi: context.SlideNextStudioEditorSlideDeletionTransaction,
+    deckViewApi: context.SlideNextStudioDeckView,
     getIframeDoc: context.getIframeDoc,
     getSlides: context.getSlides,
     alert: context.alert,
     captureSlideMutationState: context.captureSlideMutationRestoreState,
     getSlideId: context.getEditorSlideId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyDeletion: context.applyEditorSlideDeletionWithTransaction,
     generateThumbnails: context.generateThumbnails,
     restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
     finalizeMutation: context.finalizeSlideMutationPersistence
@@ -1148,7 +1145,7 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
   const duplicateSlideNodeSource = extractFunctionSource(
     fileContent,
     'function duplicateSlideNode() {',
-    '\n\n    function applyEditorSlideDeletionWithTransaction'
+    '\n\n    // Delete Active Slide Node'
   );
   const sourceSlide = {
     classList: {
@@ -2099,7 +2096,7 @@ test('deleteSlideNode delegates slide removal and transaction capture to the sha
   const delegation = calls.find(([name]) => name === 'applyStudioSlideDeletionMutation');
   assert.equal(delegation[1], slidesContainer);
   assert.equal(delegation[2], deletedSlide);
-  assert.equal(delegation[3].createMarkupTransactionCapture, null);
+  assert.equal(typeof delegation[3].createMarkupTransactionCapture, 'function');
   const finalize = calls.find(([name]) => name === 'finalizeSlideMutationPersistence');
   assert.deepEqual(finalize, [
     'finalizeSlideMutationPersistence',

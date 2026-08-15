@@ -72,6 +72,54 @@ test('slide deletion controller fails closed without a slide-command adapter', (
   assert.equal(controller.remove(0), false);
 });
 
+test('slide deletion controller owns the shared transaction adapter when available', () => {
+  const container = { id: 'container' };
+  const slideNode = { id: 'slide-1' };
+  const mutationApi = { name: 'mutation' };
+  const deckViewApi = { name: 'deck-view' };
+  const transactionApi = { name: 'transaction' };
+  const delegated = [];
+  let legacyCalled = false;
+  const slideCommandsApi = {
+    applyStudioSlideDeletionWithTransaction() {},
+    deleteStudioSlideNode(index, options) {
+      assert.equal(index, 1);
+      return options.applyDeletion(container, slideNode, {
+        skipMarkupTransactionCapture: true
+      }).didApply;
+    }
+  };
+  const controller = deletionController.createStudioEditorSlideDeletionController({
+    slideCommandsApi,
+    deletionTransactionApi: {
+      applyStudioEditorSlideDeletionMutationWithTransaction(...args) {
+        delegated.push(args);
+        return { didApply: true, transaction: { id: 'tx-delete' } };
+      }
+    },
+    deletionMutationApi: mutationApi,
+    deckViewApi,
+    transactionApi,
+    applyDeletion() {
+      legacyCalled = true;
+      return { didApply: false, transaction: null };
+    }
+  });
+
+  assert.equal(controller.remove(1), true);
+  assert.equal(legacyCalled, false);
+  assert.equal(delegated.length, 1);
+  assert.equal(delegated[0][0], container);
+  assert.equal(delegated[0][1], slideNode);
+  assert.deepEqual(delegated[0][2], {
+    mutationApi,
+    slideCommandsApi,
+    deckViewApi,
+    transactionApi,
+    skipMarkupTransactionCapture: true
+  });
+});
+
 test('slide deletion controller fails closed when canonical builder construction throws', () => {
   let deleteCalls = 0;
   const controller = deletionController.createStudioEditorSlideDeletionController({

@@ -3210,6 +3210,12 @@
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
             ? SlideNextStudioDeckView
             : null,
+          deletionMutationApi: typeof SlideNextStudioEditorSlideDeletionMutation !== 'undefined'
+            ? SlideNextStudioEditorSlideDeletionMutation
+            : null,
+          deletionTransactionApi: typeof SlideNextStudioEditorSlideDeletionTransaction !== 'undefined'
+            ? SlideNextStudioEditorSlideDeletionTransaction
+            : null,
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
@@ -3235,7 +3241,6 @@
           applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
           alert: typeof alert === 'function' ? alert : null,
-          applyDeletion: (...args) => applyEditorSlideDeletionWithTransaction(...args),
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
           rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
@@ -7529,39 +7534,6 @@
         && typeof studioEditorSlideDuplicationController.duplicate === 'function'
         ? studioEditorSlideDuplicationController.duplicate()
         : false;
-    }
-
-    function applyEditorSlideDeletionWithTransaction(container, slideNode, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorSlideDeletionTransaction !== 'undefined'
-        ? SlideNextStudioEditorSlideDeletionTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorSlideDeletionMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorSlideDeletionMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(container, slideNode, {
-        mutationApi: typeof SlideNextStudioEditorSlideDeletionMutation !== 'undefined'
-          ? SlideNextStudioEditorSlideDeletionMutation
-          : null,
-        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-          ? SlideNextStudioEditorSlideCommands
-          : null,
-        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-          ? SlideNextStudioDeckView
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        containerElementId: options.containerElementId,
-        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
-        getElementId: options.getElementId
-      });
     }
 
     // Delete Active Slide Node
