@@ -400,8 +400,14 @@
           }
         : {})
     }) || {};
+    const activeSlideIndex = Number.isInteger(deckSnapshot.activeSlideIndex)
+      && deckSnapshot.activeSlideIndex >= 0
+      ? deckSnapshot.activeSlideIndex
+      : -1;
     const activeSlideSnapshot = Array.isArray(deckSnapshot.slides)
-      ? deckSnapshot.slides.find((slide) => slide.id === deckSnapshot.activeSlideId)
+      ? activeSlideIndex >= 0
+        ? deckSnapshot.slides[activeSlideIndex] || null
+        : deckSnapshot.slides.find((slide) => slide.id === deckSnapshot.activeSlideId)
       : null;
     const layers = activeSlideSnapshot && Array.isArray(activeSlideSnapshot.elements)
       ? activeSlideSnapshot.elements

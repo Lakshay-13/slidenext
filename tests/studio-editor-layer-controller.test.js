@@ -673,7 +673,8 @@ test('syncStudioLayerList assembles live layer action state before shared render
     }
   };
   const deckSnapshot = {
-    activeSlideId: 'slide-1',
+    activeSlideId: 'stale-slide-id',
+    activeSlideIndex: 0,
     slides: [{
       id: 'slide-1',
       elements: [{ id: 'node-1', isLocked: true }]
