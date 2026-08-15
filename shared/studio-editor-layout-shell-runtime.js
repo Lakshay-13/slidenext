@@ -62,6 +62,11 @@
       'conversionEngineApi',
       'SlideNextStudioEditorLayoutConversion'
     );
+    runtimeOptions.conversionMutationApi = resolveApi(
+      options,
+      'conversionMutationApi',
+      'SlideNextStudioEditorLayoutConversionMutation'
+    );
     runtimeOptions.alignmentEngineApi = resolveApi(
       options,
       'alignmentEngineApi',

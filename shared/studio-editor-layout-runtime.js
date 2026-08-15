@@ -110,6 +110,7 @@
     const conversionController = conversionApi
       ? conversionApi.createStudioEditorLayoutConversionController({
           conversionApi: options.conversionEngineApi,
+          conversionMutationApi: options.conversionMutationApi,
           canonicalLayoutApi: options.canonicalLayoutApi,
           canonicalDeckApi: options.canonicalDeckApi,
           transactionApi: options.transactionApi,

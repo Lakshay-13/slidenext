@@ -1520,6 +1520,7 @@
   <script src="/shared/studio-editor-position-layout-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback-adapter.js"></script>
+  <script src="/shared/studio-editor-layout-conversion-mutation.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
   <script src="/shared/studio-editor-position-layout-mutation.js"></script>
@@ -3405,6 +3406,9 @@
             : null,
           conversionEngineApi: typeof SlideNextStudioEditorLayoutConversion !== 'undefined'
             ? SlideNextStudioEditorLayoutConversion
+            : null,
+          conversionMutationApi: typeof SlideNextStudioEditorLayoutConversionMutation !== 'undefined'
+            ? SlideNextStudioEditorLayoutConversionMutation
             : null,
           alignmentEngineApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
             ? SlideNextStudioEditorAlignment

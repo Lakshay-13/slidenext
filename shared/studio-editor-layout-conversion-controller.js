@@ -20,6 +20,9 @@
     const transactionApi = options.transactionApi
       || (root && root.SlideNextStudioEditorTransaction)
       || null;
+    const conversionMutationApi = options.conversionMutationApi
+      || (root && root.SlideNextStudioEditorLayoutConversionMutation)
+      || null;
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
@@ -90,34 +93,39 @@
       });
     }
 
-    function restoreStyles(items = []) {
-      items.forEach((item) => {
-        if (!item || !item.element || !item.element.style) return;
-        Object.keys(item.beforeStyle || {}).forEach((property) => {
-          item.element.style[property] = item.beforeStyle[property];
-        });
-      });
-    }
-
-    function applyStyles(items = []) {
-      const appliedItems = [];
-      try {
-        items.forEach((item) => {
-          appliedItems.push(item);
-          if (!item || !item.element || !item.element.style) {
-            throw new Error('conversion target has no writable style');
-          }
-          Object.keys(item.afterStyle || {}).forEach((property) => {
-            item.element.style[property] = item.afterStyle[property];
+    const restoreConversionStyles = conversionMutationApi
+      && typeof conversionMutationApi.restoreStudioLayoutConversionStyles === 'function'
+      ? conversionMutationApi.restoreStudioLayoutConversionStyles
+      : (items = []) => {
+          items.forEach((item) => {
+            if (!item || !item.element || !item.element.style) return;
+            Object.keys(item.beforeStyle || {}).forEach((property) => {
+              item.element.style[property] = item.beforeStyle[property];
+            });
           });
-          appliedItems.push(item);
-        });
-        return true;
-      } catch (error) {
-        restoreStyles(appliedItems);
-        return false;
-      }
-    }
+          return true;
+        };
+    const applyConversionStyles = conversionMutationApi
+      && typeof conversionMutationApi.applyStudioLayoutConversionStyles === 'function'
+      ? conversionMutationApi.applyStudioLayoutConversionStyles
+      : (items = []) => {
+          const appliedItems = [];
+          try {
+            items.forEach((item) => {
+              if (!item || !item.element || !item.element.style) {
+                throw new Error('conversion target has no writable style');
+              }
+              appliedItems.push(item);
+              Object.keys(item.afterStyle || {}).forEach((property) => {
+                item.element.style[property] = item.afterStyle[property];
+              });
+            });
+            return true;
+          } catch (error) {
+            restoreConversionStyles(appliedItems);
+            return false;
+          }
+        };
 
     function buildCanonicalDeckForPlan(plan, doc) {
       const createMutationBuilder = canonicalLayoutApi
@@ -187,7 +195,7 @@
         if (updateActionState) updateActionState(doc);
         return false;
       }
-      if (!applyStyles(plan.items)) {
+      if (!applyConversionStyles(plan.items)) {
         if (updateActionState) updateActionState(doc);
         return false;
       }
@@ -204,7 +212,7 @@
         finalizeResult = false;
       }
       if (finalizeResult === false) {
-        restoreStyles(plan.items);
+        restoreConversionStyles(plan.items);
         if (updateActionState) updateActionState(doc);
         return false;
       }

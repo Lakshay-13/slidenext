@@ -21,6 +21,7 @@ test('layout runtime composes layout controllers', () => {
   const callbacks = {
     nudgeEngineApi: {},
     conversionEngineApi: {},
+    conversionMutationApi: {},
     alignmentEngineApi: {},
     positionLayoutTransactionApi: {
       createStudioEditorPositionLayoutApplicator(options) {
@@ -124,6 +125,7 @@ test('layout runtime composes layout controllers', () => {
   assert.equal(calls[2][1].applyUngroupMutation, callbacks.applyUngroupMutation);
   assert.equal(calls[2][1].getTransactionElementById, callbacks.getTransactionElementById);
   assert.equal(calls[3][1].conversionApi, callbacks.conversionEngineApi);
+  assert.equal(calls[3][1].conversionMutationApi, callbacks.conversionMutationApi);
   assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[3][1].buildPositionedLayoutItems, callbacks.buildPositionedLayoutItems);
   assert.equal(calls[3][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);

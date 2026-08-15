@@ -85,6 +85,36 @@ test('convert applies one reversible style transaction and canonical layout side
   assert.deepEqual(calls[3], ['update', { id: 'doc' }]);
 });
 
+test('convert delegates DOM style application and rollback to the shared mutation API', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { position: '', margin: '8px', left: '', top: '', width: '50%', height: '' }
+  };
+  const calls = [];
+  const controller = controllerApi.createStudioEditorLayoutConversionController({
+    conversionApi: {
+      buildStudioFlowToFreeformPlan: () => createPlan(element)
+    },
+    conversionMutationApi: {
+      applyStudioLayoutConversionStyles(items) {
+        calls.push(['apply', items]);
+        return true;
+      },
+      restoreStudioLayoutConversionStyles(items) {
+        calls.push(['restore', items]);
+        return true;
+      }
+    },
+    transactionApi: { createStudioStyleTransaction: () => ({ kind: 'style' }) },
+    getDocument: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    finalizeDeckMutation: () => false
+  });
+
+  assert.equal(controller.convert(), false);
+  assert.deepEqual(calls.map(([name]) => name), ['apply', 'restore']);
+});
+
 test('convert fails closed before DOM mutation when canonical sidecar construction fails', () => {
   const element = {
     dataset: { editorId: 'node-1' },
