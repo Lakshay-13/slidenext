@@ -489,16 +489,12 @@ test('insertAssetToActiveSlide stamps the canonical asset before insertion', () 
   const context = {
     currentPresentationUrl: '/presentations/demo/index.html',
     document: { getElementById() { return { value: '' }; } },
-    getIframeDoc() {
-      return { id: 'doc' };
-    },
-    buildEditorCanonicalDeck() {
-      return { assets: [{ id: 'hero', name: 'Hero', src: '/images/hero.png' }] };
-    },
-    studioEditorElementInsertionController: {
-      insert(type, options) {
-        calls.push([type, options.versionLabel]);
-        options.prepareElement(element);
+    studioEditorAssetInsertionController: {
+      insert(assetId) {
+        if (assetId !== 'hero') return false;
+        calls.push([assetId]);
+        element.setAttribute('data-asset-id', assetId);
+        element.src = '/images/hero.png';
         return true;
       }
     },
@@ -514,7 +510,7 @@ test('insertAssetToActiveSlide stamps the canonical asset before insertion', () 
   runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.insertAssetToActiveSlide('hero'), true);
-  assert.deepEqual(calls, [['img', 'Auto: Inserted Asset "Hero"']]);
+  assert.deepEqual(calls, [['hero']]);
   assert.equal(attributes['data-asset-id'], 'hero');
   assert.equal(element.src, '/images/hero.png');
   assert.equal(context.insertAssetToActiveSlide('missing'), false);
@@ -536,24 +532,10 @@ test('insertAssetToActiveSlide prefers live canonical asset metadata', () => {
   const context = {
     currentPresentationUrl: '/presentations/demo/index.html',
     document: { getElementById() { return { value: '' }; } },
-    getIframeDoc() {
-      return doc;
-    },
-    getStudioEditorSessionToken() {
-      return 29;
-    },
-    resolveEditorLiveCanonicalDeck(sourceDoc, sessionToken) {
-      assert.equal(sourceDoc, doc);
-      assert.equal(sessionToken, 29);
-      return { assets: [{ id: 'live-hero', name: 'Live Hero', src: '/images/live-hero.png' }] };
-    },
-    buildEditorCanonicalDeck() {
-      throw new Error('DOM rebuild should not run when live asset metadata is available');
-    },
-    studioEditorElementInsertionController: {
-      insert(type, options) {
-        calls.push([type, options.versionLabel]);
-        options.prepareElement(element);
+    studioEditorAssetInsertionController: {
+      insert(assetId) {
+        calls.push([assetId]);
+        element.src = '/images/live-hero.png';
         return true;
       }
     },
@@ -569,7 +551,7 @@ test('insertAssetToActiveSlide prefers live canonical asset metadata', () => {
   runSourceWithCanonicalUi(source, context);
 
   assert.equal(context.insertAssetToActiveSlide('live-hero'), true);
-  assert.deepEqual(calls, [['img', 'Auto: Inserted Asset "Live Hero"']]);
+  assert.deepEqual(calls, [['live-hero']]);
   assert.equal(element.src, '/images/live-hero.png');
 });
 

@@ -1457,6 +1457,7 @@
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-asset-insertion.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -4269,6 +4270,22 @@
       : null;
     const studioEditorAssetController = studioEditorAssetRuntime
       ? studioEditorAssetRuntime.assetController
+      : null;
+    const studioEditorAssetInsertionController = typeof SlideNextStudioEditorAssetInsertion !== 'undefined'
+      && SlideNextStudioEditorAssetInsertion
+      && typeof SlideNextStudioEditorAssetInsertion.createStudioEditorAssetInsertionController === 'function'
+      ? SlideNextStudioEditorAssetInsertion.createStudioEditorAssetInsertionController({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getDocument: () => getIframeDoc(),
+          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(sourceDoc || getIframeDoc())
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
+              : null,
+          insertionController: studioEditorElementInsertionController
+        })
       : null;
     const GRID_SNAP_SIZE_PX = 20;
     const studioEditorGridSnapRuntime = typeof SlideNextStudioEditorGridSnapShellRuntime !== 'undefined'
@@ -10211,34 +10228,10 @@
     }
 
     function insertAssetToActiveSlide(assetId) {
-      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-      const canonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
-        ? resolveEditorUiCanonicalDeck(getIframeDoc())
-        : typeof buildEditorCanonicalDeck === 'function'
-          ? buildEditorCanonicalDeck(getIframeDoc())
-          : null;
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
-      const asset = canonicalDeckApi
-        && typeof canonicalDeckApi.findCanonicalAssetById === 'function'
-        ? canonicalDeckApi.findCanonicalAssetById(canonicalDeck, normalizedAssetId)
-        : null;
-      if (!asset || !asset.src || !studioEditorElementInsertionController
-        || typeof studioEditorElementInsertionController.insert !== 'function') {
-        return false;
-      }
-
-      return studioEditorElementInsertionController.insert('img', {
-        versionLabel: `Auto: Inserted Asset "${asset.name || asset.id}"`,
-        prepareElement: (element) => {
-          if (!element) return;
-          if (typeof element.setAttribute === 'function') {
-            element.setAttribute('data-asset-id', asset.id);
-          }
-          element.src = asset.src;
-        }
-      });
+      return studioEditorAssetInsertionController
+        && typeof studioEditorAssetInsertionController.insert === 'function'
+        ? studioEditorAssetInsertionController.insert(assetId)
+        : false;
     }
 
     function nudgeSelectedElements(dx, dy, doc) {
