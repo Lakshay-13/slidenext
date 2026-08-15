@@ -1465,6 +1465,7 @@
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-motion-state.js"></script>
+  <script src="/shared/studio-editor-motion-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
     <script src="/shared/studio-editor-alignment.js"></script>
     <script src="/shared/studio-editor-alignment-controller.js"></script>
@@ -3704,10 +3705,18 @@
           documentRef: document
         })
       : null;
-    const studioEditorMotionStateController = typeof SlideNextStudioEditorMotionState !== 'undefined'
-      && SlideNextStudioEditorMotionState
-      && typeof SlideNextStudioEditorMotionState.createStudioEditorMotionStateController === 'function'
-      ? SlideNextStudioEditorMotionState.createStudioEditorMotionStateController({
+    const studioEditorMotionStateShellRuntimeApi =
+      typeof SlideNextStudioEditorMotionStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorMotionStateShellRuntime
+      : null;
+    const studioEditorMotionStateShellRuntime = studioEditorMotionStateShellRuntimeApi
+      && typeof studioEditorMotionStateShellRuntimeApi
+        .createStudioEditorMotionStateShellRuntime === 'function'
+      ? studioEditorMotionStateShellRuntimeApi
+        .createStudioEditorMotionStateShellRuntime({
+          motionStateApi: typeof SlideNextStudioEditorMotionState !== 'undefined'
+            ? SlideNextStudioEditorMotionState
+            : null,
           nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
             ? SlideNextStudioEditorNudge
             : null,
@@ -3721,6 +3730,10 @@
           getRectOnSlide,
           documentRef: document
         })
+      : null;
+    const studioEditorMotionStateController = studioEditorMotionStateShellRuntime
+      && studioEditorMotionStateShellRuntime.isAvailable === true
+      ? studioEditorMotionStateShellRuntime.motionStateController
       : null;
     const studioEditorAlignmentStateController = typeof SlideNextStudioEditorAlignmentState !== 'undefined'
       && SlideNextStudioEditorAlignmentState
