@@ -190,6 +190,43 @@ test('canonical PPTX CLI resolves root-relative assets from the workspace root',
   assert.doesNotMatch(errors.join('\n'), /missing image asset/);
 });
 
+test('canonical PPTX CLI resolves deck-relative assets from the input directory', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-relative-'));
+  const assetsDir = path.join(tempDir, 'assets');
+  const inputPath = path.join(tempDir, 'deck.json');
+  const outputPath = path.join(tempDir, 'deck.pptx');
+  fs.mkdirSync(assetsDir);
+  fs.writeFileSync(
+    path.join(assetsDir, 'hero.png'),
+    Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  );
+  fs.writeFileSync(inputPath, JSON.stringify({
+    layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'hero-image',
+        type: 'image',
+        attributes: { src: 'assets/hero.png' },
+        layout: { x: 0, y: 0, width: 300, height: 200 }
+      }]
+    }]
+  }));
+  const errors = [];
+  const originalConsoleError = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+
+  try {
+    assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+    assert.equal(fs.existsSync(outputPath), true);
+  } finally {
+    console.error = originalConsoleError;
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+
+  assert.doesNotMatch(errors.join('\n'), /missing image asset/);
+});
+
 test('canonical PPTX CLI accepts a presentation metadata wrapper with a canonical deck', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'slidenext-pptx-metadata-'));
   const inputPath = path.join(tempDir, 'presentation.json');

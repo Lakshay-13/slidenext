@@ -16,6 +16,22 @@ function printUsage() {
   console.error('Usage: node scripts/export-canonical-pptx.js <canonical-deck.json|deck.html> <output.pptx>');
 }
 
+function createPptxAssetExists(assetBaseDir, assetRootDir) {
+  const containedAssetExists = pdfScript.createPdfAssetExists(assetBaseDir, assetRootDir);
+  return (assetSource, ...args) => {
+    if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
+    if (/^(?:data:|https?:\/\/)/i.test(assetSource)) return true;
+    if (path.isAbsolute(assetSource)) {
+      try {
+        return fsSync.statSync(assetSource).isFile();
+      } catch (error) {
+        return false;
+      }
+    }
+    return containedAssetExists(assetSource, ...args);
+  };
+}
+
 async function main(argv = process.argv.slice(2)) {
   const [inputPath, outputPath] = argv;
   if (!inputPath || !outputPath) {
@@ -65,14 +81,14 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   const deck = presentationMetadata.resolvePresentationCanonicalDeck(input) || input;
+  const assetExists = createPptxAssetExists(
+    path.dirname(resolvedInputPath),
+    process.cwd()
+  );
   const result = createCanonicalPptxExport(deck, {
     assetBaseDir: path.dirname(resolvedInputPath),
     assetRootDir: process.cwd(),
-    assetExists(assetSource) {
-      if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
-      if (/^(?:data:|https?:\/\/)/i.test(assetSource)) return true;
-      return fsSync.existsSync(assetSource);
-    }
+    assetExists
   });
 
   if (!result.pptx) {
