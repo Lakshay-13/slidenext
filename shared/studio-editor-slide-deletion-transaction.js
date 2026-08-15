@@ -38,7 +38,45 @@
     });
   }
 
+  function createStudioEditorSlideDeletionApplicator(options = {}) {
+    const applyDeletionTransaction = typeof options.applyDeletionTransaction === 'function'
+      ? options.applyDeletionTransaction
+      : applyStudioEditorSlideDeletionMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const slideCommandsApi = options.slideCommandsApi && typeof options.slideCommandsApi === 'object'
+      ? options.slideCommandsApi
+      : null;
+    const deckViewApi = options.deckViewApi && typeof options.deckViewApi === 'object'
+      ? options.deckViewApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyDeletion = typeof options.legacyApplyDeletion === 'function'
+      ? options.legacyApplyDeletion
+      : () => ({ didApply: false, transaction: null });
+    const canApplyDeletionTransaction = typeof options.applyDeletionTransaction === 'function'
+      || (mutationApi
+        && typeof mutationApi.applyStudioSlideDeletionMutationWithTransaction === 'function');
+
+    return (container, slideNode, mutationOptions = {}) => {
+      if (canApplyDeletionTransaction) {
+        return applyDeletionTransaction(container, slideNode, {
+          mutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyDeletion(container, slideNode, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorSlideDeletionMutationWithTransaction
+    applyStudioEditorSlideDeletionMutationWithTransaction,
+    createStudioEditorSlideDeletionApplicator
   };
 });

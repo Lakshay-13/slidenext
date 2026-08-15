@@ -65,25 +65,36 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const legacyApplyDeletion = typeof options.applyDeletion === 'function'
-      ? options.applyDeletion
-      : () => ({ didApply: false, transaction: null });
-    const applyDeletionTransaction = deletionTransactionApi
-      && typeof deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction === 'function'
-      ? deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction
+    const createDeletionApplicator = deletionTransactionApi
+      && typeof deletionTransactionApi.createStudioEditorSlideDeletionApplicator === 'function'
+      ? deletionTransactionApi.createStudioEditorSlideDeletionApplicator
       : null;
-    const applyDeletion = (container, slideNode, mutationOptions = {}) => {
-      if (applyDeletionTransaction) {
-        return applyDeletionTransaction(container, slideNode, {
+    const applyDeletion = createDeletionApplicator
+      ? createDeletionApplicator({
           mutationApi: deletionMutationApi,
           slideCommandsApi,
           deckViewApi,
           transactionApi,
-          ...mutationOptions
-        });
-      }
-      return legacyApplyDeletion(container, slideNode, mutationOptions);
-    };
+          legacyApplyDeletion: options.applyDeletion
+        })
+      : deletionTransactionApi
+        && typeof deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction === 'function'
+        ? (container, slideNode, mutationOptions = {}) => (
+            deletionTransactionApi.applyStudioEditorSlideDeletionMutationWithTransaction(
+              container,
+              slideNode,
+              {
+                mutationApi: deletionMutationApi,
+                slideCommandsApi,
+                deckViewApi,
+                transactionApi,
+                ...mutationOptions
+              }
+            )
+          )
+        : typeof options.applyDeletion === 'function'
+          ? options.applyDeletion
+          : () => ({ didApply: false, transaction: null });
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : null;

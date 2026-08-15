@@ -120,6 +120,38 @@ test('slide deletion controller owns the shared transaction adapter when availab
   });
 });
 
+test('slide deletion controller uses the shared applicator factory when available', () => {
+  const calls = [];
+  const controller = deletionController.createStudioEditorSlideDeletionController({
+    slideCommandsApi: {
+      deleteStudioSlideNode(index, options) {
+        calls.push(['delete', index]);
+        return options.applyDeletion('container', 'slide', { legacy: true }).didApply;
+      }
+    },
+    deletionTransactionApi: {
+      createStudioEditorSlideDeletionApplicator(options) {
+        calls.push(['factory', options]);
+        return (...args) => {
+          calls.push(['applicator', ...args]);
+          return { didApply: true, transaction: null };
+        };
+      }
+    },
+    deletionMutationApi: { id: 'mutation' },
+    deckViewApi: { id: 'view' },
+    transactionApi: { id: 'transaction' }
+  });
+
+  assert.equal(controller.remove(1), true);
+  assert.equal(calls[0][0], 'factory');
+  assert.equal(calls[0][1].mutationApi.id, 'mutation');
+  assert.equal(calls[0][1].deckViewApi.id, 'view');
+  assert.equal(calls[0][1].transactionApi.id, 'transaction');
+  assert.equal(calls[1][0], 'delete');
+  assert.deepEqual(calls[2], ['applicator', 'container', 'slide', { legacy: true }]);
+});
+
 test('slide deletion controller fails closed when canonical builder construction throws', () => {
   let deleteCalls = 0;
   const controller = deletionController.createStudioEditorSlideDeletionController({
