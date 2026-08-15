@@ -172,7 +172,7 @@ test('group controller rolls back when the canonical group sidecar is null', () 
   assert.equal(calls[0][0], 'rollback');
   assert.equal(calls[0][1], transaction);
   assert.equal(calls[0][2], 'undo');
-  assert.deepEqual(calls[1], ['commit', { selectedElements: [] }]);
+  assert.deepEqual(calls[1], ['commit', { selectedElements: [first, second] }]);
   assert.equal(calls.some((call) => call[0] === 'finalize'), false);
 });
 
@@ -208,7 +208,7 @@ test('group controller commits restored selection and finalizes ungrouping', () 
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
 });
 
-test('group controller rolls back and clears selection when group finalization throws', () => {
+test('group controller rolls back and restores selection when group finalization throws', () => {
   const calls = [];
   const slide = { id: 'slide-1' };
   const parent = {
@@ -251,11 +251,11 @@ test('group controller rolls back and clears selection when group finalization t
   assert.deepEqual(calls, [
     ['selection', { selectedElements: [group] }],
     ['rollback', transaction, 'undo'],
-    ['selection', { selectedElements: [] }]
+    ['selection', { selectedElements: [{ id: 'one' }, { id: 'two' }] }]
   ]);
 });
 
-test('group controller rolls back and clears selection when ungroup finalization throws', () => {
+test('group controller rolls back and restores selection when ungroup finalization throws', () => {
   const calls = [];
   const slide = { id: 'slide-1' };
   const group = { id: 'group', parentElement: slide };
@@ -294,7 +294,7 @@ test('group controller rolls back and clears selection when ungroup finalization
   assert.deepEqual(calls, [
     ['selection', { selectedElements: [child] }],
     ['rollback', transaction, 'undo'],
-    ['selection', { selectedElements: [] }]
+    ['selection', { selectedElements: [group] }]
   ]);
 });
 
@@ -351,7 +351,7 @@ test('ungroup controller rolls back when the canonical ungroup sidecar is null',
 
   assert.equal(controller.ungroup(), false);
   assert.deepEqual(calls[0], ['rollback', transaction, 'undo']);
-  assert.deepEqual(calls[1], ['commit', { selectedElements: [] }]);
+  assert.deepEqual(calls[1], ['commit', { selectedElements: [group] }]);
   assert.equal(calls.some((call) => call[0] === 'finalize'), false);
 });
 
@@ -450,10 +450,10 @@ test('group and ungroup controllers roll back when finalization rejects the muta
   assert.deepEqual(calls, [
     ['selection', { selectedElements: [group] }],
     ['rollback', transaction, 'undo'],
-    ['selection', { selectedElements: [] }],
+    ['selection', { selectedElements: [{ id: 'first' }, { id: 'second' }] }],
     ['selection', { selectedElements: [{ id: 'child' }] }],
     ['rollback', transaction, 'undo'],
-    ['selection', { selectedElements: [] }]
+    ['selection', { selectedElements: [group] }]
   ]);
 });
 

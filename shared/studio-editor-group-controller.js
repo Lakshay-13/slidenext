@@ -338,7 +338,7 @@
       }
       if (canonicalGroupMutationRequired && !canonicalDeck) {
         rollbackGroupMutation(mutation.transaction, doc);
-        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        if (commitSelectionState) commitSelectionState({ selectedElements: groupActionState.selection });
         return false;
       }
       if (commitSelectionState) {
@@ -353,7 +353,7 @@
       });
       if (finalizeResult === false) {
         rollbackGroupMutation(mutation.transaction, doc);
-        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        if (commitSelectionState) commitSelectionState({ selectedElements: groupActionState.selection });
         return false;
       }
       return true;
@@ -461,7 +461,7 @@
       }
       if (canonicalUngroupMutationRequired && !canonicalDeck) {
         rollbackGroupMutation(mutation.transaction, doc);
-        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        if (commitSelectionState) commitSelectionState({ selectedElements: ungroupActionState.groups });
         return false;
       }
       if (commitSelectionState) {
@@ -476,7 +476,7 @@
       });
       if (finalizeResult === false) {
         rollbackGroupMutation(mutation.transaction, doc);
-        if (commitSelectionState) commitSelectionState({ selectedElements: [] });
+        if (commitSelectionState) commitSelectionState({ selectedElements: ungroupActionState.groups });
         return false;
       }
       return true;
