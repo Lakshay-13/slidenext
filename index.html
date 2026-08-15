@@ -1687,6 +1687,7 @@
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
   <script src="/shared/studio-editor-selection-composition.js"></script>
+  <script src="/shared/studio-editor-selection-composition-shell-runtime.js"></script>
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
@@ -8621,10 +8622,18 @@
       ? SlideNextStudioEditorSelectionCommitAdapter
       : null;
 
-    const studioEditorSelectionCompositionController = typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
-      && SlideNextStudioEditorSelectionComposition
-      && typeof SlideNextStudioEditorSelectionComposition.createStudioEditorSelectionCompositionController === 'function'
-      ? SlideNextStudioEditorSelectionComposition.createStudioEditorSelectionCompositionController({
+    const studioEditorSelectionCompositionShellRuntimeApi =
+      typeof SlideNextStudioEditorSelectionCompositionShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorSelectionCompositionShellRuntime
+      : null;
+    const studioEditorSelectionCompositionShellRuntime = studioEditorSelectionCompositionShellRuntimeApi
+      && typeof studioEditorSelectionCompositionShellRuntimeApi
+        .createStudioEditorSelectionCompositionShellRuntime === 'function'
+      ? studioEditorSelectionCompositionShellRuntimeApi
+        .createStudioEditorSelectionCompositionShellRuntime({
+          compositionApi: typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
+            ? SlideNextStudioEditorSelectionComposition
+            : null,
           selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
             ? SlideNextStudioEditorSelection
             : null,
@@ -8644,6 +8653,10 @@
             return false;
           }
         })
+      : null;
+    const studioEditorSelectionCompositionController = studioEditorSelectionCompositionShellRuntime
+      && studioEditorSelectionCompositionShellRuntime.isAvailable === true
+      ? studioEditorSelectionCompositionShellRuntime.selectionCompositionController
       : null;
 
     function commitEditorSelectionState(nextSelectionState, options = {}) {
