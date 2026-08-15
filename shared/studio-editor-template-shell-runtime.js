@@ -47,6 +47,31 @@
       'renderApi',
       'SlideNextDeckRender'
     );
+    runtimeOptions.insertionMutationApi = resolveApi(
+      options,
+      'insertionMutationApi',
+      'SlideNextStudioEditorSlideInsertionMutation'
+    );
+    runtimeOptions.insertionTransactionApi = resolveApi(
+      options,
+      'insertionTransactionApi',
+      'SlideNextStudioEditorSlideInsertionTransaction'
+    );
+    runtimeOptions.slideCommandsApi = resolveApi(
+      options,
+      'slideCommandsApi',
+      'SlideNextStudioEditorSlideCommands'
+    );
+    runtimeOptions.deckViewApi = resolveApi(
+      options,
+      'deckViewApi',
+      'SlideNextStudioDeckView'
+    );
+    runtimeOptions.transactionApi = resolveApi(
+      options,
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
 
     return templateRuntimeApi.createStudioEditorTemplateRuntime(runtimeOptions);
   }

@@ -3201,6 +3201,12 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
+          insertionMutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
+            ? SlideNextStudioEditorSlideInsertionMutation
+            : null,
+          insertionTransactionApi: typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
+            ? SlideNextStudioEditorSlideInsertionTransaction
+            : null,
           reorderMutationApi: typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
             ? SlideNextStudioEditorSlideReorderMutation
             : null,
@@ -3238,7 +3244,6 @@
               })
             : null,
           saveHistoryState: (...args) => saveHistoryState(...args),
-          applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
           alert: typeof alert === 'function' ? alert : null,
           restoreDeckViewAfterSlideMutation: (...args) => restoreDeckViewAfterSlideMutation(...args),
@@ -4006,6 +4011,21 @@
           renderApi: typeof SlideNextDeckRender !== 'undefined'
             ? SlideNextDeckRender
             : null,
+          insertionMutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
+            ? SlideNextStudioEditorSlideInsertionMutation
+            : null,
+          insertionTransactionApi: typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
+            ? SlideNextStudioEditorSlideInsertionTransaction
+            : null,
+          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+            ? SlideNextStudioEditorSlideCommands
+            : null,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           getDocument: () => getIframeDoc(),
           getActiveSlide: (doc) => getActiveSlide(doc),
           getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
@@ -4067,7 +4087,6 @@
           getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
           prepareSlide: (...args) => makeElementsHoverable(...args),
           getElementId: (element) => assignEditorSlideId(element),
-          applyInsertion: (...args) => applyEditorSlideInsertionWithTransaction(...args),
           generateThumbnails: (...args) => generateThumbnails(...args),
           setActiveSlide: (...args) => setActiveSlide(...args),
           saveHistoryState: (...args) => saveHistoryState(...args),
@@ -7485,40 +7504,6 @@
           setActiveSlideByIndex: (index) => setActiveSlide(index)
         }
       );
-    }
-
-    function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
-        ? SlideNextStudioEditorSlideInsertionTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorSlideInsertionMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorSlideInsertionMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(container, slideNode, {
-        mutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
-          ? SlideNextStudioEditorSlideInsertionMutation
-          : null,
-        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-          ? SlideNextStudioEditorSlideCommands
-          : null,
-        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-          ? SlideNextStudioDeckView
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        containerElementId: options.containerElementId,
-        beforeNode: options.beforeNode,
-        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
-        getElementId: options.getElementId
-      });
     }
 
     // Add Blank Slide Node

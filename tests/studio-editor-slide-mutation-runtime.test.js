@@ -21,6 +21,8 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     canonicalDeckApi: {},
     deckImportApi: {},
     transactionApi: {},
+    insertionMutationApi: {},
+    insertionTransactionApi: {},
     reorderMutationApi: {},
     reorderTransactionApi: {},
     deckViewApi: {},
@@ -74,6 +76,8 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.equal(calls[2][1].deletionMutationApi, callbacks.deletionMutationApi);
   assert.equal(calls[2][1].deletionTransactionApi, callbacks.deletionTransactionApi);
   assert.equal(calls[1][1].transactionApi, callbacks.transactionApi);
+  assert.equal(calls[1][1].insertionMutationApi, callbacks.insertionMutationApi);
+  assert.equal(calls[1][1].insertionTransactionApi, callbacks.insertionTransactionApi);
   assert.equal(calls[1][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
   assert.equal(calls[0][1].rollbackMutation, callbacks.rollbackMutation);
@@ -91,6 +95,8 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.equal(calls[3][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[3][1].makeElementsHoverable, callbacks.makeElementsHoverable);
   assert.equal(calls[3][1].transactionApi, callbacks.transactionApi);
+  assert.equal(calls[3][1].insertionMutationApi, callbacks.insertionMutationApi);
+  assert.equal(calls[3][1].insertionTransactionApi, callbacks.insertionTransactionApi);
   assert.equal(calls[3][1].rollbackMutation, callbacks.rollbackMutation);
 });
 

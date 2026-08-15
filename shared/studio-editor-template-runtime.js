@@ -23,6 +23,21 @@
           renderApi: options.renderApi
             || (root && root.SlideNextDeckRender)
             || null,
+          insertionMutationApi: options.insertionMutationApi
+            || (root && root.SlideNextStudioEditorSlideInsertionMutation)
+            || null,
+          insertionTransactionApi: options.insertionTransactionApi
+            || (root && root.SlideNextStudioEditorSlideInsertionTransaction)
+            || null,
+          slideCommandsApi: options.slideCommandsApi
+            || (root && root.SlideNextStudioEditorSlideCommands)
+            || null,
+          deckViewApi: options.deckViewApi
+            || (root && root.SlideNextStudioDeckView)
+            || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
           getCanonicalDeck: options.getCanonicalDeck,
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,

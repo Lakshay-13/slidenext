@@ -21,6 +21,8 @@ test('slide mutation shell runtime resolves mutation controllers and canonical d
     canonicalSlideApi: { name: 'slide' },
     canonicalDeckApi: { name: 'deck' },
     deckImportApi: { name: 'import' },
+    insertionMutationApi: { name: 'insertion-mutation' },
+    insertionTransactionApi: { name: 'insertion-transaction' },
     reorderMutationApi: { name: 'reorder-mutation' },
     reorderTransactionApi: { name: 'reorder-transaction' },
     deckViewApi: { name: 'deck-view' },
@@ -62,6 +64,8 @@ test('slide mutation shell runtime honors explicitly unavailable dependencies', 
     canonicalSlideApi: null,
     canonicalDeckApi: null,
     deckImportApi: null,
+    insertionMutationApi: null,
+    insertionTransactionApi: null,
     reorderMutationApi: null,
     reorderTransactionApi: null,
     deckViewApi: null,
@@ -77,6 +81,8 @@ test('slide mutation shell runtime honors explicitly unavailable dependencies', 
   assert.equal(receivedOptions.canonicalSlideApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
   assert.equal(receivedOptions.deckImportApi, null);
+  assert.equal(receivedOptions.insertionMutationApi, null);
+  assert.equal(receivedOptions.insertionTransactionApi, null);
   assert.equal(receivedOptions.reorderMutationApi, null);
   assert.equal(receivedOptions.reorderTransactionApi, null);
   assert.equal(receivedOptions.deckViewApi, null);

@@ -88,15 +88,9 @@ function loadRestoreDeckViewAfterSlideMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadApplyEditorSlideInsertionWithTransaction(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorSlideInsertionWithTransaction(container, slideNode, options = {}) {',
-    '\n\n    // Add Blank Slide Node'
-  );
+function loadSlideInsertionTransactionModules(_fileContent, context) {
   context.SlideNextStudioEditorSlideInsertionMutation = slideInsertionMutation;
   context.SlideNextStudioEditorSlideInsertionTransaction = slideInsertionTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadApplyEditorSlideDeletionWithTransaction(_fileContent, context) {
@@ -147,6 +141,10 @@ function installSlideInsertionController(context) {
     canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
     deckImportApi: context.SlideNextDeckImport,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    insertionMutationApi: context.SlideNextStudioEditorSlideInsertionMutation,
+    insertionTransactionApi: context.SlideNextStudioEditorSlideInsertionTransaction,
+    deckViewApi: context.SlideNextStudioDeckView,
     getIframeDoc: context.getIframeDoc,
     resolveInsertionActionState: context.resolveCurrentStudioInsertionActionState,
     getSlides: context.getSlides,
@@ -164,7 +162,6 @@ function installSlideInsertionController(context) {
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     getSlideId: context.getEditorSlideId,
     saveHistoryState: context.saveHistoryState,
-    applyInsertion: context.applyEditorSlideInsertionWithTransaction,
     generateThumbnails: context.generateThumbnails,
     setActiveSlide: context.setActiveSlide,
     finalizeMutation: context.finalizeSlideMutationPersistence
@@ -198,6 +195,10 @@ function installSlideDuplicationController(context) {
     canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
     deckImportApi: context.SlideNextDeckImport,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    insertionMutationApi: context.SlideNextStudioEditorSlideInsertionMutation,
+    insertionTransactionApi: context.SlideNextStudioEditorSlideInsertionTransaction,
+    deckViewApi: context.SlideNextStudioDeckView,
     getIframeDoc: context.getIframeDoc,
     resolveInsertionActionState: context.resolveCurrentStudioInsertionActionState,
     getSlides: context.getSlides,
@@ -207,7 +208,6 @@ function installSlideDuplicationController(context) {
     makeElementsHoverable: context.makeElementsHoverable,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     saveHistoryState: context.saveHistoryState,
-    applyInsertion: context.applyEditorSlideInsertionWithTransaction,
     generateThumbnails: context.generateThumbnails,
     setActiveSlide: context.setActiveSlide,
     finalizeMutation: context.finalizeSlideMutationPersistence
@@ -883,7 +883,7 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
-  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  loadSlideInsertionTransactionModules(fileContent, context);
   installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
@@ -940,6 +940,7 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   const calls = [];
   const context = {
     SlideNextStudioEditorSlideCommands: slideCommands,
+    SlideNextStudioEditorTransaction: {},
     SlideNextStudioDeckView: {
       resolveStudioInsertionActionState() {
         return { canAddSlide: true };
@@ -993,7 +994,7 @@ test('addSlideNode delegates slide insertion and transaction capture to the shar
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
-  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  loadSlideInsertionTransactionModules(fileContent, context);
   installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
@@ -1034,7 +1035,7 @@ test('addSlideNode no-ops when insertion state or the iframe document disallows 
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
-  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  loadSlideInsertionTransactionModules(fileContent, context);
   installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
@@ -1127,7 +1128,7 @@ test('addSlideNode skips history when blank slide creation fails', () => {
   loadCaptureSlideMutationRestoreState(fileContent, context);
   loadRestoreDeckViewAfterSlideMutation(fileContent, context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
-  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  loadSlideInsertionTransactionModules(fileContent, context);
   installSlideInsertionController(context);
   vm.runInContext(addSlideNodeSource, context);
 
@@ -1252,7 +1253,7 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
 
   vm.createContext(context);
   loadFinalizeSlideMutationPersistence(fileContent, context);
-  loadApplyEditorSlideInsertionWithTransaction(fileContent, context);
+  loadSlideInsertionTransactionModules(fileContent, context);
   installSlideDuplicationController(context);
   vm.runInContext(duplicateSlideNodeSource, context);
 

@@ -23,6 +23,15 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const insertionTransactionApi = options.insertionTransactionApi
+      || (root && root.SlideNextStudioEditorSlideInsertionTransaction)
+      || null;
+    const insertionMutationApi = options.insertionMutationApi
+      || (root && root.SlideNextStudioEditorSlideInsertionMutation)
+      || null;
+    const deckViewApi = options.deckViewApi
+      || (root && root.SlideNextStudioDeckView)
+      || null;
     const duplicateStudioSlideNode = slideCommandsApi
       && typeof slideCommandsApi.duplicateStudioSlideNode === 'function'
       ? slideCommandsApi.duplicateStudioSlideNode
@@ -63,9 +72,21 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyInsertion = typeof options.applyInsertion === 'function'
-      ? options.applyInsertion
-      : () => ({ didApply: false, transaction: null });
+    const createInsertionApplicator = insertionTransactionApi
+      && typeof insertionTransactionApi.createStudioEditorSlideInsertionApplicator === 'function'
+      ? insertionTransactionApi.createStudioEditorSlideInsertionApplicator
+      : null;
+    const applyInsertion = createInsertionApplicator
+      ? createInsertionApplicator({
+          mutationApi: insertionMutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          legacyApplyInsertion: options.applyInsertion
+        })
+      : typeof options.applyInsertion === 'function'
+        ? options.applyInsertion
+        : () => ({ didApply: false, transaction: null });
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : null;

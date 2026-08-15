@@ -16,7 +16,12 @@ test('template shell runtime resolves controller, canonical, and render dependen
     controllerApi: { name: 'controller' },
     canonicalDeckApi: { name: 'deck' },
     canonicalStateApi: { name: 'state' },
-    renderApi: { name: 'render' }
+    renderApi: { name: 'render' },
+    insertionMutationApi: { name: 'insertion-mutation' },
+    insertionTransactionApi: { name: 'insertion-transaction' },
+    slideCommandsApi: { name: 'commands' },
+    deckViewApi: { name: 'deck-view' },
+    transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
 
@@ -48,13 +53,23 @@ test('template shell runtime honors explicitly unavailable dependencies', () => 
     controllerApi: null,
     canonicalDeckApi: null,
     canonicalStateApi: null,
-    renderApi: null
+    renderApi: null,
+    insertionMutationApi: null,
+    insertionTransactionApi: null,
+    slideCommandsApi: null,
+    deckViewApi: null,
+    transactionApi: null
   });
 
   assert.equal(receivedOptions.controllerApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
   assert.equal(receivedOptions.canonicalStateApi, null);
   assert.equal(receivedOptions.renderApi, null);
+  assert.equal(receivedOptions.insertionMutationApi, null);
+  assert.equal(receivedOptions.insertionTransactionApi, null);
+  assert.equal(receivedOptions.slideCommandsApi, null);
+  assert.equal(receivedOptions.deckViewApi, null);
+  assert.equal(receivedOptions.transactionApi, null);
 });
 
 test('template shell runtime safely returns null without a runtime factory', () => {

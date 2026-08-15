@@ -20,6 +20,11 @@ test('template runtime composes controller dependencies without changing them', 
     canonicalDeckApi: {},
     canonicalStateApi: {},
     renderApi: {},
+    insertionMutationApi: {},
+    insertionTransactionApi: {},
+    slideCommandsApi: {},
+    deckViewApi: {},
+    transactionApi: {},
     getCanonicalDeck: () => null,
     getPendingCanonicalDeck: () => null,
     getCanonicalDeckBaseline: () => null,
@@ -47,6 +52,11 @@ test('template runtime composes controller dependencies without changing them', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
   assert.equal(calls[0].canonicalStateApi, options.canonicalStateApi);
+  assert.equal(calls[0].insertionMutationApi, options.insertionMutationApi);
+  assert.equal(calls[0].insertionTransactionApi, options.insertionTransactionApi);
+  assert.equal(calls[0].slideCommandsApi, options.slideCommandsApi);
+  assert.equal(calls[0].deckViewApi, options.deckViewApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
   assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].getDocument, options.getDocument);
   assert.equal(calls[0].getSlideContainer, options.getSlideContainer);

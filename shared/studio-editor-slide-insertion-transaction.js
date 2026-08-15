@@ -39,7 +39,45 @@
     });
   }
 
+  function createStudioEditorSlideInsertionApplicator(options = {}) {
+    const applyInsertionTransaction = typeof options.applyInsertionTransaction === 'function'
+      ? options.applyInsertionTransaction
+      : applyStudioEditorSlideInsertionMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const slideCommandsApi = options.slideCommandsApi && typeof options.slideCommandsApi === 'object'
+      ? options.slideCommandsApi
+      : null;
+    const deckViewApi = options.deckViewApi && typeof options.deckViewApi === 'object'
+      ? options.deckViewApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyInsertion = typeof options.legacyApplyInsertion === 'function'
+      ? options.legacyApplyInsertion
+      : () => ({ didApply: false, transaction: null });
+    const canApplyInsertionTransaction = mutationApi
+      && (typeof options.applyInsertionTransaction === 'function'
+        || typeof mutationApi.applyStudioSlideInsertionMutationWithTransaction === 'function');
+
+    return (container, slideNode, mutationOptions = {}) => {
+      if (canApplyInsertionTransaction) {
+        return applyInsertionTransaction(container, slideNode, {
+          mutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyInsertion(container, slideNode, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorSlideInsertionMutationWithTransaction
+    applyStudioEditorSlideInsertionMutationWithTransaction,
+    createStudioEditorSlideInsertionApplicator
   };
 });

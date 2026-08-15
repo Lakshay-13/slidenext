@@ -47,3 +47,33 @@ test('applyStudioEditorSlideInsertionMutationWithTransaction fails closed withou
     { didApply: false, transaction: null }
   );
 });
+
+test('slide insertion applicator centralizes transaction dependencies and preserves fallback callbacks', () => {
+  const container = { id: 'slides-container' };
+  const slideNode = { id: 'slide-1' };
+  const mutationApi = {
+    applyStudioSlideInsertionMutationWithTransaction() {
+      return { didApply: true, transaction: { id: 'shared-insertion' } };
+    }
+  };
+  const applyInsertion = slideInsertionTransaction.createStudioEditorSlideInsertionApplicator({
+    mutationApi,
+    slideCommandsApi: { id: 'commands' },
+    deckViewApi: { id: 'deck-view' },
+    transactionApi: { id: 'transaction' }
+  });
+
+  assert.deepEqual(
+    applyInsertion(container, slideNode, { beforeNode: { id: 'slide-2' } }),
+    { didApply: true, transaction: { id: 'shared-insertion' } }
+  );
+
+  const fallback = () => ({ didApply: true, transaction: { id: 'legacy-insertion' } });
+  const legacyApplicator = slideInsertionTransaction.createStudioEditorSlideInsertionApplicator({
+    legacyApplyInsertion: fallback
+  });
+  assert.deepEqual(
+    legacyApplicator(container, slideNode, { beforeNode: null }),
+    { didApply: true, transaction: { id: 'legacy-insertion' } }
+  );
+});

@@ -67,6 +67,16 @@
       'deckImportApi',
       'SlideNextDeckImport'
     );
+    runtimeOptions.insertionMutationApi = resolveApi(
+      options,
+      'insertionMutationApi',
+      'SlideNextStudioEditorSlideInsertionMutation'
+    );
+    runtimeOptions.insertionTransactionApi = resolveApi(
+      options,
+      'insertionTransactionApi',
+      'SlideNextStudioEditorSlideInsertionTransaction'
+    );
     runtimeOptions.reorderMutationApi = resolveApi(
       options,
       'reorderMutationApi',

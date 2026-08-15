@@ -30,6 +30,8 @@
       canonicalDeckApi: options.canonicalDeckApi,
       deckImportApi: options.deckImportApi,
       transactionApi: options.transactionApi,
+      insertionMutationApi: options.insertionMutationApi,
+      insertionTransactionApi: options.insertionTransactionApi,
       reorderMutationApi: options.reorderMutationApi,
       reorderTransactionApi: options.reorderTransactionApi,
       deckViewApi: options.deckViewApi,
