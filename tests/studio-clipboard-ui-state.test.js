@@ -10,8 +10,6 @@ const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardToolbarState = require('../shared/studio-editor-clipboard-state.js');
-const clipboardMutation = require('../shared/studio-editor-clipboard-mutation.js');
-const clipboardTransaction = require('../shared/studio-editor-clipboard-transaction.js');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
@@ -57,17 +55,6 @@ function extractClipboardActionFinalizerSource(fileContent) {
     'function finalizeClipboardActionResult(result) {',
     '\n\n    function finalizeInsertedElements(insertedElements, versionLabel, transaction = null) {'
   );
-}
-
-function loadClipboardInsertionHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {',
-    '\n\n    function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {'
-  );
-  context.SlideNextStudioEditorClipboardMutation = clipboardMutation;
-  context.SlideNextStudioEditorClipboardTransaction = clipboardTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function installClipboardController(context) {
@@ -324,8 +311,8 @@ test('buildClipboardPayload returns no payload when the shared clipboard module 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardPayloadSource = extractFunctionSource(
     fileContent,
-    'function buildClipboardPayload(elements = selectedElements, doc = getIframeDoc()) {',
-    '\n\n    function applyEditorClipboardInsertionWithTransaction'
+    'function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
+    '\n\n    function insertClipboardPayload'
   );
   const activeSlide = {};
   const documentRef = {
@@ -674,172 +661,40 @@ test('duplicateSelectedElements forwards a canonical deck sidecar for cloned nod
   assert.deepEqual(sourceDeck.slides[0].nodes.map((node) => node.id), ['node-1']);
 });
 
-test('insertClipboardPayload captures each insertion parent once through the shared markup adapter', () => {
+test('insertClipboardPayload forwards items, offset, and callbacks to the shared controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const insertClipboardPayloadSource = extractFunctionSource(
     fileContent,
     'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
     '\n\n    function buildClipboardSelectionMutationPlan'
   );
-  const parent = {
-    dataset: { editorId: 'parent-1' },
-    innerHTML: '<div data-editor-id="source"></div>',
-    appended: [],
-    appendChild(element) {
-      this.appended.push(element);
-      this.innerHTML = `<div data-editor-id="source"></div>${this.appended.map((item) => `<div>${item.id}</div>`).join('')}`;
-    },
-    getBoundingClientRect() {
-      return { left: 0, top: 0, right: 500, bottom: 400 };
-    }
-  };
-  const slide = {
-    contains() {
-      return true;
-    },
-    appendChild(element) {
-      parent.appendChild(element);
-    }
-  };
-  const doc = { id: 'iframe-doc' };
-  const firstClone = { id: 'clone-1', style: {} };
-  const secondClone = { id: 'clone-2', style: {} };
-  let capturedTransaction = null;
-  const context = {
-    DUPLICATE_OFFSET_PX: 24,
-    SlideNextStudioEditorTransaction: studioTransaction,
-    SlideNextStudioEditorClipboard: {
-      applyStudioClipboardInsertion: clipboardState.applyStudioClipboardInsertion,
-      buildStudioClipboardInsertionPlan() {
-        return [
-          {
-            clone: firstClone,
-            insertionTarget: { mode: 'absolute', parent },
-            absolutePlacement: { nextLeft: 10, nextTop: 20 }
-          },
-          {
-            clone: secondClone,
-            insertionTarget: { mode: 'absolute', parent },
-            absolutePlacement: { nextLeft: 30, nextTop: 40 }
-          }
-        ];
-      }
-    },
-    assignEditorElementId(element) {
-      return element.dataset.editorId;
-    },
-    getActiveSlide(currentDoc) {
-      assert.equal(currentDoc, doc);
-      return slide;
-    },
-    getIframeDoc() {
-      return doc;
-    },
-    getRectOnSlide(rect) {
-      return rect;
-    },
-    getSlideMetrics() {
-      return { logicalWidth: 500, logicalHeight: 400 };
-    },
-    makeElementsHoverable() {}
-  };
-
-  vm.createContext(context);
-  loadClipboardInsertionHelper(fileContent, context);
-  vm.runInContext(insertClipboardPayloadSource, context);
-
-  const inserted = context.insertClipboardPayload([{ id: 'source-1' }, { id: 'source-2' }], 1, {
-    onTransaction(transaction) {
-      capturedTransaction = transaction;
-    }
-  });
-
-  assert.equal(inserted.length, 2);
-  assert.equal(inserted[0].id, 'clone-1');
-  assert.equal(inserted[1].id, 'clone-2');
-  assert.deepEqual(JSON.parse(JSON.stringify(capturedTransaction)), {
-    kind: 'slidenext.editor.transaction',
-    version: 1,
-    operations: [{
-      type: 'markup',
-      elementId: 'parent-1',
-      before: '<div data-editor-id="source"></div>',
-      after: '<div data-editor-id="source"></div><div>clone-1</div><div>clone-2</div>'
-    }]
-  });
-  assert.deepEqual(firstClone.style, {
-    position: 'absolute',
-    margin: '0',
-    left: '10px',
-    top: '20px'
-  });
-  assert.deepEqual(secondClone.style, {
-    position: 'absolute',
-    margin: '0',
-    left: '30px',
-    top: '40px'
-  });
-});
-
-test('insertClipboardPayload delegates insertion application to the shared clipboard module', () => {
-  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const insertClipboardPayloadSource = extractFunctionSource(
-    fileContent,
-    'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
-    '\n\n    function buildClipboardSelectionMutationPlan'
-  );
-  const doc = { id: 'iframe-doc' };
-  const slide = { contains() { return true; } };
-  const inserted = [{ id: 'clone-1' }];
-  let capturedTransaction = null;
+  const items = [{ id: 'source-1' }, { id: 'source-2' }];
+  const inserted = [{ id: 'clone-1' }, { id: 'clone-2' }];
   const calls = [];
   const context = {
-    DUPLICATE_OFFSET_PX: 24,
-    SlideNextStudioEditorClipboard: {
-      buildStudioClipboardInsertionPlan() {
-        return [{
-          clone: { id: 'plan-clone', style: {} },
-          insertionTarget: { mode: 'append-to-slide' },
-          absolutePlacement: null
-        }];
-      },
-      applyStudioClipboardInsertion(plans, options) {
-        calls.push(['applyStudioClipboardInsertion', plans, options]);
-        return { inserted, transaction: { type: 'markup' } };
+    studioEditorClipboardInsertionController: {
+      insert(nextItems, nextOffset, options) {
+        calls.push([nextItems, nextOffset, options]);
+        options.onTransaction({ id: 'tx-insert' });
+        return inserted;
       }
-    },
-    getActiveSlide(currentDoc) {
-      assert.equal(currentDoc, doc);
-      return slide;
-    },
-    getIframeDoc() {
-      return doc;
-    },
-    getRectOnSlide(rect) {
-      return rect;
-    },
-    getSlideMetrics() {
-      return { logicalWidth: 500, logicalHeight: 400 };
-    },
-    makeElementsHoverable() {}
+    }
   };
 
   vm.createContext(context);
-  loadClipboardInsertionHelper(fileContent, context);
   vm.runInContext(insertClipboardPayloadSource, context);
 
-  const result = context.insertClipboardPayload([{ id: 'source-1' }], 1, {
+  let capturedTransaction = null;
+  assert.deepEqual(context.insertClipboardPayload(items, 2, {
     onTransaction(transaction) {
       capturedTransaction = transaction;
     }
-  });
-
-  assert.deepEqual(result, inserted);
-  assert.equal(calls[0][0], 'applyStudioClipboardInsertion');
-  assert.equal(calls[0][1].length, 1);
-  assert.equal(calls[0][2].slide, slide);
-  assert.equal(typeof calls[0][2].getElementId, 'function');
-  assert.deepEqual(capturedTransaction, { type: 'markup' });
+  }), inserted);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], items);
+  assert.equal(calls[0][1], 2);
+  assert.equal(typeof calls[0][2].onTransaction, 'function');
+  assert.deepEqual(capturedTransaction, { id: 'tx-insert' });
 });
 
 test('insertClipboardPayload returns no insertions when the shared clipboard module is unavailable', () => {

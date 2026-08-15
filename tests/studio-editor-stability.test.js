@@ -2025,7 +2025,7 @@ test('clipboard payload construction routes through the shared payload controlle
   const payloadSource = extractFunctionSource(
     fileContent,
     'function buildClipboardPayload(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
-    '\n\n    function applyEditorClipboardInsertionWithTransaction'
+    '\n\n    function insertClipboardPayload'
   );
 
   assert.match(payloadSource, /studioEditorClipboardPayloadController\.buildPayload\(elements, doc\)/);
@@ -2033,6 +2033,18 @@ test('clipboard payload construction routes through the shared payload controlle
     payloadSource,
     /buildStudioClipboardPayloadItems/
   );
+});
+
+test('clipboard insertion construction routes through the shared insertion controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertionSource = extractFunctionSource(
+    fileContent,
+    'function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {',
+    '\n\n    function buildClipboardSelectionMutationPlan'
+  );
+
+  assert.match(insertionSource, /studioEditorClipboardInsertionController\.insert\(items, offsetMultiplier, options\)/);
+  assert.doesNotMatch(insertionSource, /buildStudioClipboardInsertionPlan/);
 });
 
 test('editor runtime wiring uses the composed positioned-ancestor resolver', () => {

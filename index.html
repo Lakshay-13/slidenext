@@ -10207,83 +10207,13 @@
       return [];
     }
 
-    function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
-        ? SlideNextStudioEditorClipboardTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorClipboardInsertionWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorClipboardInsertionWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          inserted: [],
-          transaction: null
-        };
-      }
-      return applyTransaction(insertionPlans, slide, {
-        mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
-          ? SlideNextStudioEditorClipboardMutation
-          : null,
-        clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-          ? SlideNextStudioEditorClipboard
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null,
-        getParentId: options.getParentId
-      });
-    }
-
     function insertClipboardPayload(items, offsetMultiplier = 1, options = {}) {
       if (typeof studioEditorClipboardInsertionController !== 'undefined'
         && studioEditorClipboardInsertionController
         && typeof studioEditorClipboardInsertionController.insert === 'function') {
         return studioEditorClipboardInsertionController.insert(items, offsetMultiplier, options);
       }
-      const doc = getIframeDoc();
-      const slide = getActiveSlide(doc);
-      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
-        ? SlideNextStudioEditorClipboard
-        : null;
-      if (!doc || !slide || !items || items.length === 0
-        || !clipboardApi
-        || typeof clipboardApi.buildStudioClipboardInsertionPlan !== 'function') {
-        return [];
-      }
-
-      const slideMetrics = getSlideMetrics(slide);
-      const insertionPlans = clipboardApi.buildStudioClipboardInsertionPlan(items, offsetMultiplier, {
-        slide,
-        prepareElement: makeElementsHoverable,
-        isOnActiveSlide: (element) => !!(element && slide.contains(element)),
-        getParentBoundsOnSlide: (parent) => {
-          if (!parent || typeof parent.getBoundingClientRect !== 'function') return null;
-          return getRectOnSlide(parent.getBoundingClientRect(), slideMetrics);
-        },
-        offsetPx: DUPLICATE_OFFSET_PX,
-        slideWidth: slideMetrics.logicalWidth,
-        slideHeight: slideMetrics.logicalHeight
-      });
-      if (insertionPlans.length !== items.length) return [];
-      const getClipboardElementId = (element) => {
-        if (typeof assignEditorElementId === 'function') {
-          const assignedId = assignEditorElementId(element);
-          if (assignedId) return assignedId;
-        }
-        return element && element.dataset && element.dataset.editorId;
-      };
-      const mutation = applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, {
-        getElementId: getClipboardElementId
-      });
-      if (typeof options.onTransaction === 'function') {
-        options.onTransaction(mutation.transaction);
-      }
-      return mutation.inserted;
+      return [];
     }
 
     function buildClipboardSelectionMutationPlan(doc = null) {
