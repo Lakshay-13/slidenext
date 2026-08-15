@@ -98,6 +98,26 @@ test('buildStudioCanonicalThemeBaseline prefers pending canonical state over liv
   assert.equal(result, pendingDeck);
 });
 
+test('buildStudioCanonicalThemeBaseline uses pending state in compatibility mode', () => {
+  const pendingDeck = canonicalDeck.createCanonicalDeck({
+    theme: { tokens: { '--color-primary': '#pending' } },
+    slides: [{ id: 'slide-1' }]
+  });
+
+  const result = canonicalTheme.buildStudioCanonicalThemeBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline() {
+      throw new Error('live baseline should not replace pending state');
+    },
+    buildCanonicalDeck() {
+      throw new Error('compatibility rebuild should not replace pending state');
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+});
+
 test('buildStudioCanonicalThemeBaseline delegates baseline resolution to canonical state', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };
