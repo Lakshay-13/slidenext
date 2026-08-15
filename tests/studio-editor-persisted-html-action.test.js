@@ -82,6 +82,11 @@ test('index loads and installs the shared persisted html action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(fileContent, /<script src="\/shared\/studio-editor-persisted-html-action\.js"><\/script>/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-html-shell-runtime\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorPersistedHtmlShellRuntime/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedHtmlGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function resolveEditorReusablePersistedHtml\(persistedDeckState, options = \{\}\) \{/);
 });

@@ -1567,6 +1567,7 @@
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
+  <script src="/shared/studio-editor-persisted-html-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
@@ -5657,10 +5658,18 @@
       && studioEditorCanonicalPersistenceShellRuntime.isAvailable === true
       ? studioEditorCanonicalPersistenceShellRuntime.canonicalPersistenceAdapter
       : null;
-    const studioEditorPersistedHtmlAction = typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
-      && SlideNextStudioEditorPersistedHtmlAction
-      && typeof SlideNextStudioEditorPersistedHtmlAction.createStudioEditorPersistedHtmlAction === 'function'
-      ? SlideNextStudioEditorPersistedHtmlAction.createStudioEditorPersistedHtmlAction({
+    const studioEditorPersistedHtmlShellRuntimeApi =
+      typeof SlideNextStudioEditorPersistedHtmlShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorPersistedHtmlShellRuntime
+      : null;
+    const studioEditorPersistedHtmlShellRuntime = studioEditorPersistedHtmlShellRuntimeApi
+      && typeof studioEditorPersistedHtmlShellRuntimeApi
+        .createStudioEditorPersistedHtmlShellRuntime === 'function'
+      ? studioEditorPersistedHtmlShellRuntimeApi
+        .createStudioEditorPersistedHtmlShellRuntime({
+          actionApi: typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
+            ? SlideNextStudioEditorPersistedHtmlAction
+            : null,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -5670,12 +5679,13 @@
             : null
         })
       : null;
-    const studioEditorPersistedHtmlGlobalApi = typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
-      && SlideNextStudioEditorPersistedHtmlAction
-      && typeof SlideNextStudioEditorPersistedHtmlAction.createStudioEditorPersistedHtmlGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistedHtmlAction.createStudioEditorPersistedHtmlGlobalApi({
-          resolveEditorReusablePersistedHtml: studioEditorPersistedHtmlAction
-        })
+    const studioEditorPersistedHtmlAction = studioEditorPersistedHtmlShellRuntime
+      && studioEditorPersistedHtmlShellRuntime.isAvailable === true
+      ? studioEditorPersistedHtmlShellRuntime.persistedHtmlAction
+      : null;
+    const studioEditorPersistedHtmlGlobalApi = studioEditorPersistedHtmlShellRuntime
+      && studioEditorPersistedHtmlShellRuntime.isAvailable === true
+      ? studioEditorPersistedHtmlShellRuntime.persistedHtmlGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedHtmlGlobalApi);
     const studioEditorPersistedDeckStateShellRuntimeApi =
