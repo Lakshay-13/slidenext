@@ -115,6 +115,55 @@ test('convert delegates DOM style application and rollback to the shared mutatio
   assert.deepEqual(calls.map(([name]) => name), ['apply', 'restore']);
 });
 
+test('convert restores styles when the shared mutation rejects after partial application', () => {
+  const element = {
+    dataset: { editorId: 'node-1' },
+    style: { position: '', margin: '8px', left: '', top: '', width: '50%', height: '' }
+  };
+  const calls = [];
+  let finalizeCalls = 0;
+  const controller = controllerApi.createStudioEditorLayoutConversionController({
+    conversionApi: {
+      buildStudioFlowToFreeformPlan: () => createPlan(element)
+    },
+    conversionMutationApi: {
+      applyStudioLayoutConversionStyles() {
+        calls.push('apply');
+        element.style.position = 'absolute';
+        return false;
+      },
+      restoreStudioLayoutConversionStyles(items) {
+        calls.push('restore');
+        items.forEach((item) => {
+          Object.keys(item.beforeStyle).forEach((property) => {
+            item.element.style[property] = item.beforeStyle[property];
+          });
+        });
+        return true;
+      }
+    },
+    transactionApi: { createStudioStyleTransaction: () => ({ kind: 'style' }) },
+    getDocument: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    finalizeDeckMutation: () => {
+      finalizeCalls += 1;
+      return true;
+    }
+  });
+
+  assert.equal(controller.convert(), false);
+  assert.deepEqual(calls, ['apply', 'restore']);
+  assert.equal(finalizeCalls, 0);
+  assert.deepEqual(element.style, {
+    position: '',
+    margin: '8px',
+    left: '',
+    top: '',
+    width: '50%',
+    height: ''
+  });
+});
+
 test('convert fails closed before DOM mutation when canonical sidecar construction fails', () => {
   const element = {
     dataset: { editorId: 'node-1' },

@@ -196,6 +196,7 @@
         return false;
       }
       if (!applyConversionStyles(plan.items)) {
+        restoreConversionStyles(plan.items);
         if (updateActionState) updateActionState(doc);
         return false;
       }
