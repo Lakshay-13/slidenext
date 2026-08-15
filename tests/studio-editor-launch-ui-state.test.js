@@ -307,6 +307,9 @@ function loadStudioEditorLaunchController(context) {
     clearTimer: (...args) => typeof context.clearTimeout === 'function'
       ? context.clearTimeout(...args)
       : undefined,
+    schedule: (...args) => typeof context.setTimeout === 'function'
+      ? context.setTimeout(...args)
+      : undefined,
     applyPersistedDeckState: (...args) => typeof context.applyCurrentStudioPersistedDeckState === 'function'
       ? context.applyCurrentStudioPersistedDeckState(...args)
       : false,
@@ -317,6 +320,16 @@ function loadStudioEditorLaunchController(context) {
     },
     updateHistoryButtons: (...args) => typeof context.updateHistoryButtons === 'function'
       ? context.updateHistoryButtons(...args)
+      : false,
+    teardownDeckActiveSlideSync: (...args) => typeof context.teardownDeckActiveSlideSync === 'function'
+      ? context.teardownDeckActiveSlideSync(...args)
+      : false,
+    deselectElement: (...args) => typeof context.deselectElement === 'function'
+      ? context.deselectElement(...args)
+      : false,
+    shellController: context.studioEditorShellController || null,
+    loadPresentations: (...args) => typeof context.loadPresentations === 'function'
+      ? context.loadPresentations(...args)
       : false,
     applyEditorSelectionState: (...args) => typeof context.applyEditorSelectionState === 'function'
       ? context.applyEditorSelectionState(...args)
@@ -1510,6 +1523,7 @@ test('closeStudioEditor reuses the shared frame accessor before clearing the edi
 
   vm.createContext(context);
   loadStudioEditorSessionLifecycleController(context);
+  loadStudioEditorLaunchController(context);
   vm.runInContext(closeStudioEditorSource, context);
 
   context.closeStudioEditor();

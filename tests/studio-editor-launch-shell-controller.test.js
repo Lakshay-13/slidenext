@@ -104,3 +104,53 @@ test('launch shell uses the session UI controller instead of fallback chrome res
   assert.equal(prepareLaunchCalls, 1);
   assert.equal(fallbackResetCalls, 0);
 });
+
+test('launch shell closes through the session lifecycle controller with shared shell dependencies', () => {
+  const elements = createElements();
+  let receivedOptions = null;
+  const persistenceApi = { name: 'persistence' };
+  const sessionLifecycleController = {
+    closeStudioEditor(options) {
+      receivedOptions = options;
+      return true;
+    }
+  };
+  const controller = launchShellController.createStudioEditorLaunchShellController({
+    documentRef: elements.documentRef,
+    getPersistenceApi: () => persistenceApi,
+    getSessionLifecycleController: () => sessionLifecycleController,
+    getSessionResetController: () => ({ name: 'reset' }),
+    getSessionUiController: () => ({ name: 'ui' }),
+    getEditor: () => elements.editor,
+    getIframe: () => elements.iframe,
+    advanceSessionToken() {},
+    resetLiveCanonicalDeck() {},
+    teardownDeckActiveSlideSync() {},
+    updateSessionState() {},
+    clearTimer() {},
+    applyPersistedDeckState() {},
+    clearHistoryStacks() {},
+    updateHistoryButtons() {},
+    resetPresentationUiState() {},
+    resetSourceViewUiState() {},
+    resetVersionUiState() {},
+    resetSaveButtonState() {},
+    updateDeckReadyToolbarActionState() {},
+    deselectElement() {},
+    shellController: { name: 'shell' },
+    resetDeckUiState() {},
+    loadPresentations() {}
+  });
+
+  assert.equal(controller.close(), true);
+  assert.equal(receivedOptions.documentRef, elements.documentRef);
+  assert.equal(receivedOptions.editor, elements.editor);
+  assert.equal(receivedOptions.iframe, elements.iframe);
+  assert.equal(receivedOptions.persistenceApi, persistenceApi);
+  assert.equal(receivedOptions.sessionResetController.name, 'reset');
+  assert.equal(receivedOptions.sessionUiController.name, 'ui');
+  assert.equal(receivedOptions.shellController.name, 'shell');
+  assert.equal(typeof receivedOptions.teardownDeckActiveSlideSync, 'function');
+  assert.equal(typeof receivedOptions.deselectElement, 'function');
+  assert.equal(typeof receivedOptions.loadPresentations, 'function');
+});

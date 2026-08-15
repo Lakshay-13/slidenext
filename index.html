@@ -5799,6 +5799,7 @@
           getAutoVersionTimers: getStudioAutoVersionTimers,
           setAutoVersionTimers: setStudioAutoVersionTimers,
           clearTimer: clearTimeout,
+          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
           applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
           clearHistoryStacks: clearStudioHistoryStacks,
           updateHistoryButtons,
@@ -5906,7 +5907,11 @@
           resetDeckUiState: resetStudioDeckUiState,
           resetVersionUiState: resetStudioVersionUiState,
           resetSaveButtonState: resetStudioSaveButtonState,
-          updateDeckReadyToolbarActionState
+          updateDeckReadyToolbarActionState,
+          teardownDeckActiveSlideSync,
+          deselectElement,
+          shellController: studioEditorShellController,
+          loadPresentations
         })
       : null;
     const studioEditorVersionHistoryController = typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
@@ -7198,46 +7203,10 @@
     }
 
     function closeStudioEditor() {
-      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-        ? SlideNextStudioEditorPersistence
-        : null;
-      const sessionLifecycleController = typeof SlideNextStudioEditorSessionLifecycleController !== 'undefined'
-        ? SlideNextStudioEditorSessionLifecycleController
-        : null;
-      if (sessionLifecycleController
-        && typeof sessionLifecycleController.closeStudioEditor === 'function') {
-        return sessionLifecycleController.closeStudioEditor({
-          documentRef: document,
-          editor: document.getElementById('studioEditor'),
-          iframe: getStudioFrame(),
-          advanceSessionToken: advanceStudioEditorSessionToken,
-          resetLiveCanonicalDeck: resetEditorLiveCanonicalDeck,
-          teardownDeckActiveSlideSync,
-          updateSessionState: updateCurrentPresentationSessionState,
-          sessionResetController: studioEditorSessionResetController,
-          persistenceApi,
-          getAutoSaveDebounceTimer: getStudioAutoSaveDebounceTimer,
-          setAutoSaveDebounceTimer: setStudioAutoSaveDebounceTimer,
-          getAutoVersionTimers: getStudioAutoVersionTimers,
-          setAutoVersionTimers: setStudioAutoVersionTimers,
-          clearTimer: clearTimeout,
-          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
-          applyPersistedDeckState: applyCurrentStudioPersistedDeckState,
-          clearHistoryStacks: clearStudioHistoryStacks,
-          updateHistoryButtons,
-          sessionUiController: studioEditorSessionUiController,
-          resetPresentationUiState: resetStudioPresentationUiState,
-          resetSourceViewUiState: resetStudioSourceViewUiState,
-          resetVersionUiState: resetStudioVersionUiState,
-          resetSaveButtonState,
-          updateDeckReadyToolbarActionState,
-          deselectElement,
-          shellController: studioEditorShellController,
-          resetDeckUiState: resetStudioDeckUiState,
-          loadPresentations
-        });
-      }
-      return false;
+      return studioEditorLaunchShellController
+        && typeof studioEditorLaunchShellController.close === 'function'
+        ? studioEditorLaunchShellController.close()
+        : false;
     }
 
     // Initialize Frame Hooks

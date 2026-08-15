@@ -194,7 +194,46 @@
       });
     }
 
-    return { launch };
+    function close() {
+      const persistenceApi = getPersistenceApi();
+      const sessionLifecycleController = getSessionLifecycleController();
+      if (!sessionLifecycleController
+        || typeof sessionLifecycleController.closeStudioEditor !== 'function') {
+        return false;
+      }
+      return sessionLifecycleController.closeStudioEditor({
+        documentRef: getDocument(),
+        editor: getEditor(),
+        iframe: getIframe(),
+        advanceSessionToken: options.advanceSessionToken,
+        resetLiveCanonicalDeck: options.resetLiveCanonicalDeck,
+        teardownDeckActiveSlideSync: options.teardownDeckActiveSlideSync,
+        updateSessionState: options.updateSessionState,
+        sessionResetController: getSessionResetController(),
+        persistenceApi,
+        getAutoSaveDebounceTimer: options.getAutoSaveDebounceTimer,
+        setAutoSaveDebounceTimer: options.setAutoSaveDebounceTimer,
+        getAutoVersionTimers: options.getAutoVersionTimers,
+        setAutoVersionTimers: options.setAutoVersionTimers,
+        clearTimer: options.clearTimer,
+        schedule: options.schedule,
+        applyPersistedDeckState: options.applyPersistedDeckState,
+        clearHistoryStacks: options.clearHistoryStacks,
+        updateHistoryButtons: options.updateHistoryButtons,
+        sessionUiController: getSessionUiController(),
+        resetPresentationUiState: options.resetPresentationUiState,
+        resetSourceViewUiState: options.resetSourceViewUiState,
+        resetVersionUiState: options.resetVersionUiState,
+        resetSaveButtonState: options.resetSaveButtonState,
+        updateDeckReadyToolbarActionState: options.updateDeckReadyToolbarActionState,
+        deselectElement: options.deselectElement,
+        shellController: options.shellController || null,
+        resetDeckUiState: options.resetDeckUiState,
+        loadPresentations: options.loadPresentations
+      });
+    }
+
+    return { launch, close };
   }
 
   return {
