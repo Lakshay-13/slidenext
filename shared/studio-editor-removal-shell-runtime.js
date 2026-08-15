@@ -42,6 +42,26 @@
       'canonicalRemovalApi',
       'SlideNextStudioEditorCanonicalRemoval'
     );
+    runtimeOptions.removalTransactionApi = resolveApi(
+      options,
+      'removalTransactionApi',
+      'SlideNextStudioEditorRemovalTransaction'
+    );
+    runtimeOptions.removalMutationApi = resolveApi(
+      options,
+      'removalMutationApi',
+      'SlideNextStudioEditorRemovalMutation'
+    );
+    runtimeOptions.removalApi = resolveApi(
+      options,
+      'removalApi',
+      'SlideNextStudioEditorRemoval'
+    );
+    runtimeOptions.transactionApi = resolveApi(
+      options,
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
 
     return removalRuntimeApi.createStudioEditorRemovalRuntime(runtimeOptions);
   }

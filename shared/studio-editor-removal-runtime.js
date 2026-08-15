@@ -20,6 +20,18 @@
           canonicalRemovalApi: options.canonicalRemovalApi
             || (root && root.SlideNextStudioEditorCanonicalRemoval)
             || null,
+          removalTransactionApi: options.removalTransactionApi
+            || (root && root.SlideNextStudioEditorRemovalTransaction)
+            || null,
+          removalMutationApi: options.removalMutationApi
+            || (root && root.SlideNextStudioEditorRemovalMutation)
+            || null,
+          removalApi: options.removalApi
+            || (root && root.SlideNextStudioEditorRemoval)
+            || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
           buildRemovalSelectionActionState: options.buildRemovalSelectionActionState,
           finalizeRemovalActionResult: options.finalizeRemovalActionResult,
           getIframeDoc: options.getIframeDoc,

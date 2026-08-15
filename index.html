@@ -3693,6 +3693,18 @@
           canonicalRemovalApi: typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
             ? SlideNextStudioEditorCanonicalRemoval
             : null,
+          removalTransactionApi: typeof SlideNextStudioEditorRemovalTransaction !== 'undefined'
+            ? SlideNextStudioEditorRemovalTransaction
+            : null,
+          removalMutationApi: typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
+            ? SlideNextStudioEditorRemovalMutation
+            : null,
+          removalApi: typeof SlideNextStudioEditorRemoval !== 'undefined'
+            ? SlideNextStudioEditorRemoval
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           buildRemovalSelectionActionState: (...args) => buildRemovalSelectionActionState(...args),
           finalizeRemovalActionResult: (...args) => finalizeRemovalActionResult(...args),
           getIframeDoc: (...args) => getIframeDoc(...args),
@@ -3703,7 +3715,6 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyRemovalMutation: (...args) => applyEditorRemovalMutationWithTransaction(...args),
           deselectElement: (...args) => deselectElement(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
           rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
@@ -9889,39 +9900,6 @@
         && typeof studioEditorStyleController.apply === 'function'
         ? studioEditorStyleController.apply(prop, val)
         : false;
-    }
-
-    function applyEditorRemovalMutationWithTransaction(selection, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorRemovalTransaction !== 'undefined'
-        ? SlideNextStudioEditorRemovalTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorRemovalMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorRemovalMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didRemove: false,
-          removedCount: 0,
-          transaction: null
-        };
-      }
-      return applyTransaction(selection, {
-        mutationApi: typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
-          ? SlideNextStudioEditorRemovalMutation
-          : null,
-        removalApi: typeof SlideNextStudioEditorRemoval !== 'undefined'
-          ? SlideNextStudioEditorRemoval
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getElementId: options.getElementId,
-        assignElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null,
-        removeElement: options.removeElement
-      });
     }
 
     // Delete active selection

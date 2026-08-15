@@ -19,6 +19,10 @@ test('removal runtime composes canonical and mutation dependencies', () => {
     controllerApi,
     canonicalDeckApi: {},
     canonicalRemovalApi: {},
+    removalTransactionApi: {},
+    removalMutationApi: {},
+    removalApi: {},
+    transactionApi: {},
     buildRemovalSelectionActionState: () => ({}),
     finalizeRemovalActionResult: () => {},
     getIframeDoc: () => null,
@@ -39,6 +43,10 @@ test('removal runtime composes canonical and mutation dependencies', () => {
   );
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
+  assert.equal(calls[0].removalTransactionApi, options.removalTransactionApi);
+  assert.equal(calls[0].removalMutationApi, options.removalMutationApi);
+  assert.equal(calls[0].removalApi, options.removalApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
   assert.equal(calls[0].buildRemovalSelectionActionState, options.buildRemovalSelectionActionState);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);

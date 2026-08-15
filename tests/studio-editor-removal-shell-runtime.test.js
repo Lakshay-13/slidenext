@@ -15,7 +15,11 @@ test('removal shell runtime resolves controller and canonical dependencies', () 
   const dependencies = {
     controllerApi: { name: 'controller' },
     canonicalDeckApi: { name: 'deck' },
-    canonicalRemovalApi: { name: 'removal' }
+    canonicalRemovalApi: { name: 'removal' },
+    removalTransactionApi: { name: 'removal-transaction' },
+    removalMutationApi: { name: 'removal-mutation' },
+    removalApi: { name: 'removal-api' },
+    transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
 
@@ -46,12 +50,20 @@ test('removal shell runtime honors explicitly unavailable dependencies', () => {
     removalRuntimeApi,
     controllerApi: null,
     canonicalDeckApi: null,
-    canonicalRemovalApi: null
+    canonicalRemovalApi: null,
+    removalTransactionApi: null,
+    removalMutationApi: null,
+    removalApi: null,
+    transactionApi: null
   });
 
   assert.equal(receivedOptions.controllerApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
   assert.equal(receivedOptions.canonicalRemovalApi, null);
+  assert.equal(receivedOptions.removalTransactionApi, null);
+  assert.equal(receivedOptions.removalMutationApi, null);
+  assert.equal(receivedOptions.removalApi, null);
+  assert.equal(receivedOptions.transactionApi, null);
 });
 
 test('removal shell runtime safely returns null without a runtime factory', () => {

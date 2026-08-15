@@ -14,6 +14,18 @@
     const canonicalRemovalApi = options.canonicalRemovalApi
       || (root && root.SlideNextStudioEditorCanonicalRemoval)
       || null;
+    const removalTransactionApi = options.removalTransactionApi
+      || (root && root.SlideNextStudioEditorRemovalTransaction)
+      || null;
+    const removalMutationApi = options.removalMutationApi
+      || (root && root.SlideNextStudioEditorRemovalMutation)
+      || null;
+    const removalApi = options.removalApi
+      || (root && root.SlideNextStudioEditorRemoval)
+      || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const buildRemovalSelectionActionState = typeof options.buildRemovalSelectionActionState === 'function'
       ? options.buildRemovalSelectionActionState
       : null;
@@ -42,9 +54,20 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyRemovalMutation = typeof options.applyRemovalMutation === 'function'
-      ? options.applyRemovalMutation
-      : () => ({ didRemove: false, transaction: null });
+    const createRemovalApplicator = removalTransactionApi
+      && typeof removalTransactionApi.createStudioEditorRemovalApplicator === 'function'
+      ? removalTransactionApi.createStudioEditorRemovalApplicator
+      : null;
+    const applyRemovalMutation = createRemovalApplicator
+      ? createRemovalApplicator({
+          mutationApi: removalMutationApi,
+          removalApi,
+          transactionApi,
+          legacyApplyRemoval: options.applyRemovalMutation
+        })
+      : typeof options.applyRemovalMutation === 'function'
+        ? options.applyRemovalMutation
+        : () => ({ didRemove: false, transaction: null });
     const deselectElement = typeof options.deselectElement === 'function'
       ? options.deselectElement
       : null;
