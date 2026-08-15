@@ -1820,7 +1820,7 @@ test('createStudioSaveRequestBodyBuilder reuses call-time overrides before build
   ]);
 });
 
-test('createStudioSaveRequestBodyBuilder prefers live canonical state over captured DOM state', () => {
+test('createStudioSaveRequestBodyBuilder prefers captured canonical state over stale live state', () => {
   const sourceDocument = { label: 'iframe-doc' };
   const liveCanonicalDeck = {
     metadata: { title: 'Live Deck' },
@@ -1848,7 +1848,7 @@ test('createStudioSaveRequestBodyBuilder prefers live canonical state over captu
 
   assert.deepEqual(builder(sourceDocument, null), {
     cleanHtml: '<html>captured</html>',
-    canonicalDeck: liveCanonicalDeck
+    canonicalDeck: capturedCanonicalDeck
   });
 });
 

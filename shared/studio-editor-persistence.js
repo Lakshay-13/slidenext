@@ -797,8 +797,8 @@
     }
     const resolvedCanonicalDeck = providedCanonicalDeck
       ? resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState)
-      : liveCanonicalDeck
-        || (capturedDeckState && capturedDeckState.canonicalDeck)
+      : (capturedDeckState && capturedDeckState.canonicalDeck)
+        || liveCanonicalDeck
         || resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState);
     const buildPersistableDeckHtml = typeof options.buildPersistableDeckHtml === 'function'
       ? options.buildPersistableDeckHtml
