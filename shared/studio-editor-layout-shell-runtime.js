@@ -67,6 +67,16 @@
       'alignmentEngineApi',
       'SlideNextStudioEditorAlignment'
     );
+    runtimeOptions.positionLayoutTransactionApi = resolveApi(
+      options,
+      'positionLayoutTransactionApi',
+      'SlideNextStudioEditorPositionLayoutTransaction'
+    );
+    runtimeOptions.positionLayoutMutationApi = resolveApi(
+      options,
+      'positionLayoutMutationApi',
+      'SlideNextStudioEditorPositionLayoutMutation'
+    );
     runtimeOptions.canonicalLayoutApi = resolveApi(
       options,
       'canonicalLayoutApi',

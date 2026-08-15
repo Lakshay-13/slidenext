@@ -52,3 +52,35 @@ test('applyStudioEditorPositionLayoutMutationWithTransaction fails closed withou
     { didApply: false, transaction: null }
   );
 });
+
+test('position layout applicator centralizes transaction dependencies and preserves fallback callbacks', () => {
+  let delegated = null;
+  const applicator = positionLayoutTransaction.createStudioEditorPositionLayoutApplicator({
+    mutationApi: {
+      applyStudioPositionLayoutMutationWithTransaction(items, options) {
+        delegated = { items, options };
+        return { didApply: true, transaction: { id: 'tx-position' } };
+      }
+    },
+    transactionApi: { id: 'transaction' },
+    alignmentApi: { id: 'alignment' }
+  });
+
+  const items = [{ element: { id: 'node-1' }, nextLeft: 12 }];
+  assert.deepEqual(
+    applicator(items, { getElementId: () => 'node-1' }),
+    { didApply: true, transaction: { id: 'tx-position' } }
+  );
+  assert.equal(delegated.items, items);
+  assert.equal(delegated.options.transactionApi.id, 'transaction');
+  assert.equal(delegated.options.alignmentApi.id, 'alignment');
+  assert.equal(typeof delegated.options.getElementId, 'function');
+
+  const legacyApplicator = positionLayoutTransaction.createStudioEditorPositionLayoutApplicator({
+    legacyApplyPositionLayout: () => ({ didApply: true, transaction: { id: 'legacy-position' } })
+  });
+  assert.deepEqual(
+    legacyApplicator(items),
+    { didApply: true, transaction: { id: 'legacy-position' } }
+  );
+});

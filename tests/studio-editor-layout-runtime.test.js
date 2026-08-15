@@ -9,6 +9,8 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 test('layout runtime composes layout controllers', () => {
   const calls = [];
+  let positionApplicatorOptions = null;
+  const positionApplicator = () => {};
   const controllers = {
     nudgeController: { name: 'nudge' },
     alignmentController: { name: 'alignment' },
@@ -20,6 +22,13 @@ test('layout runtime composes layout controllers', () => {
     nudgeEngineApi: {},
     conversionEngineApi: {},
     alignmentEngineApi: {},
+    positionLayoutTransactionApi: {
+      createStudioEditorPositionLayoutApplicator(options) {
+        positionApplicatorOptions = options;
+        return positionApplicator;
+      }
+    },
+    positionLayoutMutationApi: {},
     canonicalLayoutApi: {},
     canonicalDeckApi: {},
     canonicalGroupApi: {},
@@ -94,8 +103,11 @@ test('layout runtime composes layout controllers', () => {
   });
 
   assert.deepEqual(result, controllers);
+  assert.equal(positionApplicatorOptions.mutationApi, callbacks.positionLayoutMutationApi);
+  assert.equal(positionApplicatorOptions.transactionApi, callbacks.transactionApi);
+  assert.equal(positionApplicatorOptions.alignmentApi, callbacks.alignmentEngineApi);
   assert.equal(calls[0][1].nudgeApi, callbacks.nudgeEngineApi);
-  assert.equal(calls[0][1].applyPositionLayout, callbacks.applyPositionLayout);
+  assert.equal(calls[0][1].applyPositionLayout, positionApplicator);
   assert.equal(calls[0][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[0][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[1][1].alignmentApi, callbacks.alignmentEngineApi);

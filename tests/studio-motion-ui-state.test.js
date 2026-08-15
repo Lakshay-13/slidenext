@@ -135,18 +135,18 @@ function loadSelectionHasLockedElements(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadPositionMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {',
-    'function alignSelectedElements(action = \'\') {'
-  );
+function loadPositionMutationModules(_fileContent, context) {
   if (!context.SlideNextStudioEditorTransaction) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
   context.SlideNextStudioEditorPositionLayoutTransaction = positionLayoutTransaction;
-  vm.runInContext(helperSource, context);
+  context.studioEditorPositionLayoutApplicator = positionLayoutTransaction
+    .createStudioEditorPositionLayoutApplicator({
+      mutationApi: context.SlideNextStudioEditorPositionLayoutMutation,
+      transactionApi: context.SlideNextStudioEditorTransaction,
+      alignmentApi: context.SlideNextStudioEditorAlignment
+    });
 }
 
 function loadPositionRollbackHelper(fileContent, context) {
@@ -169,7 +169,7 @@ function installNudgeController(context) {
     updateMotionActionState: context.updateMotionActionState,
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyPositionLayout: context.applyEditorPositionLayoutWithTransaction,
+    applyPositionLayout: context.studioEditorPositionLayoutApplicator,
     finalizeDeckMutation: context.finalizeEditorDeckMutation
   });
 }
@@ -782,7 +782,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when sel
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -831,7 +831,7 @@ test('nudgeSelectedElements returns false and refreshes motion controls when nud
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -937,7 +937,7 @@ test('nudgeSelectedElements persists the moved selection through the shared muta
   vm.createContext(context);
   loadBuildMotionSelectionActionState(fileContent, context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -1026,7 +1026,7 @@ test('nudgeSelectedElements forwards an immutable canonical layout sidecar', () 
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -1079,7 +1079,7 @@ test('nudgeSelectedElements delegates position application to the shared nudge m
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 
@@ -1135,7 +1135,7 @@ test('nudgeSelectedElements forwards a reversible style transaction to history',
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installNudgeController(context);
   vm.runInContext(nudgeSelectedElementsSource, context);
 

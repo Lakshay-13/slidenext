@@ -28,6 +28,20 @@
       && typeof options.layoutModeControllerApi.createStudioEditorLayoutModeController === 'function'
       ? options.layoutModeControllerApi
       : null;
+    const positionLayoutTransactionApi = options.positionLayoutTransactionApi
+      && typeof options.positionLayoutTransactionApi.createStudioEditorPositionLayoutApplicator === 'function'
+      ? options.positionLayoutTransactionApi
+      : null;
+    const applyPositionLayout = positionLayoutTransactionApi
+      ? positionLayoutTransactionApi.createStudioEditorPositionLayoutApplicator({
+          mutationApi: options.positionLayoutMutationApi,
+          transactionApi: options.transactionApi,
+          alignmentApi: options.alignmentEngineApi,
+          legacyApplyPositionLayout: options.applyPositionLayout
+        })
+      : typeof options.applyPositionLayout === 'function'
+        ? options.applyPositionLayout
+        : () => ({ didApply: false, transaction: null });
 
     const nudgeController = nudgeApi
       ? nudgeApi.createStudioEditorNudgeController({
@@ -40,7 +54,7 @@
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
-          applyPositionLayout: options.applyPositionLayout,
+          applyPositionLayout,
           rollbackPositionMutation: options.rollbackPositionMutation,
           finalizeDeckMutation: options.finalizeDeckMutation
         })
@@ -57,7 +71,7 @@
           buildCanonicalDeckBaseline: options.buildCanonicalDeckBaseline,
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
-          applyPositionLayout: options.applyPositionLayout,
+          applyPositionLayout,
           rollbackPositionMutation: options.rollbackPositionMutation,
           finalizeDeckMutation: options.finalizeDeckMutation
         })

@@ -3409,6 +3409,12 @@
           alignmentEngineApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
             ? SlideNextStudioEditorAlignment
             : null,
+          positionLayoutTransactionApi: typeof SlideNextStudioEditorPositionLayoutTransaction !== 'undefined'
+            ? SlideNextStudioEditorPositionLayoutTransaction
+            : null,
+          positionLayoutMutationApi: typeof SlideNextStudioEditorPositionLayoutMutation !== 'undefined'
+            ? SlideNextStudioEditorPositionLayoutMutation
+            : null,
           canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
             ? SlideNextStudioEditorCanonicalLayout
             : null,
@@ -3484,7 +3490,6 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
-          applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           rollbackPositionMutation: (...args) => rollbackEditorPositionLayoutMutation(...args),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
@@ -10333,37 +10338,6 @@
         && typeof studioEditorLayoutConversionController.convert === 'function'
         ? studioEditorLayoutConversionController.convert()
         : false;
-    }
-
-    function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorPositionLayoutTransaction !== 'undefined'
-        ? SlideNextStudioEditorPositionLayoutTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorPositionLayoutMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorPositionLayoutMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return { didApply: false, transaction: null };
-      }
-      return applyTransaction(nextItems, {
-        mutationApi: typeof SlideNextStudioEditorPositionLayoutMutation !== 'undefined'
-          ? SlideNextStudioEditorPositionLayoutMutation
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
-          ? SlideNextStudioEditorAlignment
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null,
-        ...(Object.prototype.hasOwnProperty.call(options, 'applyLayout')
-          ? { applyLayout: options.applyLayout }
-          : {})
-      });
     }
 
     function rollbackEditorPositionLayoutMutation(transaction, sourceDoc = getIframeDoc()) {

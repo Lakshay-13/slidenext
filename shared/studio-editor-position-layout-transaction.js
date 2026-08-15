@@ -41,7 +41,41 @@
     });
   }
 
+  function createStudioEditorPositionLayoutApplicator(options = {}) {
+    const applyPositionTransaction = typeof options.applyPositionTransaction === 'function'
+      ? options.applyPositionTransaction
+      : applyStudioEditorPositionLayoutMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const alignmentApi = options.alignmentApi && typeof options.alignmentApi === 'object'
+      ? options.alignmentApi
+      : null;
+    const legacyApplyPositionLayout = typeof options.legacyApplyPositionLayout === 'function'
+      ? options.legacyApplyPositionLayout
+      : () => ({ didApply: false, transaction: null });
+    const canApplyPositionTransaction = mutationApi
+      && (typeof options.applyPositionTransaction === 'function'
+        || typeof mutationApi.applyStudioPositionLayoutMutationWithTransaction === 'function');
+
+    return (nextItems, mutationOptions = {}) => {
+      if (canApplyPositionTransaction) {
+        return applyPositionTransaction(nextItems, {
+          mutationApi,
+          transactionApi,
+          alignmentApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyPositionLayout(nextItems, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorPositionLayoutMutationWithTransaction
+    applyStudioEditorPositionLayoutMutationWithTransaction,
+    createStudioEditorPositionLayoutApplicator
   };
 });

@@ -24,18 +24,18 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-function loadPositionMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorPositionLayoutWithTransaction(nextItems, options = {}) {',
-    'function alignSelectedElements(action = \'\') {'
-  );
+function loadPositionMutationModules(_fileContent, context) {
   if (!context.SlideNextStudioEditorTransaction) {
     context.SlideNextStudioEditorTransaction = studioTransaction;
   }
   context.SlideNextStudioEditorPositionLayoutMutation = positionLayoutMutation;
   context.SlideNextStudioEditorPositionLayoutTransaction = positionLayoutTransaction;
-  vm.runInContext(helperSource, context);
+  context.studioEditorPositionLayoutApplicator = positionLayoutTransaction
+    .createStudioEditorPositionLayoutApplicator({
+      mutationApi: context.SlideNextStudioEditorPositionLayoutMutation,
+      transactionApi: context.SlideNextStudioEditorTransaction,
+      alignmentApi: context.SlideNextStudioEditorAlignment
+    });
 }
 
 function installAlignmentController(context) {
@@ -48,7 +48,7 @@ function installAlignmentController(context) {
     getIframeDoc: context.getIframeDoc,
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyPositionLayout: context.applyEditorPositionLayoutWithTransaction,
+    applyPositionLayout: context.studioEditorPositionLayoutApplicator,
     finalizeDeckMutation: context.finalizeEditorDeckMutation
   });
 }
@@ -394,7 +394,7 @@ test('distributeSelectedElements writes distribution positions and records one m
     }
   };
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -466,7 +466,7 @@ test('distributeSelectedElements forwards an immutable canonical layout sidecar'
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -518,7 +518,7 @@ test('alignSelectedElements writes aligned parent-relative positions and records
     }
   };
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -575,7 +575,7 @@ test('alignSelectedElements forwards a reversible position transaction', () => {
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -654,7 +654,7 @@ test('alignSelectedElements forwards an immutable canonical layout sidecar', () 
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -712,7 +712,7 @@ test('alignSelectedElements delegates position application to the shared alignme
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
@@ -769,7 +769,7 @@ test('distributeSelectedElements delegates position application to the shared al
   };
 
   vm.createContext(context);
-  loadPositionMutationHelper(fileContent, context);
+  loadPositionMutationModules(fileContent, context);
   installAlignmentController(context);
   vm.runInContext(source, context);
 
