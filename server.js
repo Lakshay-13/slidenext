@@ -866,6 +866,9 @@ app.post('/api/versions/delete', async (req, res) => {
     return res.status(400).json({ error: 'Missing htmlPath or versionFilename' });
   }
 
+  let deletedVersionContent = null;
+  let didDeleteVersionFile = false;
+  let deletedVersionPath = '';
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
     if (!isPathWithin(workspaceDir, targetFile)) {
@@ -874,12 +877,15 @@ app.post('/api/versions/delete', async (req, res) => {
 
     const parentDir = path.dirname(targetFile);
     const versionFilePath = path.resolve(parentDir, '.versions', versionFilename);
+    deletedVersionPath = versionFilePath;
 
     if (!isPathWithin(path.join(parentDir, '.versions'), versionFilePath)) {
       return res.status(403).json({ error: 'Access denied: invalid backup path' });
     }
 
+    deletedVersionContent = await fs.readFile(versionFilePath, 'utf8');
     await fs.unlink(versionFilePath);
+    didDeleteVersionFile = true;
     console.log(`Deleted version backup: ${versionFilename}`);
 
     const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
@@ -906,6 +912,14 @@ app.post('/api/versions/delete', async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
+    if (didDeleteVersionFile && deletedVersionContent !== null) {
+      try {
+        await writeFileAtomically(deletedVersionPath, deletedVersionContent);
+        console.warn(`Restored deleted version after metadata failure: ${deletedVersionPath}`);
+      } catch (rollbackErr) {
+        console.warn('Failed to roll back deleted version:', rollbackErr.message);
+      }
+    }
     console.error('Error deleting version:', err);
     res.status(500).json({ error: `Failed to delete version: ${err.message}` });
   }
