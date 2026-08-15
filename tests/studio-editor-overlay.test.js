@@ -10,8 +10,8 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 test('editor composes selection overlay synchronization through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorSelectionOverlaySynchronizer =/);
-  assert.match(source, /createStudioSelectionOverlaySynchronizer\(/);
+  assert.match(source, /studioEditorSelectionOverlayShellRuntimeApi/);
+  assert.match(source, /createStudioEditorSelectionOverlayShellRuntime\(/);
   assert.match(
     source,
     /getTransformSelectionState: \(doc\) => getTransformSelectionState\(getStudioSelectedElements\(doc\), doc\),/
