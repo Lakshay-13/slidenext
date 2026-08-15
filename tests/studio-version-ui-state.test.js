@@ -1260,6 +1260,7 @@ test('openSaveVersionModal does not open when deck-ready state disables version 
       };
     },
     SlideNextStudioModalVisibility: modalVisibility,
+    SlideNextStudioVersionView: versionView,
     document: {
       getElementById(id) {
         return elements[id] || null;

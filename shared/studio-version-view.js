@@ -74,6 +74,58 @@
     return controller.hideImmediately(modal, content);
   }
 
+  function openStudioSaveVersionModal(options = {}) {
+    const canOpen = typeof options.canOpen === 'function'
+      ? options.canOpen()
+      : options.canOpen !== false;
+    if (!canOpen) return false;
+
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    const modal = documentRef.getElementById('saveVersionModal');
+    const content = documentRef.getElementById('saveVersionModalContent');
+    const input = documentRef.getElementById('versionCheckpointName');
+    if (!modal || !content || !input) return false;
+
+    input.value = '';
+    const modalOptions = {
+      modalVisibility: resolveModalVisibility(options),
+      forceReflow: true
+    };
+    const didShow = showStudioVersionModal(modal, content, modalOptions);
+    if (didShow === false) return false;
+
+    const visibility = resolveModalVisibility(options);
+    const scheduleCallback = visibility
+      && typeof visibility.scheduleStudioModalCallback === 'function'
+      ? visibility.scheduleStudioModalCallback
+      : defaultModalVisibility
+        && typeof defaultModalVisibility.scheduleStudioModalCallback === 'function'
+        ? defaultModalVisibility.scheduleStudioModalCallback
+        : null;
+    if (scheduleCallback) {
+      scheduleCallback.call(visibility, modal, {
+        delayMs: 50,
+        callback: () => {
+          if (typeof input.focus === 'function') input.focus();
+        }
+      });
+    } else if (typeof input.focus === 'function') {
+      input.focus();
+    }
+    return true;
+  }
+
+  function closeStudioSaveVersionModal(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
+    return hideStudioVersionModal(
+      documentRef.getElementById('saveVersionModal'),
+      documentRef.getElementById('saveVersionModalContent'),
+      options
+    );
+  }
+
   function resetStudioVersionUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -220,6 +272,8 @@
     showStudioVersionModal,
     hideStudioVersionModal,
     hideStudioVersionModalImmediately,
+    openStudioSaveVersionModal,
+    closeStudioSaveVersionModal,
     resetStudioVersionUiState,
     resetStudioRenameVersionButton,
     setStudioRenameVersionButtonBusy,

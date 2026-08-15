@@ -64,6 +64,57 @@ test('version view delegates modal chrome through the shared visibility controll
   ]);
 });
 
+test('version view opens and closes the save checkpoint modal with delayed focus', () => {
+  const elements = {
+    saveVersionModal: {
+      classList: createClassList(['hidden', 'opacity-0']),
+      offsetHeight: 0
+    },
+    saveVersionModalContent: {
+      classList: createClassList(['scale-95'])
+    },
+    versionCheckpointName: {
+      value: 'Existing label',
+      focusCalls: 0,
+      focus() {
+        this.focusCalls += 1;
+      }
+    }
+  };
+  const callbacks = [];
+  const modalVisibility = {
+    cancelStudioModalHide() {},
+    scheduleStudioModalCallback(modal, options) {
+      callbacks.push([modal, options.delayMs]);
+      options.callback();
+    },
+    scheduleStudioModalHide(modal, options) {
+      options.onHide();
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return elements[id] || null;
+    }
+  };
+
+  assert.equal(versionView.openStudioSaveVersionModal({
+    documentRef,
+    canOpen: () => true,
+    modalVisibility
+  }), true);
+  assert.equal(elements.versionCheckpointName.value, '');
+  assert.equal(elements.versionCheckpointName.focusCalls, 1);
+  assert.deepEqual(callbacks, [[elements.saveVersionModal, 50]]);
+  assert.equal(elements.saveVersionModal.classList.contains('hidden'), false);
+
+  assert.equal(versionView.closeStudioSaveVersionModal({
+    documentRef,
+    modalVisibility
+  }), undefined);
+  assert.equal(elements.saveVersionModal.classList.contains('hidden'), true);
+});
+
 test('hideStudioVersionsDropdown hides the version menu', () => {
   const dropdown = { classList: createClassList() };
   assert.equal(versionView.hideStudioVersionsDropdown({

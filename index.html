@@ -11440,31 +11440,30 @@
 
     // Custom styled checkpoint version modal controls
     function openSaveVersionModal() {
-      if (!resolveCurrentStudioDeckReadyActionState().canUseSaveButton) {
-        return;
-      }
-      const modal = document.getElementById('saveVersionModal');
-      const content = document.getElementById('saveVersionModalContent');
-      const input = document.getElementById('versionCheckpointName');
-      if (!modal || !content || !input) {
-        return;
-      }
-      
-      input.value = '';
-      showCurrentStudioVersionModal(modal, content, {
-        forceReflow: true
-      });
-      
-      SlideNextStudioModalVisibility.scheduleStudioModalCallback(modal, {
-        delayMs: 50,
-        callback: () => input.focus()
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.openStudioSaveVersionModal !== 'function') return false;
+      return versionView.openStudioSaveVersionModal({
+        documentRef: document,
+        canOpen: () => resolveCurrentStudioDeckReadyActionState().canUseSaveButton,
+        modalVisibility: typeof SlideNextStudioModalVisibility !== 'undefined'
+          ? SlideNextStudioModalVisibility
+          : null
       });
     }
     
     function closeSaveVersionModal() {
-      const modal = document.getElementById('saveVersionModal');
-      const content = document.getElementById('saveVersionModalContent');
-      hideCurrentStudioVersionModal(modal, content);
+      const versionView = typeof SlideNextStudioVersionView !== 'undefined'
+        ? SlideNextStudioVersionView
+        : null;
+      if (!versionView || typeof versionView.closeStudioSaveVersionModal !== 'function') return false;
+      return versionView.closeStudioSaveVersionModal({
+        documentRef: document,
+        modalVisibility: typeof SlideNextStudioModalVisibility !== 'undefined'
+          ? SlideNextStudioModalVisibility
+          : null
+      });
     }
 
     function showCurrentStudioVersionModal(modal, content, options = {}) {
