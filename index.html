@@ -1373,6 +1373,7 @@
   <script src="/shared/studio-editor-layer-order-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
   <script src="/shared/studio-editor-layer-order-state.js"></script>
+  <script src="/shared/studio-editor-layer-order-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
@@ -3828,10 +3829,18 @@
       && studioEditorUngroupStateShellRuntime.isAvailable === true
       ? studioEditorUngroupStateShellRuntime.ungroupStateController
       : null;
-    const studioEditorLayerOrderStateController = typeof SlideNextStudioEditorLayerOrderState !== 'undefined'
-      && SlideNextStudioEditorLayerOrderState
-      && typeof SlideNextStudioEditorLayerOrderState.createStudioEditorLayerOrderStateController === 'function'
-      ? SlideNextStudioEditorLayerOrderState.createStudioEditorLayerOrderStateController({
+    const studioEditorLayerOrderStateShellRuntimeApi =
+      typeof SlideNextStudioEditorLayerOrderStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderStateShellRuntime
+      : null;
+    const studioEditorLayerOrderStateShellRuntime = studioEditorLayerOrderStateShellRuntimeApi
+      && typeof studioEditorLayerOrderStateShellRuntimeApi
+        .createStudioEditorLayerOrderStateShellRuntime === 'function'
+      ? studioEditorLayerOrderStateShellRuntimeApi
+        .createStudioEditorLayerOrderStateShellRuntime({
+          layerOrderStateApi: typeof SlideNextStudioEditorLayerOrderState !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderState
+            : null,
           layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
             ? SlideNextStudioEditorLayerOrder
             : null,
@@ -3841,6 +3850,10 @@
           getNormalizedSlideLayerOrder,
           getLockedState: () => isElementLocked
         })
+      : null;
+    const studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellRuntime
+      && studioEditorLayerOrderStateShellRuntime.isAvailable === true
+      ? studioEditorLayerOrderStateShellRuntime.layerOrderStateController
       : null;
     const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
       && SlideNextStudioEditorRemovalShellRuntime
