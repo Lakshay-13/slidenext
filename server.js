@@ -466,6 +466,45 @@ async function createPresentationMetadataVersionBackup(targetFile, versionFilena
   return metadataVersionFilename;
 }
 
+async function createVersionBackupPair({
+  targetFile,
+  htmlContent,
+  versionLabel,
+  metadataInfo,
+  metadata,
+  now = new Date(),
+  createHtmlBackup = createVersionBackupFromContent,
+  createMetadataBackup = createPresentationMetadataVersionBackup,
+  removeBackup = (backupPath) => fs.unlink(backupPath)
+}) {
+  const backupFilename = await createHtmlBackup(targetFile, htmlContent, versionLabel, now);
+
+  try {
+    let metadataBackupFilename = '';
+    if (metadataInfo && metadata !== undefined) {
+      metadataBackupFilename = await createMetadataBackup(
+        targetFile,
+        backupFilename,
+        metadataInfo,
+        metadata
+      );
+    }
+    return { backupFilename, metadataBackupFilename };
+  } catch (err) {
+    const versionsDir = path.resolve(path.dirname(targetFile), '.versions');
+    const backupPath = path.resolve(versionsDir, backupFilename);
+    if (isPathWithin(versionsDir, backupPath)) {
+      try {
+        await removeBackup(backupPath);
+        console.warn(`Removed partial version backup after metadata failure: ${backupPath}`);
+      } catch (rollbackErr) {
+        console.warn('Failed to remove partial version backup:', rollbackErr.message);
+      }
+    }
+    throw err;
+  }
+}
+
 // 2. API: Overwrite index.html and save a timestamped backup in .versions/
 app.post('/api/save', async (req, res) => {
   const requestBody = req.body || {};
@@ -583,23 +622,20 @@ app.post('/api/versions/create', async (req, res) => {
     }
 
     const htmlContent = await fs.readFile(targetFile, 'utf8');
-    const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel);
-    console.log(`Version backup saved without rewriting deck: ${backupFilename}`);
-
     const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
-    if (metadataInfo) {
-      const currentCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(metadataInfo.metadata);
-      if (currentCanonicalDeck) {
-        const metadataBackupFilename = await createPresentationMetadataVersionBackup(
-          targetFile,
-          backupFilename,
-          metadataInfo,
-          metadataInfo.metadata
-        );
-        if (metadataBackupFilename) {
-          console.log(`Version metadata backup saved without rewriting deck: ${metadataBackupFilename}`);
-        }
-      }
+    const currentCanonicalDeck = metadataInfo
+      ? presentationMetadata.resolvePresentationCanonicalDeck(metadataInfo.metadata)
+      : null;
+    const { backupFilename, metadataBackupFilename } = await createVersionBackupPair({
+      targetFile,
+      htmlContent,
+      versionLabel,
+      metadataInfo: currentCanonicalDeck ? metadataInfo : null,
+      metadata: currentCanonicalDeck ? metadataInfo.metadata : undefined
+    });
+    console.log(`Version backup saved without rewriting deck: ${backupFilename}`);
+    if (metadataBackupFilename) {
+      console.log(`Version metadata backup saved without rewriting deck: ${metadataBackupFilename}`);
     }
 
     res.json({ success: true, backupFilename });
@@ -939,5 +975,6 @@ if (require.main === module) {
 module.exports = {
   app,
   PORT,
-  workspaceDir
+  workspaceDir,
+  createVersionBackupPair
 };
