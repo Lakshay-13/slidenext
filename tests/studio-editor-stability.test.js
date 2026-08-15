@@ -2020,7 +2020,7 @@ test('getEditorClosestPositionedAncestor fails closed when the shared DOM module
   assert.equal(context.getEditorClosestPositionedAncestor({ id: 'element-1' }), null);
 });
 
-test('clipboard payload construction uses the composed positioned-ancestor resolver', () => {
+test('clipboard payload construction routes through the shared payload controller', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const payloadSource = extractFunctionSource(
     fileContent,
@@ -2028,10 +2028,10 @@ test('clipboard payload construction uses the composed positioned-ancestor resol
     '\n\n    function applyEditorClipboardInsertionWithTransaction'
   );
 
-  assert.match(payloadSource, /getClosestPositionedAncestor: getEditorClosestPositionedAncestor/);
+  assert.match(payloadSource, /studioEditorClipboardPayloadController\.buildPayload\(elements, doc\)/);
   assert.doesNotMatch(
     payloadSource,
-    /getClosestPositionedAncestor: SlideNextStudioEditorDom\.getStudioClosestPositionedAncestor/
+    /buildStudioClipboardPayloadItems/
   );
 });
 

@@ -10204,41 +10204,7 @@
         && typeof studioEditorClipboardPayloadController.buildPayload === 'function') {
         return studioEditorClipboardPayloadController.buildPayload(elements, doc);
       }
-      const resolvedDoc = doc || getIframeDoc();
-      const clipboardApi = typeof SlideNextStudioEditorClipboard !== 'undefined'
-        ? SlideNextStudioEditorClipboard
-        : null;
-      const selection = Array.isArray(elements) ? elements : [];
-      const slide = getActiveSlide(resolvedDoc);
-      const getComputedStyle = resolvedDoc
-        && resolvedDoc.defaultView
-        && typeof resolvedDoc.defaultView.getComputedStyle === 'function'
-        ? resolvedDoc.defaultView.getComputedStyle.bind(resolvedDoc.defaultView)
-        : null;
-      if (!resolvedDoc || !slide || selection.length === 0 || !getComputedStyle
-        || !clipboardApi
-        || typeof clipboardApi.getStudioClipboardSelection !== 'function'
-        || typeof clipboardApi.buildStudioClipboardPayloadItems !== 'function') {
-        return [];
-      }
-      const slideMetrics = getSlideMetrics(slide);
-      const orderedSelection = clipboardApi.getStudioClipboardSelection(selection, {
-        orderedElements: getNormalizedSlideLayerOrder(slide)
-      });
-      if (orderedSelection.length === 0) return [];
-
-      return clipboardApi.buildStudioClipboardPayloadItems(orderedSelection, {
-        sanitizeElement: sanitizeDuplicatedSubtree,
-        hoverableClassName: 'editor-hoverable',
-        getComputedStyle,
-        getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
-        buildPositionedLayoutItem: buildEditorPositionedLayoutItem,
-        positionedLayoutOptions: {
-          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
-          getRectOnSlide,
-          slideMetrics
-        }
-      });
+      return [];
     }
 
     function applyEditorClipboardInsertionWithTransaction(insertionPlans, slide, options = {}) {
