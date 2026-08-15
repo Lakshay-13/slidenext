@@ -18,6 +18,8 @@ test('style shell runtime resolves controller, chart, canonical, and DOM depende
     canonicalStyleApi: { name: 'canonical-style' },
     canonicalDeckApi: { name: 'deck' },
     transactionApi: { name: 'transaction' },
+    styleTransactionApi: { name: 'style-transaction' },
+    styleMutationApi: { name: 'style-mutation' },
     domApi: { name: 'dom' },
     chartApi: { name: 'chart' }
   };
@@ -53,6 +55,8 @@ test('style shell runtime honors explicitly unavailable dependencies', () => {
     canonicalStyleApi: null,
     canonicalDeckApi: null,
     transactionApi: null,
+    styleTransactionApi: null,
+    styleMutationApi: null,
     domApi: null,
     chartApi: null
   });
@@ -63,6 +67,8 @@ test('style shell runtime honors explicitly unavailable dependencies', () => {
     'canonicalStyleApi',
     'canonicalDeckApi',
     'transactionApi',
+    'styleTransactionApi',
+    'styleMutationApi',
     'domApi',
     'chartApi'
   ]) {

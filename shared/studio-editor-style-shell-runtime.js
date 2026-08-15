@@ -52,6 +52,16 @@
       'transactionApi',
       'SlideNextStudioEditorTransaction'
     );
+    runtimeOptions.styleTransactionApi = resolveApi(
+      options,
+      'styleTransactionApi',
+      'SlideNextStudioEditorStyleTransaction'
+    );
+    runtimeOptions.styleMutationApi = resolveApi(
+      options,
+      'styleMutationApi',
+      'SlideNextStudioEditorStyleMutation'
+    );
     runtimeOptions.domApi = resolveApi(
       options,
       'domApi',

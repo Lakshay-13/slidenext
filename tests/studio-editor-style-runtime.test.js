@@ -21,6 +21,9 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
     chartApi: {},
     canonicalStyleApi: {},
     canonicalDeckApi: {},
+    transactionApi: {},
+    styleTransactionApi: {},
+    styleMutationApi: {},
     getSelectedElements: () => [],
     getIframeDoc: () => null,
     getActiveSlide: () => null,
@@ -44,6 +47,9 @@ test('style runtime composes canonical, inspector, and mutation dependencies', (
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalStyleApi, options.canonicalStyleApi);
   assert.equal(calls[0].chartApi, options.chartApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
+  assert.equal(calls[0].styleTransactionApi, options.styleTransactionApi);
+  assert.equal(calls[0].styleMutationApi, options.styleMutationApi);
   assert.equal(calls[0].getSelectedElements, options.getSelectedElements);
   assert.equal(calls[0].documentRef, options.documentRef);
   assert.equal(calls[0].buildCanonicalDeck, options.buildCanonicalDeck);

@@ -26,6 +26,12 @@
     const transactionApi = options.transactionApi
       || (root && root.SlideNextStudioEditorTransaction)
       || null;
+    const styleTransactionApi = options.styleTransactionApi
+      || (root && root.SlideNextStudioEditorStyleTransaction)
+      || null;
+    const styleMutationApi = options.styleMutationApi
+      || (root && root.SlideNextStudioEditorStyleMutation)
+      || null;
     const domApi = options.domApi
       || (root && root.SlideNextStudioEditorDom)
       || null;
@@ -84,9 +90,21 @@
         return false;
       }
     }
-    const applyStyleMutation = typeof options.applyStyleMutation === 'function'
-      ? options.applyStyleMutation
-      : () => ({ didApply: false, displayValue: '', transaction: null });
+    const createStyleApplicator = styleTransactionApi
+      && typeof styleTransactionApi.createStudioEditorStyleApplicator === 'function'
+      ? styleTransactionApi.createStudioEditorStyleApplicator
+      : null;
+    const applyStyleMutation = createStyleApplicator
+      ? createStyleApplicator({
+          styleApi,
+          mutationApi: styleMutationApi,
+          transactionApi,
+          chartApi,
+          legacyApplyStyle: options.applyStyleMutation
+        })
+      : typeof options.applyStyleMutation === 'function'
+        ? options.applyStyleMutation
+        : () => ({ didApply: false, displayValue: '', transaction: null });
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
       : null;

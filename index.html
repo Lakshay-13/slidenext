@@ -3826,6 +3826,12 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
+          styleTransactionApi: typeof SlideNextStudioEditorStyleTransaction !== 'undefined'
+            ? SlideNextStudioEditorStyleTransaction
+            : null,
+          styleMutationApi: typeof SlideNextStudioEditorStyleMutation !== 'undefined'
+            ? SlideNextStudioEditorStyleMutation
+            : null,
           domApi: typeof SlideNextStudioEditorDom !== 'undefined'
             ? SlideNextStudioEditorDom
             : null,
@@ -3847,7 +3853,6 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyStyleMutation: (...args) => applyEditorStyleMutationWithTransaction(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
         })
       : null;
@@ -9796,34 +9801,6 @@
         saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
         triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
         triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null
-      });
-    }
-
-    function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorStyleTransaction !== 'undefined'
-        ? SlideNextStudioEditorStyleTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorStyleMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorStyleMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return { didApply: false, displayValue: `${value}`, transaction: null };
-      }
-      return applyTransaction(styleApi, selection, prop, value, {
-        mutationApi: typeof SlideNextStudioEditorStyleMutation !== 'undefined'
-          ? SlideNextStudioEditorStyleMutation
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        chartApi: typeof SlideNextStudioEditorChartMutation !== 'undefined'
-          ? SlideNextStudioEditorChartMutation
-          : null,
-        getElementId: options.getElementId,
-        assignElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null
       });
     }
 

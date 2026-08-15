@@ -46,16 +46,10 @@ function loadFinalizeEditorDeckMutation(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadStyleMutationHelper(fileContent, context) {
+function loadStyleMutationModules(_fileContent, context) {
   context.SlideNextStudioEditorCanonicalStyle = canonicalStyle;
   context.SlideNextStudioEditorStyleMutation = styleMutation;
   context.SlideNextStudioEditorStyleTransaction = styleTransaction;
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorStyleMutationWithTransaction(styleApi, selection, prop, value, options = {}) {',
-    '\n\n    // Apply styles immediately to active selected elements'
-  );
-  vm.runInContext(helperSource, context);
   const styleApi = context.SlideNextStudioEditorStyle;
   if (styleApi
     && typeof styleApi.applyStudioStyleMutationWithTransaction !== 'function'
@@ -85,7 +79,8 @@ function installStyleController(context) {
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     buildCanonicalDeckBaseline: context.buildEditorCanonicalDeck,
-    applyStyleMutation: context.applyEditorStyleMutationWithTransaction,
+    styleTransactionApi: context.SlideNextStudioEditorStyleTransaction,
+    styleMutationApi: context.SlideNextStudioEditorStyleMutation,
     finalizeDeckMutation: context.finalizeEditorDeckMutation
   });
 }
@@ -557,7 +552,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -620,7 +615,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -662,7 +657,7 @@ test('applySelectedElementStyle delegates unsuccessful result refresh to the sha
   };
 
   vm.createContext(context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -722,7 +717,7 @@ test('applySelectedElementStyle delegates mutation and transaction assembly to t
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -786,7 +781,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -886,7 +881,7 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
 
     vm.createContext(context);
     loadFinalizeEditorDeckMutation(fileContent, context);
-    loadStyleMutationHelper(fileContent, context);
+    loadStyleMutationModules(fileContent, context);
     installStyleController(context);
     vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -997,7 +992,7 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -1068,7 +1063,7 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -1155,7 +1150,7 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 
@@ -1248,7 +1243,7 @@ test('applySelectedElementStyle persists image source edits in the canonical nod
 
   vm.createContext(context);
   loadFinalizeEditorDeckMutation(fileContent, context);
-  loadStyleMutationHelper(fileContent, context);
+  loadStyleMutationModules(fileContent, context);
   installStyleController(context);
   vm.runInContext(applySelectedElementStyleSource, context);
 

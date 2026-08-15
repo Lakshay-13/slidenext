@@ -44,7 +44,45 @@
     });
   }
 
+  function createStudioEditorStyleApplicator(options = {}) {
+    const applyStyleTransaction = typeof options.applyStyleTransaction === 'function'
+      ? options.applyStyleTransaction
+      : applyStudioEditorStyleMutationWithTransaction;
+    const styleApi = options.styleApi && typeof options.styleApi === 'object'
+      ? options.styleApi
+      : null;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const chartApi = options.chartApi && typeof options.chartApi === 'object'
+      ? options.chartApi
+      : null;
+    const legacyApplyStyle = typeof options.legacyApplyStyle === 'function'
+      ? options.legacyApplyStyle
+      : () => ({ didApply: false, displayValue: '', transaction: null });
+    const canApplyStyleTransaction = mutationApi
+      && (typeof options.applyStyleTransaction === 'function'
+        || typeof mutationApi.applyStudioStyleMutationWithTransaction === 'function');
+
+    return (resolvedStyleApi, selection, prop, value, mutationOptions = {}) => {
+      const effectiveStyleApi = resolvedStyleApi || styleApi;
+      if (canApplyStyleTransaction) {
+        return applyStyleTransaction(effectiveStyleApi, selection, prop, value, {
+          mutationApi,
+          transactionApi,
+          chartApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyStyle(effectiveStyleApi, selection, prop, value, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorStyleMutationWithTransaction
+    applyStudioEditorStyleMutationWithTransaction,
+    createStudioEditorStyleApplicator
   };
 });

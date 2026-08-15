@@ -29,6 +29,12 @@
           transactionApi: options.transactionApi
             || (root && root.SlideNextStudioEditorTransaction)
             || null,
+          styleTransactionApi: options.styleTransactionApi
+            || (root && root.SlideNextStudioEditorStyleTransaction)
+            || null,
+          styleMutationApi: options.styleMutationApi
+            || (root && root.SlideNextStudioEditorStyleMutation)
+            || null,
           domApi: options.domApi
             || (root && root.SlideNextStudioEditorDom)
             || null,
