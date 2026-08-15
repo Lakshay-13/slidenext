@@ -1383,6 +1383,7 @@
   <script src="/shared/studio-editor-layout-mode-view.js"></script>
   <script src="/shared/studio-editor-layout-mode-controller.js"></script>
   <script src="/shared/studio-editor-layout-ui-bridge.js"></script>
+  <script src="/shared/studio-editor-layout-ui-shell-runtime.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
@@ -3544,10 +3545,18 @@
     const studioEditorLayoutModeController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.layoutModeController
       : null;
-    const studioEditorLayoutUiBridge = typeof SlideNextStudioEditorLayoutUiBridge !== 'undefined'
-      && SlideNextStudioEditorLayoutUiBridge
-      && typeof SlideNextStudioEditorLayoutUiBridge.createStudioEditorLayoutUiBridge === 'function'
-      ? SlideNextStudioEditorLayoutUiBridge.createStudioEditorLayoutUiBridge({
+    const studioEditorLayoutUiShellRuntimeApi =
+      typeof SlideNextStudioEditorLayoutUiShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorLayoutUiShellRuntime
+      : null;
+    const studioEditorLayoutUiShellRuntime = studioEditorLayoutUiShellRuntimeApi
+      && typeof studioEditorLayoutUiShellRuntimeApi
+        .createStudioEditorLayoutUiShellRuntime === 'function'
+      ? studioEditorLayoutUiShellRuntimeApi
+        .createStudioEditorLayoutUiShellRuntime({
+          layoutUiBridgeApi: typeof SlideNextStudioEditorLayoutUiBridge !== 'undefined'
+            ? SlideNextStudioEditorLayoutUiBridge
+            : null,
           layoutModeController: studioEditorLayoutModeController,
           layoutConversionController: studioEditorLayoutConversionController,
           layoutConversionViewApi: typeof SlideNextStudioEditorLayoutConversionView !== 'undefined'
@@ -3556,6 +3565,10 @@
           documentRef: document,
           getDocument: () => getIframeDoc()
         })
+      : null;
+    const studioEditorLayoutUiBridge = studioEditorLayoutUiShellRuntime
+      && studioEditorLayoutUiShellRuntime.isAvailable === true
+      ? studioEditorLayoutUiShellRuntime.layoutUiBridge
       : null;
 
     const studioEditorElementVisibilityStateReader = typeof SlideNextStudioElementState !== 'undefined'
