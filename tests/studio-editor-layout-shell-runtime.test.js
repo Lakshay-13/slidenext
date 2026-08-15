@@ -26,7 +26,9 @@ test('layout shell runtime resolves controller, engine, and canonical dependenci
     canonicalGroupApi: { name: 'group' },
     deckImportApi: { name: 'import' },
     groupTransactionApi: { name: 'group-transaction' },
+    ungroupTransactionApi: { name: 'ungroup-transaction' },
     groupMutationApi: { name: 'group-mutation' },
+    ungroupMutationApi: { name: 'ungroup-mutation' },
     groupEngineApi: { name: 'group-engine' },
     transactionApi: { name: 'transaction' }
   };
@@ -70,7 +72,9 @@ test('layout shell runtime honors explicitly unavailable dependencies', () => {
     canonicalGroupApi: null,
     deckImportApi: null,
     groupTransactionApi: null,
+    ungroupTransactionApi: null,
     groupMutationApi: null,
+    ungroupMutationApi: null,
     groupEngineApi: null,
     transactionApi: null
   });
@@ -89,7 +93,9 @@ test('layout shell runtime honors explicitly unavailable dependencies', () => {
     'canonicalGroupApi',
     'deckImportApi',
     'groupTransactionApi',
+    'ungroupTransactionApi',
     'groupMutationApi',
+    'ungroupMutationApi',
     'groupEngineApi',
     'transactionApi'
   ]) {

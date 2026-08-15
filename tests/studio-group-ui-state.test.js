@@ -38,19 +38,13 @@ function loadGroupMutationModules(_fileContent, context) {
   context.SlideNextStudioEditorGroupTransaction = groupTransaction;
 }
 
-function loadUngroupMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorUngroupMutationWithTransaction(options = {}) {',
-    'function ungroupSelectedElements() {'
-  );
+function loadUngroupMutationModules(_fileContent, context) {
   context.SlideNextStudioEditorGroup = {
     ...studioGroup,
     ...(context.SlideNextStudioEditorGroup || {})
   };
   context.SlideNextStudioEditorGroupMutation = groupMutation;
   context.SlideNextStudioEditorUngroupTransaction = ungroupTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function installGroupController(context) {
@@ -58,7 +52,9 @@ function installGroupController(context) {
     canonicalDeckApi: context.SlideNextCanonicalDeck,
     canonicalGroupApi: context.SlideNextStudioEditorCanonicalGroup,
     groupTransactionApi: context.SlideNextStudioEditorGroupTransaction,
+    ungroupTransactionApi: context.SlideNextStudioEditorUngroupTransaction,
     groupMutationApi: context.SlideNextStudioEditorGroupMutation,
+    ungroupMutationApi: context.SlideNextStudioEditorGroupMutation,
     groupEngineApi: context.SlideNextStudioEditorGroup,
     deckImportApi: context.SlideNextDeckImport,
     buildGroupSelectionActionState: context.buildGroupSelectionActionState,
@@ -71,7 +67,6 @@ function installGroupController(context) {
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     getEditorSlideId: context.getEditorSlideId,
-    applyUngroupMutation: context.applyEditorUngroupMutationWithTransaction,
     commitSelectionState: context.commitEditorSelectionState,
     finalizeDeckMutation: context.finalizeEditorDeckMutation,
     prepareGroup: context.makeElementsHoverable
@@ -957,7 +952,7 @@ test('ungroupSelectedElements restores child positions, removes the wrapper, and
     }
   };
   vm.createContext(context);
-  loadUngroupMutationHelper(fileContent, context);
+  loadUngroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 
@@ -1031,7 +1026,7 @@ test('ungroupSelectedElements delegates wrapper removal to the shared group modu
   };
 
   vm.createContext(context);
-  loadUngroupMutationHelper(fileContent, context);
+  loadUngroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 
@@ -1111,7 +1106,7 @@ test('ungroupSelectedElements forwards a canonical tree sidecar for restored chi
   };
 
   vm.createContext(context);
-  loadUngroupMutationHelper(fileContent, context);
+  loadUngroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 

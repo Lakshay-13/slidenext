@@ -97,9 +97,19 @@
       'groupTransactionApi',
       'SlideNextStudioEditorGroupTransaction'
     );
+    runtimeOptions.ungroupTransactionApi = resolveApi(
+      options,
+      'ungroupTransactionApi',
+      'SlideNextStudioEditorUngroupTransaction'
+    );
     runtimeOptions.groupMutationApi = resolveApi(
       options,
       'groupMutationApi',
+      'SlideNextStudioEditorGroupMutation'
+    );
+    runtimeOptions.ungroupMutationApi = resolveApi(
+      options,
+      'ungroupMutationApi',
       'SlideNextStudioEditorGroupMutation'
     );
     runtimeOptions.groupEngineApi = resolveApi(

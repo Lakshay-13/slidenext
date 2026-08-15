@@ -40,7 +40,41 @@
     });
   }
 
+  function createStudioEditorUngroupApplicator(options = {}) {
+    const applyUngroupTransaction = typeof options.applyUngroupTransaction === 'function'
+      ? options.applyUngroupTransaction
+      : applyStudioEditorUngroupMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const groupApi = options.groupApi && typeof options.groupApi === 'object'
+      ? options.groupApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyUngroup = typeof options.legacyApplyUngroup === 'function'
+      ? options.legacyApplyUngroup
+      : () => ({ didApply: false, restoredElements: [], restoredGroups: [], transaction: null });
+    const canApplyUngroupTransaction = mutationApi
+      && (typeof options.applyUngroupTransaction === 'function'
+        || typeof mutationApi.applyStudioUngroupMutationWithTransaction === 'function');
+
+    return (mutationOptions = {}) => {
+      if (canApplyUngroupTransaction) {
+        return applyUngroupTransaction({
+          mutationApi,
+          groupApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyUngroup(mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorUngroupMutationWithTransaction
+    applyStudioEditorUngroupMutationWithTransaction,
+    createStudioEditorUngroupApplicator
   };
 });

@@ -25,7 +25,9 @@ test('layout runtime composes layout controllers', () => {
     canonicalGroupApi: {},
     deckImportApi: {},
     groupTransactionApi: {},
+    ungroupTransactionApi: {},
     groupMutationApi: {},
+    ungroupMutationApi: {},
     groupEngineApi: {},
     buildMotionSelectionActionState() {},
     updateMotionActionState() {},
@@ -102,7 +104,9 @@ test('layout runtime composes layout controllers', () => {
   assert.equal(calls[1][1].rollbackPositionMutation, callbacks.rollbackPositionMutation);
   assert.equal(calls[2][1].canonicalGroupApi, callbacks.canonicalGroupApi);
   assert.equal(calls[2][1].groupTransactionApi, callbacks.groupTransactionApi);
+  assert.equal(calls[2][1].ungroupTransactionApi, callbacks.ungroupTransactionApi);
   assert.equal(calls[2][1].groupMutationApi, callbacks.groupMutationApi);
+  assert.equal(calls[2][1].ungroupMutationApi, callbacks.ungroupMutationApi);
   assert.equal(calls[2][1].groupEngineApi, callbacks.groupEngineApi);
   assert.equal(calls[2][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[2][1].applyUngroupMutation, callbacks.applyUngroupMutation);

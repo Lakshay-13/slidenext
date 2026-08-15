@@ -3421,7 +3421,13 @@
           groupTransactionApi: typeof SlideNextStudioEditorGroupTransaction !== 'undefined'
             ? SlideNextStudioEditorGroupTransaction
             : null,
+          ungroupTransactionApi: typeof SlideNextStudioEditorUngroupTransaction !== 'undefined'
+            ? SlideNextStudioEditorUngroupTransaction
+            : null,
           groupMutationApi: typeof SlideNextStudioEditorGroupMutation !== 'undefined'
+            ? SlideNextStudioEditorGroupMutation
+            : null,
+          ungroupMutationApi: typeof SlideNextStudioEditorGroupMutation !== 'undefined'
             ? SlideNextStudioEditorGroupMutation
             : null,
           groupEngineApi: typeof SlideNextStudioEditorGroup !== 'undefined'
@@ -3480,7 +3486,6 @@
             : null,
           applyPositionLayout: (...args) => applyEditorPositionLayoutWithTransaction(...args),
           rollbackPositionMutation: (...args) => rollbackEditorPositionLayoutMutation(...args),
-          applyUngroupMutation: (...args) => applyEditorUngroupMutationWithTransaction(...args),
           commitSelectionState: (...args) => commitEditorSelectionState(...args),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
           updateConversionActionState: () => {
@@ -10464,35 +10469,6 @@
         && typeof studioEditorGroupController.group === 'function'
         ? studioEditorGroupController.group()
         : false;
-    }
-
-    function applyEditorUngroupMutationWithTransaction(options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorUngroupTransaction !== 'undefined'
-        ? SlideNextStudioEditorUngroupTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorUngroupMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorUngroupMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return { didApply: false, restoredElements: [], restoredGroups: [], transaction: null };
-      }
-      return applyTransaction({
-        ...options,
-        mutationApi: typeof SlideNextStudioEditorGroupMutation !== 'undefined'
-          ? SlideNextStudioEditorGroupMutation
-          : null,
-        groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
-          ? SlideNextStudioEditorGroup
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null
-      });
     }
 
     function ungroupSelectedElements() {

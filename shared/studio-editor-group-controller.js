@@ -23,7 +23,13 @@
     const groupTransactionApi = options.groupTransactionApi
       || (root && root.SlideNextStudioEditorGroupTransaction)
       || null;
+    const ungroupTransactionApi = options.ungroupTransactionApi
+      || (root && root.SlideNextStudioEditorUngroupTransaction)
+      || null;
     const groupMutationApi = options.groupMutationApi
+      || (root && root.SlideNextStudioEditorGroupMutation)
+      || null;
+    const ungroupMutationApi = options.ungroupMutationApi
       || (root && root.SlideNextStudioEditorGroupMutation)
       || null;
     const groupEngineApi = options.groupEngineApi
@@ -94,9 +100,20 @@
       : typeof options.applyGroupMutation === 'function'
         ? options.applyGroupMutation
         : () => ({ didApply: false, group: null, transaction: null });
-    const applyUngroupMutation = typeof options.applyUngroupMutation === 'function'
-      ? options.applyUngroupMutation
-      : () => ({ didApply: false, restoredElements: [], restoredGroups: [], transaction: null });
+    const applyUngroup = ungroupTransactionApi
+      && typeof ungroupTransactionApi.createStudioEditorUngroupApplicator === 'function'
+      ? ungroupTransactionApi.createStudioEditorUngroupApplicator
+      : null;
+    const applyUngroupMutation = applyUngroup
+      ? applyUngroup({
+          mutationApi: ungroupMutationApi,
+          groupApi: groupEngineApi,
+          transactionApi,
+          legacyApplyUngroup: options.applyUngroupMutation
+        })
+      : typeof options.applyUngroupMutation === 'function'
+        ? options.applyUngroupMutation
+        : () => ({ didApply: false, restoredElements: [], restoredGroups: [], transaction: null });
     const commitSelectionState = typeof options.commitSelectionState === 'function'
       ? options.commitSelectionState
       : null;
