@@ -190,7 +190,12 @@
       if (!historyApi || typeof historyApi.buildStudioHistoryEntry !== 'function') {
         return null;
       }
-      const pendingCanonicalDeck = getPendingCanonicalDeck(doc);
+      let pendingCanonicalDeck = null;
+      try {
+        pendingCanonicalDeck = getPendingCanonicalDeck(doc);
+      } catch (error) {
+        // Continue through transaction, live baseline, and document rebuild fallbacks.
+      }
       const pendingTransaction = getPendingTransaction();
       const hasPendingCanonicalDeck = isValidCanonicalDeck(pendingCanonicalDeck);
       const historyCanonicalDeckBuilder = hasPendingCanonicalDeck

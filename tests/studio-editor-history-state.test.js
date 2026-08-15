@@ -132,6 +132,26 @@ test('createStudioEditorHistoryEntryBuilder forwards pending canonical state dir
   assert.equal(buildCalls, 0);
 });
 
+test('createStudioEditorHistoryEntryBuilder falls back when pending state resolution throws', () => {
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'live-slide' }] };
+
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        return { canonicalDeck: options.buildCanonicalDeck('history-doc') };
+      }
+    },
+    getPendingCanonicalDeck() {
+      throw new Error('stale editor session');
+    },
+    getCanonicalDeckBaseline() {
+      return liveCanonicalDeck;
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), { canonicalDeck: liveCanonicalDeck });
+});
+
 test('createStudioEditorHistoryEntryBuilder rebuilds canonical state for transaction captures', () => {
   const baselineDeck = { kind: 'slidenext.deck', slides: [{ id: 'baseline' }] };
   const mutatedDeck = { kind: 'slidenext.deck', slides: [{ id: 'mutated' }] };
