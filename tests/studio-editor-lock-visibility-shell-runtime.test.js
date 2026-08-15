@@ -21,6 +21,9 @@ test('lock visibility shell runtime resolves controller and canonical dependenci
     canonicalStateApi: { name: 'state' },
     lockTransactionApi: { name: 'lock-transaction' },
     lockMutationApi: { name: 'lock-mutation' },
+    visibilityTransactionApi: { name: 'visibility-transaction' },
+    visibilityMutationApi: { name: 'visibility-mutation' },
+    elementStateApi: { name: 'element-state' },
     transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
@@ -58,6 +61,9 @@ test('lock visibility shell runtime honors explicitly unavailable dependencies',
     canonicalStateApi: null,
     lockTransactionApi: null,
     lockMutationApi: null,
+    visibilityTransactionApi: null,
+    visibilityMutationApi: null,
+    elementStateApi: null,
     transactionApi: null
   });
 
@@ -70,6 +76,9 @@ test('lock visibility shell runtime honors explicitly unavailable dependencies',
     'canonicalStateApi',
     'lockTransactionApi',
     'lockMutationApi',
+    'visibilityTransactionApi',
+    'visibilityMutationApi',
+    'elementStateApi',
     'transactionApi'
   ]) {
     assert.equal(receivedOptions[key], null);

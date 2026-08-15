@@ -35,6 +35,15 @@
           lockMutationApi: options.lockMutationApi
             || (root && root.SlideNextStudioEditorLockMutation)
             || null,
+          visibilityTransactionApi: options.visibilityTransactionApi
+            || (root && root.SlideNextStudioEditorVisibilityTransaction)
+            || null,
+          visibilityMutationApi: options.visibilityMutationApi
+            || (root && root.SlideNextStudioEditorVisibilityMutation)
+            || null,
+          elementStateApi: options.elementStateApi
+            || (root && root.SlideNextStudioElementState)
+            || null,
           transactionApi: options.transactionApi
             || (root && root.SlideNextStudioEditorTransaction)
             || null,

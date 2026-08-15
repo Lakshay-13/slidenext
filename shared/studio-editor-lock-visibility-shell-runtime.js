@@ -67,6 +67,21 @@
       'lockMutationApi',
       'SlideNextStudioEditorLockMutation'
     );
+    runtimeOptions.visibilityTransactionApi = resolveApi(
+      options,
+      'visibilityTransactionApi',
+      'SlideNextStudioEditorVisibilityTransaction'
+    );
+    runtimeOptions.visibilityMutationApi = resolveApi(
+      options,
+      'visibilityMutationApi',
+      'SlideNextStudioEditorVisibilityMutation'
+    );
+    runtimeOptions.elementStateApi = resolveApi(
+      options,
+      'elementStateApi',
+      'SlideNextStudioElementState'
+    );
     runtimeOptions.transactionApi = resolveApi(
       options,
       'transactionApi',

@@ -3577,6 +3577,15 @@
           lockMutationApi: typeof SlideNextStudioEditorLockMutation !== 'undefined'
             ? SlideNextStudioEditorLockMutation
             : null,
+          visibilityTransactionApi: typeof SlideNextStudioEditorVisibilityTransaction !== 'undefined'
+            ? SlideNextStudioEditorVisibilityTransaction
+            : null,
+          visibilityMutationApi: typeof SlideNextStudioEditorVisibilityMutation !== 'undefined'
+            ? SlideNextStudioEditorVisibilityMutation
+            : null,
+          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
+            ? SlideNextStudioElementState
+            : null,
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
@@ -3596,7 +3605,6 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
           rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
         })
@@ -9700,46 +9708,6 @@
         && typeof studioEditorLockVisibilityController.toggleLock === 'function'
         ? studioEditorLockVisibilityController.toggleLock()
         : false;
-    }
-
-    function applyEditorVisibilityMutationWithTransaction(selection, shouldHide, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorVisibilityTransaction !== 'undefined'
-        ? SlideNextStudioEditorVisibilityTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorVisibilityMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorVisibilityMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(selection, shouldHide, {
-        mutationApi: typeof SlideNextStudioEditorVisibilityMutation !== 'undefined'
-          ? SlideNextStudioEditorVisibilityMutation
-          : null,
-        visibilityApi: typeof SlideNextStudioEditorVisibilityState !== 'undefined'
-          ? SlideNextStudioEditorVisibilityState
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        isHidden: options.isHidden,
-        setHidden: options.setHidden,
-        setElementHiddenState: typeof setElementHiddenState === 'function'
-          ? setElementHiddenState
-          : null,
-        getVisibilityState: options.getVisibilityState,
-        elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
-          ? SlideNextStudioElementState
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null
-      });
     }
 
     function rollbackEditorLockVisibilityMutation(transaction, sourceDoc = getIframeDoc()) {

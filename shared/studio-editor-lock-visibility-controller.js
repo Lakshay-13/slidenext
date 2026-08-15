@@ -29,6 +29,15 @@
     const lockMutationApi = options.lockMutationApi
       || (root && root.SlideNextStudioEditorLockMutation)
       || null;
+    const visibilityTransactionApi = options.visibilityTransactionApi
+      || (root && root.SlideNextStudioEditorVisibilityTransaction)
+      || null;
+    const visibilityMutationApi = options.visibilityMutationApi
+      || (root && root.SlideNextStudioEditorVisibilityMutation)
+      || null;
+    const elementStateApi = options.elementStateApi
+      || (root && root.SlideNextStudioElementState)
+      || null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
@@ -95,9 +104,23 @@
       : typeof options.applyLockMutation === 'function'
         ? options.applyLockMutation
         : () => ({ didApply: false, transaction: null });
-    const applyVisibilityMutation = typeof options.applyVisibilityMutation === 'function'
-      ? options.applyVisibilityMutation
-      : () => ({ didApply: false, transaction: null });
+    const createVisibilityApplicator = visibilityTransactionApi
+      && typeof visibilityTransactionApi.createStudioEditorVisibilityApplicator === 'function'
+      ? visibilityTransactionApi.createStudioEditorVisibilityApplicator
+      : null;
+    const applyVisibilityMutation = createVisibilityApplicator
+      ? createVisibilityApplicator({
+          mutationApi: visibilityMutationApi,
+          visibilityApi: visibilityStateApi,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
+          elementStateApi,
+          legacyApplyVisibility: options.applyVisibilityMutation
+        })
+      : typeof options.applyVisibilityMutation === 'function'
+        ? options.applyVisibilityMutation
+        : () => ({ didApply: false, transaction: null });
     const finalizeSelectionToggleMutation = typeof options.finalizeSelectionToggleMutation === 'function'
       ? options.finalizeSelectionToggleMutation
       : null;
