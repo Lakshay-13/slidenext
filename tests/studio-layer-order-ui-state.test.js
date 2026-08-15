@@ -1310,7 +1310,8 @@ test('arrangeElementLayer delegates to the shared layer controller when availabl
     refreshLayerOrderUi() {},
     reorderSlideLayers() {},
     syncLayerOrderZIndexInput() {},
-    finalizeLayerOrderMutation() {}
+    finalizeLayerOrderMutation() {},
+    rollbackLayerOrderMutation() {}
   };
 
   vm.createContext(context);
@@ -1368,12 +1369,14 @@ test('changeLayerZIndexByRef resolves selected elements from the iframe document
     liveSelectionApi: context.SlideNextStudioEditorLiveSelection,
     getSelectedElements: context.getStudioSelectedElements,
     syncLayerOrderZIndexInput: context.syncLayerOrderZIndexInput,
-    finalizeLayerOrderMutation: context.finalizeLayerOrderMutation
+    finalizeLayerOrderMutation: context.finalizeLayerOrderMutation,
+    rollbackLayerOrderMutation: context.rollbackLayerOrderMutation
   });
   assert.equal(accessors.changeLayerZIndexByRef(event, 'front'), 'delegated-change');
   assert.equal(delegatedOptions.event, event);
   assert.equal(delegatedOptions.action, 'front');
   assert.deepEqual(delegatedOptions.selectedElements, selectedElements);
+  assert.equal(delegatedOptions.rollbackLayerOrderMutation, context.rollbackLayerOrderMutation);
 });
 
 test('rollbackEditorLayerOrderMutation reverses a rejected z-index transaction', () => {

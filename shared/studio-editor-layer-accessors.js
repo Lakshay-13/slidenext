@@ -102,7 +102,8 @@
         liveSelectionApi: options.liveSelectionApi,
         selectedElements: getSelectedElements(sourceDoc),
         syncLayerOrderZIndexInput: options.syncLayerOrderZIndexInput,
-        finalizeLayerOrderMutation: options.finalizeLayerOrderMutation
+        finalizeLayerOrderMutation: options.finalizeLayerOrderMutation,
+        rollbackLayerOrderMutation: options.rollbackLayerOrderMutation
       });
     }
 

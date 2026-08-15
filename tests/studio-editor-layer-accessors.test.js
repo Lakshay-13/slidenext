@@ -104,4 +104,12 @@ test('index loads and installs the layer accessor module before editor orchestra
   assert.ok(installIndex > scriptIndex);
   assert.match(fileContent, /createStudioEditorLayerAccessors\(/);
   assert.match(fileContent, /createStudioEditorLayerGlobalApi\(/);
+  const accessorBlock = fileContent.slice(
+    fileContent.indexOf('const studioEditorLayerAccessors ='),
+    fileContent.indexOf('const studioEditorLayerGlobalApi')
+  );
+  assert.match(
+    accessorBlock,
+    /rollbackLayerOrderMutation: \(\.\.\.args\) => rollbackEditorLayerOrderMutation\(\.\.\.args\)/
+  );
 });

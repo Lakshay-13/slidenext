@@ -1808,7 +1808,8 @@
             ? getStudioSelectedElements
             : null,
           syncLayerOrderZIndexInput,
-          finalizeLayerOrderMutation
+          finalizeLayerOrderMutation,
+          rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
         })
       : null;
     const studioEditorLayerGlobalApi = studioEditorLayerAccessorsApi
