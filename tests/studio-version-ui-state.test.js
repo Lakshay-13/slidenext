@@ -9,6 +9,7 @@ const editorSession = require('../shared/studio-editor-session.js');
 const versionActions = require('../shared/studio-version-actions.js');
 const versionHistory = require('../shared/studio-version-history.js');
 const versionHistoryController = require('../shared/studio-editor-version-history-controller.js');
+const renameModalController = require('../shared/studio-editor-version-rename-modal-controller.js');
 const versionView = require('../shared/studio-version-view.js');
 const versionRestoreController = require('../shared/studio-editor-version-restore-controller.js');
 const versionDeleteController = require('../shared/studio-editor-version-delete-controller.js');
@@ -1522,6 +1523,13 @@ test('promptRenameVersion tolerates a missing rename input', () => {
   loadShowCurrentStudioVersionModal(fileContent, context);
   loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
   vm.runInContext(promptRenameVersionSource, context);
+  context.studioEditorVersionRenameModalController = renameModalController.createStudioEditorVersionRenameModalController({
+    documentRef: context.document,
+    setRenameState: context.setStudioRenameVersionState,
+    createVersionActionContext: context.createCurrentStudioVersionActionContext,
+    resetRenameButton: context.resetCurrentStudioRenameVersionButtonState,
+    showModal: context.showCurrentStudioVersionModal
+  });
 
   assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));
   assert.equal(context.renamingFilename, 'index_20260101_120000_Auto.html');
@@ -1592,6 +1600,13 @@ test('promptRenameVersion tolerates missing rename modal chrome', () => {
   loadShowCurrentStudioVersionModal(fileContent, context);
   loadResetCurrentStudioRenameVersionButtonState(fileContent, context);
   vm.runInContext(promptRenameVersionSource, context);
+  context.studioEditorVersionRenameModalController = renameModalController.createStudioEditorVersionRenameModalController({
+    documentRef: context.document,
+    setRenameState: context.setStudioRenameVersionState,
+    createVersionActionContext: context.createCurrentStudioVersionActionContext,
+    resetRenameButton: context.resetCurrentStudioRenameVersionButtonState,
+    showModal: context.showCurrentStudioVersionModal
+  });
 
   assert.doesNotThrow(() => context.promptRenameVersion('index_20260101_120000_Auto.html', 'Draft Name'));
   assert.equal(context.renamingFilename, 'index_20260101_120000_Auto.html');
@@ -1636,6 +1651,11 @@ test('closeRenameVersionModal tolerates missing rename modal nodes', () => {
   vm.createContext(context);
   loadHideCurrentStudioVersionModal(fileContent, context);
   vm.runInContext(closeRenameVersionModalSource, context);
+  context.studioEditorVersionRenameModalController = renameModalController.createStudioEditorVersionRenameModalController({
+    documentRef: context.document,
+    clearRenameState: context.clearStudioRenameVersionState,
+    hideModal: context.hideCurrentStudioVersionModal
+  });
 
   assert.doesNotThrow(() => context.closeRenameVersionModal());
   assert.equal(context.renamingFilename, '');

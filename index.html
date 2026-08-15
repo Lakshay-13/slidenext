@@ -1767,6 +1767,7 @@
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-controller.js"></script>
   <script src="/shared/studio-editor-version-delete-controller.js"></script>
+  <script src="/shared/studio-editor-version-rename-modal-controller.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/studio-editor-version-history-controller.js"></script>
@@ -2707,6 +2708,19 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionRenameStateGlobalApi);
+    const studioEditorVersionRenameModalController = typeof SlideNextStudioEditorVersionRenameModalController !== 'undefined'
+      && SlideNextStudioEditorVersionRenameModalController
+      && typeof SlideNextStudioEditorVersionRenameModalController.createStudioEditorVersionRenameModalController === 'function'
+      ? SlideNextStudioEditorVersionRenameModalController.createStudioEditorVersionRenameModalController({
+          documentRef: document,
+          setRenameState: (...args) => setStudioRenameVersionState(...args),
+          clearRenameState: (...args) => clearStudioRenameVersionState(...args),
+          createVersionActionContext: (...args) => createCurrentStudioVersionActionContext(...args),
+          resetRenameButton: (...args) => resetCurrentStudioRenameVersionButtonState(...args),
+          showModal: (...args) => showCurrentStudioVersionModal(...args),
+          hideModal: (...args) => hideCurrentStudioVersionModal(...args)
+        })
+      : null;
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions
       : null;
@@ -11463,36 +11477,17 @@
     }
 
     function promptRenameVersion(filename, currentLabel) {
-      setStudioRenameVersionState({
-        filename,
-        context: createCurrentStudioVersionActionContext()
-      });
-      const renameInput = document.getElementById('newVersionNameInput');
-      if (renameInput) {
-        renameInput.value = currentLabel;
-      }
-      
-      const modal = document.getElementById('renameVersionModal');
-      const content = document.getElementById('renameVersionModalContent');
-      const btn = document.getElementById('confirmRenameVersionBtn');
-      resetCurrentStudioRenameVersionButtonState(btn);
-      
-      showCurrentStudioVersionModal(modal, content, {
-        delayMs: 10,
-        onShown: () => {
-          if (renameInput) {
-            renameInput.focus();
-            renameInput.select();
-          }
-        }
-      });
+      return studioEditorVersionRenameModalController
+        && typeof studioEditorVersionRenameModalController.open === 'function'
+        ? studioEditorVersionRenameModalController.open(filename, currentLabel)
+        : false;
     }
     
     function closeRenameVersionModal() {
-      const modal = document.getElementById('renameVersionModal');
-      const content = document.getElementById('renameVersionModalContent');
-      resetCurrentStudioRenameVersionState();
-      hideCurrentStudioVersionModal(modal, content);
+      return studioEditorVersionRenameModalController
+        && typeof studioEditorVersionRenameModalController.close === 'function'
+        ? studioEditorVersionRenameModalController.close()
+        : false;
     }
 
     function resetCurrentStudioRenameVersionState() {
