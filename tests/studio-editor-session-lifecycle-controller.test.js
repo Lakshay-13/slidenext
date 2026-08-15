@@ -152,5 +152,5 @@ test('index routes close-editor lifecycle through the shared controller', () => 
   assert.match(source, /src="\/shared\/studio-editor-session-lifecycle-controller\.js"/);
   assert.match(source, /src="\/shared\/studio-editor-launch-shell-controller\.js"/);
   assert.match(source, /createStudioEditorLaunchShellController/);
-  assert.match(source, /sessionLifecycleController\.closeStudioEditor/);
+  assert.match(source, /studioEditorLaunchShellController\.close\(\)/);
 });
