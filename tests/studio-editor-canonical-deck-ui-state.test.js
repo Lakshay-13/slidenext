@@ -12,6 +12,7 @@ const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
+const deckViewBuildOptions = require('../shared/studio-editor-deck-view-build-options.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -2386,6 +2387,7 @@ test('createEditorDeckViewBuildOptions delegates build-option composition to the
     slides: []
   };
   const context = {
+    SlideNextStudioEditorDeckViewBuildOptions: deckViewBuildOptions,
     SlideNextStudioDeckView: {
       createStudioDeckViewBuildOptions(doc, options) {
         delegatedArgs = { doc, options };
@@ -2448,6 +2450,7 @@ test('createEditorDeckViewBuildOptions reuses the local deck view state options 
   let delegatedArgs = null;
   const calls = [];
   const context = {
+    SlideNextStudioEditorDeckViewBuildOptions: deckViewBuildOptions,
     SlideNextStudioDeckView: {
       createStudioDeckViewBuildOptions(doc, options) {
         delegatedArgs = { doc, options };
@@ -2515,6 +2518,7 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   };
   let delegatedArgs = null;
   const context = {
+    SlideNextStudioEditorDeckViewBuildOptions: deckViewBuildOptions,
     SlideNextStudioDeckView: {
       createStudioDeckViewBuildOptions(doc, options) {
         delegatedArgs = { doc, options };

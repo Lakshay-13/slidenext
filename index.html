@@ -1742,6 +1742,7 @@
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
+    <script src="/shared/studio-editor-deck-view-build-options.js"></script>
   <script src="/shared/studio-editor-navigation-controller.js"></script>
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-navigation-runtime.js"></script>
@@ -6634,13 +6635,17 @@
       const buildOptions = arguments.length > 1 && arguments[1] && typeof arguments[1] === 'object'
         ? arguments[1]
         : {};
-      const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
-        ? SlideNextStudioEditorCanonicalViewState
+      const deckViewBuildOptionsApi = typeof SlideNextStudioEditorDeckViewBuildOptions !== 'undefined'
+        ? SlideNextStudioEditorDeckViewBuildOptions
         : null;
-      if (editorCanonicalViewStateApi
-        && typeof editorCanonicalViewStateApi.createStudioEditorDeckViewBuildOptions === 'function') {
-        return editorCanonicalViewStateApi.createStudioEditorDeckViewBuildOptions(doc, {
+      if (deckViewBuildOptionsApi
+        && typeof deckViewBuildOptionsApi.createStudioEditorDeckViewBuildOptions === 'function') {
+        return deckViewBuildOptionsApi.createStudioEditorDeckViewBuildOptions({
+          doc,
           buildOptions,
+          canonicalViewStateApi: typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalViewState
+            : null,
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null,
           getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
             ? getStudioPendingEditorCanonicalDeck
@@ -6654,9 +6659,19 @@
             sourceDoc,
             canonicalDeck,
             renderOptions
-          )
+          ),
+          createCanonicalDeckViewStateOptions: typeof createEditorCanonicalDeckViewStateOptions === 'function'
+            ? createEditorCanonicalDeckViewStateOptions
+            : null,
+          resolveCanonicalDeckViewState: typeof resolveEditorCanonicalDeckViewState === 'function'
+            ? resolveEditorCanonicalDeckViewState
+            : null
         });
       }
+      return createEditorDeckViewBuildOptionsFallback(doc, buildOptions);
+    }
+
+    function createEditorDeckViewBuildOptionsFallback(doc, buildOptions = {}) {
       const activeSlideId = typeof buildOptions.activeSlideId === 'string' && buildOptions.activeSlideId.trim()
         ? buildOptions.activeSlideId
         : '';
