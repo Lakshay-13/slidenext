@@ -1571,6 +1571,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
+  <script src="/shared/studio-editor-metadata-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
@@ -5733,10 +5734,18 @@
       ? studioEditorPersistedDeckStateShellRuntime.persistedDeckStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckStateGlobalApi);
-    const studioEditorMetadataPersistenceAction = typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
-      && SlideNextStudioEditorMetadataPersistenceAction
-      && typeof SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceAction === 'function'
-      ? SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceAction({
+    const studioEditorMetadataPersistenceShellRuntimeApi =
+      typeof SlideNextStudioEditorMetadataPersistenceShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorMetadataPersistenceShellRuntime
+      : null;
+    const studioEditorMetadataPersistenceShellRuntime = studioEditorMetadataPersistenceShellRuntimeApi
+      && typeof studioEditorMetadataPersistenceShellRuntimeApi
+        .createStudioEditorMetadataPersistenceShellRuntime === 'function'
+      ? studioEditorMetadataPersistenceShellRuntimeApi
+        .createStudioEditorMetadataPersistenceShellRuntime({
+          actionApi: typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
+            ? SlideNextStudioEditorMetadataPersistenceAction
+            : null,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -5763,17 +5772,18 @@
             typeof SlideNextPresentationMetadata !== 'undefined'
             && SlideNextPresentationMetadata
             && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
-          )
+            )
             ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
             : null
         })
       : null;
-    const studioEditorMetadataPersistenceGlobalApi = typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
-      && SlideNextStudioEditorMetadataPersistenceAction
-      && typeof SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceGlobalApi === 'function'
-      ? SlideNextStudioEditorMetadataPersistenceAction.createStudioEditorMetadataPersistenceGlobalApi({
-          resolveEditorMetadataPersistenceOptions: studioEditorMetadataPersistenceAction
-        })
+    const studioEditorMetadataPersistenceAction = studioEditorMetadataPersistenceShellRuntime
+      && studioEditorMetadataPersistenceShellRuntime.isAvailable === true
+      ? studioEditorMetadataPersistenceShellRuntime.metadataPersistenceAction
+      : null;
+    const studioEditorMetadataPersistenceGlobalApi = studioEditorMetadataPersistenceShellRuntime
+      && studioEditorMetadataPersistenceShellRuntime.isAvailable === true
+      ? studioEditorMetadataPersistenceShellRuntime.metadataPersistenceGlobalApi
       : {};
     Object.assign(globalThis, studioEditorMetadataPersistenceGlobalApi);
     const studioEditorPersistableDeckSanitizerAction = typeof SlideNextStudioEditorPersistableDeckSanitizerAction !== 'undefined'

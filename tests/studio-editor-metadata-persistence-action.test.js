@@ -78,6 +78,11 @@ test('index loads and installs the shared metadata persistence action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(fileContent, /<script src="\/shared\/studio-editor-metadata-persistence-action\.js"><\/script>/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-metadata-persistence-shell-runtime\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorMetadataPersistenceShellRuntime/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorMetadataPersistenceGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function resolveEditorMetadataPersistenceOptions\(options = \{\}\) \{/);
 });
