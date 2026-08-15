@@ -29,6 +29,9 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const canonicalSlideApi = options.canonicalSlideApi
+      || (root && root.SlideNextStudioEditorCanonicalSlide)
+      || null;
     const transactionApi = options.transactionApi
       || (root && root.SlideNextStudioEditorTransaction)
       || null;
@@ -176,12 +179,33 @@
         }
         const activeSlideId = getSlideId(activeSlide) || activeSlide.id
           || (activeSlide.dataset && activeSlide.dataset.slideId) || '';
-        canonicalWallpaperSlide = canonicalDeck
-          && Array.isArray(canonicalDeck.slides)
-          ? (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function'
-              ? canonicalDeckApi.findCanonicalSlideById(canonicalDeck, activeSlideId)
-              : canonicalDeck.slides.find((slide) => slide && slide.id === activeSlideId) || null)
-          : null;
+        if (canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+          if (canonicalSlideApi
+            && typeof canonicalSlideApi.findStudioCanonicalSlideById === 'function') {
+            try {
+              canonicalWallpaperSlide = canonicalSlideApi.findStudioCanonicalSlideById(
+                canonicalDeck,
+                activeSlideId,
+                { canonicalDeckApi }
+              );
+            } catch (error) {
+              canonicalWallpaperSlide = null;
+            }
+          }
+          if (!canonicalWallpaperSlide
+            && canonicalDeckApi
+            && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
+            canonicalWallpaperSlide = canonicalDeckApi.findCanonicalSlideById(
+              canonicalDeck,
+              activeSlideId
+            );
+          }
+          if (!canonicalWallpaperSlide) {
+            canonicalWallpaperSlide = canonicalDeck.slides.find(
+              (slide) => slide && slide.id === activeSlideId
+            ) || null;
+          }
+        }
         return canonicalWallpaperSlide || activeSlide;
       };
 

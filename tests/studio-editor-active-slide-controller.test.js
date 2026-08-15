@@ -124,6 +124,13 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
   };
   const wallpaperSlides = [];
   const lookupCalls = [];
+  const adapterCalls = [];
+  const canonicalDeckApi = {
+    findCanonicalSlideById(deck, slideId) {
+      lookupCalls.push([deck, slideId]);
+      return canonicalSlide;
+    }
+  };
   let buildCanonicalDeckCalls = 0;
   const controller = activeSlideController.createStudioEditorActiveSlideController({
     activeSlideView: {
@@ -156,12 +163,13 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
     resolveCanonicalDeck() {
       return { slides: [canonicalSlide] };
     },
-    canonicalDeckApi: {
-      findCanonicalSlideById(deck, slideId) {
-        lookupCalls.push([deck, slideId]);
-        return canonicalSlide;
+    canonicalSlideApi: {
+      findStudioCanonicalSlideById(deck, slideId, options) {
+        adapterCalls.push([deck, slideId, options.canonicalDeckApi]);
+        return options.canonicalDeckApi.findCanonicalSlideById(deck, slideId);
       }
     },
+    canonicalDeckApi,
     getSlideId(slide) {
       return slide.id;
     }
@@ -172,6 +180,11 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
   assert.deepEqual(lookupCalls, [[
     { slides: [canonicalSlide] },
     'slide-1'
+  ]]);
+  assert.deepEqual(adapterCalls, [[
+    { slides: [canonicalSlide] },
+    'slide-1',
+    canonicalDeckApi
   ]]);
   assert.equal(buildCanonicalDeckCalls, 0);
 });

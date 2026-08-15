@@ -43,6 +43,7 @@
           notesView: options.notesView,
           deckViewApi: options.deckViewApi,
           deckSnapshotApi: options.deckSnapshotApi,
+          canonicalSlideApi: options.canonicalSlideApi,
           transactionApi: options.transactionApi,
           documentRef: options.documentRef,
           getCurrentSlideIndex: options.getCurrentSlideIndex,
