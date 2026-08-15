@@ -90,6 +90,25 @@ test('history flush action treats undefined pending state as empty', () => {
   assert.equal(saveCalls, 0);
 });
 
+test('history flush action fails closed when pending state reads throw', () => {
+  let saveCalls = 0;
+  const flushPendingEditorHistory = historyFlushAction.createStudioEditorHistoryFlushAction({
+    getPendingTransaction() {
+      throw new Error('stale transaction state');
+    },
+    getPendingCanonicalDeck() {
+      throw new Error('stale canonical state');
+    },
+    saveHistoryState() {
+      saveCalls += 1;
+      return { didCapture: true };
+    }
+  });
+
+  assert.equal(flushPendingEditorHistory(), false);
+  assert.equal(saveCalls, 0);
+});
+
 test('history flush global API preserves the editor handler name', () => {
   const calls = [];
   const api = historyFlushAction.createStudioEditorHistoryFlushGlobalApi({

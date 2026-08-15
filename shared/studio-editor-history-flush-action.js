@@ -33,8 +33,18 @@
       if (historyController && typeof historyController.flushPending === 'function') {
         return historyController.flushPending();
       }
-      const pendingTransaction = getPendingTransaction();
-      const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
+      let pendingTransaction = null;
+      try {
+        pendingTransaction = getPendingTransaction();
+      } catch (error) {
+        // Continue with any readable pending canonical state.
+      }
+      let pendingCanonicalDeck = null;
+      try {
+        pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
+      } catch (error) {
+        // Continue with any readable pending transaction.
+      }
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
