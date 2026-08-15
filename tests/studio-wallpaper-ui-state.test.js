@@ -8,6 +8,7 @@ const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-grad
 const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-transaction-actions.js');
 const deckView = require('../shared/studio-deck-view.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
+const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -103,6 +104,7 @@ function getWallpaperStates(controls) {
 }
 
 function loadResolveCurrentStudioWallpaperActionState(fileContent, context) {
+  context.SlideNextStudioEditorCanonicalSlide ??= canonicalSlide;
   const canonicalUiSource = fs.readFileSync(
     path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
     'utf8'
@@ -236,7 +238,10 @@ test('resolveCurrentStudioWallpaperActionState attaches the canonical active sli
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     activeSlide: doc.activeSlide,
     canUseWallpaperControls: true,
-    canonicalActiveSlide
+    canonicalActiveSlide: canonicalSlide.findStudioCanonicalSlideById(
+      { slides: [canonicalActiveSlide] },
+      canonicalActiveSlide.id
+    )
   });
 });
 
@@ -282,7 +287,10 @@ test('resolveCurrentStudioWallpaperActionState prefers the live canonical deck b
   assert.deepEqual(JSON.parse(JSON.stringify(result)), {
     activeSlide: doc.activeSlide,
     canUseWallpaperControls: true,
-    canonicalActiveSlide: liveCanonicalActiveSlide
+    canonicalActiveSlide: canonicalSlide.findStudioCanonicalSlideById(
+      { slides: [liveCanonicalActiveSlide] },
+      liveCanonicalActiveSlide.id
+    )
   });
   assert.equal(buildCalls, 0);
 });

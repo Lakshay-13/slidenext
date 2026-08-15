@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const masterSlideView = require('../shared/studio-editor-master-slide-view.js');
 const masterSlideState = require('../shared/studio-editor-master-slide-state.js');
+const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,6 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function runSourceWithCanonicalUi(source, context) {
   context.SlideNextStudioEditorMasterSlideState = masterSlideState;
+  context.SlideNextStudioEditorCanonicalSlide ??= canonicalSlide;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
     fileContent,

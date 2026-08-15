@@ -8030,22 +8030,14 @@
       const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
         ? SlideNextStudioEditorCanonicalSlide
         : null;
+      if (!canonicalSlideApi
+        || typeof canonicalSlideApi.findStudioCanonicalSlideById !== 'function') return null;
       const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
         ? SlideNextCanonicalDeck
         : null;
-      if (canonicalSlideApi
-        && typeof canonicalSlideApi.findStudioCanonicalSlideById === 'function') {
-        try {
-          return canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
-            canonicalDeckApi
-          }) || null;
-        } catch (error) {
-          // Preserve the compatibility lookup when the shared resolver is unavailable.
-        }
-      }
-      if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return null;
-      const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
-      return canonicalDeck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
+      return canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
+        canonicalDeckApi
+      }) || null;
     }
 
     function buildEditorMutationCanonicalDeck(sourceDoc, buildOptions = {}) {

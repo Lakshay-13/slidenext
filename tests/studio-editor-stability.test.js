@@ -1014,8 +1014,8 @@ test('editor canonical slide adapter delegates lookup to the shared slide module
   vm.createContext(fallbackContext);
   vm.runInContext(helperSource, fallbackContext);
   assert.equal(
-    fallbackContext.findEditorCanonicalSlideById({ slides: [{ id: 'legacy-slide' }] }, 'legacy-slide').id,
-    'legacy-slide'
+    fallbackContext.findEditorCanonicalSlideById({ slides: [{ id: 'legacy-slide' }] }, 'legacy-slide'),
+    null
   );
 });
 
