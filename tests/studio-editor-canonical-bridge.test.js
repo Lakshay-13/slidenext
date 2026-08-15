@@ -196,6 +196,25 @@ test('canonical bridge prefers pending state for forced DOM rebuilds', () => {
   assert.equal(capturedOptions.canonicalDeckBaseline, pendingCanonicalDeck);
 });
 
+test('canonical bridge forwards a pending baseline when no live baseline reader exists', () => {
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending-only' }] };
+  let capturedOptions = null;
+  const bridge = canonicalBridge.createStudioEditorCanonicalBridge({
+    canonicalStateApi: canonicalState,
+    canonicalDeckBuilder(_doc, options) {
+      capturedOptions = options;
+      return { kind: 'slidenext.deck', slides: [] };
+    },
+    getPendingCanonicalDeck() {
+      return pendingCanonicalDeck;
+    }
+  });
+
+  bridge.buildCanonicalDeck({}, { preferLiveCanonicalDeck: false });
+
+  assert.equal(capturedOptions.canonicalDeckBaseline, pendingCanonicalDeck);
+});
+
 test('canonical bridge delegates baseline resolution to canonical state', () => {
   const documentRef = { id: 'frame' };
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };

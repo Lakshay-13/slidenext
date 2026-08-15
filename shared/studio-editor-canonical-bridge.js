@@ -152,7 +152,7 @@
       let resolvedOptions = normalizedOptions;
       if (normalizedOptions.preferLiveCanonicalDeck === false
         && !Object.prototype.hasOwnProperty.call(normalizedOptions, 'canonicalDeckBaseline')
-        && getCanonicalDeckBaseline) {
+        && (getPendingCanonicalDeck || getCanonicalDeckBaseline)) {
         const canonicalDeckBaseline = readCanonicalDeckBaseline(resolvedDocument);
         if (canonicalDeckBaseline) {
           resolvedOptions = {
