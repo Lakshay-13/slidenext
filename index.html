@@ -1463,6 +1463,7 @@
   <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-insertion.js"></script>
+  <script src="/shared/studio-editor-asset-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -4425,10 +4426,18 @@
     const studioEditorAssetController = studioEditorAssetRuntime
       ? studioEditorAssetRuntime.assetController
       : null;
-    const studioEditorAssetInsertionController = typeof SlideNextStudioEditorAssetInsertion !== 'undefined'
-      && SlideNextStudioEditorAssetInsertion
-      && typeof SlideNextStudioEditorAssetInsertion.createStudioEditorAssetInsertionController === 'function'
-      ? SlideNextStudioEditorAssetInsertion.createStudioEditorAssetInsertionController({
+    const studioEditorAssetInsertionShellRuntimeApi =
+      typeof SlideNextStudioEditorAssetInsertionShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorAssetInsertionShellRuntime
+      : null;
+    const studioEditorAssetInsertionShellRuntime = studioEditorAssetInsertionShellRuntimeApi
+      && typeof studioEditorAssetInsertionShellRuntimeApi
+        .createStudioEditorAssetInsertionShellRuntime === 'function'
+      ? studioEditorAssetInsertionShellRuntimeApi
+        .createStudioEditorAssetInsertionShellRuntime({
+          assetInsertionApi: typeof SlideNextStudioEditorAssetInsertion !== 'undefined'
+            ? SlideNextStudioEditorAssetInsertion
+            : null,
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
@@ -4440,6 +4449,10 @@
               : null,
           insertionController: studioEditorElementInsertionController
         })
+      : null;
+    const studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime
+      && studioEditorAssetInsertionShellRuntime.isAvailable === true
+      ? studioEditorAssetInsertionShellRuntime.assetInsertionController
       : null;
     const GRID_SNAP_SIZE_PX = 20;
     const studioEditorGridSnapRuntime = typeof SlideNextStudioEditorGridSnapShellRuntime !== 'undefined'
