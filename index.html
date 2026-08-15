@@ -1568,6 +1568,7 @@
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
@@ -5677,10 +5678,18 @@
         })
       : {};
     Object.assign(globalThis, studioEditorPersistedHtmlGlobalApi);
-    const studioEditorPersistedDeckStateAction = typeof SlideNextStudioEditorPersistedDeckStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckStateAction
-      && typeof SlideNextStudioEditorPersistedDeckStateAction.createStudioEditorPersistedDeckStateAction === 'function'
-      ? SlideNextStudioEditorPersistedDeckStateAction.createStudioEditorPersistedDeckStateAction({
+    const studioEditorPersistedDeckStateShellRuntimeApi =
+      typeof SlideNextStudioEditorPersistedDeckStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorPersistedDeckStateShellRuntime
+      : null;
+    const studioEditorPersistedDeckStateShellRuntime = studioEditorPersistedDeckStateShellRuntimeApi
+      && typeof studioEditorPersistedDeckStateShellRuntimeApi
+        .createStudioEditorPersistedDeckStateShellRuntime === 'function'
+      ? studioEditorPersistedDeckStateShellRuntimeApi
+        .createStudioEditorPersistedDeckStateShellRuntime({
+          actionApi: typeof SlideNextStudioEditorPersistedDeckStateAction !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckStateAction
+            : null,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -5705,12 +5714,13 @@
           setPersistedPlaybackState
         })
       : null;
-    const studioEditorPersistedDeckStateGlobalApi = typeof SlideNextStudioEditorPersistedDeckStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckStateAction
-      && typeof SlideNextStudioEditorPersistedDeckStateAction.createStudioEditorPersistedDeckStateGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistedDeckStateAction.createStudioEditorPersistedDeckStateGlobalApi({
-          updateEditorPersistedDeckState: studioEditorPersistedDeckStateAction
-        })
+    const studioEditorPersistedDeckStateAction = studioEditorPersistedDeckStateShellRuntime
+      && studioEditorPersistedDeckStateShellRuntime.isAvailable === true
+      ? studioEditorPersistedDeckStateShellRuntime.persistedDeckStateAction
+      : null;
+    const studioEditorPersistedDeckStateGlobalApi = studioEditorPersistedDeckStateShellRuntime
+      && studioEditorPersistedDeckStateShellRuntime.isAvailable === true
+      ? studioEditorPersistedDeckStateShellRuntime.persistedDeckStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckStateGlobalApi);
     const studioEditorMetadataPersistenceAction = typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'

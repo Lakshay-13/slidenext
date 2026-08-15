@@ -69,6 +69,11 @@ test('index loads and installs the shared persisted deck state action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(fileContent, /<script src="\/shared\/studio-editor-persisted-deck-state-action\.js"><\/script>/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-deck-state-shell-runtime\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorPersistedDeckStateShellRuntime/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedDeckStateGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function updateEditorPersistedDeckState\(nextState = \{\}\) \{/);
 });
