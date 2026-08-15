@@ -1778,6 +1778,7 @@
   <script src="/shared/studio-editor-version-rename-controller.js"></script>
   <script src="/shared/studio-editor-version-delete-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-modal-controller.js"></script>
+  <script src="/shared/studio-editor-version-rename-modal-shell-runtime.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/studio-editor-version-history-controller.js"></script>
@@ -2718,10 +2719,18 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionRenameStateGlobalApi);
-    const studioEditorVersionRenameModalController = typeof SlideNextStudioEditorVersionRenameModalController !== 'undefined'
-      && SlideNextStudioEditorVersionRenameModalController
-      && typeof SlideNextStudioEditorVersionRenameModalController.createStudioEditorVersionRenameModalController === 'function'
-      ? SlideNextStudioEditorVersionRenameModalController.createStudioEditorVersionRenameModalController({
+    const studioEditorVersionRenameModalShellRuntimeApi =
+      typeof SlideNextStudioEditorVersionRenameModalShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorVersionRenameModalShellRuntime
+      : null;
+    const studioEditorVersionRenameModalShellRuntime = studioEditorVersionRenameModalShellRuntimeApi
+      && typeof studioEditorVersionRenameModalShellRuntimeApi
+        .createStudioEditorVersionRenameModalShellRuntime === 'function'
+      ? studioEditorVersionRenameModalShellRuntimeApi
+        .createStudioEditorVersionRenameModalShellRuntime({
+          modalControllerApi: typeof SlideNextStudioEditorVersionRenameModalController !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameModalController
+            : null,
           documentRef: document,
           setRenameState: (...args) => setStudioRenameVersionState(...args),
           clearRenameState: (...args) => clearStudioRenameVersionState(...args),
@@ -2730,6 +2739,10 @@
           showModal: (...args) => showCurrentStudioVersionModal(...args),
           hideModal: (...args) => hideCurrentStudioVersionModal(...args)
         })
+      : null;
+    const studioEditorVersionRenameModalController = studioEditorVersionRenameModalShellRuntime
+      && studioEditorVersionRenameModalShellRuntime.isAvailable === true
+      ? studioEditorVersionRenameModalShellRuntime.versionRenameModalController
       : null;
     const editorInteractionDefaults = typeof SlideNextStudioEditorInteractionOptions !== 'undefined'
       ? SlideNextStudioEditorInteractionOptions

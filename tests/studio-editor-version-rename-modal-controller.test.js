@@ -71,7 +71,8 @@ test('editor wires rename modal orchestration through a shared controller', () =
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /<script src="\/shared\/studio-editor-version-rename-modal-controller\.js"><\/script>/);
-  assert.match(source, /SlideNextStudioEditorVersionRenameModalController\.createStudioEditorVersionRenameModalController/);
+  assert.match(source, /studioEditorVersionRenameModalShellRuntimeApi/);
+  assert.match(source, /createStudioEditorVersionRenameModalShellRuntime/);
   assert.match(source, /studioEditorVersionRenameModalController\.open\(filename, currentLabel\)/);
   assert.match(source, /studioEditorVersionRenameModalController\.close\(\)/);
   assert.doesNotMatch(source, /function promptRenameVersion\([^)]*\) \{[\s\S]*newVersionNameInput[\s\S]*showCurrentStudioVersionModal/);
