@@ -538,26 +538,31 @@ app.post('/api/save', async (req, res) => {
     if (!isAutoSave) {
       try {
         const now = new Date();
-        const backupFilename = await createVersionBackupFromContent(targetFile, htmlContent, versionLabel, now);
-        console.log(`Version backup saved: ${backupFilename}`);
-
-        if (hasCanonicalDeck) {
-          const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
-          if (metadataInfo) {
-            const nextMetadata = applyPresentationCanonicalDeckUpdate(metadataInfo.metadata, canonicalDeck);
-            const nextCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(nextMetadata);
-            if (nextCanonicalDeck || canonicalDeck === null) {
-              const metadataBackupFilename = await createPresentationMetadataVersionBackup(
-                targetFile,
-                backupFilename,
-                metadataInfo,
-                nextMetadata
-              );
-              if (metadataBackupFilename) {
-                console.log(`Version metadata backup saved: ${metadataBackupFilename}`);
-              }
-            }
+        const metadataInfo = hasCanonicalDeck
+          ? await readPresentationMetadataSidecar(htmlPath)
+          : null;
+        let backupMetadataInfo = null;
+        let backupMetadata;
+        if (metadataInfo) {
+          const nextMetadata = applyPresentationCanonicalDeckUpdate(metadataInfo.metadata, canonicalDeck);
+          const nextCanonicalDeck = presentationMetadata.resolvePresentationCanonicalDeck(nextMetadata);
+          if (nextCanonicalDeck || canonicalDeck === null) {
+            backupMetadataInfo = metadataInfo;
+            backupMetadata = nextMetadata;
           }
+        }
+
+        const { backupFilename, metadataBackupFilename } = await createVersionBackupPair({
+          targetFile,
+          htmlContent,
+          versionLabel,
+          now,
+          metadataInfo: backupMetadataInfo,
+          metadata: backupMetadata
+        });
+        console.log(`Version backup saved: ${backupFilename}`);
+        if (metadataBackupFilename) {
+          console.log(`Version metadata backup saved: ${metadataBackupFilename}`);
         }
       } catch (backupErr) {
         console.warn('Failed to create version backup:', backupErr.message);

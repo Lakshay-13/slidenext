@@ -19,6 +19,37 @@ function closeServer(server) {
   });
 }
 
+test('save route creates paired HTML and canonical metadata checkpoints', async (t) => {
+  const folder = `.test-save-version-pair-${process.pid}-${Date.now()}`;
+  const folderPath = path.join(workspaceDir, 'presentations', folder);
+  const htmlPath = `presentations/${folder}/index.html`;
+  const metadataPath = path.join(folderPath, 'presentation.json');
+  await fs.mkdir(folderPath);
+  await fs.writeFile(path.join(folderPath, 'index.html'), '<!doctype html><html><body>old</body></html>');
+  await fs.writeFile(metadataPath, JSON.stringify({ title: 'Version pair' }));
+  t.after(() => fs.rm(folderPath, { recursive: true, force: true }));
+
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      htmlPath,
+      htmlContent: '<!doctype html><html><body>updated</body></html>',
+      versionLabel: 'Named checkpoint',
+      canonicalDeck: { slides: [{ id: 'slide-1', nodes: [] }] }
+    })
+  });
+
+  assert.equal(response.status, 200);
+  const versionFiles = await fs.readdir(path.join(folderPath, '.versions'));
+  assert.equal(versionFiles.filter((filename) => filename.endsWith('.html')).length, 1);
+  assert.equal(versionFiles.filter((filename) => filename.endsWith('.json')).length, 1);
+});
+
 test('save route atomically persists the canonical deck sidecar', async (t) => {
   const folder = `.test-save-sidecar-${process.pid}-${Date.now()}`;
   const folderPath = path.join(workspaceDir, 'presentations', folder);
