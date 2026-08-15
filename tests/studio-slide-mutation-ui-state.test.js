@@ -110,15 +110,9 @@ function loadApplyEditorSlideDeletionWithTransaction(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadApplyEditorSlideReorderWithTransaction(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {',
-    '\n\n    // Swap node indices in iframe and re-render'
-  );
+function loadApplyEditorSlideReorderWithTransaction(_fileContent, context) {
   context.SlideNextStudioEditorSlideReorderMutation = slideReorderMutation;
   context.SlideNextStudioEditorSlideReorderTransaction = slideReorderTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadRollbackEditorSlideMutation(fileContent, context) {
@@ -138,12 +132,15 @@ function installSlideReorderController(context) {
     slideCommandsApi: context.SlideNextStudioEditorSlideCommands,
     canonicalSlideApi: context.SlideNextStudioEditorCanonicalSlide,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
+    transactionApi: context.SlideNextStudioEditorTransaction,
+    reorderMutationApi: context.SlideNextStudioEditorSlideReorderMutation,
+    reorderTransactionApi: context.SlideNextStudioEditorSlideReorderTransaction,
+    deckViewApi: context.SlideNextStudioDeckView,
     getIframeDoc: context.getIframeDoc,
     getSlides: context.getSlides,
     getSlideId: context.getEditorSlideId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     captureSlideMutationState: context.captureSlideMutationRestoreState,
-    applyReorder: context.applyEditorSlideReorderWithTransaction,
     generateThumbnails: context.generateThumbnails,
     restoreDeckViewAfterSlideMutation: context.restoreDeckViewAfterSlideMutation,
     finalizeMutation: context.finalizeSlideMutationPersistence
@@ -1422,10 +1419,9 @@ test('reorderSlides uses the shared iframe accessor and restores editor state af
     kind: 'slidenext.editor.transaction',
     version: 1,
     operations: [{
-      type: 'markup',
-      elementId: 'slides-container',
-      before: '<section data-slide-id="slide-1"></section><section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section>',
-      after: '<section data-slide-id="slide-2"></section><section data-slide-id="slide-3"></section><section data-slide-id="slide-1"></section>'
+      type: 'slide-order',
+      before: ['slide-1', 'slide-2', 'slide-3'],
+      after: ['slide-2', 'slide-3', 'slide-1']
     }]
   });
   assert.deepEqual(calls[9][3].slides.map((slide) => slide.id), ['slide-2', 'slide-3', 'slide-1']);

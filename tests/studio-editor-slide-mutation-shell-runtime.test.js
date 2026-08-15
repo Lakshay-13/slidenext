@@ -20,7 +20,10 @@ test('slide mutation shell runtime resolves mutation controllers and canonical d
     slideCommandsApi: { name: 'commands' },
     canonicalSlideApi: { name: 'slide' },
     canonicalDeckApi: { name: 'deck' },
-    deckImportApi: { name: 'import' }
+    deckImportApi: { name: 'import' },
+    reorderMutationApi: { name: 'reorder-mutation' },
+    reorderTransactionApi: { name: 'reorder-transaction' },
+    deckViewApi: { name: 'deck-view' }
   };
   const callback = () => {};
 
@@ -56,7 +59,10 @@ test('slide mutation shell runtime honors explicitly unavailable dependencies', 
     slideCommandsApi: null,
     canonicalSlideApi: null,
     canonicalDeckApi: null,
-    deckImportApi: null
+    deckImportApi: null,
+    reorderMutationApi: null,
+    reorderTransactionApi: null,
+    deckViewApi: null
   });
 
   assert.equal(receivedOptions.reorderApi, null);
@@ -67,6 +73,9 @@ test('slide mutation shell runtime honors explicitly unavailable dependencies', 
   assert.equal(receivedOptions.canonicalSlideApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
   assert.equal(receivedOptions.deckImportApi, null);
+  assert.equal(receivedOptions.reorderMutationApi, null);
+  assert.equal(receivedOptions.reorderTransactionApi, null);
+  assert.equal(receivedOptions.deckViewApi, null);
 });
 
 test('slide mutation shell runtime safely returns null without a runtime factory', () => {

@@ -48,12 +48,37 @@
     const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
       ? options.transactionApi
       : null;
+    const reorderTransactionApi = options.reorderTransactionApi
+      || (root && root.SlideNextStudioEditorSlideReorderTransaction)
+      || null;
+    const reorderMutationApi = options.reorderMutationApi
+      || (root && root.SlideNextStudioEditorSlideReorderMutation)
+      || null;
+    const deckViewApi = options.deckViewApi
+      || (root && root.SlideNextStudioDeckView)
+      || null;
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
       ? options.captureSlideMutationState
       : null;
-    const applyReorder = typeof options.applyReorder === 'function'
+    const legacyApplyReorder = typeof options.applyReorder === 'function'
       ? options.applyReorder
       : () => ({ didApply: false, transaction: null });
+    const applyReorderTransaction = reorderTransactionApi
+      && typeof reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction === 'function'
+      ? reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction
+      : null;
+    const applyReorder = (container, slideNode, beforeNode, mutationOptions = {}) => {
+      if (applyReorderTransaction) {
+        return applyReorderTransaction(container, slideNode, beforeNode, {
+          mutationApi: reorderMutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyReorder(container, slideNode, beforeNode, mutationOptions);
+    };
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : null;

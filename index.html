@@ -3201,6 +3201,15 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
+          reorderMutationApi: typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
+            ? SlideNextStudioEditorSlideReorderMutation
+            : null,
+          reorderTransactionApi: typeof SlideNextStudioEditorSlideReorderTransaction !== 'undefined'
+            ? SlideNextStudioEditorSlideReorderTransaction
+            : null,
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
@@ -3214,7 +3223,6 @@
           ),
           getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
           captureSlideMutationState: (...args) => captureSlideMutationRestoreState(...args),
-          applyReorder: (...args) => applyEditorSlideReorderWithTransaction(...args),
           resolveInsertionActionState: (...args) => resolveCurrentStudioInsertionActionState(...args),
           createBlankSlide: (doc) => typeof studioEditorBlankSlideFactory === 'function'
             ? studioEditorBlankSlideFactory(doc, {
@@ -7224,39 +7232,6 @@
       return studioEditorThumbnailController
         ? studioEditorThumbnailController.attach(card)
         : false;
-    }
-
-    function applyEditorSlideReorderWithTransaction(container, slideNode, beforeNode = null, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorSlideReorderTransaction !== 'undefined'
-        ? SlideNextStudioEditorSlideReorderTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorSlideReorderMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorSlideReorderMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(container, slideNode, beforeNode, {
-        mutationApi: typeof SlideNextStudioEditorSlideReorderMutation !== 'undefined'
-          ? SlideNextStudioEditorSlideReorderMutation
-          : null,
-        slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-          ? SlideNextStudioEditorSlideCommands
-          : null,
-        deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-          ? SlideNextStudioDeckView
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        containerElementId: options.containerElementId,
-        skipMarkupTransactionCapture: options.skipMarkupTransactionCapture === true,
-        getElementId: options.getElementId
-      });
     }
 
     function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {

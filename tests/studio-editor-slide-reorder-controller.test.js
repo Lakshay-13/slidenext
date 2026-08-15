@@ -85,6 +85,58 @@ test('slide reorder controller fails closed without a reorder command', () => {
   assert.equal(controller.reorder(0, 1), false);
 });
 
+test('slide reorder controller owns the shared transaction adapter when available', () => {
+  const container = { id: 'container' };
+  const slideNode = { id: 'slide-1' };
+  const beforeNode = { id: 'slide-2' };
+  const mutationApi = { name: 'mutation' };
+  const deckViewApi = { name: 'deck-view' };
+  const transactionApi = { name: 'transaction' };
+  const delegated = [];
+  let legacyCalled = false;
+  const slideCommandsApi = {
+    applyStudioSlideReorderWithTransaction() {},
+    reorderStudioSlideNodes(fromIdx, toIdx, options) {
+      assert.equal(fromIdx, 0);
+      assert.equal(toIdx, 1);
+      return options.applyReorder(container, slideNode, beforeNode, {
+        skipMarkupTransactionCapture: true
+      }).didApply;
+    }
+  };
+  const controller = reorderController.createStudioEditorSlideReorderController({
+    slideCommandsApi,
+    reorderTransactionApi: {
+      applyStudioEditorSlideReorderMutationWithTransaction(...args) {
+        delegated.push(args);
+        return { didApply: true, transaction: { id: 'tx-reorder' } };
+      }
+    },
+    reorderMutationApi: mutationApi,
+    deckViewApi,
+    transactionApi,
+    applyReorder() {
+      legacyCalled = true;
+      return { didApply: false, transaction: null };
+    }
+  });
+
+  assert.equal(controller.reorder(0, 1), true);
+  assert.equal(legacyCalled, false);
+  assert.equal(delegated.length, 1);
+  assert.equal(delegated[0][0], container);
+  assert.equal(delegated[0][1], slideNode);
+  assert.equal(delegated[0][2], beforeNode);
+  assert.deepEqual(delegated[0][3], {
+    mutationApi,
+    slideCommandsApi,
+    deckViewApi,
+    transactionApi,
+    skipMarkupTransactionCapture: true
+  });
+  assert.equal(typeof delegated[0][3].slideCommandsApi.applyStudioSlideReorderWithTransaction, 'function');
+});
+
 test('slide reorder controller fails closed when canonical builder construction throws', () => {
   let reorderCalls = 0;
   const controller = reorderController.createStudioEditorSlideReorderController({

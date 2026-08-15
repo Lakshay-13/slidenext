@@ -67,6 +67,21 @@
       'deckImportApi',
       'SlideNextDeckImport'
     );
+    runtimeOptions.reorderMutationApi = resolveApi(
+      options,
+      'reorderMutationApi',
+      'SlideNextStudioEditorSlideReorderMutation'
+    );
+    runtimeOptions.reorderTransactionApi = resolveApi(
+      options,
+      'reorderTransactionApi',
+      'SlideNextStudioEditorSlideReorderTransaction'
+    );
+    runtimeOptions.deckViewApi = resolveApi(
+      options,
+      'deckViewApi',
+      'SlideNextStudioDeckView'
+    );
 
     return mutationRuntimeApi.createStudioEditorSlideMutationRuntime(runtimeOptions);
   }

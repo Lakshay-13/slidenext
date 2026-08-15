@@ -21,6 +21,9 @@ test('slide mutation runtime composes the four structural slide controllers', ()
     canonicalDeckApi: {},
     deckImportApi: {},
     transactionApi: {},
+    reorderMutationApi: {},
+    reorderTransactionApi: {},
+    deckViewApi: {},
     getIframeDoc() {},
     getSlides() {},
     getSlideId() {},
@@ -63,6 +66,9 @@ test('slide mutation runtime composes the four structural slide controllers', ()
   assert.deepEqual(result, controllers);
   assert.equal(calls[0][1].canonicalDeckApi, callbacks.canonicalDeckApi);
   assert.equal(calls[0][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
+  assert.equal(calls[0][1].reorderMutationApi, callbacks.reorderMutationApi);
+  assert.equal(calls[0][1].reorderTransactionApi, callbacks.reorderTransactionApi);
+  assert.equal(calls[0][1].deckViewApi, callbacks.deckViewApi);
   assert.equal(calls[1][1].transactionApi, callbacks.transactionApi);
   assert.equal(calls[1][1].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
   assert.equal(calls[0][1].applyReorder, callbacks.applyReorder);
@@ -118,5 +124,13 @@ test('index wires structural slide mutations through the runtime module', () => 
   assert.match(
     fileContent,
     /getCanonicalDeckBaseline: \(sourceDoc\) => resolveEditorLiveCanonicalDeck\([\s\S]*?getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,/
+  );
+  assert.match(
+    fileContent,
+    /reorderTransactionApi: typeof SlideNextStudioEditorSlideReorderTransaction !== 'undefined'/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /function applyEditorSlideReorderWithTransaction\(/
   );
 });
