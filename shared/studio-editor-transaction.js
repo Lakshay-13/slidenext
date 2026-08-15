@@ -134,36 +134,64 @@
     const applyLayout = typeof options.applyLayout === 'function'
       ? options.applyLayout
       : null;
+    const positionBaselines = nextItems.map((item) => ({
+      element: item && item.element,
+      left: item && item.element && item.element.style ? item.element.style.left : undefined,
+      top: item && item.element && item.element.style ? item.element.style.top : undefined
+    }));
+    const restorePositionBaselines = () => {
+      positionBaselines.forEach(({ element, left, top }) => {
+        try {
+          if (!element || !element.style) return;
+          element.style.left = left;
+          element.style.top = top;
+        } catch (error) {
+          // Keep rollback best-effort when a target becomes disconnected.
+        }
+      });
+    };
+    const failedPositionMutation = () => {
+      restorePositionBaselines();
+      return { didApply: false, transaction: null };
+    };
 
     if (applyLayout) {
-      const mutation = applyLayout(nextItems, {
-        createPositionTransaction,
-        getElementId
-      });
-      return mutation && typeof mutation === 'object'
-        ? mutation
-        : { didApply: false, transaction: null };
+      try {
+        const mutation = applyLayout(nextItems, {
+          createPositionTransaction,
+          getElementId
+        });
+        return mutation && typeof mutation === 'object' && mutation.didApply
+          ? mutation
+          : failedPositionMutation();
+      } catch (error) {
+        return failedPositionMutation();
+      }
     }
 
-    const transaction = createPositionTransaction
-      ? createPositionTransaction(nextItems, { getElementId })
-      : null;
-    let didApply = false;
-    nextItems.forEach((item) => {
-      if (!item || !item.element || !item.element.style) return;
-      if (Number.isFinite(item.nextLeft)) {
-        item.element.style.left = `${item.nextLeft}px`;
-        didApply = true;
-      }
-      if (Number.isFinite(item.nextTop)) {
-        item.element.style.top = `${item.nextTop}px`;
-        didApply = true;
-      }
-    });
-    return {
-      didApply,
-      transaction
-    };
+    try {
+      const transaction = createPositionTransaction
+        ? createPositionTransaction(nextItems, { getElementId })
+        : null;
+      let didApply = false;
+      nextItems.forEach((item) => {
+        if (!item || !item.element || !item.element.style) return;
+        if (Number.isFinite(item.nextLeft)) {
+          item.element.style.left = `${item.nextLeft}px`;
+          didApply = true;
+        }
+        if (Number.isFinite(item.nextTop)) {
+          item.element.style.top = `${item.nextTop}px`;
+          didApply = true;
+        }
+      });
+      return {
+        didApply,
+        transaction
+      };
+    } catch (error) {
+      return failedPositionMutation();
+    }
   }
 
   function createStudioPropertyTransaction(items = [], options = {}) {

@@ -265,6 +265,44 @@ test('applyStudioPositionLayoutWithTransaction delegates layout application and 
   assert.equal(calls[0][2].createPositionTransaction instanceof Function, true);
 });
 
+test('applyStudioPositionLayoutWithTransaction restores positions after a partial layout failure', () => {
+  const first = { style: { left: '10px', top: '20px' } };
+  let shouldThrow = true;
+  const secondStyle = { _left: '30px', top: '40px' };
+  Object.defineProperty(secondStyle, 'left', {
+    configurable: true,
+    get() {
+      return this._left;
+    },
+    set(value) {
+      if (shouldThrow) {
+        shouldThrow = false;
+        throw new Error('position write failed');
+      }
+      this._left = value;
+    }
+  });
+  const second = { style: secondStyle };
+
+  const result = transaction.applyStudioPositionLayoutWithTransaction([
+    { element: first, nextLeft: 100, nextTop: 110 },
+    { element: second, nextLeft: 120, nextTop: 130 }
+  ], {
+    applyLayout(items) {
+      items.forEach((item) => {
+        item.element.style.left = `${item.nextLeft}px`;
+        item.element.style.top = `${item.nextTop}px`;
+      });
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.deepEqual(result, { didApply: false, transaction: null });
+  assert.deepEqual(first.style, { left: '10px', top: '20px' });
+  assert.equal(second.style.left, '30px');
+  assert.equal(second.style.top, '40px');
+});
+
 test('applyStudioPositionLayoutWithTransaction applies a direct layout when no delegate is provided', () => {
   const first = { style: { left: '10px', top: '20px' } };
   const result = transaction.applyStudioPositionLayoutWithTransaction([
