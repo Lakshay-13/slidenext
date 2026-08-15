@@ -277,9 +277,11 @@
       if (!nextCanonicalDeck) return false;
 
       const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-      const asset = nextCanonicalDeck.assets.find(
-        (candidate) => candidate && candidate.id === normalizedAssetId
-      );
+      const asset = canonicalDeckApi.findCanonicalAssetById
+        ? canonicalDeckApi.findCanonicalAssetById(nextCanonicalDeck, normalizedAssetId)
+        : nextCanonicalDeck.assets.find(
+            (candidate) => candidate && candidate.id === normalizedAssetId
+          );
       if (normalizedAssetId && !asset) return false;
       const previousSrc = typeof selectedImage.getAttribute === 'function'
         ? selectedImage.getAttribute('src')

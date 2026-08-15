@@ -627,6 +627,15 @@
     return null;
   }
 
+  function findCanonicalAssetById(deckLike, assetId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedAssetId = normalizeString(assetId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedAssetId) return null;
+    return deck.assets.find((asset) => asset && asset.id === normalizedAssetId) || null;
+  }
+
   function findCanonicalSlideById(deckLike, slideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -1746,9 +1755,7 @@
       return null;
     }
 
-    const asset = normalizedAssetId
-      ? deck.assets.find((candidate) => candidate && candidate.id === normalizedAssetId)
-      : null;
+    const asset = findCanonicalAssetById(deck, normalizedAssetId);
     if (normalizedAssetId && !asset) return null;
 
     const slideIndex = deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
@@ -2084,6 +2091,7 @@
     mergeCanonicalDeckRebuildBaseline,
     isCanonicalDeck,
     findCanonicalNodeById,
+    findCanonicalAssetById,
     findCanonicalSlideById,
     findCanonicalSlideIndexById,
     reorderCanonicalSlides,

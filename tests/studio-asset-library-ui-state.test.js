@@ -23,6 +23,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 }
 
 function runSourceWithCanonicalUi(source, context) {
+  context.SlideNextCanonicalDeck = canonicalDeckModel;
   context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   context.SlideNextStudioEditorAssetState = assetState;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
