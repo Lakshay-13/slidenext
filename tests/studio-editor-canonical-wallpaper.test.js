@@ -92,6 +92,22 @@ test('buildStudioCanonicalWallpaperBaseline prefers a valid live canonical deck'
   assert.equal(didBuildFromDocument, false);
 });
 
+test('buildStudioCanonicalWallpaperBaseline uses pending state in compatibility mode', () => {
+  const pendingDeck = createSourceDeck();
+  const result = canonicalWallpaper.buildStudioCanonicalWallpaperBaseline({
+    canonicalDeckApi: canonicalDeck,
+    getPendingCanonicalDeck: () => pendingDeck,
+    getCanonicalDeckBaseline() {
+      throw new Error('live baseline should not replace pending state');
+    },
+    buildCanonicalDeck() {
+      throw new Error('compatibility rebuild should not replace pending state');
+    }
+  });
+
+  assert.equal(result, pendingDeck);
+});
+
 test('buildStudioCanonicalWallpaperBaseline delegates baseline resolution to canonical state', () => {
   const sourceDeck = createSourceDeck();
   const sourceDocument = { id: 'editor-doc' };
