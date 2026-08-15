@@ -20,6 +20,15 @@
     const transactionApi = options.transactionApi
       || (root && root.SlideNextStudioEditorTransaction)
       || null;
+    const groupTransactionApi = options.groupTransactionApi
+      || (root && root.SlideNextStudioEditorGroupTransaction)
+      || null;
+    const groupMutationApi = options.groupMutationApi
+      || (root && root.SlideNextStudioEditorGroupMutation)
+      || null;
+    const groupEngineApi = options.groupEngineApi
+      || (root && root.SlideNextStudioEditorGroup)
+      || null;
     const getTransactionElementById = typeof options.getTransactionElementById === 'function'
       ? options.getTransactionElementById
       : null;
@@ -66,9 +75,25 @@
     const getEditorSlideId = typeof options.getEditorSlideId === 'function'
       ? options.getEditorSlideId
       : (slide) => slide && slide.id;
-    const applyGroupMutation = typeof options.applyGroupMutation === 'function'
-      ? options.applyGroupMutation
-      : () => ({ didApply: false, group: null, transaction: null });
+    const prepareGroup = typeof options.prepareGroup === 'function'
+      ? options.prepareGroup
+      : null;
+    const applyGroup = groupTransactionApi
+      && typeof groupTransactionApi.createStudioEditorGroupApplicator === 'function'
+      ? groupTransactionApi.createStudioEditorGroupApplicator
+      : null;
+    const applyGroupMutation = applyGroup
+      ? applyGroup({
+          mutationApi: groupMutationApi,
+          groupApi: groupEngineApi,
+          transactionApi,
+          assignElementId,
+          prepareGroup,
+          legacyApplyGroup: options.applyGroupMutation
+        })
+      : typeof options.applyGroupMutation === 'function'
+        ? options.applyGroupMutation
+        : () => ({ didApply: false, group: null, transaction: null });
     const applyUngroupMutation = typeof options.applyUngroupMutation === 'function'
       ? options.applyUngroupMutation
       : () => ({ didApply: false, restoredElements: [], restoredGroups: [], transaction: null });
@@ -77,9 +102,6 @@
       : null;
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
-      : null;
-    const prepareGroup = typeof options.prepareGroup === 'function'
-      ? options.prepareGroup
       : null;
 
     function createCanonicalGroupBuilders() {

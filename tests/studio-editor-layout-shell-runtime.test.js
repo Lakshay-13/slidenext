@@ -25,6 +25,9 @@ test('layout shell runtime resolves controller, engine, and canonical dependenci
     canonicalDeckApi: { name: 'deck' },
     canonicalGroupApi: { name: 'group' },
     deckImportApi: { name: 'import' },
+    groupTransactionApi: { name: 'group-transaction' },
+    groupMutationApi: { name: 'group-mutation' },
+    groupEngineApi: { name: 'group-engine' },
     transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
@@ -66,6 +69,9 @@ test('layout shell runtime honors explicitly unavailable dependencies', () => {
     canonicalDeckApi: null,
     canonicalGroupApi: null,
     deckImportApi: null,
+    groupTransactionApi: null,
+    groupMutationApi: null,
+    groupEngineApi: null,
     transactionApi: null
   });
 
@@ -82,6 +88,9 @@ test('layout shell runtime honors explicitly unavailable dependencies', () => {
     'canonicalDeckApi',
     'canonicalGroupApi',
     'deckImportApi',
+    'groupTransactionApi',
+    'groupMutationApi',
+    'groupEngineApi',
     'transactionApi'
   ]) {
     assert.equal(receivedOptions[key], null);

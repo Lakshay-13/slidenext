@@ -46,7 +46,49 @@
     });
   }
 
+  function createStudioEditorGroupApplicator(options = {}) {
+    const applyGroupTransaction = typeof options.applyGroupTransaction === 'function'
+      ? options.applyGroupTransaction
+      : applyStudioEditorGroupMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const groupApi = options.groupApi && typeof options.groupApi === 'object'
+      ? options.groupApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const assignElementId = typeof options.assignElementId === 'function'
+      ? options.assignElementId
+      : null;
+    const prepareGroup = typeof options.prepareGroup === 'function'
+      ? options.prepareGroup
+      : null;
+    const legacyApplyGroup = typeof options.legacyApplyGroup === 'function'
+      ? options.legacyApplyGroup
+      : () => ({ didApply: false, group: null, transaction: null });
+    const canApplyGroupTransaction = mutationApi
+      && (typeof options.applyGroupTransaction === 'function'
+        || typeof mutationApi.applyStudioGroupMutationWithTransaction === 'function');
+
+    return (mutationOptions = {}) => {
+      if (canApplyGroupTransaction) {
+        return applyGroupTransaction({
+          mutationApi,
+          groupApi,
+          transactionApi,
+          assignElementId,
+          prepareGroup,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyGroup(mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorGroupMutationWithTransaction
+    applyStudioEditorGroupMutationWithTransaction,
+    createStudioEditorGroupApplicator
   };
 });

@@ -92,6 +92,21 @@
       'transactionApi',
       'SlideNextStudioEditorTransaction'
     );
+    runtimeOptions.groupTransactionApi = resolveApi(
+      options,
+      'groupTransactionApi',
+      'SlideNextStudioEditorGroupTransaction'
+    );
+    runtimeOptions.groupMutationApi = resolveApi(
+      options,
+      'groupMutationApi',
+      'SlideNextStudioEditorGroupMutation'
+    );
+    runtimeOptions.groupEngineApi = resolveApi(
+      options,
+      'groupEngineApi',
+      'SlideNextStudioEditorGroup'
+    );
 
     return layoutRuntimeApi.createStudioEditorLayoutRuntime(runtimeOptions);
   }

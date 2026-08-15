@@ -29,19 +29,13 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return source;
 }
 
-function loadGroupMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorGroupMutationWithTransaction(options = {}) {',
-    'function groupSelectedElements() {'
-  );
+function loadGroupMutationModules(_fileContent, context) {
   context.SlideNextStudioEditorGroup = {
     ...studioGroup,
     ...(context.SlideNextStudioEditorGroup || {})
   };
   context.SlideNextStudioEditorGroupMutation = groupMutation;
   context.SlideNextStudioEditorGroupTransaction = groupTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadUngroupMutationHelper(fileContent, context) {
@@ -63,6 +57,9 @@ function installGroupController(context) {
   context.studioEditorGroupController = groupController.createStudioEditorGroupController({
     canonicalDeckApi: context.SlideNextCanonicalDeck,
     canonicalGroupApi: context.SlideNextStudioEditorCanonicalGroup,
+    groupTransactionApi: context.SlideNextStudioEditorGroupTransaction,
+    groupMutationApi: context.SlideNextStudioEditorGroupMutation,
+    groupEngineApi: context.SlideNextStudioEditorGroup,
     deckImportApi: context.SlideNextDeckImport,
     buildGroupSelectionActionState: context.buildGroupSelectionActionState,
     buildUngroupSelectionActionState: context.buildUngroupSelectionActionState,
@@ -74,7 +71,6 @@ function installGroupController(context) {
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
     getEditorSlideId: context.getEditorSlideId,
-    applyGroupMutation: context.applyEditorGroupMutationWithTransaction,
     applyUngroupMutation: context.applyEditorUngroupMutationWithTransaction,
     commitSelectionState: context.commitEditorSelectionState,
     finalizeDeckMutation: context.finalizeEditorDeckMutation,
@@ -661,7 +657,7 @@ test('groupSelectedElements wraps selected children with relative coordinates an
     }
   };
   vm.createContext(context);
-  loadGroupMutationHelper(fileContent, context);
+  loadGroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 
@@ -767,7 +763,7 @@ test('groupSelectedElements delegates wrapper mutation to the shared group modul
   };
 
   vm.createContext(context);
-  loadGroupMutationHelper(fileContent, context);
+  loadGroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 
@@ -866,7 +862,7 @@ test('groupSelectedElements forwards a canonical tree sidecar for grouped nodes'
   };
 
   vm.createContext(context);
-  loadGroupMutationHelper(fileContent, context);
+  loadGroupMutationModules(fileContent, context);
   installGroupController(context);
   vm.runInContext(source, context);
 
