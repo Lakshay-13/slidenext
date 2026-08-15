@@ -384,7 +384,16 @@
           : null);
       const versionLabel = `Auto: Inserted Block${blockId ? ` "${blockId}"` : ''}`;
       if (finalizeInsertedElements) {
-        return !!finalizeInsertedElements(insertedElements, versionLabel, transaction, nextCanonicalDeck);
+        const didFinalize = finalizeInsertedElements(
+          insertedElements,
+          versionLabel,
+          transaction,
+          nextCanonicalDeck
+        );
+        if (!didFinalize) {
+          removeInsertedElements(insertedElements, activeSlide);
+        }
+        return !!didFinalize;
       }
       if (saveHistoryState
         && isStudioHistoryCaptureFailure(
