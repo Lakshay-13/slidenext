@@ -13,7 +13,13 @@ test('editor forwards the group and ungroup documents into the selection reader'
 
   assert.match(
     source,
-    /const studioEditorGroupStateController =[\s\S]+?createStudioEditorGroupStateController\(\{[\s\S]+?getDocument: \(\) => getIframeDoc\(\),[\s\S]+?getSelectedElements: \(sourceDoc\) => getStudioSelectedElements\(sourceDoc\),/
+    /<script src="\/shared\/studio-editor-group-state-shell-runtime\.js"><\/script>/
+  );
+  assert.match(source, /studioEditorGroupStateShellRuntimeApi/);
+  assert.match(source, /createStudioEditorGroupStateShellRuntime/);
+  assert.match(
+    source,
+    /studioEditorGroupStateController = studioEditorGroupStateShellRuntime/
   );
   assert.match(
     source,
