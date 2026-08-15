@@ -2576,6 +2576,53 @@ test('transform pointer cancellation restores styles and does not persist either
   });
 });
 
+test('transform handlers cancel and restore styles when frame application throws', () => {
+  [
+    transformState.createStudioTransformPointerHandlers,
+    transformState.createStudioTransformFallbackPointerHandlers
+  ].forEach((createHandlers) => {
+    const element = {
+      style: {
+        position: 'relative',
+        margin: '8px',
+        left: '10px',
+        top: '20px',
+        width: '100px',
+        height: '50px'
+      }
+    };
+    const startStyle = { ...element.style };
+    let completionPlan = null;
+    const session = {
+      pointerId: 7,
+      materialized: true,
+      moved: true,
+      items: [{ element, startStyle }]
+    };
+    const handlers = createHandlers({
+      getActiveSlide: () => ({ id: 'slide-1' }),
+      resolveTransformSessionStart: () => ({ session, startBounds: {} }),
+      buildTransformFrameState: () => ({ isActive: true, bounds: {} }),
+      applyTransformBounds() {
+        element.style.left = '90px';
+        throw new Error('frame application unavailable');
+      },
+      onSessionFinalize(_finalizeResult, nextCompletionPlan) {
+        completionPlan = nextCompletionPlan;
+      }
+    });
+
+    assert.equal(handlers.handlePointerDown({ pointerId: 7 }), true);
+    assert.equal(handlers.handlePointerMove({ pointerId: 7 }), false);
+    assert.deepEqual(element.style, startStyle);
+    assert.deepEqual(completionPlan, {
+      shouldPersist: false,
+      versionLabel: ''
+    });
+    assert.equal(handlers.getSession(), null);
+  });
+});
+
 test('transform window blur rolls back the active gesture instead of persisting it', () => {
   const element = {
     style: {

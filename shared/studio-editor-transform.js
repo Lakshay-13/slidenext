@@ -1682,7 +1682,13 @@
       }
 
       const bounds = transformFrameState.bounds;
-      const appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      let appliedBounds;
+      try {
+        appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      } catch (error) {
+        finalizeSession({ cancelled: true });
+        return false;
+      }
       if (appliedBounds && Array.isArray(appliedBounds.nextItems)) {
         session.lastAppliedLayoutItems = appliedBounds.nextItems;
       }
@@ -1846,7 +1852,13 @@
       if (!transformFrameState.isActive) return false;
 
       const bounds = transformFrameState.bounds;
-      const appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      let appliedBounds;
+      try {
+        appliedBounds = applyTransformBounds(session, bounds, { minSizePx });
+      } catch (error) {
+        finalizeSession({ cancelled: true });
+        return false;
+      }
       if (appliedBounds && Array.isArray(appliedBounds.nextItems)) {
         session.lastAppliedLayoutItems = appliedBounds.nextItems;
       }
