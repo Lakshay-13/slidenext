@@ -486,6 +486,15 @@ app.post('/api/save', async (req, res) => {
       return res.status(403).json({ error: 'Access denied: outside workspace directory' });
     }
 
+    let previousHtmlContent = null;
+    if (hasCanonicalDeck) {
+      try {
+        previousHtmlContent = await fs.readFile(targetFile, 'utf8');
+      } catch (readErr) {
+        console.warn('Failed to capture the previous HTML before canonical save:', readErr.message);
+      }
+    }
+
     // Create timestamped backup file if it is NOT an auto-save
     if (!isAutoSave) {
       try {
@@ -536,10 +545,20 @@ app.post('/api/save', async (req, res) => {
     }
 
     if (canonicalDeckPersistenceError) {
+      let didRestoreHtml = false;
+      if (previousHtmlContent !== null) {
+        try {
+          await writeFileAtomically(targetFile, previousHtmlContent);
+          didRestoreHtml = true;
+          console.warn(`Restored previous HTML after canonical sidecar failure: ${targetFile}`);
+        } catch (restoreErr) {
+          console.warn('Failed to restore previous HTML after canonical sidecar failure:', restoreErr.message);
+        }
+      }
       return res.status(500).json({
         success: false,
         error: 'Failed to persist canonical deck sidecar',
-        htmlSaved: true
+        htmlSaved: !didRestoreHtml
       });
     }
 

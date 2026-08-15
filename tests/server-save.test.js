@@ -175,10 +175,10 @@ test('save route reports canonical sidecar failures instead of claiming success'
   assert.deepEqual(await response.json(), {
     success: false,
     error: 'Failed to persist canonical deck sidecar',
-    htmlSaved: true
+    htmlSaved: false
   });
   assert.equal(
     await fs.readFile(path.join(folderPath, 'index.html'), 'utf8'),
-    '<!doctype html><html><body>updated</body></html>'
+    '<!doctype html><html><body>old</body></html>'
   );
 });
