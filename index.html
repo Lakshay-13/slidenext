@@ -1745,6 +1745,7 @@
   <script src="/shared/studio-editor-history-restore-action.js"></script>
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-editor-element-snapshot-controller.js"></script>
+  <script src="/shared/studio-editor-element-snapshot-shell-runtime.js"></script>
   <script src="/shared/studio-editor-element-snapshot-accessors.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
@@ -2823,10 +2824,18 @@
         })
       : {};
     Object.assign(globalThis, presentationDashboardGlobalApi);
-    const studioEditorElementSnapshotController = typeof SlideNextStudioEditorElementSnapshotController !== 'undefined'
-      && SlideNextStudioEditorElementSnapshotController
-      && typeof SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController === 'function'
-      ? SlideNextStudioEditorElementSnapshotController.createStudioEditorElementSnapshotController({
+    const studioEditorElementSnapshotShellRuntimeApi =
+      typeof SlideNextStudioEditorElementSnapshotShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorElementSnapshotShellRuntime
+      : null;
+    const studioEditorElementSnapshotShellRuntime = studioEditorElementSnapshotShellRuntimeApi
+      && typeof studioEditorElementSnapshotShellRuntimeApi
+        .createStudioEditorElementSnapshotShellRuntime === 'function'
+      ? studioEditorElementSnapshotShellRuntimeApi
+        .createStudioEditorElementSnapshotShellRuntime({
+          snapshotControllerApi: typeof SlideNextStudioEditorElementSnapshotController !== 'undefined'
+            ? SlideNextStudioEditorElementSnapshotController
+            : null,
           snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
             ? SlideNextStudioElementSnapshot
             : null,
@@ -2849,6 +2858,10 @@
               : false;
           }
         })
+      : null;
+    const studioEditorElementSnapshotController = studioEditorElementSnapshotShellRuntime
+      && studioEditorElementSnapshotShellRuntime.isAvailable === true
+      ? studioEditorElementSnapshotShellRuntime.elementSnapshotController
       : null;
     const studioEditorElementSnapshotAccessors = typeof SlideNextStudioEditorElementSnapshotAccessors !== 'undefined'
       && SlideNextStudioEditorElementSnapshotAccessors

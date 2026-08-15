@@ -92,6 +92,8 @@ test('editor shell loads and routes element snapshots through shared accessors',
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-element-snapshot-controller\.js/);
+  assert.match(source, /studio-editor-element-snapshot-shell-runtime\.js/);
+  assert.match(source, /createStudioEditorElementSnapshotShellRuntime/);
   assert.match(source, /SlideNextStudioEditorElementSnapshotAccessors/);
   assert.match(source, /accessors\.getDisplayMetadata\(el\)/);
   assert.match(source, /accessors\.build\(el\)/);
