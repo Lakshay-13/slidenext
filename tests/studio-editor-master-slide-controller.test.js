@@ -407,11 +407,16 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   let renderedOptions = null;
   let activeIndex = -1;
   const lookupCalls = [];
+  const slideLookupCalls = [];
   const canonicalDeckApi = {
     ...canonicalDeck,
     findCanonicalMasterSlideById(deckLike, masterSlideId) {
       lookupCalls.push([deckLike, masterSlideId]);
       return canonicalDeck.findCanonicalMasterSlideById(deckLike, masterSlideId);
+    },
+    findCanonicalSlideIndexById(deckLike, slideId) {
+      slideLookupCalls.push([deckLike, slideId]);
+      return canonicalDeck.findCanonicalSlideIndexById(deckLike, slideId);
     }
   };
   const controller = masterSlideController.createStudioEditorMasterSlideController({
@@ -449,6 +454,8 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   assert.equal(activeIndex, 0);
   assert.equal(lookupCalls.length, 1);
   assert.equal(lookupCalls[0][1], 'master-1');
+  assert.equal(slideLookupCalls.length, 1);
+  assert.equal(slideLookupCalls[0][1], 'slide-1');
 });
 
 test('assignMasterSlide restores the active slide when persistence rejects', () => {

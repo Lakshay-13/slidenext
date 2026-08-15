@@ -170,9 +170,25 @@
     function replaceActiveSlide(nextCanonicalDeck) {
       const documentRef = getDocument();
       const activeSlideId = resolveActiveSlideId();
-      const activeSlideIndex = nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides)
-        ? nextCanonicalDeck.slides.findIndex((slide) => slide && slide.id === activeSlideId)
-        : -1;
+      let activeSlideIndex = -1;
+      if (nextCanonicalDeck && Array.isArray(nextCanonicalDeck.slides)) {
+        if (canonicalDeckApi
+          && typeof canonicalDeckApi.findCanonicalSlideIndexById === 'function') {
+          try {
+            activeSlideIndex = canonicalDeckApi.findCanonicalSlideIndexById(
+              nextCanonicalDeck,
+              activeSlideId
+            );
+          } catch (err) {
+            activeSlideIndex = -1;
+          }
+        }
+        if (activeSlideIndex < 0) {
+          activeSlideIndex = nextCanonicalDeck.slides.findIndex(
+            (slide) => slide && slide.id === activeSlideId
+          );
+        }
+      }
       const slides = getSlides(documentRef);
       const currentSlide = Array.isArray(slides) ? slides[activeSlideIndex] : null;
       const nextSlide = activeSlideIndex >= 0 ? nextCanonicalDeck.slides[activeSlideIndex] : null;
