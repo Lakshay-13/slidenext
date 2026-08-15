@@ -880,7 +880,12 @@
         ? transactionApi.normalizeStudioEditorTransaction(transaction)
         : transaction;
       if (normalizedTransaction) {
-        const pendingTransaction = getPendingTransaction();
+        let pendingTransaction = null;
+        try {
+          pendingTransaction = getPendingTransaction();
+        } catch (error) {
+          // Treat stale pending transaction state as empty.
+        }
         const mergedTransaction = transactionApi
           && typeof transactionApi.mergeStudioEditorTransactions === 'function'
           ? transactionApi.mergeStudioEditorTransactions(pendingTransaction, normalizedTransaction)

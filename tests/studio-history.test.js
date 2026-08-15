@@ -938,6 +938,39 @@ test('createStudioHistorySaveHandler merges transactions and schedules history c
   assert.equal(scheduledCalls[0][1], false);
 });
 
+test('createStudioHistorySaveHandler continues when the pending transaction read throws', () => {
+  const transaction = { id: 'next' };
+  let capturedPendingTransaction = 'unset';
+  let savedPendingTransaction = null;
+  const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
+    transactionApi: {
+      normalizeStudioEditorTransaction(value) {
+        return value;
+      },
+      mergeStudioEditorTransactions(first, second) {
+        capturedPendingTransaction = first;
+        return { first, second };
+      }
+    },
+    getPendingTransaction() {
+      throw new Error('stale pending transaction');
+    },
+    setPendingTransaction(nextTransaction) {
+      savedPendingTransaction = nextTransaction;
+    },
+    scheduleCapture() {
+      return { nextTimer: null, didCapture: true };
+    }
+  });
+
+  assert.deepEqual(saveHistoryState(false, transaction), {
+    nextTimer: null,
+    didCapture: true
+  });
+  assert.equal(capturedPendingTransaction, null);
+  assert.deepEqual(savedPendingTransaction, { first: null, second: transaction });
+});
+
 test('createStudioHistorySaveHandler reports an immediate history capture failure', () => {
   const saveHistoryState = studioHistory.createStudioHistorySaveHandler({
     captureState() {
