@@ -1375,6 +1375,7 @@
   <script src="/shared/studio-editor-layer-order-state.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-layer-accessors.js"></script>
@@ -10410,10 +10411,18 @@
       });
     }
 
-    const studioEditorLayerOrderZIndexSynchronizer = typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-      && SlideNextStudioEditorLayerOrder
-      && typeof SlideNextStudioEditorLayerOrder.createStudioLayerOrderZIndexInputSynchronizer === 'function'
-      ? SlideNextStudioEditorLayerOrder.createStudioLayerOrderZIndexInputSynchronizer({
+    const studioEditorLayerOrderZIndexShellRuntimeApi =
+      typeof SlideNextStudioEditorLayerOrderZIndexShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderZIndexShellRuntime
+      : null;
+    const studioEditorLayerOrderZIndexShellRuntime = studioEditorLayerOrderZIndexShellRuntimeApi
+      && typeof studioEditorLayerOrderZIndexShellRuntimeApi
+        .createStudioEditorLayerOrderZIndexShellRuntime === 'function'
+      ? studioEditorLayerOrderZIndexShellRuntimeApi
+        .createStudioEditorLayerOrderZIndexShellRuntime({
+          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+            ? SlideNextStudioEditorLayerOrder
+            : null,
           getDocument: () => getIframeDoc(),
           getDocumentRef: () => document,
           resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
@@ -10425,6 +10434,10 @@
             ? resolveEditorCanonicalNodeForElement
             : null
         })
+      : null;
+    const studioEditorLayerOrderZIndexSynchronizer = studioEditorLayerOrderZIndexShellRuntime
+      && studioEditorLayerOrderZIndexShellRuntime.isAvailable === true
+      ? studioEditorLayerOrderZIndexShellRuntime.sync
       : null;
 
     function syncLayerOrderZIndexInput(target) {
