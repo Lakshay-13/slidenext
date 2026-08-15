@@ -60,25 +60,37 @@
     const captureSlideMutationState = typeof options.captureSlideMutationState === 'function'
       ? options.captureSlideMutationState
       : null;
-    const legacyApplyReorder = typeof options.applyReorder === 'function'
-      ? options.applyReorder
-      : () => ({ didApply: false, transaction: null });
-    const applyReorderTransaction = reorderTransactionApi
-      && typeof reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction === 'function'
-      ? reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction
+    const createReorderApplicator = reorderTransactionApi
+      && typeof reorderTransactionApi.createStudioEditorSlideReorderApplicator === 'function'
+      ? reorderTransactionApi.createStudioEditorSlideReorderApplicator
       : null;
-    const applyReorder = (container, slideNode, beforeNode, mutationOptions = {}) => {
-      if (applyReorderTransaction) {
-        return applyReorderTransaction(container, slideNode, beforeNode, {
+    const applyReorder = createReorderApplicator
+      ? createReorderApplicator({
           mutationApi: reorderMutationApi,
           slideCommandsApi,
           deckViewApi,
           transactionApi,
-          ...mutationOptions
-        });
-      }
-      return legacyApplyReorder(container, slideNode, beforeNode, mutationOptions);
-    };
+          legacyApplyReorder: options.applyReorder
+        })
+      : reorderTransactionApi
+        && typeof reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction === 'function'
+        ? (container, slideNode, beforeNode, mutationOptions = {}) => (
+            reorderTransactionApi.applyStudioEditorSlideReorderMutationWithTransaction(
+              container,
+              slideNode,
+              beforeNode,
+              {
+                mutationApi: reorderMutationApi,
+                slideCommandsApi,
+                deckViewApi,
+                transactionApi,
+                ...mutationOptions
+              }
+            )
+          )
+        : typeof options.applyReorder === 'function'
+          ? options.applyReorder
+          : () => ({ didApply: false, transaction: null });
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : null;

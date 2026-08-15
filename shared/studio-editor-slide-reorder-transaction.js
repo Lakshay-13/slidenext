@@ -43,7 +43,45 @@
     });
   }
 
+  function createStudioEditorSlideReorderApplicator(options = {}) {
+    const applyReorderTransaction = typeof options.applyReorderTransaction === 'function'
+      ? options.applyReorderTransaction
+      : applyStudioEditorSlideReorderMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const slideCommandsApi = options.slideCommandsApi && typeof options.slideCommandsApi === 'object'
+      ? options.slideCommandsApi
+      : null;
+    const deckViewApi = options.deckViewApi && typeof options.deckViewApi === 'object'
+      ? options.deckViewApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyReorder = typeof options.legacyApplyReorder === 'function'
+      ? options.legacyApplyReorder
+      : () => ({ didApply: false, transaction: null });
+    const canApplyReorderTransaction = typeof options.applyReorderTransaction === 'function'
+      || (mutationApi
+        && typeof mutationApi.applyStudioSlideReorderMutationWithTransaction === 'function');
+
+    return (container, slideNode, beforeNode = null, mutationOptions = {}) => {
+      if (canApplyReorderTransaction) {
+        return applyReorderTransaction(container, slideNode, beforeNode, {
+          mutationApi,
+          slideCommandsApi,
+          deckViewApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyReorder(container, slideNode, beforeNode, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorSlideReorderMutationWithTransaction
+    applyStudioEditorSlideReorderMutationWithTransaction,
+    createStudioEditorSlideReorderApplicator
   };
 });
