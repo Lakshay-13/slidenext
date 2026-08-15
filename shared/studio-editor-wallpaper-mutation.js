@@ -97,10 +97,18 @@
       };
     }
 
-    const mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
-      createStyleTransaction,
-      getSlideId
-    });
+    let mutation = null;
+    try {
+      mutation = applyStudioWallpaperToSlides(sourceSlides, background, {
+        createStyleTransaction,
+        getSlideId
+      });
+    } catch (error) {
+      return {
+        didChange: false,
+        transaction: null
+      };
+    }
     return mutation && typeof mutation === 'object'
       ? {
           didChange: !!mutation.didChange,

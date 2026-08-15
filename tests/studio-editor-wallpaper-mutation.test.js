@@ -124,6 +124,26 @@ test('applyStudioWallpaperSlidesMutationWithTransaction fails closed without sli
   );
 });
 
+test('applyStudioWallpaperSlidesMutationWithTransaction contains apply adapter failures', () => {
+  const sourceSlide = { style: { background: 'white' } };
+
+  assert.doesNotThrow(() => {
+    assert.deepEqual(
+      wallpaperMutation.applyStudioWallpaperSlidesMutationWithTransaction(
+        [sourceSlide],
+        'black',
+        {
+          applyStudioWallpaperToSlides() {
+            throw new Error('wallpaper view failed');
+          }
+        }
+      ),
+      { didChange: false, transaction: null }
+    );
+  });
+  assert.equal(sourceSlide.style.background, 'white');
+});
+
 test('applyStudioWallpaperSlidesMutationWithTransaction fails closed when canonical setup throws', () => {
   let applyCalls = 0;
   const sourceSlide = {
