@@ -763,6 +763,8 @@ app.post('/api/versions/rename', async (req, res) => {
     return res.status(400).json({ error: 'Missing htmlPath, versionFilename, or newLabel' });
   }
 
+  let renamedVersionFile = null;
+  let renamedMetadataVersionFile = null;
   try {
     const targetFile = path.resolve(workspaceDir, htmlPath);
     if (!isPathWithin(workspaceDir, targetFile)) {
@@ -795,6 +797,10 @@ app.post('/api/versions/rename', async (req, res) => {
     const newFilePath = path.resolve(parentDir, '.versions', newFilename);
 
     await fs.rename(versionFilePath, newFilePath);
+    renamedVersionFile = {
+      source: versionFilePath,
+      target: newFilePath
+    };
     console.log(`Renamed version from ${versionFilename} to ${newFilename}`);
 
     const metadataInfo = await readPresentationMetadataSidecar(htmlPath);
@@ -818,6 +824,10 @@ app.post('/api/versions/rename', async (req, res) => {
         ) {
           try {
             await fs.rename(metadataVersionFile, newMetadataVersionFile);
+            renamedMetadataVersionFile = {
+              source: metadataVersionFile,
+              target: newMetadataVersionFile
+            };
             console.log(`Renamed version metadata from ${metadataVersionFilename} to ${newMetadataVersionFilename}`);
           } catch (metadataRenameErr) {
             if (metadataRenameErr.code !== 'ENOENT') {
@@ -830,6 +840,20 @@ app.post('/api/versions/rename', async (req, res) => {
 
     res.json({ success: true, newFilename });
   } catch (err) {
+    if (renamedMetadataVersionFile) {
+      try {
+        await fs.rename(renamedMetadataVersionFile.target, renamedMetadataVersionFile.source);
+      } catch (rollbackErr) {
+        console.warn('Failed to roll back renamed version metadata:', rollbackErr.message);
+      }
+    }
+    if (renamedVersionFile) {
+      try {
+        await fs.rename(renamedVersionFile.target, renamedVersionFile.source);
+      } catch (rollbackErr) {
+        console.warn('Failed to roll back renamed version:', rollbackErr.message);
+      }
+    }
     console.error('Error renaming version:', err);
     res.status(500).json({ error: `Failed to rename version: ${err.message}` });
   }
