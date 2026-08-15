@@ -1418,6 +1418,7 @@
   <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-state.js"></script>
+  <script src="/shared/studio-editor-removal-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-toolbar-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
@@ -3692,10 +3693,18 @@
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
       ? studioEditorLockVisibilityRuntime.lockVisibilityController
       : null;
-    const studioEditorRemovalStateController = typeof SlideNextStudioEditorRemovalState !== 'undefined'
-      && SlideNextStudioEditorRemovalState
-      && typeof SlideNextStudioEditorRemovalState.createStudioEditorRemovalStateController === 'function'
-      ? SlideNextStudioEditorRemovalState.createStudioEditorRemovalStateController({
+    const studioEditorRemovalStateShellRuntimeApi =
+      typeof SlideNextStudioEditorRemovalStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorRemovalStateShellRuntime
+      : null;
+    const studioEditorRemovalStateShellRuntime = studioEditorRemovalStateShellRuntimeApi
+      && typeof studioEditorRemovalStateShellRuntimeApi
+        .createStudioEditorRemovalStateShellRuntime === 'function'
+      ? studioEditorRemovalStateShellRuntimeApi
+        .createStudioEditorRemovalStateShellRuntime({
+          removalStateApi: typeof SlideNextStudioEditorRemovalState !== 'undefined'
+            ? SlideNextStudioEditorRemovalState
+            : null,
           removalView: typeof SlideNextStudioEditorRemoval !== 'undefined'
             ? SlideNextStudioEditorRemoval
             : null,
@@ -3708,6 +3717,10 @@
             : isElementLocked,
           documentRef: document
         })
+      : null;
+    const studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime
+      && studioEditorRemovalStateShellRuntime.isAvailable === true
+      ? studioEditorRemovalStateShellRuntime.removalStateController
       : null;
     const studioEditorMotionStateShellRuntimeApi =
       typeof SlideNextStudioEditorMotionStateShellRuntime !== 'undefined'

@@ -18,7 +18,15 @@ test('editor forwards the removal action document into the selection reader', ()
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const removalStateSource = fs.readFileSync(REMOVAL_STATE_PATH, 'utf8');
 
-  assert.match(source, /createStudioEditorRemovalStateController/);
+  assert.match(
+    source,
+    /<script src="\/shared\/studio-editor-removal-state-shell-runtime\.js"><\/script>/
+  );
+  assert.match(source, /createStudioEditorRemovalStateShellRuntime/);
+  assert.match(
+    source,
+    /studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime/
+  );
   assert.match(removalStateSource, /getSelectedElements\(doc\)/);
   assert.match(removalStateSource, /getDocumentRef: \(\) => documentRef/);
 });
