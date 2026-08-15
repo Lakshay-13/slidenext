@@ -1366,6 +1366,7 @@
   <script src="/shared/studio-editor-live-selection.js"></script>
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-inspector-controller.js"></script>
+  <script src="/shared/studio-editor-inspector-selection-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-transaction.js"></script>
@@ -8994,17 +8995,15 @@
         : false;
     }
 
-    const studioEditorInspectorSelectionSynchronizer = typeof SlideNextStudioEditorInspectorController !== 'undefined'
-      && SlideNextStudioEditorInspectorController
-      && typeof SlideNextStudioEditorInspectorController.createStudioInspectorSelectionSynchronizer === 'function'
-      ? SlideNextStudioEditorInspectorController.createStudioInspectorSelectionSynchronizer({
-          liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-            ? SlideNextStudioEditorLiveSelection
-            : null,
-          inspectorApi: SlideNextStudioEditorInspectorController,
-          inspectorView: typeof SlideNextStudioEditorInspectorView !== 'undefined'
-            ? SlideNextStudioEditorInspectorView
-            : null,
+    const studioEditorInspectorSelectionShellRuntimeApi =
+      typeof SlideNextStudioEditorInspectorSelectionShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorInspectorSelectionShellRuntime
+      : null;
+    const studioEditorInspectorSelectionShellRuntime = studioEditorInspectorSelectionShellRuntimeApi
+      && typeof studioEditorInspectorSelectionShellRuntimeApi
+        .createStudioEditorInspectorSelectionShellRuntime === 'function'
+      ? studioEditorInspectorSelectionShellRuntimeApi
+        .createStudioEditorInspectorSelectionShellRuntime({
           documentRef: typeof document !== 'undefined' ? document : null,
           getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
@@ -9051,6 +9050,10 @@
             ? updateLayerOrderActionState
             : null
         })
+      : null;
+    var studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionShellRuntime
+      && typeof studioEditorInspectorSelectionShellRuntime.sync === 'function'
+      ? studioEditorInspectorSelectionShellRuntime.sync
       : null;
 
     function syncInspectorForSelection() {
