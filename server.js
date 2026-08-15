@@ -680,9 +680,16 @@ app.post('/api/restore', async (req, res) => {
       return res.status(403).json({ error: 'Access denied: invalid backup path' });
     }
 
+    let previousHtmlContent = null;
+    try {
+      previousHtmlContent = await fs.readFile(targetFile, 'utf8');
+    } catch (readErr) {
+      console.warn('Failed to capture the current HTML before version restore:', readErr.message);
+    }
+
     // Overwrite target file with the backup content
     const backupContent = await fs.readFile(versionFilePath, 'utf8');
-    await fs.writeFile(targetFile, backupContent, 'utf8');
+    await writeFileAtomically(targetFile, backupContent);
     console.log(`Restored target file to backup version: ${versionFilename}`);
 
     let canonicalSidecarPersistenceError = null;
@@ -725,10 +732,20 @@ app.post('/api/restore', async (req, res) => {
     }
 
     if (canonicalSidecarPersistenceError) {
+      let didRestorePreviousHtml = false;
+      if (previousHtmlContent !== null) {
+        try {
+          await writeFileAtomically(targetFile, previousHtmlContent);
+          didRestorePreviousHtml = true;
+          console.warn(`Restored current HTML after canonical sidecar failure: ${targetFile}`);
+        } catch (restoreErr) {
+          console.warn('Failed to restore current HTML after canonical sidecar failure:', restoreErr.message);
+        }
+      }
       return res.status(500).json({
         success: false,
         error: 'Failed to restore canonical deck sidecar',
-        htmlRestored: true
+        htmlRestored: !didRestorePreviousHtml
       });
     }
 
