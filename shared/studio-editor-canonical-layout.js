@@ -160,7 +160,10 @@
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
     if (!canonicalDeckApi
-      || (!getCanonicalDeckBaseline && !buildCanonicalDeck && !buildCanonicalDeckBaseline)) {
+      || (!getPendingCanonicalDeck
+        && !getCanonicalDeckBaseline
+        && !buildCanonicalDeck
+        && !buildCanonicalDeckBaseline)) {
       return null;
     }
 

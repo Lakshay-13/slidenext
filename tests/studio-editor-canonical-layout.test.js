@@ -276,6 +276,24 @@ test('buildStudioCanonicalLayoutMutation maps positioned items onto a fresh cano
   assert.equal(sourceDeck.slides[0].nodes[0].layout.x, null);
 });
 
+test('buildStudioCanonicalLayoutMutation accepts a pending baseline without a live reader', () => {
+  const pendingDeck = createSourceDeck();
+  const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    nextItems: [{
+      element: { dataset: { editorId: 'node-1' } },
+      nextAbsLeft: 40,
+      nextAbsTop: 60
+    }]
+  });
+
+  assert.equal(result.slides[0].nodes[0].layout.x, 40);
+  assert.equal(result.slides[0].nodes[0].layout.y, 60);
+  assert.equal(pendingDeck.slides[0].nodes[0].layout.x, null);
+});
+
 test('buildStudioCanonicalLayoutMutation fails closed when no positioned items are valid', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalLayout.buildStudioCanonicalLayoutMutation({
