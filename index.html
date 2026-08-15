@@ -3968,6 +3968,9 @@
           transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
             ? SlideNextStudioEditorTransaction
             : null,
+          clipboardTransactionApi: typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
+            ? SlideNextStudioEditorClipboardTransaction
+            : null,
           getIframeDoc: () => getIframeDoc(),
           getActiveSlide: (doc) => getActiveSlide(doc),
           getEditorSlideId: (slide) => getEditorSlideId(slide),

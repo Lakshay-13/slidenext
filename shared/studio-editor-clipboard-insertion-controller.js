@@ -21,6 +21,10 @@
       'transactionApi',
       'SlideNextStudioEditorTransaction'
     );
+    const clipboardTransactionApi = resolveDependency(
+      'clipboardTransactionApi',
+      'SlideNextStudioEditorClipboardTransaction'
+    );
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
       : () => null;
@@ -45,8 +49,7 @@
     const getElementId = typeof options.getElementId === 'function'
       ? options.getElementId
       : (element) => element && element.dataset && element.dataset.editorId;
-
-    function applyInsertionWithTransaction(insertionPlans, slide) {
+    const applyLegacyInsertion = (insertionPlans, slide, mutationOptions = {}) => {
       const applyMutation = mutationApi
         && typeof mutationApi.applyStudioClipboardInsertionWithTransaction === 'function'
         ? mutationApi.applyStudioClipboardInsertionWithTransaction
@@ -57,25 +60,27 @@
           transaction: null
         };
       }
-
       return applyMutation(insertionPlans, slide, {
         clipboardApi,
         transactionApi,
-        getElementId,
-        getParentId: (parent) => {
-          if (parent === slide) {
-            let slideId = '';
-            try {
-              slideId = getEditorSlideId(slide) || '';
-            } catch (error) {
-              slideId = '';
-            }
-            return slideId ? `slide:${slideId}` : '';
-          }
-          return getElementId(parent);
-        }
+        ...mutationOptions
       });
-    }
+    };
+
+    const createInsertionApplicator = clipboardTransactionApi
+      && typeof clipboardTransactionApi.createStudioEditorClipboardInsertionApplicator === 'function'
+      ? clipboardTransactionApi.createStudioEditorClipboardInsertionApplicator
+      : null;
+    const applyInsertionWithTransaction = createInsertionApplicator
+      ? createInsertionApplicator({
+          mutationApi,
+          clipboardApi,
+          transactionApi,
+          legacyApplyInsertion: options.applyInsertionWithTransaction || applyLegacyInsertion
+        })
+      : typeof options.applyInsertionWithTransaction === 'function'
+        ? options.applyInsertionWithTransaction
+        : applyLegacyInsertion;
 
     function insert(items, offsetMultiplier = 1, actionOptions = {}) {
       const doc = getIframeDoc();
@@ -104,7 +109,21 @@
       });
       if (!Array.isArray(insertionPlans) || insertionPlans.length !== items.length) return [];
 
-      const mutation = applyInsertionWithTransaction(insertionPlans, slide);
+      const mutation = applyInsertionWithTransaction(insertionPlans, slide, {
+        getElementId,
+        getParentId: (parent) => {
+          if (parent === slide) {
+            let slideId = '';
+            try {
+              slideId = getEditorSlideId(slide) || '';
+            } catch (error) {
+              slideId = '';
+            }
+            return slideId ? `slide:${slideId}` : '';
+          }
+          return getElementId(parent);
+        }
+      });
       if (typeof actionOptions.onTransaction === 'function') {
         actionOptions.onTransaction(mutation.transaction);
       }

@@ -47,6 +47,11 @@
       'transactionApi',
       'SlideNextStudioEditorTransaction'
     );
+    runtimeOptions.clipboardTransactionApi = resolveApi(
+      options,
+      'clipboardTransactionApi',
+      'SlideNextStudioEditorClipboardTransaction'
+    );
 
     return insertionRuntimeApi.createStudioEditorClipboardInsertionRuntime(runtimeOptions);
   }

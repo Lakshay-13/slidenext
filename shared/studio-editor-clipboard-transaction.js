@@ -40,7 +40,41 @@
     });
   }
 
+  function createStudioEditorClipboardInsertionApplicator(options = {}) {
+    const applyInsertionTransaction = typeof options.applyInsertionTransaction === 'function'
+      ? options.applyInsertionTransaction
+      : applyStudioEditorClipboardInsertionWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const clipboardApi = options.clipboardApi && typeof options.clipboardApi === 'object'
+      ? options.clipboardApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyInsertion = typeof options.legacyApplyInsertion === 'function'
+      ? options.legacyApplyInsertion
+      : () => ({ inserted: [], transaction: null });
+    const canApplyInsertionTransaction = mutationApi
+      && (typeof options.applyInsertionTransaction === 'function'
+        || typeof mutationApi.applyStudioClipboardInsertionWithTransaction === 'function');
+
+    return (insertionPlans, slide, mutationOptions = {}) => {
+      if (canApplyInsertionTransaction) {
+        return applyInsertionTransaction(insertionPlans, slide, {
+          mutationApi,
+          clipboardApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyInsertion(insertionPlans, slide, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorClipboardInsertionWithTransaction
+    applyStudioEditorClipboardInsertionWithTransaction,
+    createStudioEditorClipboardInsertionApplicator
   };
 });

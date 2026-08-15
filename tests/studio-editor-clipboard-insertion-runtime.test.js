@@ -20,6 +20,7 @@ test('clipboard insertion runtime composes mutation and geometry dependencies', 
     clipboardApi: {},
     mutationApi: {},
     transactionApi: {},
+    clipboardTransactionApi: {},
     getIframeDoc: () => null,
     getActiveSlide: () => null,
     getEditorSlideId: () => 'slide-1',
@@ -37,6 +38,7 @@ test('clipboard insertion runtime composes mutation and geometry dependencies', 
   assert.equal(calls.length, 1);
   assert.equal(calls[0].mutationApi, options.mutationApi);
   assert.equal(calls[0].transactionApi, options.transactionApi);
+  assert.equal(calls[0].clipboardTransactionApi, options.clipboardTransactionApi);
   assert.equal(calls[0].getEditorSlideId, options.getEditorSlideId);
   assert.equal(calls[0].getSlideMetrics, options.getSlideMetrics);
   assert.equal(calls[0].getOffsetPx, options.getOffsetPx);

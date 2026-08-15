@@ -16,7 +16,8 @@ test('clipboard insertion shell runtime resolves controller, mutation, and trans
     controllerApi: { name: 'controller' },
     clipboardApi: { name: 'clipboard' },
     mutationApi: { name: 'mutation' },
-    transactionApi: { name: 'transaction' }
+    transactionApi: { name: 'transaction' },
+    clipboardTransactionApi: { name: 'clipboard-transaction' }
   };
   const callback = () => {};
 
@@ -48,13 +49,15 @@ test('clipboard insertion shell runtime honors explicitly unavailable dependenci
     controllerApi: null,
     clipboardApi: null,
     mutationApi: null,
-    transactionApi: null
+    transactionApi: null,
+    clipboardTransactionApi: null
   });
 
   assert.equal(receivedOptions.controllerApi, null);
   assert.equal(receivedOptions.clipboardApi, null);
   assert.equal(receivedOptions.mutationApi, null);
   assert.equal(receivedOptions.transactionApi, null);
+  assert.equal(receivedOptions.clipboardTransactionApi, null);
 });
 
 test('clipboard insertion shell runtime safely returns null without a runtime factory', () => {

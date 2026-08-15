@@ -23,6 +23,9 @@
           transactionApi: options.transactionApi
             || (root && root.SlideNextStudioEditorTransaction)
             || null,
+          clipboardTransactionApi: options.clipboardTransactionApi
+            || (root && root.SlideNextStudioEditorClipboardTransaction)
+            || null,
           getIframeDoc: options.getIframeDoc,
           getActiveSlide: options.getActiveSlide,
           getEditorSlideId: options.getEditorSlideId,
