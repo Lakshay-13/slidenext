@@ -57,6 +57,21 @@
       'canonicalStateApi',
       'SlideNextStudioEditorCanonicalState'
     );
+    runtimeOptions.lockTransactionApi = resolveApi(
+      options,
+      'lockTransactionApi',
+      'SlideNextStudioEditorLockTransaction'
+    );
+    runtimeOptions.lockMutationApi = resolveApi(
+      options,
+      'lockMutationApi',
+      'SlideNextStudioEditorLockMutation'
+    );
+    runtimeOptions.transactionApi = resolveApi(
+      options,
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
 
     return lockVisibilityRuntimeApi.createStudioEditorLockVisibilityRuntime(runtimeOptions);
   }

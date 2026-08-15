@@ -51,7 +51,41 @@
     });
   }
 
+  function createStudioEditorLockApplicator(options = {}) {
+    const applyLockTransaction = typeof options.applyLockTransaction === 'function'
+      ? options.applyLockTransaction
+      : applyStudioEditorLockMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const lockApi = options.lockApi && typeof options.lockApi === 'object'
+      ? options.lockApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyLock = typeof options.legacyApplyLock === 'function'
+      ? options.legacyApplyLock
+      : () => ({ didApply: false, transaction: null });
+    const canApplyLockTransaction = mutationApi
+      && (typeof options.applyLockTransaction === 'function'
+        || typeof mutationApi.applyStudioLockMutationWithTransaction === 'function');
+
+    return (selection, shouldLock, mutationOptions = {}) => {
+      if (canApplyLockTransaction) {
+        return applyLockTransaction(selection, shouldLock, {
+          mutationApi,
+          lockApi,
+          transactionApi,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyLock(selection, shouldLock, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorLockMutationWithTransaction
+    applyStudioEditorLockMutationWithTransaction,
+    createStudioEditorLockApplicator
   };
 });

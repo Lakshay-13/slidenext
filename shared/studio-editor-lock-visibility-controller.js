@@ -23,6 +23,12 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    const lockTransactionApi = options.lockTransactionApi
+      || (root && root.SlideNextStudioEditorLockTransaction)
+      || null;
+    const lockMutationApi = options.lockMutationApi
+      || (root && root.SlideNextStudioEditorLockMutation)
+      || null;
     const getSelectedElements = typeof options.getSelectedElements === 'function'
       ? options.getSelectedElements
       : () => [];
@@ -73,9 +79,22 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyLockMutation = typeof options.applyLockMutation === 'function'
-      ? options.applyLockMutation
-      : () => ({ didApply: false, transaction: null });
+    const createLockApplicator = lockTransactionApi
+      && typeof lockTransactionApi.createStudioEditorLockApplicator === 'function'
+      ? lockTransactionApi.createStudioEditorLockApplicator
+      : null;
+    const applyLockMutation = createLockApplicator
+      ? createLockApplicator({
+          mutationApi: lockMutationApi,
+          lockApi: lockStateApi,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
+          legacyApplyLock: options.applyLockMutation
+        })
+      : typeof options.applyLockMutation === 'function'
+        ? options.applyLockMutation
+        : () => ({ didApply: false, transaction: null });
     const applyVisibilityMutation = typeof options.applyVisibilityMutation === 'function'
       ? options.applyVisibilityMutation
       : () => ({ didApply: false, transaction: null });

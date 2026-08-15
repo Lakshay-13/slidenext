@@ -3571,6 +3571,15 @@
           canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
             ? SlideNextStudioEditorCanonicalState
             : null,
+          lockTransactionApi: typeof SlideNextStudioEditorLockTransaction !== 'undefined'
+            ? SlideNextStudioEditorLockTransaction
+            : null,
+          lockMutationApi: typeof SlideNextStudioEditorLockMutation !== 'undefined'
+            ? SlideNextStudioEditorLockMutation
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           getSelectedElements: getStudioSelectedElements,
           getIframeDoc: (...args) => getIframeDoc(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
@@ -3587,7 +3596,6 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyLockMutation: (...args) => applyEditorLockMutationWithTransaction(...args),
           applyVisibilityMutation: (...args) => applyEditorVisibilityMutationWithTransaction(...args),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
           rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
@@ -9683,42 +9691,6 @@
           : null,
         finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
           ? finalizeEditorDeckMutation
-          : null
-      });
-    }
-
-    function applyEditorLockMutationWithTransaction(selection, shouldLock, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorLockTransaction !== 'undefined'
-        ? SlideNextStudioEditorLockTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorLockMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorLockMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(selection, shouldLock, {
-        mutationApi: typeof SlideNextStudioEditorLockMutation !== 'undefined'
-          ? SlideNextStudioEditorLockMutation
-          : null,
-        lockApi: typeof SlideNextStudioEditorLockState !== 'undefined'
-          ? SlideNextStudioEditorLockState
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        isLocked: options.isLocked,
-        setLocked: options.setLocked,
-        setElementLockedState: typeof setElementLockedState === 'function'
-          ? setElementLockedState
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
           : null
       });
     }

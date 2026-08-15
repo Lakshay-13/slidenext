@@ -22,6 +22,9 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
     canonicalDeckApi: {},
     canonicalVisibilityApi: {},
     canonicalStateApi: {},
+    lockTransactionApi: {},
+    lockMutationApi: {},
+    transactionApi: {},
     getSelectedElements: () => [],
     getIframeDoc: () => null,
     getActiveSlide: () => null,
@@ -47,6 +50,9 @@ test('lock visibility runtime composes canonical and mutation dependencies', () 
   );
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalDeckApi, options.canonicalDeckApi);
+  assert.equal(calls[0].lockTransactionApi, options.lockTransactionApi);
+  assert.equal(calls[0].lockMutationApi, options.lockMutationApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
   assert.equal(calls[0].getSelectedElements, options.getSelectedElements);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);

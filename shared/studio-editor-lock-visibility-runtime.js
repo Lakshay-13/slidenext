@@ -29,6 +29,15 @@
           canonicalStateApi: options.canonicalStateApi
             || (root && root.SlideNextStudioEditorCanonicalState)
             || null,
+          lockTransactionApi: options.lockTransactionApi
+            || (root && root.SlideNextStudioEditorLockTransaction)
+            || null,
+          lockMutationApi: options.lockMutationApi
+            || (root && root.SlideNextStudioEditorLockMutation)
+            || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
           getSelectedElements: options.getSelectedElements,
           getIframeDoc: options.getIframeDoc,
           getActiveSlide: options.getActiveSlide,

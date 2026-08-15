@@ -103,7 +103,6 @@ function installLockVisibilityController(context) {
     assignLockElementId: context.assignEditorElementId,
     assignVisibilityElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyLockMutation: context.applyEditorLockMutationWithTransaction,
     applyVisibilityMutation: context.applyEditorVisibilityMutationWithTransaction,
     finalizeSelectionToggleMutation: context.finalizeSelectionToggleMutation,
     rollbackSelectionToggleMutation: context.rollbackEditorLockVisibilityMutation
