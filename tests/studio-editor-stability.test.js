@@ -3306,7 +3306,7 @@ test('editor composes slide layer-order writes through the shared adapter', () =
   const applySlideLayerOrderSource = extractFunctionSource(
     source,
     'function applySlideLayerOrder(slide, orderedElements) {',
-    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+    '\n\n    function rollbackEditorLayerOrderMutation'
   );
 
   assert.match(source, /const studioEditorSlideLayerOrderAdapter =/);
@@ -3325,7 +3325,7 @@ test('applySlideLayerOrder delegates through the shared adapter', () => {
   const applySlideLayerOrderSource = extractFunctionSource(
     fileContent,
     'function applySlideLayerOrder(slide, orderedElements) {',
-    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+    '\n\n    function rollbackEditorLayerOrderMutation'
   );
   const slide = { id: 'slide-1' };
   const orderedElements = [{ id: 'element-1' }];
@@ -3359,7 +3359,7 @@ test('applySlideLayerOrder fails closed when the shared adapter is unavailable',
   const applySlideLayerOrderSource = extractFunctionSource(
     fileContent,
     'function applySlideLayerOrder(slide, orderedElements) {',
-    '\n\n    function applyEditorLayerOrderMutationWithTransaction'
+    '\n\n    function rollbackEditorLayerOrderMutation'
   );
   const context = {
     SlideNextStudioEditorDom: null
@@ -4188,7 +4188,7 @@ test('setupIframeDragging delegates the fallback drag lifecycle through shared p
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
     'function setupIframeDragging(doc) {',
-    '\n\n    // Insert New elements'
+    '\n\n    function insertElement'
   );
 
   const calls = [];
@@ -4368,7 +4368,7 @@ test('setupIframeDragging delegates pointer binding to the shared transform hand
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
     'function setupIframeDragging(doc) {',
-    '\n\n    // Insert New elements'
+    '\n\n    function insertElement'
   );
 
   const calls = [];
@@ -4566,7 +4566,7 @@ test('setupIframeDragging delegates interaction binding to the shared interactio
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
     'function setupIframeDragging(doc) {',
-    '\n\n    // Insert New elements'
+    '\n\n    function insertElement'
   );
 
   const doc = { body: {} };

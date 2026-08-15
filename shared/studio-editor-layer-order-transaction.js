@@ -50,7 +50,45 @@
     });
   }
 
+  function createStudioEditorLayerOrderApplicator(options = {}) {
+    const applyLayerOrderTransaction = typeof options.applyLayerOrderTransaction === 'function'
+      ? options.applyLayerOrderTransaction
+      : applyStudioEditorLayerOrderMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const layerOrderApi = options.layerOrderApi && typeof options.layerOrderApi === 'object'
+      ? options.layerOrderApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const applyLayerOrder = typeof options.applyLayerOrder === 'function'
+      ? options.applyLayerOrder
+      : null;
+    const legacyApplyLayerOrder = typeof options.legacyApplyLayerOrder === 'function'
+      ? options.legacyApplyLayerOrder
+      : () => ({ didApply: false, transaction: null });
+    const canApplyLayerOrderTransaction = mutationApi
+      && (typeof options.applyLayerOrderTransaction === 'function'
+        || typeof mutationApi.applyStudioLayerOrderMutationWithTransaction === 'function');
+
+    return (slide, initialOrder, nextOrder, mutationOptions = {}) => {
+      if (canApplyLayerOrderTransaction) {
+        return applyLayerOrderTransaction(slide, initialOrder, nextOrder, {
+          mutationApi,
+          layerOrderApi,
+          transactionApi,
+          applyLayerOrder,
+          ...mutationOptions
+        });
+      }
+      return legacyApplyLayerOrder(slide, initialOrder, nextOrder, mutationOptions);
+    };
+  }
+
   return {
-    applyStudioEditorLayerOrderMutationWithTransaction
+    applyStudioEditorLayerOrderMutationWithTransaction,
+    createStudioEditorLayerOrderApplicator
   };
 });

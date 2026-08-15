@@ -47,6 +47,21 @@
       'canonicalDeckApi',
       'SlideNextCanonicalDeck'
     );
+    runtimeOptions.layerOrderTransactionApi = resolveApi(
+      options,
+      'layerOrderTransactionApi',
+      'SlideNextStudioEditorLayerOrderTransaction'
+    );
+    runtimeOptions.layerOrderMutationApi = resolveApi(
+      options,
+      'layerOrderMutationApi',
+      'SlideNextStudioEditorLayerOrderMutation'
+    );
+    runtimeOptions.transactionApi = resolveApi(
+      options,
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
 
     return layerOrderRuntimeApi.createStudioEditorLayerOrderRuntime(runtimeOptions);
   }

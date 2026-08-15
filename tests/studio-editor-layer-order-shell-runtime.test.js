@@ -16,7 +16,10 @@ test('layer order shell runtime resolves controller and canonical dependencies',
     controllerApi: { name: 'controller' },
     layerOrderApi: { name: 'layer-order' },
     canonicalLayoutApi: { name: 'layout' },
-    canonicalDeckApi: { name: 'deck' }
+    canonicalDeckApi: { name: 'deck' },
+    layerOrderTransactionApi: { name: 'layer-transaction' },
+    layerOrderMutationApi: { name: 'layer-mutation' },
+    transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
 
@@ -48,13 +51,19 @@ test('layer order shell runtime honors explicitly unavailable dependencies', () 
     controllerApi: null,
     layerOrderApi: null,
     canonicalLayoutApi: null,
-    canonicalDeckApi: null
+    canonicalDeckApi: null,
+    layerOrderTransactionApi: null,
+    layerOrderMutationApi: null,
+    transactionApi: null
   });
 
   assert.equal(receivedOptions.controllerApi, null);
   assert.equal(receivedOptions.layerOrderApi, null);
   assert.equal(receivedOptions.canonicalLayoutApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
+  assert.equal(receivedOptions.layerOrderTransactionApi, null);
+  assert.equal(receivedOptions.layerOrderMutationApi, null);
+  assert.equal(receivedOptions.transactionApi, null);
 });
 
 test('layer order shell runtime safely returns null without a runtime factory', () => {

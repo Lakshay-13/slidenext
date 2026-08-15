@@ -20,6 +20,9 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
     layerOrderApi: {},
     canonicalLayoutApi: {},
     canonicalDeckApi: {},
+    layerOrderTransactionApi: {},
+    layerOrderMutationApi: {},
+    transactionApi: {},
     getActiveSlide: () => null,
     getIframeDoc: () => null,
     getNormalizedSlideLayerOrder: () => [],
@@ -38,10 +41,14 @@ test('layer order runtime composes canonical and mutation dependencies', () => {
   );
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalLayoutApi, options.canonicalLayoutApi);
+  assert.equal(calls[0].layerOrderTransactionApi, options.layerOrderTransactionApi);
+  assert.equal(calls[0].layerOrderMutationApi, options.layerOrderMutationApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
   assert.equal(calls[0].getNormalizedSlideLayerOrder, options.getNormalizedSlideLayerOrder);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyLayerOrderMutation, options.applyLayerOrderMutation);
+  assert.equal(calls[0].applyLayerOrder, options.applyLayerOrder);
   assert.equal(calls[0].rollbackLayerOrderMutation, options.rollbackLayerOrderMutation);
 });
 

@@ -113,15 +113,9 @@ function loadReorderSlideLayers(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadLayerOrderMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {',
-    'function reorderSlideLayers(action, targetElements = selectedElements, options = {}) {'
-  );
+function loadLayerOrderTransactionModules(_fileContent, context) {
   context.SlideNextStudioEditorLayerOrderMutation = layerOrderMutation;
   context.SlideNextStudioEditorLayerOrderTransaction = layerOrderTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadLayerOrderRollbackHelper(fileContent, context) {
@@ -140,13 +134,16 @@ function installLayerOrderController(context) {
     layerOrderApi: context.SlideNextStudioEditorLayerOrder,
     canonicalLayoutApi: context.SlideNextStudioEditorCanonicalLayout,
     canonicalDeckApi: context.SlideNextCanonicalDeck,
+    layerOrderTransactionApi: context.SlideNextStudioEditorLayerOrderTransaction,
+    layerOrderMutationApi: context.SlideNextStudioEditorLayerOrderMutation,
+    transactionApi: context.SlideNextStudioEditorTransaction,
     getActiveSlide: context.getActiveSlide,
     getIframeDoc: context.getIframeDoc,
     getNormalizedSlideLayerOrder: context.getNormalizedSlideLayerOrder,
     isElementLocked: context.isElementLocked,
     assignElementId: context.assignEditorElementId,
     buildCanonicalDeck: context.buildEditorCanonicalDeck,
-    applyLayerOrderMutation: context.applyEditorLayerOrderMutationWithTransaction,
+    applyLayerOrder: context.applySlideLayerOrder,
     rollbackLayerOrderMutation: context.rollbackEditorLayerOrderMutation
   });
 }
@@ -288,7 +285,7 @@ test('reorderSlideLayers forwards a reversible z-index transaction', () => {
   };
 
   vm.createContext(context);
-  loadLayerOrderMutationHelper(fileContent, context);
+  loadLayerOrderTransactionModules(fileContent, context);
   installLayerOrderController(context);
   loadReorderSlideLayers(fileContent, context);
 
@@ -372,7 +369,7 @@ test('reorderSlideLayers forwards canonical z-index updates after applying layer
   };
 
   vm.createContext(context);
-  loadLayerOrderMutationHelper(fileContent, context);
+  loadLayerOrderTransactionModules(fileContent, context);
   installLayerOrderController(context);
   loadReorderSlideLayers(fileContent, context);
 
@@ -766,7 +763,7 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
   };
 
   vm.createContext(context);
-  loadLayerOrderMutationHelper(fileContent, context);
+  loadLayerOrderTransactionModules(fileContent, context);
   installLayerOrderController(context);
   vm.runInContext(source, context);
 
@@ -781,7 +778,7 @@ test('reorderSlideLayers delegates order application to the shared layer-order m
   assert.deepEqual(captured, { type: 'style' });
 });
 
-test('applyEditorLayerOrderMutationWithTransaction delegates to the shared transaction adapter', () => {
+test('layer-order applicator delegates to the shared transaction adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slide = { id: 'slide-1' };
   const initialOrder = [{ id: 'node-1' }];
@@ -804,9 +801,16 @@ test('applyEditorLayerOrderMutationWithTransaction delegates to the shared trans
   };
 
   vm.createContext(context);
-  loadLayerOrderMutationHelper(fileContent, context);
+  loadLayerOrderTransactionModules(fileContent, context);
 
-  const result = context.applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder);
+  const applyLayerOrderMutation = context.SlideNextStudioEditorLayerOrderTransaction
+    .createStudioEditorLayerOrderApplicator({
+      mutationApi: context.SlideNextStudioEditorLayerOrderMutation,
+      layerOrderApi: context.SlideNextStudioEditorLayerOrder,
+      transactionApi: context.SlideNextStudioEditorTransaction,
+      applyLayerOrder: context.applySlideLayerOrder
+    });
+  const result = applyLayerOrderMutation(slide, initialOrder, nextOrder);
 
   assert.deepEqual(result, { didApply: true, transaction: { type: 'style' } });
   assert.equal(delegatedOptions.currentSlide, slide);

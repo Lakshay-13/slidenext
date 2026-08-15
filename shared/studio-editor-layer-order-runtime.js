@@ -23,6 +23,15 @@
           canonicalDeckApi: options.canonicalDeckApi
             || (root && root.SlideNextCanonicalDeck)
             || null,
+          layerOrderTransactionApi: options.layerOrderTransactionApi
+            || (root && root.SlideNextStudioEditorLayerOrderTransaction)
+            || null,
+          layerOrderMutationApi: options.layerOrderMutationApi
+            || (root && root.SlideNextStudioEditorLayerOrderMutation)
+            || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
           getActiveSlide: options.getActiveSlide,
           getIframeDoc: options.getIframeDoc,
           getNormalizedSlideLayerOrder: options.getNormalizedSlideLayerOrder,
@@ -32,6 +41,7 @@
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
           getCanonicalDeckBaseline: options.getCanonicalDeckBaseline,
           applyLayerOrderMutation: options.applyLayerOrderMutation,
+          applyLayerOrder: options.applyLayerOrder,
           rollbackLayerOrderMutation: options.rollbackLayerOrderMutation
         })
       : null;

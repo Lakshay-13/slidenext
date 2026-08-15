@@ -20,6 +20,15 @@
     const canonicalStateApi = options.canonicalStateApi
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
+    const layerOrderTransactionApi = options.layerOrderTransactionApi
+      || (root && root.SlideNextStudioEditorLayerOrderTransaction)
+      || null;
+    const layerOrderMutationApi = options.layerOrderMutationApi
+      || (root && root.SlideNextStudioEditorLayerOrderMutation)
+      || null;
+    const transactionApi = options.transactionApi
+      || (root && root.SlideNextStudioEditorTransaction)
+      || null;
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
       : () => null;
@@ -51,9 +60,24 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyLayerOrderMutation = typeof options.applyLayerOrderMutation === 'function'
-      ? options.applyLayerOrderMutation
-      : () => ({ didApply: false, transaction: null });
+    const applyLayerOrder = typeof options.applyLayerOrder === 'function'
+      ? options.applyLayerOrder
+      : null;
+    const createLayerOrderApplicator = layerOrderTransactionApi
+      && typeof layerOrderTransactionApi.createStudioEditorLayerOrderApplicator === 'function'
+      ? layerOrderTransactionApi.createStudioEditorLayerOrderApplicator
+      : null;
+    const applyLayerOrderMutation = createLayerOrderApplicator
+      ? createLayerOrderApplicator({
+          mutationApi: layerOrderMutationApi,
+          layerOrderApi,
+          transactionApi,
+          applyLayerOrder,
+          legacyApplyLayerOrder: options.applyLayerOrderMutation
+        })
+      : typeof options.applyLayerOrderMutation === 'function'
+        ? options.applyLayerOrderMutation
+        : () => ({ didApply: false, transaction: null });
 
     function isValidCanonicalDeck(value) {
       if (!value) return false;

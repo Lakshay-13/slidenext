@@ -48,3 +48,39 @@ test('applyStudioEditorLayerOrderMutationWithTransaction fails closed without th
     { didApply: false, transaction: null }
   );
 });
+
+test('layer-order applicator centralizes transaction dependencies and preserves fallback callbacks', () => {
+  let delegated = null;
+  const slide = { id: 'slide-1' };
+  const initialOrder = [{ id: 'node-1' }];
+  const nextOrder = [{ id: 'node-2' }];
+  const applyLayerOrder = () => {};
+  const applicator = layerOrderTransaction.createStudioEditorLayerOrderApplicator({
+    mutationApi: {
+      applyStudioLayerOrderMutationWithTransaction(currentSlide, currentInitialOrder, currentNextOrder, options) {
+        delegated = { currentSlide, currentInitialOrder, currentNextOrder, options };
+        return { didApply: true, transaction: { id: 'shared-layer-order' } };
+      }
+    },
+    layerOrderApi: { id: 'layer-order' },
+    transactionApi: { id: 'transaction' },
+    applyLayerOrder
+  });
+
+  assert.deepEqual(
+    applicator(slide, initialOrder, nextOrder, { getElementId: () => 'node-2' }),
+    { didApply: true, transaction: { id: 'shared-layer-order' } }
+  );
+  assert.equal(delegated.currentSlide, slide);
+  assert.equal(delegated.options.layerOrderApi.id, 'layer-order');
+  assert.equal(delegated.options.transactionApi.id, 'transaction');
+  assert.equal(delegated.options.applyLayerOrder, applyLayerOrder);
+
+  const legacyApplicator = layerOrderTransaction.createStudioEditorLayerOrderApplicator({
+    legacyApplyLayerOrder: () => ({ didApply: true, transaction: { id: 'legacy-layer-order' } })
+  });
+  assert.deepEqual(
+    legacyApplicator(slide, initialOrder, nextOrder),
+    { didApply: true, transaction: { id: 'legacy-layer-order' } }
+  );
+});

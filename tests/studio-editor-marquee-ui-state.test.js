@@ -80,7 +80,7 @@ test('setupIframeDragging wires marquee handlers beside shared transforms and co
   const setupIframeDraggingSource = extractFunctionSource(
     fileContent,
     'function setupIframeDragging(doc) {',
-    '\n\n    // Insert New elements'
+    '\n\n    function insertElement'
   );
 
   const calls = [];

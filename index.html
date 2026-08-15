@@ -2601,6 +2601,15 @@
           canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
             ? SlideNextCanonicalDeck
             : null,
+          layerOrderTransactionApi: typeof SlideNextStudioEditorLayerOrderTransaction !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderTransaction
+            : null,
+          layerOrderMutationApi: typeof SlideNextStudioEditorLayerOrderMutation !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderMutation
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           canonicalWallpaperApi: typeof SlideNextStudioEditorCanonicalWallpaper !== 'undefined'
             ? SlideNextStudioEditorCanonicalWallpaper
             : null,
@@ -3754,7 +3763,7 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyLayerOrderMutation: (...args) => applyEditorLayerOrderMutationWithTransaction(...args),
+          applyLayerOrder: (...args) => applySlideLayerOrder(...args),
           rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
         })
       : null;
@@ -8465,40 +8474,6 @@
       return typeof slideLayerOrderWriter === 'function'
         ? slideLayerOrderWriter(slide, orderedElements)
         : [];
-    }
-
-    function applyEditorLayerOrderMutationWithTransaction(slide, initialOrder, nextOrder, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorLayerOrderTransaction !== 'undefined'
-        ? SlideNextStudioEditorLayerOrderTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorLayerOrderMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorLayerOrderMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return {
-          didApply: false,
-          transaction: null
-        };
-      }
-      return applyTransaction(slide, initialOrder, nextOrder, {
-        mutationApi: typeof SlideNextStudioEditorLayerOrderMutation !== 'undefined'
-          ? SlideNextStudioEditorLayerOrderMutation
-          : null,
-        layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-          ? SlideNextStudioEditorLayerOrder
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getElementId: options.getElementId,
-        assignEditorElementId: typeof assignEditorElementId === 'function'
-          ? assignEditorElementId
-          : null,
-        applyLayerOrder: typeof options.applyLayerOrder === 'function'
-          ? options.applyLayerOrder
-          : applySlideLayerOrder
-      });
     }
 
     function rollbackEditorLayerOrderMutation(transaction, sourceDoc = getIframeDoc()) {
