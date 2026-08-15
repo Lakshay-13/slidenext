@@ -130,6 +130,22 @@
     let restoreHandler = null;
     let historyButtonSync = null;
 
+    function readPendingHistoryState() {
+      let pendingTransaction = null;
+      try {
+        pendingTransaction = getPendingTransaction();
+      } catch (error) {
+        // Treat stale transaction state as unavailable.
+      }
+      let pendingCanonicalDeck = null;
+      try {
+        pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
+      } catch (error) {
+        // Treat stale canonical state as unavailable.
+      }
+      return { pendingTransaction, pendingCanonicalDeck };
+    }
+
     function buildSaveAdapter() {
       if (!historyStateApi
         || typeof historyStateApi.createStudioEditorHistorySaveAdapter !== 'function') {
@@ -280,8 +296,7 @@
     }
 
     function flushPending() {
-      const pendingTransaction = getPendingTransaction();
-      const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
+      const { pendingTransaction, pendingCanonicalDeck } = readPendingHistoryState();
       const hasPendingTransaction = pendingTransaction !== undefined && pendingTransaction !== null;
       const hasPendingCanonicalDeck = pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null;
       if (!hasPendingTransaction && !hasPendingCanonicalDeck) return false;
@@ -337,8 +352,7 @@
             triggerAutoSave,
             flushPendingHistory: flushPending,
             hasPendingHistory: () => {
-              const pendingTransaction = getPendingTransaction();
-              const pendingCanonicalDeck = getPendingCanonicalDeck(getDocument());
+              const { pendingTransaction, pendingCanonicalDeck } = readPendingHistoryState();
               return (pendingTransaction !== undefined && pendingTransaction !== null)
                 || (pendingCanonicalDeck !== undefined && pendingCanonicalDeck !== null);
             }

@@ -89,6 +89,30 @@ test('history controller reports pending flush capture failures', () => {
   assert.equal(controller.flushPending(), false);
 });
 
+test('history controller fails closed when pending state reads throw', () => {
+  let saveCalls = 0;
+  const controller = historyController.createStudioEditorHistoryController({
+    historyApi: {
+      createStudioHistorySaveHandler() {
+        return () => {
+          saveCalls += 1;
+          return { didCapture: true };
+        };
+      }
+    },
+    historyStateApi: historyState,
+    getPendingTransaction() {
+      throw new Error('stale transaction state');
+    },
+    getPendingCanonicalDeck() {
+      throw new Error('stale canonical state');
+    }
+  });
+
+  assert.equal(controller.flushPending(), false);
+  assert.equal(saveCalls, 0);
+});
+
 test('history controller forwards history steps and restore entries', () => {
   const steps = [];
   const restores = [];
