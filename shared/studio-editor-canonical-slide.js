@@ -168,6 +168,14 @@
       }
     };
     const readCanonicalDeckBaseline = (sourceDocument) => {
+      if (getPendingCanonicalDeck) {
+        try {
+          const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
+          if (isValidCanonicalDeck(pendingCanonicalDeck)) return pendingCanonicalDeck;
+        } catch (err) {
+          // Fall through to the live baseline and document rebuild paths.
+        }
+      }
       if (getCanonicalDeckBaseline) {
         try {
           const liveCanonicalDeck = getCanonicalDeckBaseline(sourceDocument);
