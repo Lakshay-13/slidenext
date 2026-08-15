@@ -1676,6 +1676,7 @@
   <script src="/shared/studio-editor-frame-runtime-options.js"></script>
   <script src="/shared/studio-editor-frame-runtime.js"></script>
   <script src="/shared/studio-editor-frame-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-frame-initializer.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
@@ -6187,6 +6188,18 @@
     const studioEditorFrameController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameController
       : null;
+    const studioEditorFrameInitializerApi = typeof SlideNextStudioEditorFrameInitializer !== 'undefined'
+      ? SlideNextStudioEditorFrameInitializer
+      : null;
+    const studioEditorFrameInitializer = studioEditorFrameInitializerApi
+      && typeof studioEditorFrameInitializerApi.createStudioEditorFrameInitializer === 'function'
+      ? studioEditorFrameInitializerApi.createStudioEditorFrameInitializer({
+          frameController: studioEditorFrameController,
+          syncCanvasDimensions: syncStudioEditorCanvasDimensions,
+          setLoadingState: setStudioFrameLoadingState,
+          setAutoSaveStatus: setStudioAutoSaveStatus
+        })
+      : null;
     const studioEditorThemeRuntime = typeof SlideNextStudioEditorThemeShellRuntime !== 'undefined'
       && SlideNextStudioEditorThemeShellRuntime
       && typeof SlideNextStudioEditorThemeShellRuntime.createStudioEditorThemeShellRuntime === 'function'
@@ -7261,6 +7274,11 @@
     }
 
     function initStudioFrame() {
+      if (typeof studioEditorFrameInitializer !== 'undefined'
+        && studioEditorFrameInitializer
+        && typeof studioEditorFrameInitializer.initialize === 'function') {
+        return studioEditorFrameInitializer.initialize();
+      }
       if (typeof studioEditorFrameController !== 'undefined'
         && studioEditorFrameController
         && typeof studioEditorFrameController.init === 'function') {
