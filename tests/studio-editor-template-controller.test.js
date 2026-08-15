@@ -324,11 +324,16 @@ test('template controller inserts a rendered template after the active slide thr
   };
   const calls = [];
   const lookupCalls = [];
+  const templateLookupCalls = [];
   const canonicalDeckApi = {
     ...canonicalDeck,
     findCanonicalSlideIndexById(deck, slideId) {
       lookupCalls.push([deck, slideId]);
       return canonicalDeck.findCanonicalSlideIndexById(deck, slideId);
+    },
+    findCanonicalTemplateById(deck, templateId) {
+      templateLookupCalls.push([deck, templateId]);
+      return canonicalDeck.findCanonicalTemplateById(deck, templateId);
     }
   };
   const controller = templateController.createStudioEditorTemplateController({
@@ -380,6 +385,7 @@ test('template controller inserts a rendered template after the active slide thr
   assert.equal(calls[3][2].kind, 'slide-insert');
   assert.equal(calls[3][3].slides.length, 2);
   assert.deepEqual(lookupCalls, [[sourceDeck, 'slide-1']]);
+  assert.deepEqual(templateLookupCalls, [[sourceDeck, 'hero-template']]);
 });
 
 test('template controller does not insert when the history baseline is rejected', () => {
@@ -572,8 +578,16 @@ test('template controller removes a saved template and finalizes persistence hoo
     slides: [{ id: 'slide-1' }]
   });
   const calls = [];
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalTemplateById(deck, templateId) {
+      lookupCalls.push([deck, templateId]);
+      return canonicalDeck.findCanonicalTemplateById(deck, templateId);
+    }
+  };
   const controller = templateController.createStudioEditorTemplateController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     getCanonicalDeck: () => sourceDeck,
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
@@ -602,6 +616,7 @@ test('template controller removes a saved template and finalizes persistence hoo
   assert.deepEqual(calls.slice(1, 3), [['save'], ['version', 'Auto: Removed Template "Hero Template"']]);
   assert.deepEqual(calls[3][0], 'templates');
   assert.deepEqual(calls[3][1], ['stats-template']);
+  assert.deepEqual(lookupCalls, [[sourceDeck, 'hero-template']]);
 });
 
 test('template controller reports rejected canonical removal without publishing template state', () => {

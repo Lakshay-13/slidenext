@@ -141,6 +141,23 @@ test('findCanonicalBlockById resolves a normalized block from canonical or legac
   assert.equal(canonicalDeck.findCanonicalBlockById(canonical, 'missing'), null);
 });
 
+test('findCanonicalTemplateById resolves a normalized template from canonical or legacy-shaped input', () => {
+  const canonical = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero', name: 'Hero' }],
+    slides: [{ id: 'slide-1' }]
+  });
+
+  assert.equal(canonicalDeck.findCanonicalTemplateById(canonical, ' hero '), canonical.templates[0]);
+  assert.equal(
+    canonicalDeck.findCanonicalTemplateById(
+      { templates: [{ id: 'stats', name: 'Stats' }], slides: [] },
+      'stats'
+    ).name,
+    'Stats'
+  );
+  assert.equal(canonicalDeck.findCanonicalTemplateById(canonical, 'missing'), null);
+});
+
 test('findCanonicalSlideIndexById resolves normalized indexes and missing slides', () => {
   const canonical = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1' }, { id: 'slide-2' }]

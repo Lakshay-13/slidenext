@@ -236,10 +236,13 @@
 
       const canonicalDeck = resolveCanonicalDeck();
       const normalizedTemplateId = typeof templateId === 'string' ? templateId.trim() : '';
-      const template = canonicalDeck
-        && Array.isArray(canonicalDeck.templates)
-        ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === normalizedTemplateId)
-        : null;
+      const template = canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalTemplateById === 'function'
+        ? canonicalDeckApi.findCanonicalTemplateById(canonicalDeck, normalizedTemplateId)
+        : canonicalDeck
+          && Array.isArray(canonicalDeck.templates)
+          ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === normalizedTemplateId)
+          : null;
       let nextCanonicalDeck = null;
       try {
         nextCanonicalDeck = canonicalDeckApi.removeCanonicalTemplate(
@@ -316,9 +319,12 @@
 
       if (generateThumbnails) generateThumbnails();
       if (setActiveSlide) setActiveSlide(insertionIndex);
-      const template = Array.isArray(canonicalDeck.templates)
-        ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === templateId)
-        : null;
+      const template = canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalTemplateById === 'function'
+        ? canonicalDeckApi.findCanonicalTemplateById(canonicalDeck, templateId)
+        : Array.isArray(canonicalDeck.templates)
+          ? canonicalDeck.templates.find((candidate) => candidate && candidate.id === templateId)
+          : null;
       const versionLabel = `Auto: Inserted Template${template && template.name ? ` "${template.name}"` : ''}`;
       if (finalizeMutation) {
         let finalizeResult = false;
