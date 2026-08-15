@@ -1730,6 +1730,7 @@
   <script src="/shared/studio-editor-element-snapshot-controller.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
+  <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
@@ -2929,6 +2930,34 @@
       : null;
     const studioEditorDeckSnapshotController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.deckSnapshotController
+      : null;
+    const studioEditorDeckSnapshotAccessors = typeof SlideNextStudioEditorDeckSnapshotAccessors !== 'undefined'
+      && SlideNextStudioEditorDeckSnapshotAccessors
+      && typeof SlideNextStudioEditorDeckSnapshotAccessors.createStudioEditorDeckSnapshotAccessors === 'function'
+      ? SlideNextStudioEditorDeckSnapshotAccessors.createStudioEditorDeckSnapshotAccessors({
+          controller: studioEditorDeckSnapshotController,
+          snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
+            ? SlideNextStudioDeckSnapshot
+            : null,
+          getDocument: () => getIframeDoc(),
+          createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
+          resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
+          resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+            nextDoc,
+            canonicalDeck
+          ),
+          resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
+          buildDomSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshotFromDom(sourceDoc, buildOptions),
+          getActiveSlideId: getEditorSlideId,
+          getSlideById,
+          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl),
+          getSlides,
+          getActiveSlide,
+          getSlideId: getEditorSlideId,
+          getSlideEditableElements,
+          getNormalizedSlideLayerOrder,
+          buildElementSnapshot: buildEditorElementSnapshot
+        })
       : null;
     const studioEditorPreviewController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.previewController
@@ -7760,30 +7789,12 @@
     }
 
     function buildEditorDeckSnapshotFromDom(doc = getIframeDoc(), options = {}) {
-      if (typeof studioEditorDeckSnapshotController !== 'undefined'
-        && studioEditorDeckSnapshotController
-        && typeof studioEditorDeckSnapshotController.buildFromDom === 'function') {
-        return studioEditorDeckSnapshotController.buildFromDom(doc, options);
-      }
-      const buildStudioDeckSnapshotFromDom = (
-        typeof SlideNextStudioDeckSnapshot !== 'undefined'
-        && SlideNextStudioDeckSnapshot
-        && typeof SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom === 'function'
-      )
-        ? SlideNextStudioDeckSnapshot.buildStudioDeckSnapshotFromDom
+      const accessors = typeof studioEditorDeckSnapshotAccessors !== 'undefined'
+        ? studioEditorDeckSnapshotAccessors
         : null;
-      if (!buildStudioDeckSnapshotFromDom) return null;
-      return buildStudioDeckSnapshotFromDom(doc, {
-        includeLayers: !!options.includeLayers,
-        getSlides,
-        getActiveSlide,
-        getSlideId: getEditorSlideId,
-        getSlideEditableElements,
-        getNormalizedSlideLayerOrder,
-        elementSnapshotOptions: {
-          buildElementSnapshot: buildEditorElementSnapshot
-        }
-      });
+      return accessors && typeof accessors.buildFromDom === 'function'
+        ? accessors.buildFromDom(doc, options)
+        : null;
     }
 
     function buildCurrentPresentationMetadataSeed(presentationUrl = getStudioCurrentPresentationUrl(), presentationTitle = getStudioPresentationTitle()) {
@@ -8201,35 +8212,12 @@
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
-      if (typeof studioEditorDeckSnapshotController !== 'undefined'
-        && studioEditorDeckSnapshotController
-        && typeof studioEditorDeckSnapshotController.build === 'function') {
-        return studioEditorDeckSnapshotController.build(doc, options);
-      }
-      const createStudioDeckSnapshotBuilder = (
-        typeof SlideNextStudioDeckSnapshot !== 'undefined'
-        && SlideNextStudioDeckSnapshot
-      )
-        && typeof SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuilder === 'function'
-        ? SlideNextStudioDeckSnapshot.createStudioDeckSnapshotBuilder
+      const accessors = typeof studioEditorDeckSnapshotAccessors !== 'undefined'
+        ? studioEditorDeckSnapshotAccessors
         : null;
-      if (createStudioDeckSnapshotBuilder) {
-        return createStudioDeckSnapshotBuilder({
-          getDocument: getIframeDoc,
-          createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
-          resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
-          resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
-            nextDoc,
-            canonicalDeck
-          ),
-          resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
-          buildDomSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshotFromDom(sourceDoc, buildOptions),
-          getActiveSlideId: getEditorSlideId,
-          getSlideById,
-          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl)
-        })(doc, options);
-      }
-      return null;
+      return accessors && typeof accessors.build === 'function'
+        ? accessors.build(doc, options)
+        : null;
     }
 
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {

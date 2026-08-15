@@ -3527,7 +3527,7 @@ test('getEditorLayerDisplayMetadata uses a neutral fallback when the shared meta
   );
 });
 
-test('buildEditorDeckSnapshot reuses the shared snapshot builder when available', () => {
+test('buildEditorDeckSnapshot delegates through the shared snapshot accessors', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckSnapshotSource = extractFunctionSource(
     fileContent,
@@ -3541,44 +3541,22 @@ test('buildEditorDeckSnapshot reuses the shared snapshot builder when available'
     activeSlideIndex: 1,
     slides: []
   };
-  let delegatedArgs = null;
+  let delegatedDoc = null;
+  let delegatedOptions = null;
   const context = {
-    SlideNextStudioDeckSnapshot: {
-      createStudioDeckSnapshotBuilder(options = {}) {
-        delegatedArgs = options;
-        return (nextDoc, nextOptions = {}) => ({
+    studioEditorDeckSnapshotAccessors: {
+      build(nextDoc, nextOptions = {}) {
+        delegatedDoc = nextDoc;
+        delegatedOptions = nextOptions;
+        return {
           ...snapshotResult,
           nextDoc,
           includeLayers: !!nextOptions.includeLayers
-        });
+        };
       }
-    },
-    buildEditorDeckSnapshotFromDom() {
-      throw new Error('buildEditorDeckSnapshotFromDom should be delegated through the shared snapshot builder');
-    },
-    buildEditorLayerSnapshot() {
-      throw new Error('buildEditorLayerSnapshot should be delegated through the shared snapshot builder');
-    },
-    createEditorCanonicalDeckViewStateOptions() {
-      return {};
-    },
-    getEditorSlideId() {
-      return 'slide-live';
     },
     getIframeDoc() {
       return iframeDoc;
-    },
-    getSlideById() {
-      return null;
-    },
-    resolveEditorCanonicalDeckViewState() {
-      throw new Error('resolveEditorCanonicalDeckViewState should be delegated through the shared snapshot builder');
-    },
-    resolveEditorFallbackActiveSlideId() {
-      throw new Error('resolveEditorFallbackActiveSlideId should be delegated through the shared snapshot builder');
-    },
-    resolveEditorLiveActiveSlide() {
-      throw new Error('resolveEditorLiveActiveSlide should be delegated through the shared snapshot builder');
     }
   };
 
@@ -3593,15 +3571,8 @@ test('buildEditorDeckSnapshot reuses the shared snapshot builder when available'
       includeLayers: true
     }
   );
-  assert.equal(delegatedArgs.getDocument, context.getIframeDoc);
-  assert.equal(typeof delegatedArgs.createDeckViewStateOptions, 'function');
-  assert.equal(typeof delegatedArgs.resolveCanonicalDeckViewState, 'function');
-  assert.equal(typeof delegatedArgs.resolveFallbackActiveSlideId, 'function');
-  assert.equal(typeof delegatedArgs.resolveLiveActiveSlide, 'function');
-  assert.equal(typeof delegatedArgs.buildDomSnapshot, 'function');
-  assert.equal(delegatedArgs.getActiveSlideId, context.getEditorSlideId);
-  assert.equal(delegatedArgs.getSlideById, context.getSlideById);
-  assert.equal(typeof delegatedArgs.buildSlideLayerSnapshot, 'function');
+  assert.equal(delegatedDoc, iframeDoc);
+  assert.deepEqual(delegatedOptions, { includeLayers: true });
 });
 
 test('buildEditorDeckSnapshot fails closed when the shared snapshot build-options helper is unavailable', () => {
