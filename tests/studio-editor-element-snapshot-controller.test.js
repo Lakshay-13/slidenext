@@ -88,11 +88,12 @@ test('element snapshot controller delegates layer display metadata and fails clo
   );
 });
 
-test('editor shell loads and routes element snapshots through the dedicated controller', () => {
+test('editor shell loads and routes element snapshots through shared accessors', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-element-snapshot-controller\.js/);
-  assert.match(source, /studioEditorElementSnapshotController\.getDisplayMetadata\(el\)/);
-  assert.match(source, /studioEditorElementSnapshotController\.build\(el\)/);
-  assert.match(source, /studioEditorElementSnapshotController\.buildLayer\(/);
+  assert.match(source, /SlideNextStudioEditorElementSnapshotAccessors/);
+  assert.match(source, /accessors\.getDisplayMetadata\(el\)/);
+  assert.match(source, /accessors\.build\(el\)/);
+  assert.match(source, /accessors\.buildLayer\(/);
 });

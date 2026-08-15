@@ -8265,139 +8265,29 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
-      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
-        && studioEditorElementSnapshotAccessors
-        && typeof studioEditorElementSnapshotAccessors.getDisplayMetadata === 'function') {
-        return studioEditorElementSnapshotAccessors.getDisplayMetadata(el);
-      }
-      if (typeof studioEditorElementSnapshotController !== 'undefined'
-        && studioEditorElementSnapshotController
-        && typeof studioEditorElementSnapshotController.getDisplayMetadata === 'function') {
-        return studioEditorElementSnapshotController.getDisplayMetadata(el);
-      }
-      const resolveStudioLayerDisplayMetadata = (
-        typeof SlideNextStudioElementSnapshot !== 'undefined'
-        && SlideNextStudioElementSnapshot
-        && typeof SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata === 'function'
-      )
-        ? SlideNextStudioElementSnapshot.resolveStudioLayerDisplayMetadata
+      const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        ? studioEditorElementSnapshotAccessors
         : null;
-      if (!resolveStudioLayerDisplayMetadata) {
-        return {
-          typeIcon: 'description',
-          displayName: 'Element'
-        };
-      }
-      return resolveStudioLayerDisplayMetadata(el);
+      return accessors && typeof accessors.getDisplayMetadata === 'function'
+        ? accessors.getDisplayMetadata(el)
+        : null;
     }
 
     function buildEditorElementSnapshot(el) {
-      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
-        && studioEditorElementSnapshotAccessors
-        && typeof studioEditorElementSnapshotAccessors.build === 'function') {
-        return studioEditorElementSnapshotAccessors.build(el);
-      }
-      if (typeof studioEditorElementSnapshotController !== 'undefined'
-        && studioEditorElementSnapshotController
-        && typeof studioEditorElementSnapshotController.build === 'function') {
-        return studioEditorElementSnapshotController.build(el);
-      }
-      if (typeof buildEditorElementSnapshot.builder !== 'function') {
-        const createStudioEditorElementSnapshotBuilder = (
-          typeof SlideNextStudioElementSnapshot !== 'undefined'
-          && SlideNextStudioElementSnapshot
-          && typeof SlideNextStudioElementSnapshot.createStudioEditorElementSnapshotBuilder === 'function'
-        )
-          ? SlideNextStudioElementSnapshot.createStudioEditorElementSnapshotBuilder
-          : null;
-        if (createStudioEditorElementSnapshotBuilder) {
-          const isStudioLiveSelectedElement = (
-            typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-            && SlideNextStudioEditorLiveSelection
-            && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
-          )
-            ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
-            : null;
-          buildEditorElementSnapshot.builder = createStudioEditorElementSnapshotBuilder({
-            getElementId: assignEditorElementId,
-            isElementLocked,
-            isElementHidden,
-            isSelectedElement: candidate => isStudioLiveSelectedElement
-              ? isStudioLiveSelectedElement(
-                getStudioSelectedElements(candidate && candidate.ownerDocument),
-                candidate
-              )
-              : false
-          });
-        }
-      }
-      if (typeof buildEditorElementSnapshot.builder === 'function') {
-        return buildEditorElementSnapshot.builder(el);
-      }
-      const buildStudioElementSnapshot = (
-        typeof SlideNextStudioElementSnapshot !== 'undefined'
-        && SlideNextStudioElementSnapshot
-        && typeof SlideNextStudioElementSnapshot.buildStudioElementSnapshot === 'function'
-      )
-        ? SlideNextStudioElementSnapshot.buildStudioElementSnapshot
+      const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        ? studioEditorElementSnapshotAccessors
         : null;
-      if (!buildStudioElementSnapshot) {
-        return {
-          id: '',
-          typeIcon: 'description',
-          displayName: 'Element',
-          zIndex: '0',
-          isLocked: false,
-          isHidden: false,
-          isSelected: false
-        };
-      }
-      const isStudioLiveSelectedElement = (
-        typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-        && SlideNextStudioEditorLiveSelection
-        && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
-      )
-        ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+      return accessors && typeof accessors.build === 'function'
+        ? accessors.build(el)
         : null;
-      return buildStudioElementSnapshot(el, {
-        getElementId: assignEditorElementId,
-        isElementLocked,
-        isElementHidden,
-        isSelectedElement: candidate => isStudioLiveSelectedElement
-          ? isStudioLiveSelectedElement(
-            getStudioSelectedElements(candidate && candidate.ownerDocument),
-            candidate
-          )
-          : false
-      });
     }
 
     function buildEditorLayerSnapshot(slide) {
-      if (typeof studioEditorElementSnapshotAccessors !== 'undefined'
-        && studioEditorElementSnapshotAccessors
-        && typeof studioEditorElementSnapshotAccessors.buildLayer === 'function') {
-        return studioEditorElementSnapshotAccessors.buildLayer(
-          getNormalizedSlideLayerOrder(slide)
-        );
-      }
-      if (typeof studioEditorElementSnapshotController !== 'undefined'
-        && studioEditorElementSnapshotController
-        && typeof studioEditorElementSnapshotController.buildLayer === 'function') {
-        return studioEditorElementSnapshotController.buildLayer(
-          getNormalizedSlideLayerOrder(slide)
-        );
-      }
-      const buildStudioLayerSnapshot = (
-        typeof SlideNextStudioElementSnapshot !== 'undefined'
-        && SlideNextStudioElementSnapshot
-        && typeof SlideNextStudioElementSnapshot.buildStudioLayerSnapshot === 'function'
-      )
-        ? SlideNextStudioElementSnapshot.buildStudioLayerSnapshot
+      const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
+        ? studioEditorElementSnapshotAccessors
         : null;
-      if (!buildStudioLayerSnapshot) return [];
-      return buildStudioLayerSnapshot(getNormalizedSlideLayerOrder(slide), {
-        buildElementSnapshot: buildEditorElementSnapshot
-      });
+      if (!accessors || typeof accessors.buildLayer !== 'function') return [];
+      return accessors.buildLayer(getNormalizedSlideLayerOrder(slide));
     }
 
     const studioEditorSelectionIdsAdapter = typeof SlideNextStudioEditorSelectionIdsAdapter !== 'undefined'

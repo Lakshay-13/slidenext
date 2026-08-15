@@ -99,7 +99,7 @@ test('editor routes element snapshot wrappers through shared accessors', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /SlideNextStudioEditorElementSnapshotAccessors/);
-  assert.match(source, /studioEditorElementSnapshotAccessors\.getDisplayMetadata\(el\)/);
-  assert.match(source, /studioEditorElementSnapshotAccessors\.build\(el\)/);
-  assert.match(source, /studioEditorElementSnapshotAccessors\.buildLayer\(/);
+  assert.match(source, /accessors\.getDisplayMetadata\(el\)/);
+  assert.match(source, /accessors\.build\(el\)/);
+  assert.match(source, /accessors\.buildLayer\(/);
 });

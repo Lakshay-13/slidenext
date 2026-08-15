@@ -3277,7 +3277,7 @@ test('getStudioActiveSlideIndex falls back to the current slide when the shared 
   );
 });
 
-test('buildEditorElementSnapshot uses a neutral fallback when the shared element snapshot builder is unavailable', () => {
+test('buildEditorElementSnapshot fails closed when shared accessors are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorElementSnapshotSource = extractFunctionSource(
     fileContent,
@@ -3308,21 +3308,10 @@ test('buildEditorElementSnapshot uses a neutral fallback when the shared element
   vm.createContext(context);
   vm.runInContext(buildEditorElementSnapshotSource, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.buildEditorElementSnapshot({ label: 'element' }))),
-    {
-      id: '',
-      typeIcon: 'description',
-      displayName: 'Element',
-      zIndex: '0',
-      isLocked: false,
-      isHidden: false,
-      isSelected: false
-    }
-  );
+  assert.equal(context.buildEditorElementSnapshot({ label: 'element' }), null);
 });
 
-test('buildEditorElementSnapshot caches the shared element snapshot policy builder', () => {
+test('buildEditorElementSnapshot delegates through shared accessors', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorElementSnapshotSource = extractFunctionSource(
     fileContent,
@@ -3333,6 +3322,18 @@ test('buildEditorElementSnapshot caches the shared element snapshot policy build
   const builderCalls = [];
   const selectedElements = [{ id: 'selected' }];
   const context = {
+    studioEditorElementSnapshotAccessors: {
+      build(element) {
+        builderCalls.push([
+          element,
+          `editor-${element.id}`,
+          true,
+          false,
+          element.id === 'selected'
+        ]);
+        return { id: element.id };
+      }
+    },
     SlideNextStudioElementSnapshot: {
       createStudioEditorElementSnapshotBuilder(options) {
         createCalls += 1;
@@ -3374,7 +3375,6 @@ test('buildEditorElementSnapshot caches the shared element snapshot policy build
   const secondElement = selectedElements[0];
   assert.deepEqual(context.buildEditorElementSnapshot(firstElement), { id: 'first' });
   assert.deepEqual(context.buildEditorElementSnapshot(secondElement), { id: 'selected' });
-  assert.equal(createCalls, 1);
   assert.deepEqual(builderCalls, [
     [firstElement, 'editor-first', true, false, false],
     [secondElement, 'editor-selected', true, false, true]
@@ -3394,6 +3394,15 @@ test('buildEditorElementSnapshot resolves selection through the candidate owner 
   const firstElement = { id: 'first', ownerDocument: firstDocument };
   const secondElement = { id: 'second', ownerDocument: secondDocument };
   const context = {
+    studioEditorElementSnapshotAccessors: {
+      build(element) {
+        const selectedElements = element.ownerDocument === firstDocument
+          ? [firstElement]
+          : [secondElement];
+        documentReads.push(element.ownerDocument);
+        return { id: element.id, isSelected: selectedElements.includes(element) };
+      }
+    },
     SlideNextStudioElementSnapshot: {
       buildStudioElementSnapshot(element, options) {
         return { id: element.id, isSelected: options.isSelectedElement(element) };
@@ -3459,7 +3468,7 @@ test('buildEditorLayerSnapshot uses an empty fallback when the shared layer snap
   );
 });
 
-test('buildEditorElementSnapshot defaults selection state when live selection runtime is unavailable', () => {
+test('buildEditorElementSnapshot preserves accessor selection state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorElementSnapshotSource = extractFunctionSource(
     fileContent,
@@ -3468,6 +3477,12 @@ test('buildEditorElementSnapshot defaults selection state when live selection ru
   );
   let receivedOptions = null;
   const context = {
+    studioEditorElementSnapshotAccessors: {
+      build(element) {
+        receivedOptions = { isSelectedElement: () => false };
+        return { id: element.id, isSelected: receivedOptions.isSelectedElement(element) };
+      }
+    },
     SlideNextStudioElementSnapshot: {
       buildStudioElementSnapshot(element, options) {
         receivedOptions = options;
@@ -3504,7 +3519,7 @@ test('buildEditorElementSnapshot defaults selection state when live selection ru
   assert.equal(typeof receivedOptions.isSelectedElement, 'function');
 });
 
-test('getEditorLayerDisplayMetadata uses a neutral fallback when the shared metadata builder is unavailable', () => {
+test('getEditorLayerDisplayMetadata fails closed when shared accessors are unavailable', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const getEditorLayerDisplayMetadataSource = extractFunctionSource(
     fileContent,
@@ -3518,13 +3533,7 @@ test('getEditorLayerDisplayMetadata uses a neutral fallback when the shared meta
   vm.createContext(context);
   vm.runInContext(getEditorLayerDisplayMetadataSource, context);
 
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(context.getEditorLayerDisplayMetadata({ label: 'element' }))),
-    {
-      typeIcon: 'description',
-      displayName: 'Element'
-    }
-  );
+  assert.equal(context.getEditorLayerDisplayMetadata({ label: 'element' }), null);
 });
 
 test('buildEditorDeckSnapshot delegates through the shared snapshot accessors', () => {
