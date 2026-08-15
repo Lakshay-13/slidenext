@@ -148,6 +148,16 @@
         previousHistoryEntry = null;
       }
     }
+    const rollbackPreviousHistoryEntry = () => {
+      if (!previousHistoryEntry || typeof options.restoreHistoryEntry !== 'function') {
+        return;
+      }
+      try {
+        options.restoreHistoryEntry(previousHistoryEntry);
+      } catch (error) {
+        // Preserve the source-apply failure when rollback is unavailable.
+      }
+    };
 
     if (typeof options.beforeApply === 'function') {
       let canApply = false;
@@ -166,9 +176,11 @@
       try {
         didRestore = options.restoreHistoryEntry(historyEntry);
       } catch (error) {
+        rollbackPreviousHistoryEntry();
         return fail('Source HTML could not be applied to the editor');
       }
       if (didRestore === false) {
+        rollbackPreviousHistoryEntry();
         return fail('Source HTML could not be applied to the editor');
       }
     }
@@ -181,13 +193,7 @@
         didPersist = false;
       }
       if (!didPersist) {
-        if (previousHistoryEntry && typeof options.restoreHistoryEntry === 'function') {
-          try {
-            options.restoreHistoryEntry(previousHistoryEntry);
-          } catch (error) {
-            // Preserve the persistence failure when rollback itself is unavailable.
-          }
-        }
+        rollbackPreviousHistoryEntry();
         return fail('Source HTML could not be applied to the editor');
       }
     }

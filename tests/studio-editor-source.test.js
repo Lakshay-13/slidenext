@@ -214,6 +214,58 @@ test('applyStudioEditorSource fails closed when restoring source history throws'
   assert.equal(afterApplyCalls, 0);
 });
 
+test('applyStudioEditorSource rolls back the previous entry when source restore rejects', () => {
+  const previousHistoryEntry = {
+    html: '<section class="slide">Original</section>',
+    activeSlideId: 'slide-original',
+    selectedElementIds: [],
+    canonicalDeck: { kind: 'slidenext.deck', slides: [{ id: 'slide-original' }] }
+  };
+  const restoredEntries = [];
+  const result = source.applyStudioEditorSource('<html>edited</html>', {
+    DOMParser: class DOMParser {
+      parseFromString() {
+        return {
+          documentElement: {
+            innerHTML: '<section class="slide">Edited</section>',
+            querySelectorAll() {
+              return [{}];
+            }
+          }
+        };
+      }
+    },
+    getCurrentDocument() {
+      return { id: 'live-frame' };
+    },
+    buildCanonicalDeck() {
+      return null;
+    },
+    captureHistoryEntry() {
+      return previousHistoryEntry;
+    },
+    restoreHistoryEntry(historyEntry) {
+      restoredEntries.push(historyEntry);
+      if (restoredEntries.length === 1) return false;
+      return true;
+    }
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    error: 'Source HTML could not be applied to the editor'
+  });
+  assert.deepEqual(restoredEntries, [
+    {
+      html: '<section class="slide">Edited</section>',
+      activeSlideId: '',
+      selectedElementIds: [],
+      canonicalDeck: null
+    },
+    previousHistoryEntry
+  ]);
+});
+
 test('applyStudioEditorSource fails closed when the pre-apply callback throws', () => {
   let restoreCalls = 0;
   const result = source.applyStudioEditorSource('<html>edited</html>', {
