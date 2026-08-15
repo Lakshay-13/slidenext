@@ -152,6 +152,32 @@ test('createStudioEditorHistoryEntryBuilder falls back when pending state resolu
   assert.deepEqual(builder('history-doc'), { canonicalDeck: liveCanonicalDeck });
 });
 
+test('createStudioEditorHistoryEntryBuilder continues when pending transaction resolution throws', () => {
+  const liveCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'live-slide' }] };
+
+  const builder = historyState.createStudioEditorHistoryEntryBuilder({
+    historyApi: {
+      buildStudioHistoryEntry(_doc, options) {
+        return {
+          canonicalDeck: options.buildCanonicalDeck('history-doc'),
+          transaction: options.transaction
+        };
+      }
+    },
+    getPendingTransaction() {
+      throw new Error('stale pending transaction');
+    },
+    getCanonicalDeckBaseline() {
+      return liveCanonicalDeck;
+    }
+  });
+
+  assert.deepEqual(builder('history-doc'), {
+    canonicalDeck: liveCanonicalDeck,
+    transaction: null
+  });
+});
+
 test('createStudioEditorHistoryEntryBuilder rebuilds canonical state for transaction captures', () => {
   const baselineDeck = { kind: 'slidenext.deck', slides: [{ id: 'baseline' }] };
   const mutatedDeck = { kind: 'slidenext.deck', slides: [{ id: 'mutated' }] };

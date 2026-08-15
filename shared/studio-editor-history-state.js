@@ -196,7 +196,12 @@
       } catch (error) {
         // Continue through transaction, live baseline, and document rebuild fallbacks.
       }
-      const pendingTransaction = getPendingTransaction();
+      let pendingTransaction = null;
+      try {
+        pendingTransaction = getPendingTransaction();
+      } catch (error) {
+        // Treat stale transaction state as unavailable.
+      }
       const hasPendingCanonicalDeck = isValidCanonicalDeck(pendingCanonicalDeck);
       const historyCanonicalDeckBuilder = hasPendingCanonicalDeck
         ? () => pendingCanonicalDeck
