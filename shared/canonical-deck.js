@@ -636,6 +636,15 @@
     return deck.assets.find((asset) => asset && asset.id === normalizedAssetId) || null;
   }
 
+  function findCanonicalBlockById(deckLike, blockId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedBlockId = normalizeString(blockId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedBlockId) return null;
+    return deck.blocks.find((block) => block && block.id === normalizedBlockId) || null;
+  }
+
   function findCanonicalSlideById(deckLike, slideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -2092,6 +2101,7 @@
     isCanonicalDeck,
     findCanonicalNodeById,
     findCanonicalAssetById,
+    findCanonicalBlockById,
     findCanonicalSlideById,
     findCanonicalSlideIndexById,
     reorderCanonicalSlides,

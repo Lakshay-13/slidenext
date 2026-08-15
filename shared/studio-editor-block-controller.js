@@ -225,10 +225,12 @@
 
       const canonicalDeck = resolveCanonicalDeck();
       const normalizedBlockId = typeof blockId === 'string' ? blockId.trim() : '';
-      const block = canonicalDeck
-        && Array.isArray(canonicalDeck.blocks)
-        ? canonicalDeck.blocks.find((candidate) => candidate && candidate.id === normalizedBlockId)
-        : null;
+      const block = canonicalDeckApi.findCanonicalBlockById
+        ? canonicalDeckApi.findCanonicalBlockById(canonicalDeck, normalizedBlockId)
+        : canonicalDeck
+          && Array.isArray(canonicalDeck.blocks)
+          ? canonicalDeck.blocks.find((candidate) => candidate && candidate.id === normalizedBlockId)
+          : null;
       let nextCanonicalDeck = null;
       try {
         nextCanonicalDeck = canonicalDeckApi.removeCanonicalBlock(

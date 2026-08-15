@@ -375,8 +375,16 @@ test('block controller removes a saved block and finalizes persistence hooks', (
     slides: [{ id: 'slide-1' }]
   });
   const calls = [];
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalBlockById(deck, blockId) {
+      lookupCalls.push([deck, blockId]);
+      return canonicalDeck.findCanonicalBlockById(deck, blockId);
+    }
+  };
   const controller = blockController.createStudioEditorBlockController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     getCanonicalDeck: () => sourceDeck,
     saveHistoryState(...args) {
       calls.push(['history', ...args]);
@@ -396,6 +404,7 @@ test('block controller removes a saved block and finalizes persistence hooks', (
 
   assert.deepEqual(sourceDeck.blocks.map((block) => block.id), ['hero', 'stats']);
   assert.deepEqual(result.blocks.map((block) => block.id), ['stats']);
+  assert.deepEqual(lookupCalls, [[sourceDeck, 'hero']]);
   assert.equal(calls[0][0], 'history');
   assert.equal(calls[0][1], false);
   assert.equal(calls[0][2], null);
