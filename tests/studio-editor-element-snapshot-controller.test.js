@@ -67,10 +67,32 @@ test('element snapshot controller delegates layer snapshots through its element 
   assert.equal(typeof calls[0].options.buildElementSnapshot, 'function');
 });
 
+test('element snapshot controller delegates layer display metadata and fails closed', () => {
+  const element = { id: 'heading' };
+  const controller = controllerApi.createStudioEditorElementSnapshotController({
+    snapshotApi: {
+      resolveStudioLayerDisplayMetadata(candidate) {
+        assert.equal(candidate, element);
+        return { typeIcon: 'title', displayName: 'Heading' };
+      }
+    }
+  });
+
+  assert.deepEqual(controller.getDisplayMetadata(element), {
+    typeIcon: 'title',
+    displayName: 'Heading'
+  });
+  assert.deepEqual(
+    controllerApi.createStudioEditorElementSnapshotController().getDisplayMetadata(element),
+    { typeIcon: 'description', displayName: 'Element' }
+  );
+});
+
 test('editor shell loads and routes element snapshots through the dedicated controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /studio-editor-element-snapshot-controller\.js/);
+  assert.match(source, /studioEditorElementSnapshotController\.getDisplayMetadata\(el\)/);
   assert.match(source, /studioEditorElementSnapshotController\.build\(el\)/);
   assert.match(source, /studioEditorElementSnapshotController\.buildLayer\(/);
 });

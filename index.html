@@ -8236,6 +8236,11 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
+      if (typeof studioEditorElementSnapshotController !== 'undefined'
+        && studioEditorElementSnapshotController
+        && typeof studioEditorElementSnapshotController.getDisplayMetadata === 'function') {
+        return studioEditorElementSnapshotController.getDisplayMetadata(el);
+      }
       const resolveStudioLayerDisplayMetadata = (
         typeof SlideNextStudioElementSnapshot !== 'undefined'
         && SlideNextStudioElementSnapshot

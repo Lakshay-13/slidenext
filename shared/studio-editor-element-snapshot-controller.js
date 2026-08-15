@@ -16,6 +16,10 @@
     isHidden: false,
     isSelected: false
   };
+  const EMPTY_DISPLAY_METADATA = {
+    typeIcon: 'description',
+    displayName: 'Element'
+  };
 
   function createStudioEditorElementSnapshotController(options = {}) {
     const hasOption = (name) => Object.prototype.hasOwnProperty.call(options, name);
@@ -77,9 +81,17 @@
       });
     }
 
+    function getDisplayMetadata(element) {
+      if (!snapshotApi || typeof snapshotApi.resolveStudioLayerDisplayMetadata !== 'function') {
+        return { ...EMPTY_DISPLAY_METADATA };
+      }
+      return snapshotApi.resolveStudioLayerDisplayMetadata(element);
+    }
+
     return {
       build,
-      buildLayer
+      buildLayer,
+      getDisplayMetadata
     };
   }
 
