@@ -421,6 +421,23 @@ test('buildStudioCanonicalStyleMutationWithBaseline builds the model from the so
   assert.equal(sourceDeck.slides[0].nodes[0].style, 'color: #000000;');
 });
 
+test('buildStudioCanonicalStyleMutationWithBaseline accepts a pending baseline without a live reader', () => {
+  const pendingDeck = createSourceDeck();
+  const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({
+    canonicalDeckApi: canonicalDeck,
+    canonicalStateApi: canonicalState,
+    getPendingCanonicalDeck: () => pendingDeck,
+    sourceDocument: { id: 'editor-doc' },
+    selection: [createElement()],
+    prop: 'color',
+    value: '#ffffff',
+    getElementId: (element) => element.dataset.editorId
+  });
+
+  assert.equal(result.slides[0].nodes[0].style, 'color: #ffffff;');
+  assert.equal(pendingDeck.slides[0].nodes[0].style, 'color: #000000;');
+});
+
 test('buildStudioCanonicalStyleMutationWithBaseline falls back when the live baseline is invalid', () => {
   const sourceDeck = createSourceDeck();
   const result = canonicalStyle.buildStudioCanonicalStyleMutationWithBaseline({

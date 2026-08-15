@@ -236,7 +236,10 @@
       || (root && root.SlideNextStudioEditorCanonicalState)
       || null;
     if (!canonicalDeckApi
-      || (!buildCanonicalDeck && !buildCanonicalDeckBaseline && !getCanonicalDeckBaseline)) return null;
+      || (!getPendingCanonicalDeck
+        && !buildCanonicalDeck
+        && !buildCanonicalDeckBaseline
+        && !getCanonicalDeckBaseline)) return null;
 
     const canonicalDeckBeforeMutation = Object.prototype.hasOwnProperty.call(options, 'canonicalDeckBeforeMutation')
       ? options.canonicalDeckBeforeMutation
