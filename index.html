@@ -1575,6 +1575,7 @@
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-shell-runtime.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
+  <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
@@ -5818,13 +5819,19 @@
       ? studioEditorPersistableDeckSanitizerShellRuntime.persistableDeckSanitizerGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistableDeckSanitizerGlobalApi);
-    const studioEditorReusablePersistedHtmlSanitizerAction =
-      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
-      && SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-      && typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-        .createStudioEditorReusablePersistedHtmlSanitizerAction === 'function'
-      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-        .createStudioEditorReusablePersistedHtmlSanitizerAction({
+    const studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi =
+      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerShellRuntime
+      : null;
+    const studioEditorReusablePersistedHtmlSanitizerShellRuntime =
+      studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
+      && typeof studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
+        .createStudioEditorReusablePersistedHtmlSanitizerShellRuntime === 'function'
+      ? studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
+        .createStudioEditorReusablePersistedHtmlSanitizerShellRuntime({
+          actionApi: typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
+            ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+            : null,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -5840,15 +5847,15 @@
           DOMParser: typeof DOMParser === 'function' ? DOMParser : null
         })
       : null;
+    const studioEditorReusablePersistedHtmlSanitizerAction =
+      studioEditorReusablePersistedHtmlSanitizerShellRuntime
+      && studioEditorReusablePersistedHtmlSanitizerShellRuntime.isAvailable === true
+      ? studioEditorReusablePersistedHtmlSanitizerShellRuntime.reusablePersistedHtmlSanitizerAction
+      : null;
     const studioEditorReusablePersistedHtmlSanitizerGlobalApi =
-      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
-      && SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-      && typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-        .createStudioEditorReusablePersistedHtmlSanitizerGlobalApi === 'function'
-      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-        .createStudioEditorReusablePersistedHtmlSanitizerGlobalApi({
-          sanitizeEditorReusablePersistedHtml: studioEditorReusablePersistedHtmlSanitizerAction
-        })
+      studioEditorReusablePersistedHtmlSanitizerShellRuntime
+      && studioEditorReusablePersistedHtmlSanitizerShellRuntime.isAvailable === true
+      ? studioEditorReusablePersistedHtmlSanitizerShellRuntime.reusablePersistedHtmlSanitizerGlobalApi
       : {};
     Object.assign(globalThis, studioEditorReusablePersistedHtmlSanitizerGlobalApi);
     const studioEditorPersistedDeckPlaybackStateAction =
