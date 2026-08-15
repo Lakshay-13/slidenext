@@ -1579,6 +1579,7 @@
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-build-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
@@ -5898,13 +5899,19 @@
       ? studioEditorPersistedDeckPlaybackStateShellRuntime.persistedDeckPlaybackStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckPlaybackStateGlobalApi);
-    const studioEditorPersistableDeckBuildStateAction =
-      typeof SlideNextStudioEditorPersistableDeckBuildStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistableDeckBuildStateAction
-      && typeof SlideNextStudioEditorPersistableDeckBuildStateAction
-        .createStudioEditorPersistableDeckBuildStateAction === 'function'
-      ? SlideNextStudioEditorPersistableDeckBuildStateAction
-        .createStudioEditorPersistableDeckBuildStateAction({
+    const studioEditorPersistableDeckBuildStateShellRuntimeApi =
+      typeof SlideNextStudioEditorPersistableDeckBuildStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorPersistableDeckBuildStateShellRuntime
+      : null;
+    const studioEditorPersistableDeckBuildStateShellRuntime =
+      studioEditorPersistableDeckBuildStateShellRuntimeApi
+      && typeof studioEditorPersistableDeckBuildStateShellRuntimeApi
+        .createStudioEditorPersistableDeckBuildStateShellRuntime === 'function'
+      ? studioEditorPersistableDeckBuildStateShellRuntimeApi
+        .createStudioEditorPersistableDeckBuildStateShellRuntime({
+          actionApi: typeof SlideNextStudioEditorPersistableDeckBuildStateAction !== 'undefined'
+            ? SlideNextStudioEditorPersistableDeckBuildStateAction
+            : null,
           getDocument: getIframeDoc,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -5916,15 +5923,13 @@
           buildPersistableDeckHtml
         })
       : null;
-    const studioEditorPersistableDeckBuildStateGlobalApi =
-      typeof SlideNextStudioEditorPersistableDeckBuildStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistableDeckBuildStateAction
-      && typeof SlideNextStudioEditorPersistableDeckBuildStateAction
-        .createStudioEditorPersistableDeckBuildStateGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistableDeckBuildStateAction
-        .createStudioEditorPersistableDeckBuildStateGlobalApi({
-          captureEditorPersistableDeckBuildState: studioEditorPersistableDeckBuildStateAction
-        })
+    const studioEditorPersistableDeckBuildStateAction = studioEditorPersistableDeckBuildStateShellRuntime
+      && studioEditorPersistableDeckBuildStateShellRuntime.isAvailable === true
+      ? studioEditorPersistableDeckBuildStateShellRuntime.persistableDeckBuildStateAction
+      : null;
+    const studioEditorPersistableDeckBuildStateGlobalApi = studioEditorPersistableDeckBuildStateShellRuntime
+      && studioEditorPersistableDeckBuildStateShellRuntime.isAvailable === true
+      ? studioEditorPersistableDeckBuildStateShellRuntime.persistableDeckBuildStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistableDeckBuildStateGlobalApi);
     const studioEditorCapturedPersistableDeckStateAction =
