@@ -170,9 +170,12 @@
           };
     }
 
-    function resolveWithContent(persistedDeckState = read()) {
+    function resolveWithContent(persistedDeckState) {
       if (typeof stateReader !== 'function') {
-        read();
+        stateReader = createStateReader();
+      }
+      if (arguments.length === 0) {
+        persistedDeckState = read();
       }
       return stateReader
         && typeof stateReader.resolveWithContent === 'function'
@@ -180,9 +183,12 @@
         : null;
     }
 
-    function resolvePersistedDeckStateWithContent(persistedDeckState = read()) {
+    function resolvePersistedDeckStateWithContent(persistedDeckState) {
       if (typeof stateReader !== 'function') {
-        read();
+        stateReader = createStateReader();
+      }
+      if (arguments.length === 0) {
+        persistedDeckState = read();
       }
       return stateReader
         && typeof stateReader.resolvePersistedDeckStateWithContent === 'function'

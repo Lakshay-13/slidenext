@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
+const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const editorPersistenceController = require('../shared/studio-editor-persistence-controller.js');
 const editorDeckReadyController = require('../shared/studio-editor-deck-ready-controller.js');
 const deckReadyView = require('../shared/studio-deck-ready.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
@@ -31,6 +33,21 @@ function loadResolveEditorStoredCanonicalDeck(fileContent, context) {
 
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.SlideNextStudioEditorPersistenceState ??= editorPersistenceState;
+  if (typeof context.studioEditorPersistenceController === 'undefined') {
+    const persistenceController = editorPersistenceController.createStudioEditorPersistenceController({
+      persistenceApi: context.SlideNextStudioEditorPersistence,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState,
+      getPersistedDeckHtml: () => context.lastPersistedDeckHtml,
+      getPersistedCanonicalDeck: () => context.lastPersistedCanonicalDeck,
+      getPersistedPlaybackState: () => context.persistedDeckPlaybackState
+    });
+    context.studioEditorPersistenceController = {
+      read: persistenceController.read,
+      resolveWithContent: persistenceController.resolveWithContent,
+      resolvePersistedDeckStateWithContent: persistenceController.resolvePersistedDeckStateWithContent
+    };
+  }
   const helperSource = extractFunctionSource(
     fileContent,
     'function getCurrentEditorPersistedDeckState() {',

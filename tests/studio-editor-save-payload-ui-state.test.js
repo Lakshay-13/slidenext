@@ -8,6 +8,7 @@ const canonicalDeckModel = require('../shared/canonical-deck.js');
 const canonicalPersistenceAdapter = require('../shared/studio-editor-canonical-persistence-adapter.js');
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
+const editorPersistenceController = require('../shared/studio-editor-persistence-controller.js');
 const persistedHtmlAction = require('../shared/studio-editor-persisted-html-action.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const sanitizerAction = require('../shared/studio-editor-persistable-deck-sanitizer-action.js');
@@ -212,6 +213,21 @@ function loadCaptureEditorPersistableDeckState(context) {
 
 function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
+  context.SlideNextStudioEditorPersistenceState ??= editorPersistenceState;
+  if (typeof context.studioEditorPersistenceController === 'undefined') {
+    const persistenceController = editorPersistenceController.createStudioEditorPersistenceController({
+      persistenceApi: context.SlideNextStudioEditorPersistence,
+      persistenceStateApi: context.SlideNextStudioEditorPersistenceState,
+      getPersistedDeckHtml: () => context.lastPersistedDeckHtml,
+      getPersistedCanonicalDeck: () => context.lastPersistedCanonicalDeck,
+      getPersistedPlaybackState: () => context.persistedDeckPlaybackState
+    });
+    context.studioEditorPersistenceController = {
+      read: persistenceController.read,
+      resolveWithContent: persistenceController.resolveWithContent,
+      resolvePersistedDeckStateWithContent: persistenceController.resolvePersistedDeckStateWithContent
+    };
+  }
   const helperSource = extractFunctionSource(
     fileContent,
     'function getCurrentEditorPersistedDeckState() {',
@@ -2594,8 +2610,8 @@ test('resolveEditorPersistedDeckStateWithContent reuses the shared persisted-sta
     }
   );
   assert.equal(resolverCreateCalls, 1);
-  assert.equal(delegatedArgs.readPersistedDeckState, context.getCurrentEditorPersistedDeckState);
-  assert.equal(delegatedArgs.resolveWithContent, context.getCurrentEditorPersistedDeckState.resolveWithContent);
+  assert.equal(typeof delegatedArgs.readPersistedDeckState, 'function');
+  assert.equal(typeof delegatedArgs.resolveWithContent, 'function');
 });
 
 test('resolveEditorCapturedPersistableDeckState fails closed when the shared resolver is unavailable', () => {

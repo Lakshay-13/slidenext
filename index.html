@@ -8172,156 +8172,37 @@
     }
 
     function getCurrentEditorPersistedDeckState() {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.read === 'function') {
-        return studioEditorPersistenceController.read();
-      }
-      if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function') {
-        const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-          ? SlideNextStudioEditorPersistence
-          : null;
-        const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-          ? SlideNextStudioEditorPersistenceState
-          : null;
-        const createStudioEditorPersistedDeckStateReaderAdapter = (
-          persistenceStateApi
-          && typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
-        )
-          ? persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter
-          : null;
-        const createStudioPersistedDeckStateReader = (
-          persistenceApi
-          && typeof persistenceApi.createStudioPersistedDeckStateReader === 'function'
-        )
-          ? persistenceApi.createStudioPersistedDeckStateReader
-          : null;
-        const createReader = createStudioEditorPersistedDeckStateReaderAdapter || createStudioPersistedDeckStateReader;
-        if (createReader) {
-          const readerOptions = {
-            getPersistedDeckHtml: getStudioPersistedDeckHtml,
-            getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
-            getPersistedPlaybackState: getStudioPersistedPlaybackState
+      const persistenceController = typeof studioEditorPersistenceController !== 'undefined'
+        ? studioEditorPersistenceController
+        : null;
+      return persistenceController
+        && typeof persistenceController.read === 'function'
+        ? persistenceController.read()
+        : {
+            cleanHtml: '',
+            canonicalDeck: null,
+            playbackState: null
           };
-          if (createStudioEditorPersistedDeckStateReaderAdapter) {
-            readerOptions.persistenceApi = persistenceApi;
-          }
-          getCurrentEditorPersistedDeckState.stateReader = createReader(readerOptions);
-        }
-      }
-      if (typeof getCurrentEditorPersistedDeckState.stateReader === 'function') {
-        return getCurrentEditorPersistedDeckState.stateReader();
-      }
-
-      return {
-        cleanHtml: '',
-        canonicalDeck: null,
-        playbackState: null
-      };
     }
 
     getCurrentEditorPersistedDeckState.resolveWithContent = function (persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.resolveWithContent === 'function') {
-        return studioEditorPersistenceController.resolveWithContent(persistedDeckState);
-      }
-      const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-        ? SlideNextStudioEditorPersistence
+      const persistenceController = typeof studioEditorPersistenceController !== 'undefined'
+        ? studioEditorPersistenceController
         : null;
-      const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-        ? SlideNextStudioEditorPersistenceState
+      return persistenceController
+        && typeof persistenceController.resolveWithContent === 'function'
+        ? persistenceController.resolveWithContent(persistedDeckState)
         : null;
-      const createStudioEditorPersistedDeckStateReaderAdapter = (
-        persistenceStateApi
-        && typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
-      )
-        ? persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter
-        : null;
-      if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function'
-        && createStudioEditorPersistedDeckStateReaderAdapter) {
-        getCurrentEditorPersistedDeckState();
-      }
-      if (getCurrentEditorPersistedDeckState.stateReader
-        && getCurrentEditorPersistedDeckState.stateReader.isStudioEditorPersistedDeckStateReaderAdapter
-        && typeof getCurrentEditorPersistedDeckState.stateReader.resolveWithContent === 'function') {
-        return getCurrentEditorPersistedDeckState.stateReader.resolveWithContent(persistedDeckState);
-      }
-      if (!getCurrentEditorPersistedDeckState.resolveWithContent.contentReader) {
-        const createStudioPersistedDeckStateReader = (
-          persistenceApi
-          && typeof persistenceApi.createStudioPersistedDeckStateReader === 'function'
-        )
-          ? persistenceApi.createStudioPersistedDeckStateReader
-          : null;
-        if (createStudioPersistedDeckStateReader) {
-          getCurrentEditorPersistedDeckState.resolveWithContent.contentReader = createStudioPersistedDeckStateReader({
-            getPersistedDeckHtml: getStudioPersistedDeckHtml,
-            getPersistedCanonicalDeck: getStudioPersistedCanonicalDeck,
-            getPersistedPlaybackState: getStudioPersistedPlaybackState,
-            resolvePersistedDeckStateSnapshotWithContent: persistenceApi
-              && typeof persistenceApi.resolveStudioPersistedDeckStateSnapshotWithContent === 'function'
-              ? persistenceApi.resolveStudioPersistedDeckStateSnapshotWithContent
-              : null,
-            resolvePersistableDeckStateWithContent: persistenceApi
-              && typeof persistenceApi.resolveStudioPersistableDeckStateWithContent === 'function'
-              ? persistenceApi.resolveStudioPersistableDeckStateWithContent
-              : null
-          });
-        }
-      }
-      if (getCurrentEditorPersistedDeckState.resolveWithContent.contentReader
-        && typeof getCurrentEditorPersistedDeckState.resolveWithContent.contentReader.resolveWithContent === 'function') {
-        return getCurrentEditorPersistedDeckState.resolveWithContent.contentReader.resolveWithContent(persistedDeckState);
-      }
-      return null;
     };
 
     function resolveEditorPersistedDeckStateWithContent(persistedDeckState = getCurrentEditorPersistedDeckState()) {
-      if (typeof studioEditorPersistenceController !== 'undefined'
-        && studioEditorPersistenceController
-        && typeof studioEditorPersistenceController.resolvePersistedDeckStateWithContent === 'function') {
-        return studioEditorPersistenceController.resolvePersistedDeckStateWithContent(persistedDeckState);
-      }
-      if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') {
-        const persistenceApi = typeof SlideNextStudioEditorPersistence !== 'undefined'
-          ? SlideNextStudioEditorPersistence
-          : null;
-        const persistenceStateApi = typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-          ? SlideNextStudioEditorPersistenceState
-          : null;
-        const createStudioEditorPersistedDeckStateReaderAdapter = (
-          persistenceStateApi
-          && typeof persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter === 'function'
-        )
-          ? persistenceStateApi.createStudioEditorPersistedDeckStateReaderAdapter
-          : null;
-        if (typeof getCurrentEditorPersistedDeckState.stateReader !== 'function'
-          && createStudioEditorPersistedDeckStateReaderAdapter) {
-          getCurrentEditorPersistedDeckState();
-        }
-        if (getCurrentEditorPersistedDeckState.stateReader
-          && getCurrentEditorPersistedDeckState.stateReader.isStudioEditorPersistedDeckStateReaderAdapter
-          && typeof getCurrentEditorPersistedDeckState.stateReader.resolvePersistedDeckStateWithContent === 'function') {
-          resolveEditorPersistedDeckStateWithContent.contentResolver = (
-            getCurrentEditorPersistedDeckState.stateReader.resolvePersistedDeckStateWithContent
-          );
-        } else {
-          const createStudioPersistedDeckStateContentResolver = (
-            persistenceApi
-            && typeof persistenceApi.createStudioPersistedDeckStateContentResolver === 'function'
-          )
-            ? persistenceApi.createStudioPersistedDeckStateContentResolver
-            : null;
-          if (!createStudioPersistedDeckStateContentResolver) return null;
-          resolveEditorPersistedDeckStateWithContent.contentResolver = createStudioPersistedDeckStateContentResolver({
-            readPersistedDeckState: getCurrentEditorPersistedDeckState,
-            resolveWithContent: getCurrentEditorPersistedDeckState.resolveWithContent
-          });
-        }
-      }
-      if (typeof resolveEditorPersistedDeckStateWithContent.contentResolver !== 'function') return null;
-      return resolveEditorPersistedDeckStateWithContent.contentResolver(persistedDeckState);
+      const persistenceController = typeof studioEditorPersistenceController !== 'undefined'
+        ? studioEditorPersistenceController
+        : null;
+      return persistenceController
+        && typeof persistenceController.resolvePersistedDeckStateWithContent === 'function'
+        ? persistenceController.resolvePersistedDeckStateWithContent(persistedDeckState)
+        : null;
     }
 
     function buildEditorDeckSnapshot(doc = getIframeDoc(), options = {}) {
