@@ -656,6 +656,17 @@
       : null;
   }
 
+  function findCanonicalMasterSlideById(deckLike, masterSlideId) {
+    const deck = isCanonicalDeck(deckLike)
+      ? deckLike
+      : createCanonicalDeck(deckLike);
+    const normalizedMasterSlideId = normalizeString(masterSlideId).trim();
+    if (!isCanonicalDeck(deck) || !normalizedMasterSlideId) return null;
+    return Array.isArray(deck.masterSlides)
+      ? deck.masterSlides.find((master) => master && master.id === normalizedMasterSlideId) || null
+      : null;
+  }
+
   function findCanonicalSlideById(deckLike, slideId) {
     const deck = isCanonicalDeck(deckLike)
       ? deckLike
@@ -2114,6 +2125,7 @@
     findCanonicalAssetById,
     findCanonicalBlockById,
     findCanonicalTemplateById,
+    findCanonicalMasterSlideById,
     findCanonicalSlideById,
     findCanonicalSlideIndexById,
     reorderCanonicalSlides,

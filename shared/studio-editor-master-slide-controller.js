@@ -296,9 +296,14 @@
       const normalizedMasterSlideId = typeof masterSlideId === 'string'
         ? masterSlideId.trim()
         : '';
-      const master = nextCanonicalDeck.masterSlides.find(
-        (candidate) => candidate && candidate.id === normalizedMasterSlideId
-      );
+      const master = canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalMasterSlideById === 'function'
+        ? canonicalDeckApi.findCanonicalMasterSlideById(nextCanonicalDeck, normalizedMasterSlideId)
+        : Array.isArray(nextCanonicalDeck.masterSlides)
+          ? nextCanonicalDeck.masterSlides.find(
+            (candidate) => candidate && candidate.id === normalizedMasterSlideId
+          )
+          : null;
       const committedDeck = commitDeck(
         nextCanonicalDeck,
         normalizedMasterSlideId
@@ -318,10 +323,13 @@
         ? masterSlideId.trim()
         : '';
       const currentDeck = resolveCanonicalDeck();
-      const master = currentDeck
-        && Array.isArray(currentDeck.masterSlides)
-        ? currentDeck.masterSlides.find((candidate) => candidate && candidate.id === normalizedMasterSlideId)
-        : null;
+      const master = canonicalDeckApi
+        && typeof canonicalDeckApi.findCanonicalMasterSlideById === 'function'
+        ? canonicalDeckApi.findCanonicalMasterSlideById(currentDeck, normalizedMasterSlideId)
+        : currentDeck
+          && Array.isArray(currentDeck.masterSlides)
+          ? currentDeck.masterSlides.find((candidate) => candidate && candidate.id === normalizedMasterSlideId)
+          : null;
       let nextCanonicalDeck = null;
       try {
         nextCanonicalDeck = canonicalDeckApi.removeCanonicalMasterSlide(

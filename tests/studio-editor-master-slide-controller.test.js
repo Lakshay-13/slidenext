@@ -406,8 +406,16 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   let activeSlide = { replaceWith(nextSlide) { activeSlide = nextSlide; } };
   let renderedOptions = null;
   let activeIndex = -1;
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalMasterSlideById(deckLike, masterSlideId) {
+      lookupCalls.push([deckLike, masterSlideId]);
+      return canonicalDeck.findCanonicalMasterSlideById(deckLike, masterSlideId);
+    }
+  };
   const controller = masterSlideController.createStudioEditorMasterSlideController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     renderApi: {
       renderCanonicalSlide(_slide, _index, options) {
         renderedOptions = options;
@@ -439,6 +447,8 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   assert.equal(renderedOptions.preferSlideSourceHtml, false);
   assert.equal(activeSlide.rendered, true);
   assert.equal(activeIndex, 0);
+  assert.equal(lookupCalls.length, 1);
+  assert.equal(lookupCalls[0][1], 'master-1');
 });
 
 test('assignMasterSlide restores the active slide when persistence rejects', () => {
@@ -548,8 +558,16 @@ test('removeMasterSlide detaches the active slide and rerenders it without the r
       replacementCount += 1;
     }
   };
+  const lookupCalls = [];
+  const canonicalDeckApi = {
+    ...canonicalDeck,
+    findCanonicalMasterSlideById(deckLike, masterSlideId) {
+      lookupCalls.push([deckLike, masterSlideId]);
+      return canonicalDeck.findCanonicalMasterSlideById(deckLike, masterSlideId);
+    }
+  };
   const controller = masterSlideController.createStudioEditorMasterSlideController({
-    canonicalDeckApi: canonicalDeck,
+    canonicalDeckApi,
     renderApi: {
       renderCanonicalSlide() {
         return '<section></section>';
@@ -577,6 +595,8 @@ test('removeMasterSlide detaches the active slide and rerenders it without the r
   assert.deepEqual(deck.masterSlides, []);
   assert.equal(Object.prototype.hasOwnProperty.call(deck.slides[0], 'masterSlideId'), false);
   assert.equal(replacementCount, 1);
+  assert.equal(lookupCalls.length, 1);
+  assert.equal(lookupCalls[0][1], 'master-1');
 });
 
 test('removeMasterSlide restores the active slide when persistence rejects', () => {

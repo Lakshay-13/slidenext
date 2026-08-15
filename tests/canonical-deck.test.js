@@ -158,6 +158,26 @@ test('findCanonicalTemplateById resolves a normalized template from canonical or
   assert.equal(canonicalDeck.findCanonicalTemplateById(canonical, 'missing'), null);
 });
 
+test('findCanonicalMasterSlideById resolves a normalized master from canonical or legacy-shaped input', () => {
+  const canonical = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'brand', name: 'Brand' }],
+    slides: [{ id: 'slide-1' }]
+  });
+
+  assert.equal(
+    canonicalDeck.findCanonicalMasterSlideById(canonical, ' brand '),
+    canonical.masterSlides[0]
+  );
+  assert.equal(
+    canonicalDeck.findCanonicalMasterSlideById(
+      { masterSlides: [{ id: 'base', name: 'Base' }], slides: [] },
+      'base'
+    ).name,
+    'Base'
+  );
+  assert.equal(canonicalDeck.findCanonicalMasterSlideById(canonical, 'missing'), null);
+});
+
 test('findCanonicalSlideIndexById resolves normalized indexes and missing slides', () => {
   const canonical = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1' }, { id: 'slide-2' }]
