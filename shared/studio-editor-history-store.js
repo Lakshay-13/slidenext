@@ -71,9 +71,14 @@
     }
 
     function getPendingEditorTransaction() {
-      return pendingController && typeof pendingController.getPendingTransaction === 'function'
-        ? pendingController.getPendingTransaction()
-        : null;
+      if (!pendingController || typeof pendingController.getPendingTransaction !== 'function') {
+        return null;
+      }
+      try {
+        return pendingController.getPendingTransaction();
+      } catch (error) {
+        return null;
+      }
     }
 
     function setPendingEditorTransaction(nextTransaction) {
@@ -89,9 +94,14 @@
     }
 
     function getPendingEditorCanonicalDeck(sourceDocument) {
-      return pendingController && typeof pendingController.getPendingCanonicalDeck === 'function'
-        ? pendingController.getPendingCanonicalDeck(sourceDocument)
-        : null;
+      if (!pendingController || typeof pendingController.getPendingCanonicalDeck !== 'function') {
+        return null;
+      }
+      try {
+        return pendingController.getPendingCanonicalDeck(sourceDocument);
+      } catch (error) {
+        return null;
+      }
     }
 
     function setPendingEditorCanonicalDeck(nextCanonicalDeck) {

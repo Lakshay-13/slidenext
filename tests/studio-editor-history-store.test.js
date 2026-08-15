@@ -76,6 +76,22 @@ test('history state preserves safe fallbacks when shared controllers are unavail
   assert.equal(controller.setUndoDebounceTimer({}), false);
 });
 
+test('history state contains pending controller read failures', () => {
+  const controller = historyStateApi.createStudioEditorHistoryStateController({
+    pendingController: {
+      getPendingTransaction() {
+        throw new Error('pending transaction unavailable');
+      },
+      getPendingCanonicalDeck() {
+        throw new Error('pending canonical deck unavailable');
+      }
+    }
+  });
+
+  assert.equal(controller.getPendingEditorTransaction(), null);
+  assert.equal(controller.getPendingEditorCanonicalDeck({ id: 'editor-document' }), null);
+});
+
 test('editor routes history state access through the shared composition adapter', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
