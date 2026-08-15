@@ -21,15 +21,9 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   return fileContent.slice(start, end);
 }
 
-function loadElementInsertionHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorElementInsertionWithTransaction(type, options = {}) {',
-    '\n\n    function insertElement(type) {'
-  );
+function loadElementInsertionTransactionModules(_fileContent, context) {
   context.SlideNextStudioEditorElementInsertionMutation = elementInsertionMutation;
   context.SlideNextStudioEditorElementInsertionTransaction = elementInsertionTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function installElementInsertionController(context) {
@@ -38,11 +32,14 @@ function installElementInsertionController(context) {
       canonicalDeckApi: context.SlideNextCanonicalDeck,
       canonicalInsertionApi: context.SlideNextStudioEditorCanonicalInsertion,
       deckImportApi: context.SlideNextDeckImport,
+      insertionTransactionApi: context.SlideNextStudioEditorElementInsertionTransaction,
+      elementInsertionMutationApi: context.SlideNextStudioEditorElementInsertionMutation,
+      insertionApi: context.SlideNextStudioEditorInsertion,
+      transactionApi: context.SlideNextStudioEditorTransaction,
       getIframeDoc: context.getIframeDoc,
       getActiveSlide: context.getActiveSlide,
       getEditorSlideId: context.getEditorSlideId,
       buildCanonicalDeck: context.buildEditorCanonicalDeck,
-      applyElementInsertion: context.applyEditorElementInsertionWithTransaction,
       makeElementsHoverable: context.makeElementsHoverable,
       assignElementId: context.assignEditorElementId,
       finalizeInsertedElements: context.finalizeInsertedElements,
@@ -118,7 +115,7 @@ test('insertElement uses the shared iframe accessor before adding a heading elem
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -201,7 +198,7 @@ test('insertElement records a slide-scoped markup transaction when adding a head
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -260,7 +257,7 @@ test('insertElement delegates successful insertion finalization to the shared li
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -332,7 +329,7 @@ test('insertElement forwards an immutable canonical node sidecar for new element
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -411,7 +408,7 @@ test('insertElement preserves the canonical sidecar in its legacy persistence fa
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -470,7 +467,7 @@ test('insertElement no-ops when no active slide is available or the element type
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 
@@ -539,7 +536,7 @@ test('insertElement fails closed when the shared insertion apply helper is unava
   };
 
   vm.createContext(context);
-  loadElementInsertionHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   vm.runInContext(insertElementSource, context);
   installElementInsertionController(context);
 

@@ -3225,6 +3225,18 @@
           deckImportApi: typeof SlideNextDeckImport !== 'undefined'
             ? SlideNextDeckImport
             : null,
+          insertionTransactionApi: typeof SlideNextStudioEditorElementInsertionTransaction !== 'undefined'
+            ? SlideNextStudioEditorElementInsertionTransaction
+            : null,
+          elementInsertionMutationApi: typeof SlideNextStudioEditorElementInsertionMutation !== 'undefined'
+            ? SlideNextStudioEditorElementInsertionMutation
+            : null,
+          insertionApi: typeof SlideNextStudioEditorInsertion !== 'undefined'
+            ? SlideNextStudioEditorInsertion
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
           getIframeDoc: (...args) => getIframeDoc(...args),
           getSlides: (...args) => getSlides(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
@@ -3969,7 +3981,6 @@
             sourceDoc || getIframeDoc(),
             getStudioEditorSessionToken()
           ),
-          applyElementInsertion: (...args) => applyEditorElementInsertionWithTransaction(...args),
           makeElementsHoverable: (...args) => makeElementsHoverable(...args),
           assignElementId: (...args) => assignEditorElementId(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
@@ -10571,38 +10582,6 @@
         && typeof studioEditorTransformController.setup === 'function'
         ? studioEditorTransformController.setup(doc)
         : false;
-    }
-
-    // Insert New elements (perfectly centered on native 1080p slide)
-    function applyEditorElementInsertionWithTransaction(type, options = {}) {
-      const transactionApi = typeof SlideNextStudioEditorElementInsertionTransaction !== 'undefined'
-        ? SlideNextStudioEditorElementInsertionTransaction
-        : null;
-      const applyTransaction = transactionApi
-        && typeof transactionApi.applyStudioEditorElementInsertionMutationWithTransaction === 'function'
-        ? transactionApi.applyStudioEditorElementInsertionMutationWithTransaction
-        : null;
-      if (!applyTransaction) {
-        return { element: null, transaction: null };
-      }
-      return applyTransaction(type, {
-        mutationApi: typeof SlideNextStudioEditorElementInsertionMutation !== 'undefined'
-          ? SlideNextStudioEditorElementInsertionMutation
-          : null,
-        insertionApi: typeof SlideNextStudioEditorInsertion !== 'undefined'
-          ? SlideNextStudioEditorInsertion
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        documentRef: options.documentRef,
-        slide: options.slide,
-        offset: options.offset,
-        layoutMode: options.layoutMode,
-        prepareElement: options.prepareElement,
-        transactionElementId: options.transactionElementId || '',
-        getElementId: options.getElementId
-      });
     }
 
     function insertElement(type) {

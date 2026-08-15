@@ -60,6 +60,22 @@
       'SlideNextStudioEditorCanonicalInsertion'
     );
     const deckImportApi = resolveDependency('deckImportApi', 'SlideNextDeckImport');
+    const insertionTransactionApi = resolveDependency(
+      'insertionTransactionApi',
+      'SlideNextStudioEditorElementInsertionTransaction'
+    );
+    const elementInsertionMutationApi = resolveDependency(
+      'elementInsertionMutationApi',
+      'SlideNextStudioEditorElementInsertionMutation'
+    );
+    const insertionApi = resolveDependency(
+      'insertionApi',
+      'SlideNextStudioEditorInsertion'
+    );
+    const transactionApi = resolveDependency(
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
       : () => null;
@@ -81,9 +97,20 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
-    const applyElementInsertion = typeof options.applyElementInsertion === 'function'
-      ? options.applyElementInsertion
-      : () => ({ element: null, transaction: null });
+    const createInsertionApplicator = insertionTransactionApi
+      && typeof insertionTransactionApi.createStudioEditorElementInsertionApplicator === 'function'
+      ? insertionTransactionApi.createStudioEditorElementInsertionApplicator
+      : null;
+    const applyElementInsertion = createInsertionApplicator
+      ? createInsertionApplicator({
+          mutationApi: elementInsertionMutationApi,
+          insertionApi,
+          transactionApi,
+          legacyApplyInsertion: options.applyElementInsertion
+        })
+      : typeof options.applyElementInsertion === 'function'
+        ? options.applyElementInsertion
+        : () => ({ element: null, transaction: null });
     const makeElementsHoverable = typeof options.makeElementsHoverable === 'function'
       ? options.makeElementsHoverable
       : null;

@@ -23,6 +23,18 @@
           deckImportApi: options.deckImportApi
             || (root && root.SlideNextDeckImport)
             || null,
+          insertionTransactionApi: options.insertionTransactionApi
+            || (root && root.SlideNextStudioEditorElementInsertionTransaction)
+            || null,
+          elementInsertionMutationApi: options.elementInsertionMutationApi
+            || (root && root.SlideNextStudioEditorElementInsertionMutation)
+            || null,
+          insertionApi: options.insertionApi
+            || (root && root.SlideNextStudioEditorInsertion)
+            || null,
+          transactionApi: options.transactionApi
+            || (root && root.SlideNextStudioEditorTransaction)
+            || null,
           getIframeDoc: options.getIframeDoc,
           getActiveSlide: options.getActiveSlide,
           getEditorSlideId: options.getEditorSlideId,

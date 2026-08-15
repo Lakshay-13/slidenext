@@ -53,15 +53,9 @@ function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
-function loadElementInsertionMutationHelper(fileContent, context) {
-  const helperSource = extractFunctionSource(
-    fileContent,
-    'function applyEditorElementInsertionWithTransaction(type, options = {}) {',
-    'function insertElement(type) {'
-  );
+function loadElementInsertionTransactionModules(_fileContent, context) {
   context.SlideNextStudioEditorElementInsertionMutation = elementInsertionMutation;
   context.SlideNextStudioEditorElementInsertionTransaction = elementInsertionTransaction;
-  vm.runInContext(helperSource, context);
 }
 
 function loadInsertElement(fileContent, context) {
@@ -79,11 +73,14 @@ function installElementInsertionController(context) {
       canonicalDeckApi: context.SlideNextCanonicalDeck,
       canonicalInsertionApi: context.SlideNextStudioEditorCanonicalInsertion,
       deckImportApi: context.SlideNextDeckImport,
+      insertionTransactionApi: context.SlideNextStudioEditorElementInsertionTransaction,
+      elementInsertionMutationApi: context.SlideNextStudioEditorElementInsertionMutation,
+      insertionApi: context.SlideNextStudioEditorInsertion,
+      transactionApi: context.SlideNextStudioEditorTransaction,
       getIframeDoc: context.getIframeDoc,
       getActiveSlide: context.getActiveSlide,
       getEditorSlideId: context.getEditorSlideId,
       buildCanonicalDeck: context.buildEditorCanonicalDeck,
-      applyElementInsertion: context.applyEditorElementInsertionWithTransaction,
       makeElementsHoverable: context.makeElementsHoverable,
       assignElementId: context.assignEditorElementId,
       finalizeInsertedElements: context.finalizeInsertedElements,
@@ -96,7 +93,7 @@ function installElementInsertionController(context) {
     });
 }
 
-test('applyEditorElementInsertionWithTransaction delegates element creation and transaction capture to the shared insertion module', () => {
+test('element insertion applicator delegates element creation and transaction capture to the shared insertion module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const slide = { appendChild() {} };
   const calls = [];
@@ -111,10 +108,13 @@ test('applyEditorElementInsertionWithTransaction delegates element creation and 
     }
   };
 
-  vm.createContext(context);
-  loadElementInsertionMutationHelper(fileContent, context);
+  const applyElementInsertion = elementInsertionTransaction
+    .createStudioEditorElementInsertionApplicator({
+      mutationApi: elementInsertionMutation,
+      insertionApi: context.SlideNextStudioEditorInsertion
+    });
 
-  const result = context.applyEditorElementInsertionWithTransaction('h2', {
+  const result = applyElementInsertion('h2', {
     documentRef: { id: 'document' },
     slide,
     offset: 15,
@@ -171,7 +171,7 @@ test('insertElement forwards an immutable canonical node sidecar after insertion
   };
 
   vm.createContext(context);
-  loadElementInsertionMutationHelper(fileContent, context);
+  loadElementInsertionTransactionModules(fileContent, context);
   loadInsertElement(fileContent, context);
   installElementInsertionController(context);
 

@@ -16,7 +16,11 @@ test('element insertion shell runtime resolves controller and canonical insertio
     controllerApi: { name: 'controller' },
     canonicalDeckApi: { name: 'deck' },
     canonicalInsertionApi: { name: 'insertion' },
-    deckImportApi: { name: 'import' }
+    deckImportApi: { name: 'import' },
+    insertionTransactionApi: { name: 'insertion-transaction' },
+    elementInsertionMutationApi: { name: 'element-mutation' },
+    insertionApi: { name: 'insertion-api' },
+    transactionApi: { name: 'transaction' }
   };
   const callback = () => {};
 
@@ -48,13 +52,21 @@ test('element insertion shell runtime honors explicitly unavailable dependencies
     controllerApi: null,
     canonicalDeckApi: null,
     canonicalInsertionApi: null,
-    deckImportApi: null
+    deckImportApi: null,
+    insertionTransactionApi: null,
+    elementInsertionMutationApi: null,
+    insertionApi: null,
+    transactionApi: null
   });
 
   assert.equal(receivedOptions.controllerApi, null);
   assert.equal(receivedOptions.canonicalDeckApi, null);
   assert.equal(receivedOptions.canonicalInsertionApi, null);
   assert.equal(receivedOptions.deckImportApi, null);
+  assert.equal(receivedOptions.insertionTransactionApi, null);
+  assert.equal(receivedOptions.elementInsertionMutationApi, null);
+  assert.equal(receivedOptions.insertionApi, null);
+  assert.equal(receivedOptions.transactionApi, null);
 });
 
 test('element insertion shell runtime safely returns null without a runtime factory', () => {

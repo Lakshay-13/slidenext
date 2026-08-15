@@ -47,6 +47,26 @@
       'deckImportApi',
       'SlideNextDeckImport'
     );
+    runtimeOptions.insertionTransactionApi = resolveApi(
+      options,
+      'insertionTransactionApi',
+      'SlideNextStudioEditorElementInsertionTransaction'
+    );
+    runtimeOptions.elementInsertionMutationApi = resolveApi(
+      options,
+      'elementInsertionMutationApi',
+      'SlideNextStudioEditorElementInsertionMutation'
+    );
+    runtimeOptions.insertionApi = resolveApi(
+      options,
+      'insertionApi',
+      'SlideNextStudioEditorInsertion'
+    );
+    runtimeOptions.transactionApi = resolveApi(
+      options,
+      'transactionApi',
+      'SlideNextStudioEditorTransaction'
+    );
 
     return insertionRuntimeApi.createStudioEditorElementInsertionRuntime(runtimeOptions);
   }

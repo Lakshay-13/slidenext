@@ -38,7 +38,41 @@
     });
   }
 
+  function createStudioEditorElementInsertionApplicator(options = {}) {
+    const applyInsertionTransaction = typeof options.applyInsertionTransaction === 'function'
+      ? options.applyInsertionTransaction
+      : applyStudioEditorElementInsertionMutationWithTransaction;
+    const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
+      ? options.mutationApi
+      : null;
+    const insertionApi = options.insertionApi && typeof options.insertionApi === 'object'
+      ? options.insertionApi
+      : null;
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    const legacyApplyInsertion = typeof options.legacyApplyInsertion === 'function'
+      ? options.legacyApplyInsertion
+      : () => ({ element: null, transaction: null });
+    const canApplyInsertionTransaction = mutationApi
+      && (typeof options.applyInsertionTransaction === 'function'
+        || typeof mutationApi.applyStudioElementInsertionMutationWithTransaction === 'function');
+
+    return (type, insertionOptions = {}) => {
+      if (canApplyInsertionTransaction) {
+        return applyInsertionTransaction(type, {
+          mutationApi,
+          insertionApi,
+          transactionApi,
+          ...insertionOptions
+        });
+      }
+      return legacyApplyInsertion(type, insertionOptions);
+    };
+  }
+
   return {
-    applyStudioEditorElementInsertionMutationWithTransaction
+    applyStudioEditorElementInsertionMutationWithTransaction,
+    createStudioEditorElementInsertionApplicator
   };
 });

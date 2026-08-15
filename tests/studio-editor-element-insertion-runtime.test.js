@@ -20,6 +20,10 @@ test('element insertion runtime composes canonical and persistence dependencies'
     canonicalDeckApi: {},
     canonicalInsertionApi: {},
     deckImportApi: {},
+    insertionTransactionApi: {},
+    elementInsertionMutationApi: {},
+    insertionApi: {},
+    transactionApi: {},
     getIframeDoc: () => null,
     getActiveSlide: () => null,
     getEditorSlideId: () => '',
@@ -45,6 +49,10 @@ test('element insertion runtime composes canonical and persistence dependencies'
   assert.equal(calls.length, 1);
   assert.equal(calls[0].canonicalInsertionApi, options.canonicalInsertionApi);
   assert.equal(calls[0].deckImportApi, options.deckImportApi);
+  assert.equal(calls[0].insertionTransactionApi, options.insertionTransactionApi);
+  assert.equal(calls[0].elementInsertionMutationApi, options.elementInsertionMutationApi);
+  assert.equal(calls[0].insertionApi, options.insertionApi);
+  assert.equal(calls[0].transactionApi, options.transactionApi);
   assert.equal(calls[0].buildCanonicalDeckBaseline, options.buildCanonicalDeckBaseline);
   assert.equal(calls[0].getPendingCanonicalDeck, options.getPendingCanonicalDeck);
   assert.equal(calls[0].applyElementInsertion, options.applyElementInsertion);
