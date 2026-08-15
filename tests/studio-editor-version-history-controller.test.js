@@ -60,7 +60,8 @@ test('editor wires the version history controller and keeps loadVersions as a co
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /<script src="\/shared\/studio-editor-version-history-controller\.js"><\/script>/);
-  assert.match(source, /SlideNextStudioEditorVersionHistoryController\.createStudioEditorVersionHistoryController/);
+  assert.match(source, /studioEditorVersionHistoryShellRuntimeApi/);
+  assert.match(source, /createStudioEditorVersionHistoryShellRuntime/);
   assert.match(source, /studioEditorVersionHistoryController\.load\(presentationUrl, sessionToken\)/);
   assert.doesNotMatch(source, /async function loadVersions\([^)]*\) \{[\s\S]*loadStudioVersionHistory\(/);
 });

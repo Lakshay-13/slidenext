@@ -1782,6 +1782,7 @@
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/studio-editor-version-history-controller.js"></script>
+  <script src="/shared/studio-editor-version-history-shell-runtime.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
@@ -5960,10 +5961,18 @@
           loadPresentations
         })
       : null;
-    const studioEditorVersionHistoryController = typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
-      && SlideNextStudioEditorVersionHistoryController
-      && typeof SlideNextStudioEditorVersionHistoryController.createStudioEditorVersionHistoryController === 'function'
-      ? SlideNextStudioEditorVersionHistoryController.createStudioEditorVersionHistoryController({
+    const studioEditorVersionHistoryShellRuntimeApi =
+      typeof SlideNextStudioEditorVersionHistoryShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorVersionHistoryShellRuntime
+      : null;
+    const studioEditorVersionHistoryShellRuntime = studioEditorVersionHistoryShellRuntimeApi
+      && typeof studioEditorVersionHistoryShellRuntimeApi
+        .createStudioEditorVersionHistoryShellRuntime === 'function'
+      ? studioEditorVersionHistoryShellRuntimeApi
+        .createStudioEditorVersionHistoryShellRuntime({
+          versionHistoryControllerApi: typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
+            ? SlideNextStudioEditorVersionHistoryController
+            : null,
           versionHistoryApi: typeof SlideNextStudioVersionHistory !== 'undefined'
             ? SlideNextStudioVersionHistory
             : null,
@@ -5984,6 +5993,10 @@
             renderVersionHistoryLoadError();
           }
         })
+      : null;
+    const studioEditorVersionHistoryController = studioEditorVersionHistoryShellRuntime
+      && studioEditorVersionHistoryShellRuntime.isAvailable === true
+      ? studioEditorVersionHistoryShellRuntime.versionHistoryController
       : null;
     const studioEditorPresentationMetadataController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.presentationMetadataController
