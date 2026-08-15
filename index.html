@@ -1470,6 +1470,7 @@
     <script src="/shared/studio-editor-alignment.js"></script>
     <script src="/shared/studio-editor-alignment-controller.js"></script>
     <script src="/shared/studio-editor-alignment-state.js"></script>
+    <script src="/shared/studio-editor-alignment-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
@@ -3735,10 +3736,18 @@
       && studioEditorMotionStateShellRuntime.isAvailable === true
       ? studioEditorMotionStateShellRuntime.motionStateController
       : null;
-    const studioEditorAlignmentStateController = typeof SlideNextStudioEditorAlignmentState !== 'undefined'
-      && SlideNextStudioEditorAlignmentState
-      && typeof SlideNextStudioEditorAlignmentState.createStudioEditorAlignmentStateController === 'function'
-      ? SlideNextStudioEditorAlignmentState.createStudioEditorAlignmentStateController({
+    const studioEditorAlignmentStateShellRuntimeApi =
+      typeof SlideNextStudioEditorAlignmentStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorAlignmentStateShellRuntime
+      : null;
+    const studioEditorAlignmentStateShellRuntime = studioEditorAlignmentStateShellRuntimeApi
+      && typeof studioEditorAlignmentStateShellRuntimeApi
+        .createStudioEditorAlignmentStateShellRuntime === 'function'
+      ? studioEditorAlignmentStateShellRuntimeApi
+        .createStudioEditorAlignmentStateShellRuntime({
+          alignmentStateApi: typeof SlideNextStudioEditorAlignmentState !== 'undefined'
+            ? SlideNextStudioEditorAlignmentState
+            : null,
           alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
             ? SlideNextStudioEditorAlignment
             : null,
@@ -3749,6 +3758,10 @@
             : isElementLocked,
           documentRef: document
         })
+      : null;
+    const studioEditorAlignmentStateController = studioEditorAlignmentStateShellRuntime
+      && studioEditorAlignmentStateShellRuntime.isAvailable === true
+      ? studioEditorAlignmentStateShellRuntime.alignmentStateController
       : null;
     const studioEditorGroupStateController = typeof SlideNextStudioEditorGroupState !== 'undefined'
       && SlideNextStudioEditorGroupState
