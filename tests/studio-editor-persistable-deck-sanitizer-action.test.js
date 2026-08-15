@@ -85,6 +85,11 @@ test('index loads and installs the shared sanitizer action', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(fileContent, /<script src="\/shared\/studio-editor-persistable-deck-sanitizer-action\.js"><\/script>/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persistable-deck-sanitizer-shell-runtime\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorPersistableDeckSanitizerShellRuntime/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistableDeckSanitizerGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function buildEditorPersistableDeckSanitizerOptions\(playbackState = null, options = \{\}\) \{/);
 });
