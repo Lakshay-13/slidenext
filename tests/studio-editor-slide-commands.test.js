@@ -528,6 +528,27 @@ test('addStudioSlideNode preserves the rollback result when deck-view restoratio
   });
 });
 
+test('addStudioSlideNode preserves the rejection when rollback throws', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2' };
+
+  assert.doesNotThrow(() => {
+    assert.equal(slideCommands.addStudioSlideNode({
+      getIframeDoc: () => doc,
+      resolveInsertionActionState: () => ({ canAddSlide: true }),
+      getSlideContainer: () => container,
+      getSlides: () => [{ id: 'slide-1' }],
+      createBlankSlide: () => newSlide,
+      applyInsertion: () => ({ didApply: true, transaction: { id: 'tx' } }),
+      finalizeMutation: () => false,
+      rollbackMutation() {
+        throw new Error('rollback failed');
+      }
+    }), false);
+  });
+});
+
 test('addStudioSlideNode prefers a scoped slide-presence transaction when the new slide is serializable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };

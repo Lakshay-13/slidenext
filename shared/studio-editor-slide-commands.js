@@ -62,6 +62,15 @@
     }
   }
 
+  function rollbackStudioSlideMutationSafely(options = {}, ...args) {
+    if (typeof options.rollbackMutation !== 'function') return;
+    try {
+      options.rollbackMutation(...args);
+    } catch (err) {
+      // Rollback failure must not mask the original slide mutation rejection.
+    }
+  }
+
   function getStudioSlideCommandDocument(options = {}) {
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
@@ -226,7 +235,7 @@
         )
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Duplicated Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
+      rollbackStudioSlideMutationSafely(options, appliedMutation.transaction, iframeDoc);
       refreshStudioSlideThumbnails(options);
       setStudioActiveSlideSafely(options, sourceIndex);
       return false;
@@ -351,7 +360,7 @@
         )
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Added Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
+      rollbackStudioSlideMutationSafely(options, appliedMutation.transaction, iframeDoc);
       refreshStudioSlideThumbnails(options);
       const preservedState = slideMutationState && typeof slideMutationState === 'object'
         ? slideMutationState
@@ -475,7 +484,7 @@
         )
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Deleted Slide', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
+      rollbackStudioSlideMutationSafely(options, appliedMutation.transaction, iframeDoc);
       refreshStudioSlideThumbnails(options);
       restoreStudioDeckViewSafely(options, iframeDoc, slideMutationState.preservedSelectionIds, {
         preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
@@ -587,7 +596,7 @@
         )
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Reordered Slides', appliedMutation.transaction);
     if (finalized === false) {
-      if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
+      rollbackStudioSlideMutationSafely(options, appliedMutation.transaction, iframeDoc);
       refreshStudioSlideThumbnails(options);
       restoreStudioDeckViewSafely(options, iframeDoc, slideMutationState.preservedSelectionIds, {
         preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
