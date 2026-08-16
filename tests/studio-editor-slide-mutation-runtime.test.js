@@ -113,7 +113,7 @@ test('index wires structural slide mutations through the runtime module', () => 
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSlideMutationShellRuntime\.createStudioEditorSlideMutationShellRuntime\(/
+    /studioEditorSlideMutationAccessorsApi\.createStudioEditorSlideMutationAccessors\(/
   );
   assert.doesNotMatch(
     fileContent,
@@ -151,7 +151,7 @@ test('index wires structural slide mutations through the runtime module', () => 
 
 test('index keeps structural slide-mutation dependencies from being shadowed', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('const studioEditorSlideMutationRuntime =');
+  const start = fileContent.indexOf('const studioEditorSlideMutationAccessorsApi =');
   const end = fileContent.indexOf(
     'const studioEditorSlideReorderController =',
     start

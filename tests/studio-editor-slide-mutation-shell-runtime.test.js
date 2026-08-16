@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-slide-mutation-shell-runtime.js');
+const mutationAccessors = require('../shared/studio-editor-slide-mutation-accessors.js');
 
 test('slide mutation shell runtime resolves mutation controllers and canonical dependencies', () => {
   let receivedOptions = null;
@@ -96,4 +97,41 @@ test('slide mutation shell runtime safely returns null without a runtime factory
     shellRuntime.createStudioEditorSlideMutationShellRuntime({ mutationRuntimeApi: {} }),
     null
   );
+});
+
+test('slide mutation accessors compose the shell runtime and preserve its result', () => {
+  const runtime = { slideInsertionController: { name: 'insert' } };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorSlideMutationShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const insertionApi = { name: 'insertion-api' };
+  const callbacks = {
+    getIframeDoc: () => ({ id: 'document' }),
+    getPendingCanonicalDeck: () => ({ kind: 'deck' })
+  };
+  const accessors = mutationAccessors.createStudioEditorSlideMutationAccessors({
+    runtimeApi,
+    mutationRuntimeApi: { name: 'mutation-runtime' },
+    insertionApi,
+    ...callbacks
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].mutationRuntimeApi.name, 'mutation-runtime');
+  assert.equal(calls[0].insertionApi, insertionApi);
+  assert.equal(calls[0].getIframeDoc, callbacks.getIframeDoc);
+  assert.equal(calls[0].getPendingCanonicalDeck, callbacks.getPendingCanonicalDeck);
+});
+
+test('slide mutation accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = mutationAccessors.createStudioEditorSlideMutationAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });

@@ -1560,6 +1560,7 @@
   <script src="/shared/studio-editor-slide-reorder-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation-runtime.js"></script>
   <script src="/shared/studio-editor-slide-mutation-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-slide-mutation-accessors.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-global-shortcuts.js"></script>
   <script src="/shared/studio-editor-bootstrap.js"></script>
@@ -3372,10 +3373,16 @@
       && studioEditorNavigationUiAccessors.isAvailable === true
       ? studioEditorNavigationUiAccessors.navigationUiBridge
       : null;
-    const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationShellRuntime !== 'undefined'
-      && SlideNextStudioEditorSlideMutationShellRuntime
-      && typeof SlideNextStudioEditorSlideMutationShellRuntime.createStudioEditorSlideMutationShellRuntime === 'function'
-      ? SlideNextStudioEditorSlideMutationShellRuntime.createStudioEditorSlideMutationShellRuntime({
+    const studioEditorSlideMutationAccessorsApi =
+      typeof SlideNextStudioEditorSlideMutationAccessors !== 'undefined'
+      ? SlideNextStudioEditorSlideMutationAccessors
+      : null;
+    const studioEditorSlideMutationAccessors = studioEditorSlideMutationAccessorsApi
+      && typeof studioEditorSlideMutationAccessorsApi.createStudioEditorSlideMutationAccessors === 'function'
+      ? studioEditorSlideMutationAccessorsApi.createStudioEditorSlideMutationAccessors({
+          runtimeApi: typeof SlideNextStudioEditorSlideMutationShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorSlideMutationShellRuntime
+            : null,
           mutationRuntimeApi: typeof SlideNextStudioEditorSlideMutationRuntime !== 'undefined'
             ? SlideNextStudioEditorSlideMutationRuntime
             : null,
@@ -3457,6 +3464,9 @@
           generateThumbnails: (...args) => generateThumbnails(...args),
           finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args)
         })
+      : null;
+    const studioEditorSlideMutationRuntime = studioEditorSlideMutationAccessors
+      ? studioEditorSlideMutationAccessors.runtime
       : null;
     const studioEditorSlideReorderController = studioEditorSlideMutationRuntime
       ? studioEditorSlideMutationRuntime.slideReorderController
