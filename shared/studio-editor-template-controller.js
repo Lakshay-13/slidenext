@@ -140,6 +140,15 @@
       }
     }
 
+    function refreshTemplateThumbnails() {
+      if (!generateThumbnails) return;
+      try {
+        generateThumbnails();
+      } catch (err) {
+        // Thumbnail chrome is secondary; preserve the template mutation result.
+      }
+    }
+
     function runLegacyPersistenceHooks(versionLabel = '') {
       if (triggerAutoSave) {
         try {
@@ -379,7 +388,7 @@
       });
       if (!mutation || !mutation.didApply) return false;
 
-      if (generateThumbnails) generateThumbnails();
+      refreshTemplateThumbnails();
       refreshTemplateActiveSlide(insertionIndex);
       const template = canonicalDeckApi
         && typeof canonicalDeckApi.findCanonicalTemplateById === 'function'
@@ -397,7 +406,7 @@
         }
         if (finalizeResult === false) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
-          if (generateThumbnails) generateThumbnails();
+          refreshTemplateThumbnails();
           refreshTemplateActiveSlide(activeSlideIndex);
           return false;
         }
@@ -412,7 +421,7 @@
             )
           )) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
-          if (generateThumbnails) generateThumbnails();
+          refreshTemplateThumbnails();
           refreshTemplateActiveSlide(activeSlideIndex);
           return false;
         }

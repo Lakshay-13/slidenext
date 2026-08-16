@@ -492,6 +492,54 @@ test('template controller preserves insertion persistence when active-slide chro
   assert.deepEqual(calls, ['active', 'save', 'version']);
 });
 
+test('template controller preserves insertion persistence when thumbnail chrome throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    templates: [{ id: 'hero-template', name: 'Hero Template', slide: { nodes: [] } }],
+    slides: [{ id: 'slide-1' }]
+  });
+  const container = {
+    children: [],
+    insertBefore(element) {
+      this.children.push(element);
+    }
+  };
+  const documentRef = {
+    createElement() {
+      return {
+        content: { firstElementChild: {} },
+        set innerHTML(value) {
+          this.html = value;
+        }
+      };
+    }
+  };
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => documentRef,
+    getSlideContainer: () => container,
+    getSlides: () => [{ id: 'current-slide' }],
+    applyInsertion(target, element) {
+      target.insertBefore(element);
+      return { didApply: true, transaction: { id: 'tx' } };
+    },
+    generateThumbnails() {
+      calls.push('thumbnails');
+      throw new Error('thumbnail chrome unavailable');
+    },
+    setActiveSlide: () => calls.push('active'),
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => calls.push('save'),
+    triggerAutoVersion: () => calls.push('version')
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insertTemplate('hero-template'), true));
+  assert.deepEqual(calls, ['thumbnails', 'active', 'save', 'version']);
+});
+
 test('template controller does not insert when the history baseline is rejected', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     templates: [{
