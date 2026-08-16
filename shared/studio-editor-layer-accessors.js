@@ -11,6 +11,9 @@
     const controller = options.controller
       || (root && root.SlideNextStudioEditorLayerController)
       || null;
+    const deckMutationApi = options.deckMutationApi
+      || (root && root.SlideNextStudioEditorDeckMutation)
+      || null;
     const documentRef = options.documentRef || null;
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
@@ -215,6 +218,28 @@
       });
     }
 
+    function finalizeLayerOrderMutation(
+      versionLabel = 'Auto: Rearranged Layers',
+      mutationOptions = {}
+    ) {
+      if (!deckMutationApi
+        || typeof deckMutationApi.finalizeStudioEditorLayerOrderMutation !== 'function') {
+        return false;
+      }
+      return deckMutationApi.finalizeStudioEditorLayerOrderMutation(versionLabel, mutationOptions, {
+        mutationApi: options.mutationApi || null,
+        isCanonicalDeck: typeof options.getCanonicalDeckValidator === 'function'
+          ? options.getCanonicalDeckValidator()
+          : null,
+        finalizeMutation: options.finalizeMutation || null,
+        saveHistoryState: options.saveHistoryState || null,
+        triggerAutoSave: options.triggerAutoSave || null,
+        updateLayersList: options.updateLayersList || null,
+        updateLayerOrderActionState: options.updateLayerOrderActionState || null,
+        triggerAutoVersion: options.triggerAutoVersion || null
+      });
+    }
+
     return {
       updateLayersList,
       resolveLayerRowElement: resolveRow,
@@ -223,7 +248,8 @@
       changeLayerZIndexByRef,
       arrangeElementLayer,
       refreshLayerOrderUi,
-      syncLayerOrderZIndexInput
+      syncLayerOrderZIndexInput,
+      finalizeLayerOrderMutation
     };
   }
 
@@ -243,7 +269,10 @@
         : false,
       syncLayerOrderZIndexInput: (target) => typeof accessors.syncLayerOrderZIndexInput === 'function'
         ? accessors.syncLayerOrderZIndexInput(target)
-        : null
+        : null,
+      finalizeLayerOrderMutation: (versionLabel, options) => typeof accessors.finalizeLayerOrderMutation === 'function'
+        ? accessors.finalizeLayerOrderMutation(versionLabel, options)
+        : false
     };
   }
 

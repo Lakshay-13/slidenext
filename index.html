@@ -1824,6 +1824,21 @@
           controller: typeof SlideNextStudioEditorLayerController !== 'undefined'
             ? SlideNextStudioEditorLayerController
             : null,
+          deckMutationApi: typeof SlideNextStudioEditorDeckMutation !== 'undefined'
+            ? SlideNextStudioEditorDeckMutation
+            : null,
+          mutationApi: typeof SlideNextStudioEditorMutation !== 'undefined'
+            ? SlideNextStudioEditorMutation
+            : null,
+          getCanonicalDeckValidator: () => typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
+          finalizeMutation: typeof finalizeEditorDeckMutation === 'function'
+            ? finalizeEditorDeckMutation
+            : null,
+          saveHistoryState: typeof saveHistoryState === 'function' ? saveHistoryState : null,
+          triggerAutoSave: typeof triggerAutoSave === 'function' ? triggerAutoSave : null,
+          triggerAutoVersion: typeof triggerAutoVersion === 'function' ? triggerAutoVersion : null,
           documentRef: document,
           getIframeDoc,
           getActiveSlide,
@@ -11432,6 +11447,11 @@
     }
 
     function finalizeLayerOrderMutation(versionLabel = 'Auto: Rearranged Layers', options = {}) {
+      if (typeof studioEditorLayerAccessors !== 'undefined'
+        && studioEditorLayerAccessors
+        && typeof studioEditorLayerAccessors.finalizeLayerOrderMutation === 'function') {
+        return studioEditorLayerAccessors.finalizeLayerOrderMutation(versionLabel, options);
+      }
       const deckMutationApi = typeof SlideNextStudioEditorDeckMutation !== 'undefined'
         ? SlideNextStudioEditorDeckMutation
         : null;

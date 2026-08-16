@@ -169,6 +169,50 @@ test('layer accessors compose layer UI refresh through the shared controller', (
   ]);
 });
 
+test('layer accessors compose layer mutation finalization through the shared deck lifecycle', () => {
+  const calls = [];
+  const validator = () => true;
+  const mutationApi = { id: 'mutation-api' };
+  const finalizeMutation = () => true;
+  const saveHistoryState = () => true;
+  const triggerAutoSave = () => true;
+  const triggerAutoVersion = () => true;
+  const updateLayersList = () => true;
+  const updateLayerOrderActionState = () => true;
+  const accessors = layerAccessors.createStudioEditorLayerAccessors({
+    deckMutationApi: {
+      finalizeStudioEditorLayerOrderMutation(label, options, lifecycleOptions) {
+        calls.push([label, options, lifecycleOptions]);
+        return 'finalized';
+      }
+    },
+    mutationApi,
+    getCanonicalDeckValidator: () => validator,
+    finalizeMutation,
+    saveHistoryState,
+    triggerAutoSave,
+    triggerAutoVersion,
+    updateLayersList,
+    updateLayerOrderActionState
+  });
+
+  const mutationOptions = { transaction: { id: 'transaction-1' } };
+  assert.equal(accessors.finalizeLayerOrderMutation('Auto: Layer Order', mutationOptions), 'finalized');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'Auto: Layer Order');
+  assert.equal(calls[0][1], mutationOptions);
+  assert.deepEqual(calls[0][2], {
+    mutationApi,
+    isCanonicalDeck: validator,
+    finalizeMutation,
+    saveHistoryState,
+    triggerAutoSave,
+    updateLayersList,
+    updateLayerOrderActionState,
+    triggerAutoVersion
+  });
+});
+
 test('layer accessors prefer the live z-index synchronizer', () => {
   const target = { id: 'target' };
   const calls = [];
