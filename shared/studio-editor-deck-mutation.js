@@ -386,7 +386,7 @@
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      if (options.triggerAutoSave() === false) return false;
+      if (!invokeStudioEditorAutoSave(options.triggerAutoSave)) return false;
     }
     if (versionLabel && typeof options.triggerAutoVersion === 'function') {
       options.triggerAutoVersion(versionLabel);

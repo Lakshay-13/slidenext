@@ -598,6 +598,23 @@ test('finalizeStudioEditorWallpaperMutation converts thrown fallback history to 
   ), false);
 });
 
+test('finalizeStudioEditorWallpaperMutation converts thrown fallback autosave to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Rejected',
+    { id: 'tx' },
+    null,
+    {
+      saveHistoryState() {},
+      triggerAutoSave: () => {
+        throw new Error('autosave unavailable');
+      },
+      triggerAutoVersion: () => {
+        throw new Error('versioning should not run');
+      }
+    }
+  ), false);
+});
+
 test('finalizeStudioEditorWallpaperMutation contains thrown persistence failures', () => {
   assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
     'Auto: Background',
