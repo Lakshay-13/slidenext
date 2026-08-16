@@ -29,6 +29,13 @@
     const generateThumbnails = typeof options.generateThumbnails === 'function'
       ? options.generateThumbnails
       : () => {};
+    const refreshRollbackThumbnailsSafely = () => {
+      try {
+        generateThumbnails();
+      } catch (error) {
+        // Thumbnail refresh must not turn a completed rollback into a failure.
+      }
+    };
     if (!transaction
       || !transactionApi
       || typeof transactionApi.applyStudioEditorTransaction !== 'function') {
@@ -108,7 +115,7 @@
             }
             makeElementsHoverable(slide);
           }
-          generateThumbnails();
+          refreshRollbackThumbnailsSafely();
           return true;
         },
         applyElementPresenceState: (elementId, parentId, snapshot) => {
