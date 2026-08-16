@@ -1691,6 +1691,7 @@
   <script src="/shared/studio-editor-shell-controller.js"></script>
   <script src="/shared/studio-editor-launch-source.js"></script>
   <script src="/shared/studio-editor-launch-controller.js"></script>
+  <script src="/shared/studio-editor-launch-controller-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-launch-shell-controller.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
@@ -6961,10 +6962,22 @@
     const studioEditorShellController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.shellController
       : null;
-    const studioEditorLaunchController = typeof SlideNextStudioEditorLaunchController !== 'undefined'
-      && SlideNextStudioEditorLaunchController
-      && typeof SlideNextStudioEditorLaunchController.createStudioEditorLaunchController === 'function'
-      ? SlideNextStudioEditorLaunchController.createStudioEditorLaunchController({
+    const studioEditorLaunchControllerRuntimeApi =
+      typeof SlideNextStudioEditorLaunchController !== 'undefined'
+      ? SlideNextStudioEditorLaunchController
+      : null;
+    const studioEditorLaunchControllerRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorLaunchControllerRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorLaunchControllerRuntimeAccessors
+      : null;
+    const studioEditorLaunchControllerRuntimeAccessors =
+      studioEditorLaunchControllerRuntimeAccessorsApi
+      && typeof studioEditorLaunchControllerRuntimeAccessorsApi
+        .createStudioEditorLaunchControllerRuntimeAccessors === 'function'
+      ? studioEditorLaunchControllerRuntimeAccessorsApi
+        .createStudioEditorLaunchControllerRuntimeAccessors({
+          runtimeApi: studioEditorLaunchControllerRuntimeApi,
+          runtimeOptions: {
           documentRef: document,
           localStorageRef: localStorage,
           getCurrentPresentationUrl: getStudioCurrentPresentationUrl,
@@ -6978,8 +6991,11 @@
           resolveLaunchSource: (...args) => resolveCurrentStudioEditorLaunchSource(...args),
           shellController: studioEditorShellController,
           setFrameSource: (...args) => setCurrentStudioEditorFrameSource(...args)
+          }
         })
-      : null;
+      : { runtime: null };
+    const studioEditorLaunchController =
+      studioEditorLaunchControllerRuntimeAccessors.runtime;
     const studioEditorLaunchShellController = typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
       && SlideNextStudioEditorLaunchShellController
       && typeof SlideNextStudioEditorLaunchShellController.createStudioEditorLaunchShellController === 'function'
