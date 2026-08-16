@@ -2459,6 +2459,8 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
 test('editor composes slide-ID assignment through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /<script src="\/shared\/studio-editor-slide-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorSlideAccessors =/);
   assert.match(source, /const studioEditorSlideIdAssigner =/);
   assert.match(source, /const studioEditorSlideIdAdapter =/);
   assert.match(source, /typeof SlideNextStudioEditorSlideIdAdapter !== 'undefined'/);
