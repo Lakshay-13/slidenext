@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const groupStateShellRuntime = require('../shared/studio-editor-group-state-shell-runtime.js');
+const groupStateAccessors = require('../shared/studio-editor-group-state-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -59,6 +60,38 @@ test('group-state shell runtime fails closed when the shared state API is unavai
   assert.equal(runtime.groupStateController, null);
 });
 
+test('group-state accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { isAvailable: true, groupStateController: { name: 'group' } };
+  const runtimeOptions = { getDocument: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorGroupStateShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const groupStateApi = { name: 'state' };
+  const accessors = groupStateAccessors.createStudioEditorGroupStateAccessors({
+    runtimeApi,
+    groupStateApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].groupStateApi, groupStateApi);
+  assert.equal(calls[0].getDocument, runtimeOptions.getDocument);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('group-state accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = groupStateAccessors.createStudioEditorGroupStateAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
+});
+
 test('index routes group-state construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -66,8 +99,14 @@ test('index routes group-state construction through the shell runtime', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-group-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorGroupStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorGroupStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-group-state-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorGroupStateAccessorsApi\s*\.\s*createStudioEditorGroupStateAccessors\(/
+  );
   assert.match(
     fileContent,
     /studioEditorGroupStateController = studioEditorGroupStateShellRuntime/

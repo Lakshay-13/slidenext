@@ -1489,6 +1489,7 @@
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-group-state-accessors.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-ungroup-state.js"></script>
@@ -4023,15 +4024,19 @@
       && studioEditorAlignmentStateShellRuntime.isAvailable === true
       ? studioEditorAlignmentStateShellRuntime.alignmentStateController
       : null;
-    const studioEditorGroupStateShellRuntimeApi =
-      typeof SlideNextStudioEditorGroupStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorGroupStateShellRuntime
+    const studioEditorGroupStateAccessorsApi =
+      typeof SlideNextStudioEditorGroupStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorGroupStateAccessors
       : null;
-    const studioEditorGroupStateShellRuntime = studioEditorGroupStateShellRuntimeApi
-      && typeof studioEditorGroupStateShellRuntimeApi
-        .createStudioEditorGroupStateShellRuntime === 'function'
-      ? studioEditorGroupStateShellRuntimeApi
-        .createStudioEditorGroupStateShellRuntime({
+    const studioEditorGroupStateAccessors = studioEditorGroupStateAccessorsApi
+      && typeof studioEditorGroupStateAccessorsApi
+        .createStudioEditorGroupStateAccessors === 'function'
+      ? studioEditorGroupStateAccessorsApi
+        .createStudioEditorGroupStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorGroupStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorGroupStateShellRuntime
+            : null,
+          runtimeOptions: {
           groupStateApi: typeof SlideNextStudioEditorGroupState !== 'undefined'
             ? SlideNextStudioEditorGroupState
             : null,
@@ -4054,7 +4059,11 @@
             ? getEditorCanonicalFreeformReader(sourceDoc, isElementFreeformPositioned)
             : isElementFreeformPositioned,
           isFreeformPositioned: isElementFreeformPositioned
+          }
         })
+      : null;
+    const studioEditorGroupStateShellRuntime = studioEditorGroupStateAccessors
+      ? studioEditorGroupStateAccessors.runtime
       : null;
     const studioEditorGroupStateController = studioEditorGroupStateShellRuntime
       && studioEditorGroupStateShellRuntime.isAvailable === true

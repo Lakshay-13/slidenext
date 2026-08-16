@@ -330,7 +330,7 @@ test('group wiring prefers live canonical state and keeps a legacy baseline fall
   );
   const groupStateControllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorGroupStateShellRuntimeApi =',
+    'const studioEditorGroupStateAccessorsApi =',
     'const studioEditorUngroupStateController ='
   );
 
