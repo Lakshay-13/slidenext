@@ -57,6 +57,26 @@ test('resolveStudioCanonicalLayoutDisplayMode identifies mixed flow and absolute
     layoutMode.resolveStudioCanonicalLayoutDisplayMode(deck, 'slide-1'),
     'mixed'
   );
+  assert.equal(
+    layoutMode.resolveStudioCanonicalInsertionLayoutMode(deck, 'slide-1'),
+    'flow'
+  );
+});
+
+test('resolveStudioCanonicalInsertionLayoutMode preserves explicit absolute slide modes', () => {
+  const deck = {
+    layout: { mode: 'flow' },
+    slides: [{
+      id: 'slide-1',
+      layout: { mode: 'absolute' },
+      nodes: [{ layout: { mode: 'flow' } }]
+    }]
+  };
+
+  assert.equal(
+    layoutMode.resolveStudioCanonicalInsertionLayoutMode(deck, 'slide-1'),
+    'absolute'
+  );
 });
 
 test('resolveStudioCanonicalLayoutMode supports an explicit fallback for unavailable decks', () => {

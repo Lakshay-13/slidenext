@@ -32,6 +32,24 @@
     });
   }
 
+  function getCanonicalNodeLayoutKinds(nodes = []) {
+    let hasAbsolute = false;
+    let hasFlow = false;
+    const visitNodes = (candidates = []) => {
+      (Array.isArray(candidates) ? candidates : []).forEach((node) => {
+        if (!node || typeof node !== 'object') return;
+        if (normalizeStudioLayoutMode(node.layout && node.layout.mode) === 'absolute') {
+          hasAbsolute = true;
+        } else {
+          hasFlow = true;
+        }
+        visitNodes(node.children);
+      });
+    };
+    visitNodes(nodes);
+    return { hasAbsolute, hasFlow };
+  }
+
   function resolveStudioCanonicalSlide(canonicalDeck, slideId, options = {}) {
     if (!canonicalDeck || !Array.isArray(canonicalDeck.slides)) return null;
 
@@ -78,27 +96,30 @@
       return mode;
     }
 
-    let hasAbsoluteNode = false;
-    let hasFlowNode = false;
-    const visitNodes = (nodes = []) => {
-      (Array.isArray(nodes) ? nodes : []).forEach((node) => {
-        if (!node || typeof node !== 'object') return;
-        if (normalizeStudioLayoutMode(node.layout && node.layout.mode) === 'absolute') {
-          hasAbsoluteNode = true;
-        } else {
-          hasFlowNode = true;
-        }
-        visitNodes(node.children);
-      });
-    };
-    visitNodes(slide.nodes);
-    return hasAbsoluteNode && hasFlowNode ? 'mixed' : mode;
+    const nodeLayoutKinds = getCanonicalNodeLayoutKinds(slide.nodes);
+    return nodeLayoutKinds.hasAbsolute && nodeLayoutKinds.hasFlow ? 'mixed' : mode;
+  }
+
+  function resolveStudioCanonicalInsertionLayoutMode(canonicalDeck, slideId, options = {}) {
+    const mode = resolveStudioCanonicalLayoutMode(canonicalDeck, slideId, options);
+    if (mode !== 'absolute') return mode;
+
+    const slide = resolveStudioCanonicalSlide(canonicalDeck, slideId, options);
+    if (!slide
+      || normalizeStudioLayoutMode(canonicalDeck.layout && canonicalDeck.layout.mode) === 'absolute'
+      || normalizeStudioLayoutMode(slide.layout && slide.layout.mode) === 'absolute') {
+      return mode;
+    }
+
+    const nodeLayoutKinds = getCanonicalNodeLayoutKinds(slide.nodes);
+    return nodeLayoutKinds.hasAbsolute && nodeLayoutKinds.hasFlow ? 'flow' : mode;
   }
 
   return {
     normalizeStudioLayoutMode,
     hasAbsoluteCanonicalNode,
     resolveStudioCanonicalLayoutMode,
-    resolveStudioCanonicalLayoutDisplayMode
+    resolveStudioCanonicalLayoutDisplayMode,
+    resolveStudioCanonicalInsertionLayoutMode
   };
 });

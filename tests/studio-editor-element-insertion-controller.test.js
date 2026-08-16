@@ -233,6 +233,44 @@ test('element insertion controller delegates canonical layout inference to the s
   ]);
 });
 
+test('element insertion controller uses the mixed-layout insertion resolver when available', () => {
+  const calls = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    layoutModeApi: {
+      resolveStudioCanonicalInsertionLayoutMode(deck, slideId) {
+        calls.push([deck, slideId]);
+        return 'flow';
+      },
+      resolveStudioCanonicalLayoutMode() {
+        throw new Error('legacy resolver should not be used');
+      }
+    },
+    canonicalInsertionApi: {
+      createStudioCanonicalInsertionMutationBuilders() {
+        return {
+          buildCanonicalInsertionBaseline() {
+            return { slides: [{ id: 'slide-1', nodes: [] }] };
+          }
+        };
+      }
+    },
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (_type, options) => {
+      calls.push(options.layoutMode);
+      return { element: { id: 'inserted' }, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+
+  assert.equal(controller.insert('h2'), true);
+  assert.deepEqual(calls, [
+    [{ slides: [{ id: 'slide-1', nodes: [] }] }, 'slide-1'],
+    'flow'
+  ]);
+});
+
 test('element insertion controller delegates explicit mode normalization to the shared layout mode API', () => {
   const calls = [];
   const controller = elementInsertionController.createStudioEditorElementInsertionController({

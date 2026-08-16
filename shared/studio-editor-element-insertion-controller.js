@@ -251,10 +251,16 @@
         refreshActionState(iframeDoc);
         return false;
       }
-      const insertionLayoutMode = normalizeLayoutMode(normalizedInsertOptions.layoutMode)
-        || (layoutModeApi
+      const resolveInsertionLayoutMode = layoutModeApi
+        && typeof layoutModeApi.resolveStudioCanonicalInsertionLayoutMode === 'function'
+        ? layoutModeApi.resolveStudioCanonicalInsertionLayoutMode
+        : layoutModeApi
           && typeof layoutModeApi.resolveStudioCanonicalLayoutMode === 'function'
-          ? layoutModeApi.resolveStudioCanonicalLayoutMode(
+            ? layoutModeApi.resolveStudioCanonicalLayoutMode
+            : null;
+      const insertionLayoutMode = normalizeLayoutMode(normalizedInsertOptions.layoutMode)
+        || (resolveInsertionLayoutMode
+          ? resolveInsertionLayoutMode(
               canonicalDeckBeforeInsertion,
               activeSlideId,
               { canonicalDeckApi }
