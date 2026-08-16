@@ -1784,6 +1784,7 @@
   <script src="/shared/studio-editor-history-controller-runtime-options.js"></script>
   <script src="/shared/studio-editor-history-controller-runtime.js"></script>
   <script src="/shared/studio-editor-history-controller-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-history-controller-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-history-save-action.js"></script>
   <script src="/shared/studio-editor-history-frame-action.js"></script>
   <script src="/shared/studio-editor-history-entry-action.js"></script>
@@ -5874,16 +5875,26 @@
           }
         })
       : null;
-    const studioEditorHistoryControllerRuntime = studioEditorHistoryControllerRuntimeOptions
-      && typeof SlideNextStudioEditorHistoryControllerShellRuntime !== 'undefined'
-      && SlideNextStudioEditorHistoryControllerShellRuntime
-      && typeof SlideNextStudioEditorHistoryControllerShellRuntime.createStudioEditorHistoryControllerShellRuntime === 'function'
-      ? SlideNextStudioEditorHistoryControllerShellRuntime.createStudioEditorHistoryControllerShellRuntime({
+    const studioEditorHistoryControllerRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorHistoryControllerRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorHistoryControllerRuntimeAccessors
+      : null;
+    const studioEditorHistoryControllerRuntimeAccessors = studioEditorHistoryControllerRuntimeAccessorsApi
+      && typeof studioEditorHistoryControllerRuntimeAccessorsApi
+        .createStudioEditorHistoryControllerRuntimeAccessors === 'function'
+      ? studioEditorHistoryControllerRuntimeAccessorsApi
+        .createStudioEditorHistoryControllerRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorHistoryControllerShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorHistoryControllerShellRuntime
+            : null,
           historyRuntimeApi: typeof SlideNextStudioEditorHistoryControllerRuntime !== 'undefined'
             ? SlideNextStudioEditorHistoryControllerRuntime
             : null,
           runtimeOptions: studioEditorHistoryControllerRuntimeOptions
         })
+      : null;
+    const studioEditorHistoryControllerRuntime = studioEditorHistoryControllerRuntimeAccessors
+      ? studioEditorHistoryControllerRuntimeAccessors.runtime
       : null;
     const studioEditorHistoryController = studioEditorHistoryControllerRuntime
       ? studioEditorHistoryControllerRuntime.historyController
