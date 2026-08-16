@@ -10,8 +10,8 @@ const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 test('editor composes inspector selection synchronization through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /studioEditorInspectorSelectionShellRuntimeApi/);
-  assert.match(source, /createStudioEditorInspectorSelectionShellRuntime\(/);
+  assert.match(source, /studioEditorInspectorSelectionAccessorsApi/);
+  assert.match(source, /createStudioEditorInspectorSelectionAccessors\(/);
   assert.match(source, /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/);
   assert.match(source, /return typeof studioEditorInspectorSelectionSynchronizer === 'function'/);
   assert.doesNotMatch(source, /syncInspectorForSelection\.synchronizer/);

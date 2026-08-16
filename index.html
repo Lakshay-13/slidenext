@@ -1371,6 +1371,7 @@
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-inspector-controller.js"></script>
   <script src="/shared/studio-editor-inspector-selection-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-inspector-selection-accessors.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-transaction.js"></script>
@@ -9742,15 +9743,27 @@
         : false;
     }
 
-    const studioEditorInspectorSelectionShellRuntimeApi =
-      typeof SlideNextStudioEditorInspectorSelectionShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorInspectorSelectionShellRuntime
+    const studioEditorInspectorSelectionAccessorsApi =
+      typeof SlideNextStudioEditorInspectorSelectionAccessors !== 'undefined'
+      ? SlideNextStudioEditorInspectorSelectionAccessors
       : null;
-    const studioEditorInspectorSelectionShellRuntime = studioEditorInspectorSelectionShellRuntimeApi
-      && typeof studioEditorInspectorSelectionShellRuntimeApi
-        .createStudioEditorInspectorSelectionShellRuntime === 'function'
-      ? studioEditorInspectorSelectionShellRuntimeApi
-        .createStudioEditorInspectorSelectionShellRuntime({
+    const studioEditorInspectorSelectionAccessors = studioEditorInspectorSelectionAccessorsApi
+      && typeof studioEditorInspectorSelectionAccessorsApi
+        .createStudioEditorInspectorSelectionAccessors === 'function'
+      ? studioEditorInspectorSelectionAccessorsApi
+        .createStudioEditorInspectorSelectionAccessors({
+          runtimeApi: typeof SlideNextStudioEditorInspectorSelectionShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorInspectorSelectionShellRuntime
+            : null,
+          inspectorApi: typeof SlideNextStudioEditorInspectorController !== 'undefined'
+            ? SlideNextStudioEditorInspectorController
+            : null,
+          liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+            ? SlideNextStudioEditorLiveSelection
+            : null,
+          inspectorView: typeof SlideNextStudioEditorInspectorView !== 'undefined'
+            ? SlideNextStudioEditorInspectorView
+            : null,
           documentRef: typeof document !== 'undefined' ? document : null,
           getSelectedElements: (doc) => getStudioSelectedElements(doc),
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
@@ -9798,9 +9811,9 @@
             : null
         })
       : null;
-    var studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionShellRuntime
-      && typeof studioEditorInspectorSelectionShellRuntime.sync === 'function'
-      ? studioEditorInspectorSelectionShellRuntime.sync
+    var studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionAccessors
+      && typeof studioEditorInspectorSelectionAccessors.sync === 'function'
+      ? studioEditorInspectorSelectionAccessors.sync
       : null;
 
     function syncInspectorForSelection() {
