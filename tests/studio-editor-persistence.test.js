@@ -1646,6 +1646,61 @@ test('buildStudioPersistableDeckHtmlFromDocument resolves canonical deck, captur
   );
 });
 
+test('persistence build helpers preserve results when resolved-state callbacks throw', () => {
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: [{ id: 'slide-1', nodes: [] }]
+  };
+  const playbackState = { activeSlideIds: ['slide-1'] };
+  const throwingCallbacks = {
+    onCanonicalDeckResolved() {
+      throw new Error('canonical state consumer unavailable');
+    },
+    onPlaybackStateResolved() {
+      throw new Error('playback state consumer unavailable');
+    }
+  };
+
+  assert.deepEqual(
+    editorPersistence.captureStudioPersistableDeckBuildState(iframeDoc, {
+      ...throwingCallbacks,
+      buildPersistableDeckHtml(doc, options) {
+        assert.equal(doc, iframeDoc);
+        options.onCanonicalDeckResolved(canonicalDeck);
+        options.onPlaybackStateResolved(playbackState);
+        return '<html>captured</html>';
+      }
+    }),
+    {
+      cleanHtml: '<html>captured</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+
+  assert.equal(
+    editorPersistence.buildStudioPersistableDeckHtmlWithoutDocument({
+      ...throwingCallbacks,
+      persistedDeckState: { cleanHtml: '<html>baseline</html>', playbackState },
+      resolveCanonicalDeck: () => canonicalDeck,
+      buildSourceDeckHtml: () => '<html>no-document</html>'
+    }),
+    '<html>no-document</html>'
+  );
+
+  assert.equal(
+    editorPersistence.buildStudioPersistableDeckHtmlFromDocument(iframeDoc, {
+      ...throwingCallbacks,
+      resolveCanonicalDeck: () => canonicalDeck,
+      resolvePlaybackState: () => playbackState,
+      buildPersistableDeckHtml: () => '<html>live-document</html>'
+    }),
+    '<html>live-document</html>'
+  );
+});
+
 test('buildStudioSaveRequestBody includes canonical deck sidecars only when they are valid', () => {
   const canonicalDeck = {
     metadata: {

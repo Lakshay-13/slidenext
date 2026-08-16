@@ -14,6 +14,15 @@
     return typeof value === 'string' ? value : fallback;
   }
 
+  function notifyResolvedPersistenceState(callback, value) {
+    if (typeof callback !== 'function') return;
+    try {
+      callback(value);
+    } catch (err) {
+      // Session/UI synchronization is secondary; preserve the persistence result.
+    }
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -457,15 +466,11 @@
       ...persistableDeckBuildOptions,
       onCanonicalDeckResolved(canonicalDeck) {
         resolvedCanonicalDeck = canonicalDeck;
-        if (onCanonicalDeckResolved) {
-          onCanonicalDeckResolved(canonicalDeck);
-        }
+        notifyResolvedPersistenceState(onCanonicalDeckResolved, canonicalDeck);
       },
       onPlaybackStateResolved(playbackState) {
         resolvedPlaybackState = playbackState;
-        if (onPlaybackStateResolved) {
-          onPlaybackStateResolved(playbackState);
-        }
+        notifyResolvedPersistenceState(onPlaybackStateResolved, playbackState);
       }
     });
     return {
@@ -925,16 +930,12 @@
       ? options.resolveCanonicalDeck
       : () => null;
     const canonicalDeck = resolveCanonicalDeck(persistedDeckState, persistedDeckStateWithContent);
-    if (typeof options.onCanonicalDeckResolved === 'function') {
-      options.onCanonicalDeckResolved(canonicalDeck);
-    }
+    notifyResolvedPersistenceState(options.onCanonicalDeckResolved, canonicalDeck);
 
     const playbackState = Object.prototype.hasOwnProperty.call(persistedDeckState, 'playbackState')
       ? persistedDeckState.playbackState
       : null;
-    if (typeof options.onPlaybackStateResolved === 'function') {
-      options.onPlaybackStateResolved(playbackState);
-    }
+    notifyResolvedPersistenceState(options.onPlaybackStateResolved, playbackState);
 
     const resolveReusablePersistedHtml = typeof options.resolveReusablePersistedHtml === 'function'
       ? options.resolveReusablePersistedHtml
@@ -978,12 +979,8 @@
       ? options.resolvePlaybackState
       : () => null;
     const playbackState = resolvePlaybackState(canonicalDeck);
-    if (typeof options.onCanonicalDeckResolved === 'function') {
-      options.onCanonicalDeckResolved(canonicalDeck);
-    }
-    if (typeof options.onPlaybackStateResolved === 'function') {
-      options.onPlaybackStateResolved(playbackState);
-    }
+    notifyResolvedPersistenceState(options.onCanonicalDeckResolved, canonicalDeck);
+    notifyResolvedPersistenceState(options.onPlaybackStateResolved, playbackState);
 
     const buildPersistableDeckSanitizerOptions = typeof options.buildPersistableDeckSanitizerOptions === 'function'
       ? options.buildPersistableDeckSanitizerOptions
