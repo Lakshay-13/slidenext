@@ -400,6 +400,35 @@ test('applyAsset binds the selected image, updates its DOM source, and commits t
   assert.equal(inspectorSyncs, 1);
 });
 
+test('applyAsset preserves the result when inspector synchronization throws', () => {
+  let deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'image-1', type: 'image' }] }]
+  });
+  const selectedImage = {
+    dataset: { editorId: 'image-1' },
+    setAttribute(name, value) {
+      this[name] = value;
+    }
+  };
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    syncInspectorForSelection() {
+      throw new Error('inspector refresh failed');
+    },
+    saveHistoryState: (_debounce, _transaction, nextDeck) => { deck = nextDeck; }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.applyAsset('hero'), true);
+  });
+  assert.equal(deck.slides[0].nodes[0].assetId, 'hero');
+  assert.equal(selectedImage.src, '/hero.png');
+});
+
 test('applyAsset restores the previous DOM source when persistence rejects', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'hero', name: 'Hero', type: 'image', src: '/hero.png' }],

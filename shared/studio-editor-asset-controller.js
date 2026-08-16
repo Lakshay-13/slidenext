@@ -88,6 +88,15 @@
       }
     }
 
+    function syncInspector() {
+      if (!syncInspectorForSelection) return;
+      try {
+        syncInspectorForSelection();
+      } catch (error) {
+        // Inspector refresh failure must not change the asset mutation result.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -323,10 +332,10 @@
         { onRejected: restorePreviousSrc }
       );
       if (!committedDeck) {
-        if (syncInspectorForSelection) syncInspectorForSelection();
+        syncInspector();
         return false;
       }
-      if (syncInspectorForSelection) syncInspectorForSelection();
+      syncInspector();
       return true;
     }
 
