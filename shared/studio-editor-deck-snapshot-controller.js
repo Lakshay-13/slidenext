@@ -19,6 +19,9 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
@@ -96,6 +99,7 @@
         getDocument,
         buildCanonicalDeck,
         getPendingCanonicalDeck,
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         createDeckViewStateOptions,
         resolveCanonicalDeckViewState,
         resolveFallbackActiveSlideId,

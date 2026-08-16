@@ -877,6 +877,28 @@ test('buildStudioDeckSnapshot falls back to the DOM snapshot when the canonical 
   });
 });
 
+test('buildStudioDeckSnapshot rejects a canonical deck that fails its validator', () => {
+  const domSnapshot = {
+    activeSlideId: 'dom-slide',
+    activeSlideIndex: 0,
+    slides: []
+  };
+
+  const result = deckSnapshot.buildStudioDeckSnapshot({ label: 'doc' }, {
+    buildCanonicalDeck() {
+      return { slides: [] };
+    },
+    isCanonicalDeck() {
+      return false;
+    },
+    buildDomSnapshot() {
+      return domSnapshot;
+    }
+  });
+
+  assert.equal(result, domSnapshot);
+});
+
 test('buildStudioDeckSnapshot falls back to the DOM snapshot when canonical construction throws', () => {
   const doc = { label: 'doc' };
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {

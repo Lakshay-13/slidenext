@@ -56,6 +56,7 @@
           getDocument: options.getDocument,
           buildCanonicalDeck: options.buildCanonicalDeck,
           getPendingCanonicalDeck: options.getPendingCanonicalDeck,
+          isCanonicalDeck: options.isCanonicalDeck,
           createDeckViewStateOptions: options.createDeckViewStateOptions,
           resolveCanonicalDeckViewState: options.resolveCanonicalDeckViewState,
           resolveFallbackActiveSlideId: options.resolveFallbackActiveSlideId,

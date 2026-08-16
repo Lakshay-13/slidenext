@@ -17,6 +17,16 @@
     return !!deck && Array.isArray(deck.slides);
   }
 
+  function isValidCanonicalDeck(deck, validator = null) {
+    if (!deck) return false;
+    const validate = typeof validator === 'function' ? validator : isCanonicalDeckLike;
+    try {
+      return validate(deck) === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function resolveStudioDeckView() {
     return typeof loadDeckView === 'function'
       ? loadDeckView()
@@ -25,6 +35,9 @@
 
   function createStudioDeckSnapshotCanonicalDeckResolver(doc, options = {}) {
     const deckView = resolveStudioDeckView();
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
@@ -36,12 +49,15 @@
         if (getPendingCanonicalDeck) {
           try {
             const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
-            if (isCanonicalDeckLike(pendingCanonicalDeck)) return pendingCanonicalDeck;
+            if (isValidCanonicalDeck(pendingCanonicalDeck, isCanonicalDeck)) return pendingCanonicalDeck;
           } catch (error) {
             // Continue through the live canonical deck fallback.
           }
         }
-        return resolveBuiltCanonicalDeck(sourceDoc);
+        const builtCanonicalDeck = resolveBuiltCanonicalDeck(sourceDoc);
+        return isValidCanonicalDeck(builtCanonicalDeck, isCanonicalDeck)
+          ? builtCanonicalDeck
+          : null;
       };
     }
 
@@ -55,7 +71,7 @@
       if (getPendingCanonicalDeck) {
         try {
           const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDoc);
-          if (isCanonicalDeckLike(pendingCanonicalDeck)) return pendingCanonicalDeck;
+          if (isValidCanonicalDeck(pendingCanonicalDeck, isCanonicalDeck)) return pendingCanonicalDeck;
         } catch (error) {
           // Continue through the live canonical deck fallback.
         }
@@ -64,7 +80,9 @@
         resolvedCanonicalDeck = buildCanonicalDeck(sourceDoc);
         didResolveCanonicalDeck = true;
       }
-      return resolvedCanonicalDeck;
+      return isValidCanonicalDeck(resolvedCanonicalDeck, isCanonicalDeck)
+        ? resolvedCanonicalDeck
+        : null;
     };
   }
 
@@ -232,6 +250,9 @@
     const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
       ? options.getPendingCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const buildDeckSnapshot = typeof options.buildDeckSnapshot === 'function'
       ? options.buildDeckSnapshot
       : buildStudioDeckSnapshot;
@@ -266,7 +287,7 @@
       if (getPendingCanonicalDeck) {
         try {
           const pendingCanonicalDeck = getPendingCanonicalDeck(doc);
-          if (isCanonicalDeckLike(pendingCanonicalDeck)) {
+          if (isValidCanonicalDeck(pendingCanonicalDeck, isCanonicalDeck)) {
             snapshotBuildOptions.canonicalDeck = pendingCanonicalDeck;
           }
         } catch (error) {
@@ -280,6 +301,7 @@
         ...(buildOptions.canonicalLayerOptions
           ? { canonicalLayerOptions: buildOptions.canonicalLayerOptions }
           : {}),
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         ...snapshotBuildOptions,
         buildDomSnapshot: (sourceDoc) => buildDomSnapshot(sourceDoc, buildOptions),
         getActiveSlideId: options.getActiveSlideId,
@@ -296,7 +318,10 @@
     const buildDomSnapshot = typeof options.buildDomSnapshot === 'function'
       ? options.buildDomSnapshot
       : (sourceDoc) => buildStudioDeckSnapshotFromDom(sourceDoc, options.domSnapshotOptions || options);
-    let canonicalDeck = isCanonicalDeckLike(options.canonicalDeck)
+    const canonicalDeckValidator = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    let canonicalDeck = isValidCanonicalDeck(options.canonicalDeck, canonicalDeckValidator)
       ? options.canonicalDeck
       : null;
     if (buildCanonicalDeck) {
@@ -309,7 +334,9 @@
       }
     }
 
-    if (!isCanonicalDeckLike(canonicalDeck) || !deckModel || typeof deckModel.buildDeckSnapshotFromCanonicalDeck !== 'function') {
+    if (!isValidCanonicalDeck(canonicalDeck, canonicalDeckValidator)
+      || !deckModel
+      || typeof deckModel.buildDeckSnapshotFromCanonicalDeck !== 'function') {
       return buildDomSnapshot(doc);
     }
 
