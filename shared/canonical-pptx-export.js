@@ -772,6 +772,8 @@
   function getCanonicalChartData(node, themeTokens = {}) {
     const chartType = getNodeAttribute(node, 'data-chart-type').trim().toLowerCase() || 'bar';
     if (!['bar', 'column'].includes(chartType)) return null;
+    const direction = getNodeAttribute(node, 'data-chart-direction').trim().toLowerCase();
+    const barDir = ['bar', 'horizontal'].includes(direction) ? 'bar' : 'col';
     let values = parseCanonicalChartNumberList(getNodeAttribute(node, 'data-chart-values'));
     if (values.length === 0) {
       const legacyBars = collectCanonicalChartBars(node && node.children)
@@ -785,6 +787,7 @@
     const labels = values.map((_, index) => rawLabels[index] || String(index + 1));
     return {
       type: 'bar',
+      barDir,
       labels,
       values,
       title: getCanonicalChartTitle(node)
@@ -1702,7 +1705,7 @@
     if (chartNode && chartData && bounds && typeof context.slide.addChart === 'function') {
       const chartOptions = {
         ...bounds,
-        barDir: 'col',
+        barDir: chartData.barDir,
         showLegend: false,
         ...(chartData.title ? { showTitle: true, title: chartData.title } : {})
       };

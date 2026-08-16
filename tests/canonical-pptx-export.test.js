@@ -828,6 +828,29 @@ test('createCanonicalPptxExport renders metadata-backed bar charts', () => {
   }]);
 });
 
+test('createCanonicalPptxExport preserves explicit horizontal chart direction', () => {
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'horizontal-chart',
+        type: 'chart',
+        attributes: {
+          'data-chart-type': 'bar',
+          'data-chart-direction': 'horizontal',
+          'data-chart-labels': 'Q1,Q2',
+          'data-chart-values': '42,68'
+        },
+        layout: { x: 100, y: 80, width: 600, height: 360 }
+      }]
+    }]
+  }, { PptxGenJS: FakePptx });
+
+  const chartCall = result.pptx.slides[0].calls.find(call => call.type === 'chart');
+  assert.equal(result.diagnostics.unsupportedNodes.length, 0);
+  assert.equal(chartCall.options.barDir, 'bar');
+  assert.deepEqual(chartCall.data[0].values, [42, 68]);
+});
+
 test('createCanonicalPptxExport preserves legacy chart bars without metadata', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{
