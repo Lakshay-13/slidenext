@@ -67,6 +67,36 @@ test('block controller preserves a committed save when publication throws', () =
   });
 });
 
+test('block controller preserves publication when legacy autosave throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Heading' }] }]
+  });
+  const calls = [];
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState() {},
+    triggerAutoSave() {
+      calls.push('save');
+      throw new Error('autosave failed');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    },
+    onBlocksChanged() {
+      calls.push('blocks');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    const result = controller.saveSelection({ id: 'intro' });
+    assert.equal(result.blocks[0].id, 'intro');
+  });
+  assert.deepEqual(calls, ['save', ['version', 'Auto: Saved Block "Block 1"'], 'blocks']);
+});
+
 test('block mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

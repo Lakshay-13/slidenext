@@ -99,6 +99,23 @@
       }
     }
 
+    function runLegacyPersistenceHooks(versionLabel = '') {
+      if (triggerAutoSave) {
+        try {
+          triggerAutoSave();
+        } catch (err) {
+          // Keep the committed history entry and continue the remaining persistence hooks.
+        }
+      }
+      if (triggerAutoVersion && versionLabel) {
+        try {
+          triggerAutoVersion(versionLabel);
+        } catch (err) {
+          // A version notification failure must not change the committed block mutation.
+        }
+      }
+    }
+
     function findCanonicalSlide(deck, slideId) {
       if (!deck || !Array.isArray(deck.slides)) return null;
       if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
@@ -191,8 +208,7 @@
           )) {
           return null;
         }
-        if (triggerAutoSave) triggerAutoSave();
-        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+        runLegacyPersistenceHooks(versionLabel);
       }
       publishBlocksChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
@@ -412,8 +428,7 @@
         removeInsertedElements(insertedElements, activeSlide);
         return false;
       }
-      if (triggerAutoSave) triggerAutoSave();
-      if (triggerAutoVersion) triggerAutoVersion(versionLabel);
+      runLegacyPersistenceHooks(versionLabel);
       return true;
     }
 
