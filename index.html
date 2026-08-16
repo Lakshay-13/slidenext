@@ -1485,6 +1485,7 @@
   <script src="/shared/studio-editor-master-slide-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-state.js"></script>
+  <script src="/shared/studio-editor-asset-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-content-state-coordinator.js"></script>
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
@@ -11703,43 +11704,59 @@
         && typeof studioEditorContentStateCoordinator.syncAssetLibrary === 'function') {
         return studioEditorContentStateCoordinator.syncAssetLibrary(doc);
       }
-      const assetStateApi = typeof SlideNextStudioEditorAssetState !== 'undefined'
+      const assetStateRuntimeApi =
+        typeof SlideNextStudioEditorAssetState !== 'undefined'
         ? SlideNextStudioEditorAssetState
         : null;
-      if (!assetStateApi
-        || typeof assetStateApi.createStudioEditorAssetStateController !== 'function') {
+      const assetStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorAssetStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorAssetStateRuntimeAccessors
+        : null;
+      const assetStateRuntimeAccessors =
+        assetStateRuntimeAccessorsApi
+        && typeof assetStateRuntimeAccessorsApi
+          .createStudioEditorAssetStateRuntimeAccessors === 'function'
+        ? assetStateRuntimeAccessorsApi
+          .createStudioEditorAssetStateRuntimeAccessors({
+            runtimeApi: assetStateRuntimeApi
+          })
+        : null;
+      if (!assetStateRuntimeAccessors
+        || typeof assetStateRuntimeAccessors
+          .createStudioEditorAssetStateController !== 'function') {
         return false;
       }
       if (!updateAssetLibraryState.controller) {
         const assetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
           ? SlideNextStudioEditorAssetView
           : null;
-        updateAssetLibraryState.controller = assetStateApi.createStudioEditorAssetStateController({
-          assetView,
-          getDocument: () => getIframeDoc(),
-          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
-          getActiveSlide: (sourceDoc) => typeof getActiveSlide === 'function'
-            ? getActiveSlide(sourceDoc)
-            : null,
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getLockedState: (sourceDoc, fallbackReader) => typeof getEditorCanonicalVisibilityReader === 'function'
-            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, fallbackReader)
-            : fallbackReader,
-          isElementLocked,
-          applyAsset: typeof applyAssetToSelectedImage === 'function'
-            ? applyAssetToSelectedImage
-            : null,
-          insertAsset: typeof insertAssetToActiveSlide === 'function'
-            ? insertAssetToActiveSlide
-            : null,
-          removeAsset: typeof removeAssetFromLibrary === 'function'
-            ? removeAssetFromLibrary
-            : null,
-          documentRef: document,
-          getCurrentPresentationUrl: typeof getStudioCurrentPresentationUrl === 'function'
-            ? getStudioCurrentPresentationUrl
-            : () => ''
-        });
+        updateAssetLibraryState.controller = assetStateRuntimeAccessors
+          .createStudioEditorAssetStateController({
+            assetView,
+            getDocument: () => getIframeDoc(),
+            getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+            getActiveSlide: (sourceDoc) => typeof getActiveSlide === 'function'
+              ? getActiveSlide(sourceDoc)
+              : null,
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getLockedState: (sourceDoc, fallbackReader) => typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, fallbackReader)
+              : fallbackReader,
+            isElementLocked,
+            applyAsset: typeof applyAssetToSelectedImage === 'function'
+              ? applyAssetToSelectedImage
+              : null,
+            insertAsset: typeof insertAssetToActiveSlide === 'function'
+              ? insertAssetToActiveSlide
+              : null,
+            removeAsset: typeof removeAssetFromLibrary === 'function'
+              ? removeAssetFromLibrary
+              : null,
+            documentRef: document,
+            getCurrentPresentationUrl: typeof getStudioCurrentPresentationUrl === 'function'
+              ? getStudioCurrentPresentationUrl
+              : () => ''
+          });
       }
       return updateAssetLibraryState.controller
         && typeof updateAssetLibraryState.controller.sync === 'function'
