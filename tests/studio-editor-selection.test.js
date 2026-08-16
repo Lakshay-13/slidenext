@@ -228,6 +228,31 @@ test('selectStudioElement skips commit when the target is not editable', () => {
   assert.deepEqual(calls, ['resolveEditableTarget']);
 });
 
+test('selectStudioElement skips ineligible resolved targets before committing', () => {
+  const calls = [];
+
+  assert.equal(studioSelection.selectStudioElement({
+    element: { id: 'decorative-canvas' },
+    resolveEditableTarget(element) {
+      calls.push(['resolveEditableTarget', element]);
+      return element;
+    },
+    getSelectionOptions() {
+      calls.push('getSelectionOptions');
+      return {
+        isEligibleElement: () => false
+      };
+    },
+    commitSelectionState() {
+      calls.push('commitSelectionState');
+    }
+  }), false);
+  assert.deepEqual(calls.map((call) => Array.isArray(call) ? call[0] : call), [
+    'resolveEditableTarget',
+    'getSelectionOptions'
+  ]);
+});
+
 test('deselectStudioElement clears selection and hides the drag HUD on clear', () => {
   const calls = [];
   const hideDragHud = () => {};

@@ -219,11 +219,16 @@
     const getSelectionOptions = typeof options.getSelectionOptions === 'function'
       ? options.getSelectionOptions
       : () => ({});
+    const selectionOptions = getSelectionOptions();
+    if (typeof selectionOptions.isEligibleElement === 'function'
+      && selectionOptions.isEligibleElement(target) === false) {
+      return false;
+    }
     const nextSelectionState = updateStudioSelection(
       Array.isArray(options.selectedElements) ? options.selectedElements : [],
       target,
       {
-        ...getSelectionOptions(),
+        ...selectionOptions,
         additive: !!options.additive,
         toggle: !!options.toggle
       }
