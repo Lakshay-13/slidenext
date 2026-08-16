@@ -117,6 +117,21 @@ test('buildStudioVisibilityToolbarState derives visibility control chrome from t
   });
 });
 
+test('buildStudioVisibilityMutationPlan returns a no-op when hidden state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(visibilityState.buildStudioVisibilityMutationPlan([live], {
+    isHidden: () => {
+      throw new Error('stale hidden state');
+    }
+  }), {
+    selection: [live],
+    shouldHide: false,
+    didChange: false,
+    versionLabel: ''
+  });
+});
+
 test('renderStudioVisibilityToolbarState applies visibility button, icon, and label chrome', () => {
   const nodes = {
     toggleVisibilitySelectionBtn: { disabled: true },

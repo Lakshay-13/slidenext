@@ -120,7 +120,14 @@
       ? options.canMutateDeck
       : () => true;
 
-    if (selection.length === 0 || !canMutateDeck()) {
+    let deckReady = false;
+    try {
+      deckReady = canMutateDeck();
+    } catch (error) {
+      deckReady = false;
+    }
+
+    if (selection.length === 0 || !deckReady) {
       return {
         selection,
         shouldHide: false,
@@ -129,7 +136,17 @@
       };
     }
 
-    const shouldHide = !selection.every((element) => isHidden(element));
+    let shouldHide = false;
+    try {
+      shouldHide = !selection.every((element) => isHidden(element));
+    } catch (error) {
+      return {
+        selection,
+        shouldHide: false,
+        didChange: false,
+        versionLabel: ''
+      };
+    }
     return {
       selection,
       shouldHide,
