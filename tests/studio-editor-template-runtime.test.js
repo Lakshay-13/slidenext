@@ -4,8 +4,43 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const templateRuntime = require('../shared/studio-editor-template-runtime.js');
+const templateRuntimeAccessors = require('../shared/studio-editor-template-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('template runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'template-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorTemplateShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const templateRuntimeApi = { name: 'template-runtime' };
+  const callback = () => {};
+
+  const result = templateRuntimeAccessors.createStudioEditorTemplateRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    templateRuntimeApi,
+    runtimeOptions: {
+      getCanonicalDeck: callback
+    }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.templateRuntimeApi, templateRuntimeApi);
+  assert.equal(receivedOptions.getCanonicalDeck, callback);
+});
+
+test('template runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    templateRuntimeAccessors.createStudioEditorTemplateRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('template runtime composes controller dependencies without changing them', () => {
   const calls = [];
@@ -78,6 +113,14 @@ test('index wires template persistence through the runtime module', () => {
     /<script src="\/shared\/studio-editor-template-shell-runtime\.js"><\/script>/
   );
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-template-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorTemplateRuntimeAccessorsApi\s*\.\s*createStudioEditorTemplateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorTemplateShellRuntime\.createStudioEditorTemplateShellRuntime\(/
   );

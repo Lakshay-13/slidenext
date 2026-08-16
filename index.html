@@ -1471,6 +1471,7 @@
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-template-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-template-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-shell-runtime.js"></script>
@@ -4663,50 +4664,60 @@
         saveSelectedElementsAsBlock: (...args) => saveSelectedElementsAsBlock(...args)
       });
     }
-    const studioEditorTemplateRuntime = typeof SlideNextStudioEditorTemplateShellRuntime !== 'undefined'
-      && SlideNextStudioEditorTemplateShellRuntime
-      && typeof SlideNextStudioEditorTemplateShellRuntime.createStudioEditorTemplateShellRuntime === 'function'
-      ? SlideNextStudioEditorTemplateShellRuntime.createStudioEditorTemplateShellRuntime({
+    const studioEditorTemplateRuntimeAccessorsApi = typeof SlideNextStudioEditorTemplateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorTemplateRuntimeAccessors
+      : null;
+    const studioEditorTemplateRuntimeAccessors = studioEditorTemplateRuntimeAccessorsApi
+      && typeof studioEditorTemplateRuntimeAccessorsApi.createStudioEditorTemplateRuntimeAccessors === 'function'
+      ? studioEditorTemplateRuntimeAccessorsApi.createStudioEditorTemplateRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorTemplateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorTemplateShellRuntime
+            : null,
           templateRuntimeApi: typeof SlideNextStudioEditorTemplateRuntime !== 'undefined'
             ? SlideNextStudioEditorTemplateRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorTemplateController !== 'undefined'
-            ? SlideNextStudioEditorTemplateController
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          renderApi: typeof SlideNextDeckRender !== 'undefined'
-            ? SlideNextDeckRender
-            : null,
-          getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(getIframeDoc())
-            : buildEditorCanonicalDeck(getIframeDoc()),
-          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
-            getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getDocument: () => getIframeDoc(),
-          getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
-            ? doc.getElementById('slidesContainer')
-            : null,
-          getSlides: (doc) => getSlides(doc),
-          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
-          prepareSlide: (...args) => makeElementsHoverable(...args),
-          getElementId: (element) => assignEditorSlideId(element),
-          generateThumbnails: (...args) => generateThumbnails(...args),
-          setActiveSlide: (...args) => setActiveSlide(...args),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          triggerAutoSave: (...args) => triggerAutoSave(...args),
-          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
-          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
-          onTemplatesChanged: () => updateTemplateActionState()
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorTemplateController !== 'undefined'
+              ? SlideNextStudioEditorTemplateController
+              : null,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+              ? SlideNextStudioEditorCanonicalState
+              : null,
+            renderApi: typeof SlideNextDeckRender !== 'undefined'
+              ? SlideNextDeckRender
+              : null,
+            getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(getIframeDoc())
+              : buildEditorCanonicalDeck(getIframeDoc()),
+            getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+              getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getDocument: () => getIframeDoc(),
+            getSlideContainer: (doc) => doc && typeof doc.getElementById === 'function'
+              ? doc.getElementById('slidesContainer')
+              : null,
+            getSlides: (doc) => getSlides(doc),
+            getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
+            prepareSlide: (...args) => makeElementsHoverable(...args),
+            getElementId: (element) => assignEditorSlideId(element),
+            generateThumbnails: (...args) => generateThumbnails(...args),
+            setActiveSlide: (...args) => setActiveSlide(...args),
+            saveHistoryState: (...args) => saveHistoryState(...args),
+            triggerAutoSave: (...args) => triggerAutoSave(...args),
+            triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+            finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
+            rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
+            onTemplatesChanged: () => updateTemplateActionState()
+          }
         })
+      : null;
+    const studioEditorTemplateRuntime = studioEditorTemplateRuntimeAccessors
+      ? studioEditorTemplateRuntimeAccessors.runtime
       : null;
     const studioEditorTemplateController = studioEditorTemplateRuntime
       ? studioEditorTemplateRuntime.templateController
