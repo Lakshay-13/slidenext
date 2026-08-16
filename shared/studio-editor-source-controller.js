@@ -36,6 +36,21 @@
     }
   }
 
+  function isValidStudioCanonicalDeck(value, validator) {
+    if (!value) return false;
+    const validate = typeof validator === 'function'
+      ? validator
+      : (candidate) => !!candidate
+        && typeof candidate === 'object'
+        && !Array.isArray(candidate)
+        && Array.isArray(candidate.slides);
+    try {
+      return validate(value) === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function createStudioEditorSourceHtmlBuilder(options = {}) {
     const buildDeckViewHtml = typeof options.buildDeckViewHtml === 'function'
       ? options.buildDeckViewHtml
@@ -76,6 +91,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const saveHistoryState = typeof options.saveHistoryState === 'function'
       ? options.saveHistoryState
       : null;
@@ -86,7 +104,7 @@
         try {
           const pendingCanonicalDeck = getPendingCanonicalDeck(sourceDocument);
           canonicalDeck = pendingCanonicalDeck
-            && Array.isArray(pendingCanonicalDeck.slides)
+            && isValidStudioCanonicalDeck(pendingCanonicalDeck, isCanonicalDeck)
             ? pendingCanonicalDeck
             : null;
         } catch (error) {
@@ -96,7 +114,10 @@
       if (getCanonicalDeckBaseline) {
         if (!canonicalDeck) {
           try {
-            canonicalDeck = getCanonicalDeckBaseline(sourceDocument);
+            const baseline = getCanonicalDeckBaseline(sourceDocument);
+            canonicalDeck = isValidStudioCanonicalDeck(baseline, isCanonicalDeck)
+              ? baseline
+              : null;
           } catch (error) {
             canonicalDeck = null;
           }
@@ -104,16 +125,19 @@
       }
       if (!canonicalDeck && buildCanonicalDeck) {
         try {
-          canonicalDeck = buildCanonicalDeck(sourceDocument, {
+          const rebuiltDeck = buildCanonicalDeck(sourceDocument, {
             preferLiveCanonicalDeck: false
           });
+          canonicalDeck = isValidStudioCanonicalDeck(rebuiltDeck, isCanonicalDeck)
+            ? rebuiltDeck
+            : null;
         } catch (error) {
           canonicalDeck = null;
         }
       }
       let historyCaptureResult;
       if (saveHistoryState) {
-        if (canonicalDeck) {
+        if (isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
           historyCaptureResult = captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
         } else {
           historyCaptureResult = captureStudioHistoryState(saveHistoryState, false);
@@ -250,6 +274,7 @@
           getPendingCanonicalDeck,
           getCanonicalDeckBaseline,
           buildCanonicalDeck,
+          isCanonicalDeck,
           saveHistoryState
         });
     const captureHistoryEntry = typeof options.captureHistoryEntry === 'function'

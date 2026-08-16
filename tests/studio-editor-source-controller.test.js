@@ -94,6 +94,20 @@ test('source history baseline capture falls back to rebuilding from the live doc
   assert.deepEqual(calls, [[false, null, rebuiltDeck]]);
 });
 
+test('source history baseline capture drops invalid canonical decks', () => {
+  const calls = [];
+  const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
+    getCurrentDocument: () => ({ id: 'live-frame' }),
+    getCanonicalDeckBaseline: () => ({ kind: 'invalid-deck' }),
+    buildCanonicalDeck: () => ({ kind: 'invalid-rebuilt-deck' }),
+    isCanonicalDeck: () => false,
+    saveHistoryState: (...args) => calls.push(args)
+  });
+
+  assert.equal(capture(), true);
+  assert.deepEqual(calls, [[false]]);
+});
+
 test('source history baseline capture fails before source replacement when persistence rejects', () => {
   const capture = sourceController.createStudioEditorSourceHistoryBaselineCapture({
     getCurrentDocument: () => ({ id: 'live-frame' }),
