@@ -1641,6 +1641,7 @@
   <script src="/shared/studio-editor-auto-version-timer-controller.js"></script>
   <script src="/shared/studio-editor-auto-version-runtime.js"></script>
   <script src="/shared/studio-editor-auto-version-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-auto-version-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-auto-version-controller.js"></script>
   <script src="/shared/studio-modal-visibility.js"></script>
   <script src="/shared/presentation-library.js"></script>
@@ -2612,37 +2613,47 @@
         })
       : {};
     Object.assign(globalThis, studioEditorTriggerAutoSaveGlobalApi);
-    const studioEditorAutoVersionRuntime = typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
-      && SlideNextStudioEditorAutoVersionShellRuntime
-      && typeof SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime === 'function'
-      ? SlideNextStudioEditorAutoVersionShellRuntime.createStudioEditorAutoVersionShellRuntime({
+    const studioEditorAutoVersionRuntimeAccessorsApi = typeof SlideNextStudioEditorAutoVersionRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorAutoVersionRuntimeAccessors
+      : null;
+    const studioEditorAutoVersionRuntimeAccessors = studioEditorAutoVersionRuntimeAccessorsApi
+      && typeof studioEditorAutoVersionRuntimeAccessorsApi.createStudioEditorAutoVersionRuntimeAccessors === 'function'
+      ? studioEditorAutoVersionRuntimeAccessorsApi.createStudioEditorAutoVersionRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorAutoVersionShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorAutoVersionShellRuntime
+            : null,
           autoVersionRuntimeApi: typeof SlideNextStudioEditorAutoVersionRuntime !== 'undefined'
             ? SlideNextStudioEditorAutoVersionRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
-            ? SlideNextStudioEditorAutoVersionController
-            : null,
-          versionActions: typeof SlideNextStudioVersionActions !== 'undefined'
-            ? SlideNextStudioVersionActions
-            : null,
-          captureSessionState: captureCurrentStudioSessionState,
-          getTimer: getStudioAutoVersionTimer,
-          clearScheduledTimer: clearTimeout,
-          setTimer: setStudioAutoVersionTimer,
-          clearStoredTimer: clearStudioAutoVersionTimer,
-          schedule: (callback, delayMs) => setTimeout(callback, delayMs),
-          execute: executeSaveAutoVersion,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          isTaskStale: isCurrentStudioPersistenceTaskStale,
-          getDocument: getIframeDoc,
-          resolvePersistenceState: resolveCurrentStudioVersionCheckpointPersistenceState,
-          isPersistedState: isCurrentDeckStatePersisted,
-          buildSaveRequestBody: buildEditorSaveRequestBody,
-          saveCheckpoint: executeCurrentStudioVersionCheckpointSaveWithFailure,
-          logger: typeof console !== 'undefined' ? console : null
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorAutoVersionController !== 'undefined'
+              ? SlideNextStudioEditorAutoVersionController
+              : null,
+            versionActions: typeof SlideNextStudioVersionActions !== 'undefined'
+              ? SlideNextStudioVersionActions
+              : null,
+            captureSessionState: captureCurrentStudioSessionState,
+            getTimer: getStudioAutoVersionTimer,
+            clearScheduledTimer: clearTimeout,
+            setTimer: setStudioAutoVersionTimer,
+            clearStoredTimer: clearStudioAutoVersionTimer,
+            schedule: (callback, delayMs) => setTimeout(callback, delayMs),
+            execute: executeSaveAutoVersion,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            isTaskStale: isCurrentStudioPersistenceTaskStale,
+            getDocument: getIframeDoc,
+            resolvePersistenceState: resolveCurrentStudioVersionCheckpointPersistenceState,
+            isPersistedState: isCurrentDeckStatePersisted,
+            buildSaveRequestBody: buildEditorSaveRequestBody,
+            saveCheckpoint: executeCurrentStudioVersionCheckpointSaveWithFailure,
+            logger: typeof console !== 'undefined' ? console : null
+          }
         })
+      : null;
+    const studioEditorAutoVersionRuntime = studioEditorAutoVersionRuntimeAccessors
+      ? studioEditorAutoVersionRuntimeAccessors.runtime
       : null;
     const studioEditorAutoVersionController = studioEditorAutoVersionRuntime
       ? studioEditorAutoVersionRuntime.autoVersionController

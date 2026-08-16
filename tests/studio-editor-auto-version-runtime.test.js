@@ -4,8 +4,41 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const autoVersionRuntime = require('../shared/studio-editor-auto-version-runtime.js');
+const autoVersionRuntimeAccessors = require('../shared/studio-editor-auto-version-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('auto-version runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'auto-version-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorAutoVersionShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const autoVersionRuntimeApi = { name: 'auto-version-runtime' };
+  const execute = () => {};
+
+  const result = autoVersionRuntimeAccessors.createStudioEditorAutoVersionRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    autoVersionRuntimeApi,
+    runtimeOptions: { execute }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.autoVersionRuntimeApi, autoVersionRuntimeApi);
+  assert.equal(receivedOptions.execute, execute);
+});
+
+test('auto-version runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    autoVersionRuntimeAccessors.createStudioEditorAutoVersionRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('auto-version runtime composes controller and executor dependencies', () => {
   const calls = [];
@@ -65,6 +98,14 @@ test('index wires auto-version controller and executor through the runtime modul
     /<script src="\/shared\/studio-editor-auto-version-shell-runtime\.js"><\/script>/
   );
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-auto-version-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorAutoVersionRuntimeAccessorsApi\s*\.\s*createStudioEditorAutoVersionRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorAutoVersionShellRuntime\.createStudioEditorAutoVersionShellRuntime\(/
   );
