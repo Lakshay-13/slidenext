@@ -71,7 +71,25 @@
     return true;
   }
 
+  function bindStudioEditorFrameLoadingControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const retryStudioEditorFrame = typeof options.retryStudioEditorFrame === 'function'
+      ? options.retryStudioEditorFrame
+      : null;
+    const button = documentRef.getElementById('studioFrameLoadingRetryBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { studioFrameLoadingRetryBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (retryStudioEditorFrame) retryStudioEditorFrame();
+    });
+    return { studioFrameLoadingRetryBtn: true };
+  }
+
   return {
-    setStudioEditorFrameLoadingState
+    setStudioEditorFrameLoadingState,
+    bindStudioEditorFrameLoadingControls
   };
 });

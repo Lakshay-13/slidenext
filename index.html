@@ -844,7 +844,7 @@
                   <span id="studioFrameLoadingIcon" class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
                   <span id="studioFrameLoadingText">Loading presentation...</span>
                 </div>
-                <button id="studioFrameLoadingRetryBtn" type="button" onclick="retryStudioEditorFrame()" class="hidden absolute mt-20 px-3 py-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 text-[10px] font-mono uppercase tracking-wider text-amber-300 hover:bg-amber-400/20 transition-colors" aria-hidden="true" aria-disabled="true" disabled>Retry editor</button>
+                <button id="studioFrameLoadingRetryBtn" type="button" class="hidden absolute mt-20 px-3 py-1.5 rounded-lg border border-amber-400/30 bg-amber-400/10 text-[10px] font-mono uppercase tracking-wider text-amber-300 hover:bg-amber-400/20 transition-colors" aria-hidden="true" aria-disabled="true" disabled>Retry editor</button>
               </div>
               <iframe id="studioFrame" src="" title="Presentation editor canvas" style="width: 1920px; height: 1080px; pointer-events: auto;" class="absolute inset-0 border-none z-10"></iframe>
             </div>
@@ -7720,6 +7720,16 @@
         getStudioPresentationTitle(),
         getStudioPresentationCategory() || 'General'
       );
+    }
+    const studioEditorFrameLoadingViewApi = typeof SlideNextStudioEditorFrameLoadingView !== 'undefined'
+      ? SlideNextStudioEditorFrameLoadingView
+      : null;
+    if (studioEditorFrameLoadingViewApi
+      && typeof studioEditorFrameLoadingViewApi.bindStudioEditorFrameLoadingControls === 'function') {
+      studioEditorFrameLoadingViewApi.bindStudioEditorFrameLoadingControls({
+        documentRef: document,
+        retryStudioEditorFrame
+      });
     }
 
     async function launchStudioEditor(url, title, category) {

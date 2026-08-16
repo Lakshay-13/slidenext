@@ -23,7 +23,11 @@ test('editor and preview iframes have accessible names', () => {
   assert.match(fileContent, /<iframe id="studioFrame"[^>]*title="Presentation editor canvas"/);
   assert.match(fileContent, /id="studioFrameLoading"[^>]*aria-busy="true"/);
   assert.match(fileContent, /id="studioFrameLoadingText">Loading presentation\.\.\.</);
-  assert.match(fileContent, /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/);
+  assert.doesNotMatch(
+    fileContent,
+    /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/
+  );
+  assert.match(fileContent, /bindStudioEditorFrameLoadingControls\(\{\s*documentRef: document,/);
 });
 
 test('editor routes session updates through the shared session controller', () => {

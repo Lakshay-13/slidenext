@@ -91,3 +91,26 @@ test('frame loading view fails closed when the overlay is unavailable', () => {
     state: 'loading'
   }), false);
 });
+
+test('frame loading view binds retry to the shared editor retry action', () => {
+  const retryButton = { listeners: {}, addEventListener(type, handler) {
+    this.listeners[type] = handler;
+  } };
+  const calls = [];
+
+  assert.deepEqual(
+    frameLoadingView.bindStudioEditorFrameLoadingControls({
+      documentRef: {
+        getElementById(id) {
+          return id === 'studioFrameLoadingRetryBtn' ? retryButton : null;
+        }
+      },
+      retryStudioEditorFrame() {
+        calls.push('retry');
+      }
+    }),
+    { studioFrameLoadingRetryBtn: true }
+  );
+  retryButton.listeners.click();
+  assert.deepEqual(calls, ['retry']);
+});
