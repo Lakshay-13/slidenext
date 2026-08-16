@@ -58,7 +58,13 @@
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element);
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
   function buildStudioStyleMutationPlan(elements = [], prop, value, options = {}) {
@@ -70,11 +76,21 @@
       ? options.canMutateDeck
       : () => true;
 
+    let canApply = false;
+    try {
+      canApply = canMutateDeck()
+        && selection.length > 0
+        && !selection.some((element) => isLocked(element));
+    } catch (error) {
+      // Never apply inspector mutations when readiness or lock state is uncertain.
+      canApply = false;
+    }
+
     return {
       selection,
       prop,
       value,
-      canApply: canMutateDeck() && selection.length > 0 && !selection.some((element) => isLocked(element)),
+      canApply,
       versionLabel: STUDIO_STYLE_VERSION_LABELS[prop] || ''
     };
   }

@@ -83,6 +83,22 @@ test('buildStudioStyleMutationPlan filters stale selections, blocks locked selec
   );
 });
 
+test('buildStudioStyleMutationPlan fails closed when lock state throws', () => {
+  const live = { isConnected: true };
+
+  assert.deepEqual(styleState.buildStudioStyleMutationPlan([live], 'color', '#fff', {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    selection: [live],
+    prop: 'color',
+    value: '#fff',
+    canApply: false,
+    versionLabel: ''
+  });
+});
+
 test('buildStudioStyleToolbarState derives inspector control enablement from shared style mutation plans', () => {
   const live = { isConnected: true, locked: false };
 
