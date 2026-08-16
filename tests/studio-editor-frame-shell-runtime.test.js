@@ -23,6 +23,33 @@ test('frame shell runtime delegates the prepared frame options', () => {
   assert.equal(receivedOptions, runtimeOptions);
 });
 
+test('frame shell runtime accepts flattened options from the runtime accessors', () => {
+  let receivedOptions = null;
+  const runtimeOptions = {
+    frameControllerApi: { name: 'controller' },
+    getIframeDocument: () => null
+  };
+  const frameRuntimeApi = {
+    createStudioEditorFrameRuntime(options) {
+      receivedOptions = options;
+      return { name: 'frame-runtime' };
+    }
+  };
+
+  assert.deepEqual(
+    shellRuntime.createStudioEditorFrameShellRuntime({
+      frameRuntimeApi,
+      ...runtimeOptions
+    }),
+    { name: 'frame-runtime' }
+  );
+  assert.deepEqual(receivedOptions, {
+    frameControllerApi: runtimeOptions.frameControllerApi,
+    getIframeDocument: runtimeOptions.getIframeDocument,
+    frameRuntimeApi
+  });
+});
+
 test('frame shell runtime safely handles missing runtime factories', () => {
   assert.equal(shellRuntime.createStudioEditorFrameShellRuntime({}), null);
   assert.equal(

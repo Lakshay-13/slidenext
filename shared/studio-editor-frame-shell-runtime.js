@@ -23,7 +23,10 @@
       return null;
     }
 
-    return frameRuntimeApi.createStudioEditorFrameRuntime(options.runtimeOptions || {});
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return frameRuntimeApi.createStudioEditorFrameRuntime(runtimeOptions || {});
   }
 
   return {
