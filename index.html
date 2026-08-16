@@ -6212,7 +6212,11 @@
           restoreCommittedSelectionByIdsOnActiveSlide,
           observeDeckActiveSlideState,
           syncSelectionOverlay,
-          capturePersistedDeckPlaybackState,
+          capturePersistedDeckPlaybackState: (...args) => (
+            typeof capturePersistedDeckPlaybackState === 'function'
+              ? capturePersistedDeckPlaybackState(...args)
+              : null
+          ),
           applyPersistedDeckState: (nextState, nextOptions) => applyCurrentStudioPersistedDeckState(
             nextState,
             nextOptions
@@ -6225,7 +6229,11 @@
           applyEditorSelectionState,
           createEditorDeckViewBuildOptions,
           buildDeckSourceHtml: resolveDeckHtmlMethod('buildDeckSourceHtml'),
-          syncIframeTheme,
+          syncIframeTheme: (...args) => (
+            typeof syncIframeTheme === 'function'
+              ? syncIframeTheme(...args)
+              : null
+          ),
           setupIframeDragging,
           bindDeckNavigationSync,
           getSlides,
@@ -6551,9 +6559,15 @@
                 ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
                 : (playbackState || null);
             },
-            setPersistedDeckHtml,
-            setPersistedCanonicalDeck,
-            setPersistedPlaybackState
+            setPersistedDeckHtml(cleanHtml) {
+              setStudioPersistedDeckHtml(cleanHtml);
+            },
+            setPersistedCanonicalDeck(canonicalDeck) {
+              setStudioPersistedCanonicalDeck(canonicalDeck);
+            },
+            setPersistedPlaybackState(playbackState) {
+              setStudioPersistedPlaybackState(playbackState);
+            }
           }
         })
       : null;
@@ -7362,7 +7376,11 @@
               resetEditorLiveCanonicalDeck();
             }
           },
-          syncIframeTheme,
+          syncIframeTheme: (...args) => (
+            typeof syncIframeTheme === 'function'
+              ? syncIframeTheme(...args)
+              : null
+          ),
           makeElementsHoverable,
           setupIframeDragging,
           generateThumbnails,
