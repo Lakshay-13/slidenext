@@ -11592,6 +11592,20 @@
           getApplyPresetWallpaper: () => typeof applyPresetWallpaper === 'function'
             ? applyPresetWallpaper
             : null,
+          getWallpaperController: () => typeof SlideNextStudioEditorWallpaperController !== 'undefined'
+            ? SlideNextStudioEditorWallpaperController
+            : null,
+          getIframeDocument: getIframeDoc,
+          applyMutation: applyEditorWallpaperMutationWithTransaction,
+          applySlidesMutation: applyEditorWallpaperSlidesMutationWithTransaction,
+          getSlideId: (slide) => typeof getEditorSlideId === 'function'
+            ? getEditorSlideId(slide)
+            : '',
+          getSlides,
+          setPendingCustomWallpaperVersion,
+          finalizeMutation: finalizeWallpaperMutation,
+          rollbackMutation: rollbackEditorWallpaperMutation,
+          getAlert: () => typeof alert === 'function' ? alert : null,
           setWallpaperTabState: typeof setStudioWallpaperTab === 'function'
             ? setStudioWallpaperTab
             : null
@@ -11745,6 +11759,12 @@
     }
 
     function applyPresetWallpaper(val, isCustomInput = false) {
+      if (typeof studioEditorWallpaperAccessors !== 'undefined'
+        && studioEditorWallpaperAccessors
+        && typeof studioEditorWallpaperAccessors.applyPresetWallpaper === 'function') {
+        const delegatedResult = studioEditorWallpaperAccessors.applyPresetWallpaper(val, isCustomInput);
+        if (typeof delegatedResult !== 'undefined') return delegatedResult;
+      }
       const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'
         ? SlideNextStudioEditorWallpaperController
         : null;
@@ -11837,6 +11857,12 @@
     // Build background CSS based on custom stops
 
     function applyWallpaperToAllSlides() {
+      if (typeof studioEditorWallpaperAccessors !== 'undefined'
+        && studioEditorWallpaperAccessors
+        && typeof studioEditorWallpaperAccessors.applyWallpaperToAllSlides === 'function') {
+        const delegatedResult = studioEditorWallpaperAccessors.applyWallpaperToAllSlides();
+        if (typeof delegatedResult !== 'undefined') return delegatedResult;
+      }
       const wallpaperController = typeof SlideNextStudioEditorWallpaperController !== 'undefined'
         ? SlideNextStudioEditorWallpaperController
         : null;

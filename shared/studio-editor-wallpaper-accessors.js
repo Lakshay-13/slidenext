@@ -26,6 +26,36 @@
     const getApplyPresetWallpaper = typeof options.getApplyPresetWallpaper === 'function'
       ? options.getApplyPresetWallpaper
       : () => options.applyPresetWallpaper || null;
+    const getWallpaperController = typeof options.getWallpaperController === 'function'
+      ? options.getWallpaperController
+      : () => options.wallpaperController || null;
+    const getIframeDocument = typeof options.getIframeDocument === 'function'
+      ? options.getIframeDocument
+      : () => null;
+    const applyMutation = typeof options.applyMutation === 'function'
+      ? options.applyMutation
+      : null;
+    const applySlidesMutation = typeof options.applySlidesMutation === 'function'
+      ? options.applySlidesMutation
+      : null;
+    const getSlideId = typeof options.getSlideId === 'function'
+      ? options.getSlideId
+      : () => '';
+    const getSlides = typeof options.getSlides === 'function'
+      ? options.getSlides
+      : null;
+    const setPendingCustomWallpaperVersion = typeof options.setPendingCustomWallpaperVersion === 'function'
+      ? options.setPendingCustomWallpaperVersion
+      : null;
+    const finalizeMutation = typeof options.finalizeMutation === 'function'
+      ? options.finalizeMutation
+      : null;
+    const rollbackMutation = typeof options.rollbackMutation === 'function'
+      ? options.rollbackMutation
+      : null;
+    const getAlert = typeof options.getAlert === 'function'
+      ? options.getAlert
+      : () => options.alertRef || null;
 
     function setWallpaperTab(tab) {
       const actionState = resolveActionState();
@@ -61,7 +91,51 @@
       return didRender;
     }
 
-    return { setWallpaperTab, renderWallpaperPresets };
+    function applyPresetWallpaper(background, isCustomInput = false) {
+      const wallpaperController = getWallpaperController();
+      if (!wallpaperController
+        || typeof wallpaperController.applyStudioPresetWallpaper !== 'function') {
+        return undefined;
+      }
+      return wallpaperController.applyStudioPresetWallpaper({
+        background,
+        isCustomInput,
+        resolveActionState,
+        getIframeDocument,
+        wallpaperView: getWallpaperView(),
+        applyMutation,
+        getSlideId,
+        setPendingCustomWallpaperVersion,
+        finalizeMutation,
+        rollbackMutation
+      });
+    }
+
+    function applyWallpaperToAllSlides() {
+      const wallpaperController = getWallpaperController();
+      if (!wallpaperController
+        || typeof wallpaperController.applyStudioWallpaperToAllSlides !== 'function') {
+        return undefined;
+      }
+      return wallpaperController.applyStudioWallpaperToAllSlides({
+        resolveActionState,
+        getIframeDocument,
+        wallpaperView: getWallpaperView(),
+        getSlides,
+        applyMutation: applySlidesMutation,
+        getSlideId,
+        finalizeMutation,
+        rollbackMutation,
+        alertRef: getAlert()
+      });
+    }
+
+    return {
+      setWallpaperTab,
+      renderWallpaperPresets,
+      applyPresetWallpaper,
+      applyWallpaperToAllSlides
+    };
   }
 
   return { createStudioEditorWallpaperAccessors };

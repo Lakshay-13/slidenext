@@ -266,6 +266,40 @@ test('wallpaper accessors render presets and bind the shared preset action', () 
   ]);
 });
 
+test('wallpaper accessors delegate active-slide mutation orchestration to the shared controller', () => {
+  const calls = [];
+  const controllerResult = 'delegated-active-slide';
+  const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors({
+    getWallpaperController: () => ({
+      applyStudioPresetWallpaper(options) {
+        calls.push(options);
+        return controllerResult;
+      }
+    }),
+    getWallpaperView: () => ({ id: 'wallpaper-view' }),
+    getIframeDocument: () => ({ id: 'iframe-document' }),
+    applyMutation: () => {},
+    getSlideId: () => 'slide-1',
+    setPendingCustomWallpaperVersion: () => {},
+    finalizeMutation: () => true,
+    rollbackMutation: () => {}
+  });
+
+  assert.equal(accessors.applyPresetWallpaper('#fff', true), controllerResult);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].background, '#fff');
+  assert.equal(calls[0].isCustomInput, true);
+  assert.equal(calls[0].getIframeDocument().id, 'iframe-document');
+  assert.equal(calls[0].wallpaperView.id, 'wallpaper-view');
+});
+
+test('wallpaper accessors return undefined when the shared mutation controller is unavailable', () => {
+  const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors();
+
+  assert.equal(accessors.applyPresetWallpaper('#fff'), undefined);
+  assert.equal(accessors.applyWallpaperToAllSlides(), undefined);
+});
+
 test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = {
