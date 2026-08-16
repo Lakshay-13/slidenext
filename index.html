@@ -1607,6 +1607,7 @@
   <script src="/shared/studio-editor-persisted-html-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
@@ -6455,38 +6456,50 @@
       typeof SlideNextStudioEditorPersistedDeckStateShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistedDeckStateShellRuntime
       : null;
-    const studioEditorPersistedDeckStateShellRuntime = studioEditorPersistedDeckStateShellRuntimeApi
-      && typeof studioEditorPersistedDeckStateShellRuntimeApi
-        .createStudioEditorPersistedDeckStateShellRuntime === 'function'
-      ? studioEditorPersistedDeckStateShellRuntimeApi
-        .createStudioEditorPersistedDeckStateShellRuntime({
-          actionApi: typeof SlideNextStudioEditorPersistedDeckStateAction !== 'undefined'
-            ? SlideNextStudioEditorPersistedDeckStateAction
-            : null,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          resolveCanonicalDeck(canonicalDeck) {
-            return typeof resolveEditorStoredCanonicalDeck === 'function'
-              ? resolveEditorStoredCanonicalDeck({ canonicalDeck }) || null
-              : null;
-          },
-          normalizePlaybackState(playbackState) {
-            return typeof SlideNextDeckPersistence !== 'undefined'
-              && SlideNextDeckPersistence
-              && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
-              ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
-              : (playbackState || null);
-          },
-          setPersistedDeckHtml,
-          setPersistedCanonicalDeck,
-          setPersistedPlaybackState
+    const studioEditorPersistedDeckStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistedDeckStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistedDeckStateRuntimeAccessors
+      : null;
+    const studioEditorPersistedDeckStateRuntimeAccessors =
+      studioEditorPersistedDeckStateRuntimeAccessorsApi
+      && typeof studioEditorPersistedDeckStateRuntimeAccessorsApi
+        .createStudioEditorPersistedDeckStateRuntimeAccessors === 'function'
+      ? studioEditorPersistedDeckStateRuntimeAccessorsApi
+        .createStudioEditorPersistedDeckStateRuntimeAccessors({
+          runtimeApi: studioEditorPersistedDeckStateShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorPersistedDeckStateAction !== 'undefined'
+              ? SlideNextStudioEditorPersistedDeckStateAction
+              : null,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            resolveCanonicalDeck(canonicalDeck) {
+              return typeof resolveEditorStoredCanonicalDeck === 'function'
+                ? resolveEditorStoredCanonicalDeck({ canonicalDeck }) || null
+                : null;
+            },
+            normalizePlaybackState(playbackState) {
+              return typeof SlideNextDeckPersistence !== 'undefined'
+                && SlideNextDeckPersistence
+                && typeof SlideNextDeckPersistence.normalizePersistedDeckPlaybackState === 'function'
+                ? SlideNextDeckPersistence.normalizePersistedDeckPlaybackState(playbackState)
+                : (playbackState || null);
+            },
+            setPersistedDeckHtml,
+            setPersistedCanonicalDeck,
+            setPersistedPlaybackState
+          }
         })
       : null;
+    const studioEditorPersistedDeckStateShellRuntime =
+      studioEditorPersistedDeckStateRuntimeAccessors
+        ? studioEditorPersistedDeckStateRuntimeAccessors.runtime
+        : null;
     const studioEditorPersistedDeckStateAction = studioEditorPersistedDeckStateShellRuntime
       && studioEditorPersistedDeckStateShellRuntime.isAvailable === true
       ? studioEditorPersistedDeckStateShellRuntime.persistedDeckStateAction

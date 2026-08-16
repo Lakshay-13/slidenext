@@ -73,7 +73,18 @@ test('index loads and installs the shared persisted deck state action', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-deck-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorPersistedDeckStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-deck-state-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorPersistedDeckStateRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedDeckStateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistedDeckStateShellRuntimeApi\s*\.\s*createStudioEditorPersistedDeckStateShellRuntime\(/
+  );
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedDeckStateGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function updateEditorPersistedDeckState\(nextState = \{\}\) \{/);
 });
