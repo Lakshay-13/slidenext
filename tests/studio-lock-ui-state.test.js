@@ -11,6 +11,7 @@ const studioTransaction = require('../shared/studio-editor-transaction.js');
 const studioElementState = require('../shared/studio-element-state.js');
 const lockState = require('../shared/studio-editor-lock-state.js');
 const lockToolbarState = require('../shared/studio-editor-lock-toolbar-state.js');
+const lockToolbarStateRuntimeAccessors = require('../shared/studio-editor-lock-toolbar-state-runtime-accessors.js');
 const lockMutation = require('../shared/studio-editor-lock-mutation.js');
 const lockTransaction = require('../shared/studio-editor-lock-transaction.js');
 const lockVisibilityRollback = require('../shared/studio-editor-lock-visibility-rollback.js');
@@ -110,6 +111,7 @@ function installLockVisibilityController(context) {
 
 function runLockActionStateSource(source, context) {
   context.SlideNextStudioEditorLockToolbarState = lockToolbarState;
+  context.SlideNextStudioEditorLockToolbarStateRuntimeAccessors = lockToolbarStateRuntimeAccessors;
   vm.createContext(context);
   vm.runInContext(source, context);
 }

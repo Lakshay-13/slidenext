@@ -1440,6 +1440,7 @@
   <script src="/shared/studio-editor-removal-state-accessors.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-lock-toolbar-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
   <script src="/shared/studio-editor-lock-transaction.js"></script>
   <script src="/shared/studio-editor-visibility-state.js"></script>
@@ -11066,27 +11067,43 @@
         && typeof studioEditorToolbarStateCoordinator.syncLock === 'function') {
         return studioEditorToolbarStateCoordinator.syncLock(doc);
       }
-      const lockToolbarState = typeof SlideNextStudioEditorLockToolbarState !== 'undefined'
+      const lockToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorLockToolbarState !== 'undefined'
         ? SlideNextStudioEditorLockToolbarState
         : null;
-      if (!lockToolbarState
-        || typeof lockToolbarState.createStudioEditorLockToolbarStateController !== 'function') {
+      const lockToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorLockToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorLockToolbarStateRuntimeAccessors
+        : null;
+      const studioEditorLockToolbarStateRuntimeAccessors =
+        lockToolbarStateRuntimeAccessorsApi
+        && typeof lockToolbarStateRuntimeAccessorsApi
+          .createStudioEditorLockToolbarStateRuntimeAccessors === 'function'
+        ? lockToolbarStateRuntimeAccessorsApi
+          .createStudioEditorLockToolbarStateRuntimeAccessors({
+            runtimeApi: lockToolbarStateRuntimeApi
+          })
+        : null;
+      if (!studioEditorLockToolbarStateRuntimeAccessors
+        || typeof studioEditorLockToolbarStateRuntimeAccessors
+          .createStudioEditorLockToolbarStateController !== 'function') {
         return false;
       }
       if (!updateLockActionState.controller) {
         const lockView = typeof SlideNextStudioEditorLockState !== 'undefined'
           ? SlideNextStudioEditorLockState
           : null;
-        updateLockActionState.controller = lockToolbarState.createStudioEditorLockToolbarStateController({
-          lockView,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-            : isElementLocked,
-          documentRef: document
-        });
+        updateLockActionState.controller = studioEditorLockToolbarStateRuntimeAccessors
+          .createStudioEditorLockToolbarStateController({
+            lockView,
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+              : isElementLocked,
+            documentRef: document
+          });
       }
       return updateLockActionState.controller
         && typeof updateLockActionState.controller.sync === 'function'
