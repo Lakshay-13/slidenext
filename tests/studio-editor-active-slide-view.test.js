@@ -125,6 +125,33 @@ test('syncStudioActiveSlideChrome records slide navigation as a view transaction
   ]);
 });
 
+test('syncStudioActiveSlideChrome keeps the canonical active slide ID ahead of a stale DOM ID', () => {
+  let currentSlideIndex = 0;
+  let currentSlideId = '';
+
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    getCurrentSlideIndex: () => currentSlideIndex,
+    syncStudioActiveSlideView() {
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'dom-slide-id' };
+    },
+    buildEditorDeckSnapshot() {
+      return {
+        activeSlideIndex: 0,
+        slides: [{ id: 'canonical-slide-id' }]
+      };
+    },
+    setCurrentSlideId(nextValue) {
+      currentSlideId = nextValue;
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.equal(currentSlideId, 'canonical-slide-id');
+});
+
 test('syncStudioActiveSlideChrome uses the canonical fallback when no iframe exists', () => {
   let currentSlideIndex = 0;
   const calls = [];

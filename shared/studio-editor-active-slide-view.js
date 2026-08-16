@@ -201,17 +201,17 @@
     let activeSlideId = canonicalActiveSlide && canonicalActiveSlide.id
       ? canonicalActiveSlide.id
       : '';
-    if (activeSlide) {
+    if (!activeSlideId && activeSlide) {
       if (typeof options.getSlideId === 'function') {
         try {
-          activeSlideId = options.getSlideId(activeSlide) || activeSlideId;
+          activeSlideId = options.getSlideId(activeSlide) || '';
         } catch (error) {
           // Preserve the canonical snapshot ID when the DOM reader fails.
         }
       } else {
         activeSlideId = activeSlide.id
           || (activeSlide.dataset && activeSlide.dataset.slideId)
-          || activeSlideId;
+          || '';
       }
     }
     setCurrentSlideId(activeSlideId);
