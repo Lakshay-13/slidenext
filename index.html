@@ -1648,6 +1648,7 @@
   <script src="/shared/studio-editor-style-controller.js"></script>
   <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-style-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-style-accessors.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-theme-shell-runtime.js"></script>
@@ -4235,13 +4236,20 @@
     const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
       ? studioEditorLayerOrderRuntime.layerOrderController
       : null;
-    const studioEditorStyleRuntime = typeof SlideNextStudioEditorStyleShellRuntime !== 'undefined'
-      && SlideNextStudioEditorStyleShellRuntime
-      && typeof SlideNextStudioEditorStyleShellRuntime.createStudioEditorStyleShellRuntime === 'function'
-      ? SlideNextStudioEditorStyleShellRuntime.createStudioEditorStyleShellRuntime({
+    const studioEditorStyleAccessorsApi =
+      typeof SlideNextStudioEditorStyleAccessors !== 'undefined'
+      ? SlideNextStudioEditorStyleAccessors
+      : null;
+    const studioEditorStyleAccessors = studioEditorStyleAccessorsApi
+      && typeof studioEditorStyleAccessorsApi.createStudioEditorStyleAccessors === 'function'
+      ? studioEditorStyleAccessorsApi.createStudioEditorStyleAccessors({
+          runtimeApi: typeof SlideNextStudioEditorStyleShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorStyleShellRuntime
+            : null,
           styleRuntimeApi: typeof SlideNextStudioEditorStyleRuntime !== 'undefined'
             ? SlideNextStudioEditorStyleRuntime
             : null,
+          runtimeOptions: {
           controllerApi: typeof SlideNextStudioEditorStyleController !== 'undefined'
             ? SlideNextStudioEditorStyleController
             : null,
@@ -4285,7 +4293,11 @@
             getStudioEditorSessionToken()
           ),
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+          }
         })
+      : null;
+    const studioEditorStyleRuntime = studioEditorStyleAccessors
+      ? studioEditorStyleAccessors.runtime
       : null;
     const studioEditorStyleController = studioEditorStyleRuntime
       ? studioEditorStyleRuntime.styleController

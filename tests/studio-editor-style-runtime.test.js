@@ -71,7 +71,11 @@ test('index wires style through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorStyleShellRuntime\.createStudioEditorStyleShellRuntime\(/
+    /<script src="\/shared\/studio-editor-style-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorStyleAccessorsApi\s*\.\s*createStudioEditorStyleAccessors\(/
   );
   assert.doesNotMatch(
     fileContent,
