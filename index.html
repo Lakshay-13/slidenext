@@ -946,13 +946,13 @@
               <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Speaker Notes</h4>
               <span class="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">Presenter only</span>
             </div>
-            <textarea id="speakerNotesInput" onchange="updateActiveSlideNotes(this.value)" rows="5" disabled placeholder="Add a private cue for this slide..." class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-y disabled:opacity-40 disabled:cursor-not-allowed"></textarea>
+            <textarea id="speakerNotesInput" rows="5" disabled placeholder="Add a private cue for this slide..." class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-y disabled:opacity-40 disabled:cursor-not-allowed"></textarea>
             <p class="text-[10px] text-zinc-600 font-mono">Saved with the slide and included in supported exports.</p>
           </div>
 
           <div class="flex flex-col gap-2">
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Slide Section</h4>
-            <input id="slideSectionInput" onchange="updateActiveSlideSection(this.value)" type="text" disabled placeholder="e.g. Opening, Research, Closing" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
+            <input id="slideSectionInput" type="text" disabled placeholder="e.g. Opening, Research, Closing" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
             <p class="text-[10px] text-zinc-600 font-mono">A lightweight organizer label for this slide.</p>
           </div>
 
@@ -3467,6 +3467,17 @@
     const studioEditorSlideMetadataController = studioEditorSlideMetadataRuntime
       ? studioEditorSlideMetadataRuntime.slideMetadataController
       : null;
+    const studioEditorNotesViewApi = typeof SlideNextStudioEditorNotes !== 'undefined'
+      ? SlideNextStudioEditorNotes
+      : null;
+    if (studioEditorNotesViewApi
+      && typeof studioEditorNotesViewApi.bindStudioEditorNotesControls === 'function') {
+      studioEditorNotesViewApi.bindStudioEditorNotesControls({
+        documentRef: document,
+        updateActiveSlideNotes,
+        updateActiveSlideSection
+      });
+    }
     const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingShellRuntime !== 'undefined'
       && SlideNextStudioEditorSlideRoutingShellRuntime
       && typeof SlideNextStudioEditorSlideRoutingShellRuntime.createStudioEditorSlideRoutingShellRuntime === 'function'

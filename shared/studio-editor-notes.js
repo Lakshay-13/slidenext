@@ -191,6 +191,37 @@
     });
   }
 
+  function bindStudioEditorNotesControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const updateActiveSlideNotes = typeof options.updateActiveSlideNotes === 'function'
+      ? options.updateActiveSlideNotes
+      : null;
+    const updateActiveSlideSection = typeof options.updateActiveSlideSection === 'function'
+      ? options.updateActiveSlideSection
+      : null;
+    const bindings = {};
+    const controls = [
+      ['speakerNotesInput', updateActiveSlideNotes],
+      ['slideSectionInput', updateActiveSlideSection]
+    ];
+    controls.forEach(([id, handler]) => {
+      const control = documentRef.getElementById(id);
+      if (!control || typeof control.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      control.addEventListener('change', (event) => {
+        if (!handler) return;
+        const target = event && event.currentTarget ? event.currentTarget : control;
+        handler(target && typeof target.value !== 'undefined' ? target.value : '');
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   return {
     SPEAKER_NOTES_ATTRIBUTE,
     LEGACY_NOTES_ATTRIBUTE,
@@ -203,6 +234,7 @@
     applyStudioSlideSection,
     syncStudioSlideMetadataControl,
     syncStudioSpeakerNotesControl,
-    syncStudioSlideSectionControl
+    syncStudioSlideSectionControl,
+    bindStudioEditorNotesControls
   };
 });

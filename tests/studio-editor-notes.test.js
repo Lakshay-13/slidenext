@@ -1,8 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const notes = require('../shared/studio-editor-notes.js');
 const transaction = require('../shared/studio-editor-transaction.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 function createSlide(attributes = {}) {
   const state = { ...attributes };
@@ -124,4 +128,43 @@ test('syncStudioSlideSectionControl reads canonical section fallback and disable
   notes.syncStudioSlideSectionControl({ documentRef, activeSlide: null, canEdit: false });
   assert.equal(control.value, '');
   assert.equal(control.disabled, true);
+});
+
+test('bindStudioEditorNotesControls wires metadata changes to both controls', () => {
+  const controls = {
+    speakerNotesInput: { value: 'Cue', listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } },
+    slideSectionInput: { value: 'Research', listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    notes.bindStudioEditorNotesControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      updateActiveSlideNotes(value) {
+        calls.push(['notes', value]);
+      },
+      updateActiveSlideSection(value) {
+        calls.push(['section', value]);
+      }
+    }),
+    { speakerNotesInput: true, slideSectionInput: true }
+  );
+  controls.speakerNotesInput.listeners.change({ currentTarget: controls.speakerNotesInput });
+  controls.slideSectionInput.listeners.change({ currentTarget: controls.slideSectionInput });
+  assert.deepEqual(calls, [['notes', 'Cue'], ['section', 'Research']]);
+});
+
+test('index keeps notes and section controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="speakerNotesInput"[^>]*onchange=/);
+  assert.doesNotMatch(fileContent, /id="slideSectionInput"[^>]*onchange=/);
 });
