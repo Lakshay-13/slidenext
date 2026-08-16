@@ -1762,6 +1762,7 @@
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
+  <script src="/shared/studio-editor-snapshot-ui.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
@@ -3069,6 +3070,19 @@
           getSlideEditableElements,
           getNormalizedSlideLayerOrder,
           buildElementSnapshot: buildEditorElementSnapshot
+        })
+      : null;
+    const studioEditorSnapshotUi = typeof SlideNextStudioEditorSnapshotUi !== 'undefined'
+      && SlideNextStudioEditorSnapshotUi
+      && typeof SlideNextStudioEditorSnapshotUi.createStudioEditorSnapshotUi === 'function'
+      ? SlideNextStudioEditorSnapshotUi.createStudioEditorSnapshotUi({
+          deckSnapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
+            ? SlideNextStudioDeckSnapshot
+            : null,
+          deckSnapshotAccessors: studioEditorDeckSnapshotAccessors,
+          elementSnapshotAccessors: studioEditorElementSnapshotAccessors,
+          buildEditorDeckSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshot(sourceDoc, buildOptions),
+          getCurrentSlideIndex: () => getStudioCurrentSlideIndex()
         })
       : null;
     const studioEditorPreviewController = studioEditorDeckViewRuntime
@@ -8500,6 +8514,11 @@
     }
 
     function getStudioActiveSlideIndex(doc = getIframeDoc()) {
+      if (typeof studioEditorSnapshotUi !== 'undefined'
+        && studioEditorSnapshotUi
+        && typeof studioEditorSnapshotUi.getActiveSlideIndex === 'function') {
+        return studioEditorSnapshotUi.getActiveSlideIndex(doc);
+      }
       const resolveStudioActiveSlideIndex = (
         typeof SlideNextStudioDeckSnapshot !== 'undefined'
         && SlideNextStudioDeckSnapshot
@@ -8515,6 +8534,11 @@
     }
 
     function getEditorLayerDisplayMetadata(el) {
+      if (typeof studioEditorSnapshotUi !== 'undefined'
+        && studioEditorSnapshotUi
+        && typeof studioEditorSnapshotUi.getLayerDisplayMetadata === 'function') {
+        return studioEditorSnapshotUi.getLayerDisplayMetadata(el);
+      }
       const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
         ? studioEditorElementSnapshotAccessors
         : null;
@@ -8524,6 +8548,11 @@
     }
 
     function buildEditorElementSnapshot(el) {
+      if (typeof studioEditorSnapshotUi !== 'undefined'
+        && studioEditorSnapshotUi
+        && typeof studioEditorSnapshotUi.buildElementSnapshot === 'function') {
+        return studioEditorSnapshotUi.buildElementSnapshot(el);
+      }
       const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
         ? studioEditorElementSnapshotAccessors
         : null;
@@ -8533,6 +8562,11 @@
     }
 
     function buildEditorLayerSnapshot(slide) {
+      if (typeof studioEditorSnapshotUi !== 'undefined'
+        && studioEditorSnapshotUi
+        && typeof studioEditorSnapshotUi.buildLayerSnapshot === 'function') {
+        return studioEditorSnapshotUi.buildLayerSnapshot(getNormalizedSlideLayerOrder(slide));
+      }
       const accessors = typeof studioEditorElementSnapshotAccessors !== 'undefined'
         ? studioEditorElementSnapshotAccessors
         : null;
