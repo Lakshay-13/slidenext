@@ -507,6 +507,27 @@ test('addStudioSlideNode preserves the mutation when active-slide selection thro
   assert.equal(finalized, true);
 });
 
+test('addStudioSlideNode preserves the rollback result when deck-view restoration throws', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2' };
+
+  assert.doesNotThrow(() => {
+    assert.equal(slideCommands.addStudioSlideNode({
+      getIframeDoc: () => doc,
+      resolveInsertionActionState: () => ({ canAddSlide: true }),
+      getSlideContainer: () => container,
+      getSlides: () => [{ id: 'slide-1' }],
+      createBlankSlide: () => newSlide,
+      applyInsertion: () => ({ didApply: true, transaction: { id: 'tx' } }),
+      finalizeMutation: () => false,
+      restoreDeckViewAfterSlideMutation() {
+        throw new Error('deck view restore failed');
+      }
+    }), false);
+  });
+});
+
 test('addStudioSlideNode prefers a scoped slide-presence transaction when the new slide is serializable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
