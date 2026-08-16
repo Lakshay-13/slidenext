@@ -483,6 +483,30 @@ test('addStudioSlideNode preserves the mutation when thumbnail refresh throws', 
   assert.equal(finalized, true);
 });
 
+test('addStudioSlideNode preserves the mutation when active-slide selection throws', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2' };
+  let finalized = false;
+
+  assert.equal(slideCommands.addStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => [{ id: 'slide-1' }],
+    createBlankSlide: () => newSlide,
+    applyInsertion: () => ({ didApply: true, transaction: { id: 'tx' } }),
+    setActiveSlide() {
+      throw new Error('active slide selection failed');
+    },
+    finalizeMutation: () => {
+      finalized = true;
+      return true;
+    }
+  }), true);
+  assert.equal(finalized, true);
+});
+
 test('addStudioSlideNode prefers a scoped slide-presence transaction when the new slide is serializable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };

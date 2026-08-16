@@ -44,6 +44,15 @@
     }
   }
 
+  function setStudioActiveSlideSafely(options = {}, index) {
+    if (typeof options.setActiveSlide !== 'function') return;
+    try {
+      options.setActiveSlide(index);
+    } catch (err) {
+      // Active-slide UI failure must not change the slide mutation result.
+    }
+  }
+
   function getStudioSlideCommandDocument(options = {}) {
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
@@ -192,9 +201,7 @@
       : mutation;
 
     refreshStudioSlideThumbnails(options);
-    if (typeof options.setActiveSlide === 'function') {
-      options.setActiveSlide(insertionIndex);
-    }
+    setStudioActiveSlideSafely(options, insertionIndex);
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : () => {};
@@ -212,9 +219,7 @@
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
       refreshStudioSlideThumbnails(options);
-      if (typeof options.setActiveSlide === 'function') {
-        options.setActiveSlide(sourceIndex);
-      }
+      setStudioActiveSlideSafely(options, sourceIndex);
       return false;
     }
     return true;
@@ -321,9 +326,7 @@
       : mutation;
 
     refreshStudioSlideThumbnails(options);
-    if (typeof options.setActiveSlide === 'function') {
-      options.setActiveSlide(newIndex);
-    }
+    setStudioActiveSlideSafely(options, newIndex);
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : () => {};
