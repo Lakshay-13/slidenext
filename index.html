@@ -7018,6 +7018,23 @@
           getSessionToken: getStudioEditorSessionToken
         })
       : null;
+    const studioEditorLaunchSourceControllerApi =
+      typeof SlideNextStudioEditorLaunchSource !== 'undefined'
+      ? SlideNextStudioEditorLaunchSource
+      : null;
+    const studioEditorLaunchSourceController = studioEditorLaunchSourceControllerApi
+      && typeof studioEditorLaunchSourceControllerApi
+        .createStudioEditorLaunchSourceController === 'function'
+      ? studioEditorLaunchSourceControllerApi.createStudioEditorLaunchSourceController({
+          launchSourceApi: studioEditorLaunchSourceControllerApi,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          deckHtmlApi: typeof SlideNextDeckHtml !== 'undefined'
+            ? SlideNextDeckHtml
+            : null
+        })
+      : null;
     const studioEditorSessionResetController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionResetController
       : null;
@@ -8502,6 +8519,11 @@
     }
 
     function resolveCurrentStudioEditorLaunchSource(metadata, presentationUrl = '') {
+      if (typeof studioEditorLaunchSourceController !== 'undefined'
+        && studioEditorLaunchSourceController
+        && typeof studioEditorLaunchSourceController.resolve === 'function') {
+        return studioEditorLaunchSourceController.resolve(presentationUrl, metadata);
+      }
       const launchSourceApi = typeof SlideNextStudioEditorLaunchSource !== 'undefined'
         ? SlideNextStudioEditorLaunchSource
         : null;
@@ -8534,6 +8556,11 @@
     }
 
     function setCurrentStudioEditorFrameSource(iframe, presentationUrl, source = {}) {
+      if (typeof studioEditorLaunchSourceController !== 'undefined'
+        && studioEditorLaunchSourceController
+        && typeof studioEditorLaunchSourceController.apply === 'function') {
+        return studioEditorLaunchSourceController.apply(iframe, presentationUrl, source);
+      }
       const launchSourceApi = typeof SlideNextStudioEditorLaunchSource !== 'undefined'
         ? SlideNextStudioEditorLaunchSource
         : null;

@@ -93,8 +93,53 @@
     return true;
   }
 
+  function createStudioEditorLaunchSourceController(options = {}) {
+    const launchSourceApi = options.launchSourceApi
+      && typeof options.launchSourceApi === 'object'
+      ? options.launchSourceApi
+      : null;
+    const canonicalDeckApi = options.canonicalDeckApi
+      && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    const deckHtmlApi = options.deckHtmlApi
+      && typeof options.deckHtmlApi === 'object'
+      ? options.deckHtmlApi
+      : null;
+
+    function resolve(presentationUrl = '', metadata = null) {
+      const resolverFactory = launchSourceApi
+        && typeof launchSourceApi.createStudioEditorLaunchSourceResolver === 'function'
+        ? launchSourceApi.createStudioEditorLaunchSourceResolver
+        : createStudioEditorLaunchSourceResolver;
+      const isCanonicalDeck = canonicalDeckApi
+        && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+        ? canonicalDeckApi.isCanonicalDeck
+        : null;
+      const buildCanonicalHtml = deckHtmlApi
+        && typeof deckHtmlApi.buildDeckPreviewHtml === 'function'
+        ? (canonicalDeck, sourcePath) => deckHtmlApi.buildDeckPreviewHtml(canonicalDeck, sourcePath)
+        : null;
+      return resolverFactory({ isCanonicalDeck, buildCanonicalHtml }).resolve(
+        presentationUrl,
+        metadata
+      );
+    }
+
+    function apply(iframe, presentationUrl = '', source = {}) {
+      const applySource = launchSourceApi
+        && typeof launchSourceApi.applyStudioEditorLaunchSource === 'function'
+        ? launchSourceApi.applyStudioEditorLaunchSource
+        : applyStudioEditorLaunchSource;
+      return applySource(iframe, presentationUrl, source);
+    }
+
+    return { resolve, apply };
+  }
+
   return {
     createStudioEditorLaunchSourceResolver,
-    applyStudioEditorLaunchSource
+    applyStudioEditorLaunchSource,
+    createStudioEditorLaunchSourceController
   };
 });

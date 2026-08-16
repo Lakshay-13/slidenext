@@ -93,6 +93,43 @@ test('launch source applier centralizes canonical srcdoc and legacy URL assignme
   assert.equal(launchSource.applyStudioEditorLaunchSource(null, '/deck/index.html'), false);
 });
 
+test('launch source controller composes canonical resolution and iframe assignment', () => {
+  const calls = [];
+  const controller = launchSource.createStudioEditorLaunchSourceController({
+    launchSourceApi: {
+      createStudioEditorLaunchSourceResolver(options) {
+        calls.push(['resolver', options]);
+        return {
+          resolve(url, metadata) {
+            calls.push(['resolve', url, metadata]);
+            return { kind: 'url', url, srcdoc: '', canonicalDeck: null };
+          }
+        };
+      },
+      applyStudioEditorLaunchSource(...args) {
+        calls.push(['apply', ...args]);
+        return 'applied';
+      }
+    },
+    canonicalDeckApi: { isCanonicalDeck: () => true },
+    deckHtmlApi: { buildDeckPreviewHtml: () => '<html>canonical</html>' }
+  });
+  const metadata = { canonicalDeck: { slides: [] } };
+
+  assert.deepEqual(controller.resolve('/deck/index.html', metadata), {
+    kind: 'url',
+    url: '/deck/index.html',
+    srcdoc: '',
+    canonicalDeck: null
+  });
+  assert.equal(controller.apply({ id: 'frame' }, '/deck/index.html', { kind: 'url' }), 'applied');
+  assert.equal(calls[0][0], 'resolver');
+  assert.equal(calls[0][1].isCanonicalDeck(metadata.canonicalDeck), true);
+  assert.equal(calls[0][1].buildCanonicalHtml(metadata.canonicalDeck, '/deck/index.html'), '<html>canonical</html>');
+  assert.deepEqual(calls[1], ['resolve', '/deck/index.html', metadata]);
+  assert.deepEqual(calls[2], ['apply', { id: 'frame' }, '/deck/index.html', { kind: 'url' }]);
+});
+
 test('index frame source adapter delegates to the shared launch source applier', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const startMarker = 'function setCurrentStudioEditorFrameSource(iframe, presentationUrl, source = {}) {';
