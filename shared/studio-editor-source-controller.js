@@ -267,7 +267,12 @@
     let sourceMode = 'html';
 
     function canUseDeckActions() {
-      const actionState = resolveReadyState();
+      let actionState;
+      try {
+        actionState = resolveReadyState();
+      } catch (error) {
+        return false;
+      }
       return !!(actionState && actionState.canUseDeckActions);
     }
 

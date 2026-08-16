@@ -327,6 +327,30 @@ test('source controller blocks modal operations when deck actions are unavailabl
   assert.equal(calls.length, 0);
 });
 
+test('source controller fails closed when deck readiness resolution throws', () => {
+  let sourceCalls = 0;
+  const { calls, controller } = createController({
+    resolveReadyState() {
+      throw new Error('deck readiness unavailable');
+    },
+    sourceApi: {
+      applyStudioEditorSource() {
+        sourceCalls += 1;
+        return { success: true };
+      }
+    }
+  });
+
+  assert.equal(controller.open(), false);
+  assert.equal(controller.apply(), false);
+  assert.deepEqual(controller.applySourceHtml('<html></html>'), {
+    success: false,
+    error: 'Editor deck is unavailable'
+  });
+  assert.equal(calls.length, 0);
+  assert.equal(sourceCalls, 0);
+});
+
 test('source controller forwards the live canonical baseline to source application', () => {
   const canonicalDeckBaseline = { kind: 'slidenext.deck', slides: [] };
   const sourceDocument = { id: 'source-frame' };
