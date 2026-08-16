@@ -61,7 +61,7 @@ test('dashboard controller loads data and renders the loaded state', async () =>
         return true;
       },
       renderPresentationLibraryCategories(options) {
-        calls.push(['categories', options.data, options.activeCategory]);
+        calls.push(['categories', options.data, options.activeCategory, options.filterCategory]);
         return 'categories';
       },
       renderPresentationLibraryGrid(options) {
@@ -85,7 +85,7 @@ test('dashboard controller loads data and renders the loaded state', async () =>
   assert.equal(documentRef.elements.presentationsGrid.classList.contains('hidden'), false);
   assert.deepEqual(calls, [
     ['loading', true],
-    ['categories', data, 'all'],
+    ['categories', data, 'all', controller.filter],
     ['grid', data, 'all']
   ]);
 });

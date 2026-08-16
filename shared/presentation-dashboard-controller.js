@@ -31,7 +31,8 @@
           ? documentRef.getElementById('categoryTabs')
           : null,
         data,
-        activeCategory
+        activeCategory,
+        filterCategory: filter
       });
     }
 

@@ -11,6 +11,7 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (presentationLibrary) {
   const presentationLibraryActionBindings = new WeakMap();
+  const presentationLibraryCategoryActionBindings = new WeakMap();
 
   function normalizeString(value) {
     return typeof value === 'string' ? value : '';
@@ -85,6 +86,32 @@
     return true;
   }
 
+  function bindPresentationLibraryCategoryActions(options = {}) {
+    const container = options.container;
+    if (!container || typeof container.addEventListener !== 'function') return false;
+
+    const filterCategory = typeof options.filterCategory === 'function'
+      ? options.filterCategory
+      : null;
+    const existingBinding = presentationLibraryCategoryActionBindings.get(container);
+    if (existingBinding) {
+      if (filterCategory) existingBinding.filterCategory = filterCategory;
+      return true;
+    }
+
+    const binding = { filterCategory };
+    container.addEventListener('click', (event) => {
+      const target = findPresentationLibraryActionTarget(container, event);
+      const action = getPresentationLibraryActionAttribute(target, 'data-presentation-library-action');
+      if (action !== 'filter' || !binding.filterCategory) return;
+      binding.filterCategory(
+        getPresentationLibraryActionAttribute(target, 'data-presentation-library-category')
+      );
+    });
+    presentationLibraryCategoryActionBindings.set(container, binding);
+    return true;
+  }
+
   function resolveCategories(data) {
     return presentationLibrary && typeof presentationLibrary.listPresentationLibraryCategories === 'function'
       ? presentationLibrary.listPresentationLibraryCategories(data)
@@ -149,12 +176,13 @@
       const isActive = activeCategory === category;
       const displayName = category === 'all' ? 'All Decks' : escapeHtml(category);
       return `
-          <button onclick="filterCategory(${inlineHandlerArgument(category)})" class="category-tab ${isActive ? 'active' : ''}">
+          <button type="button" data-presentation-library-action="filter" data-presentation-library-category="${escapeHtml(category)}" class="category-tab ${isActive ? 'active' : ''}">
             ${displayName}
           </button>
         `;
     }).join('');
     if (container) container.innerHTML = markup;
+    bindPresentationLibraryCategoryActions(options);
     return markup;
   }
 
@@ -199,6 +227,7 @@
 
   return {
     bindPresentationLibraryActions,
+    bindPresentationLibraryCategoryActions,
     setPresentationLibraryLoadingState,
     setPresentationLibraryErrorState,
     renderPresentationLibraryCategories,

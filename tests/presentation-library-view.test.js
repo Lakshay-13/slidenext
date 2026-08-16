@@ -115,9 +115,37 @@ test('renderPresentationLibraryCategories renders active and inactive category t
   });
 
   assert.equal(container.innerHTML, markup);
-  assert.match(markup, /filterCategory\(&quot;all&quot;\)/);
-  assert.match(markup, /filterCategory\(&quot;Research&quot;\)/);
+  assert.match(markup, /data-presentation-library-action="filter"/);
+  assert.match(markup, /data-presentation-library-category="all"/);
+  assert.match(markup, /data-presentation-library-category="Research"/);
+  assert.doesNotMatch(markup, /onclick=/);
   assert.match(markup, /category-tab active/);
+});
+
+test('presentation library view delegates category filtering through the view', () => {
+  const container = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+  assert.equal(presentationLibraryView.bindPresentationLibraryCategoryActions({
+    container,
+    filterCategory(category) {
+      calls.push(category);
+    }
+  }), true);
+  container.listeners.click({
+    target: {
+      dataset: {
+        presentationLibraryAction: 'filter',
+        presentationLibraryCategory: 'Research'
+      },
+      parentNode: container
+    }
+  });
+  assert.deepEqual(calls, ['Research']);
 });
 
 test('renderPresentationLibraryGrid renders presentation actions and empty state', () => {
