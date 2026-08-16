@@ -106,6 +106,48 @@ test('save route atomically persists the canonical deck sidecar', async (t) => {
   );
 });
 
+test('save route renders canonical-only requests into HTML before persisting', async (t) => {
+  const folder = `.test-save-canonical-only-${process.pid}-${Date.now()}`;
+  const folderPath = path.join(workspaceDir, 'presentations', folder);
+  const htmlPath = `presentations/${folder}/index.html`;
+  const metadataPath = path.join(folderPath, 'presentation.json');
+  await fs.mkdir(folderPath);
+  await fs.writeFile(metadataPath, JSON.stringify({ title: 'Canonical only' }));
+  t.after(() => fs.rm(folderPath, { recursive: true, force: true }));
+
+  const server = http.createServer(app);
+  const port = await listenOnEphemeralPort(server);
+  t.after(() => closeServer(server));
+
+  const response = await fetch(`http://127.0.0.1:${port}/api/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      htmlPath,
+      isAutoSave: true,
+      canonicalDeck: {
+        metadata: { title: 'Canonical only' },
+        layout: { size: { width: 1920, height: 1080, unit: 'px' } },
+        slides: [{
+          id: 'slide-1',
+          nodes: [{
+            id: 'title',
+            type: 'text',
+            tagName: 'h1',
+            text: 'Rendered from model',
+            layout: { x: 100, y: 100, width: 800, height: 100 }
+          }]
+        }]
+      }
+    })
+  });
+
+  assert.equal(response.status, 200);
+  const persistedHtml = await fs.readFile(path.join(folderPath, 'index.html'), 'utf8');
+  assert.match(persistedHtml, /Rendered from model/);
+  assert.match(persistedHtml, /class="slide slide-active"/);
+});
+
 test('save route clears the canonical deck sidecar only when explicitly given null', async (t) => {
   const folder = `.test-save-clear-sidecar-${process.pid}-${Date.now()}`;
   const folderPath = path.join(workspaceDir, 'presentations', folder);

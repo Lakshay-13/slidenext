@@ -10,6 +10,7 @@ const {
 } = require('./shared/version-backup-utils');
 const presentationMetadata = require('./shared/presentation-metadata');
 const presentationCreation = require('./shared/presentation-creation');
+const deckHtml = require('./shared/deck-html');
 const canonicalPptxExport = require('./shared/canonical-pptx-export');
 const canonicalPdfExport = require('./scripts/export-canonical-pdf');
 const legacyPptxExport = require('./scripts/export-legacy-html-pptx');
@@ -510,11 +511,16 @@ app.post('/api/save', async (req, res) => {
   const requestBody = req.body || {};
   const { htmlPath, htmlContent, isAutoSave, versionLabel, canonicalDeck } = requestBody;
   const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(requestBody, 'canonicalDeck');
-  if (!htmlPath || !htmlContent) {
-    return res.status(400).json({ error: 'Missing htmlPath or htmlContent' });
-  }
-  if (hasCanonicalDeck && canonicalDeck !== null && !resolveProvidedCanonicalDeck(canonicalDeck)) {
+  const resolvedCanonicalDeck = hasCanonicalDeck && canonicalDeck !== null
+    ? resolveProvidedCanonicalDeck(canonicalDeck)
+    : null;
+  if (hasCanonicalDeck && canonicalDeck !== null && !resolvedCanonicalDeck) {
     return res.status(400).json({ error: 'Invalid canonicalDeck' });
+  }
+  const resolvedHtmlContent = htmlContent
+    || (resolvedCanonicalDeck ? deckHtml.buildDeckSourceHtml(resolvedCanonicalDeck) : '');
+  if (!htmlPath || !resolvedHtmlContent) {
+    return res.status(400).json({ error: 'Missing htmlPath or htmlContent' });
   }
 
   try {
@@ -554,7 +560,7 @@ app.post('/api/save', async (req, res) => {
 
         const { backupFilename, metadataBackupFilename } = await createVersionBackupPair({
           targetFile,
-          htmlContent,
+          htmlContent: resolvedHtmlContent,
           versionLabel,
           now,
           metadataInfo: backupMetadataInfo,
@@ -570,7 +576,7 @@ app.post('/api/save', async (req, res) => {
     }
 
     // Write new content to the target file
-    await writeFileAtomically(targetFile, htmlContent);
+    await writeFileAtomically(targetFile, resolvedHtmlContent);
     console.log(`Saved new content to ${targetFile} (AutoSave: ${!!isAutoSave})`);
 
     let canonicalDeckPersistenceError = null;
