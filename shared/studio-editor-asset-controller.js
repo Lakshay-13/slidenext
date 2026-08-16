@@ -78,6 +78,16 @@
     const onAssetsChanged = typeof options.onAssetsChanged === 'function'
       ? options.onAssetsChanged
       : null;
+
+    function publishAssetsChanged(nextCanonicalDeck) {
+      if (!onAssetsChanged) return;
+      try {
+        onAssetsChanged(nextCanonicalDeck.assets, nextCanonicalDeck);
+      } catch (error) {
+        // A listener failure must not change an already committed asset mutation.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -171,7 +181,7 @@
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }
-      if (onAssetsChanged) onAssetsChanged(nextCanonicalDeck.assets, nextCanonicalDeck);
+      publishAssetsChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
     }
 
