@@ -72,7 +72,15 @@ test('index routes canvas sizing through the shared shell runtime', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorCanvasShellRuntimeApi\.createStudioEditorCanvasShellRuntime\(/
+    /<script src="\/shared\/studio-editor-canvas-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorCanvasRuntimeAccessorsApi\s*\.\s*createStudioEditorCanvasRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorCanvasShellRuntimeApi\s*\.\s*createStudioEditorCanvasShellRuntime\(/
   );
   assert.match(
     fileContent,
