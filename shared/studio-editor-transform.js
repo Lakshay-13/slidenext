@@ -1174,6 +1174,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const requireCanonicalDeck = typeof options.requireCanonicalDeck === 'function'
       ? options.requireCanonicalDeck
       : () => false;
@@ -1202,7 +1205,13 @@
       let canonicalDeck = null;
       if (buildCanonicalDeck) {
         try {
-          canonicalDeck = buildCanonicalDeck(finalizeResult);
+          const candidate = buildCanonicalDeck(finalizeResult);
+          const validate = isCanonicalDeck
+            || ((value) => !!value
+              && typeof value === 'object'
+              && !Array.isArray(value)
+              && Array.isArray(value.slides));
+          if (candidate && validate(candidate) === true) canonicalDeck = candidate;
         } catch (err) {
           // Preserve the move through transaction history when the sidecar fails.
           canonicalDeck = null;

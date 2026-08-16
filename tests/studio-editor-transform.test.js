@@ -380,6 +380,22 @@ test('createStudioTransformSessionFinalizer can fail closed when canonical state
   assert.deepEqual(calls, [['failure', transaction]]);
 });
 
+test('createStudioTransformSessionFinalizer rejects an invalid required canonical sidecar', () => {
+  const calls = [];
+  const finalizeSession = transformState.createStudioTransformSessionFinalizer({
+    buildTransaction: () => ({ type: 'style' }),
+    buildCanonicalDeck: () => ({ slides: [] }),
+    isCanonicalDeck: () => false,
+    requireCanonicalDeck: () => true,
+    onCanonicalFailure: ({ transaction }) => calls.push(['failure', transaction]),
+    saveHistoryState: () => calls.push('history')
+  });
+
+  finalizeSession({ id: 'move' }, { shouldPersist: true });
+
+  assert.deepEqual(calls, [['failure', { type: 'style' }]]);
+});
+
 test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', () => {
   const documentListeners = new Map();
   const bodyListeners = new Map();

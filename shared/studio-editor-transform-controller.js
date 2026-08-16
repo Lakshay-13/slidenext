@@ -276,7 +276,11 @@
             onHistoryFailure: rollbackCanonicalTransform,
             saveHistoryState,
             triggerAutoSave,
-            triggerAutoVersion
+            triggerAutoVersion,
+            isCanonicalDeck: canonicalDeckApi
+              && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+              ? canonicalDeckApi.isCanonicalDeck
+              : null
           })
         : () => {};
       const attachSharedStudioPointerHandlers = eventsApi
