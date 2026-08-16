@@ -27,6 +27,21 @@
         }
       };
 
+  function isValidStudioCanonicalDeck(value, validator) {
+    if (!value) return false;
+    const validate = typeof validator === 'function'
+      ? validator
+      : (candidate) => !!candidate
+        && typeof candidate === 'object'
+        && !Array.isArray(candidate)
+        && Array.isArray(candidate.slides);
+    try {
+      return validate(value) === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   function invokeStudioSlideCommandFinalizer(finalizeMutation, ...args) {
     try {
       return finalizeMutation(...args);
@@ -158,10 +173,19 @@
     const buildCanonicalDuplicateSlideBaseline = typeof options.buildCanonicalDuplicateSlideBaseline === 'function'
       ? options.buildCanonicalDuplicateSlideBaseline
       : null;
-    const canonicalDeckBeforeDuplication = buildCanonicalDuplicateSlideBaseline
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeckBeforeDuplicationCandidate = buildCanonicalDuplicateSlideBaseline
       ? buildCanonicalDuplicateSlideBaseline({
           sourceDocument: iframeDoc
         })
+      : null;
+    const canonicalDeckBeforeDuplication = isValidStudioCanonicalDeck(
+      canonicalDeckBeforeDuplicationCandidate,
+      isCanonicalDeck
+    )
+      ? canonicalDeckBeforeDuplicationCandidate
       : null;
     const buildCanonicalDuplicateSlideDeck = typeof options.buildCanonicalDuplicateSlideDeck === 'function'
       ? options.buildCanonicalDuplicateSlideDeck
@@ -275,10 +299,19 @@
     const buildCanonicalAddSlideBaseline = typeof options.buildCanonicalAddSlideBaseline === 'function'
       ? options.buildCanonicalAddSlideBaseline
       : null;
-    const canonicalDeckBeforeAddition = buildCanonicalAddSlideBaseline
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeckBeforeAdditionCandidate = buildCanonicalAddSlideBaseline
       ? buildCanonicalAddSlideBaseline({
           sourceDocument: iframeDoc
         })
+      : null;
+    const canonicalDeckBeforeAddition = isValidStudioCanonicalDeck(
+      canonicalDeckBeforeAdditionCandidate,
+      isCanonicalDeck
+    )
+      ? canonicalDeckBeforeAdditionCandidate
       : null;
     const buildCanonicalAddSlideDeck = typeof options.buildCanonicalAddSlideDeck === 'function'
       ? options.buildCanonicalAddSlideDeck
@@ -417,10 +450,19 @@
     const buildCanonicalDeleteSlideBaseline = typeof options.buildCanonicalDeleteSlideBaseline === 'function'
       ? options.buildCanonicalDeleteSlideBaseline
       : null;
-    const canonicalDeckBeforeDeletion = buildCanonicalDeleteSlideBaseline
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeckBeforeDeletionCandidate = buildCanonicalDeleteSlideBaseline
       ? buildCanonicalDeleteSlideBaseline({
           sourceDocument: iframeDoc
         })
+      : null;
+    const canonicalDeckBeforeDeletion = isValidStudioCanonicalDeck(
+      canonicalDeckBeforeDeletionCandidate,
+      isCanonicalDeck
+    )
+      ? canonicalDeckBeforeDeletionCandidate
       : null;
     const buildCanonicalDeleteSlideDeck = typeof options.buildCanonicalDeleteSlideDeck === 'function'
       ? options.buildCanonicalDeleteSlideDeck
@@ -539,10 +581,19 @@
     const buildCanonicalReorderSlideBaseline = typeof options.buildCanonicalReorderSlideBaseline === 'function'
       ? options.buildCanonicalReorderSlideBaseline
       : null;
-    const canonicalDeckBeforeReorder = buildCanonicalReorderSlideBaseline
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeckBeforeReorderCandidate = buildCanonicalReorderSlideBaseline
       ? buildCanonicalReorderSlideBaseline({
           sourceDocument: iframeDoc
         })
+      : null;
+    const canonicalDeckBeforeReorder = isValidStudioCanonicalDeck(
+      canonicalDeckBeforeReorderCandidate,
+      isCanonicalDeck
+    )
+      ? canonicalDeckBeforeReorderCandidate
       : null;
     const canonicalDeckAfterReorder = buildCanonicalReorderSlideDeck
       ? buildCanonicalReorderSlideDeck({

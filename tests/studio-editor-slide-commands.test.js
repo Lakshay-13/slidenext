@@ -248,6 +248,31 @@ test('duplicateStudioSlideNode prefers a scoped slide-presence transaction when 
   }]);
 });
 
+test('duplicateStudioSlideNode drops an invalid canonical baseline before history capture', () => {
+  const sourceSlide = { classList: { remove() {} }, cloneNode: () => ({ classList: { remove() {} } }) };
+  const historyCalls = [];
+  let insertionCalls = 0;
+
+  const result = slideCommands.duplicateStudioSlideNode({
+    getIframeDoc: () => ({}),
+    resolveInsertionActionState: () => ({ canDuplicateSlide: true }),
+    getSlideContainer: () => ({}),
+    getSlides: () => [sourceSlide],
+    getActiveSlide: () => sourceSlide,
+    assignSlideId: () => 'slide-2',
+    buildCanonicalDuplicateSlideBaseline: () => ({ invalid: true }),
+    saveHistoryState: (...args) => historyCalls.push(args),
+    applyInsertion: () => {
+      insertionCalls += 1;
+      return { didApply: true, transaction: null };
+    }
+  });
+
+  assert.equal(result, true);
+  assert.deepEqual(historyCalls, [[]]);
+  assert.equal(insertionCalls, 1);
+});
+
 test('duplicateStudioSlideNode fails closed before DOM insertion when canonical duplication is unavailable', () => {
   const doc = { id: 'editor-doc' };
   const duplicateSlide = { classList: { remove() {} } };
