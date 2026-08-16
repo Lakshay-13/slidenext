@@ -484,3 +484,26 @@ test('element insertion controller preserves success when version notification t
 
   assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
 });
+
+test('element insertion controller preserves persistence when selection chrome throws', () => {
+  const element = { id: 'element-1' };
+  const calls = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ children: [] }),
+    applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
+    selectElement() {
+      calls.push('select');
+      throw new Error('selection chrome unavailable');
+    },
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => {
+      calls.push('save');
+      return true;
+    },
+    triggerAutoVersion: () => calls.push('version')
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
+  assert.deepEqual(calls, ['select', 'save', 'version']);
+});

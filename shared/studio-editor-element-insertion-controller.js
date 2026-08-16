@@ -169,6 +169,15 @@
       }
     }
 
+    function selectInsertedElement(element) {
+      if (!selectElement) return;
+      try {
+        selectElement(element);
+      } catch (err) {
+        // Selection chrome is secondary; continue with history and persistence.
+      }
+    }
+
     function buildCanonicalInsertionBuilders() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -312,7 +321,7 @@
           }
           return true;
         }
-        if (selectElement) selectElement(newElement);
+        selectInsertedElement(newElement);
         if (generateThumbnails) generateThumbnails();
         if (saveHistoryState) {
           if (transaction && canonicalDeck) {
