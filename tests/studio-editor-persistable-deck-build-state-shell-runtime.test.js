@@ -65,8 +65,19 @@ test('index routes persistable deck build-state installation through the shell r
     fileContent,
     /<script src="\/shared\/studio-editor-persistable-deck-build-state-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persistable-deck-build-state-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorPersistableDeckBuildStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorPersistableDeckBuildStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorPersistableDeckBuildStateRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistableDeckBuildStateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistableDeckBuildStateShellRuntimeApi\s*\.\s*createStudioEditorPersistableDeckBuildStateShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorPersistableDeckBuildStateGlobalApi\s*=\s*studioEditorPersistableDeckBuildStateShellRuntime/

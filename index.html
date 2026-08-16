@@ -1622,6 +1622,7 @@
   <script src="/shared/studio-editor-persisted-deck-playback-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-build-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
@@ -6724,26 +6725,37 @@
       typeof SlideNextStudioEditorPersistableDeckBuildStateShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistableDeckBuildStateShellRuntime
       : null;
-    const studioEditorPersistableDeckBuildStateShellRuntime =
-      studioEditorPersistableDeckBuildStateShellRuntimeApi
-      && typeof studioEditorPersistableDeckBuildStateShellRuntimeApi
-        .createStudioEditorPersistableDeckBuildStateShellRuntime === 'function'
-      ? studioEditorPersistableDeckBuildStateShellRuntimeApi
-        .createStudioEditorPersistableDeckBuildStateShellRuntime({
-          actionApi: typeof SlideNextStudioEditorPersistableDeckBuildStateAction !== 'undefined'
-            ? SlideNextStudioEditorPersistableDeckBuildStateAction
-            : null,
-          getDocument: getIframeDoc,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          buildPersistableDeckHtml
+    const studioEditorPersistableDeckBuildStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistableDeckBuildStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistableDeckBuildStateRuntimeAccessors
+      : null;
+    const studioEditorPersistableDeckBuildStateRuntimeAccessors =
+      studioEditorPersistableDeckBuildStateRuntimeAccessorsApi
+      && typeof studioEditorPersistableDeckBuildStateRuntimeAccessorsApi
+        .createStudioEditorPersistableDeckBuildStateRuntimeAccessors === 'function'
+      ? studioEditorPersistableDeckBuildStateRuntimeAccessorsApi
+        .createStudioEditorPersistableDeckBuildStateRuntimeAccessors({
+          runtimeApi: studioEditorPersistableDeckBuildStateShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorPersistableDeckBuildStateAction !== 'undefined'
+              ? SlideNextStudioEditorPersistableDeckBuildStateAction
+              : null,
+            getDocument: getIframeDoc,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            buildPersistableDeckHtml
+          }
         })
       : null;
+    const studioEditorPersistableDeckBuildStateShellRuntime =
+      studioEditorPersistableDeckBuildStateRuntimeAccessors
+        ? studioEditorPersistableDeckBuildStateRuntimeAccessors.runtime
+        : null;
     const studioEditorPersistableDeckBuildStateAction = studioEditorPersistableDeckBuildStateShellRuntime
       && studioEditorPersistableDeckBuildStateShellRuntime.isAvailable === true
       ? studioEditorPersistableDeckBuildStateShellRuntime.persistableDeckBuildStateAction
