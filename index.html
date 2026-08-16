@@ -1844,6 +1844,8 @@
   <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
+    <script src="/shared/studio-editor-insertion-toolbar-state.js"></script>
+    <script src="/shared/studio-editor-insertion-toolbar-state-runtime-accessors.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
     <script src="/shared/studio-editor-deck-view-build-options.js"></script>
   <script src="/shared/studio-editor-navigation-controller.js"></script>
@@ -13036,32 +13038,48 @@
     }
 
     function updateInsertionActionState(doc = getIframeDoc()) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
+      const insertionToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorInsertionToolbarState !== 'undefined'
+        ? SlideNextStudioEditorInsertionToolbarState
         : null;
-      if (!deckView || typeof deckView.syncStudioInsertionToolbarActionState !== 'function') {
+      const insertionToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorInsertionToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorInsertionToolbarStateRuntimeAccessors
+        : null;
+      const insertionToolbarStateRuntimeAccessors =
+        insertionToolbarStateRuntimeAccessorsApi
+        && typeof insertionToolbarStateRuntimeAccessorsApi
+          .createStudioEditorInsertionToolbarStateRuntimeAccessors === 'function'
+        ? insertionToolbarStateRuntimeAccessorsApi
+          .createStudioEditorInsertionToolbarStateRuntimeAccessors({
+            runtimeApi: insertionToolbarStateRuntimeApi
+          })
+        : null;
+      if (!insertionToolbarStateRuntimeAccessors
+        || typeof insertionToolbarStateRuntimeAccessors
+          .createStudioEditorInsertionToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof deckView.createStudioInsertionToolbarActionStateSync === 'function') {
-        if (typeof updateInsertionActionState.sync !== 'function') {
-          updateInsertionActionState.sync = deckView.createStudioInsertionToolbarActionStateSync({
+      if (!updateInsertionActionState.controller) {
+        const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null;
+        updateInsertionActionState.controller = insertionToolbarStateRuntimeAccessors
+          .createStudioEditorInsertionToolbarStateController({
+            deckView,
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => resolveCurrentStudioInsertionActionState(sourceDoc),
-            getDocumentRef: () => document
+            getActiveSlide,
+            getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
+              ? sourceDoc.getElementById('slidesContainer')
+              : null,
+            documentRef: document
           });
-        }
-        if (typeof updateInsertionActionState.sync === 'function') {
-          return updateInsertionActionState.sync(doc);
-        }
       }
-      return deckView.syncStudioInsertionToolbarActionState({
-        documentRef: document,
-        doc,
-        getActiveSlide,
-        getSlideContainer: (sourceDoc) => sourceDoc && typeof sourceDoc.getElementById === 'function'
-          ? sourceDoc.getElementById('slidesContainer')
-          : null
-      });
+      return updateInsertionActionState.controller
+        && typeof updateInsertionActionState.controller.sync === 'function'
+        ? updateInsertionActionState.controller.sync(doc)
+        : false;
     }
 
     function resolveCurrentStudioZoomActionState(doc = getIframeDoc()) {

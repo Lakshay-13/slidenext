@@ -6,6 +6,8 @@ const vm = require('node:vm');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const deckView = require('../shared/studio-deck-view.js');
+const insertionToolbarState = require('../shared/studio-editor-insertion-toolbar-state.js');
+const insertionToolbarStateRuntimeAccessors = require('../shared/studio-editor-insertion-toolbar-state-runtime-accessors.js');
 const studioInsertion = require('../shared/studio-editor-insertion.js');
 const elementInsertionMutation = require('../shared/studio-editor-element-insertion-mutation.js');
 const elementInsertionTransaction = require('../shared/studio-editor-element-insertion-transaction.js');
@@ -56,6 +58,11 @@ function loadResolveCurrentStudioInsertionActionState(fileContent, context) {
 function loadElementInsertionTransactionModules(_fileContent, context) {
   context.SlideNextStudioEditorElementInsertionMutation = elementInsertionMutation;
   context.SlideNextStudioEditorElementInsertionTransaction = elementInsertionTransaction;
+}
+
+function installInsertionToolbarState(context) {
+  context.SlideNextStudioEditorInsertionToolbarState = insertionToolbarState;
+  context.SlideNextStudioEditorInsertionToolbarStateRuntimeAccessors = insertionToolbarStateRuntimeAccessors;
 }
 
 function loadInsertElement(fileContent, context) {
@@ -313,6 +320,7 @@ test('updateInsertionActionState enables deck-ready insert controls only when th
     }
   };
 
+  installInsertionToolbarState(context);
   vm.createContext(context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(updateInsertionActionStateSource, context);
@@ -418,6 +426,7 @@ test('updateInsertionActionState delegates toolbar rendering to the shared deck 
     }
   };
 
+  installInsertionToolbarState(context);
   vm.createContext(context);
   vm.runInContext(updateInsertionActionStateSource, context);
 
@@ -466,6 +475,7 @@ test('updateInsertionActionState caches the shared insertion toolbar synchronize
     }
   };
 
+  installInsertionToolbarState(context);
   vm.createContext(context);
   loadResolveCurrentStudioInsertionActionState(fileContent, context);
   vm.runInContext(updateInsertionActionStateSource, context);
