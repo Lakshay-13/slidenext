@@ -442,3 +442,29 @@ test('element insertion controller rolls back the legacy fallback when history t
   assert.equal(controller.insert('h2'), false);
   assert.deepEqual(calls, ['remove', ['update', documentRef]]);
 });
+
+test('element insertion controller rolls back the legacy fallback when autosave throws', () => {
+  const calls = [];
+  const documentRef = { id: 'doc' };
+  const element = {
+    remove() {
+      calls.push('remove');
+    }
+  };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => documentRef,
+    getActiveSlide: () => ({ children: [] }),
+    applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => {
+      throw new Error('autosave unavailable');
+    },
+    triggerAutoVersion: () => {
+      throw new Error('versioning should not run');
+    },
+    updateInsertionActionState: (doc) => calls.push(['update', doc])
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), false));
+  assert.deepEqual(calls, ['remove', ['update', documentRef]]);
+});

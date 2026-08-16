@@ -150,6 +150,16 @@
       }
     }
 
+    function persistInsertedElement() {
+      if (!triggerAutoSave) return true;
+      try {
+        return triggerAutoSave() !== false;
+      } catch (err) {
+        // Treat a thrown autosave as the same failed persistence outcome as false.
+        return false;
+      }
+    }
+
     function buildCanonicalInsertionBuilders() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -318,7 +328,7 @@
             }
           }
         }
-        if (triggerAutoSave && triggerAutoSave() === false) {
+        if (!persistInsertedElement()) {
           removeInsertedElement(newElement);
           refreshActionState(iframeDoc);
           return false;
