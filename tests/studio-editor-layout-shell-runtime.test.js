@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-layout-shell-runtime.js');
+const layoutAccessors = require('../shared/studio-editor-layout-accessors.js');
 
 test('layout shell runtime resolves controller, engine, and canonical dependencies', () => {
   let receivedOptions = null;
@@ -118,4 +119,36 @@ test('layout shell runtime safely returns null without a runtime factory', () =>
     shellRuntime.createStudioEditorLayoutShellRuntime({ layoutRuntimeApi: {} }),
     null
   );
+});
+
+test('layout accessors compose the shell runtime and preserve its dependencies', () => {
+  const runtime = { layoutController: { name: 'layout' } };
+  const runtimeOptions = { documentRef: {} };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorLayoutShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const layoutRuntimeApi = { name: 'runtime' };
+  const accessors = layoutAccessors.createStudioEditorLayoutAccessors({
+    runtimeApi,
+    layoutRuntimeApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].layoutRuntimeApi, layoutRuntimeApi);
+  assert.equal(calls[0].documentRef, runtimeOptions.documentRef);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('layout accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = layoutAccessors.createStudioEditorLayoutAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });
