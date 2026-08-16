@@ -732,6 +732,24 @@ test('createStudioSlideMutationPersistenceFinalizer propagates rejected history'
   assert.equal(finalizeSlideMutation('Auto: Rejected', { id: 'tx' }), false);
 });
 
+test('createStudioSlideMutationPersistenceFinalizer converts thrown autosave to rejection', () => {
+  const calls = [];
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      throw new Error('autosave unavailable');
+    },
+    triggerAutoVersion() {
+      throw new Error('versioning should not run');
+    }
+  });
+
+  assert.equal(finalizeSlideMutation('Auto: Rejected', { id: 'tx' }), false);
+  assert.deepEqual(calls, ['history']);
+});
+
 test('createStudioSlideMutationRestoreStateCapturer preserves view state after saving history', () => {
   const iframeDoc = { id: 'editor-doc' };
   const calls = [];
