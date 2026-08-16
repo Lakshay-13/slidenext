@@ -383,7 +383,10 @@
 
   function resolveStudioPersistableDeckStateWithContent(persistedDeckState = {}) {
     const nextPersistedDeckState = asPlainObject(persistedDeckState);
-    return normalizeString(nextPersistedDeckState.cleanHtml) ? nextPersistedDeckState : null;
+    return normalizeString(nextPersistedDeckState.cleanHtml)
+      || isStructurallyValidStudioCanonicalDeck(nextPersistedDeckState.canonicalDeck)
+      ? nextPersistedDeckState
+      : null;
   }
 
   function resolveStudioCapturedPersistableDeckState(cleanHtml = '', options = {}) {

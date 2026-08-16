@@ -652,7 +652,7 @@ test('createStudioPersistedDeckPlaybackStateCapturer reuses call-time overrides 
   assert.deepEqual(calls[1], ['overrideResolveFallbackActiveSlideId']);
 });
 
-test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted html', () => {
+test('resolveStudioPersistableDeckStateWithContent accepts persisted html or canonical content', () => {
   const persistedDeckState = {
     doc: { label: 'iframe-doc' },
     cleanHtml: '<html>persisted</html>',
@@ -675,6 +675,20 @@ test('resolveStudioPersistableDeckStateWithContent requires non-empty persisted 
       canonicalDeck: null
     }),
     null
+  );
+
+  const canonicalOnlyState = {
+    doc: null,
+    cleanHtml: '',
+    canonicalDeck: {
+      kind: 'slidenext.deck',
+      schemaVersion: 1,
+      slides: []
+    }
+  };
+  assert.deepEqual(
+    editorPersistence.resolveStudioPersistableDeckStateWithContent(canonicalOnlyState),
+    canonicalOnlyState
   );
 });
 
