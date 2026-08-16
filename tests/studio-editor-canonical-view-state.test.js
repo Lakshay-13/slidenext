@@ -47,6 +47,36 @@ test('canonical view state options preserve editor callbacks when shared normali
   assert.equal(result.resolveLiveActiveSlideId, resolveLiveActiveSlideId);
 });
 
+test('canonical view state options resolver reuses shared dependencies', () => {
+  const calls = [];
+  const deckViewApi = {
+    createStudioDeckViewCanonicalStateOptions(options) {
+      calls.push(options);
+      return options;
+    }
+  };
+  const getPendingCanonicalDeck = () => ({ slides: [] });
+  const fallbackBuildCanonicalDeck = () => ({ slides: [] });
+  const fallbackResolveLiveActiveSlideId = () => 'fallback-slide';
+  const resolver = canonicalViewState.createStudioEditorCanonicalDeckViewStateOptionsResolver({
+    deckViewApi,
+    getPendingCanonicalDeck,
+    fallbackBuildCanonicalDeck,
+    fallbackResolveLiveActiveSlideId
+  });
+  const buildCanonicalDeck = () => ({ slides: [] });
+  const resolveLiveActiveSlideId = () => 'live-slide';
+
+  const result = resolver({ buildCanonicalDeck, resolveLiveActiveSlideId });
+
+  assert.equal(result.buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(result.resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+  assert.equal(result.getPendingCanonicalDeck, getPendingCanonicalDeck);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].buildCanonicalDeck, buildCanonicalDeck);
+  assert.equal(calls[0].resolveLiveActiveSlideId, resolveLiveActiveSlideId);
+});
+
 test('canonical view state resolver delegates the normalized options and preserves live slide state', () => {
   const doc = { id: 'editor-doc' };
   const buildCanonicalDeck = () => ({ slides: [] });

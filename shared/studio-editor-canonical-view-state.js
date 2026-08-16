@@ -81,6 +81,34 @@
     };
   }
 
+  function createStudioEditorCanonicalDeckViewStateOptionsResolver(options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
+    const fallbackBuildCanonicalDeck = typeof options.fallbackBuildCanonicalDeck === 'function'
+      ? options.fallbackBuildCanonicalDeck
+      : null;
+    const fallbackResolveLiveActiveSlideId = typeof options.fallbackResolveLiveActiveSlideId === 'function'
+      ? options.fallbackResolveLiveActiveSlideId
+      : null;
+
+    return (nextOptions = {}) => createStudioEditorCanonicalDeckViewStateOptions({
+      deckViewApi,
+      buildCanonicalDeck: nextOptions.buildCanonicalDeck,
+      getPendingCanonicalDeck: typeof nextOptions.getPendingCanonicalDeck === 'function'
+        ? nextOptions.getPendingCanonicalDeck
+        : getPendingCanonicalDeck,
+      resolveLiveActiveSlideId: nextOptions.resolveLiveActiveSlideId,
+      fallbackBuildCanonicalDeck: typeof nextOptions.fallbackBuildCanonicalDeck === 'function'
+        ? nextOptions.fallbackBuildCanonicalDeck
+        : fallbackBuildCanonicalDeck,
+      fallbackResolveLiveActiveSlideId: typeof nextOptions.fallbackResolveLiveActiveSlideId === 'function'
+        ? nextOptions.fallbackResolveLiveActiveSlideId
+        : fallbackResolveLiveActiveSlideId
+    });
+  }
+
   function resolveStudioEditorCanonicalDeckViewState(doc, options = {}) {
     const deckViewApi = resolveDeckViewApi(options);
     const deckViewStateOptions = createStudioEditorCanonicalDeckViewStateOptions(options);
@@ -341,6 +369,7 @@
   return {
     createStudioEditorCanonicalDeckResolverWithBuilder,
     createStudioEditorCanonicalDeckViewStateOptions,
+    createStudioEditorCanonicalDeckViewStateOptionsResolver,
     resolveStudioEditorCanonicalDeckViewState,
     createStudioEditorDeckViewSharedOptions,
     resolveStudioEditorFallbackActiveSlideId,
