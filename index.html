@@ -1794,6 +1794,7 @@
   <script src="/shared/studio-element-snapshot.js"></script>
   <script src="/shared/studio-editor-element-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-element-snapshot-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-element-snapshot-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-element-snapshot-accessors.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
@@ -2930,40 +2931,48 @@
         })
       : {};
     Object.assign(globalThis, presentationDashboardGlobalApi);
-    const studioEditorElementSnapshotShellRuntimeApi =
-      typeof SlideNextStudioEditorElementSnapshotShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorElementSnapshotShellRuntime
+    const studioEditorElementSnapshotRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorElementSnapshotRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorElementSnapshotRuntimeAccessors
       : null;
-    const studioEditorElementSnapshotShellRuntime = studioEditorElementSnapshotShellRuntimeApi
-      && typeof studioEditorElementSnapshotShellRuntimeApi
-        .createStudioEditorElementSnapshotShellRuntime === 'function'
-      ? studioEditorElementSnapshotShellRuntimeApi
-        .createStudioEditorElementSnapshotShellRuntime({
+    const studioEditorElementSnapshotRuntimeAccessors = studioEditorElementSnapshotRuntimeAccessorsApi
+      && typeof studioEditorElementSnapshotRuntimeAccessorsApi
+        .createStudioEditorElementSnapshotRuntimeAccessors === 'function'
+      ? studioEditorElementSnapshotRuntimeAccessorsApi
+        .createStudioEditorElementSnapshotRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorElementSnapshotShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorElementSnapshotShellRuntime
+            : null,
           snapshotControllerApi: typeof SlideNextStudioEditorElementSnapshotController !== 'undefined'
             ? SlideNextStudioEditorElementSnapshotController
             : null,
-          snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
-            ? SlideNextStudioElementSnapshot
-            : null,
-          getElementId: assignEditorElementId,
-          isElementLocked,
-          isElementHidden,
-          isSelectedElement: candidate => {
-            const isStudioLiveSelectedElement = (
-              typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-              && SlideNextStudioEditorLiveSelection
-              && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
-            )
-              ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
-              : null;
-            return isStudioLiveSelectedElement
-              ? isStudioLiveSelectedElement(
-                getStudioSelectedElements(candidate && candidate.ownerDocument),
-                candidate
+          runtimeOptions: {
+            snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
+              ? SlideNextStudioElementSnapshot
+              : null,
+            getElementId: assignEditorElementId,
+            isElementLocked,
+            isElementHidden,
+            isSelectedElement: candidate => {
+              const isStudioLiveSelectedElement = (
+                typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+                && SlideNextStudioEditorLiveSelection
+                && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
               )
-              : false;
+                ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
+                : null;
+              return isStudioLiveSelectedElement
+                ? isStudioLiveSelectedElement(
+                  getStudioSelectedElements(candidate && candidate.ownerDocument),
+                  candidate
+                )
+                : false;
+            }
           }
         })
+      : null;
+    const studioEditorElementSnapshotShellRuntime = studioEditorElementSnapshotRuntimeAccessors
+      ? studioEditorElementSnapshotRuntimeAccessors.runtime
       : null;
     const studioEditorElementSnapshotController = studioEditorElementSnapshotShellRuntime
       && studioEditorElementSnapshotShellRuntime.isAvailable === true

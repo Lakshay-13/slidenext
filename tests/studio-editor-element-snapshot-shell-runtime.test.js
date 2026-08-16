@@ -4,8 +4,42 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const snapshotShellRuntime = require('../shared/studio-editor-element-snapshot-shell-runtime.js');
+const snapshotRuntimeAccessors = require('../shared/studio-editor-element-snapshot-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('element snapshot runtime accessors delegate to the shell runtime', () => {
+  const runtime = { isAvailable: true, elementSnapshotController: { build() {} } };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorElementSnapshotShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const snapshotControllerApi = { name: 'snapshot-controller' };
+  const snapshotApi = { name: 'snapshot' };
+
+  const result = snapshotRuntimeAccessors
+    .createStudioEditorElementSnapshotRuntimeAccessors({
+      runtimeApi: shellRuntimeApi,
+      snapshotControllerApi,
+      runtimeOptions: { snapshotApi }
+    });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.snapshotControllerApi, snapshotControllerApi);
+  assert.equal(receivedOptions.snapshotApi, snapshotApi);
+});
+
+test('element snapshot runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    snapshotRuntimeAccessors.createStudioEditorElementSnapshotRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('element snapshot shell runtime forwards snapshot callbacks', () => {
   let receivedOptions = null;
@@ -52,8 +86,12 @@ test('index routes element snapshot construction through the shell runtime', () 
     fileContent,
     /<script src="\/shared\/studio-editor-element-snapshot-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorElementSnapshotShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorElementSnapshotShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-element-snapshot-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(fileContent, /studioEditorElementSnapshotRuntimeAccessorsApi/);
+  assert.match(fileContent, /createStudioEditorElementSnapshotRuntimeAccessors/);
   assert.match(
     fileContent,
     /studioEditorElementSnapshotController = studioEditorElementSnapshotShellRuntime/
