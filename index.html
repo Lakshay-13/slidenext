@@ -1386,6 +1386,7 @@
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-layer-order-z-index-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-interaction-state-coordinator.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
@@ -12147,26 +12148,36 @@
       typeof SlideNextStudioEditorLayerOrderZIndexShellRuntime !== 'undefined'
       ? SlideNextStudioEditorLayerOrderZIndexShellRuntime
       : null;
-    const studioEditorLayerOrderZIndexShellRuntime = studioEditorLayerOrderZIndexShellRuntimeApi
-      && typeof studioEditorLayerOrderZIndexShellRuntimeApi
-        .createStudioEditorLayerOrderZIndexShellRuntime === 'function'
-      ? studioEditorLayerOrderZIndexShellRuntimeApi
-        .createStudioEditorLayerOrderZIndexShellRuntime({
-          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-            ? SlideNextStudioEditorLayerOrder
-            : null,
-          getDocument: () => getIframeDoc(),
-          getDocumentRef: () => document,
-          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(sourceDoc)
-            : typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck(sourceDoc)
-              : null,
-          resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
-            ? resolveEditorCanonicalNodeForElement
-            : null
-        })
+    const studioEditorLayerOrderZIndexRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorLayerOrderZIndexRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderZIndexRuntimeAccessors
       : null;
+    const studioEditorLayerOrderZIndexRuntimeAccessors =
+      studioEditorLayerOrderZIndexRuntimeAccessorsApi
+      && typeof studioEditorLayerOrderZIndexRuntimeAccessorsApi
+        .createStudioEditorLayerOrderZIndexRuntimeAccessors === 'function'
+      ? studioEditorLayerOrderZIndexRuntimeAccessorsApi
+        .createStudioEditorLayerOrderZIndexRuntimeAccessors({
+          runtimeApi: studioEditorLayerOrderZIndexShellRuntimeApi,
+          runtimeOptions: {
+            layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+              ? SlideNextStudioEditorLayerOrder
+              : null,
+            getDocument: () => getIframeDoc(),
+            getDocumentRef: () => document,
+            resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(sourceDoc)
+              : typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null,
+            resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
+              ? resolveEditorCanonicalNodeForElement
+              : null
+          }
+        })
+      : { runtime: null };
+    const studioEditorLayerOrderZIndexShellRuntime =
+      studioEditorLayerOrderZIndexRuntimeAccessors.runtime;
     const studioEditorLayerOrderZIndexSynchronizer = studioEditorLayerOrderZIndexShellRuntime
       && studioEditorLayerOrderZIndexShellRuntime.isAvailable === true
       ? studioEditorLayerOrderZIndexShellRuntime.sync

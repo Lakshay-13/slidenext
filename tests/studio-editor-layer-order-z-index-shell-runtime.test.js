@@ -54,7 +54,7 @@ test('index routes layer-order z-index synchronization through the shell runtime
   );
   assert.match(
     fileContent,
-    /studioEditorLayerOrderZIndexShellRuntimeApi\s*\.\s*createStudioEditorLayerOrderZIndexShellRuntime\(/
+    /studioEditorLayerOrderZIndexRuntimeAccessorsApi\s*\.\s*createStudioEditorLayerOrderZIndexRuntimeAccessors\(/
   );
   assert.match(
     fileContent,

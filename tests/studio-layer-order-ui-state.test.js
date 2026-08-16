@@ -19,6 +19,8 @@ const layerOrderController = require('../shared/studio-editor-layer-order-contro
 const layerOrderState = require('../shared/studio-editor-layer-order-state.js');
 const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
+const layerOrderZIndexShellRuntime = require('../shared/studio-editor-layer-order-z-index-shell-runtime.js');
+const layerOrderZIndexRuntimeAccessors = require('../shared/studio-editor-layer-order-z-index-runtime-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -44,6 +46,8 @@ function loadFinalizeLayerOrderMutation(fileContent, context) {
 }
 
 function loadSyncLayerOrderZIndexInput(fileContent, context) {
+  context.SlideNextStudioEditorLayerOrderZIndexShellRuntime = layerOrderZIndexShellRuntime;
+  context.SlideNextStudioEditorLayerOrderZIndexRuntimeAccessors = layerOrderZIndexRuntimeAccessors;
   context.SlideNextStudioEditorCanonicalReaderAdapter = canonicalReaderAdapter;
   const canonicalUiSource = fs.readFileSync(
     path.join(__dirname, '..', 'shared', 'studio-editor-canonical-ui.js'),
