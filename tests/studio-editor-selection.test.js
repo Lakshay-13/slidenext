@@ -284,6 +284,34 @@ test('selectAllStudioElementsOnActiveSlide commits the normalized active-slide l
   });
 });
 
+test('selectAllStudioElementsOnActiveSlide excludes elements rejected by the select-all filter', () => {
+  const activeSlide = { id: 'slide-1' };
+  const unlocked = { id: 'unlocked' };
+  const locked = { id: 'locked' };
+  const hidden = { id: 'hidden' };
+  let committedSelection = null;
+
+  assert.equal(studioSelection.selectAllStudioElementsOnActiveSlide({
+    getActiveSlide() {
+      return activeSlide;
+    },
+    getElements() {
+      return [unlocked, locked, hidden];
+    },
+    isSelectableElement(element) {
+      return element !== locked && element !== hidden;
+    },
+    commitSelectionState(nextSelectionState) {
+      committedSelection = nextSelectionState;
+    }
+  }), true);
+
+  assert.deepEqual(committedSelection, {
+    selectedElements: [unlocked],
+    selectedElement: unlocked
+  });
+});
+
 test('selectAllStudioElementsOnActiveSlide returns false without an active slide or elements', () => {
   assert.equal(studioSelection.selectAllStudioElementsOnActiveSlide({
     getActiveSlide() {

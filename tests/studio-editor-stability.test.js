@@ -1569,6 +1569,15 @@ test('selectAllElementsOnActiveSlide delegates selection orchestration to the sh
       assert.equal(currentDoc, iframeDoc);
     },
     getNormalizedSlideLayerOrder() {},
+    getEditorCanonicalVisibilityReader(_property, _doc, fallbackReader) {
+      return fallbackReader;
+    },
+    isElementLocked(element) {
+      return !!element.locked;
+    },
+    isElementHidden(element) {
+      return !!element.hidden;
+    },
     getEditorSelectionOptions(options) {
       return { doc: options.doc };
     },
@@ -1588,8 +1597,12 @@ test('selectAllElementsOnActiveSlide delegates selection orchestration to the sh
   assert.equal(calls[0].doc, iframeDoc);
   assert.equal(typeof calls[0].getActiveSlide, 'function');
   assert.equal(typeof calls[0].getElements, 'function');
+  assert.equal(typeof calls[0].isSelectableElement, 'function');
   assert.equal(typeof calls[0].getSelectionOptions, 'function');
   assert.equal(typeof calls[0].commitSelectionState, 'function');
+  assert.equal(calls[0].isSelectableElement({ locked: false, hidden: false }), true);
+  assert.equal(calls[0].isSelectableElement({ locked: true, hidden: false }), false);
+  assert.equal(calls[0].isSelectableElement({ locked: false, hidden: true }), false);
   assert.equal(calls[0].getSelectionOptions().doc, iframeDoc);
   calls[0].commitSelectionState({ selectedElements: [] });
   assert.equal(committedArgs[1].doc, iframeDoc);

@@ -9791,9 +9791,12 @@
 
     function selectAllElementsOnActiveSlide(doc = getIframeDoc()) {
       if (typeof studioEditorSelectAllElements !== 'function') return false;
+      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
+      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
       return studioEditorSelectAllElements({
         getActiveSlide,
         getElements: getNormalizedSlideLayerOrder,
+        isSelectableElement: (element) => !readLockedState(element) && !readHiddenState(element),
         getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions({
           ...selectionOptions,
           doc

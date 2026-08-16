@@ -251,8 +251,19 @@
     const getElements = typeof options.getElements === 'function'
       ? options.getElements
       : () => [];
-    const elements = getElements(activeSlide) || [];
-    if (!Array.isArray(elements) || elements.length === 0) return false;
+    const rawElements = getElements(activeSlide) || [];
+    if (!Array.isArray(rawElements) || rawElements.length === 0) return false;
+    const isSelectableElement = typeof options.isSelectableElement === 'function'
+      ? options.isSelectableElement
+      : () => true;
+    const elements = rawElements.filter((element) => {
+      try {
+        return isSelectableElement(element, activeSlide) !== false;
+      } catch (err) {
+        return false;
+      }
+    });
+    if (elements.length === 0) return false;
     const getSelectionOptions = typeof options.getSelectionOptions === 'function'
       ? options.getSelectionOptions
       : () => ({});
