@@ -243,6 +243,50 @@ test('captureEditorPersistableDeckBuildState captures and forwards canonical dec
   assert.equal(reportedPlaybackState, playbackState);
 });
 
+test('captureEditorPersistableDeckBuildState preserves captured state when callbacks throw', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const playbackState = {
+    activeSlideIds: ['slide-1'],
+    slideCounterText: '1 / 1'
+  };
+  const context = {
+    buildPersistableDeckHtml(doc, options = {}) {
+      assert.equal(doc, iframeDoc);
+      options.onCanonicalDeckResolved(canonicalDeck);
+      options.onPlaybackStateResolved(playbackState);
+      return '<html>persisted</html>';
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  loadCaptureEditorPersistableDeckBuildState(fileContent, context);
+
+  assert.deepEqual(
+    context.captureEditorPersistableDeckBuildState(iframeDoc, {
+      onCanonicalDeckResolved() {
+        throw new Error('canonical state consumer unavailable');
+      },
+      onPlaybackStateResolved() {
+        throw new Error('playback state consumer unavailable');
+      }
+    }),
+    {
+      cleanHtml: '<html>persisted</html>',
+      canonicalDeck,
+      playbackState
+    }
+  );
+});
+
 test('captureEditorPersistableDeckBuildState delegates through the shared persistence helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const iframeDoc = { label: 'iframe-doc' };

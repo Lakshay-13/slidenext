@@ -5,6 +5,15 @@
   }
   root.SlideNextStudioEditorPersistableDeckBuildStateAction = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function createApi() {
+  function notifyResolvedBuildState(callback, value) {
+    if (typeof callback !== 'function') return;
+    try {
+      callback(value);
+    } catch (err) {
+      // Session/UI synchronization is secondary; preserve the captured build state.
+    }
+  }
+
   function createStudioEditorPersistableDeckBuildStateAction(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -102,11 +111,11 @@
         ...nextBuildOptions,
         onCanonicalDeckResolved(canonicalDeck) {
           resolvedCanonicalDeck = canonicalDeck;
-          if (onCanonicalDeckResolved) onCanonicalDeckResolved(canonicalDeck);
+          notifyResolvedBuildState(onCanonicalDeckResolved, canonicalDeck);
         },
         onPlaybackStateResolved(playbackState) {
           resolvedPlaybackState = playbackState;
-          if (onPlaybackStateResolved) onPlaybackStateResolved(playbackState);
+          notifyResolvedBuildState(onPlaybackStateResolved, playbackState);
         }
       });
       return {
