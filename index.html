@@ -11568,11 +11568,18 @@
         : null;
       if (!themeView || typeof themeView.renderStudioThemeTokenPresets !== 'function') return false;
       const readyState = resolveCurrentStudioDeckReadyActionState();
-      return themeView.renderStudioThemeTokenPresets({
+      const didRender = themeView.renderStudioThemeTokenPresets({
         documentRef: document,
         presetData: themeTokenPresetsData,
         canUseThemeTokenControls: !!readyState.canUseDeckActions
       });
+      if (typeof themeView.bindStudioThemeTokenPresetActions === 'function') {
+        themeView.bindStudioThemeTokenPresetActions({
+          documentRef: document,
+          applyThemeTokenPreset
+        });
+      }
+      return didRender;
     }
 
     function flushPendingWallpaperVersion() {

@@ -29,6 +29,7 @@ test('renderStudioThemeTokenPresets renders disabled-aware swatches and labels',
   assert.match(container.innerHTML, /Brand tokens/);
   assert.match(container.innerHTML, /disabled/);
   assert.match(container.innerHTML, /#5eead4/);
+  assert.doesNotMatch(container.innerHTML, /onclick=/);
 });
 
 test('renderStudioThemeTokenPresets falls back to safe swatches and tolerates missing containers', () => {
@@ -62,4 +63,44 @@ test('syncStudioThemeTokenPresetActionState toggles rendered preset buttons', ()
     canUseThemeTokenControls: false
   }), true);
   assert.deepEqual(buttons.map((button) => button.disabled), [true, true]);
+});
+
+test('bindStudioThemeTokenPresetActions delegates preset clicks and updates callbacks without duplicate listeners', () => {
+  const listeners = {};
+  const presetButton = {
+    dataset: { themePresetId: 'aurora' },
+    closest(selector) {
+      return selector === '[data-theme-preset-id]' ? this : null;
+    }
+  };
+  const container = {
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    },
+    contains(target) {
+      return target === presetButton;
+    }
+  };
+  const calls = [];
+  const documentRef = {
+    getElementById(id) {
+      return id === 'themeTokenPresetsList' ? container : null;
+    }
+  };
+
+  assert.equal(themeView.bindStudioThemeTokenPresetActions({
+    documentRef,
+    applyThemeTokenPreset(presetId) {
+      calls.push(['first', presetId]);
+    }
+  }), true);
+  assert.equal(themeView.bindStudioThemeTokenPresetActions({
+    documentRef,
+    applyThemeTokenPreset(presetId) {
+      calls.push(['second', presetId]);
+    }
+  }), true);
+
+  listeners.click({ target: presetButton });
+  assert.deepEqual(calls, [['second', 'aurora']]);
 });

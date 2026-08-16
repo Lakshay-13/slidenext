@@ -209,6 +209,34 @@ test('renderThemeTokenPresets forwards readiness to the shared theme view', () =
   assert.equal(calls[0].canUseThemeTokenControls, false);
 });
 
+test('renderThemeTokenPresets binds generated preset actions through the shared theme view', () => {
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorThemeView: {
+      renderStudioThemeTokenPresets() {
+        return true;
+      },
+      bindStudioThemeTokenPresetActions(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    document: {},
+    themeTokenPresetsData: {},
+    resolveCurrentStudioDeckReadyActionState() {
+      return { canUseDeckActions: true };
+    },
+    applyThemeTokenPreset() {}
+  };
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  vm.createContext(context);
+  loadFunction(fileContent, 'function renderThemeTokenPresets() {', '\n\n    function flushPendingWallpaperVersion()', context);
+
+  assert.equal(context.renderThemeTokenPresets(), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].applyThemeTokenPreset, context.applyThemeTokenPreset);
+});
+
 test('updateThemeTokenActionState delegates deck readiness to the shared theme view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];

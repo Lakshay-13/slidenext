@@ -7,6 +7,8 @@
     root.SlideNextStudioEditorThemeView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const studioThemePresetActionBindings = typeof WeakMap === 'function' ? new WeakMap() : null;
+
   function normalizeString(value, fallback = '') {
     return typeof value === 'string' ? value : fallback;
   }
@@ -45,7 +47,7 @@
       const secondary = normalizePresetColor(tokens['--color-secondary']);
       const background = normalizePresetColor(tokens['--color-bg-base']);
       const label = normalizeString(normalizedPreset.name, presetId);
-      return `<button type="button" data-theme-preset-id="${escapeAttribute(presetId)}" onclick="applyThemeTokenPreset(this.dataset.themePresetId)" class="flex items-center gap-2 p-2 rounded-lg border border-white/5 bg-zinc-900 hover:border-[#7028d0]/50 hover:bg-zinc-800 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/5 disabled:hover:bg-zinc-900" title="Apply ${escapeAttribute(label)} theme tokens"${canUseThemeTokenControls ? '' : ' disabled'}>
+      return `<button type="button" data-theme-preset-id="${escapeAttribute(presetId)}" class="flex items-center gap-2 p-2 rounded-lg border border-white/5 bg-zinc-900 hover:border-[#7028d0]/50 hover:bg-zinc-800 transition-all text-left disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/5 disabled:hover:bg-zinc-900" title="Apply ${escapeAttribute(label)} theme tokens"${canUseThemeTokenControls ? '' : ' disabled'}>
           <span class="flex -space-x-1.5 shrink-0" aria-hidden="true">
             <span class="w-4 h-4 rounded-full border border-white/20" style="background:${escapeAttribute(primary)}"></span>
             <span class="w-4 h-4 rounded-full border border-white/20" style="background:${escapeAttribute(secondary)}"></span>
@@ -57,6 +59,47 @@
           </span>
         </button>`;
     }).join('');
+    return true;
+  }
+
+  function bindStudioThemeTokenPresetActions(options = {}) {
+    const documentRef = options.documentRef;
+    const container = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('themeTokenPresetsList')
+      : null;
+    const applyThemeTokenPreset = typeof options.applyThemeTokenPreset === 'function'
+      ? options.applyThemeTokenPreset
+      : null;
+    if (!container || typeof container.addEventListener !== 'function' || !applyThemeTokenPreset) {
+      return false;
+    }
+
+    let binding = studioThemePresetActionBindings && studioThemePresetActionBindings.get(container);
+    if (!binding) {
+      binding = { applyThemeTokenPreset };
+      binding.handleClick = (event) => {
+        const eventTarget = event && event.target;
+        const presetButton = eventTarget && typeof eventTarget.closest === 'function'
+          ? eventTarget.closest('[data-theme-preset-id]')
+          : null;
+        if (!presetButton
+          || (typeof container.contains === 'function' && !container.contains(presetButton))) {
+          return;
+        }
+        const presetId = presetButton.dataset && typeof presetButton.dataset.themePresetId === 'string'
+          ? presetButton.dataset.themePresetId
+          : typeof presetButton.getAttribute === 'function'
+            ? presetButton.getAttribute('data-theme-preset-id') || ''
+            : '';
+        if (presetId) binding.applyThemeTokenPreset(presetId);
+      };
+      container.addEventListener('click', binding.handleClick);
+      if (studioThemePresetActionBindings) {
+        studioThemePresetActionBindings.set(container, binding);
+      }
+    } else {
+      binding.applyThemeTokenPreset = applyThemeTokenPreset;
+    }
     return true;
   }
 
@@ -102,6 +145,7 @@
   return {
     normalizePresetColor,
     renderStudioThemeTokenPresets,
+    bindStudioThemeTokenPresetActions,
     syncStudioThemeTokenPresetActionState,
     createStudioThemeTokenPresetActionStateSync
   };
