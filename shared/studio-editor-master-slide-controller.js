@@ -194,6 +194,15 @@
       }
     }
 
+    function refreshMasterActiveSlide(index) {
+      if (!setActiveSlide) return;
+      try {
+        setActiveSlide(index);
+      } catch (err) {
+        // Active-slide chrome is secondary; preserve the rendered master mutation.
+      }
+    }
+
     function replaceActiveSlide(nextCanonicalDeck) {
       const documentRef = getDocument();
       const activeSlideId = resolveActiveSlideId();
@@ -242,7 +251,7 @@
       } else {
         return false;
       }
-      if (setActiveSlide) setActiveSlide(activeSlideIndex);
+      refreshMasterActiveSlide(activeSlideIndex);
       if (generateThumbnails) generateThumbnails();
 
       return {
@@ -256,7 +265,7 @@
           } else {
             return false;
           }
-          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          refreshMasterActiveSlide(activeSlideIndex);
           if (generateThumbnails) generateThumbnails();
           return true;
         }

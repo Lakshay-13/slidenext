@@ -511,6 +511,43 @@ test('assignMasterSlide rerenders the active slide and commits the reference', (
   assert.equal(slideLookupCalls[0][1], 'slide-1');
 });
 
+test('assignMasterSlide preserves persistence when active-slide chrome throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [] } }],
+    slides: [{ id: 'slide-1', nodes: [] }]
+  });
+  const activeSlide = {
+    replaceWith() {}
+  };
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: {
+      renderCanonicalSlide() {
+        return '<section></section>';
+      }
+    },
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: { firstElementChild: { replaceWith() {} } },
+          set innerHTML(value) {
+            this.html = value;
+          }
+        };
+      }
+    }),
+    getSlides: () => [activeSlide],
+    setActiveSlide() {
+      throw new Error('active-slide chrome unavailable');
+    },
+    saveHistoryState() {}
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.assignMasterSlide('master-1'), true));
+});
+
 test('assignMasterSlide restores the active slide when persistence rejects', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],
