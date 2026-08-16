@@ -1637,6 +1637,7 @@
   <script src="/shared/studio-editor-persistence-runtime-options.js"></script>
   <script src="/shared/studio-editor-persistence-runtime.js"></script>
   <script src="/shared/studio-editor-persistence-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persistence-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-controller.js"></script>
   <script src="/shared/studio-editor-autosave.js"></script>
   <script src="/shared/studio-editor-trigger-auto-save-action.js"></script>
@@ -6319,16 +6320,26 @@
           )
         })
       : null;
-    const studioEditorPersistenceRuntime = studioEditorPersistenceRuntimeOptions
-      && typeof SlideNextStudioEditorPersistenceShellRuntime !== 'undefined'
-      && SlideNextStudioEditorPersistenceShellRuntime
-      && typeof SlideNextStudioEditorPersistenceShellRuntime.createStudioEditorPersistenceShellRuntime === 'function'
-      ? SlideNextStudioEditorPersistenceShellRuntime.createStudioEditorPersistenceShellRuntime({
+    const studioEditorPersistenceRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistenceRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistenceRuntimeAccessors
+      : null;
+    const studioEditorPersistenceRuntimeAccessors = studioEditorPersistenceRuntimeAccessorsApi
+      && typeof studioEditorPersistenceRuntimeAccessorsApi
+        .createStudioEditorPersistenceRuntimeAccessors === 'function'
+      ? studioEditorPersistenceRuntimeAccessorsApi
+        .createStudioEditorPersistenceRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorPersistenceShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorPersistenceShellRuntime
+            : null,
           persistenceRuntimeApi: typeof SlideNextStudioEditorPersistenceRuntime !== 'undefined'
             ? SlideNextStudioEditorPersistenceRuntime
             : null,
           runtimeOptions: studioEditorPersistenceRuntimeOptions
         })
+      : null;
+    const studioEditorPersistenceRuntime = studioEditorPersistenceRuntimeAccessors
+      ? studioEditorPersistenceRuntimeAccessors.runtime
       : null;
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
