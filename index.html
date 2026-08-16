@@ -1425,6 +1425,7 @@
   <script src="/shared/studio-editor-removal-controller.js"></script>
   <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-removal-accessors.js"></script>
   <script src="/shared/studio-editor-removal-state.js"></script>
   <script src="/shared/studio-editor-removal-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-state-accessors.js"></script>
@@ -4139,13 +4140,20 @@
       && studioEditorLayerOrderStateShellRuntime.isAvailable === true
       ? studioEditorLayerOrderStateShellRuntime.layerOrderStateController
       : null;
-    const studioEditorRemovalRuntime = typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
-      && SlideNextStudioEditorRemovalShellRuntime
-      && typeof SlideNextStudioEditorRemovalShellRuntime.createStudioEditorRemovalShellRuntime === 'function'
-      ? SlideNextStudioEditorRemovalShellRuntime.createStudioEditorRemovalShellRuntime({
+    const studioEditorRemovalAccessorsApi =
+      typeof SlideNextStudioEditorRemovalAccessors !== 'undefined'
+      ? SlideNextStudioEditorRemovalAccessors
+      : null;
+    const studioEditorRemovalAccessors = studioEditorRemovalAccessorsApi
+      && typeof studioEditorRemovalAccessorsApi.createStudioEditorRemovalAccessors === 'function'
+      ? studioEditorRemovalAccessorsApi.createStudioEditorRemovalAccessors({
+          runtimeApi: typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorRemovalShellRuntime
+            : null,
           removalRuntimeApi: typeof SlideNextStudioEditorRemovalRuntime !== 'undefined'
             ? SlideNextStudioEditorRemovalRuntime
             : null,
+          runtimeOptions: {
           controllerApi: typeof SlideNextStudioEditorRemovalController !== 'undefined'
             ? SlideNextStudioEditorRemovalController
             : null,
@@ -4181,7 +4189,11 @@
           finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
           rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
           restoreSelection: (...args) => restoreCommittedSelectionByIdsOnActiveSlide(...args)
+          }
         })
+      : null;
+    const studioEditorRemovalRuntime = studioEditorRemovalAccessors
+      ? studioEditorRemovalAccessors.runtime
       : null;
     const studioEditorRemovalController = studioEditorRemovalRuntime
       ? studioEditorRemovalRuntime.removalController
