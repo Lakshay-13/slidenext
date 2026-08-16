@@ -4,8 +4,43 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const insertionRuntime = require('../shared/studio-editor-element-insertion-runtime.js');
+const insertionRuntimeAccessors = require('../shared/studio-editor-element-insertion-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('element insertion runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'element-insertion-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorElementInsertionShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const insertionRuntimeApi = { name: 'insertion-runtime' };
+  const callback = () => {};
+
+  const result = insertionRuntimeAccessors.createStudioEditorElementInsertionRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    insertionRuntimeApi,
+    runtimeOptions: {
+      getIframeDoc: callback
+    }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.insertionRuntimeApi, insertionRuntimeApi);
+  assert.equal(receivedOptions.getIframeDoc, callback);
+});
+
+test('element insertion runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    insertionRuntimeAccessors.createStudioEditorElementInsertionRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('element insertion runtime composes canonical and persistence dependencies', () => {
   const calls = [];
@@ -72,7 +107,19 @@ test('index wires element insertion through the runtime module', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-element-insertion-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorElementInsertionRuntimeAccessorsApi\s*\.\s*createStudioEditorElementInsertionRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /SlideNextStudioEditorElementInsertionShellRuntime\.createStudioEditorElementInsertionShellRuntime\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorElementInsertionController\.createStudioEditorElementInsertionController\(/
   );
   assert.doesNotMatch(
     fileContent,

@@ -1400,6 +1400,7 @@
   <script src="/shared/studio-editor-element-insertion-controller.js"></script>
   <script src="/shared/studio-editor-element-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-element-insertion-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-element-insertion-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -4515,44 +4516,54 @@
     const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
       ? studioEditorClipboardSelectionRuntime.selectionController
       : null;
-    const studioEditorElementInsertionRuntime = typeof SlideNextStudioEditorElementInsertionShellRuntime !== 'undefined'
-      && SlideNextStudioEditorElementInsertionShellRuntime
-      && typeof SlideNextStudioEditorElementInsertionShellRuntime.createStudioEditorElementInsertionShellRuntime === 'function'
-      ? SlideNextStudioEditorElementInsertionShellRuntime.createStudioEditorElementInsertionShellRuntime({
+    const studioEditorElementInsertionRuntimeAccessorsApi = typeof SlideNextStudioEditorElementInsertionRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorElementInsertionRuntimeAccessors
+      : null;
+    const studioEditorElementInsertionRuntimeAccessors = studioEditorElementInsertionRuntimeAccessorsApi
+      && typeof studioEditorElementInsertionRuntimeAccessorsApi.createStudioEditorElementInsertionRuntimeAccessors === 'function'
+      ? studioEditorElementInsertionRuntimeAccessorsApi.createStudioEditorElementInsertionRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorElementInsertionShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorElementInsertionShellRuntime
+            : null,
           insertionRuntimeApi: typeof SlideNextStudioEditorElementInsertionRuntime !== 'undefined'
             ? SlideNextStudioEditorElementInsertionRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
-            ? SlideNextStudioEditorElementInsertionController
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-            ? SlideNextStudioEditorCanonicalInsertion
-            : null,
-          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
-            ? SlideNextDeckImport
-            : null,
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getActiveSlide: (...args) => getActiveSlide(...args),
-          getEditorSlideId: (...args) => getEditorSlideId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          makeElementsHoverable: (...args) => makeElementsHoverable(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
-          selectElement: (...args) => selectElement(...args),
-          generateThumbnails: (...args) => generateThumbnails(...args),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          triggerAutoSave: (...args) => triggerAutoSave(...args),
-          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          updateInsertionActionState: (...args) => updateInsertionActionState(...args)
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
+              ? SlideNextStudioEditorElementInsertionController
+              : null,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
+              ? SlideNextStudioEditorCanonicalInsertion
+              : null,
+            deckImportApi: typeof SlideNextDeckImport !== 'undefined'
+              ? SlideNextDeckImport
+              : null,
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            getActiveSlide: (...args) => getActiveSlide(...args),
+            getEditorSlideId: (...args) => getEditorSlideId(...args),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            makeElementsHoverable: (...args) => makeElementsHoverable(...args),
+            assignElementId: (...args) => assignEditorElementId(...args),
+            finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
+            selectElement: (...args) => selectElement(...args),
+            generateThumbnails: (...args) => generateThumbnails(...args),
+            saveHistoryState: (...args) => saveHistoryState(...args),
+            triggerAutoSave: (...args) => triggerAutoSave(...args),
+            triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+            updateInsertionActionState: (...args) => updateInsertionActionState(...args)
+          }
         })
+      : null;
+    const studioEditorElementInsertionRuntime = studioEditorElementInsertionRuntimeAccessors
+      ? studioEditorElementInsertionRuntimeAccessors.runtime
       : null;
     const studioEditorElementInsertionController = studioEditorElementInsertionRuntime
       ? studioEditorElementInsertionRuntime.elementInsertionController
