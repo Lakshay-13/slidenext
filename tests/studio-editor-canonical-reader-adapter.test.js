@@ -73,6 +73,39 @@ test('canonical reader adapter delegates freeform reads through the shared resol
   assert.equal(reader({}), true);
 });
 
+test('createStudioEditorCanonicalReaderResolvers reuses canonical dependencies', () => {
+  const calls = [];
+  const fallbackReader = () => false;
+  const resolvers = canonicalReaderAdapter.createStudioEditorCanonicalReaderResolvers({
+    canonicalStateApi: {
+      createStudioEditorCanonicalVisibilityReaderResolver(options) {
+        calls.push(['visibility', options]);
+        return (_property, _doc, fallback) => () => fallback({});
+      },
+      createStudioEditorCanonicalFreeformReaderResolver(options) {
+        calls.push(['freeform', options]);
+        return (_doc, fallback) => fallback;
+      }
+    },
+    canonicalDeckApi: { id: 'deck-api' },
+    getElementId: () => 'node-1',
+    resolveCanonicalNode: () => ({ id: 'node-1' }),
+    buildCanonicalDeck: () => ({ slides: [] })
+  });
+
+  assert.equal(
+    resolvers.getStudioEditorCanonicalVisibilityReader('hidden', {}, fallbackReader)({}),
+    false
+  );
+  assert.equal(
+    resolvers.getStudioEditorCanonicalFreeformReader({}, fallbackReader),
+    fallbackReader
+  );
+  assert.deepEqual(calls.map(([kind]) => kind), ['visibility', 'freeform']);
+  assert.equal(calls[0][1].canonicalDeckApi.id, 'deck-api');
+  assert.equal(calls[1][1].getElementId(), 'node-1');
+});
+
 test('canonical reader adapter fails closed without the shared reader API', () => {
   const fallbackReader = () => true;
   assert.equal(

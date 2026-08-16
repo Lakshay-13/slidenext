@@ -102,8 +102,21 @@
     }
   }
 
+  function createStudioEditorCanonicalReaderResolvers(options = {}) {
+    const dependencies = resolveCanonicalReaderDependencies(options);
+    return {
+      getStudioEditorCanonicalVisibilityReader: (property, doc, fallbackReader) => (
+        getStudioEditorCanonicalVisibilityReader(property, doc, fallbackReader, dependencies)
+      ),
+      getStudioEditorCanonicalFreeformReader: (doc, fallbackReader) => (
+        getStudioEditorCanonicalFreeformReader(doc, fallbackReader, dependencies)
+      )
+    };
+  }
+
   return {
     getStudioEditorCanonicalVisibilityReader,
-    getStudioEditorCanonicalFreeformReader
+    getStudioEditorCanonicalFreeformReader,
+    createStudioEditorCanonicalReaderResolvers
   };
 });

@@ -9543,6 +9543,32 @@
       });
     }
 
+    const studioEditorCanonicalReaderAdapter = typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
+      ? SlideNextStudioEditorCanonicalReaderAdapter
+      : null;
+    const studioEditorCanonicalReaderResolvers = studioEditorCanonicalReaderAdapter
+      && typeof studioEditorCanonicalReaderAdapter.createStudioEditorCanonicalReaderResolvers === 'function'
+      ? studioEditorCanonicalReaderAdapter.createStudioEditorCanonicalReaderResolvers({
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null,
+          resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
+            ? resolveEditorCanonicalNodeForElement
+            : null,
+          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null
+        })
+      : null;
+
     const studioEditorLiveSelectionAdapter = typeof SlideNextStudioEditorLiveSelectionAdapter !== 'undefined'
       && SlideNextStudioEditorLiveSelectionAdapter
       && typeof SlideNextStudioEditorLiveSelectionAdapter.getStudioEditorLiveSelection === 'function'
@@ -9655,14 +9681,25 @@
 
     function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {
       const fallback = typeof fallbackReader === 'function' ? fallbackReader : () => false;
+      if (typeof studioEditorCanonicalReaderResolvers !== 'undefined'
+        && studioEditorCanonicalReaderResolvers
+        && typeof studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalVisibilityReader === 'function') {
+        return studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalVisibilityReader(
+          property,
+          doc,
+          fallback
+        );
+      }
       const resolveCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
         ? resolveEditorUiCanonicalDeck
         : typeof buildEditorCanonicalDeck === 'function'
           ? buildEditorCanonicalDeck
           : null;
-      const canonicalReaderAdapter = typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
-        ? SlideNextStudioEditorCanonicalReaderAdapter
-        : null;
+      const canonicalReaderAdapter = typeof studioEditorCanonicalReaderAdapter !== 'undefined'
+        ? studioEditorCanonicalReaderAdapter
+        : typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
+          ? SlideNextStudioEditorCanonicalReaderAdapter
+          : null;
       if (canonicalReaderAdapter
         && typeof canonicalReaderAdapter.getStudioEditorCanonicalVisibilityReader === 'function') {
         return canonicalReaderAdapter.getStudioEditorCanonicalVisibilityReader(property, doc, fallback, {
@@ -9694,14 +9731,21 @@
             && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
             ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
             : () => false;
+      if (typeof studioEditorCanonicalReaderResolvers !== 'undefined'
+        && studioEditorCanonicalReaderResolvers
+        && typeof studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalFreeformReader === 'function') {
+        return studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalFreeformReader(doc, fallback);
+      }
       const resolveCanonicalDeck = typeof resolveEditorUiCanonicalDeck === 'function'
         ? resolveEditorUiCanonicalDeck
         : typeof buildEditorCanonicalDeck === 'function'
           ? buildEditorCanonicalDeck
           : null;
-      const canonicalReaderAdapter = typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
-        ? SlideNextStudioEditorCanonicalReaderAdapter
-        : null;
+      const canonicalReaderAdapter = typeof studioEditorCanonicalReaderAdapter !== 'undefined'
+        ? studioEditorCanonicalReaderAdapter
+        : typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
+          ? SlideNextStudioEditorCanonicalReaderAdapter
+          : null;
       if (canonicalReaderAdapter
         && typeof canonicalReaderAdapter.getStudioEditorCanonicalFreeformReader === 'function') {
         return canonicalReaderAdapter.getStudioEditorCanonicalFreeformReader(doc, fallback, {
