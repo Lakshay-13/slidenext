@@ -79,8 +79,19 @@ test('index routes metadata persistence installation through the shell runtime',
     fileContent,
     /<script src="\/shared\/studio-editor-metadata-persistence-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-metadata-persistence-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorMetadataPersistenceShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorMetadataPersistenceShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorMetadataPersistenceRuntimeAccessorsApi\s*\.\s*createStudioEditorMetadataPersistenceRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorMetadataPersistenceShellRuntimeApi\s*\.\s*createStudioEditorMetadataPersistenceShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorMetadataPersistenceGlobalApi = studioEditorMetadataPersistenceShellRuntime/

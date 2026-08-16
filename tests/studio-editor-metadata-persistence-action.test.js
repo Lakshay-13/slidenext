@@ -82,7 +82,18 @@ test('index loads and installs the shared metadata persistence action', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-metadata-persistence-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorMetadataPersistenceShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-metadata-persistence-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorMetadataPersistenceRuntimeAccessorsApi\s*\.\s*createStudioEditorMetadataPersistenceRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorMetadataPersistenceShellRuntimeApi\s*\.\s*createStudioEditorMetadataPersistenceShellRuntime\(/
+  );
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorMetadataPersistenceGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function resolveEditorMetadataPersistenceOptions\(options = \{\}\) \{/);
 });

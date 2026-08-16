@@ -1610,6 +1610,7 @@
   <script src="/shared/studio-editor-persisted-deck-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-metadata-persistence-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-shell-runtime.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
@@ -6513,45 +6514,57 @@
       typeof SlideNextStudioEditorMetadataPersistenceShellRuntime !== 'undefined'
       ? SlideNextStudioEditorMetadataPersistenceShellRuntime
       : null;
-    const studioEditorMetadataPersistenceShellRuntime = studioEditorMetadataPersistenceShellRuntimeApi
-      && typeof studioEditorMetadataPersistenceShellRuntimeApi
-        .createStudioEditorMetadataPersistenceShellRuntime === 'function'
-      ? studioEditorMetadataPersistenceShellRuntimeApi
-        .createStudioEditorMetadataPersistenceShellRuntime({
-          actionApi: typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
-            ? SlideNextStudioEditorMetadataPersistenceAction
-            : null,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
-          resolveMergedPresentationPersistenceOptions: (
-            typeof SlideNextDeckLoader !== 'undefined'
-            && SlideNextDeckLoader
-            && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
-          )
-            ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
-            : null,
-          resolvePresentationPersistenceOptions: (
-            typeof SlideNextDeckLoader !== 'undefined'
-            && SlideNextDeckLoader
-            && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
-          )
-            ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
-            : null,
-          mergePresentationPersistenceOptions: (
-            typeof SlideNextPresentationMetadata !== 'undefined'
-            && SlideNextPresentationMetadata
-            && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+    const studioEditorMetadataPersistenceRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorMetadataPersistenceRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorMetadataPersistenceRuntimeAccessors
+      : null;
+    const studioEditorMetadataPersistenceRuntimeAccessors =
+      studioEditorMetadataPersistenceRuntimeAccessorsApi
+      && typeof studioEditorMetadataPersistenceRuntimeAccessorsApi
+        .createStudioEditorMetadataPersistenceRuntimeAccessors === 'function'
+      ? studioEditorMetadataPersistenceRuntimeAccessorsApi
+        .createStudioEditorMetadataPersistenceRuntimeAccessors({
+          runtimeApi: studioEditorMetadataPersistenceShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
+              ? SlideNextStudioEditorMetadataPersistenceAction
+              : null,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            getCurrentPresentationMetadata: getStudioCurrentPresentationMetadata,
+            resolveMergedPresentationPersistenceOptions: (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions === 'function'
             )
-            ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
-            : null
+              ? SlideNextDeckLoader.resolveMergedPresentationPersistenceOptions
+              : null,
+            resolvePresentationPersistenceOptions: (
+              typeof SlideNextDeckLoader !== 'undefined'
+              && SlideNextDeckLoader
+              && typeof SlideNextDeckLoader.resolvePresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextDeckLoader.resolvePresentationPersistenceOptions
+              : null,
+            mergePresentationPersistenceOptions: (
+              typeof SlideNextPresentationMetadata !== 'undefined'
+              && SlideNextPresentationMetadata
+              && typeof SlideNextPresentationMetadata.mergePresentationPersistenceOptions === 'function'
+            )
+              ? SlideNextPresentationMetadata.mergePresentationPersistenceOptions
+              : null
+          }
         })
       : null;
+    const studioEditorMetadataPersistenceShellRuntime =
+      studioEditorMetadataPersistenceRuntimeAccessors
+        ? studioEditorMetadataPersistenceRuntimeAccessors.runtime
+        : null;
     const studioEditorMetadataPersistenceAction = studioEditorMetadataPersistenceShellRuntime
       && studioEditorMetadataPersistenceShellRuntime.isAvailable === true
       ? studioEditorMetadataPersistenceShellRuntime.metadataPersistenceAction
