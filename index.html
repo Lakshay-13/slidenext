@@ -1418,6 +1418,7 @@
   <script src="/shared/studio-editor-clipboard-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-state.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
   <script src="/shared/studio-editor-removal-mutation.js"></script>
@@ -4306,13 +4307,22 @@
       && typeof studioEditorStyleController.bindStudioEditorStyleControls === 'function') {
       studioEditorStyleController.bindStudioEditorStyleControls({ documentRef: document });
     }
-    const studioEditorClipboardRuntime = typeof SlideNextStudioEditorClipboardShellRuntime !== 'undefined'
-      && SlideNextStudioEditorClipboardShellRuntime
-      && typeof SlideNextStudioEditorClipboardShellRuntime.createStudioEditorClipboardShellRuntime === 'function'
-      ? SlideNextStudioEditorClipboardShellRuntime.createStudioEditorClipboardShellRuntime({
+    const studioEditorClipboardRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorClipboardRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorClipboardRuntimeAccessors
+      : null;
+    const studioEditorClipboardRuntimeAccessors = studioEditorClipboardRuntimeAccessorsApi
+      && typeof studioEditorClipboardRuntimeAccessorsApi
+        .createStudioEditorClipboardRuntimeAccessors === 'function'
+      ? studioEditorClipboardRuntimeAccessorsApi
+        .createStudioEditorClipboardRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorClipboardShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorClipboardShellRuntime
+            : null,
           clipboardRuntimeApi: typeof SlideNextStudioEditorClipboardRuntime !== 'undefined'
             ? SlideNextStudioEditorClipboardRuntime
             : null,
+          runtimeOptions: {
           controllerApi: typeof SlideNextStudioEditorClipboardController !== 'undefined'
             ? SlideNextStudioEditorClipboardController
             : null,
@@ -4342,7 +4352,11 @@
           ),
           insertClipboardPayload: (...args) => insertClipboardPayload(...args),
           finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
+          }
         })
+      : null;
+    const studioEditorClipboardRuntime = studioEditorClipboardRuntimeAccessors
+      ? studioEditorClipboardRuntimeAccessors.runtime
       : null;
     const studioEditorClipboardController = studioEditorClipboardRuntime
       ? studioEditorClipboardRuntime.clipboardController

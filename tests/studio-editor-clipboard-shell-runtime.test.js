@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-clipboard-shell-runtime.js');
+const clipboardRuntimeAccessors = require('../shared/studio-editor-clipboard-runtime-accessors.js');
 
 test('clipboard shell runtime resolves clipboard and canonical insertion dependencies', () => {
   let receivedOptions = null;
@@ -70,4 +71,36 @@ test('clipboard shell runtime safely returns null without a runtime factory', ()
     shellRuntime.createStudioEditorClipboardShellRuntime({ clipboardRuntimeApi: {} }),
     null
   );
+});
+
+test('clipboard runtime accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { clipboardController: { name: 'clipboard' } };
+  const runtimeOptions = { getIframeDoc: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorClipboardShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const clipboardRuntimeApi = { name: 'runtime' };
+  const accessors = clipboardRuntimeAccessors.createStudioEditorClipboardRuntimeAccessors({
+    runtimeApi,
+    clipboardRuntimeApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].clipboardRuntimeApi, clipboardRuntimeApi);
+  assert.equal(calls[0].getIframeDoc, runtimeOptions.getIframeDoc);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('clipboard runtime accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = clipboardRuntimeAccessors.createStudioEditorClipboardRuntimeAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });
