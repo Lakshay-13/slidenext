@@ -67,6 +67,38 @@ test('zoom accessors preserve safe no-controller fallbacks', () => {
   assert.equal(accessors.zoomSelectChange('1.0'), false);
 });
 
+test('zoom accessors bind zoom controls to the shared controller', () => {
+  const controlIds = ['zoomOutBtn', 'zoomSelect', 'zoomInBtn'];
+  const controls = Object.fromEntries(controlIds.map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+  const accessors = accessorsApi.createStudioEditorZoomAccessors({
+    zoomController: {
+      zoomOut: () => calls.push('out'),
+      zoomSelectChange: (value) => calls.push(['select', value]),
+      zoomIn: () => calls.push('in')
+    }
+  });
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    accessors.bindStudioEditorZoomControls({ documentRef }),
+    Object.fromEntries(controlIds.map((id) => [id, true]))
+  );
+  controls.zoomOutBtn.listeners.click({ preventDefault() {} });
+  controls.zoomSelect.listeners.change({ currentTarget: { value: '1.2' } });
+  controls.zoomInBtn.listeners.click({ preventDefault() {} });
+  assert.deepEqual(calls, ['out', ['select', '1.2'], 'in']);
+});
+
 test('zoom global api preserves the editor shell function names and contracts', () => {
   const calls = [];
   const accessors = {
@@ -118,6 +150,12 @@ test('editor loads zoom accessors after the zoom runtime', () => {
     /<script src="\/shared\/studio-editor-zoom-accessors\.js"><\/script>/
   );
   assert.match(fileContent, /createStudioEditorZoomAccessors\(/);
+  ['zoomOutBtn', 'zoomSelect', 'zoomInBtn'].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing zoom control: ${id}`);
+    assert.doesNotMatch(line, /onclick=|onchange=/);
+  });
+  assert.match(fileContent, /bindStudioEditorZoomControls\(\{ documentRef: document \}\)/);
   assert.match(fileContent, /studioEditorZoomAccessors/);
   assert.match(fileContent, /createStudioEditorZoomGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorZoomGlobalApi\)/);

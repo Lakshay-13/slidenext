@@ -793,10 +793,10 @@
             <span id="canvasLayoutModeLabel" data-layout-mode="unknown" title="The active slide layout mode is not available yet." class="px-2 py-0.5 rounded border border-white/10 text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Layout unavailable</span>
           </div>
           <div class="flex items-center gap-2">
-              <button id="zoomOutBtn" onclick="zoomOut()" disabled class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Zoom Out">
+              <button id="zoomOutBtn" disabled class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Zoom Out">
                 <span class="material-symbols-outlined text-[16px]">zoom_out</span>
               </button>
-              <select id="zoomSelect" onchange="zoomSelectChange(this.value)" disabled class="bg-zinc-900 border border-white/5 rounded px-2 py-0.5 text-xs text-zinc-300 font-mono focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed">
+              <select id="zoomSelect" disabled class="bg-zinc-900 border border-white/5 rounded px-2 py-0.5 text-xs text-zinc-300 font-mono focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed">
                 <option value="fit">Fit Screen</option>
                 <option value="0.25">25%</option>
                 <option value="0.3">30%</option>
@@ -825,7 +825,7 @@
                 <option value="1.45">145%</option>
                 <option value="1.5">150%</option>
               </select>
-              <button id="zoomInBtn" onclick="zoomIn()" disabled class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Zoom In">
+              <button id="zoomInBtn" disabled class="p-1 hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Zoom In">
                 <span class="material-symbols-outlined text-[16px]">zoom_in</span>
               </button>
           </div>
@@ -6435,6 +6435,10 @@
           zoomController: studioEditorZoomController
         })
       : null;
+    if (studioEditorZoomAccessors
+      && typeof studioEditorZoomAccessors.bindStudioEditorZoomControls === 'function') {
+      studioEditorZoomAccessors.bindStudioEditorZoomControls({ documentRef: document });
+    }
     const studioEditorZoomGlobalApi = typeof SlideNextStudioEditorZoomAccessors !== 'undefined'
       && SlideNextStudioEditorZoomAccessors
       && typeof SlideNextStudioEditorZoomAccessors.createStudioEditorZoomGlobalApi === 'function'
