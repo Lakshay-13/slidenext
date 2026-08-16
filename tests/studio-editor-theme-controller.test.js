@@ -78,6 +78,43 @@ test('theme controller binds both theme buttons without inline handlers', () => 
   assert.deepEqual(calls, ['toggle', 'toggle']);
 });
 
+test('theme controller binding is idempotent for an existing document', () => {
+  const buttons = {};
+  ['globalThemeToggleBtn', 'studioThemeToggleBtn'].forEach((id) => {
+    buttons[id] = {
+      listeners: [],
+      addEventListener(type, handler) {
+        this.listeners.push({ type, handler });
+      }
+    };
+  });
+  const controller = themeController.createStudioEditorThemeController({
+    themeViewApi: {
+      toggleStudioGlobalTheme() {
+        return { didApply: true };
+      }
+    },
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    }
+  });
+
+  assert.deepEqual(
+    controller.bindStudioEditorThemeButtons(),
+    { global: true, editor: true }
+  );
+  assert.deepEqual(
+    controller.bindStudioEditorThemeButtons(),
+    { global: true, editor: true }
+  );
+  Object.values(buttons).forEach((button) => {
+    assert.equal(button.listeners.length, 1);
+    assert.equal(button.listeners[0].type, 'click');
+  });
+});
+
 test('fails closed when the shared theme view is unavailable', () => {
   const controller = themeController.createStudioEditorThemeController({ themeViewApi: null });
 

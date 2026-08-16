@@ -27,6 +27,7 @@
           && typeof documentRef.documentElement.classList.contains === 'function'
           && documentRef.documentElement.classList.contains('dark')
         );
+    const themeButtonBindings = new WeakMap();
 
     function syncIframeTheme() {
       if (!themeViewApi || typeof themeViewApi.syncStudioIframeTheme !== 'function') return false;
@@ -54,7 +55,10 @@
       const bindButton = (id) => {
         const button = themeDocument.getElementById(id);
         if (!button || typeof button.addEventListener !== 'function') return false;
-        button.addEventListener('click', toggleGlobalTheme);
+        if (!themeButtonBindings.has(button)) {
+          button.addEventListener('click', toggleGlobalTheme);
+          themeButtonBindings.set(button, toggleGlobalTheme);
+        }
         return true;
       };
 
