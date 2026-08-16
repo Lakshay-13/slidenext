@@ -46,6 +46,27 @@ test('block controller saves the active selection and finalizes persistence hook
   assert.deepEqual(calls[3][1], ['intro']);
 });
 
+test('block controller preserves a committed save when publication throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', nodes: [{ id: 'node-1', text: 'Heading' }] }]
+  });
+  const controller = blockController.createStudioEditorBlockController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedNodeIds: () => ['node-1'],
+    saveHistoryState() {},
+    onBlocksChanged() {
+      throw new Error('block listener failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    const result = controller.saveSelection({ id: 'intro', name: 'Intro Block' });
+    assert.equal(result.blocks[0].id, 'intro');
+  });
+});
+
 test('block mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{

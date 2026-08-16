@@ -89,6 +89,16 @@
     const onBlocksChanged = typeof options.onBlocksChanged === 'function'
       ? options.onBlocksChanged
       : null;
+
+    function publishBlocksChanged(nextCanonicalDeck) {
+      if (!onBlocksChanged) return;
+      try {
+        onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
+      } catch (error) {
+        // A listener failure must not change an already committed block mutation.
+      }
+    }
+
     function findCanonicalSlide(deck, slideId) {
       if (!deck || !Array.isArray(deck.slides)) return null;
       if (canonicalDeckApi && typeof canonicalDeckApi.findCanonicalSlideById === 'function') {
@@ -184,7 +194,7 @@
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }
-      if (onBlocksChanged) onBlocksChanged(nextCanonicalDeck.blocks, nextCanonicalDeck);
+      publishBlocksChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
     }
 
