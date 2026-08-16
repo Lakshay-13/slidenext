@@ -463,6 +463,7 @@ test('finalizeSlideMutationPersistence delegates lifecycle ordering to the share
   assert.equal(delegatedOptions.saveHistoryState, context.saveHistoryState);
   assert.equal(delegatedOptions.triggerAutoSave, context.triggerAutoSave);
   assert.equal(delegatedOptions.triggerAutoVersion, context.triggerAutoVersion);
+  assert.match(fileContent, /isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'/);
 });
 
 test('finalizeSlideMutationPersistence uses a configured shared finalizer when available', () => {

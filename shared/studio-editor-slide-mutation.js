@@ -10,6 +10,25 @@
     root.SlideNextStudioEditorSlideMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+  function isStudioCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
+  function isValidStudioCanonicalDeck(value, validator) {
+    if (!value) return false;
+    const validate = typeof validator === 'function'
+      ? validator
+      : isStudioCanonicalDeckLike;
+    try {
+      return validate(value) === true;
+    } catch (error) {
+      return false;
+    }
+  }
+
   const isStudioHistoryCaptureFailure = historyResultApi
     && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
     ? historyResultApi.isStudioHistoryCaptureFailure
@@ -40,6 +59,9 @@
     const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
       ? options.triggerAutoVersion
       : () => {};
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     if (mutationApi && typeof mutationApi.finalizeStudioSlideMutation === 'function') {
       return (versionLabel, transaction = null, canonicalDeck = null) => (
@@ -47,6 +69,7 @@
           versionLabel,
           transaction,
           canonicalDeck,
+          ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
           saveHistoryState,
           triggerAutoSave,
           triggerAutoVersion
@@ -55,8 +78,11 @@
     }
 
     return (versionLabel, transaction = null, canonicalDeck = null) => {
-      const historyCaptureResult = canonicalDeck
-        ? captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+      const validCanonicalDeck = isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
+        ? canonicalDeck
+        : null;
+      const historyCaptureResult = validCanonicalDeck
+        ? captureStudioHistoryState(saveHistoryState, false, transaction, validCanonicalDeck)
         : captureStudioHistoryState(saveHistoryState, false, transaction);
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
       if (triggerAutoSave() === false) return false;

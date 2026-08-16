@@ -716,6 +716,22 @@ test('createStudioSlideMutationPersistenceFinalizer forwards canonical deck over
   assert.deepEqual(historyArgs, [false, null, canonicalDeck]);
 });
 
+test('createStudioSlideMutationPersistenceFinalizer drops invalid canonical sidecars', () => {
+  const historyArgs = [];
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    isCanonicalDeck: () => false,
+    saveHistoryState(...args) {
+      historyArgs.push(args);
+    }
+  });
+
+  assert.equal(
+    finalizeSlideMutation('', null, { kind: 'slidenext.deck', slides: [] }),
+    ''
+  );
+  assert.deepEqual(historyArgs, [[false, null]]);
+});
+
 test('createStudioSlideMutationPersistenceFinalizer propagates rejected history', () => {
   const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
     saveHistoryState: () => {

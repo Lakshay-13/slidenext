@@ -21,7 +21,7 @@ test('createStudioEditorSlideMutationPersistenceFinalizer delegates shared mutat
     triggerAutoVersion
   });
   const transaction = { kind: 'transaction' };
-  const canonicalDeck = { kind: 'deck' };
+  const canonicalDeck = { kind: 'deck', slides: [] };
 
   assert.equal(finalize('Auto: Slide', transaction, canonicalDeck), 'delegated');
   assert.deepEqual(calls, [{
@@ -48,9 +48,10 @@ test('createStudioEditorSlideMutationPersistenceFinalizer preserves the local fa
     }
   });
 
-  assert.equal(finalize('Auto: Slide', { kind: 'transaction' }, { kind: 'deck' }), 'Auto: Slide');
+  const canonicalDeck = { kind: 'deck', slides: [] };
+  assert.equal(finalize('Auto: Slide', { kind: 'transaction' }, canonicalDeck), 'Auto: Slide');
   assert.deepEqual(calls, [
-    ['history', false, { kind: 'transaction' }, { kind: 'deck' }],
+    ['history', false, { kind: 'transaction' }, canonicalDeck],
     ['save'],
     ['version', 'Auto: Slide']
   ]);
@@ -78,6 +79,22 @@ test('createStudioEditorSlideMutationPersistenceFinalizer converts thrown fallba
   });
 
   assert.equal(finalize('Auto: Rejected', { kind: 'transaction' }), false);
+});
+
+test('createStudioEditorSlideMutationPersistenceFinalizer drops invalid fallback sidecars', () => {
+  const calls = [];
+  const finalize = slideMutation.createStudioEditorSlideMutationPersistenceFinalizer({
+    isCanonicalDeck: () => false,
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  assert.equal(
+    finalize('Auto: Slide', { kind: 'transaction' }, { kind: 'deck', slides: [] }),
+    'Auto: Slide'
+  );
+  assert.deepEqual(calls, [[false, { kind: 'transaction' }]]);
 });
 
 test('createStudioEditorSlideMutationRestoreStateCapturer preserves active slide and selection fallback', () => {

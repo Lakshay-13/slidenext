@@ -260,11 +260,17 @@
     const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
       ? options.triggerAutoVersion
       : () => {};
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     return function finalizeStudioSlideMutation(versionLabel, transaction = null, canonicalDeck = null) {
-      if (canonicalDeck) {
+      const validCanonicalDeck = isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
+        ? canonicalDeck
+        : null;
+      if (validCanonicalDeck) {
         if (isStudioHistoryCaptureFailure(
-          captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
+          captureStudioHistoryState(saveHistoryState, false, transaction, validCanonicalDeck)
         )) return false;
       } else {
         if (isStudioHistoryCaptureFailure(

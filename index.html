@@ -8106,7 +8106,10 @@
           : null,
         saveHistoryState: options.saveHistoryState,
         triggerAutoSave: options.triggerAutoSave,
-        triggerAutoVersion: options.triggerAutoVersion
+        triggerAutoVersion: options.triggerAutoVersion,
+        isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+          ? getEditorCanonicalDeckValidator()
+          : null
       });
     }
 
