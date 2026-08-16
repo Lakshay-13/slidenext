@@ -4,8 +4,43 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const selectionRuntime = require('../shared/studio-editor-clipboard-selection-runtime.js');
+const selectionRuntimeAccessors = require('../shared/studio-editor-clipboard-selection-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('clipboard selection runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'clipboard-selection-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorClipboardSelectionShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const selectionRuntimeApi = { name: 'selection-runtime' };
+  const callback = () => {};
+
+  const result = selectionRuntimeAccessors.createStudioEditorClipboardSelectionRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    selectionRuntimeApi,
+    runtimeOptions: {
+      getSelectedElements: callback
+    }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.selectionRuntimeApi, selectionRuntimeApi);
+  assert.equal(receivedOptions.getSelectedElements, callback);
+});
+
+test('clipboard selection runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    selectionRuntimeAccessors.createStudioEditorClipboardSelectionRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('clipboard selection runtime composes lock and payload dependencies', () => {
   const calls = [];
@@ -50,6 +85,14 @@ test('index wires clipboard selection through the runtime module', () => {
     /<script src="\/shared\/studio-editor-clipboard-selection-shell-runtime\.js"><\/script>/
   );
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-clipboard-selection-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorClipboardSelectionRuntimeAccessorsApi\s*\.\s*createStudioEditorClipboardSelectionRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorClipboardSelectionShellRuntime\.createStudioEditorClipboardSelectionShellRuntime\(/
   );
