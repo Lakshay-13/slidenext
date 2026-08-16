@@ -47,3 +47,25 @@ test('pruneStudioEditorChromeNodes fails closed without a pruner', () => {
     null
   );
 });
+
+test('createStudioEditorChromeNodePruner owns the chrome option composition', () => {
+  const calls = [];
+  const activeSlide = { id: 'active-slide' };
+  const documentRef = { id: 'document' };
+  const pruner = chromeNodePrunerAdapter.createStudioEditorChromeNodePruner({
+    chromeNodePruner(doc, options) {
+      calls.push([doc, options]);
+      return undefined;
+    },
+    chromeNodeIds: ['selection-overlay', 'guides-layer']
+  });
+
+  assert.equal(pruner(documentRef, activeSlide), true);
+  assert.deepEqual(calls, [[
+    documentRef,
+    {
+      activeSlide,
+      chromeNodeIds: ['selection-overlay', 'guides-layer']
+    }
+  ]]);
+});

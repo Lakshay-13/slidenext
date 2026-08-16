@@ -6285,6 +6285,13 @@
     const EDITOR_CHROME_NODE_IDS = editorConfiguration && Array.isArray(editorConfiguration.EDITOR_CHROME_NODE_IDS)
       ? editorConfiguration.EDITOR_CHROME_NODE_IDS
       : ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud'];
+    const studioEditorChromeNodePrunerRuntime = studioEditorChromeNodePrunerAdapter
+      && typeof studioEditorChromeNodePrunerAdapter.createStudioEditorChromeNodePruner === 'function'
+      ? studioEditorChromeNodePrunerAdapter.createStudioEditorChromeNodePruner({
+          chromeNodePruner: studioEditorChromeNodePruner,
+          chromeNodeIds: EDITOR_CHROME_NODE_IDS
+        })
+      : null;
     const EDITOR_SELECTABLE_SELECTOR = editorConfiguration
       && typeof editorConfiguration.EDITOR_SELECTABLE_SELECTOR === 'string'
       ? editorConfiguration.EDITOR_SELECTABLE_SELECTOR
@@ -8708,6 +8715,9 @@
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
+      if (typeof studioEditorChromeNodePrunerRuntime === 'function') {
+        return studioEditorChromeNodePrunerRuntime(doc, activeSlide) !== null;
+      }
       const chromeNodePruner = typeof studioEditorChromeNodePruner === 'function'
         ? studioEditorChromeNodePruner
         : null;

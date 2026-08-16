@@ -23,7 +23,28 @@
     return pruneChromeNodes(doc, options.chromeOptions || {});
   }
 
+  function createStudioEditorChromeNodePruner(options = {}) {
+    const chromeNodeIds = Array.isArray(options.chromeNodeIds)
+      ? [...options.chromeNodeIds]
+      : [];
+    const chromeNodePruner = typeof options.chromeNodePruner === 'function'
+      ? options.chromeNodePruner
+      : null;
+
+    return (doc, activeSlide) => {
+      const result = pruneStudioEditorChromeNodes(doc, {
+        chromeNodePruner,
+        chromeOptions: {
+          activeSlide,
+          chromeNodeIds
+        }
+      });
+      return result === null ? null : true;
+    };
+  }
+
   return {
-    pruneStudioEditorChromeNodes
+    pruneStudioEditorChromeNodes,
+    createStudioEditorChromeNodePruner
   };
 });
