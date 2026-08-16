@@ -272,9 +272,7 @@
         )) return false;
       }
       if (!invokeStudioEditorAutoSave(triggerAutoSave)) return false;
-      if (versionLabel) {
-        triggerAutoVersion(versionLabel);
-      }
+      invokeStudioEditorAutoVersion(triggerAutoVersion, versionLabel);
       return versionLabel;
     };
   }

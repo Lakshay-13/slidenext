@@ -750,6 +750,24 @@ test('createStudioSlideMutationPersistenceFinalizer converts thrown autosave to 
   assert.deepEqual(calls, ['history']);
 });
 
+test('createStudioSlideMutationPersistenceFinalizer preserves the result when version notification throws', () => {
+  const calls = [];
+  const finalizeSlideMutation = mutation.createStudioSlideMutationPersistenceFinalizer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      throw new Error('version notification unavailable');
+    }
+  });
+
+  assert.equal(finalizeSlideMutation('Auto: Reordered Slides', { id: 'tx' }), 'Auto: Reordered Slides');
+  assert.deepEqual(calls, ['history', 'save']);
+});
+
 test('createStudioSlideMutationRestoreStateCapturer preserves view state after saving history', () => {
   const iframeDoc = { id: 'editor-doc' };
   const calls = [];
