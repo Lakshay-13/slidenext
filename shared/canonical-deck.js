@@ -541,10 +541,11 @@
   }
 
   function mergeCanonicalDeckRebuildBaseline(deckLike, baselineLike) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
-    if (!isCanonicalDeck(deck)) {
+    if (!deckWasCanonical && !isCanonicalDeck(deck)) {
       return null;
     }
 
@@ -991,11 +992,12 @@
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
     }
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const masterSlides = Array.isArray(deck.masterSlides) ? deck.masterSlides : [];
-    if (!isCanonicalDeck(deck)
+    if ((!deckWasCanonical && !isCanonicalDeck(deck))
       || !masterLike
       || typeof masterLike !== 'object'
       || !Number.isInteger(index)
@@ -1013,12 +1015,13 @@
   }
 
   function removeCanonicalMasterSlide(deckLike, masterSlideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedMasterSlideId = normalizeString(masterSlideId).trim();
     const masterSlides = Array.isArray(deck.masterSlides) ? deck.masterSlides : [];
-    if (!isCanonicalDeck(deck) || !normalizedMasterSlideId) {
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedMasterSlideId) {
       return null;
     }
 
