@@ -25,9 +25,10 @@
       return null;
     }
 
-    return persistenceRuntimeApi.createStudioEditorPersistenceRuntime(
-      options.runtimeOptions || {}
-    );
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return persistenceRuntimeApi.createStudioEditorPersistenceRuntime(runtimeOptions || {});
   }
 
   return {
