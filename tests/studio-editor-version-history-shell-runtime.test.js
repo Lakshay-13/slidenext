@@ -56,8 +56,19 @@ test('index routes version history construction through the shell runtime', () =
     fileContent,
     /<script src="\/shared\/studio-editor-version-history-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-version-history-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorVersionHistoryShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorVersionHistoryShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorVersionHistoryRuntimeAccessorsApi\s*\.\s*createStudioEditorVersionHistoryRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorVersionHistoryShellRuntimeApi\s*\.\s*createStudioEditorVersionHistoryShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorVersionHistoryController = studioEditorVersionHistoryShellRuntime/

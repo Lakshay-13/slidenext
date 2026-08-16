@@ -1866,6 +1866,7 @@
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/studio-editor-version-history-controller.js"></script>
   <script src="/shared/studio-editor-version-history-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-version-history-runtime-accessors.js"></script>
   <script src="/shared/version-backup-utils.js"></script>
   <script>
     // Global Editor State
@@ -7010,34 +7011,45 @@
       typeof SlideNextStudioEditorVersionHistoryShellRuntime !== 'undefined'
       ? SlideNextStudioEditorVersionHistoryShellRuntime
       : null;
-    const studioEditorVersionHistoryShellRuntime = studioEditorVersionHistoryShellRuntimeApi
-      && typeof studioEditorVersionHistoryShellRuntimeApi
-        .createStudioEditorVersionHistoryShellRuntime === 'function'
-      ? studioEditorVersionHistoryShellRuntimeApi
-        .createStudioEditorVersionHistoryShellRuntime({
-          versionHistoryControllerApi: typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
-            ? SlideNextStudioEditorVersionHistoryController
-            : null,
-          versionHistoryApi: typeof SlideNextStudioVersionHistory !== 'undefined'
-            ? SlideNextStudioVersionHistory
-            : null,
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          getSessionToken: getStudioEditorSessionToken,
-          createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
-          loadVersionHistory: typeof SlideNextStudioVersionHistory !== 'undefined'
-            && typeof SlideNextStudioVersionHistory.loadStudioVersionHistory === 'function'
-            ? SlideNextStudioVersionHistory.loadStudioVersionHistory
-            : null,
-          beforeLoad: (requestedPresentationUrl) => {
-            if (requestedPresentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
-              renderVersionHistoryLoadingState();
+    const studioEditorVersionHistoryRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorVersionHistoryRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorVersionHistoryRuntimeAccessors
+      : null;
+    const studioEditorVersionHistoryRuntimeAccessors =
+      studioEditorVersionHistoryRuntimeAccessorsApi
+      && typeof studioEditorVersionHistoryRuntimeAccessorsApi
+        .createStudioEditorVersionHistoryRuntimeAccessors === 'function'
+      ? studioEditorVersionHistoryRuntimeAccessorsApi
+        .createStudioEditorVersionHistoryRuntimeAccessors({
+          runtimeApi: studioEditorVersionHistoryShellRuntimeApi,
+          runtimeOptions: {
+            versionHistoryControllerApi: typeof SlideNextStudioEditorVersionHistoryController !== 'undefined'
+              ? SlideNextStudioEditorVersionHistoryController
+              : null,
+            versionHistoryApi: typeof SlideNextStudioVersionHistory !== 'undefined'
+              ? SlideNextStudioVersionHistory
+              : null,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
+            getSessionToken: getStudioEditorSessionToken,
+            createLoadOptions: createCurrentStudioVersionHistoryLoadOptions,
+            loadVersionHistory: typeof SlideNextStudioVersionHistory !== 'undefined'
+              && typeof SlideNextStudioVersionHistory.loadStudioVersionHistory === 'function'
+              ? SlideNextStudioVersionHistory.loadStudioVersionHistory
+              : null,
+            beforeLoad: (requestedPresentationUrl) => {
+              if (requestedPresentationUrl && typeof renderVersionHistoryLoadingState === 'function') {
+                renderVersionHistoryLoadingState();
+              }
+            },
+            reportLoadError: (error) => {
+              console.error('Failed to load version history:', error);
+              renderVersionHistoryLoadError();
             }
-          },
-          reportLoadError: (error) => {
-            console.error('Failed to load version history:', error);
-            renderVersionHistoryLoadError();
           }
         })
+      : null;
+    const studioEditorVersionHistoryShellRuntime = studioEditorVersionHistoryRuntimeAccessors
+      ? studioEditorVersionHistoryRuntimeAccessors.runtime
       : null;
     const studioEditorVersionHistoryController = studioEditorVersionHistoryShellRuntime
       && studioEditorVersionHistoryShellRuntime.isAvailable === true
