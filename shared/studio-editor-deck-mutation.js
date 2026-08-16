@@ -44,6 +44,15 @@
     }
   }
 
+  function invokeStudioEditorAutoVersion(triggerAutoVersion, versionLabel) {
+    if (typeof triggerAutoVersion !== 'function' || !versionLabel) return;
+    try {
+      triggerAutoVersion(versionLabel);
+    } catch (err) {
+      // Version notification is secondary to the committed mutation.
+    }
+  }
+
   function invokeStudioEditorThumbnailRefresh(generateThumbnails) {
     if (typeof generateThumbnails !== 'function') return;
     try {
@@ -331,9 +340,7 @@
     if (typeof options.updateLayerOrderActionState === 'function') {
       invokeStudioEditorUiRefresh(options.updateLayerOrderActionState);
     }
-    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
-      options.triggerAutoVersion(versionLabel);
-    }
+    invokeStudioEditorAutoVersion(options.triggerAutoVersion, versionLabel);
     return versionLabel;
   }
 

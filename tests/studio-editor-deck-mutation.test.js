@@ -467,6 +467,25 @@ test('finalizeStudioEditorLayerOrderMutation preserves versioning when action re
   assert.deepEqual(calls, ['save', ['version', 'Auto: Layer Order']]);
 });
 
+test('finalizeStudioEditorLayerOrderMutation preserves the result when version notification throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Layer Order', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState() {},
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion: () => {
+      throw new Error('version notification unavailable');
+    }
+  });
+
+  assert.equal(result, 'Auto: Layer Order');
+  assert.deepEqual(calls, ['save']);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
