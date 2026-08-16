@@ -91,6 +91,34 @@
     });
   }
 
+  function bindStudioEditorMasterSlideControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const saveActiveSlideAsMaster = typeof options.saveActiveSlideAsMaster === 'function'
+      ? options.saveActiveSlideAsMaster
+      : null;
+    const applySelectedMasterSlide = typeof options.applySelectedMasterSlide === 'function'
+      ? options.applySelectedMasterSlide
+      : null;
+    const bindings = {};
+    [
+      ['saveActiveSlideMasterBtn', saveActiveSlideAsMaster],
+      ['applyMasterSlideBtn', applySelectedMasterSlide]
+    ].forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function createStudioMasterSlideStateSync(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -119,6 +147,7 @@
   return {
     renderStudioMasterSlideLibrary,
     syncStudioMasterSlideState,
+    bindStudioEditorMasterSlideControls,
     createStudioMasterSlideStateSync
   };
 });

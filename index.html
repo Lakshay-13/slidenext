@@ -767,14 +767,14 @@
           <div class="mt-3 pt-3 border-t border-white/5 flex flex-col gap-2">
             <label for="masterSlideNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Master Layout</label>
             <input id="masterSlideNameInput" type="text" value="Master Layout" placeholder="Name this layout" disabled class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
-            <button id="saveActiveSlideMasterBtn" onclick="saveActiveSlideAsMaster()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="saveActiveSlideMasterBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0]">layers</span>
               Save Master Layout
             </button>
             <select id="masterSlideSelect" disabled class="w-full p-2 bg-zinc-900 border border-white/5 rounded-lg text-xs font-sans text-zinc-300 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="">No master layout</option>
             </select>
-            <button id="applyMasterSlideBtn" onclick="applySelectedMasterSlide()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="applyMasterSlideBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0]">style</span>
               Apply Master Layout
             </button>
@@ -4485,6 +4485,17 @@
     const studioEditorMasterSlideController = studioEditorMasterSlideRuntime
       ? studioEditorMasterSlideRuntime.masterSlideController
       : null;
+    const studioEditorMasterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
+      ? SlideNextStudioEditorMasterSlideView
+      : null;
+    if (studioEditorMasterSlideView
+      && typeof studioEditorMasterSlideView.bindStudioEditorMasterSlideControls === 'function') {
+      studioEditorMasterSlideView.bindStudioEditorMasterSlideControls({
+        documentRef: document,
+        saveActiveSlideAsMaster,
+        applySelectedMasterSlide
+      });
+    }
     const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
       && SlideNextStudioEditorAssetShellRuntime
       && typeof SlideNextStudioEditorAssetShellRuntime.createStudioEditorAssetShellRuntime === 'function'

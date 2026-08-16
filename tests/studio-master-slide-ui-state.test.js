@@ -123,6 +123,45 @@ test('shared master-slide view wires apply and remove actions to injected callba
   assert.deepEqual(calls, [['apply', 'brand'], ['remove', 'brand']]);
 });
 
+test('shared master-slide view binds save and apply controls', () => {
+  const controls = {
+    saveActiveSlideMasterBtn: { listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } },
+    applyMasterSlideBtn: { listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    masterSlideView.bindStudioEditorMasterSlideControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      saveActiveSlideAsMaster() {
+        calls.push('save-master');
+      },
+      applySelectedMasterSlide() {
+        calls.push('apply-master');
+      }
+    }),
+    { saveActiveSlideMasterBtn: true, applyMasterSlideBtn: true }
+  );
+  controls.saveActiveSlideMasterBtn.listeners.click();
+  controls.applyMasterSlideBtn.listeners.click();
+  assert.deepEqual(calls, ['save-master', 'apply-master']);
+});
+
+test('index keeps master-layout controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="saveActiveSlideMasterBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="applyMasterSlideBtn"[^>]*onclick=/);
+});
+
 test('shared master-slide state sync updates controls before rendering the library', () => {
   const select = {
     disabled: false,
