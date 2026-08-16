@@ -149,6 +149,44 @@ test('toggleStudioVersionsDropdown reports whether the menu opened', () => {
   assert.equal(dropdown.classList.contains('hidden'), true);
 });
 
+test('version view binds the version toolbar controls', () => {
+  const controls = {
+    studioVersionBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    },
+    studioSaveBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    versionView.bindStudioEditorVersionToolbarControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      toggleVersionDropdown() {
+        calls.push('toggle-versions');
+      },
+      openSaveVersionModal() {
+        calls.push('open-save-version');
+      }
+    }),
+    { studioVersionBtn: true, studioSaveBtn: true }
+  );
+  controls.studioVersionBtn.listeners.click();
+  controls.studioSaveBtn.listeners.click();
+  assert.deepEqual(calls, ['toggle-versions', 'open-save-version']);
+});
+
 test('version rename button view helpers render reset and busy states', () => {
   const button = { disabled: true, textContent: 'Renaming...' };
   assert.equal(versionView.resetStudioRenameVersionButton(button), true);

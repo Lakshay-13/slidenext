@@ -2959,3 +2959,10 @@ test('createCurrentStudioSessionStateReaders exposes live presentation and sessi
   assert.equal(options.getCurrentPresentationUrl(), '/presentations/ai-tools-presentation/index.html');
   assert.equal(options.getCurrentSessionToken(), 5);
 });
+
+test('index keeps version toolbar controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="studioVersionBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="studioSaveBtn"[^>]*onclick=/);
+});

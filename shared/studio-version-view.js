@@ -34,6 +34,34 @@
     return { didToggle: true, shouldOpen };
   }
 
+  function bindStudioEditorVersionToolbarControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const toggleVersionDropdown = typeof options.toggleVersionDropdown === 'function'
+      ? options.toggleVersionDropdown
+      : null;
+    const openSaveVersionModal = typeof options.openSaveVersionModal === 'function'
+      ? options.openSaveVersionModal
+      : null;
+    const bindings = {};
+    [
+      ['studioVersionBtn', toggleVersionDropdown],
+      ['studioSaveBtn', openSaveVersionModal]
+    ].forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function resolveModalVisibility(options = {}) {
     return options.modalVisibility && typeof options.modalVisibility === 'object'
       ? options.modalVisibility
@@ -269,6 +297,7 @@
   return {
     hideStudioVersionsDropdown,
     toggleStudioVersionsDropdown,
+    bindStudioEditorVersionToolbarControls,
     showStudioVersionModal,
     hideStudioVersionModal,
     hideStudioVersionModalImmediately,

@@ -677,7 +677,7 @@
 
         <!-- Versions Dropdown trigger -->
         <div class="relative">
-          <button id="studioVersionBtn" onclick="toggleVersionDropdown()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
+          <button id="studioVersionBtn" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all">
             <span class="material-symbols-outlined text-[16px]">history</span>
             <span>Versions</span>
             <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
@@ -721,7 +721,7 @@
         </button>
 
         <!-- Save Version Checkpoint -->
-        <button id="studioSaveBtn" onclick="openSaveVersionModal()" class="px-4 py-2 bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] text-black font-bold rounded-lg flex items-center gap-1.5 text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.2)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none">
+        <button id="studioSaveBtn" class="px-4 py-2 bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] text-black font-bold rounded-lg flex items-center gap-1.5 text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.2)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none">
           <span class="material-symbols-outlined text-[16px] font-bold">bookmarks</span>
           <span>Save Version</span>
         </button>
@@ -4494,6 +4494,17 @@
         documentRef: document,
         saveActiveSlideAsMaster,
         applySelectedMasterSlide
+      });
+    }
+    const studioEditorVersionView = typeof SlideNextStudioVersionView !== 'undefined'
+      ? SlideNextStudioVersionView
+      : null;
+    if (studioEditorVersionView
+      && typeof studioEditorVersionView.bindStudioEditorVersionToolbarControls === 'function') {
+      studioEditorVersionView.bindStudioEditorVersionToolbarControls({
+        documentRef: document,
+        toggleVersionDropdown,
+        openSaveVersionModal
       });
     }
     const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
