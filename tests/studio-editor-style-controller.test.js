@@ -76,6 +76,38 @@ test('style controller binds inspector controls with their existing event cadenc
   ]);
 });
 
+test('style controller reuses inspector bindings without duplicate listeners', () => {
+  const listeners = [];
+  const control = {
+    value: 'updated',
+    addEventListener(type, handler) {
+      listeners.push({ type, handler });
+    }
+  };
+  const calls = [];
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, prop, value) {
+        calls.push([prop, value]);
+        return { canApply: false };
+      }
+    },
+    getIframeDoc: () => ({})
+  });
+  const documentRef = {
+    getElementById(id) {
+      return id === 'elTextContent' ? control : null;
+    }
+  };
+
+  assert.equal(controller.bindStudioEditorStyleControls({ documentRef }).elTextContent, true);
+  assert.equal(controller.bindStudioEditorStyleControls({ documentRef }).elTextContent, true);
+  assert.equal(listeners.length, 1);
+
+  listeners[0].handler({ currentTarget: control });
+  assert.deepEqual(calls, [['text', 'updated']]);
+});
+
 test('style controller accepts an explicit target selection for inline text commits', () => {
   const selectedElement = { id: 'selected' };
   const inlineTarget = { id: 'inline-target' };

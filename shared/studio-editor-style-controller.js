@@ -108,6 +108,7 @@
     const finalizeDeckMutation = typeof options.finalizeDeckMutation === 'function'
       ? options.finalizeDeckMutation
       : null;
+    const styleControlBindings = new WeakMap();
 
     function finalizeStyleMutation(versionLabel, options = {}) {
       if (!finalizeDeckMutation) return false;
@@ -421,6 +422,13 @@
       }
 
       const bindings = {};
+      const bindControl = (control, eventName, handler) => {
+        if (!styleControlBindings.has(control)) {
+          control.addEventListener(eventName, handler);
+          styleControlBindings.set(control, { eventName, handler });
+        }
+        return true;
+      };
       const valueControls = [
         ['elTextContent', 'input', 'text'],
         ['elChartTitle', 'change', 'chartTitle'],
@@ -449,11 +457,10 @@
           bindings[id] = false;
           return;
         }
-        control.addEventListener(eventName, (event) => {
+        bindings[id] = bindControl(control, eventName, (event) => {
           const source = event && (event.currentTarget || event.target);
           apply(prop, source && source.value);
         });
-        bindings[id] = true;
       });
 
       const alignmentControls = [
@@ -468,8 +475,7 @@
           bindings[id] = false;
           return;
         }
-        control.addEventListener('click', () => apply('align', value));
-        bindings[id] = true;
+        bindings[id] = bindControl(control, 'click', () => apply('align', value));
       });
 
       return bindings;
