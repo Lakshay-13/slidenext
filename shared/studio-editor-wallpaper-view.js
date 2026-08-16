@@ -300,6 +300,32 @@
     return bindings;
   }
 
+  function bindStudioCustomGradientTypeControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const setCustomGradientType = typeof options.setCustomGradientType === 'function'
+      ? options.setCustomGradientType
+      : null;
+    const bindings = {};
+    const controls = [
+      ['cgLinearBtn', 'linear'],
+      ['cgRadialBtn', 'radial']
+    ];
+    controls.forEach(([id, gradientType]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (setCustomGradientType) setCustomGradientType(gradientType);
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function resetStudioWallpaperUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -487,6 +513,7 @@
     applyStudioWallpaperToSlides,
     setStudioWallpaperTab,
     bindStudioWallpaperTabControls,
+    bindStudioCustomGradientTypeControls,
     resetStudioWallpaperUiState,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,

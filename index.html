@@ -899,8 +899,8 @@
               <div class="flex flex-col gap-2">
                 <label class="text-[10px] font-mono text-zinc-500 uppercase">Gradient Type</label>
                 <div class="grid grid-cols-2 gap-2 bg-zinc-950 p-1 rounded border border-white/5">
-                  <button id="cgLinearBtn" onclick="setCustomGradientType('linear')" class="py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]">Linear</button>
-                  <button id="cgRadialBtn" onclick="setCustomGradientType('radial')" class="py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400">Radial</button>
+                  <button id="cgLinearBtn" class="py-1 text-center text-xs font-mono rounded bg-white/5 text-[#7028d0] font-semibold border border-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#7028d0]">Linear</button>
+                  <button id="cgRadialBtn" class="py-1 text-center text-xs font-mono rounded text-zinc-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-zinc-400">Radial</button>
                 </div>
               </div>
 
@@ -11413,6 +11413,20 @@
       studioEditorWallpaperViewApi.bindStudioWallpaperTabControls({
         documentRef: document,
         setWallpaperTab
+      });
+    }
+    if (studioEditorWallpaperViewApi
+      && typeof studioEditorWallpaperViewApi.bindStudioCustomGradientTypeControls === 'function') {
+      const gradientGlobalApi = typeof studioEditorWallpaperGradientGlobalApi !== 'undefined'
+        ? studioEditorWallpaperGradientGlobalApi
+        : null;
+      const setCustomGradientType = gradientGlobalApi
+        && typeof gradientGlobalApi.setCustomGradientType === 'function'
+        ? gradientGlobalApi.setCustomGradientType
+        : null;
+      studioEditorWallpaperViewApi.bindStudioCustomGradientTypeControls({
+        documentRef: document,
+        setCustomGradientType
       });
     }
 

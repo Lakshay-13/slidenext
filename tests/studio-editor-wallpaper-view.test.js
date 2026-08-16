@@ -408,3 +408,39 @@ test('index keeps wallpaper tab navigation free of inline handlers', () => {
   assert.doesNotMatch(fileContent, /id="wpTabPresets"[^>]*onclick=/);
   assert.doesNotMatch(fileContent, /id="wpTabCustom"[^>]*onclick=/);
 });
+
+test('bindStudioCustomGradientTypeControls wires linear and radial actions', () => {
+  const controls = {
+    cgLinearBtn: { listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } },
+    cgRadialBtn: { listeners: {}, addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    } }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioCustomGradientTypeControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      setCustomGradientType(type) {
+        calls.push(type);
+      }
+    }),
+    { cgLinearBtn: true, cgRadialBtn: true }
+  );
+  controls.cgLinearBtn.listeners.click();
+  controls.cgRadialBtn.listeners.click();
+  assert.deepEqual(calls, ['linear', 'radial']);
+});
+
+test('index keeps custom gradient type controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="cgLinearBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="cgRadialBtn"[^>]*onclick=/);
+});
