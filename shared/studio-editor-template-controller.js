@@ -121,6 +121,16 @@
     const onTemplatesChanged = typeof options.onTemplatesChanged === 'function'
       ? options.onTemplatesChanged
       : null;
+
+    function publishTemplatesChanged(nextCanonicalDeck) {
+      if (!onTemplatesChanged) return;
+      try {
+        onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
+      } catch (error) {
+        // A listener failure must not change an already committed template mutation.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -203,7 +213,7 @@
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }
-      if (onTemplatesChanged) onTemplatesChanged(nextCanonicalDeck.templates, nextCanonicalDeck);
+      publishTemplatesChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
     }
 

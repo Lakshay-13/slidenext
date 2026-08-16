@@ -42,6 +42,26 @@ test('template controller saves the active slide and finalizes persistence hooks
   assert.deepEqual(calls[3][1], ['hero-template']);
 });
 
+test('template controller preserves a committed save when publication throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState() {},
+    onTemplatesChanged() {
+      throw new Error('template listener failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    const result = controller.saveActiveSlide({ id: 'hero-template', name: 'Hero Template' });
+    assert.equal(result.templates[0].id, 'hero-template');
+  });
+});
+
 test('template mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
