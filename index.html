@@ -1604,6 +1604,7 @@
   <script src="/shared/studio-editor-persistence-controller.js"></script>
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persisted-html-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
@@ -6413,22 +6414,33 @@
       typeof SlideNextStudioEditorPersistedHtmlShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistedHtmlShellRuntime
       : null;
-    const studioEditorPersistedHtmlShellRuntime = studioEditorPersistedHtmlShellRuntimeApi
-      && typeof studioEditorPersistedHtmlShellRuntimeApi
-        .createStudioEditorPersistedHtmlShellRuntime === 'function'
-      ? studioEditorPersistedHtmlShellRuntimeApi
-        .createStudioEditorPersistedHtmlShellRuntime({
-          actionApi: typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
-            ? SlideNextStudioEditorPersistedHtmlAction
-            : null,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null
+    const studioEditorPersistedHtmlRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistedHtmlRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistedHtmlRuntimeAccessors
+      : null;
+    const studioEditorPersistedHtmlRuntimeAccessors =
+      studioEditorPersistedHtmlRuntimeAccessorsApi
+      && typeof studioEditorPersistedHtmlRuntimeAccessorsApi
+        .createStudioEditorPersistedHtmlRuntimeAccessors === 'function'
+      ? studioEditorPersistedHtmlRuntimeAccessorsApi
+        .createStudioEditorPersistedHtmlRuntimeAccessors({
+          runtimeApi: studioEditorPersistedHtmlShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
+              ? SlideNextStudioEditorPersistedHtmlAction
+              : null,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null
+          }
         })
+      : null;
+    const studioEditorPersistedHtmlShellRuntime = studioEditorPersistedHtmlRuntimeAccessors
+      ? studioEditorPersistedHtmlRuntimeAccessors.runtime
       : null;
     const studioEditorPersistedHtmlAction = studioEditorPersistedHtmlShellRuntime
       && studioEditorPersistedHtmlShellRuntime.isAvailable === true

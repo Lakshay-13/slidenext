@@ -86,7 +86,18 @@ test('index loads and installs the shared persisted html action', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-html-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorPersistedHtmlShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-html-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorPersistedHtmlRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedHtmlRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistedHtmlShellRuntimeApi\s*\.\s*createStudioEditorPersistedHtmlShellRuntime\(/
+  );
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorPersistedHtmlGlobalApi\);/);
   assert.doesNotMatch(fileContent, /function resolveEditorReusablePersistedHtml\(persistedDeckState, options = \{\}\) \{/);
 });
