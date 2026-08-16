@@ -4756,6 +4756,45 @@ test('buildPersistableDeckHtml reports canonical deck and playback state when th
   assert.equal(reportedPlaybackState, playbackState);
 });
 
+test('persistable deck html action preserves output when resolved-state callbacks throw', () => {
+  const canonicalDeck = { kind: 'slidenext.deck', schemaVersion: 1, slides: [] };
+  const playbackState = { activeSlideIds: ['slide-1'] };
+  const action = persistableDeckHtmlAction.createStudioEditorPersistableDeckHtmlAction({
+    persistenceApi: {
+      buildStudioPersistableDeckHtmlWithoutDocument(options) {
+        options.onCanonicalDeckResolved(canonicalDeck);
+        options.onPlaybackStateResolved(playbackState);
+        return '<html>no-document</html>';
+      },
+      buildStudioPersistableDeckHtmlFromDocument(doc, options) {
+        assert.equal(doc.id, 'iframe-doc');
+        options.onCanonicalDeckResolved(canonicalDeck);
+        options.onPlaybackStateResolved(playbackState);
+        return '<html>live-document</html>';
+      }
+    }
+  });
+  const throwingCallbacks = {
+    onCanonicalDeckResolved() {
+      throw new Error('canonical state consumer unavailable');
+    },
+    onPlaybackStateResolved() {
+      throw new Error('playback state consumer unavailable');
+    }
+  };
+
+  assert.doesNotThrow(() => {
+    assert.equal(
+      action(null, throwingCallbacks),
+      '<html>no-document</html>'
+    );
+    assert.equal(
+      action({ id: 'iframe-doc' }, throwingCallbacks),
+      '<html>live-document</html>'
+    );
+  });
+});
+
 test('buildPersistableDeckHtml delegates document dispatch through the persistence controller when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildPersistableDeckHtmlSource = extractFunctionSource(

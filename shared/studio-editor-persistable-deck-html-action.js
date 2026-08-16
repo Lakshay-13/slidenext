@@ -5,6 +5,21 @@
   }
   root.SlideNextStudioEditorPersistableDeckHtmlAction = factory();
 }(typeof globalThis !== 'undefined' ? globalThis : this, function createApi() {
+  function notifyResolvedDeckState(callback, value) {
+    if (typeof callback !== 'function') return;
+    try {
+      callback(value);
+    } catch (err) {
+      // Session/UI synchronization is secondary; preserve the persistable HTML result.
+    }
+  }
+
+  function wrapResolvedDeckStateCallback(callback) {
+    return typeof callback === 'function'
+      ? (value) => notifyResolvedDeckState(callback, value)
+      : null;
+  }
+
   function createStudioEditorPersistableDeckHtmlAction(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -125,12 +140,12 @@
             : null;
         },
         resolveCanonicalDeck: () => resolveCanonicalDeck(providedCanonicalDeck, doc),
-        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-          ? buildOptions.onCanonicalDeckResolved
-          : null,
-        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-          ? buildOptions.onPlaybackStateResolved
-          : null,
+        onCanonicalDeckResolved: wrapResolvedDeckStateCallback(
+          buildOptions.onCanonicalDeckResolved
+        ),
+        onPlaybackStateResolved: wrapResolvedDeckStateCallback(
+          buildOptions.onPlaybackStateResolved
+        ),
         resolveReusablePersistedHtml: (...args) => {
           const resolveReusablePersistedHtml = resolveDependency(
             getResolveReusablePersistedHtml
@@ -176,12 +191,12 @@
           const capturePlaybackState = resolveDependency(getCapturePlaybackState);
           return capturePlaybackState ? capturePlaybackState(doc, canonicalDeck) : null;
         },
-        onCanonicalDeckResolved: typeof buildOptions.onCanonicalDeckResolved === 'function'
-          ? buildOptions.onCanonicalDeckResolved
-          : null,
-        onPlaybackStateResolved: typeof buildOptions.onPlaybackStateResolved === 'function'
-          ? buildOptions.onPlaybackStateResolved
-          : null,
+        onCanonicalDeckResolved: wrapResolvedDeckStateCallback(
+          buildOptions.onCanonicalDeckResolved
+        ),
+        onPlaybackStateResolved: wrapResolvedDeckStateCallback(
+          buildOptions.onPlaybackStateResolved
+        ),
         buildPersistableDeckSanitizerOptions: (playbackState) => buildSanitizerOptions
           ? buildSanitizerOptions(playbackState, { resolveMetadataPersistenceOptions })
           : {},
@@ -219,12 +234,11 @@
           ? persistedDeckStateWithContent.cleanHtml
           : '';
         const canonicalDeck = resolveCanonicalDeck(providedCanonicalDeck, doc);
-        if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-          buildOptions.onCanonicalDeckResolved(canonicalDeck);
-        }
-        if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-          buildOptions.onPlaybackStateResolved(persistedDeckState.playbackState);
-        }
+        notifyResolvedDeckState(buildOptions.onCanonicalDeckResolved, canonicalDeck);
+        notifyResolvedDeckState(
+          buildOptions.onPlaybackStateResolved,
+          persistedDeckState.playbackState
+        );
         const resolveReusablePersistedHtml = resolveDependency(
           getResolveReusablePersistedHtml
         );
@@ -278,12 +292,8 @@
       const resolvedPlaybackState = capturePlaybackState
         ? capturePlaybackState(doc, canonicalDeck)
         : null;
-      if (typeof buildOptions.onCanonicalDeckResolved === 'function') {
-        buildOptions.onCanonicalDeckResolved(canonicalDeck);
-      }
-      if (typeof buildOptions.onPlaybackStateResolved === 'function') {
-        buildOptions.onPlaybackStateResolved(resolvedPlaybackState);
-      }
+      notifyResolvedDeckState(buildOptions.onCanonicalDeckResolved, canonicalDeck);
+      notifyResolvedDeckState(buildOptions.onPlaybackStateResolved, resolvedPlaybackState);
       const persistableDeckSanitizerOptions = buildSanitizerOptions
         ? buildSanitizerOptions(resolvedPlaybackState, { resolveMetadataPersistenceOptions })
         : {};
