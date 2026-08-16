@@ -1831,6 +1831,7 @@
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
   <script src="/shared/studio-editor-deck-view-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-deck-view-runtime-accessors.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
@@ -3006,147 +3007,157 @@
           }
         })
       : null;
-    const studioEditorDeckViewRuntime = typeof SlideNextStudioEditorDeckViewShellRuntime !== 'undefined'
-      && SlideNextStudioEditorDeckViewShellRuntime
-      && typeof SlideNextStudioEditorDeckViewShellRuntime.createStudioEditorDeckViewShellRuntime === 'function'
-      ? SlideNextStudioEditorDeckViewShellRuntime.createStudioEditorDeckViewShellRuntime({
+    const studioEditorDeckViewRuntimeAccessorsApi = typeof SlideNextStudioEditorDeckViewRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorDeckViewRuntimeAccessors
+      : null;
+    const studioEditorDeckViewRuntimeAccessors = studioEditorDeckViewRuntimeAccessorsApi
+      && typeof studioEditorDeckViewRuntimeAccessorsApi.createStudioEditorDeckViewRuntimeAccessors === 'function'
+      ? studioEditorDeckViewRuntimeAccessorsApi.createStudioEditorDeckViewRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorDeckViewShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorDeckViewShellRuntime
+            : null,
           deckViewRuntimeApi: typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
             ? SlideNextStudioEditorDeckViewRuntime
             : null,
-          exportApi: typeof SlideNextStudioEditorExportController !== 'undefined'
-            ? SlideNextStudioEditorExportController
-            : null,
-          snapshotControllerApi: typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
-            ? SlideNextStudioEditorDeckSnapshotController
-            : null,
-          previewControllerApi: typeof SlideNextStudioEditorPreviewController !== 'undefined'
-            ? SlideNextStudioEditorPreviewController
-            : null,
-          sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
-            ? SlideNextStudioEditorSourceController
-            : null,
-          exportActions: typeof SlideNextStudioEditorExportActions !== 'undefined'
-            ? SlideNextStudioEditorExportActions
-            : null,
-          resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
-          buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(getIframeDoc(), { canonicalDeck }),
-          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
-            ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
-            : typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
+          runtimeOptions: {
+            exportApi: typeof SlideNextStudioEditorExportController !== 'undefined'
+              ? SlideNextStudioEditorExportController
               : null,
-          buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
-            ? (sourceDoc, buildOptions) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions)
-            : null,
-          getPendingTransaction: getStudioPendingEditorTransaction,
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
-            getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-            ? getEditorCanonicalDeckValidator()
-            : null,
-          pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
-            ? SlideNextStudioPdfExport
-            : null,
-          pptxExport: typeof SlideNextStudioPptxExport !== 'undefined'
-            ? SlideNextStudioPptxExport
-            : null,
-          documentRef: document,
-          resolvePdfBaseHref: () => {
-            const deckHtmlApi = typeof SlideNextDeckHtml !== 'undefined'
-              ? SlideNextDeckHtml
-              : null;
-            return deckHtmlApi && typeof deckHtmlApi.buildPresentationBaseHref === 'function'
-              ? deckHtmlApi.buildPresentationBaseHref(getStudioCurrentPresentationUrl())
-              : '';
-          },
-          setStatus: (...args) => {
-            const statusHandler = typeof setStudioAutoSaveStatusWithWarningCount === 'function'
-              ? setStudioAutoSaveStatusWithWarningCount
-              : typeof setStudioAutoSaveStatus === 'function'
-                ? setStudioAutoSaveStatus
+            snapshotControllerApi: typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
+              ? SlideNextStudioEditorDeckSnapshotController
+              : null,
+            previewControllerApi: typeof SlideNextStudioEditorPreviewController !== 'undefined'
+              ? SlideNextStudioEditorPreviewController
+              : null,
+            sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
+              ? SlideNextStudioEditorSourceController
+              : null,
+            exportActions: typeof SlideNextStudioEditorExportActions !== 'undefined'
+              ? SlideNextStudioEditorExportActions
+              : null,
+            resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
+            buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(getIframeDoc(), { canonicalDeck }),
+            buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+              ? (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
+              : typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck
+                : null,
+            buildMutationCanonicalDeck: typeof buildEditorMutationCanonicalDeck === 'function'
+              ? (sourceDoc, buildOptions) => buildEditorMutationCanonicalDeck(sourceDoc || getIframeDoc(), buildOptions)
+              : null,
+            getPendingTransaction: getStudioPendingEditorTransaction,
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+              getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+              ? getEditorCanonicalDeckValidator()
+              : null,
+            pdfExport: typeof SlideNextStudioPdfExport !== 'undefined'
+              ? SlideNextStudioPdfExport
+              : null,
+            pptxExport: typeof SlideNextStudioPptxExport !== 'undefined'
+              ? SlideNextStudioPptxExport
+              : null,
+            documentRef: document,
+            resolvePdfBaseHref: () => {
+              const deckHtmlApi = typeof SlideNextDeckHtml !== 'undefined'
+                ? SlideNextDeckHtml
                 : null;
-            return statusHandler ? statusHandler(...args) : undefined;
-          },
-          resolveSourcePath: getStudioCurrentPresentationUrl,
-          resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx',
-          snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
-            ? SlideNextStudioDeckSnapshot
-            : null,
-          getDocument: () => getIframeDoc(),
-          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
-            ? (sourceDoc, buildOptions) => resolveEditorUiCanonicalDeck(sourceDoc, buildOptions)
-            : typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck
+              return deckHtmlApi && typeof deckHtmlApi.buildPresentationBaseHref === 'function'
+                ? deckHtmlApi.buildPresentationBaseHref(getStudioCurrentPresentationUrl())
+                : '';
+            },
+            setStatus: (...args) => {
+              const statusHandler = typeof setStudioAutoSaveStatusWithWarningCount === 'function'
+                ? setStudioAutoSaveStatusWithWarningCount
+                : typeof setStudioAutoSaveStatus === 'function'
+                  ? setStudioAutoSaveStatus
+                  : null;
+              return statusHandler ? statusHandler(...args) : undefined;
+            },
+            resolveSourcePath: getStudioCurrentPresentationUrl,
+            resolveFilename: () => (getStudioPresentationTitle() || 'slidenext-presentation') + '.pptx',
+            snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
+              ? SlideNextStudioDeckSnapshot
               : null,
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-            ? getEditorCanonicalDeckValidator()
-            : null,
-          createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
-          resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
-          resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
-            nextDoc,
-            canonicalDeck
-          ),
-          resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
-          getActiveSlideId: getEditorSlideId,
-          getSlideById,
-          buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl),
-          getSlides,
-          getActiveSlide,
-          getSlideId: getEditorSlideId,
-          getSlideEditableElements,
-          getNormalizedSlideLayerOrder,
-          buildElementSnapshot: buildEditorElementSnapshot,
-          previewApi: typeof SlideNextStudioPreview !== 'undefined'
-            ? SlideNextStudioPreview
-            : null,
-          resolvePresentationUrl: getStudioCurrentPresentationUrl,
-          resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
-          previewBuildHtml: (canonicalDeck) => buildEditorPreviewHtml(
-            getIframeDoc(),
-            canonicalDeck ? { canonicalDeck } : {}
-          ),
-          previewBuildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
-          previewCreateDeckViewHtmlOptions: (options) => createEditorPreviewDeckViewHtmlOptions(options),
-          resolveBuildStudioPreviewHtml: () => resolveStudioDeckViewMethod('buildStudioPreviewHtml'),
-          resolveBuildDeckPreviewHtml: () => resolveDeckHtmlMethod('buildDeckPreviewHtml'),
-          resolveInjectBaseHrefIntoHtml: () => resolveDeckHtmlMethod('injectBaseHrefIntoHtml'),
-          resolveBuildPresentationBaseHref: () => resolveDeckHtmlMethod('buildPresentationBaseHref'),
-          previewBuildCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(getIframeDoc())
-            : buildEditorCanonicalDeck(getIframeDoc()),
-          previewIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
-          sourceApi: typeof SlideNextStudioEditorSource !== 'undefined'
-            ? SlideNextStudioEditorSource
-            : null,
-          resolveSourceHtml: () => buildEditorSourceHtml(),
-          resolveSourceCss: () => studioEditorSourceCssResolver
-            ? studioEditorSourceCssResolver()
-            : '',
-          applySourceCss: (sourceCss) => studioEditorSourceCssApplier
-            ? studioEditorSourceCssApplier(sourceCss)
-            : { success: false, error: 'Source CSS editor is unavailable' },
-          sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
-            getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          captureHistoryEntry: () => createHistoryEntry(getIframeDoc()),
-          getCurrentDocument: () => getIframeDoc(),
-          resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
-            sourceDoc,
-            canonicalDeck
-          ),
-          resolveHistoryOptions: () => getEditorHistoryOptions(),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          triggerAutoSave: () => triggerAutoSave(),
-          sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
-          restoreHistoryEntry: restoreEditorSourceHistoryEntry,
+            getDocument: () => getIframeDoc(),
+            buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+              ? (sourceDoc, buildOptions) => resolveEditorUiCanonicalDeck(sourceDoc, buildOptions)
+              : typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck
+                : null,
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+              ? getEditorCanonicalDeckValidator()
+              : null,
+            createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
+            resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
+            resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+              nextDoc,
+              canonicalDeck
+            ),
+            resolveLiveActiveSlide: (nextDoc) => resolveEditorLiveActiveSlide(nextDoc),
+            getActiveSlideId: getEditorSlideId,
+            getSlideById,
+            buildSlideLayerSnapshot: (slideEl) => buildEditorLayerSnapshot(slideEl),
+            getSlides,
+            getActiveSlide,
+            getSlideId: getEditorSlideId,
+            getSlideEditableElements,
+            getNormalizedSlideLayerOrder,
+            buildElementSnapshot: buildEditorElementSnapshot,
+            previewApi: typeof SlideNextStudioPreview !== 'undefined'
+              ? SlideNextStudioPreview
+              : null,
+            resolvePresentationUrl: getStudioCurrentPresentationUrl,
+            resolveActiveSlideIndex: () => getStudioActiveSlideIndex(),
+            previewBuildHtml: (canonicalDeck) => buildEditorPreviewHtml(
+              getIframeDoc(),
+              canonicalDeck ? { canonicalDeck } : {}
+            ),
+            previewBuildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
+            previewCreateDeckViewHtmlOptions: (options) => createEditorPreviewDeckViewHtmlOptions(options),
+            resolveBuildStudioPreviewHtml: () => resolveStudioDeckViewMethod('buildStudioPreviewHtml'),
+            resolveBuildDeckPreviewHtml: () => resolveDeckHtmlMethod('buildDeckPreviewHtml'),
+            resolveInjectBaseHrefIntoHtml: () => resolveDeckHtmlMethod('injectBaseHrefIntoHtml'),
+            resolveBuildPresentationBaseHref: () => resolveDeckHtmlMethod('buildPresentationBaseHref'),
+            previewBuildCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(getIframeDoc())
+              : buildEditorCanonicalDeck(getIframeDoc()),
+            previewIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
+            sourceApi: typeof SlideNextStudioEditorSource !== 'undefined'
+              ? SlideNextStudioEditorSource
+              : null,
+            resolveSourceHtml: () => buildEditorSourceHtml(),
+            resolveSourceCss: () => studioEditorSourceCssResolver
+              ? studioEditorSourceCssResolver()
+              : '',
+            applySourceCss: (sourceCss) => studioEditorSourceCssApplier
+              ? studioEditorSourceCssApplier(sourceCss)
+              : { success: false, error: 'Source CSS editor is unavailable' },
+            sourceBuildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+              getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            captureHistoryEntry: () => createHistoryEntry(getIframeDoc()),
+            getCurrentDocument: () => getIframeDoc(),
+            resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
+              sourceDoc,
+              canonicalDeck
+            ),
+            resolveHistoryOptions: () => getEditorHistoryOptions(),
+            saveHistoryState: (...args) => saveHistoryState(...args),
+            triggerAutoSave: () => triggerAutoSave(),
+            sourceIsCanonicalDeck: (value) => getEditorCanonicalDeckValidator()(value),
+            restoreHistoryEntry: restoreEditorSourceHistoryEntry,
+          }
         })
+      : null;
+    const studioEditorDeckViewRuntime = studioEditorDeckViewRuntimeAccessors
+      ? studioEditorDeckViewRuntimeAccessors.runtime
       : null;
 
     const studioEditorExportController = studioEditorDeckViewRuntime

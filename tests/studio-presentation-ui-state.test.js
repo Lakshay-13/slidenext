@@ -61,7 +61,7 @@ test('Present button uses shared preview controller wiring instead of an inline 
 
 test('preview controller wiring supplies the canonical snapshot resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const start = fileContent.indexOf('const studioEditorDeckViewRuntimeAccessorsApi =');
   const end = fileContent.indexOf('const studioEditorExportController =', start);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
@@ -83,14 +83,14 @@ test('preview controller wiring supplies the canonical snapshot resolver', () =>
 
 test('preview canonical deck callback prefers the live UI resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const start = fileContent.indexOf('const studioEditorDeckViewRuntime =');
+  const start = fileContent.indexOf('const studioEditorDeckViewRuntimeAccessorsApi =');
   const end = fileContent.indexOf('const studioEditorExportController =', start);
   assert.notEqual(start, -1);
   assert.notEqual(end, -1);
 
   const controllerSource = fileContent.slice(start, end);
   const callbackStart = controllerSource.indexOf('previewBuildCanonicalDeck:');
-  const callbackEnd = controllerSource.indexOf('\n          previewIsCanonicalDeck', callbackStart);
+  const callbackEnd = controllerSource.indexOf('\n            previewIsCanonicalDeck', callbackStart);
   assert.notEqual(callbackStart, -1);
   assert.notEqual(callbackEnd, -1);
 

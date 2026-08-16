@@ -4,8 +4,41 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const deckViewRuntime = require('../shared/studio-editor-deck-view-runtime.js');
+const deckViewRuntimeAccessors = require('../shared/studio-editor-deck-view-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('deck view runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'deck-view-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorDeckViewShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const deckViewRuntimeApi = { name: 'deck-view-runtime' };
+  const callback = () => {};
+
+  const result = deckViewRuntimeAccessors.createStudioEditorDeckViewRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    deckViewRuntimeApi,
+    runtimeOptions: { buildCanonicalDeck: callback }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.deckViewRuntimeApi, deckViewRuntimeApi);
+  assert.equal(receivedOptions.buildCanonicalDeck, callback);
+});
+
+test('deck view runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    deckViewRuntimeAccessors.createStudioEditorDeckViewRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('deck view runtime composes export, snapshot, preview, and source controllers', () => {
   const calls = [];
@@ -148,6 +181,14 @@ test('index wires deck view composition through the runtime module', () => {
     /<script src="\/shared\/studio-editor-deck-view-shell-runtime\.js"><\/script>/
   );
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-deck-view-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorDeckViewRuntimeAccessorsApi\s*\.\s*createStudioEditorDeckViewRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorDeckViewShellRuntime\.createStudioEditorDeckViewShellRuntime\(/
   );
