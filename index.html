@@ -1583,6 +1583,7 @@
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-save-request-body-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-checker-action.js"></script>
@@ -5964,13 +5965,19 @@
       ? studioEditorCapturedPersistableDeckStateShellRuntime.capturedPersistableDeckStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorCapturedPersistableDeckStateGlobalApi);
-    const studioEditorPersistableDeckStateAction =
-      typeof SlideNextStudioEditorPersistableDeckStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistableDeckStateAction
-      && typeof SlideNextStudioEditorPersistableDeckStateAction
-        .createStudioEditorPersistableDeckStateAction === 'function'
-      ? SlideNextStudioEditorPersistableDeckStateAction
-        .createStudioEditorPersistableDeckStateAction({
+    const studioEditorPersistableDeckStateShellRuntimeApi =
+      typeof SlideNextStudioEditorPersistableDeckStateShellRuntime !== 'undefined'
+      ? SlideNextStudioEditorPersistableDeckStateShellRuntime
+      : null;
+    const studioEditorPersistableDeckStateShellRuntime =
+      studioEditorPersistableDeckStateShellRuntimeApi
+      && typeof studioEditorPersistableDeckStateShellRuntimeApi
+        .createStudioEditorPersistableDeckStateShellRuntime === 'function'
+      ? studioEditorPersistableDeckStateShellRuntimeApi
+        .createStudioEditorPersistableDeckStateShellRuntime({
+          actionApi: typeof SlideNextStudioEditorPersistableDeckStateAction !== 'undefined'
+            ? SlideNextStudioEditorPersistableDeckStateAction
+            : null,
           getDocument: getIframeDoc,
           getPersistenceController: () => studioEditorPersistenceController,
           persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
@@ -5989,15 +5996,13 @@
             })
         })
       : null;
-    const studioEditorPersistableDeckStateGlobalApi =
-      typeof SlideNextStudioEditorPersistableDeckStateAction !== 'undefined'
-      && SlideNextStudioEditorPersistableDeckStateAction
-      && typeof SlideNextStudioEditorPersistableDeckStateAction
-        .createStudioEditorPersistableDeckStateGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistableDeckStateAction
-        .createStudioEditorPersistableDeckStateGlobalApi({
-          captureEditorPersistableDeckState: studioEditorPersistableDeckStateAction
-        })
+    const studioEditorPersistableDeckStateAction = studioEditorPersistableDeckStateShellRuntime
+      && studioEditorPersistableDeckStateShellRuntime.isAvailable === true
+      ? studioEditorPersistableDeckStateShellRuntime.persistableDeckStateAction
+      : null;
+    const studioEditorPersistableDeckStateGlobalApi = studioEditorPersistableDeckStateShellRuntime
+      && studioEditorPersistableDeckStateShellRuntime.isAvailable === true
+      ? studioEditorPersistableDeckStateShellRuntime.persistableDeckStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistableDeckStateGlobalApi);
     const studioEditorSessionRuntimeOptionsApi = typeof SlideNextStudioEditorSessionRuntimeOptions !== 'undefined'
