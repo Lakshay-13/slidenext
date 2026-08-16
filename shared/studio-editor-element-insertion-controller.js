@@ -178,6 +178,15 @@
       }
     }
 
+    function refreshInsertedElementThumbnails() {
+      if (!generateThumbnails) return;
+      try {
+        generateThumbnails();
+      } catch (err) {
+        // Thumbnail rendering is secondary; continue with history and persistence.
+      }
+    }
+
     function buildCanonicalInsertionBuilders() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -322,7 +331,7 @@
           return true;
         }
         selectInsertedElement(newElement);
-        if (generateThumbnails) generateThumbnails();
+        refreshInsertedElementThumbnails();
         if (saveHistoryState) {
           if (transaction && canonicalDeck) {
             if (isStudioHistoryCaptureFailure(

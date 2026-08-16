@@ -507,3 +507,26 @@ test('element insertion controller preserves persistence when selection chrome t
   assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
   assert.deepEqual(calls, ['select', 'save', 'version']);
 });
+
+test('element insertion controller preserves persistence when thumbnail refresh throws', () => {
+  const element = { id: 'element-1' };
+  const calls = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ children: [] }),
+    applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
+    generateThumbnails() {
+      calls.push('thumbnails');
+      throw new Error('thumbnail rendering unavailable');
+    },
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => {
+      calls.push('save');
+      return true;
+    },
+    triggerAutoVersion: () => calls.push('version')
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
+  assert.deepEqual(calls, ['thumbnails', 'save', 'version']);
+});
