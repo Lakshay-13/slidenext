@@ -12532,7 +12532,7 @@
             ? getEditorSlideId(slide)
             : '',
           getSlides,
-          setPendingCustomWallpaperVersion,
+          setPendingCustomWallpaperVersion: setStudioPendingCustomWallpaperVersion,
           finalizeMutation: finalizeWallpaperMutation,
           rollbackMutation: rollbackEditorWallpaperMutation,
           getAlert: () => typeof alert === 'function' ? alert : null,
@@ -12712,7 +12712,7 @@
           getSlideId: (slide) => typeof getEditorSlideId === 'function'
             ? getEditorSlideId(slide)
             : '',
-          setPendingCustomWallpaperVersion,
+          setPendingCustomWallpaperVersion: setStudioPendingCustomWallpaperVersion,
           finalizeMutation: finalizeWallpaperMutation,
           rollbackMutation: rollbackEditorWallpaperMutation
         });
