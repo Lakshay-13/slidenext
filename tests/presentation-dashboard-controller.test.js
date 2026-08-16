@@ -53,8 +53,12 @@ test('dashboard controller loads data and renders the loaded state', async () =>
   const documentRef = createDocumentStub();
   const calls = [];
   const data = [{ category: 'General', presentations: [{ title: 'Deck' }] }];
+  const launchPresentation = () => {};
+  const launchStudioEditor = () => {};
   const controller = dashboardController.createPresentationDashboardController({
     documentRef,
+    launchPresentation,
+    launchStudioEditor,
     presentationLibraryView: {
       setPresentationLibraryLoadingState(options) {
         calls.push(['loading', options.documentRef === documentRef]);
@@ -65,7 +69,7 @@ test('dashboard controller loads data and renders the loaded state', async () =>
         return 'categories';
       },
       renderPresentationLibraryGrid(options) {
-        calls.push(['grid', options.data, options.activeCategory]);
+        calls.push(['grid', options.data, options.activeCategory, options.launchPresentation, options.launchStudioEditor]);
         return 'grid';
       }
     },
@@ -86,7 +90,7 @@ test('dashboard controller loads data and renders the loaded state', async () =>
   assert.deepEqual(calls, [
     ['loading', true],
     ['categories', data, 'all', controller.filter],
-    ['grid', data, 'all']
+    ['grid', data, 'all', launchPresentation, launchStudioEditor]
   ]);
 });
 

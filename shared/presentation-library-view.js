@@ -12,6 +12,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (presentationLibrary) {
   const presentationLibraryActionBindings = new WeakMap();
   const presentationLibraryCategoryActionBindings = new WeakMap();
+  const presentationLibraryGridActionBindings = new WeakMap();
 
   function normalizeString(value) {
     return typeof value === 'string' ? value : '';
@@ -109,6 +110,42 @@
       );
     });
     presentationLibraryCategoryActionBindings.set(container, binding);
+    return true;
+  }
+
+  function bindPresentationLibraryGridActions(options = {}) {
+    const container = options.container;
+    if (!container || typeof container.addEventListener !== 'function') return false;
+
+    const handlers = {};
+    if (typeof options.launchPresentation === 'function') {
+      handlers.launchPresentation = options.launchPresentation;
+    }
+    if (typeof options.launchStudioEditor === 'function') {
+      handlers.launchStudioEditor = options.launchStudioEditor;
+    }
+    const existingBinding = presentationLibraryGridActionBindings.get(container);
+    if (existingBinding) {
+      Object.assign(existingBinding.handlers, handlers);
+      return true;
+    }
+
+    const binding = { handlers };
+    container.addEventListener('click', (event) => {
+      const target = findPresentationLibraryActionTarget(container, event);
+      const action = getPresentationLibraryActionAttribute(target, 'data-presentation-library-action');
+      const url = getPresentationLibraryActionAttribute(target, 'data-presentation-library-url');
+      if (action === 'launch' && binding.handlers.launchPresentation) {
+        binding.handlers.launchPresentation(url);
+      } else if (action === 'edit' && binding.handlers.launchStudioEditor) {
+        binding.handlers.launchStudioEditor(
+          url,
+          getPresentationLibraryActionAttribute(target, 'data-presentation-library-title'),
+          getPresentationLibraryActionAttribute(target, 'data-presentation-library-category')
+        );
+      }
+    });
+    presentationLibraryGridActionBindings.set(container, binding);
     return true;
   }
 
@@ -212,22 +249,24 @@
             <p class="text-sm text-[#bcc9c6]/80 leading-relaxed">${escapeHtml(presentation.description || '')}</p>
           </div>
           <div class="flex items-center gap-3">
-            <button onclick="launchPresentation(${inlineHandlerArgument(presentation.url)})" class="flex-1 py-2.5 bg-[#7028d0] hover:bg-[#5050e8] text-black font-bold rounded-lg text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.1)] hover:shadow-[0_0_20px_rgba(112,40,208,0.25)] flex items-center justify-center gap-1.5 active:scale-95">
+            <button type="button" data-presentation-library-action="launch" data-presentation-library-url="${escapeHtml(normalizeString(presentation.url))}" class="flex-1 py-2.5 bg-[#7028d0] hover:bg-[#5050e8] text-black font-bold rounded-lg text-xs transition-all shadow-[0_0_15px_rgba(112,40,208,0.1)] hover:shadow-[0_0_20px_rgba(112,40,208,0.25)] flex items-center justify-center gap-1.5 active:scale-95">
               <span class="material-symbols-outlined text-[16px] font-bold">play_arrow</span> Launch Keynote
             </button>
-            <button onclick="launchStudioEditor(${inlineHandlerArgument(presentation.url)}, ${inlineHandlerArgument(presentation.title)}, ${inlineHandlerArgument(presentation.category)})" class="px-3.5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95">
+            <button type="button" data-presentation-library-action="edit" data-presentation-library-url="${escapeHtml(normalizeString(presentation.url))}" data-presentation-library-title="${escapeHtml(normalizeString(presentation.title))}" data-presentation-library-category="${escapeHtml(normalizeString(presentation.category))}" class="px-3.5 py-2.5 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95">
               <span class="material-symbols-outlined text-[16px]">edit_note</span> Studio Editor
             </button>
           </div>
         </div>
-      `).join('');
+    `).join('');
     if (container) container.innerHTML = markup;
+    bindPresentationLibraryGridActions(options);
     return markup;
   }
 
   return {
     bindPresentationLibraryActions,
     bindPresentationLibraryCategoryActions,
+    bindPresentationLibraryGridActions,
     setPresentationLibraryLoadingState,
     setPresentationLibraryErrorState,
     renderPresentationLibraryCategories,

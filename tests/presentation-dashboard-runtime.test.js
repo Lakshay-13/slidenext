@@ -14,6 +14,7 @@ test('presentation dashboard runtime composes dashboard and creation controllers
   const presentationLibraryView = {};
   const presentationCreationView = {};
   const loadPresentations = () => calls.push(['load']);
+  const launchPresentation = () => calls.push(['preview']);
   const launchStudioEditor = (...args) => calls.push(['launch', ...args]);
   const dashboardController = { load() {} };
   const creationController = { submit() {} };
@@ -28,7 +29,9 @@ test('presentation dashboard runtime composes dashboard and creation controllers
         assert.deepEqual(options, {
           documentRef,
           presentationLibrary,
-          presentationLibraryView
+          presentationLibraryView,
+          launchPresentation,
+          launchStudioEditor
         });
         return dashboardController;
       }
@@ -44,6 +47,7 @@ test('presentation dashboard runtime composes dashboard and creation controllers
       }
     },
     loadPresentations,
+    launchPresentation,
     launchStudioEditor
   });
 

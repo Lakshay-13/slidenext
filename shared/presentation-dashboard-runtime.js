@@ -45,9 +45,11 @@
     );
     const dashboardController = createDashboardController
       ? createDashboardController({
-          documentRef: options.documentRef,
-          presentationLibrary,
-          presentationLibraryView
+        documentRef: options.documentRef,
+        presentationLibrary,
+        presentationLibraryView,
+        launchPresentation: options.launchPresentation,
+        launchStudioEditor: options.launchStudioEditor
         })
       : null;
 

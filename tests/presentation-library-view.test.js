@@ -167,8 +167,10 @@ test('renderPresentationLibraryGrid renders presentation actions and empty state
 
   assert.equal(container.innerHTML, markup);
   assert.match(markup, /Onboarding/);
-  assert.match(markup, /launchPresentation\(&quot;presentations\/onboarding\/index.html&quot;\)/);
-  assert.match(markup, /launchStudioEditor\(&quot;presentations\/onboarding\/index.html&quot;/);
+  assert.match(markup, /data-presentation-library-action="launch"/);
+  assert.match(markup, /data-presentation-library-action="edit"/);
+  assert.match(markup, /data-presentation-library-url="presentations\/onboarding\/index.html"/);
+  assert.doesNotMatch(markup, /onclick=/);
   assert.match(markup, /content-visibility: auto/);
   assert.match(markup, /contain-intrinsic-size: 240px/);
 
@@ -200,6 +202,43 @@ test('renderPresentationLibraryGrid escapes user-controlled metadata and handler
   assert.match(markup, /Quarterly &quot;Review&quot; &lt;Draft&gt;/);
   assert.match(markup, /Owner&#39;s notes/);
   assert.match(markup, /&lt;img src=x onerror=alert\(1\)&gt;/);
-  assert.match(markup, /launchPresentation\(&quot;presentations\/review\/quote\\&quot;deck\/index.html&quot;\)/);
+  assert.match(markup, /data-presentation-library-url="presentations\/review\/quote&quot;deck\/index.html"/);
   assert.doesNotMatch(markup, /<img src=x/);
+});
+
+test('presentation library view delegates launch actions through the view', () => {
+  const container = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+  assert.equal(presentationLibraryView.bindPresentationLibraryGridActions({
+    container,
+    launchPresentation(url) {
+      calls.push(['launch', url]);
+    },
+    launchStudioEditor(...args) {
+      calls.push(['edit', ...args]);
+    }
+  }), true);
+  const dispatch = (action, dataset) => {
+    container.listeners.click({
+      target: {
+        dataset: { presentationLibraryAction: action, ...dataset },
+        parentNode: container
+      }
+    });
+  };
+  dispatch('launch', { presentationLibraryUrl: '/deck/index.html' });
+  dispatch('edit', {
+    presentationLibraryUrl: '/deck/index.html',
+    presentationLibraryTitle: 'Deck',
+    presentationLibraryCategory: 'Research'
+  });
+  assert.deepEqual(calls, [
+    ['launch', '/deck/index.html'],
+    ['edit', '/deck/index.html', 'Deck', 'Research']
+  ]);
 });

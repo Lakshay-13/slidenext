@@ -43,7 +43,9 @@
           ? documentRef.getElementById('presentationsGrid')
           : null,
         data,
-        activeCategory
+        activeCategory,
+        launchPresentation: options.launchPresentation,
+        launchStudioEditor: options.launchStudioEditor
       });
     }
 
