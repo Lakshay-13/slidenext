@@ -39,6 +39,33 @@ test('buildStudioNudgeSelectionState excludes hidden elements from movement elig
   });
 });
 
+test('buildStudioNudgeSelectionState fails closed when canonical readers throw', () => {
+  const hiddenReaderError = { id: 'hidden-reader-error', isConnected: true };
+  const lockedReaderError = { id: 'locked-reader-error', isConnected: true };
+
+  assert.deepEqual(nudge.buildStudioNudgeSelectionState([hiddenReaderError], {
+    isHidden: () => {
+      throw new Error('stale hidden state');
+    },
+    isLocked: () => false,
+    isFreeformPositioned: () => true
+  }), {
+    selection: [],
+    canNudge: false
+  });
+
+  assert.deepEqual(nudge.buildStudioNudgeSelectionState([lockedReaderError], {
+    isHidden: () => false,
+    isLocked: () => {
+      throw new Error('stale locked state');
+    },
+    isFreeformPositioned: () => true
+  }), {
+    selection: [lockedReaderError],
+    canNudge: false
+  });
+});
+
 test('buildStudioNudgedLayout clamps a multi-selection as one group', () => {
   const result = nudge.buildStudioNudgedLayout([
     {
