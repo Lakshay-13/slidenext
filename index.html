@@ -1802,6 +1802,7 @@
   <script src="/shared/studio-editor-closest-positioned-ancestor-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-id-adapter.js"></script>
+  <script src="/shared/studio-editor-active-slide-accessors.js"></script>
   <script src="/shared/studio-editor-chrome-node-pruner-adapter.js"></script>
   <script src="/shared/studio-editor-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
@@ -5210,52 +5211,67 @@
       ? SlideNextStudioEditorActiveSlideAdapter
       : null;
 
-    const studioEditorActiveSlideResolver = studioEditorActiveSlideAdapter
-      && typeof studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver === 'function'
-      ? studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver({
-          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-            ? SlideNextStudioEditorDom
-            : null
-        })
-      : studioEditorActiveSlideAdapter
-        && typeof studioEditorActiveSlideAdapter.getStudioEditorActiveSlide === 'function'
-        && typeof SlideNextStudioEditorDom !== 'undefined'
-        && SlideNextStudioEditorDom
-        && typeof SlideNextStudioEditorDom.getStudioActiveSlide === 'function'
-        ? (doc, options) => studioEditorActiveSlideAdapter.getStudioEditorActiveSlide(
-            doc,
-            {
-              domApi: SlideNextStudioEditorDom,
-              domOptions: options
-            }
-          )
-        : null;
-
     const studioEditorActiveSlideIdAdapter = typeof SlideNextStudioEditorActiveSlideIdAdapter !== 'undefined'
       && SlideNextStudioEditorActiveSlideIdAdapter
       && typeof SlideNextStudioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId === 'function'
       ? SlideNextStudioEditorActiveSlideIdAdapter
       : null;
 
-    const studioEditorActiveSlideIdResolver = studioEditorActiveSlideIdAdapter
-      && typeof studioEditorActiveSlideIdAdapter.createStudioEditorActiveSlideIdResolver === 'function'
-      ? studioEditorActiveSlideIdAdapter.createStudioEditorActiveSlideIdResolver({
+    const studioEditorActiveSlideAccessorsApi = typeof SlideNextStudioEditorActiveSlideAccessors !== 'undefined'
+      ? SlideNextStudioEditorActiveSlideAccessors
+      : null;
+    const studioEditorActiveSlideAccessors = studioEditorActiveSlideAccessorsApi
+      && typeof studioEditorActiveSlideAccessorsApi.createStudioEditorActiveSlideAccessors === 'function'
+      ? studioEditorActiveSlideAccessorsApi.createStudioEditorActiveSlideAccessors({
+          activeSlideAdapter: studioEditorActiveSlideAdapter,
+          activeSlideIdAdapter: studioEditorActiveSlideIdAdapter,
           domApi: typeof SlideNextStudioEditorDom !== 'undefined'
             ? SlideNextStudioEditorDom
+            : null,
+          getDocument: () => getIframeDoc(),
+          getDomOptions: (overrides = {}) => getEditorDomOptions(overrides),
+          stateBridge: typeof studioEditorStateBridge !== 'undefined'
+            ? studioEditorStateBridge
             : null
         })
+      : null;
+
+    const studioEditorActiveSlideResolver = studioEditorActiveSlideAccessors
+      ? (doc, options = {}) => studioEditorActiveSlideAccessors.getActiveSlide(doc, options)
+      : typeof studioEditorActiveSlideAdapter !== 'undefined'
+        && studioEditorActiveSlideAdapter
+        && typeof studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver === 'function'
+        ? studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver({
+            domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+              ? SlideNextStudioEditorDom
+              : null
+          })
+        : null;
+
+    const studioEditorActiveSlideIdResolver = studioEditorActiveSlideAccessors
+      ? (doc, options = {}) => studioEditorActiveSlideAccessors.getActiveSlideId(doc, options)
       : studioEditorActiveSlideIdAdapter
         && typeof studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId === 'function'
-        && typeof SlideNextStudioEditorDom !== 'undefined'
-        && SlideNextStudioEditorDom
-        && typeof SlideNextStudioEditorDom.getStudioActiveSlideId === 'function'
-        ? (doc, options) => studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId(
-            doc,
-            {
-              domApi: SlideNextStudioEditorDom,
-              domOptions: options
+        ? (doc, options = {}) => {
+            if (options.preferStateBridge
+              && typeof studioEditorStateBridge !== 'undefined'
+              && studioEditorStateBridge
+              && typeof studioEditorStateBridge.getSlideId === 'function') {
+              const storedSlideId = studioEditorStateBridge.getSlideId();
+              if (typeof storedSlideId === 'string' && storedSlideId.trim()) {
+                return storedSlideId.trim();
+              }
             }
-          )
+            return studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId(
+              doc,
+              {
+                domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+                  ? SlideNextStudioEditorDom
+                  : null,
+                domOptions: getEditorDomOptions()
+              }
+            );
+          }
         : null;
 
     const studioEditorChromeNodePrunerAdapter = typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'
@@ -9917,20 +9933,11 @@
     }
 
     function getActiveSlideId(doc = getIframeDoc()) {
-      if (arguments.length === 0
-        && typeof studioEditorStateBridge !== 'undefined'
-        && studioEditorStateBridge
-        && typeof studioEditorStateBridge.getSlideId === 'function') {
-        const storedSlideId = studioEditorStateBridge.getSlideId();
-        if (typeof storedSlideId === 'string' && storedSlideId.trim()) {
-          return storedSlideId.trim();
-        }
-      }
       const activeSlideIdResolver = typeof studioEditorActiveSlideIdResolver === 'function'
         ? studioEditorActiveSlideIdResolver
         : null;
       return typeof activeSlideIdResolver === 'function'
-        ? activeSlideIdResolver(doc, getEditorDomOptions())
+        ? activeSlideIdResolver(doc, { preferStateBridge: arguments.length === 0 })
         : '';
     }
 

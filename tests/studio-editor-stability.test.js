@@ -2160,9 +2160,10 @@ test('motion, alignment, and group action-state builders reuse composed editor s
 test('editor composes active-slide lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorActiveSlideResolver =/);
+  assert.match(source, /const studioEditorActiveSlideAccessorsApi =/);
+  assert.match(source, /createStudioEditorActiveSlideAccessors/);
+  assert.match(source, /const studioEditorActiveSlideAccessors =/);
   assert.match(source, /const studioEditorActiveSlideAdapter =/);
-  assert.match(source, /getStudioActiveSlide/);
   assert.match(source, /typeof SlideNextStudioEditorActiveSlideAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorActiveSlideResolver === 'function'/);
   assert.doesNotMatch(source, /getActiveSlide\.resolver/);
@@ -2247,9 +2248,10 @@ test('getActiveSlide fails closed when the shared DOM module is unavailable', ()
 test('editor composes active-slide ID lookup through the shared DOM module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorActiveSlideIdResolver =/);
+  assert.match(source, /const studioEditorActiveSlideAccessorsApi =/);
+  assert.match(source, /createStudioEditorActiveSlideAccessors/);
+  assert.match(source, /const studioEditorActiveSlideAccessors =/);
   assert.match(source, /const studioEditorActiveSlideIdAdapter =/);
-  assert.match(source, /getStudioActiveSlideId/);
   assert.match(source, /typeof SlideNextStudioEditorActiveSlideIdAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorActiveSlideIdResolver === 'function'/);
   assert.doesNotMatch(source, /getActiveSlideId\.resolver/);
