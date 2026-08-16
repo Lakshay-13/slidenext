@@ -92,6 +92,58 @@ test('layer global API forwards arguments to configured accessors', () => {
   ]);
 });
 
+test('layer accessors compose arrangement through the shared controller', () => {
+  const calls = [];
+  const documentRef = { id: 'iframe-document' };
+  const rawSelection = [{ id: 'raw-selection' }];
+  const liveSelection = [{ id: 'live-selection' }];
+  let delegatedOptions = null;
+  const accessors = layerAccessors.createStudioEditorLayerAccessors({
+    controller: {
+      arrangeStudioElementLayer(options) {
+        delegatedOptions = options;
+        return 'arranged';
+      }
+    },
+    getIframeDoc() {
+      return documentRef;
+    },
+    getSelectedElements(sourceDoc) {
+      calls.push(['selected', sourceDoc]);
+      return rawSelection;
+    },
+    getLiveSelectedElements(elements, sourceDoc) {
+      calls.push(['live', elements, sourceDoc]);
+      return liveSelection;
+    },
+    selectionHasLockedElements,
+    refreshLayerOrderUi,
+    reorderSlideLayers,
+    syncLayerOrderZIndexInput,
+    finalizeLayerOrderMutation
+  });
+
+  function selectionHasLockedElements() {}
+  function refreshLayerOrderUi() {}
+  function reorderSlideLayers() {}
+  function syncLayerOrderZIndexInput() {}
+  function finalizeLayerOrderMutation() {}
+
+  assert.equal(accessors.arrangeElementLayer('front'), 'arranged');
+  assert.equal(delegatedOptions.action, 'front');
+  assert.equal(delegatedOptions.getDocument(), documentRef);
+  assert.deepEqual(delegatedOptions.getSelectedElements(documentRef), liveSelection);
+  assert.deepEqual(calls, [
+    ['selected', documentRef],
+    ['live', rawSelection, documentRef]
+  ]);
+  assert.equal(delegatedOptions.selectionHasLockedElements, selectionHasLockedElements);
+  assert.equal(delegatedOptions.refreshLayerOrderUi, refreshLayerOrderUi);
+  assert.equal(delegatedOptions.reorderSlideLayers, reorderSlideLayers);
+  assert.equal(delegatedOptions.syncLayerOrderZIndexInput, syncLayerOrderZIndexInput);
+  assert.equal(delegatedOptions.finalizeLayerOrderMutation, finalizeLayerOrderMutation);
+});
+
 test('index loads and installs the layer accessor module before editor orchestration', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const scriptIndex = fileContent.indexOf(
@@ -112,4 +164,5 @@ test('index loads and installs the layer accessor module before editor orchestra
     accessorBlock,
     /rollbackLayerOrderMutation: \(\.\.\.args\) => rollbackEditorLayerOrderMutation\(\.\.\.args\)/
   );
+  assert.match(accessorBlock, /getLiveSelectedElements:/);
 });

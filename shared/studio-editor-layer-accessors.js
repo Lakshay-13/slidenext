@@ -126,12 +126,41 @@
       });
     }
 
+    function arrangeElementLayer(action, doc) {
+      if (!controller || typeof controller.arrangeStudioElementLayer !== 'function') {
+        return false;
+      }
+      const resolvedDoc = doc || getIframeDoc();
+      const getSelectedElements = typeof options.getSelectedElements === 'function'
+        ? options.getSelectedElements
+        : () => [];
+      const getLiveSelectedElements = typeof options.getLiveSelectedElements === 'function'
+        ? options.getLiveSelectedElements
+        : null;
+      return controller.arrangeStudioElementLayer({
+        action,
+        getDocument: () => resolvedDoc,
+        getSelectedElements: (sourceDoc) => {
+          const selectedElements = getSelectedElements(sourceDoc);
+          return getLiveSelectedElements
+            ? getLiveSelectedElements(selectedElements, sourceDoc)
+            : selectedElements;
+        },
+        selectionHasLockedElements: options.selectionHasLockedElements,
+        refreshLayerOrderUi: options.refreshLayerOrderUi,
+        reorderSlideLayers: options.reorderSlideLayers,
+        syncLayerOrderZIndexInput: options.syncLayerOrderZIndexInput,
+        finalizeLayerOrderMutation: options.finalizeLayerOrderMutation
+      });
+    }
+
     return {
       updateLayersList,
       resolveLayerRowElement: resolveRow,
       selectLayerElementByRef,
       toggleLayerVisibilityByRef,
-      changeLayerZIndexByRef
+      changeLayerZIndexByRef,
+      arrangeElementLayer
     };
   }
 
@@ -142,7 +171,10 @@
       resolveLayerRowElement: (row) => accessors.resolveLayerRowElement(row),
       selectLayerElementByRef: (event) => accessors.selectLayerElementByRef(event),
       toggleLayerVisibilityByRef: (event) => accessors.toggleLayerVisibilityByRef(event),
-      changeLayerZIndexByRef: (event, action) => accessors.changeLayerZIndexByRef(event, action)
+      changeLayerZIndexByRef: (event, action) => accessors.changeLayerZIndexByRef(event, action),
+      arrangeElementLayer: (action, doc) => typeof accessors.arrangeElementLayer === 'function'
+        ? accessors.arrangeElementLayer(action, doc)
+        : false
     };
   }
 

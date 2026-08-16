@@ -1833,6 +1833,12 @@
             : null,
           getElementByEditorId,
           buildLayerOrderSelectionActionState,
+          getSelectedElements: typeof getStudioSelectedElements === 'function'
+            ? getStudioSelectedElements
+            : null,
+          getLiveSelectedElements: typeof getLiveSelectedElements === 'function'
+            ? getLiveSelectedElements
+            : null,
           selectElement,
           getCommittedSelectedEditorElementIds,
           deselectElement,
@@ -11517,6 +11523,11 @@
 
     // Rearrange Selected Element Layers
     function arrangeElementLayer(action, doc) {
+      if (typeof studioEditorLayerAccessors !== 'undefined'
+        && studioEditorLayerAccessors
+        && typeof studioEditorLayerAccessors.arrangeElementLayer === 'function') {
+        return studioEditorLayerAccessors.arrangeElementLayer(action, doc);
+      }
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
