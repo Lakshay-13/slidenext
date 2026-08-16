@@ -14,6 +14,8 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const groupController = require('../shared/studio-editor-group-controller.js');
 const groupState = require('../shared/studio-editor-group-state.js');
+const groupToolbarState = require('../shared/studio-editor-group-toolbar-state.js');
+const groupToolbarStateRuntimeAccessors = require('../shared/studio-editor-group-toolbar-state-runtime-accessors.js');
 const ungroupState = require('../shared/studio-editor-ungroup-state.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
@@ -141,6 +143,11 @@ function installGroupStateController(context) {
   });
 }
 
+function installGroupToolbarState(context) {
+  context.SlideNextStudioEditorGroupToolbarState = groupToolbarState;
+  context.SlideNextStudioEditorGroupToolbarStateRuntimeAccessors = groupToolbarStateRuntimeAccessors;
+}
+
 test('updateGroupActionState delegates toolbar state assembly to the shared group view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const source = extractFunctionSource(
@@ -171,6 +178,7 @@ test('updateGroupActionState delegates toolbar state assembly to the shared grou
     }
   };
 
+  installGroupToolbarState(context);
   vm.createContext(context);
   vm.runInContext(source, context);
 
@@ -219,6 +227,7 @@ test('updateGroupActionState caches the shared group toolbar synchronizer when a
     }
   };
 
+  installGroupToolbarState(context);
   vm.createContext(context);
   vm.runInContext(source, context);
 
@@ -247,6 +256,7 @@ test('updateGroupActionState fails closed when the shared group view is unavaila
     document: {}
   };
 
+  installGroupToolbarState(context);
   vm.createContext(context);
   vm.runInContext(source, context);
 

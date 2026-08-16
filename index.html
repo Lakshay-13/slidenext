@@ -1510,6 +1510,8 @@
     <script src="/shared/studio-editor-alignment-state-shell-runtime.js"></script>
     <script src="/shared/studio-editor-alignment-state-accessors.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
+  <script src="/shared/studio-editor-group-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-group-toolbar-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-group-state-accessors.js"></script>
@@ -11285,32 +11287,45 @@
         && typeof studioEditorInteractionStateCoordinator.syncGroup === 'function') {
         return studioEditorInteractionStateCoordinator.syncGroup(doc);
       }
-      const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
-        ? SlideNextStudioEditorGroup
+      const groupToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorGroupToolbarState !== 'undefined'
+        ? SlideNextStudioEditorGroupToolbarState
         : null;
-      if (!groupApi || typeof groupApi.syncStudioGroupToolbarState !== 'function') {
+      const groupToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorGroupToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorGroupToolbarStateRuntimeAccessors
+        : null;
+      const groupToolbarStateRuntimeAccessors =
+        groupToolbarStateRuntimeAccessorsApi
+        && typeof groupToolbarStateRuntimeAccessorsApi
+          .createStudioEditorGroupToolbarStateRuntimeAccessors === 'function'
+        ? groupToolbarStateRuntimeAccessorsApi
+          .createStudioEditorGroupToolbarStateRuntimeAccessors({
+            runtimeApi: groupToolbarStateRuntimeApi
+          })
+        : null;
+      if (!groupToolbarStateRuntimeAccessors
+        || typeof groupToolbarStateRuntimeAccessors
+          .createStudioEditorGroupToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof groupApi.createStudioGroupToolbarStateSync === 'function') {
-        if (typeof updateGroupActionState.sync !== 'function') {
-          updateGroupActionState.sync = groupApi.createStudioGroupToolbarStateSync({
+      if (!updateGroupActionState.controller) {
+        const groupView = typeof SlideNextStudioEditorGroup !== 'undefined'
+          ? SlideNextStudioEditorGroup
+          : null;
+        updateGroupActionState.controller = groupToolbarStateRuntimeAccessors
+          .createStudioEditorGroupToolbarStateController({
+            groupView,
             getDocument: () => getIframeDoc(),
             getGroupActionState: (sourceDoc) => buildGroupSelectionActionState(sourceDoc),
             getUngroupActionState: (sourceDoc) => buildUngroupSelectionActionState(sourceDoc),
-            getDocumentRef: () => document
+            documentRef: document
           });
-        }
-        if (typeof updateGroupActionState.sync === 'function') {
-          return updateGroupActionState.sync(doc);
-        }
       }
-      const groupState = buildGroupSelectionActionState(doc);
-      const ungroupState = buildUngroupSelectionActionState(doc);
-      return groupApi.syncStudioGroupToolbarState({
-        documentRef: document,
-        canGroup: groupState.canGroup,
-        canUngroup: ungroupState.canUngroup
-      });
+      return updateGroupActionState.controller
+        && typeof updateGroupActionState.controller.sync === 'function'
+        ? updateGroupActionState.controller.sync(doc)
+        : false;
     }
 
     function isEditorGroupElement(element) {
