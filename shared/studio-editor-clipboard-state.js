@@ -38,11 +38,20 @@
       return getLockedState(sourceDoc);
     }
 
+    function refreshBlockState(doc) {
+      if (!syncBlockState) return;
+      try {
+        syncBlockState(doc);
+      } catch (err) {
+        // Block chrome is secondary; clipboard controls still need to reflect the live selection.
+      }
+    }
+
     function sync(doc = getDocument()) {
       if (!clipboardView || typeof clipboardView.syncStudioClipboardToolbarState !== 'function') {
         return false;
       }
-      if (syncBlockState) syncBlockState(doc);
+      refreshBlockState(doc);
       if (typeof clipboardView.createStudioClipboardToolbarStateSync === 'function') {
         if (!stateSync) {
           stateSync = clipboardView.createStudioClipboardToolbarStateSync({

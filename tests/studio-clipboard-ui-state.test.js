@@ -1108,6 +1108,30 @@ test('updateClipboardActionState fails closed when the shared clipboard view is 
   });
 });
 
+test('clipboard state preserves toolbar rendering when block-state refresh throws', () => {
+  const doc = { id: 'doc-1' };
+  const calls = [];
+  const controller = clipboardToolbarState.createStudioEditorClipboardStateController({
+    clipboardView: {
+      syncStudioClipboardToolbarState() {
+        calls.push('syncClipboardToolbarState');
+        return 'clipboard-toolbar';
+      }
+    },
+    syncBlockState(currentDoc) {
+      calls.push(['syncBlockState', currentDoc]);
+      throw new Error('block toolbar unavailable');
+    },
+    getDocument: () => doc
+  });
+
+  assert.equal(controller.sync(), 'clipboard-toolbar');
+  assert.deepEqual(calls, [
+    ['syncBlockState', doc],
+    'syncClipboardToolbarState'
+  ]);
+});
+
 test('copySelectedElements returns false and refreshes clipboard controls when payload build yields no items', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildClipboardSelectionMutationPlanSource = extractClipboardMutationPlanBuilderSource(fileContent);
