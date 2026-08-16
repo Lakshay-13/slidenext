@@ -127,7 +127,14 @@
       ? options.canMutateDeck
       : () => true;
 
-    if (selection.length === 0 || !canMutateDeck()) {
+    let deckReady = false;
+    try {
+      deckReady = canMutateDeck();
+    } catch (error) {
+      deckReady = false;
+    }
+
+    if (selection.length === 0 || !deckReady) {
       return {
         selection,
         shouldLock: false,
@@ -136,7 +143,17 @@
       };
     }
 
-    const shouldLock = !selection.every((element) => isLocked(element));
+    let shouldLock = false;
+    try {
+      shouldLock = !selection.every((element) => isLocked(element));
+    } catch (error) {
+      return {
+        selection,
+        shouldLock: false,
+        didChange: false,
+        versionLabel: ''
+      };
+    }
     return {
       selection,
       shouldLock,

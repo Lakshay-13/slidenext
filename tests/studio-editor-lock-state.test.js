@@ -170,6 +170,21 @@ test('buildStudioLockMutationPlan derives the next lock toggle from the live sel
   });
 });
 
+test('buildStudioLockMutationPlan returns a no-op when lock state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(lockState.buildStudioLockMutationPlan([live], {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    selection: [live],
+    shouldLock: false,
+    didChange: false,
+    versionLabel: ''
+  });
+});
+
 test('renderStudioLockToolbarState applies lock button, icon, and label chrome', () => {
   const nodes = {
     toggleLockSelectionBtn: { disabled: true },
