@@ -454,7 +454,13 @@
     const selectedSet = new Set(Array.isArray(selection) ? selection : []);
 
     return getSlideEditableElements(slide)
-      .filter((element) => !selectedSet.has(element) && !isHidden(element))
+      .filter((element) => {
+        try {
+          return !selectedSet.has(element) && !isHidden(element);
+        } catch (error) {
+          return false;
+        }
+      })
       .map((element) => {
         if (!element || typeof element.getBoundingClientRect !== 'function') return null;
         return getRectOnSlide(element.getBoundingClientRect(), slideMetrics);

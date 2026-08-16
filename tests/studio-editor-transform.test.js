@@ -1388,6 +1388,23 @@ test('buildStudioTransformSnapTargets excludes selected and hidden elements and 
   }), [{ left: 50, top: 70, right: 250, bottom: 190 }]);
 });
 
+test('buildStudioTransformSnapTargets skips elements when hidden state throws', () => {
+  const staleHiddenElement = {
+    getBoundingClientRect() {
+      throw new Error('stale hidden target should not be measured');
+    }
+  };
+
+  assert.deepEqual(transformState.buildStudioTransformSnapTargets('slide', [], {
+    getSlideEditableElements() {
+      return [staleHiddenElement];
+    },
+    isHidden() {
+      throw new Error('stale hidden state');
+    }
+  }), []);
+});
+
 test('resolveStudioTransformBounds applies the shared interaction and normalization pipeline', () => {
   assert.deepEqual(transformState.resolveStudioTransformBounds({
     type: 'drag',
