@@ -45,6 +45,27 @@ test('resolveStudioEditorCanonicalNode falls back to the canonical deck lookup',
   assert.equal(result, expectedNode);
 });
 
+test('createStudioEditorCanonicalNodeResolver reuses canonical dependencies', () => {
+  const element = { id: 'element-1' };
+  const canonicalDeck = { slides: [] };
+  const calls = [];
+  const resolver = canonicalNodeAdapter.createStudioEditorCanonicalNodeResolver({
+    canonicalStateApi: {
+      createStudioEditorCanonicalNodeResolver(options) {
+        calls.push(options);
+        return (elementValue, deckValue) => ({
+          element: elementValue,
+          deck: deckValue
+        });
+      }
+    },
+    canonicalDeckApi: { id: 'canonical-deck-api' }
+  });
+
+  assert.deepEqual(resolver(element, canonicalDeck), { element, deck: canonicalDeck });
+  assert.deepEqual(calls, [{ canonicalDeckApi: { id: 'canonical-deck-api' } }]);
+});
+
 test('resolveStudioEditorCanonicalNode fails closed when lookup dependencies are unavailable', () => {
   assert.equal(
     canonicalNodeAdapter.resolveStudioEditorCanonicalNode({ dataset: { editorId: 'node-1' } }, { slides: [] }),

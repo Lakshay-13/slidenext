@@ -9526,6 +9526,10 @@
     }
 
     function resolveEditorCanonicalNodeForElement(element, canonicalDeck = null) {
+      if (typeof studioEditorCanonicalNodeResolver !== 'undefined'
+        && typeof studioEditorCanonicalNodeResolver === 'function') {
+        return studioEditorCanonicalNodeResolver(element, canonicalDeck);
+      }
       const canonicalNodeAdapter = typeof SlideNextStudioEditorCanonicalNodeAdapter !== 'undefined'
         ? SlideNextStudioEditorCanonicalNodeAdapter
         : null;
@@ -9539,9 +9543,24 @@
           : null,
         canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
           ? SlideNextStudioEditorCanonicalState
-          : null
+        : null
       });
     }
+
+    const studioEditorCanonicalNodeAdapter = typeof SlideNextStudioEditorCanonicalNodeAdapter !== 'undefined'
+      ? SlideNextStudioEditorCanonicalNodeAdapter
+      : null;
+    const studioEditorCanonicalNodeResolver = studioEditorCanonicalNodeAdapter
+      && typeof studioEditorCanonicalNodeAdapter.createStudioEditorCanonicalNodeResolver === 'function'
+      ? studioEditorCanonicalNodeAdapter.createStudioEditorCanonicalNodeResolver({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null
+        })
+      : null;
 
     const studioEditorCanonicalReaderAdapter = typeof SlideNextStudioEditorCanonicalReaderAdapter !== 'undefined'
       ? SlideNextStudioEditorCanonicalReaderAdapter
