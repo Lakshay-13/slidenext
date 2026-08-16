@@ -36,6 +36,7 @@
       ? options.reorderSlidesById
       : () => {};
     let draggedThumbSlideId = '';
+    const legacyThumbnailDragBindings = new WeakMap();
 
     function attach(card) {
       if (!card || typeof card.addEventListener !== 'function') return false;
@@ -53,33 +54,44 @@
         });
       }
 
-      card.addEventListener('dragstart', () => {
-        draggedThumbSlideId = card.dataset && card.dataset.slideId
-          ? card.dataset.slideId
-          : '';
-        card.style.opacity = '0.4';
-      });
-      card.addEventListener('dragend', () => {
-        card.style.opacity = '1';
-        draggedThumbSlideId = '';
-      });
-      card.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        card.classList.add('border-dashed', 'border-[#7028d0]/50');
-      });
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-      });
-      card.addEventListener('drop', (event) => {
-        event.preventDefault();
-        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-        const targetSlideId = card.dataset && card.dataset.slideId
-          ? card.dataset.slideId
-          : '';
-        if (draggedThumbSlideId && draggedThumbSlideId !== targetSlideId) {
-          reorderSlidesById(draggedThumbSlideId, targetSlideId);
+      if (legacyThumbnailDragBindings.has(card)) {
+        return true;
+      }
+      const binding = {
+        handleDragStart: () => {
+          draggedThumbSlideId = card.dataset && card.dataset.slideId
+            ? card.dataset.slideId
+            : '';
+          card.style.opacity = '0.4';
+        },
+        handleDragEnd: () => {
+          card.style.opacity = '1';
+          draggedThumbSlideId = '';
+        },
+        handleDragOver: (event) => {
+          event.preventDefault();
+          card.classList.add('border-dashed', 'border-[#7028d0]/50');
+        },
+        handleDragLeave: () => {
+          card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+        },
+        handleDrop: (event) => {
+          event.preventDefault();
+          card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+          const targetSlideId = card.dataset && card.dataset.slideId
+            ? card.dataset.slideId
+            : '';
+          if (draggedThumbSlideId && draggedThumbSlideId !== targetSlideId) {
+            reorderSlidesById(draggedThumbSlideId, targetSlideId);
+          }
         }
-      });
+      };
+      card.addEventListener('dragstart', binding.handleDragStart);
+      card.addEventListener('dragend', binding.handleDragEnd);
+      card.addEventListener('dragover', binding.handleDragOver);
+      card.addEventListener('dragleave', binding.handleDragLeave);
+      card.addEventListener('drop', binding.handleDrop);
+      legacyThumbnailDragBindings.set(card, binding);
       return true;
     }
 

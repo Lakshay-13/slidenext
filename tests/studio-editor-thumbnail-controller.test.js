@@ -83,6 +83,29 @@ test('thumbnail controller supports the legacy thumbnail view fallback', () => {
   assert.equal(typeof calls[0].setupDragAndDropThumbnail, 'function');
 });
 
+test('thumbnail controller keeps legacy drag binding idempotent', () => {
+  const card = {
+    dataset: { slideId: 'slide-1' },
+    listeners: [],
+    style: {},
+    classList: {
+      add() {},
+      remove() {}
+    },
+    addEventListener(type, handler) {
+      this.listeners.push({ type, handler });
+    }
+  };
+  const controller = thumbnailController.createStudioEditorThumbnailController({
+    thumbnailView: {},
+    reorderSlidesById() {}
+  });
+
+  assert.equal(controller.attach(card), true);
+  assert.equal(controller.attach(card), true);
+  assert.equal(card.listeners.length, 5);
+});
+
 test('thumbnail controller delegates active-card synchronization to the deck view', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };
