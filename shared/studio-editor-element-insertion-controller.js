@@ -160,6 +160,15 @@
       }
     }
 
+    function notifyInsertedElementVersion(versionLabel) {
+      if (!triggerAutoVersion) return;
+      try {
+        triggerAutoVersion(versionLabel);
+      } catch (err) {
+        // Version notification failure must not undo an already persisted insertion.
+      }
+    }
+
     function buildCanonicalInsertionBuilders() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -333,7 +342,7 @@
           refreshActionState(iframeDoc);
           return false;
         }
-        if (triggerAutoVersion) triggerAutoVersion(versionLabel);
+        notifyInsertedElementVersion(versionLabel);
         return true;
       }
 

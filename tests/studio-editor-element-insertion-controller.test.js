@@ -468,3 +468,19 @@ test('element insertion controller rolls back the legacy fallback when autosave 
   assert.doesNotThrow(() => assert.equal(controller.insert('h2'), false));
   assert.deepEqual(calls, ['remove', ['update', documentRef]]);
 });
+
+test('element insertion controller preserves success when version notification throws', () => {
+  const element = { id: 'element-1' };
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ children: [] }),
+    applyElementInsertion: () => ({ element, transaction: { id: 'tx' } }),
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => true,
+    triggerAutoVersion: () => {
+      throw new Error('version notification unavailable');
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.insert('h2'), true));
+});
