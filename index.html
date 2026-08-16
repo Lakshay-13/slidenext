@@ -1391,6 +1391,7 @@
   <script src="/shared/studio-editor-layout-mode-controller.js"></script>
   <script src="/shared/studio-editor-layout-ui-bridge.js"></script>
   <script src="/shared/studio-editor-layout-ui-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-layout-ui-accessors.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
@@ -3762,15 +3763,19 @@
     const studioEditorLayoutModeController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.layoutModeController
       : null;
-    const studioEditorLayoutUiShellRuntimeApi =
-      typeof SlideNextStudioEditorLayoutUiShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorLayoutUiShellRuntime
+    const studioEditorLayoutUiAccessorsApi =
+      typeof SlideNextStudioEditorLayoutUiAccessors !== 'undefined'
+      ? SlideNextStudioEditorLayoutUiAccessors
       : null;
-    const studioEditorLayoutUiShellRuntime = studioEditorLayoutUiShellRuntimeApi
-      && typeof studioEditorLayoutUiShellRuntimeApi
-        .createStudioEditorLayoutUiShellRuntime === 'function'
-      ? studioEditorLayoutUiShellRuntimeApi
-        .createStudioEditorLayoutUiShellRuntime({
+    const studioEditorLayoutUiAccessors = studioEditorLayoutUiAccessorsApi
+      && typeof studioEditorLayoutUiAccessorsApi
+        .createStudioEditorLayoutUiAccessors === 'function'
+      ? studioEditorLayoutUiAccessorsApi
+        .createStudioEditorLayoutUiAccessors({
+          runtimeApi: typeof SlideNextStudioEditorLayoutUiShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorLayoutUiShellRuntime
+            : null,
+          runtimeOptions: {
           layoutUiBridgeApi: typeof SlideNextStudioEditorLayoutUiBridge !== 'undefined'
             ? SlideNextStudioEditorLayoutUiBridge
             : null,
@@ -3781,7 +3786,11 @@
             : null,
           documentRef: document,
           getDocument: () => getIframeDoc()
+          }
         })
+      : null;
+    const studioEditorLayoutUiShellRuntime = studioEditorLayoutUiAccessors
+      ? studioEditorLayoutUiAccessors.runtime
       : null;
     const studioEditorLayoutUiBridge = studioEditorLayoutUiShellRuntime
       && studioEditorLayoutUiShellRuntime.isAvailable === true

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const layoutUiShellRuntime = require('../shared/studio-editor-layout-ui-shell-runtime.js');
+const layoutUiAccessors = require('../shared/studio-editor-layout-ui-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -44,6 +45,35 @@ test('layout UI shell runtime fails closed when the shared bridge is unavailable
   assert.equal(runtime.layoutUiBridge, null);
 });
 
+test('layout UI accessors compose the shell runtime and preserve its result', () => {
+  const runtime = { isAvailable: true, layoutUiBridge: { name: 'bridge' } };
+  const runtimeOptions = { documentRef: { id: 'editor-document' } };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorLayoutUiShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const accessors = layoutUiAccessors.createStudioEditorLayoutUiAccessors({
+    runtimeApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, runtimeOptions.documentRef);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('layout UI accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = layoutUiAccessors.createStudioEditorLayoutUiAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
+});
+
 test('index routes layout UI bridge construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -53,7 +83,11 @@ test('index routes layout UI bridge construction through the shell runtime', () 
   );
   assert.match(
     fileContent,
-    /studioEditorLayoutUiShellRuntimeApi\s*\.\s*createStudioEditorLayoutUiShellRuntime\(/
+    /<script src="\/shared\/studio-editor-layout-ui-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorLayoutUiAccessorsApi\s*\.\s*createStudioEditorLayoutUiAccessors\(/
   );
   assert.match(
     fileContent,
