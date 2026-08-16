@@ -1378,6 +1378,7 @@
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-interaction-state-coordinator.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
   <script src="/shared/studio-editor-layer-controller.js"></script>
   <script src="/shared/studio-editor-layer-accessors.js"></script>
@@ -9797,6 +9798,41 @@
           documentRef: document
         })
       : null;
+    const studioEditorInteractionStateCoordinatorApi = typeof SlideNextStudioEditorInteractionStateCoordinator !== 'undefined'
+      ? SlideNextStudioEditorInteractionStateCoordinator
+      : null;
+    const studioEditorInteractionStateCoordinator = studioEditorInteractionStateCoordinatorApi
+      && typeof studioEditorInteractionStateCoordinatorApi
+        .createStudioEditorInteractionStateCoordinator === 'function'
+      ? studioEditorInteractionStateCoordinatorApi
+        .createStudioEditorInteractionStateCoordinator({
+          motionStateController: studioEditorMotionStateController,
+          alignmentStateController: studioEditorAlignmentStateController,
+          groupStateController: studioEditorGroupStateController,
+          ungroupStateController: studioEditorUngroupStateController,
+          layerOrderStateController: studioEditorLayerOrderStateController,
+          groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
+            ? SlideNextStudioEditorGroup
+            : null,
+          layerController: typeof SlideNextStudioEditorLayerController !== 'undefined'
+            ? SlideNextStudioEditorLayerController
+            : null,
+          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+            ? SlideNextStudioEditorLayerOrder
+            : null,
+          styleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
+            ? SlideNextStudioEditorStyle
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getNormalizedSlideLayerOrder,
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
+          documentRef: document
+        })
+      : null;
 
     const studioEditorLiveSelectionAdapter = typeof SlideNextStudioEditorLiveSelectionAdapter !== 'undefined'
       && SlideNextStudioEditorLiveSelectionAdapter
@@ -10110,6 +10146,11 @@
     }
 
     function buildMotionSelectionActionState(doc = null) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.buildMotionActionState === 'function') {
+        return studioEditorInteractionStateCoordinator.buildMotionActionState(doc);
+      }
       if (studioEditorMotionStateController
         && typeof studioEditorMotionStateController.buildActionState === 'function') {
         return studioEditorMotionStateController.buildActionState(doc);
@@ -10127,6 +10168,11 @@
     }
 
     function updateMotionActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.syncMotion === 'function') {
+        return studioEditorInteractionStateCoordinator.syncMotion(doc);
+      }
       return studioEditorMotionStateController
         && typeof studioEditorMotionStateController.sync === 'function'
         ? studioEditorMotionStateController.sync(doc)
@@ -10134,6 +10180,11 @@
     }
 
     function buildAlignmentActionState(doc = null) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.buildAlignmentActionState === 'function') {
+        return studioEditorInteractionStateCoordinator.buildAlignmentActionState(doc);
+      }
       if (studioEditorAlignmentStateController
         && typeof studioEditorAlignmentStateController.buildActionState === 'function') {
         return studioEditorAlignmentStateController.buildActionState(doc);
@@ -10148,6 +10199,11 @@
     }
 
     function buildGroupSelectionActionState(doc = null) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.buildGroupActionState === 'function') {
+        return studioEditorInteractionStateCoordinator.buildGroupActionState(doc);
+      }
       if (studioEditorGroupStateController
         && typeof studioEditorGroupStateController.buildActionState === 'function') {
         return studioEditorGroupStateController.buildActionState(doc);
@@ -10168,6 +10224,11 @@
     }
 
     function updateGroupActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.syncGroup === 'function') {
+        return studioEditorInteractionStateCoordinator.syncGroup(doc);
+      }
       const groupApi = typeof SlideNextStudioEditorGroup !== 'undefined'
         ? SlideNextStudioEditorGroup
         : null;
@@ -10203,6 +10264,11 @@
     }
 
     function buildUngroupSelectionActionState(doc = null) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.buildUngroupActionState === 'function') {
+        return studioEditorInteractionStateCoordinator.buildUngroupActionState(doc);
+      }
       if (studioEditorUngroupStateController
         && typeof studioEditorUngroupStateController.buildActionState === 'function') {
         return studioEditorUngroupStateController.buildActionState(doc);
@@ -10216,6 +10282,11 @@
     }
 
     function updateAlignmentActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.syncAlignment === 'function') {
+        return studioEditorInteractionStateCoordinator.syncAlignment(doc);
+      }
       return studioEditorAlignmentStateController
         && typeof studioEditorAlignmentStateController.sync === 'function'
         ? studioEditorAlignmentStateController.sync(doc)
@@ -10261,6 +10332,11 @@
     }
 
     function buildLayerOrderSelectionActionState(elements, options = {}) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.buildLayerOrderActionState === 'function') {
+        return studioEditorInteractionStateCoordinator.buildLayerOrderActionState(elements, options);
+      }
       return studioEditorLayerOrderStateController
         && typeof studioEditorLayerOrderStateController.buildActionState === 'function'
         ? studioEditorLayerOrderStateController.buildActionState(elements, options)
@@ -10277,6 +10353,11 @@
     }
 
     function updateLayerOrderActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorInteractionStateCoordinator !== 'undefined'
+        && studioEditorInteractionStateCoordinator
+        && typeof studioEditorInteractionStateCoordinator.syncLayerOrder === 'function') {
+        return studioEditorInteractionStateCoordinator.syncLayerOrder(doc);
+      }
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;
