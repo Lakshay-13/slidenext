@@ -317,6 +317,50 @@ test('source controller delegates source mode switching and tracks the active mo
   assert.equal(calls[1][1].mode, 'html');
 });
 
+test('source controller binds modal controls without inline handlers', () => {
+  const { calls, controller } = createController();
+  const buttons = {};
+  ['openSourceViewBtn', 'sourceViewHtmlTab', 'sourceViewCssTab', 'applySourceViewBtn', 'closeSourceViewBtn']
+    .forEach((id) => {
+      buttons[id] = {
+        listeners: {},
+        addEventListener(type, handler) {
+          this.listeners[type] = handler;
+        }
+      };
+    });
+  const documentRef = {
+    getElementById(id) {
+      return buttons[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindStudioEditorSourceButtons({ documentRef }),
+    { open: true, html: true, css: true, apply: true, close: true }
+  );
+  Object.values(buttons).forEach((button) => {
+    assert.equal(typeof button.listeners.click, 'function');
+  });
+
+  buttons.sourceViewCssTab.listeners.click();
+  buttons.sourceViewHtmlTab.listeners.click();
+  buttons.openSourceViewBtn.listeners.click();
+  buttons.applySourceViewBtn.listeners.click();
+  buttons.closeSourceViewBtn.listeners.click();
+
+  assert.deepEqual(calls.map(([name]) => name), [
+    'mode',
+    'mode',
+    'open',
+    'apply',
+    'applySourceHtml',
+    'close'
+  ]);
+  assert.equal(calls[0][1].mode, 'css');
+  assert.equal(calls[1][1].mode, 'html');
+});
+
 test('source controller blocks modal operations when deck actions are unavailable', () => {
   const { calls, controller } = createController({
     resolveReadyState: () => ({ canUseDeckActions: false })

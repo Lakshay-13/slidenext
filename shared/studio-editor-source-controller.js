@@ -405,6 +405,28 @@
       return true;
     }
 
+    function bindStudioEditorSourceButtons(options = {}) {
+      const sourceDocument = options.documentRef || documentRef;
+      if (!sourceDocument || typeof sourceDocument.getElementById !== 'function') {
+        return { open: false, html: false, css: false, apply: false, close: false };
+      }
+
+      const bindButton = (id, handler) => {
+        const button = sourceDocument.getElementById(id);
+        if (!button || typeof button.addEventListener !== 'function') return false;
+        button.addEventListener('click', handler);
+        return true;
+      };
+
+      return {
+        open: bindButton('openSourceViewBtn', open),
+        html: bindButton('sourceViewHtmlTab', () => setMode('html')),
+        css: bindButton('sourceViewCssTab', () => setMode('css')),
+        apply: bindButton('applySourceViewBtn', apply),
+        close: bindButton('closeSourceViewBtn', close)
+      };
+    }
+
     return {
       open,
       setMode,
@@ -412,7 +434,8 @@
       apply,
       close,
       reset,
-      resetPresentation
+      resetPresentation,
+      bindStudioEditorSourceButtons
     };
   }
 

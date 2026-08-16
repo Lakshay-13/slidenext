@@ -612,12 +612,12 @@
         </div>
         <div class="flex items-center gap-2">
           <div class="flex items-center gap-1 rounded-lg border border-white/10 bg-black/30 p-1" role="group" aria-label="Source mode">
-            <button id="sourceViewHtmlTab" type="button" onclick="setSourceViewMode('html')" aria-pressed="true" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white">HTML</button>
-            <button id="sourceViewCssTab" type="button" onclick="setSourceViewMode('css')" aria-pressed="false" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">CSS</button>
+            <button id="sourceViewHtmlTab" type="button" aria-pressed="true" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-white/10 text-white">HTML</button>
+            <button id="sourceViewCssTab" type="button" aria-pressed="false" class="rounded px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-500">CSS</button>
           </div>
           <span id="sourceViewModeLabel" class="sr-only">HTML</span>
-          <button id="applySourceViewBtn" onclick="applySourceViewModal()" class="px-3 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all">Apply</button>
-          <button onclick="closeSourceViewModal()" class="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Close</button>
+          <button id="applySourceViewBtn" class="px-3 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] to-[#6030d8] rounded-lg transition-all">Apply</button>
+          <button id="closeSourceViewBtn" class="px-3 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Close</button>
         </div>
       </div>
       <p id="sourceViewError" class="hidden text-xs text-rose-400" role="alert" aria-live="polite"></p>
@@ -707,7 +707,7 @@
           <span>PPTX</span>
         </button>
 
-        <button id="openSourceViewBtn" onclick="openSourceViewModal()" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+        <button id="openSourceViewBtn" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
           <span class="material-symbols-outlined text-[16px]">code</span>
           <span>HTML</span>
         </button>
@@ -3104,6 +3104,10 @@
     const studioEditorSourceController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.sourceController
       : null;
+    if (studioEditorSourceController
+      && typeof studioEditorSourceController.bindStudioEditorSourceButtons === 'function') {
+      studioEditorSourceController.bindStudioEditorSourceButtons({ documentRef: document });
+    }
     const studioEditorSourceRuntime = typeof SlideNextStudioEditorSourceShellRuntime !== 'undefined'
       && SlideNextStudioEditorSourceShellRuntime
       && typeof SlideNextStudioEditorSourceShellRuntime.createStudioEditorSourceShellRuntime === 'function'

@@ -67,6 +67,17 @@ function createSourceGlobalApi(controller) {
   });
 }
 
+test('source view controls use shared controller wiring instead of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  ['openSourceViewBtn', 'sourceViewHtmlTab', 'sourceViewCssTab', 'applySourceViewBtn', 'closeSourceViewBtn']
+    .forEach((id) => {
+      const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+      assert.ok(line, `Missing source control: ${id}`);
+      assert.doesNotMatch(line, /onclick=/);
+    });
+  assert.match(fileContent, /bindStudioEditorSourceButtons\(\{ documentRef: document \}\)/);
+});
+
 test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   const elements = {
     sourceViewModal: {
