@@ -130,6 +130,40 @@ test('toolbar accessors preserve safe fallbacks without controllers', () => {
   assert.equal(accessors.syncIframeTheme(), false);
 });
 
+test('toolbar accessors bind selection controls to editor commands', () => {
+  const controlIds = [
+    'toggleLockSelectionBtn',
+    'toggleVisibilitySelectionBtn',
+    'removeSelectionBtn',
+    'deselectSelectionBtn'
+  ];
+  const controls = Object.fromEntries(controlIds.map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+  const accessors = accessorsApi.createStudioEditorToolbarAccessors({
+    toggleSelectedElementsLockState: () => calls.push('lock'),
+    toggleSelectedElementsVisibility: () => calls.push('visibility'),
+    removeSelectedElement: () => calls.push('remove'),
+    deselectElement: () => calls.push('deselect')
+  });
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    accessors.bindStudioEditorSelectionControls({ documentRef }),
+    Object.fromEntries(controlIds.map((id) => [id, true]))
+  );
+  controlIds.forEach((id) => controls[id].listeners.click());
+  assert.deepEqual(calls, ['lock', 'visibility', 'remove', 'deselect']);
+});
+
 test('toolbar global api preserves the editor shell function names', () => {
   const calls = [];
   const accessors = {
@@ -198,6 +232,16 @@ test('editor loads toolbar accessors after the theme runtime', () => {
     assert.ok(line, `Missing layout control: ${id}`);
     assert.doesNotMatch(line, /onclick=/);
   });
+  [
+    'toggleLockSelectionBtn',
+    'toggleVisibilitySelectionBtn',
+    'removeSelectionBtn',
+    'deselectSelectionBtn'
+  ].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing selection control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
 
   assert.match(
     fileContent,
@@ -205,6 +249,7 @@ test('editor loads toolbar accessors after the theme runtime', () => {
   );
   assert.match(fileContent, /createStudioEditorToolbarAccessors\(/);
   assert.match(fileContent, /bindStudioEditorLayoutControls\(\{ documentRef: document \}\)/);
+  assert.match(fileContent, /bindStudioEditorSelectionControls\(\{ documentRef: document \}\)/);
   assert.match(fileContent, /studioEditorToolbarAccessors/);
   assert.match(fileContent, /createStudioEditorToolbarGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorToolbarGlobalApi\)/);

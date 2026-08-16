@@ -16,11 +16,27 @@
     const arrangeElementLayer = typeof options.arrangeElementLayer === 'function'
       ? options.arrangeElementLayer
       : null;
+    const toggleSelectedElementsLockState = typeof options.toggleSelectedElementsLockState === 'function'
+      ? options.toggleSelectedElementsLockState
+      : null;
+    const toggleSelectedElementsVisibility = typeof options.toggleSelectedElementsVisibility === 'function'
+      ? options.toggleSelectedElementsVisibility
+      : null;
+    const removeSelectedElement = typeof options.removeSelectedElement === 'function'
+      ? options.removeSelectedElement
+      : null;
+    const deselectElement = typeof options.deselectElement === 'function'
+      ? options.deselectElement
+      : null;
 
     function call(controller, methodName, fallback, ...args) {
       return controller && typeof controller[methodName] === 'function'
         ? controller[methodName](...args)
         : fallback;
+    }
+
+    function callAction(action, fallback, ...args) {
+      return typeof action === 'function' ? action(...args) : fallback;
     }
 
     return {
@@ -37,6 +53,10 @@
       ungroupSelectedElements: () => call(groupController, 'ungroup', false),
       nudgeSelectedElements: (dx, dy) => call(nudgeController, 'nudge', false, dx, dy),
       arrangeElementLayer: (action) => arrangeElementLayer ? arrangeElementLayer(action) : false,
+      toggleSelectedElementsLockState: (...args) => callAction(toggleSelectedElementsLockState, false, ...args),
+      toggleSelectedElementsVisibility: (...args) => callAction(toggleSelectedElementsVisibility, false, ...args),
+      removeSelectedElement: (...args) => callAction(removeSelectedElement, false, ...args),
+      deselectElement: (...args) => callAction(deselectElement, false, ...args),
       toggleGlobalTheme: () => call(themeController, 'toggleGlobalTheme', false),
       syncIframeTheme: () => call(themeController, 'syncIframeTheme', false),
       bindStudioEditorLayoutControls: (options = {}) => {
@@ -64,6 +84,28 @@
           ['arrangeLayerForwardBtn', () => arrangeElementLayer ? arrangeElementLayer('forward') : false],
           ['arrangeLayerBackwardBtn', () => arrangeElementLayer ? arrangeElementLayer('backward') : false],
           ['toggleGridSnapBtn', () => call(gridSnapController, 'toggle', false)]
+        ];
+        buttonHandlers.forEach(([id, handler]) => {
+          const button = documentRef.getElementById(id);
+          if (!button || typeof button.addEventListener !== 'function') {
+            bindings[id] = false;
+            return;
+          }
+          button.addEventListener('click', handler);
+          bindings[id] = true;
+        });
+        return bindings;
+      },
+      bindStudioEditorSelectionControls: (options = {}) => {
+        const documentRef = options.documentRef || (typeof document !== 'undefined' ? document : null);
+        if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+        const bindings = {};
+        const buttonHandlers = [
+          ['toggleLockSelectionBtn', () => callAction(toggleSelectedElementsLockState, false)],
+          ['toggleVisibilitySelectionBtn', () => callAction(toggleSelectedElementsVisibility, false)],
+          ['removeSelectionBtn', () => callAction(removeSelectedElement, false)],
+          ['deselectSelectionBtn', () => callAction(deselectElement, false)]
         ];
         buttonHandlers.forEach(([id, handler]) => {
           const button = documentRef.getElementById(id);

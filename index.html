@@ -1304,23 +1304,23 @@
             </button>
           </div>
 
-          <button id="toggleLockSelectionBtn" onclick="toggleSelectedElementsLockState()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+          <button id="toggleLockSelectionBtn" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
             <span id="toggleLockSelectionIcon" class="material-symbols-outlined text-[16px]">lock</span>
             <span id="toggleLockSelectionLabel">Lock Selected</span>
           </button>
 
-          <button id="toggleVisibilitySelectionBtn" onclick="toggleSelectedElementsVisibility()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+          <button id="toggleVisibilitySelectionBtn" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
             <span id="toggleVisibilitySelectionIcon" class="material-symbols-outlined text-[16px]">visibility_off</span>
             <span id="toggleVisibilitySelectionLabel">Hide Selected</span>
           </button>
 
           <!-- Danger actions: Remove element -->
           <div class="flex flex-col gap-2">
-            <button id="removeSelectionBtn" onclick="removeSelectedElement()" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/10">
+            <button id="removeSelectionBtn" class="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500/10">
               <span class="material-symbols-outlined text-[16px]">delete</span>
               Delete Selected
             </button>
-            <button onclick="deselectElement()" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-400 text-xs font-mono rounded-lg flex items-center justify-center gap-1.5 transition-all">
+          <button id="deselectSelectionBtn" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-400 text-xs font-mono rounded-lg flex items-center justify-center gap-1.5 transition-all">
               Clear Selection
             </button>
           </div>
@@ -6674,12 +6674,20 @@
           alignmentController: studioEditorAlignmentController,
           groupController: studioEditorGroupController,
           nudgeController: studioEditorNudgeController,
-          arrangeElementLayer: (...args) => arrangeElementLayer(...args)
+          arrangeElementLayer: (...args) => arrangeElementLayer(...args),
+          toggleSelectedElementsLockState: (...args) => toggleSelectedElementsLockState(...args),
+          toggleSelectedElementsVisibility: (...args) => toggleSelectedElementsVisibility(...args),
+          removeSelectedElement: (...args) => removeSelectedElement(...args),
+          deselectElement: (...args) => deselectElement(...args)
         })
       : null;
     if (studioEditorToolbarAccessors
       && typeof studioEditorToolbarAccessors.bindStudioEditorLayoutControls === 'function') {
       studioEditorToolbarAccessors.bindStudioEditorLayoutControls({ documentRef: document });
+    }
+    if (studioEditorToolbarAccessors
+      && typeof studioEditorToolbarAccessors.bindStudioEditorSelectionControls === 'function') {
+      studioEditorToolbarAccessors.bindStudioEditorSelectionControls({ documentRef: document });
     }
     const studioEditorToolbarGlobalApi = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
       && SlideNextStudioEditorToolbarAccessors
@@ -6692,7 +6700,11 @@
               alignmentController: studioEditorAlignmentController,
               groupController: studioEditorGroupController,
               nudgeController: studioEditorNudgeController,
-              arrangeElementLayer: (...args) => arrangeElementLayer(...args)
+              arrangeElementLayer: (...args) => arrangeElementLayer(...args),
+              toggleSelectedElementsLockState: (...args) => toggleSelectedElementsLockState(...args),
+              toggleSelectedElementsVisibility: (...args) => toggleSelectedElementsVisibility(...args),
+              removeSelectedElement: (...args) => removeSelectedElement(...args),
+              deselectElement: (...args) => deselectElement(...args)
             })
         })
       : {};
