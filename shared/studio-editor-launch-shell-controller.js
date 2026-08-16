@@ -7,6 +7,23 @@
     root.SlideNextStudioEditorLaunchShellController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  function bindStudioEditorShellControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const closeStudioEditor = typeof options.closeStudioEditor === 'function'
+      ? options.closeStudioEditor
+      : null;
+    const button = documentRef.getElementById('closeStudioEditorBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { closeStudioEditorBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (closeStudioEditor) closeStudioEditor();
+    });
+    return { closeStudioEditorBtn: true };
+  }
+
   function createStudioEditorLaunchShellController(options = {}) {
     const getPersistenceApi = typeof options.getPersistenceApi === 'function'
       ? options.getPersistenceApi
@@ -237,6 +254,7 @@
   }
 
   return {
+    bindStudioEditorShellControls,
     createStudioEditorLaunchShellController
   };
 });

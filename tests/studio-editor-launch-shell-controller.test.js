@@ -35,6 +35,32 @@ function createElements() {
   };
 }
 
+test('launch shell binds the editor close control', () => {
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    launchShellController.bindStudioEditorShellControls({
+      documentRef: {
+        getElementById(id) {
+          return id === 'closeStudioEditorBtn' ? button : null;
+        }
+      },
+      closeStudioEditor() {
+        calls.push('close');
+      }
+    }),
+    { closeStudioEditorBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['close']);
+});
+
 test('launch shell prepares the session and delegates the live token to the frame controller', async () => {
   const elements = createElements();
   const calls = [];

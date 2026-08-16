@@ -632,7 +632,7 @@
     <header class="h-16 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between px-6 z-20">
       <!-- Left: Navigation / Title -->
       <div class="flex items-center gap-4">
-        <button onclick="closeStudioEditor()" class="p-2 hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center gap-1 text-xs font-medium border border-white/5">
+        <button id="closeStudioEditorBtn" class="p-2 hover:bg-white/5 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center gap-1 text-xs font-medium border border-white/5">
           <span class="material-symbols-outlined text-[16px]">arrow_back</span> Dashboard
         </button>
         <div class="h-6 w-[1px] bg-white/10"></div>
@@ -7806,6 +7806,16 @@
         && typeof studioEditorLaunchShellController.close === 'function'
         ? studioEditorLaunchShellController.close()
         : false;
+    }
+    const studioEditorLaunchShellView = typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
+      ? SlideNextStudioEditorLaunchShellController
+      : null;
+    if (studioEditorLaunchShellView
+      && typeof studioEditorLaunchShellView.bindStudioEditorShellControls === 'function') {
+      studioEditorLaunchShellView.bindStudioEditorShellControls({
+        documentRef: document,
+        closeStudioEditor
+      });
     }
 
     // Initialize Frame Hooks

@@ -28,6 +28,8 @@ test('editor and preview iframes have accessible names', () => {
     /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/
   );
   assert.match(fileContent, /bindStudioEditorFrameLoadingControls\(\{\s*documentRef: document,/);
+  assert.doesNotMatch(fileContent, /id="closeStudioEditorBtn"[^>]*onclick=/);
+  assert.match(fileContent, /bindStudioEditorShellControls\(\{\s*documentRef: document,/);
 });
 
 test('editor routes session updates through the shared session controller', () => {
