@@ -7,6 +7,8 @@
     root.SlideNextStudioEditorThumbnailView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  const thumbnailDragBindings = new WeakMap();
+
   function setStudioThumbnailSlideCount(options = {}) {
     const documentRef = options.documentRef;
     const slideCountLabel = documentRef && typeof documentRef.getElementById === 'function'
@@ -185,35 +187,51 @@
       ? options.onReorder
       : null;
 
-    card.addEventListener('dragstart', () => {
-      setDraggedSlideId(getSlideId(card));
-      card.style.opacity = '0.4';
-    });
+    let binding = thumbnailDragBindings.get(card);
+    if (!binding) {
+      binding = {
+        getSlideId,
+        getDraggedSlideId,
+        setDraggedSlideId,
+        onReorder
+      };
+      binding.handleDragStart = () => {
+        binding.setDraggedSlideId(binding.getSlideId(card));
+        card.style.opacity = '0.4';
+      };
+      binding.handleDragEnd = () => {
+        card.style.opacity = '1';
+        binding.setDraggedSlideId('');
+      };
+      binding.handleDragOver = (event) => {
+        event.preventDefault();
+        card.classList.add('border-dashed', 'border-[#7028d0]/50');
+      };
+      binding.handleDragLeave = () => {
+        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
+      };
+      binding.handleDrop = (event) => {
+        event.preventDefault();
+        card.classList.remove('border-dashed', 'border-[#7028d0]/50');
 
-    card.addEventListener('dragend', () => {
-      card.style.opacity = '1';
-      setDraggedSlideId('');
-    });
-
-    card.addEventListener('dragover', (event) => {
-      event.preventDefault();
-      card.classList.add('border-dashed', 'border-[#7028d0]/50');
-    });
-
-    card.addEventListener('dragleave', () => {
-      card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-    });
-
-    card.addEventListener('drop', (event) => {
-      event.preventDefault();
-      card.classList.remove('border-dashed', 'border-[#7028d0]/50');
-
-      const draggedSlideId = getDraggedSlideId();
-      const targetSlideId = getSlideId(card);
-      if (onReorder && draggedSlideId && draggedSlideId !== targetSlideId) {
-        onReorder(draggedSlideId, targetSlideId);
-      }
-    });
+        const draggedSlideId = binding.getDraggedSlideId();
+        const targetSlideId = binding.getSlideId(card);
+        if (binding.onReorder && draggedSlideId && draggedSlideId !== targetSlideId) {
+          binding.onReorder(draggedSlideId, targetSlideId);
+        }
+      };
+      card.addEventListener('dragstart', binding.handleDragStart);
+      card.addEventListener('dragend', binding.handleDragEnd);
+      card.addEventListener('dragover', binding.handleDragOver);
+      card.addEventListener('dragleave', binding.handleDragLeave);
+      card.addEventListener('drop', binding.handleDrop);
+      thumbnailDragBindings.set(card, binding);
+    } else {
+      binding.getSlideId = getSlideId;
+      binding.getDraggedSlideId = getDraggedSlideId;
+      binding.setDraggedSlideId = setDraggedSlideId;
+      binding.onReorder = onReorder;
+    }
 
     return true;
   }

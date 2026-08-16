@@ -355,6 +355,42 @@ test('attachStudioThumbnailDragAndDrop preserves thumbnail drag state and reorde
   assert.equal(card.style.opacity, '1');
 });
 
+test('attachStudioThumbnailDragAndDrop replaces callbacks without duplicate listeners', () => {
+  const card = createThumbCard();
+  card.dataset.slideId = 'slide-2';
+  card.classList = {
+    add() {},
+    remove() {}
+  };
+  let draggedSlideId = '';
+  const calls = [];
+  const options = {
+    getDraggedSlideId: () => draggedSlideId,
+    setDraggedSlideId(nextSlideId) {
+      draggedSlideId = nextSlideId;
+    },
+    onReorder() {
+      calls.push('old');
+    }
+  };
+
+  assert.equal(thumbnailView.attachStudioThumbnailDragAndDrop(card, options), true);
+  assert.equal(thumbnailView.attachStudioThumbnailDragAndDrop(card, {
+    ...options,
+    onReorder(sourceSlideId, targetSlideId) {
+      calls.push([sourceSlideId, targetSlideId]);
+    }
+  }), true);
+  assert.equal(card.listeners.length, 5);
+
+  const getHandler = (type) => card.listeners.find((listener) => listener.type === type).handler;
+  getHandler('dragstart')({});
+  card.dataset.slideId = 'slide-3';
+  getHandler('drop')({ preventDefault() {} });
+
+  assert.deepEqual(calls, [['slide-2', 'slide-3']]);
+});
+
 test('setupDragAndDropThumbnail delegates event binding to the shared thumbnail view', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const setupSource = extractFunctionSource(
