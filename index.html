@@ -1827,6 +1827,7 @@
   <script src="/shared/studio-editor-source-accessors.js"></script>
   <script src="/shared/studio-editor-source-runtime.js"></script>
   <script src="/shared/studio-editor-source-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-source-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
@@ -3228,49 +3229,59 @@
       && typeof studioEditorSourceController.bindStudioEditorSourceButtons === 'function') {
       studioEditorSourceController.bindStudioEditorSourceButtons({ documentRef: document });
     }
-    const studioEditorSourceRuntime = typeof SlideNextStudioEditorSourceShellRuntime !== 'undefined'
-      && SlideNextStudioEditorSourceShellRuntime
-      && typeof SlideNextStudioEditorSourceShellRuntime.createStudioEditorSourceShellRuntime === 'function'
-      ? SlideNextStudioEditorSourceShellRuntime.createStudioEditorSourceShellRuntime({
+    const studioEditorSourceRuntimeAccessorsApi = typeof SlideNextStudioEditorSourceRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorSourceRuntimeAccessors
+      : null;
+    const studioEditorSourceRuntimeAccessors = studioEditorSourceRuntimeAccessorsApi
+      && typeof studioEditorSourceRuntimeAccessorsApi.createStudioEditorSourceRuntimeAccessors === 'function'
+      ? studioEditorSourceRuntimeAccessorsApi.createStudioEditorSourceRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorSourceShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorSourceShellRuntime
+            : null,
           sourceRuntimeApi: typeof SlideNextStudioEditorSourceRuntime !== 'undefined'
             ? SlideNextStudioEditorSourceRuntime
             : null,
-          sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
-            ? SlideNextStudioEditorSourceController
-            : null,
-          sourceAccessorsApi: typeof SlideNextStudioEditorSourceAccessors !== 'undefined'
-            ? SlideNextStudioEditorSourceAccessors
-            : null,
-          sourceController: studioEditorSourceController,
-          buildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
-          createDeckViewHtmlOptions: (options) => createEditorDeckViewHtmlOptions(options),
-          resolveBuildStudioSourceHtml: () => resolveStudioDeckViewMethod('buildStudioSourceHtml'),
-          resolveBuildDeckSourceHtml: () => resolveDeckHtmlMethod('buildDeckSourceHtml'),
-          getCurrentDocument: () => getIframeDoc(),
-          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(sourceDoc)
-            : buildEditorCanonicalDeck(sourceDoc),
-          buildSourceHtml: () => buildEditorSourceHtml(),
-          extractSourceCss: (sourceHtml) => {
-            const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
-              ? SlideNextStudioEditorSourceMode
-              : null;
-            return sourceModeApi && typeof sourceModeApi.extractStudioSourceCss === 'function'
-              ? sourceModeApi.extractStudioSourceCss(sourceHtml)
-              : '';
-          },
-          resolveReplaceSourceCss: () => {
-            const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
-              ? SlideNextStudioEditorSourceMode
-              : null;
-            return sourceModeApi && typeof sourceModeApi.replaceStudioSourceCss === 'function'
-              ? sourceModeApi.replaceStudioSourceCss
-              : null;
-          },
-          applySourceHtml: (sourceHtml) => studioEditorSourceController
-            ? studioEditorSourceController.applySourceHtml(sourceHtml)
-            : { success: false, error: 'Source editor is unavailable' }
+          runtimeOptions: {
+            sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
+              ? SlideNextStudioEditorSourceController
+              : null,
+            sourceAccessorsApi: typeof SlideNextStudioEditorSourceAccessors !== 'undefined'
+              ? SlideNextStudioEditorSourceAccessors
+              : null,
+            sourceController: studioEditorSourceController,
+            buildDeckViewHtml: (doc, options) => buildEditorDeckViewHtml(doc, options),
+            createDeckViewHtmlOptions: (options) => createEditorDeckViewHtmlOptions(options),
+            resolveBuildStudioSourceHtml: () => resolveStudioDeckViewMethod('buildStudioSourceHtml'),
+            resolveBuildDeckSourceHtml: () => resolveDeckHtmlMethod('buildDeckSourceHtml'),
+            getCurrentDocument: () => getIframeDoc(),
+            resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(sourceDoc)
+              : buildEditorCanonicalDeck(sourceDoc),
+            buildSourceHtml: () => buildEditorSourceHtml(),
+            extractSourceCss: (sourceHtml) => {
+              const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+                ? SlideNextStudioEditorSourceMode
+                : null;
+              return sourceModeApi && typeof sourceModeApi.extractStudioSourceCss === 'function'
+                ? sourceModeApi.extractStudioSourceCss(sourceHtml)
+                : '';
+            },
+            resolveReplaceSourceCss: () => {
+              const sourceModeApi = typeof SlideNextStudioEditorSourceMode !== 'undefined'
+                ? SlideNextStudioEditorSourceMode
+                : null;
+              return sourceModeApi && typeof sourceModeApi.replaceStudioSourceCss === 'function'
+                ? sourceModeApi.replaceStudioSourceCss
+                : null;
+            },
+            applySourceHtml: (sourceHtml) => studioEditorSourceController
+              ? studioEditorSourceController.applySourceHtml(sourceHtml)
+              : { success: false, error: 'Source editor is unavailable' }
+          }
         })
+      : null;
+    const studioEditorSourceRuntime = studioEditorSourceRuntimeAccessors
+      ? studioEditorSourceRuntimeAccessors.runtime
       : null;
     const studioEditorSourceAccessors = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceAccessors

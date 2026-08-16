@@ -210,7 +210,11 @@ test('editor loads the source runtime after source adapters', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-source-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorSourceShellRuntime\(/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-source-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorSourceRuntimeAccessors\(/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorSourceController\.createStudioEditorSource(CssResolver|CssApplier|HtmlBuilder)\(/

@@ -2,6 +2,39 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-source-shell-runtime.js');
+const sourceRuntimeAccessors = require('../shared/studio-editor-source-runtime-accessors.js');
+
+test('source runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'source-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorSourceShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const sourceRuntimeApi = { name: 'source-runtime' };
+  const callback = () => {};
+
+  const result = sourceRuntimeAccessors.createStudioEditorSourceRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    sourceRuntimeApi,
+    runtimeOptions: { buildSourceHtml: callback }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.sourceRuntimeApi, sourceRuntimeApi);
+  assert.equal(receivedOptions.buildSourceHtml, callback);
+});
+
+test('source runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    sourceRuntimeAccessors.createStudioEditorSourceRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('source shell runtime resolves adapter dependencies and preserves callbacks', () => {
   let receivedOptions = null;
