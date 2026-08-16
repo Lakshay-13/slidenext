@@ -245,11 +245,20 @@
       }
     }
 
+    function refreshActionState() {
+      if (!updateGroupActionState) return;
+      try {
+        updateGroupActionState();
+      } catch (error) {
+        // A toolbar refresh failure must not change the group result.
+      }
+    }
+
     function group() {
       if (!buildGroupSelectionActionState) return false;
       const groupActionState = buildGroupSelectionActionState();
       if (!groupActionState.canGroup) {
-        if (updateGroupActionState) updateGroupActionState();
+        refreshActionState();
         return false;
       }
       if (!finalizeDeckMutation) return false;
@@ -363,7 +372,7 @@
       if (!buildUngroupSelectionActionState) return false;
       const ungroupActionState = buildUngroupSelectionActionState();
       if (!ungroupActionState.canUngroup) {
-        if (updateGroupActionState) updateGroupActionState();
+        refreshActionState();
         return false;
       }
       if (!finalizeDeckMutation) return false;

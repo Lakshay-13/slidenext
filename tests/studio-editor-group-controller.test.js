@@ -368,6 +368,21 @@ test('group controller refreshes state and fails closed when actions are unavail
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('group controller preserves the result when action-state refresh throws', () => {
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState: () => ({ canGroup: false }),
+    buildUngroupSelectionActionState: () => ({ canUngroup: false }),
+    updateGroupActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.group(), false);
+    assert.equal(controller.ungroup(), false);
+  });
+});
+
 test('group and ungroup controllers fail closed before mutation when finalization is unavailable', () => {
   let groupCalls = 0;
   let ungroupCalls = 0;
