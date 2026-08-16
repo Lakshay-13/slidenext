@@ -70,6 +70,7 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : (value) => !!value && typeof value === 'object' && Array.isArray(value.slides);
+    const previewButtonBindings = new WeakMap();
 
     function createStudioEditorPreviewFallbackHtmlTransformer(transformOptions = {}) {
       const injectBaseHrefIntoHtml = typeof transformOptions.injectBaseHrefIntoHtml === 'function'
@@ -249,7 +250,9 @@
       const bindButton = (id, handler) => {
         const button = previewDocument.getElementById(id);
         if (!button || typeof button.addEventListener !== 'function') return false;
+        if (previewButtonBindings.has(button)) return true;
         button.addEventListener('click', handler);
+        previewButtonBindings.set(button, handler);
         return true;
       };
 

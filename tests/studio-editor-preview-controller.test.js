@@ -118,6 +118,39 @@ test('preview controller binds presentation chrome without inline handlers', () 
   }]]);
 });
 
+test('preview controller binding is idempotent for an existing document', () => {
+  const buttons = {};
+  ['launchPreviewBtn', 'closePresentationBtn', 'toggleIframeFullscreenBtn'].forEach((id) => {
+    buttons[id] = {
+      listeners: [],
+      addEventListener(type, handler) {
+        this.listeners.push({ type, handler });
+      }
+    };
+  });
+  const documentRef = {
+    getElementById(id) {
+      return buttons[id] || null;
+    }
+  };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation() { return true; },
+      resetStudioPresentationUiState() {},
+      toggleStudioPresentationFullscreen() { return true; }
+    },
+    resolveReadyState: () => ({ canLaunchPreview: true }),
+    resolvePresentationUrl: () => '/presentations/demo/index.html'
+  });
+
+  controller.bindStudioEditorPreviewButtons({ documentRef });
+  controller.bindStudioEditorPreviewButtons({ documentRef });
+
+  Object.values(buttons).forEach((button) => {
+    assert.equal(button.listeners.length, 1);
+  });
+});
+
 test('opens the presentation modal through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };
