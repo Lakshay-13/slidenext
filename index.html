@@ -1408,6 +1408,7 @@
   <script src="/shared/studio-editor-clipboard-payload-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-payload-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-shell-runtime.js"></script>
@@ -4384,34 +4385,44 @@
         })
       : {};
     Object.assign(globalThis, studioEditorClipboardGlobalApi);
-    const studioEditorClipboardPayloadRuntime = typeof SlideNextStudioEditorClipboardPayloadShellRuntime !== 'undefined'
-      && SlideNextStudioEditorClipboardPayloadShellRuntime
-      && typeof SlideNextStudioEditorClipboardPayloadShellRuntime.createStudioEditorClipboardPayloadShellRuntime === 'function'
-      ? SlideNextStudioEditorClipboardPayloadShellRuntime.createStudioEditorClipboardPayloadShellRuntime({
+    const studioEditorClipboardPayloadRuntimeAccessorsApi = typeof SlideNextStudioEditorClipboardPayloadRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorClipboardPayloadRuntimeAccessors
+      : null;
+    const studioEditorClipboardPayloadRuntimeAccessors = studioEditorClipboardPayloadRuntimeAccessorsApi
+      && typeof studioEditorClipboardPayloadRuntimeAccessorsApi.createStudioEditorClipboardPayloadRuntimeAccessors === 'function'
+      ? studioEditorClipboardPayloadRuntimeAccessorsApi.createStudioEditorClipboardPayloadRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorClipboardPayloadShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorClipboardPayloadShellRuntime
+            : null,
           payloadRuntimeApi: typeof SlideNextStudioEditorClipboardPayloadRuntime !== 'undefined'
             ? SlideNextStudioEditorClipboardPayloadRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
-            ? SlideNextStudioEditorClipboardPayloadController
-            : null,
-          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-            ? SlideNextStudioEditorClipboard
-            : null,
-          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-            ? SlideNextStudioEditorDom
-            : null,
-          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
-            ? SlideNextStudioEditorTransform
-            : null,
-          getIframeDoc: () => getIframeDoc(),
-          getActiveSlide: (doc) => getActiveSlide(doc),
-          getSlideMetrics: (slide) => getSlideMetrics(slide),
-          getNormalizedSlideLayerOrder: (slide) => getNormalizedSlideLayerOrder(slide),
-          sanitizeElement: (element) => sanitizeDuplicatedSubtree(element),
-          getRectOnSlide: (...args) => getRectOnSlide(...args),
-          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
-          buildPositionedLayoutItem: buildEditorPositionedLayoutItem
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
+              ? SlideNextStudioEditorClipboardPayloadController
+              : null,
+            clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+              ? SlideNextStudioEditorClipboard
+              : null,
+            domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+              ? SlideNextStudioEditorDom
+              : null,
+            transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+              ? SlideNextStudioEditorTransform
+              : null,
+            getIframeDoc: () => getIframeDoc(),
+            getActiveSlide: (doc) => getActiveSlide(doc),
+            getSlideMetrics: (slide) => getSlideMetrics(slide),
+            getNormalizedSlideLayerOrder: (slide) => getNormalizedSlideLayerOrder(slide),
+            sanitizeElement: (element) => sanitizeDuplicatedSubtree(element),
+            getRectOnSlide: (...args) => getRectOnSlide(...args),
+            getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
+            buildPositionedLayoutItem: buildEditorPositionedLayoutItem
+          }
         })
+      : null;
+    const studioEditorClipboardPayloadRuntime = studioEditorClipboardPayloadRuntimeAccessors
+      ? studioEditorClipboardPayloadRuntimeAccessors.runtime
       : null;
     const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
       ? studioEditorClipboardPayloadRuntime.payloadController
