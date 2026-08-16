@@ -1437,6 +1437,7 @@
   <script src="/shared/studio-editor-lock-visibility-controller.js"></script>
   <script src="/shared/studio-editor-lock-visibility-runtime.js"></script>
   <script src="/shared/studio-editor-lock-visibility-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-lock-visibility-accessors.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
   <script src="/shared/studio-editor-layout-conversion.js"></script>
@@ -3830,13 +3831,22 @@
       studioEditorElementLockWriter(element, locked);
     }
 
-    const studioEditorLockVisibilityRuntime = typeof SlideNextStudioEditorLockVisibilityShellRuntime !== 'undefined'
-      && SlideNextStudioEditorLockVisibilityShellRuntime
-      && typeof SlideNextStudioEditorLockVisibilityShellRuntime.createStudioEditorLockVisibilityShellRuntime === 'function'
-      ? SlideNextStudioEditorLockVisibilityShellRuntime.createStudioEditorLockVisibilityShellRuntime({
+    const studioEditorLockVisibilityAccessorsApi =
+      typeof SlideNextStudioEditorLockVisibilityAccessors !== 'undefined'
+      ? SlideNextStudioEditorLockVisibilityAccessors
+      : null;
+    const studioEditorLockVisibilityAccessors = studioEditorLockVisibilityAccessorsApi
+      && typeof studioEditorLockVisibilityAccessorsApi
+        .createStudioEditorLockVisibilityAccessors === 'function'
+      ? studioEditorLockVisibilityAccessorsApi
+        .createStudioEditorLockVisibilityAccessors({
+          runtimeApi: typeof SlideNextStudioEditorLockVisibilityShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorLockVisibilityShellRuntime
+            : null,
           lockVisibilityRuntimeApi: typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
             ? SlideNextStudioEditorLockVisibilityRuntime
             : null,
+          runtimeOptions: {
           controllerApi: typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
             ? SlideNextStudioEditorLockVisibilityController
             : null,
@@ -3891,7 +3901,11 @@
           ),
           finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
           rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
+          }
         })
+      : null;
+    const studioEditorLockVisibilityRuntime = studioEditorLockVisibilityAccessors
+      ? studioEditorLockVisibilityAccessors.runtime
       : null;
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
       ? studioEditorLockVisibilityRuntime.lockVisibilityController

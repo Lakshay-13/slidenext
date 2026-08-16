@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-lock-visibility-shell-runtime.js');
+const lockVisibilityAccessors = require('../shared/studio-editor-lock-visibility-accessors.js');
 
 test('lock visibility shell runtime resolves controller and canonical dependencies', () => {
   let receivedOptions = null;
@@ -91,4 +92,36 @@ test('lock visibility shell runtime safely returns null without a runtime factor
     shellRuntime.createStudioEditorLockVisibilityShellRuntime({ lockVisibilityRuntimeApi: {} }),
     null
   );
+});
+
+test('lock visibility accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { lockVisibilityController: { name: 'lock-visibility' } };
+  const runtimeOptions = { getSelectedElements: () => [] };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorLockVisibilityShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const lockVisibilityRuntimeApi = { name: 'runtime' };
+  const accessors = lockVisibilityAccessors.createStudioEditorLockVisibilityAccessors({
+    runtimeApi,
+    lockVisibilityRuntimeApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].lockVisibilityRuntimeApi, lockVisibilityRuntimeApi);
+  assert.equal(calls[0].getSelectedElements, runtimeOptions.getSelectedElements);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('lock visibility accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = lockVisibilityAccessors.createStudioEditorLockVisibilityAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });

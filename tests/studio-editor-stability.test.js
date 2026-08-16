@@ -358,7 +358,7 @@ test('lock and visibility wiring prefers live canonical state and keeps a legacy
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorLockVisibilityRuntime =',
+    'const studioEditorLockVisibilityAccessorsApi =',
     'const studioEditorLockVisibilityController ='
   );
 
