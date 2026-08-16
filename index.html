@@ -756,7 +756,7 @@
           <div class="mt-3 pt-3 border-t border-white/5 flex flex-col gap-2">
             <label for="templateNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Slide Template</label>
             <input id="templateNameInput" type="text" value="Slide Template" placeholder="Name this slide" disabled class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
-            <button id="saveActiveSlideTemplateBtn" onclick="saveActiveSlideAsTemplate()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="saveActiveSlideTemplateBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0]">view_quilt</span>
               Save Slide Template
             </button>
@@ -4432,6 +4432,16 @@
     const studioEditorTemplateController = studioEditorTemplateRuntime
       ? studioEditorTemplateRuntime.templateController
       : null;
+    const studioEditorTemplateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
+      ? SlideNextStudioEditorTemplateView
+      : null;
+    if (studioEditorTemplateView
+      && typeof studioEditorTemplateView.bindStudioEditorTemplateControls === 'function') {
+      studioEditorTemplateView.bindStudioEditorTemplateControls({
+        documentRef: document,
+        saveActiveSlideAsTemplate
+      });
+    }
     const studioEditorMasterSlideRuntime = typeof SlideNextStudioEditorMasterSlideShellRuntime !== 'undefined'
       && SlideNextStudioEditorMasterSlideShellRuntime
       && typeof SlideNextStudioEditorMasterSlideShellRuntime.createStudioEditorMasterSlideShellRuntime === 'function'

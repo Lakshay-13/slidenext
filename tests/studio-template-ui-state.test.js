@@ -150,6 +150,38 @@ test('shared template view wires insert and remove actions to injected callbacks
   assert.deepEqual(calls, [['insert', 'hero'], ['remove', 'hero']]);
 });
 
+test('shared template view binds the save template control', () => {
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    templateView.bindStudioEditorTemplateControls({
+      documentRef: {
+        getElementById(id) {
+          return id === 'saveActiveSlideTemplateBtn' ? button : null;
+        }
+      },
+      saveActiveSlideAsTemplate() {
+        calls.push('save-template');
+      }
+    }),
+    { saveActiveSlideTemplateBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['save-template']);
+});
+
+test('index keeps the template save control free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="saveActiveSlideTemplateBtn"[^>]*onclick=/);
+});
+
 test('shared template state sync updates template controls before rendering the library', () => {
   const controls = {
     saveActiveSlideTemplateBtn: { disabled: false },

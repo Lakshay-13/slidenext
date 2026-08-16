@@ -73,6 +73,23 @@
     });
   }
 
+  function bindStudioEditorTemplateControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const saveActiveSlideAsTemplate = typeof options.saveActiveSlideAsTemplate === 'function'
+      ? options.saveActiveSlideAsTemplate
+      : null;
+    const button = documentRef.getElementById('saveActiveSlideTemplateBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { saveActiveSlideTemplateBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (saveActiveSlideAsTemplate) saveActiveSlideAsTemplate();
+    });
+    return { saveActiveSlideTemplateBtn: true };
+  }
+
   function createStudioTemplateStateSync(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -101,6 +118,7 @@
   return {
     renderStudioTemplateLibrary,
     syncStudioTemplateState,
+    bindStudioEditorTemplateControls,
     createStudioTemplateStateSync
   };
 });
