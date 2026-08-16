@@ -30,6 +30,35 @@ test('main editor script parses without duplicate top-level bindings', () => {
   );
 });
 
+test('insertion toolbar controls delegate through the shared controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const insertionControlIds = [
+    'toolbarInsertHeadingBtn',
+    'toolbarInsertParagraphBtn',
+    'toolbarInsertImageBtn',
+    'toolbarInsertShapeBtn',
+    'insertHeadingBtn',
+    'insertParagraphBtn',
+    'insertImageBtn',
+    'insertIconBtn',
+    'insertShapeBtn',
+    'insertTableBtn',
+    'insertCodeBtn',
+    'insertEmbedBtn',
+    'insertChartBtn'
+  ];
+
+  insertionControlIds.forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing insertion control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
+  assert.match(
+    fileContent,
+    /bindStudioEditorElementInsertionButtons\(\{ documentRef: document \}\)/
+  );
+});
+
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const source = selectionFixture.extractSelectionAwareFunctionSource(
     fileContent,

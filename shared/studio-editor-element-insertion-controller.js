@@ -368,7 +368,45 @@
       return false;
     }
 
-    return { insert };
+    function bindStudioEditorElementInsertionButtons(options = {}) {
+      const insertionDocument = options.documentRef
+        || (root && root.document)
+        || null;
+      if (!insertionDocument || typeof insertionDocument.getElementById !== 'function') {
+        return {};
+      }
+
+      const buttonTypes = {
+        toolbarInsertHeadingBtn: 'h2',
+        toolbarInsertParagraphBtn: 'p',
+        toolbarInsertImageBtn: 'img',
+        toolbarInsertShapeBtn: 'shape',
+        insertHeadingBtn: 'h2',
+        insertParagraphBtn: 'p',
+        insertImageBtn: 'img',
+        insertIconBtn: 'icon',
+        insertShapeBtn: 'shape',
+        insertTableBtn: 'table',
+        insertCodeBtn: 'code',
+        insertEmbedBtn: 'embed',
+        insertChartBtn: 'chart'
+      };
+      const bindings = {};
+
+      Object.entries(buttonTypes).forEach(([buttonId, type]) => {
+        const button = insertionDocument.getElementById(buttonId);
+        if (!button || typeof button.addEventListener !== 'function') {
+          bindings[buttonId] = false;
+          return;
+        }
+        button.addEventListener('click', () => insert(type));
+        bindings[buttonId] = true;
+      });
+
+      return bindings;
+    }
+
+    return { insert, bindStudioEditorElementInsertionButtons };
   }
 
   return {

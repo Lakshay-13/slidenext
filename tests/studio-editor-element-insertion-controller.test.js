@@ -2,6 +2,55 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const elementInsertionController = require('../shared/studio-editor-element-insertion-controller.js');
 
+test('element insertion controller binds toolbar controls to canonical insertion types', () => {
+  const buttonTypes = {
+    toolbarInsertHeadingBtn: 'h2',
+    toolbarInsertParagraphBtn: 'p',
+    toolbarInsertImageBtn: 'img',
+    toolbarInsertShapeBtn: 'shape',
+    insertHeadingBtn: 'h2',
+    insertParagraphBtn: 'p',
+    insertImageBtn: 'img',
+    insertIconBtn: 'icon',
+    insertShapeBtn: 'shape',
+    insertTableBtn: 'table',
+    insertCodeBtn: 'code',
+    insertEmbedBtn: 'embed',
+    insertChartBtn: 'chart'
+  };
+  const elements = Object.fromEntries(
+    Object.keys(buttonTypes).map((id) => [id, {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    }])
+  );
+  const insertedTypes = [];
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({}),
+    getActiveSlide: () => ({ children: [] }),
+    getEditorSlideId: () => 'slide-1',
+    applyElementInsertion: (type) => {
+      insertedTypes.push(type);
+      return { element: {}, transaction: null };
+    },
+    finalizeInsertedElements: () => true
+  });
+  const documentRef = {
+    getElementById(id) {
+      return elements[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindStudioEditorElementInsertionButtons({ documentRef }),
+    Object.fromEntries(Object.keys(buttonTypes).map((id) => [id, true]))
+  );
+  Object.keys(buttonTypes).forEach((id) => elements[id].listeners.click());
+  assert.deepEqual(insertedTypes, Object.values(buttonTypes));
+});
+
 test('element insertion controller preserves insertion finalization and version labeling', () => {
   const calls = [];
   const slide = { children: [{}, {}] };
