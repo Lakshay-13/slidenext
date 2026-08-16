@@ -401,6 +401,23 @@ test('buildStudioClipboardMutationPlan reuses the live unlocked selection for co
   });
 });
 
+test('buildStudioClipboardMutationPlan disables mutations when lock state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(clipboardState.buildStudioClipboardMutationPlan([live], {
+    items: [{ id: 'copy' }]
+  }, {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    selection: [live],
+    canCopy: false,
+    canDuplicate: false,
+    canPaste: false
+  });
+});
+
 test('buildStudioClipboardPayloadItem captures sanitized absolute payload geometry', () => {
   const template = {
     classList: createClassList()

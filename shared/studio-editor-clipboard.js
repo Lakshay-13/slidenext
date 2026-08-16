@@ -200,16 +200,28 @@
     const canMutateDeck = typeof options.canMutateDeck === 'function'
       ? options.canMutateDeck
       : () => true;
-    const deckReady = canMutateDeck();
-    const canCopy = deckReady && selection.length > 0 && !selection.some((element) => isLocked(element));
+    let deckReady = false;
+    let canCopy = false;
+    let canPaste = false;
+    try {
+      deckReady = canMutateDeck();
+      canCopy = deckReady
+        && selection.length > 0
+        && !selection.some((element) => isLocked(element));
+      canPaste = buildStudioClipboardPastePlan(clipboard, {
+        canMutateDeck
+      }).canPaste;
+    } catch (error) {
+      // Never expose clipboard mutations when canonical state is uncertain.
+      canCopy = false;
+      canPaste = false;
+    }
 
     return {
       selection,
       canCopy,
       canDuplicate: canCopy,
-      canPaste: buildStudioClipboardPastePlan(clipboard, {
-        canMutateDeck
-      }).canPaste
+      canPaste
     };
   }
 
