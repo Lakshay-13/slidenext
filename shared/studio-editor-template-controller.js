@@ -131,6 +131,15 @@
       }
     }
 
+    function refreshTemplateActiveSlide(index) {
+      if (!setActiveSlide) return;
+      try {
+        setActiveSlide(index);
+      } catch (err) {
+        // Active-slide chrome is secondary; preserve the template mutation result.
+      }
+    }
+
     function runLegacyPersistenceHooks(versionLabel = '') {
       if (triggerAutoSave) {
         try {
@@ -371,7 +380,7 @@
       if (!mutation || !mutation.didApply) return false;
 
       if (generateThumbnails) generateThumbnails();
-      if (setActiveSlide) setActiveSlide(insertionIndex);
+      refreshTemplateActiveSlide(insertionIndex);
       const template = canonicalDeckApi
         && typeof canonicalDeckApi.findCanonicalTemplateById === 'function'
         ? canonicalDeckApi.findCanonicalTemplateById(canonicalDeck, templateId)
@@ -389,7 +398,7 @@
         if (finalizeResult === false) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
           if (generateThumbnails) generateThumbnails();
-          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          refreshTemplateActiveSlide(activeSlideIndex);
           return false;
         }
       } else {
@@ -404,7 +413,7 @@
           )) {
           if (rollbackMutation) rollbackMutation(mutation.transaction, documentRef);
           if (generateThumbnails) generateThumbnails();
-          if (setActiveSlide) setActiveSlide(activeSlideIndex);
+          refreshTemplateActiveSlide(activeSlideIndex);
           return false;
         }
         runLegacyPersistenceHooks(versionLabel);
