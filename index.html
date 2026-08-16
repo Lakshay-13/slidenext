@@ -1522,6 +1522,7 @@
   <script src="/shared/studio-editor-zoom-runtime-options.js"></script>
   <script src="/shared/studio-editor-zoom-runtime.js"></script>
   <script src="/shared/studio-editor-zoom-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-zoom-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-zoom-accessors.js"></script>
   <script src="/shared/studio-editor-status-view.js"></script>
   <script src="/shared/studio-editor-frame-loading-view.js"></script>
@@ -6895,16 +6896,26 @@
           resolveActionState: () => resolveCurrentStudioZoomActionState(),
         })
       : null;
-    const studioEditorZoomRuntime = studioEditorZoomRuntimeOptions
-      && typeof SlideNextStudioEditorZoomShellRuntime !== 'undefined'
-      && SlideNextStudioEditorZoomShellRuntime
-      && typeof SlideNextStudioEditorZoomShellRuntime.createStudioEditorZoomShellRuntime === 'function'
-      ? SlideNextStudioEditorZoomShellRuntime.createStudioEditorZoomShellRuntime({
+    const studioEditorZoomRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorZoomRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorZoomRuntimeAccessors
+      : null;
+    const studioEditorZoomRuntimeAccessors = studioEditorZoomRuntimeAccessorsApi
+      && typeof studioEditorZoomRuntimeAccessorsApi
+        .createStudioEditorZoomRuntimeAccessors === 'function'
+      ? studioEditorZoomRuntimeAccessorsApi
+        .createStudioEditorZoomRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorZoomShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorZoomShellRuntime
+            : null,
           zoomRuntimeApi: typeof SlideNextStudioEditorZoomRuntime !== 'undefined'
             ? SlideNextStudioEditorZoomRuntime
             : null,
           runtimeOptions: studioEditorZoomRuntimeOptions
         })
+      : null;
+    const studioEditorZoomRuntime = studioEditorZoomRuntimeAccessors
+      ? studioEditorZoomRuntimeAccessors.runtime
       : null;
     const studioEditorZoomController = studioEditorZoomRuntime
       ? studioEditorZoomRuntime.zoomController
