@@ -1841,11 +1841,13 @@
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
   <script src="/shared/studio-editor-deck-ready-shell-runtime.js"></script>
-  <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
+    <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-insertion-toolbar-state.js"></script>
     <script src="/shared/studio-editor-insertion-toolbar-state-runtime-accessors.js"></script>
+    <script src="/shared/studio-editor-zoom-toolbar-state.js"></script>
+    <script src="/shared/studio-editor-zoom-toolbar-state-runtime-accessors.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
     <script src="/shared/studio-editor-deck-view-build-options.js"></script>
   <script src="/shared/studio-editor-navigation-controller.js"></script>
@@ -13097,29 +13099,45 @@
     }
 
     function updateZoomActionState(doc = getIframeDoc()) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
+      const zoomToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorZoomToolbarState !== 'undefined'
+        ? SlideNextStudioEditorZoomToolbarState
         : null;
-      if (!deckView || typeof deckView.syncStudioZoomToolbarActionState !== 'function') {
+      const zoomToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorZoomToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorZoomToolbarStateRuntimeAccessors
+        : null;
+      const zoomToolbarStateRuntimeAccessors =
+        zoomToolbarStateRuntimeAccessorsApi
+        && typeof zoomToolbarStateRuntimeAccessorsApi
+          .createStudioEditorZoomToolbarStateRuntimeAccessors === 'function'
+        ? zoomToolbarStateRuntimeAccessorsApi
+          .createStudioEditorZoomToolbarStateRuntimeAccessors({
+            runtimeApi: zoomToolbarStateRuntimeApi
+          })
+        : null;
+      if (!zoomToolbarStateRuntimeAccessors
+        || typeof zoomToolbarStateRuntimeAccessors
+          .createStudioEditorZoomToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof deckView.createStudioZoomToolbarActionStateSync === 'function') {
-        if (typeof updateZoomActionState.sync !== 'function') {
-          updateZoomActionState.sync = deckView.createStudioZoomToolbarActionStateSync({
+      if (!updateZoomActionState.controller) {
+        const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null;
+        updateZoomActionState.controller = zoomToolbarStateRuntimeAccessors
+          .createStudioEditorZoomToolbarStateController({
+            deckView,
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => resolveCurrentStudioZoomActionState(sourceDoc),
-            getDocumentRef: () => document
+            getActiveSlide,
+            documentRef: document
           });
-        }
-        if (typeof updateZoomActionState.sync === 'function') {
-          return updateZoomActionState.sync(doc);
-        }
       }
-      return deckView.syncStudioZoomToolbarActionState({
-        documentRef: document,
-        doc,
-        getActiveSlide
-      });
+      return updateZoomActionState.controller
+        && typeof updateZoomActionState.controller.sync === 'function'
+        ? updateZoomActionState.controller.sync(doc)
+        : false;
     }
 
     function resolveCurrentStudioWallpaperActionState(doc = getIframeDoc()) {

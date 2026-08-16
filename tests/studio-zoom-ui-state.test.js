@@ -9,6 +9,8 @@ const zoomView = require('../shared/studio-editor-zoom.js');
 const zoomController = require('../shared/studio-editor-zoom-controller.js');
 const zoomAccessorsApi = require('../shared/studio-editor-zoom-accessors.js');
 const deckView = require('../shared/studio-deck-view.js');
+const zoomToolbarState = require('../shared/studio-editor-zoom-toolbar-state.js');
+const zoomToolbarStateRuntimeAccessors = require('../shared/studio-editor-zoom-toolbar-state-runtime-accessors.js');
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
   const start = fileContent.indexOf(startMarker);
@@ -152,6 +154,11 @@ function loadResolveCurrentStudioZoomActionState(fileContent, context) {
   vm.runInContext(helperSource, context);
 }
 
+function installZoomToolbarState(context) {
+  context.SlideNextStudioEditorZoomToolbarState = zoomToolbarState;
+  context.SlideNextStudioEditorZoomToolbarStateRuntimeAccessors = zoomToolbarStateRuntimeAccessors;
+}
+
 test('resolveCurrentStudioZoomActionState reports zoom readiness from the live active slide state', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const context = {
@@ -254,6 +261,7 @@ test('updateZoomActionState enables zoom controls only when the iframe has a liv
     }
   };
 
+  installZoomToolbarState(context);
   vm.createContext(context);
   loadResolveCurrentStudioZoomActionState(fileContent, context);
   vm.runInContext(updateZoomActionStateSource, context);
@@ -300,6 +308,7 @@ test('updateZoomActionState delegates toolbar rendering to the shared deck view'
     }
   };
 
+  installZoomToolbarState(context);
   vm.createContext(context);
   vm.runInContext(updateZoomActionStateSource, context);
 
@@ -344,6 +353,7 @@ test('updateZoomActionState caches the shared zoom toolbar synchronizer when ava
     }
   };
 
+  installZoomToolbarState(context);
   vm.createContext(context);
   loadResolveCurrentStudioZoomActionState(fileContent, context);
   vm.runInContext(updateZoomActionStateSource, context);
