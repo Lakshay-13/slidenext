@@ -106,7 +106,7 @@ test('editor loads the editor state bridge after its runtime dependency', () => 
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
+    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
   );
   assert.match(fileContent, /studioEditorStateBridge/);
 });

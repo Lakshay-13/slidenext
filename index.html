@@ -1715,6 +1715,7 @@
   <script src="/shared/studio-editor-state-bridge.js"></script>
   <script src="/shared/studio-editor-state-accessors.js"></script>
   <script src="/shared/studio-editor-shell-state-runtime.js"></script>
+  <script src="/shared/studio-editor-shell-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -1960,10 +1961,21 @@
         })
       : {};
     Object.assign(globalThis, studioEditorLayerGlobalApi);
-    const studioEditorShellStateRuntime = typeof SlideNextStudioEditorShellStateRuntime !== 'undefined'
-      && SlideNextStudioEditorShellStateRuntime
-      && typeof SlideNextStudioEditorShellStateRuntime.createStudioEditorShellStateRuntime === 'function'
-      ? SlideNextStudioEditorShellStateRuntime.createStudioEditorShellStateRuntime({
+    const studioEditorShellStateRuntimeApi = typeof SlideNextStudioEditorShellStateRuntime !== 'undefined'
+      ? SlideNextStudioEditorShellStateRuntime
+      : null;
+    const studioEditorShellStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorShellStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorShellStateRuntimeAccessors
+      : null;
+    const studioEditorShellStateRuntimeAccessors =
+      studioEditorShellStateRuntimeAccessorsApi
+      && typeof studioEditorShellStateRuntimeAccessorsApi
+        .createStudioEditorShellStateRuntimeAccessors === 'function'
+      ? studioEditorShellStateRuntimeAccessorsApi
+        .createStudioEditorShellStateRuntimeAccessors({
+          runtimeApi: studioEditorShellStateRuntimeApi,
+          runtimeOptions: {
           getElementId: (element) => typeof assignEditorElementId === 'function'
             ? assignEditorElementId(element)
             : '',
@@ -2066,8 +2078,11 @@
               context: typeof renamingVersionContext !== 'undefined' ? renamingVersionContext : null
             };
           }
+          }
         })
-      : null;
+      : { runtime: null };
+    const studioEditorShellStateRuntime =
+      studioEditorShellStateRuntimeAccessors.runtime;
     const studioEditorSessionStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.sessionStateBridge
       : null;

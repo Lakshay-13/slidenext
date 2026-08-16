@@ -40,7 +40,7 @@ test('index wires canonical session state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
+    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
   );
   assert.doesNotMatch(
     fileContent,

@@ -171,7 +171,18 @@ test('editor loads the shell state runtime after its bridge dependencies', () =>
     fileContent,
     /<script src="\/shared\/studio-editor-shell-state-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorShellStateRuntime\(/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-shell-state-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
+  );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorSessionStateBridge\.createStudioEditorSessionStateBridge\(/

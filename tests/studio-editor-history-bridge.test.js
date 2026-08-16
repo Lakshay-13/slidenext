@@ -82,7 +82,7 @@ test('editor loads the history bridge after its runtime dependency', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
+    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
   );
   assert.match(fileContent, /studioEditorHistoryBridge/);
 });

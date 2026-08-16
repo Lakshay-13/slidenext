@@ -36,7 +36,7 @@ test('index wires autosave timer state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorShellStateRuntime\.createStudioEditorShellStateRuntime\(/
+    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
   );
   assert.doesNotMatch(
     fileContent,
