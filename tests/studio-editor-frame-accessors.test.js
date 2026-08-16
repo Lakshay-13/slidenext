@@ -107,6 +107,8 @@ test('frame accessors publish the global consumed by the editor shell', () => {
 
 test('editor loads and consumes the frame accessor module', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const firstIframeDocUse = fileContent.indexOf('          getIframeDoc,');
+  const earlyAccessorPublication = fileContent.indexOf('const earlyStudioEditorFrameGlobalApi');
 
   assert.match(
     fileContent,
@@ -116,6 +118,7 @@ test('editor loads and consumes the frame accessor module', () => {
   assert.match(fileContent, /studioEditorFrameAccessors/);
   assert.match(fileContent, /studioEditorFrameGlobalApi/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorFrameGlobalApi\)/);
+  assert.ok(firstIframeDocUse > earlyAccessorPublication);
   assert.doesNotMatch(fileContent, /function getStudioFrame\(\)/);
   assert.doesNotMatch(fileContent, /function getIframeDoc\(\)/);
   assert.doesNotMatch(fileContent, /function getEditorDomOptions\(options = \{\}\)/);

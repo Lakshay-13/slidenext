@@ -1897,6 +1897,20 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
+    const studioEditorFrameAccessorsApi = typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
+      ? SlideNextStudioEditorFrameAccessors
+      : null;
+    let studioEditorFrameAccessors = studioEditorFrameAccessorsApi
+      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors === 'function'
+      ? studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors({ documentRef: document })
+      : null;
+    const earlyStudioEditorFrameGlobalApi = studioEditorFrameAccessorsApi
+      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi === 'function'
+      ? studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi({
+          accessors: studioEditorFrameAccessors
+        })
+      : {};
+    Object.assign(globalThis, earlyStudioEditorFrameGlobalApi);
     const studioEditorLayerAccessorsApi = typeof SlideNextStudioEditorLayerAccessors !== 'undefined'
       ? SlideNextStudioEditorLayerAccessors
       : null;
@@ -7260,10 +7274,7 @@
       && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
       ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
       : ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    const studioEditorFrameAccessorsApi = typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
-      ? SlideNextStudioEditorFrameAccessors
-      : null;
-    const studioEditorFrameAccessors = studioEditorFrameAccessorsApi
+    studioEditorFrameAccessors = studioEditorFrameAccessorsApi
       && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors === 'function'
       ? studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors({
           documentRef: document,
