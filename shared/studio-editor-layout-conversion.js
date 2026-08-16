@@ -19,7 +19,13 @@
       ? options.isHidden
       : () => false;
 
-    return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element) && !isHidden(element);
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
   function normalizePixel(value) {
@@ -109,10 +115,22 @@
     if (selection.length === 0) {
       return { selection, items: [], canConvert: false, reason: 'empty-selection' };
     }
-    if (selection.some((element) => isLocked(element))) {
+    let hasLockedSelection = false;
+    try {
+      hasLockedSelection = selection.some((element) => isLocked(element));
+    } catch (error) {
       return { selection, items: [], canConvert: false, reason: 'locked-selection' };
     }
-    if (selection.some((element) => isFreeformPositioned(element))) {
+    if (hasLockedSelection) {
+      return { selection, items: [], canConvert: false, reason: 'locked-selection' };
+    }
+    let hasFreeformSelection = false;
+    try {
+      hasFreeformSelection = selection.some((element) => isFreeformPositioned(element));
+    } catch (error) {
+      return { selection, items: [], canConvert: false, reason: 'geometry-unavailable' };
+    }
+    if (hasFreeformSelection) {
       return { selection, items: [], canConvert: false, reason: 'already-freeform' };
     }
 

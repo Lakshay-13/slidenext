@@ -103,6 +103,40 @@ test('buildStudioFlowToFreeformPlan rejects locked and already-freeform selectio
   assert.equal(geometryCalls, 0);
 });
 
+test('buildStudioFlowToFreeformPlan fails closed when layout state readers throw', () => {
+  const element = { isConnected: true };
+
+  assert.deepEqual(conversion.buildStudioFlowToFreeformPlan([element], {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    },
+    isFreeformPositioned: () => false,
+    buildPositionedLayoutItems: () => {
+      throw new Error('geometry should not be read');
+    }
+  }), {
+    selection: [element],
+    items: [],
+    canConvert: false,
+    reason: 'locked-selection'
+  });
+
+  assert.deepEqual(conversion.buildStudioFlowToFreeformPlan([element], {
+    isLocked: () => false,
+    isFreeformPositioned: () => {
+      throw new Error('stale layout state');
+    },
+    buildPositionedLayoutItems: () => {
+      throw new Error('geometry should not be read');
+    }
+  }), {
+    selection: [element],
+    items: [],
+    canConvert: false,
+    reason: 'geometry-unavailable'
+  });
+});
+
 test('buildStudioFlowToFreeformPlan preserves content-box dimensions when computed padding and borders exist', () => {
   const element = {
     isConnected: true,
