@@ -15,8 +15,13 @@
     const isHidden = typeof options.isHidden === 'function'
       ? options.isHidden
       : () => false;
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
 
-    return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
+    return selection.filter((element) => isEligibleElement(element)
+      && !isHidden(element)
+      && !isLocked(element));
   }
 
   function normalizeStudioSelectionRect(rect) {

@@ -84,6 +84,9 @@
     const isHidden = typeof options.isHidden === 'function'
       ? options.isHidden
       : () => false;
+    const isLocked = typeof options.isLocked === 'function'
+      ? options.isLocked
+      : () => false;
     const getRectOnSlide = typeof options.getRectOnSlide === 'function'
       ? options.getRectOnSlide
       : () => null;
@@ -98,6 +101,7 @@
       getMarqueeSelection: (elements, rect, session) => getStudioMarqueeSelection
         ? getStudioMarqueeSelection(elements, rect, {
             isHidden,
+            isLocked,
             getElementBounds: (element) => getRectOnSlide(element.getBoundingClientRect(), session.slideMetrics)
           })
         : [],

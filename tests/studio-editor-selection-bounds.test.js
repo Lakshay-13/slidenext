@@ -17,15 +17,17 @@ test('editor composes selection bounds through the shared resolver', () => {
   assert.doesNotMatch(source, /getSelectionBounds\.resolver/);
 });
 
-test('getStudioBoundableSelection ignores disconnected and hidden selections', () => {
+test('getStudioBoundableSelection ignores disconnected, hidden, and locked selections', () => {
   assert.deepEqual(selectionBounds.getStudioBoundableSelection([
     { id: 1, isConnected: false, hidden: false },
     { id: 2, isConnected: true, hidden: true },
-    { id: 3, isConnected: true, hidden: false }
+    { id: 3, isConnected: true, hidden: false, locked: true },
+    { id: 4, isConnected: true, hidden: false, locked: false }
   ], {
-    isHidden: (element) => element.hidden
+    isHidden: (element) => element.hidden,
+    isLocked: (element) => element.locked
   }), [
-    { id: 3, isConnected: true, hidden: false }
+    { id: 4, isConnected: true, hidden: false, locked: false }
   ]);
 });
 
@@ -175,7 +177,8 @@ test('getStudioMarqueeSelection normalizes reverse drags and returns overlapping
     { id: 2, isConnected: true, hidden: true, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },
     { id: 3, isConnected: true, hidden: false, bounds: { left: 10, top: 10, right: 30, bottom: 30 } },
     { id: 4, isConnected: true, hidden: false, bounds: { left: 30, top: 30, right: 50, bottom: 50 } },
-    { id: 5, isConnected: true, hidden: false, bounds: null }
+    { id: 5, isConnected: true, hidden: false, bounds: null },
+    { id: 6, isConnected: true, hidden: false, locked: true, bounds: { left: 10, top: 10, right: 30, bottom: 30 } }
   ];
 
   assert.deepEqual(selectionBounds.getStudioMarqueeSelection(elements, {
@@ -185,6 +188,7 @@ test('getStudioMarqueeSelection normalizes reverse drags and returns overlapping
     bottom: 15
   }, {
     isHidden: (element) => element.hidden,
+    isLocked: (element) => element.locked,
     getElementBounds: (element) => element.bounds
   }), [elements[2], elements[3]]);
 });

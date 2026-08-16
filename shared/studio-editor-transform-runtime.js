@@ -49,6 +49,7 @@
           getCanonicalFreeformReader: options.getCanonicalFreeformReader,
           isFreeformPositioned: options.isFreeformPositioned,
           isHidden: options.isHidden,
+          isLocked: options.isLocked,
           getRectOnSlide: options.getRectOnSlide,
           ensureOverlay: options.ensureOverlay,
           getClosestPositionedAncestor: options.getClosestPositionedAncestor,

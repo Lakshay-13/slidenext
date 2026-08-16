@@ -56,6 +56,7 @@
       ? options.getSlideEditableElements
       : null;
     const isHidden = typeof options.isHidden === 'function' ? options.isHidden : null;
+    const isLocked = typeof options.isLocked === 'function' ? options.isLocked : null;
     const getCanonicalVisibilityReader = typeof options.getCanonicalVisibilityReader === 'function'
       ? options.getCanonicalVisibilityReader
       : null;
@@ -152,6 +153,18 @@
         }
       }
       return isHidden ? isHidden(element) : false;
+    }
+
+    function readLockedState(element, doc) {
+      if (getCanonicalVisibilityReader) {
+        try {
+          const reader = getCanonicalVisibilityReader('locked', doc);
+          if (typeof reader === 'function') return reader(element);
+        } catch (err) {
+          // Fall back to an unlocked state when canonical state is unavailable.
+        }
+      }
+      return isLocked ? isLocked(element) : false;
     }
 
     function getCanonicalTransformBuilders() {
@@ -337,6 +350,7 @@
               captureTarget: doc && doc.body,
               dragStartThresholdPx,
               isHidden: (element) => readHiddenState(element, doc),
+              isLocked: (element) => readLockedState(element, doc),
               getRectOnSlide,
               onSessionStart: () => {
                 setIsDraggingElement(true);

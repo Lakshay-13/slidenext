@@ -99,6 +99,9 @@ test('buildStudioMarqueeInteractionOptions delegates selection bounds and applie
     isHidden() {
       return false;
     },
+    isLocked(element) {
+      return element === selected;
+    },
     getRectOnSlide(rect, slideMetrics) {
       return { rect, slideMetrics };
     },
@@ -118,6 +121,8 @@ test('buildStudioMarqueeInteractionOptions delegates selection bounds and applie
   assert.deepEqual(options.getMarqueeSelection([element], { left: 0 }, session), ['marquee']);
   assert.deepEqual(selectionCalls[0][0], [element]);
   assert.deepEqual(selectionCalls[0][1], { left: 0 });
+  assert.equal(selectionCalls[0][2].isLocked(element), false);
+  assert.equal(selectionCalls[0][2].isLocked(selected), true);
   assert.deepEqual(options.getSelectedElements(), selected);
   assert.equal(options.marker, 'override');
 });

@@ -326,6 +326,7 @@ test('transform controller forwards canonical hidden state to transform and marq
   const doc = { body: {} };
   let transformHiddenReader = null;
   let marqueeHiddenReader = null;
+  let marqueeLockedReader = null;
   const controller = transformController.createStudioEditorTransformController({
     interactionOptionsApi: {
       buildStudioTransformInteractionOptions(options) {
@@ -334,6 +335,7 @@ test('transform controller forwards canonical hidden state to transform and marq
       },
       buildStudioMarqueeInteractionOptions(options) {
         marqueeHiddenReader = options.isHidden;
+        marqueeLockedReader = options.isLocked;
         return { kind: 'marquee' };
       }
     },
@@ -344,15 +346,15 @@ test('transform controller forwards canonical hidden state to transform and marq
     },
     isHidden: () => false,
     getCanonicalVisibilityReader(property, currentDoc) {
-      assert.equal(property, 'hidden');
       assert.equal(currentDoc, doc);
-      return () => true;
+      return () => property === 'hidden' || property === 'locked';
     }
   });
 
   assert.equal(controller.setup(doc), true);
   assert.equal(transformHiddenReader({ id: 'node-1' }), true);
   assert.equal(marqueeHiddenReader({ id: 'node-1' }), true);
+  assert.equal(marqueeLockedReader({ id: 'node-1' }), true);
 });
 
 test('transform controller binds marquee selection reads to the setup document', () => {
