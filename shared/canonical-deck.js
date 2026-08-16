@@ -711,60 +711,67 @@
   }
 
   function findCanonicalAssetById(deckLike, assetId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedAssetId = normalizeString(assetId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedAssetId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedAssetId) return null;
     return deck.assets.find((asset) => asset && asset.id === normalizedAssetId) || null;
   }
 
   function findCanonicalBlockById(deckLike, blockId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedBlockId = normalizeString(blockId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedBlockId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedBlockId) return null;
     return deck.blocks.find((block) => block && block.id === normalizedBlockId) || null;
   }
 
   function findCanonicalTemplateById(deckLike, templateId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedTemplateId = normalizeString(templateId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedTemplateId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedTemplateId) return null;
     return Array.isArray(deck.templates)
       ? deck.templates.find((template) => template && template.id === normalizedTemplateId) || null
       : null;
   }
 
   function findCanonicalMasterSlideById(deckLike, masterSlideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedMasterSlideId = normalizeString(masterSlideId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedMasterSlideId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedMasterSlideId) return null;
     return Array.isArray(deck.masterSlides)
       ? deck.masterSlides.find((master) => master && master.id === normalizedMasterSlideId) || null
       : null;
   }
 
   function findCanonicalSlideById(deckLike, slideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedSlideId = normalizeString(slideId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedSlideId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedSlideId) return null;
     return deck.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
   }
 
   function findCanonicalSlideIndexById(deckLike, slideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
-    const slide = findCanonicalSlideById(deck, slideId);
-    return slide ? deck.slides.indexOf(slide) : -1;
+    const normalizedSlideId = normalizeString(slideId).trim();
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedSlideId) return -1;
+    return deck.slides.findIndex((slide) => slide && slide.id === normalizedSlideId);
   }
 
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
