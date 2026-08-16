@@ -1263,19 +1263,19 @@
             </p>
             <div class="grid grid-cols-3 gap-1.5 bg-zinc-900 p-2 rounded-lg border border-white/5 w-fit mx-auto">
               <span></span>
-              <button id="nudgeSelectionUpBtn" onclick="nudgeSelectedElements(0, -1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Up">
+              <button id="nudgeSelectionUpBtn" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Up">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_up</span>
               </button>
               <span></span>
-              <button id="nudgeSelectionLeftBtn" onclick="nudgeSelectedElements(-1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Left">
+              <button id="nudgeSelectionLeftBtn" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Left">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_left</span>
               </button>
               <span class="flex items-center justify-center text-[9px] font-mono text-zinc-500">1px</span>
-              <button id="nudgeSelectionRightBtn" onclick="nudgeSelectedElements(1, 0)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Right">
+              <button id="nudgeSelectionRightBtn" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Right">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_right</span>
               </button>
               <span></span>
-              <button id="nudgeSelectionDownBtn" onclick="nudgeSelectedElements(0, 1)" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Down">
+              <button id="nudgeSelectionDownBtn" class="w-8 h-8 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-300" title="Nudge Down">
                 <span class="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
               </button>
               <span></span>
@@ -6672,7 +6672,8 @@
           gridSnapController: studioEditorGridSnapController,
           themeController: studioEditorThemeController,
           alignmentController: studioEditorAlignmentController,
-          groupController: studioEditorGroupController
+          groupController: studioEditorGroupController,
+          nudgeController: studioEditorNudgeController
         })
       : null;
     if (studioEditorToolbarAccessors
@@ -6688,7 +6689,8 @@
               gridSnapController: studioEditorGridSnapController,
               themeController: studioEditorThemeController,
               alignmentController: studioEditorAlignmentController,
-              groupController: studioEditorGroupController
+              groupController: studioEditorGroupController,
+              nudgeController: studioEditorNudgeController
             })
         })
       : {};

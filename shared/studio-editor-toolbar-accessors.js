@@ -12,6 +12,7 @@
     const themeController = options.themeController || null;
     const alignmentController = options.alignmentController || null;
     const groupController = options.groupController || null;
+    const nudgeController = options.nudgeController || null;
 
     function call(controller, methodName, fallback, ...args) {
       return controller && typeof controller[methodName] === 'function'
@@ -24,12 +25,14 @@
       themeController,
       alignmentController,
       groupController,
+      nudgeController,
       updateGridSnapActionState: () => call(gridSnapController, 'sync', false),
       toggleGridSnap: () => call(gridSnapController, 'toggle', false),
       alignSelectedElements: (action) => call(alignmentController, 'align', false, action),
       distributeSelectedElements: (axis) => call(alignmentController, 'distribute', false, axis),
       groupSelectedElements: () => call(groupController, 'group', false),
       ungroupSelectedElements: () => call(groupController, 'ungroup', false),
+      nudgeSelectedElements: (dx, dy) => call(nudgeController, 'nudge', false, dx, dy),
       toggleGlobalTheme: () => call(themeController, 'toggleGlobalTheme', false),
       syncIframeTheme: () => call(themeController, 'syncIframeTheme', false),
       bindStudioEditorLayoutControls: (options = {}) => {
@@ -48,6 +51,10 @@
           ['distributeSelectionVerticalBtn', () => call(alignmentController, 'distribute', false, 'vertical')],
           ['groupSelectionBtn', () => call(groupController, 'group', false)],
           ['ungroupSelectionBtn', () => call(groupController, 'ungroup', false)],
+          ['nudgeSelectionUpBtn', () => call(nudgeController, 'nudge', false, 0, -1)],
+          ['nudgeSelectionLeftBtn', () => call(nudgeController, 'nudge', false, -1, 0)],
+          ['nudgeSelectionRightBtn', () => call(nudgeController, 'nudge', false, 1, 0)],
+          ['nudgeSelectionDownBtn', () => call(nudgeController, 'nudge', false, 0, 1)],
           ['toggleGridSnapBtn', () => call(gridSnapController, 'toggle', false)]
         ];
         buttonHandlers.forEach(([id, handler]) => {
@@ -81,6 +88,9 @@
         : false,
       ungroupSelectedElements: () => typeof accessors.ungroupSelectedElements === 'function'
         ? accessors.ungroupSelectedElements()
+        : false,
+      nudgeSelectedElements: (dx, dy) => typeof accessors.nudgeSelectedElements === 'function'
+        ? accessors.nudgeSelectedElements(dx, dy)
         : false,
       toggleGlobalTheme: () => accessors.toggleGlobalTheme(),
       syncIframeTheme: () => accessors.syncIframeTheme()

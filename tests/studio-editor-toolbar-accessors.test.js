@@ -53,6 +53,10 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     'distributeSelectionVerticalBtn',
     'groupSelectionBtn',
     'ungroupSelectionBtn',
+    'nudgeSelectionUpBtn',
+    'nudgeSelectionLeftBtn',
+    'nudgeSelectionRightBtn',
+    'nudgeSelectionDownBtn',
     'toggleGridSnapBtn'
   ];
   const controls = Object.fromEntries(controlIds.map((id) => [id, {
@@ -73,6 +77,9 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     groupController: {
       group: () => calls.push(['group']),
       ungroup: () => calls.push(['ungroup'])
+    },
+    nudgeController: {
+      nudge: (dx, dy) => calls.push(['nudge', dx, dy])
     }
   });
   const documentRef = {
@@ -97,6 +104,10 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     ['distribute', 'vertical'],
     ['group'],
     ['ungroup'],
+    ['nudge', 0, -1],
+    ['nudge', -1, 0],
+    ['nudge', 1, 0],
+    ['nudge', 0, 1],
     ['grid']
   ]);
 });
@@ -164,6 +175,10 @@ test('editor loads toolbar accessors after the theme runtime', () => {
     'distributeSelectionVerticalBtn',
     'groupSelectionBtn',
     'ungroupSelectionBtn',
+    'nudgeSelectionUpBtn',
+    'nudgeSelectionLeftBtn',
+    'nudgeSelectionRightBtn',
+    'nudgeSelectionDownBtn',
     'toggleGridSnapBtn'
   ].forEach((id) => {
     const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
