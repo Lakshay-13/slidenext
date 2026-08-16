@@ -61,8 +61,19 @@ test('index routes persistable deck sanitizer installation through the shell run
     fileContent,
     /<script src="\/shared\/studio-editor-persistable-deck-sanitizer-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persistable-deck-sanitizer-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorPersistableDeckSanitizerShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorPersistableDeckSanitizerShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorPersistableDeckSanitizerRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistableDeckSanitizerRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistableDeckSanitizerShellRuntimeApi\s*\.\s*createStudioEditorPersistableDeckSanitizerShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorPersistableDeckSanitizerGlobalApi = studioEditorPersistableDeckSanitizerShellRuntime/
