@@ -1347,6 +1347,8 @@
   <script src="/shared/studio-editor-theme-view.js"></script>
   <script src="/shared/studio-editor-theme-toolbar-state.js"></script>
   <script src="/shared/studio-editor-theme-toolbar-state-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-wallpaper-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-wallpaper-toolbar-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-presets.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/studio-editor-canonical-deck.js"></script>
@@ -13194,32 +13196,45 @@
     }
 
     function updateWallpaperActionState(doc = getIframeDoc()) {
-      const deckView = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
+      const wallpaperToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorWallpaperToolbarState !== 'undefined'
+        ? SlideNextStudioEditorWallpaperToolbarState
         : null;
-      if (!deckView || typeof deckView.syncStudioWallpaperToolbarActionState !== 'function') {
-        if (typeof updateThemeTokenActionState === 'function') updateThemeTokenActionState(doc);
+      const wallpaperToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorWallpaperToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorWallpaperToolbarStateRuntimeAccessors
+        : null;
+      const wallpaperToolbarStateRuntimeAccessors =
+        wallpaperToolbarStateRuntimeAccessorsApi
+        && typeof wallpaperToolbarStateRuntimeAccessorsApi
+          .createStudioEditorWallpaperToolbarStateRuntimeAccessors === 'function'
+        ? wallpaperToolbarStateRuntimeAccessorsApi
+          .createStudioEditorWallpaperToolbarStateRuntimeAccessors({
+            runtimeApi: wallpaperToolbarStateRuntimeApi
+          })
+        : null;
+      if (!wallpaperToolbarStateRuntimeAccessors
+        || typeof wallpaperToolbarStateRuntimeAccessors
+          .createStudioEditorWallpaperToolbarStateController !== 'function') {
         return false;
       }
-      if (typeof deckView.createStudioWallpaperToolbarActionStateSync === 'function') {
-        if (typeof updateWallpaperActionState.sync !== 'function') {
-          updateWallpaperActionState.sync = deckView.createStudioWallpaperToolbarActionStateSync({
+      if (!updateWallpaperActionState.controller) {
+        const deckView = typeof SlideNextStudioDeckView !== 'undefined'
+          ? SlideNextStudioDeckView
+          : null;
+        updateWallpaperActionState.controller = wallpaperToolbarStateRuntimeAccessors
+          .createStudioEditorWallpaperToolbarStateController({
+            deckView,
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => resolveCurrentStudioWallpaperActionState(sourceDoc),
-            getDocumentRef: () => document
+            getActiveSlide,
+            documentRef: document
           });
-        }
-        if (typeof updateWallpaperActionState.sync === 'function') {
-          const didSync = updateWallpaperActionState.sync(doc);
-          if (typeof updateThemeTokenActionState === 'function') updateThemeTokenActionState(doc);
-          return didSync;
-        }
       }
-      const didSync = deckView.syncStudioWallpaperToolbarActionState({
-        documentRef: document,
-        doc,
-        getActiveSlide
-      });
+      const didSync = updateWallpaperActionState.controller
+        && typeof updateWallpaperActionState.controller.sync === 'function'
+        ? updateWallpaperActionState.controller.sync(doc)
+        : false;
       if (typeof updateThemeTokenActionState === 'function') updateThemeTokenActionState(doc);
       return didSync;
     }

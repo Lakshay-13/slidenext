@@ -8,6 +8,8 @@ const wallpaperAccessors = require('../shared/studio-editor-wallpaper-accessors.
 const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
 const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-transaction-actions.js');
 const deckView = require('../shared/studio-deck-view.js');
+const wallpaperToolbarState = require('../shared/studio-editor-wallpaper-toolbar-state.js');
+const wallpaperToolbarStateRuntimeAccessors = require('../shared/studio-editor-wallpaper-toolbar-state-runtime-accessors.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const canonicalSlide = require('../shared/studio-editor-canonical-slide.js');
 
@@ -460,6 +462,8 @@ test('updateWallpaperActionState enables wallpaper controls only when the iframe
     }
   };
 
+  context.SlideNextStudioEditorWallpaperToolbarState = wallpaperToolbarState;
+  context.SlideNextStudioEditorWallpaperToolbarStateRuntimeAccessors = wallpaperToolbarStateRuntimeAccessors;
   vm.createContext(context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(updateWallpaperActionStateSource, context);
@@ -539,6 +543,8 @@ test('updateWallpaperActionState caches the shared wallpaper toolbar synchronize
     }
   };
 
+  context.SlideNextStudioEditorWallpaperToolbarState = wallpaperToolbarState;
+  context.SlideNextStudioEditorWallpaperToolbarStateRuntimeAccessors = wallpaperToolbarStateRuntimeAccessors;
   vm.createContext(context);
   loadResolveCurrentStudioWallpaperActionState(fileContent, context);
   vm.runInContext(updateWallpaperActionStateSource, context);
@@ -577,6 +583,8 @@ test('updateWallpaperActionState delegates toolbar rendering to the shared deck 
     }
   };
 
+  context.SlideNextStudioEditorWallpaperToolbarState = wallpaperToolbarState;
+  context.SlideNextStudioEditorWallpaperToolbarStateRuntimeAccessors = wallpaperToolbarStateRuntimeAccessors;
   vm.createContext(context);
   vm.runInContext(updateWallpaperActionStateSource, context);
 
