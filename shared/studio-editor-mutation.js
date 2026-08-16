@@ -81,6 +81,15 @@
     }
   }
 
+  function invokeStudioEditorAutoVersion(triggerAutoVersion, versionLabel) {
+    if (typeof triggerAutoVersion !== 'function' || !versionLabel) return;
+    try {
+      triggerAutoVersion(versionLabel);
+    } catch (err) {
+      // Version notification is secondary to the committed mutation.
+    }
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
@@ -182,9 +191,7 @@
         }
       }
       if (!invokeStudioEditorAutoSave(triggerAutoSave)) return false;
-      if (versionLabel) {
-        triggerAutoVersion(versionLabel);
-      }
+      invokeStudioEditorAutoVersion(triggerAutoVersion, versionLabel);
       return versionLabel;
     };
   }

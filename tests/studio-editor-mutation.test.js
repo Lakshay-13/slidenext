@@ -301,6 +301,24 @@ test('createStudioMutationFinalizer converts thrown autosave to rejection', () =
   assert.deepEqual(calls, ['history']);
 });
 
+test('createStudioMutationFinalizer preserves the result when version notification throws', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      throw new Error('version notification unavailable');
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Moved Element'), 'Auto: Moved Element');
+  assert.deepEqual(calls, ['history', 'save']);
+});
+
 test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
   const historyArgs = [];
   const isCanonicalDeck = (value) => (
