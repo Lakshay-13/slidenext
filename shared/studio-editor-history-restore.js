@@ -263,7 +263,9 @@
       const normalizeHistoryEntry = typeof historyApi.normalizeStudioHistoryEntry === 'function'
         ? historyApi.normalizeStudioHistoryEntry
         : (value) => value || {};
-      const historyEntry = normalizeHistoryEntry(entry);
+      const historyEntry = normalizeHistoryEntry(entry, {
+        isCanonicalDeck
+      });
       const restoreStudioHistoryTransaction = typeof historyApi.restoreStudioHistoryTransaction === 'function'
         ? historyApi.restoreStudioHistoryTransaction
         : null;

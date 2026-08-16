@@ -95,6 +95,7 @@ test('history stack options resolver adds history behavior while preserving call
   const calls = [];
   const normalizeEntry = (entry) => ({ normalized: entry });
   const areEntriesEqual = (left, right) => left === right;
+  const isCanonicalDeck = () => true;
   const resolver = historyOptions.createStudioEditorHistoryStackOptionsResolver({
     getHistoryOptions(options) {
       calls.push(options);
@@ -105,7 +106,8 @@ test('history stack options resolver adds history behavior while preserving call
         normalizeStudioHistoryEntry: normalizeEntry,
         areStudioHistoryEntriesEqual: areEntriesEqual
       };
-    }
+    },
+    isCanonicalDeck
   });
 
   const result = resolver({ custom: true, maxUndoEntries: 12 });
@@ -115,6 +117,7 @@ test('history stack options resolver adds history behavior while preserving call
   assert.equal(result.custom, true);
   assert.equal(result.normalizeEntry, normalizeEntry);
   assert.equal(result.areEntriesEqual, areEntriesEqual);
+  assert.equal(result.isCanonicalDeck, isCanonicalDeck);
   assert.equal(result.maxUndoEntries, 12);
 });
 

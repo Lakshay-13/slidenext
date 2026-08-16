@@ -94,6 +94,9 @@
     const getHistoryApi = typeof options.getHistoryApi === 'function'
       ? options.getHistoryApi
       : () => null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     return function resolveStudioEditorHistoryStackOptions(historyInput = {}) {
       const historyOptionsInput = historyInput && typeof historyInput === 'object'
@@ -110,6 +113,7 @@
           && typeof historyApi.areStudioHistoryEntriesEqual === 'function'
           ? historyApi.areStudioHistoryEntriesEqual
           : undefined,
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         maxUndoEntries: 50,
         ...historyOptionsInput
       };

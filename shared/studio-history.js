@@ -307,7 +307,7 @@
       && transaction.operations.every((operation) => operation && operation.type === 'active-slide');
   }
 
-  function normalizeStudioHistoryEntry(entry) {
+  function normalizeStudioHistoryEntry(entry, options = {}) {
     if (!entry) {
       return { html: '', activeSlideId: '', selectedElementIds: [], canonicalDeck: null };
     }
@@ -323,11 +323,14 @@
     const candidateCanonicalDeck = entry.canonicalDeck && typeof entry.canonicalDeck === 'object'
       ? entry.canonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const normalizedEntry = {
       html: normalizeStudioHistoryFrameHtml(entry.html || ''),
       activeSlideId: entry.activeSlideId || '',
       selectedElementIds: normalizeStudioHistoryIdList(entry.selectedElementIds),
-      canonicalDeck: isValidStudioHistoryCanonicalDeck(candidateCanonicalDeck)
+      canonicalDeck: isValidStudioHistoryCanonicalDeck(candidateCanonicalDeck, isCanonicalDeck)
         ? cloneStudioHistoryData(candidateCanonicalDeck)
         : null
     };
@@ -357,8 +360,8 @@
           }
         };
 
-    const normalizedA = normalizeStudioHistoryEntry(a);
-    const normalizedB = normalizeStudioHistoryEntry(b);
+    const normalizedA = normalizeStudioHistoryEntry(a, options);
+    const normalizedB = normalizeStudioHistoryEntry(b, options);
 
     return normalizedA.html === normalizedB.html
       && normalizedA.activeSlideId === normalizedB.activeSlideId
@@ -388,8 +391,10 @@
       };
     }
 
-    const lastEntry = nextUndoStack.length > 0 ? normalizeEntry(nextUndoStack[nextUndoStack.length - 1]) : null;
-    const normalizedHistoryEntry = normalizeEntry(historyEntry);
+    const lastEntry = nextUndoStack.length > 0
+      ? normalizeEntry(nextUndoStack[nextUndoStack.length - 1], options)
+      : null;
+    const normalizedHistoryEntry = normalizeEntry(historyEntry, options);
     if (lastEntry && areEntriesEqual(lastEntry, normalizedHistoryEntry, options)) {
       return {
         undoStack: nextUndoStack,

@@ -8370,6 +8370,9 @@
             getHistoryOptions: (nextOptions) => getEditorHistoryOptions(nextOptions),
             getHistoryApi: () => typeof SlideNextStudioHistory !== 'undefined'
               ? SlideNextStudioHistory
+              : null,
+            isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+              ? getEditorCanonicalDeckValidator()
               : null
           });
         }

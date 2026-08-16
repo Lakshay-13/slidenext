@@ -640,6 +640,25 @@ test('normalizeStudioHistoryEntry rejects malformed canonical sidecars by defaul
   });
 });
 
+test('normalizeStudioHistoryEntry applies the explicit canonical deck validator', () => {
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  assert.deepEqual(studioHistory.normalizeStudioHistoryEntry({
+    canonicalDeck
+  }, {
+    isCanonicalDeck: () => false
+  }), {
+    html: '',
+    activeSlideId: '',
+    selectedElementIds: [],
+    canonicalDeck: null
+  });
+});
+
 test('createStudioHistoryEntry falls back to HTML for malformed canonical sidecars', () => {
   const entry = studioHistory.createStudioHistoryEntry({ id: 'history-doc' }, {
     canonicalDeck: { invalid: true },
