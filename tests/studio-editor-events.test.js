@@ -1,8 +1,13 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 
 const events = require('../shared/studio-editor-events.js');
 const keyboard = require('../shared/studio-editor-keyboard.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 test('isStudioTypingContext normalizes tag names and contenteditable state', () => {
   assert.equal(keyboard.isStudioTypingContext({ tagName: 'input' }), true);
@@ -11,6 +16,52 @@ test('isStudioTypingContext normalizes tag names and contenteditable state', () 
   assert.equal(keyboard.isStudioTypingContext({ contentEditable: 'true' }), true);
   assert.equal(keyboard.isStudioTypingContext({ tagName: 'DIV', contentEditable: 'inherit' }), false);
   assert.equal(keyboard.isStudioTypingContext(null), false);
+});
+
+test('index loads keyboard dependency before editor events', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const keyboardScript = fileContent.indexOf('<script src="/shared/studio-editor-keyboard.js"></script>');
+  const eventsScript = fileContent.indexOf('<script src="/shared/studio-editor-events.js"></script>');
+
+  assert.ok(keyboardScript >= 0);
+  assert.ok(eventsScript >= 0);
+  assert.ok(keyboardScript < eventsScript);
+});
+
+test('browser-style event loading preserves typing-context shortcut guards', () => {
+  const context = vm.createContext({});
+  const keyboardSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-keyboard.js'),
+    'utf8'
+  );
+  const eventsSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared', 'studio-editor-events.js'),
+    'utf8'
+  );
+
+  vm.runInContext(keyboardSource, context);
+  vm.runInContext(eventsSource, context);
+
+  let removeCalls = 0;
+  const handler = context.SlideNextStudioEditorEvents.createStudioFrameKeydownHandler({
+    getActiveElement: () => ({ tagName: 'TEXTAREA' }),
+    getSelectedElements: () => [{ isConnected: true }],
+    canMutateDeck: () => true,
+    removeSelectedElement: () => { removeCalls += 1; }
+  });
+  let prevented = 0;
+  handler({
+    key: 'Delete',
+    ctrlKey: false,
+    metaKey: false,
+    altKey: false,
+    shiftKey: false,
+    preventDefault: () => { prevented += 1; },
+    stopPropagation: () => {}
+  });
+
+  assert.equal(removeCalls, 0);
+  assert.equal(prevented, 0);
 });
 
 test('attachStudioFrameInteractionHandlers binds frame click and keyboard listeners', () => {
