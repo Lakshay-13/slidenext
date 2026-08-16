@@ -69,7 +69,13 @@
     function nudge(dx, dy, sourceDoc) {
       if (!buildMotionSelectionActionState) return false;
 
-      const motionActionState = buildMotionSelectionActionState(sourceDoc);
+      let motionActionState;
+      try {
+        motionActionState = buildMotionSelectionActionState(sourceDoc);
+      } catch (error) {
+        refreshActionState(sourceDoc);
+        return false;
+      }
       const { doc, nudgeLayoutItems, slideBounds } = motionActionState || {};
       if (!motionActionState || !motionActionState.canNudge) {
         refreshActionState(doc);
