@@ -1693,6 +1693,7 @@
   <script src="/shared/studio-editor-launch-controller.js"></script>
   <script src="/shared/studio-editor-launch-controller-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-launch-shell-controller.js"></script>
+  <script src="/shared/studio-editor-launch-shell-controller-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-shell-runtime.js"></script>
@@ -6996,10 +6997,22 @@
       : { runtime: null };
     const studioEditorLaunchController =
       studioEditorLaunchControllerRuntimeAccessors.runtime;
-    const studioEditorLaunchShellController = typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
-      && SlideNextStudioEditorLaunchShellController
-      && typeof SlideNextStudioEditorLaunchShellController.createStudioEditorLaunchShellController === 'function'
-      ? SlideNextStudioEditorLaunchShellController.createStudioEditorLaunchShellController({
+    const studioEditorLaunchShellControllerRuntimeApi =
+      typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
+      ? SlideNextStudioEditorLaunchShellController
+      : null;
+    const studioEditorLaunchShellControllerRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorLaunchShellControllerRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorLaunchShellControllerRuntimeAccessors
+      : null;
+    const studioEditorLaunchShellControllerRuntimeAccessors =
+      studioEditorLaunchShellControllerRuntimeAccessorsApi
+      && typeof studioEditorLaunchShellControllerRuntimeAccessorsApi
+        .createStudioEditorLaunchShellControllerRuntimeAccessors === 'function'
+      ? studioEditorLaunchShellControllerRuntimeAccessorsApi
+        .createStudioEditorLaunchShellControllerRuntimeAccessors({
+          runtimeApi: studioEditorLaunchShellControllerRuntimeApi,
+          runtimeOptions: {
           documentRef: document,
           getPersistenceApi: () => typeof SlideNextStudioEditorPersistence !== 'undefined'
             ? SlideNextStudioEditorPersistence
@@ -7040,8 +7053,11 @@
           deselectElement,
           shellController: studioEditorShellController,
           loadPresentations
+          }
         })
-      : null;
+      : { runtime: null };
+    const studioEditorLaunchShellController =
+      studioEditorLaunchShellControllerRuntimeAccessors.runtime;
     const studioEditorVersionHistoryShellRuntimeApi =
       typeof SlideNextStudioEditorVersionHistoryShellRuntime !== 'undefined'
       ? SlideNextStudioEditorVersionHistoryShellRuntime
