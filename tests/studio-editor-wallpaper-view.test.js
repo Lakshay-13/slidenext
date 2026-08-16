@@ -444,3 +444,41 @@ test('index keeps custom gradient type controls free of inline handlers', () => 
   assert.doesNotMatch(fileContent, /id="cgLinearBtn"[^>]*onclick=/);
   assert.doesNotMatch(fileContent, /id="cgRadialBtn"[^>]*onclick=/);
 });
+
+test('bindStudioWallpaperSolidColorControl preserves picker apply and flush events', () => {
+  const input = {
+    value: '#123456',
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioWallpaperSolidColorControl({
+      documentRef: {
+        getElementById(id) {
+          return id === 'wallpaperCustomColor' ? input : null;
+        }
+      },
+      applyPresetWallpaper(value, isCustomInput) {
+        calls.push(['apply', value, isCustomInput]);
+      },
+      flushPendingWallpaperVersion() {
+        calls.push(['flush']);
+      }
+    }),
+    { wallpaperCustomColor: true }
+  );
+  input.listeners.input({ currentTarget: input });
+  input.listeners.change();
+  assert.deepEqual(calls, [['apply', '#123456', true], ['flush']]);
+});
+
+test('index keeps the solid wallpaper color picker free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="wallpaperCustomColor"[^>]*oninput=/);
+  assert.doesNotMatch(fileContent, /id="wallpaperCustomColor"[^>]*onchange=/);
+});

@@ -883,7 +883,7 @@
               </div>
               <div class="flex items-center justify-between p-2 bg-zinc-900 border border-white/5 rounded-lg">
                 <span class="text-xs font-mono text-zinc-400">Solid Picker:</span>
-                <input type="color" id="wallpaperCustomColor" oninput="applyPresetWallpaper(this.value, true)" onchange="flushPendingWallpaperVersion()" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+                <input type="color" id="wallpaperCustomColor" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
               </div>
             </div>
 
@@ -11427,6 +11427,16 @@
       studioEditorWallpaperViewApi.bindStudioCustomGradientTypeControls({
         documentRef: document,
         setCustomGradientType
+      });
+    }
+    if (studioEditorWallpaperViewApi
+      && typeof studioEditorWallpaperViewApi.bindStudioWallpaperSolidColorControl === 'function') {
+      studioEditorWallpaperViewApi.bindStudioWallpaperSolidColorControl({
+        documentRef: document,
+        applyPresetWallpaper: typeof applyPresetWallpaper === 'function' ? applyPresetWallpaper : null,
+        flushPendingWallpaperVersion: typeof flushPendingWallpaperVersion === 'function'
+          ? flushPendingWallpaperVersion
+          : null
       });
     }
 
