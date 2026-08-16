@@ -19,9 +19,17 @@
       ? options.isLocked
       : () => false;
 
-    return selection.filter((element) => isEligibleElement(element)
-      && !isHidden(element)
-      && !isLocked(element));
+    return selection.filter((element) => {
+      try {
+        if (!isEligibleElement(element) || isHidden(element) || isLocked(element)) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        // A stale canonical reader must not break pointer-driven selection.
+        return false;
+      }
+    });
   }
 
   function normalizeStudioSelectionRect(rect) {

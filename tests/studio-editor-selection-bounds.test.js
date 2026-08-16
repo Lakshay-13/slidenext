@@ -31,6 +31,25 @@ test('getStudioBoundableSelection ignores disconnected, hidden, and locked selec
   ]);
 });
 
+test('getStudioBoundableSelection fails closed when visibility readers throw', () => {
+  const elements = [
+    { id: 'safe', isConnected: true },
+    { id: 'hidden-reader-error', isConnected: true },
+    { id: 'locked-reader-error', isConnected: true }
+  ];
+
+  assert.deepEqual(selectionBounds.getStudioBoundableSelection(elements, {
+    isHidden: (element) => {
+      if (element.id === 'hidden-reader-error') throw new Error('stale hidden state');
+      return false;
+    },
+    isLocked: (element) => {
+      if (element.id === 'locked-reader-error') throw new Error('stale locked state');
+      return false;
+    }
+  }), [elements[0]]);
+});
+
 test('buildStudioSelectionBounds computes bounds from live visible elements', () => {
   assert.deepEqual(selectionBounds.buildStudioSelectionBounds([
     { id: 1, isConnected: false, hidden: false, bounds: { left: 0, top: 0, right: 100, bottom: 100 } },
