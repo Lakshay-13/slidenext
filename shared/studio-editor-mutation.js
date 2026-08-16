@@ -373,9 +373,7 @@
     if (typeof options.updateLayerOrderActionState === 'function') {
       options.updateLayerOrderActionState();
     }
-    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
-      options.triggerAutoVersion(versionLabel);
-    }
+    invokeStudioEditorAutoVersion(options.triggerAutoVersion, versionLabel);
     return versionLabel;
   }
 
