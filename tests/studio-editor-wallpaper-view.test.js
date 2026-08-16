@@ -521,3 +521,41 @@ test('index keeps custom-gradient color stops free of inline handlers', () => {
   assert.doesNotMatch(fileContent, /id="cgColor1"[^>]*(oninput|onchange)=/);
   assert.doesNotMatch(fileContent, /id="cgColor2"[^>]*(oninput|onchange)=/);
 });
+
+test('bindStudioCustomGradientAngleControl preserves angle update and flush events', () => {
+  const input = {
+    value: '210',
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioCustomGradientAngleControl({
+      documentRef: {
+        getElementById(id) {
+          return id === 'cgAngle' ? input : null;
+        }
+      },
+      updateCustomGradientAngle(value) {
+        calls.push(['update', value]);
+      },
+      flushPendingWallpaperVersion() {
+        calls.push(['flush']);
+      }
+    }),
+    { cgAngle: true }
+  );
+  input.listeners.input({ currentTarget: input });
+  input.listeners.change();
+  assert.deepEqual(calls, [['update', '210'], ['flush']]);
+});
+
+test('index keeps the custom-gradient angle slider free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="cgAngle"[^>]*oninput=/);
+  assert.doesNotMatch(fileContent, /id="cgAngle"[^>]*onchange=/);
+});

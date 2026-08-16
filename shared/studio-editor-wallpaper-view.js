@@ -379,6 +379,31 @@
     return bindings;
   }
 
+  function bindStudioCustomGradientAngleControl(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const updateCustomGradientAngle = typeof options.updateCustomGradientAngle === 'function'
+      ? options.updateCustomGradientAngle
+      : null;
+    const flushPendingWallpaperVersion = typeof options.flushPendingWallpaperVersion === 'function'
+      ? options.flushPendingWallpaperVersion
+      : null;
+    const input = documentRef.getElementById('cgAngle');
+    if (!input || typeof input.addEventListener !== 'function') {
+      return { cgAngle: false };
+    }
+    input.addEventListener('input', (event) => {
+      if (!updateCustomGradientAngle) return;
+      const target = event && event.currentTarget ? event.currentTarget : input;
+      updateCustomGradientAngle(target && typeof target.value !== 'undefined' ? target.value : '');
+    });
+    input.addEventListener('change', () => {
+      if (flushPendingWallpaperVersion) flushPendingWallpaperVersion();
+    });
+    return { cgAngle: true };
+  }
+
   function resetStudioWallpaperUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -569,6 +594,7 @@
     bindStudioCustomGradientTypeControls,
     bindStudioWallpaperSolidColorControl,
     bindStudioCustomGradientColorControls,
+    bindStudioCustomGradientAngleControl,
     resetStudioWallpaperUiState,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,

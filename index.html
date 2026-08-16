@@ -922,7 +922,7 @@
                   <span>Linear Angle:</span>
                   <span id="cgAngleVal" class="text-white font-bold">135°</span>
                 </div>
-                <input type="range" id="cgAngle" min="0" max="360" value="135" oninput="updateCustomGradientAngle(this.value)" onchange="flushPendingWallpaperVersion()" class="w-full accent-[#7028d0] cursor-pointer" />
+                <input type="range" id="cgAngle" min="0" max="360" value="135" class="w-full accent-[#7028d0] cursor-pointer" />
               </div>
             </div>
 
@@ -11449,6 +11449,22 @@
         applyCustomGradient: gradientGlobalApi
           && typeof gradientGlobalApi.applyCustomGradient === 'function'
           ? gradientGlobalApi.applyCustomGradient
+          : null,
+        flushPendingWallpaperVersion: typeof flushPendingWallpaperVersion === 'function'
+          ? flushPendingWallpaperVersion
+          : null
+      });
+    }
+    if (studioEditorWallpaperViewApi
+      && typeof studioEditorWallpaperViewApi.bindStudioCustomGradientAngleControl === 'function') {
+      const gradientGlobalApi = typeof studioEditorWallpaperGradientGlobalApi !== 'undefined'
+        ? studioEditorWallpaperGradientGlobalApi
+        : null;
+      studioEditorWallpaperViewApi.bindStudioCustomGradientAngleControl({
+        documentRef: document,
+        updateCustomGradientAngle: gradientGlobalApi
+          && typeof gradientGlobalApi.updateCustomGradientAngle === 'function'
+          ? gradientGlobalApi.updateCustomGradientAngle
           : null,
         flushPendingWallpaperVersion: typeof flushPendingWallpaperVersion === 'function'
           ? flushPendingWallpaperVersion
