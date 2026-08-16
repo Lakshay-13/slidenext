@@ -1819,6 +1819,7 @@
   <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
   <script src="/shared/studio-editor-hoverable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
+  <script src="/shared/studio-editor-element-identity-accessors.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-editor-overlay-accessors.js"></script>
   <script src="/shared/studio-editor-selection-overlay-shell-runtime.js"></script>
@@ -5476,7 +5477,29 @@
       ? SlideNextStudioEditorElementIdentityAdapter
       : null;
 
-    const studioEditorEditableElementEligibilityReader = studioEditorElementIdentityAdapter
+    const studioEditorElementIdentityAccessorsApi =
+      typeof SlideNextStudioEditorElementIdentityAccessors !== 'undefined'
+      ? SlideNextStudioEditorElementIdentityAccessors
+      : null;
+    const studioEditorElementIdentityAccessors = studioEditorElementIdentityAccessorsApi
+      && typeof studioEditorElementIdentityAccessorsApi
+        .createStudioEditorElementIdentityAccessors === 'function'
+      ? studioEditorElementIdentityAccessorsApi
+        .createStudioEditorElementIdentityAccessors({
+          elementIdentityAdapter: studioEditorElementIdentityAdapter,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          getDocument: () => getIframeDoc(),
+          getDomOptions: (overrides = {}) => getEditorDomOptions(overrides)
+        })
+      : null;
+
+    const studioEditorEditableElementEligibilityReader = typeof studioEditorElementIdentityAccessors !== 'undefined'
+      && studioEditorElementIdentityAccessors
+      && typeof studioEditorElementIdentityAccessors.isElementEligible === 'function'
+      ? (element, options) => studioEditorElementIdentityAccessors.isElementEligible(element, options)
+      : studioEditorElementIdentityAdapter
       && typeof studioEditorElementIdentityAdapter.isStudioEditorElementEligible === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
@@ -5490,7 +5513,11 @@
         )
       : null;
 
-    const studioEditorElementIdAssigner = studioEditorElementIdentityAdapter
+    const studioEditorElementIdAssigner = typeof studioEditorElementIdentityAccessors !== 'undefined'
+      && studioEditorElementIdentityAccessors
+      && typeof studioEditorElementIdentityAccessors.assignElementId === 'function'
+      ? (element, options) => studioEditorElementIdentityAccessors.assignElementId(element, options)
+      : studioEditorElementIdentityAdapter
       && typeof studioEditorElementIdentityAdapter.assignStudioEditorElementId === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
@@ -5504,7 +5531,11 @@
         )
       : null;
 
-    const studioEditorElementByIdReader = studioEditorElementIdentityAdapter
+    const studioEditorElementByIdReader = typeof studioEditorElementIdentityAccessors !== 'undefined'
+      && studioEditorElementIdentityAccessors
+      && typeof studioEditorElementIdentityAccessors.getElementById === 'function'
+      ? (editorId, doc, options) => studioEditorElementIdentityAccessors.getElementById(editorId, doc, options)
+      : studioEditorElementIdentityAdapter
       && typeof studioEditorElementIdentityAdapter.getStudioEditorElementById === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom

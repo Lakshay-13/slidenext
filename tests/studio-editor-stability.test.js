@@ -3033,6 +3033,8 @@ test('editor composes element-ID assignment through the shared DOM module', () =
     '\n\n    function getElementByEditorId'
   );
 
+  assert.match(source, /<script src="\/shared\/studio-editor-element-identity-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorElementIdentityAccessors =/);
   assert.match(source, /const studioEditorElementIdAssigner =/);
   assert.match(source, /const studioEditorElementIdentityAdapter =/);
   assert.match(source, /typeof elementIdAssigner === 'function'/);
