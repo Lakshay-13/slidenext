@@ -42,6 +42,44 @@ test('group controller commits grouped selection and finalizes the mutation', ()
   assert.deepEqual(calls[2][2].transaction, { id: 'tx' });
 });
 
+test('group controller preserves finalization when selection chrome throws', () => {
+  const calls = [];
+  const slide = { id: 'slide-1' };
+  const group = { id: 'group' };
+  const parent = {
+    getBoundingClientRect() {
+      return { left: 0, top: 0, right: 100, bottom: 100 };
+    }
+  };
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState: () => ({
+      canGroup: true,
+      slide,
+      parent,
+      selection: [{ id: 'one' }, { id: 'two' }],
+      groupPlan: { id: 'plan' }
+    }),
+    getSlideMetrics: () => ({ scaleX: 1, scaleY: 1 }),
+    getRectOnSlide: (rect) => rect,
+    getNormalizedSlideLayerOrder: () => [],
+    applyGroupMutation: () => ({ didApply: true, group, transaction: { id: 'tx' } }),
+    commitSelectionState: () => {
+      calls.push('selection');
+      throw new Error('selection chrome failed');
+    },
+    finalizeDeckMutation: (label) => {
+      calls.push(['finalize', label]);
+      return true;
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.group(), true));
+  assert.deepEqual(calls, [
+    'selection',
+    ['finalize', 'Auto: Grouped Elements']
+  ]);
+});
+
 test('group controller forwards canonical baselines and commits the canonical sidecar', () => {
   const slide = {
     id: 'slide-1',
