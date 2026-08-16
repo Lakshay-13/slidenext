@@ -921,7 +921,7 @@ test('buildEditorSaveRequestBody delegates save-request deck-state resolution th
   );
   assert.equal(delegatedArgs.doc, doc);
   assert.equal(delegatedArgs.cleanHtml, null);
-  assert.equal(delegatedArgs.canonicalDeck, null);
+  assert.equal(delegatedArgs.canonicalDeck, undefined);
   assert.equal(typeof delegatedArgs.capturePersistableDeckState, 'function');
   assert.equal(typeof delegatedArgs.resolveCanonicalDeck, 'function');
   assert.equal(delegatedArgs.buildPersistableDeckHtml, context.buildPersistableDeckHtml);

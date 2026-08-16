@@ -784,7 +784,8 @@
   }
 
   function resolveStudioSaveRequestDeckState(doc = null, cleanHtml = null, options = {}) {
-    const providedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck')
+    const hasProvidedCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck');
+    const providedCanonicalDeck = hasProvidedCanonicalDeck
       ? options.canonicalDeck
       : null;
     const getLiveCanonicalDeck = typeof options.getLiveCanonicalDeck === 'function'
@@ -793,7 +794,9 @@
     const capturePersistableDeckState = typeof options.capturePersistableDeckState === 'function'
       ? options.capturePersistableDeckState
       : null;
-    const capturedDeckState = typeof cleanHtml === 'string' || !capturePersistableDeckState
+    const capturedDeckState = hasProvidedCanonicalDeck && providedCanonicalDeck === null
+      || typeof cleanHtml === 'string'
+      || !capturePersistableDeckState
       ? null
       : capturePersistableDeckState(doc, {
           canonicalDeck: providedCanonicalDeck
@@ -802,14 +805,16 @@
       ? options.resolveCanonicalDeck
       : (canonicalDeck) => canonicalDeck || null;
     let liveCanonicalDeck = null;
-    if (!providedCanonicalDeck && getLiveCanonicalDeck) {
+    if (!hasProvidedCanonicalDeck && getLiveCanonicalDeck) {
       try {
         liveCanonicalDeck = getLiveCanonicalDeck(doc);
       } catch (err) {
         liveCanonicalDeck = null;
       }
     }
-    const resolvedCanonicalDeck = providedCanonicalDeck
+    const resolvedCanonicalDeck = hasProvidedCanonicalDeck && providedCanonicalDeck === null
+      ? null
+      : providedCanonicalDeck
       ? resolveCanonicalDeck(providedCanonicalDeck, doc, capturedDeckState)
       : (capturedDeckState && capturedDeckState.canonicalDeck)
         || liveCanonicalDeck
@@ -1052,11 +1057,7 @@
       const presentationUrl = Object.prototype.hasOwnProperty.call(nextOptions, 'presentationUrl')
         ? nextOptions.presentationUrl
         : getPresentationUrl();
-      const canonicalDeck = Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')
-        ? nextOptions.canonicalDeck
-        : null;
-      const resolvedDeckState = resolveSaveRequestDeckState(doc, cleanHtml, {
-        canonicalDeck,
+      const resolveDeckStateOptions = {
         capturePersistableDeckState: typeof nextOptions.capturePersistableDeckState === 'function'
           ? nextOptions.capturePersistableDeckState
           : capturePersistableDeckState,
@@ -1069,7 +1070,11 @@
         buildPersistableDeckHtml: typeof nextOptions.buildPersistableDeckHtml === 'function'
           ? nextOptions.buildPersistableDeckHtml
           : buildPersistableDeckHtml
-      });
+      };
+      if (Object.prototype.hasOwnProperty.call(nextOptions, 'canonicalDeck')) {
+        resolveDeckStateOptions.canonicalDeck = nextOptions.canonicalDeck;
+      }
+      const resolvedDeckState = resolveSaveRequestDeckState(doc, cleanHtml, resolveDeckStateOptions);
     const saveRequestOptions = {
       isAutoSave: !!nextOptions.isAutoSave,
       versionLabel: nextOptions.versionLabel,

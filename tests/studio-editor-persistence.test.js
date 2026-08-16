@@ -1945,6 +1945,51 @@ test('createStudioSaveRequestBodyBuilder prefers captured canonical state over s
   });
 });
 
+test('createStudioSaveRequestBodyBuilder uses the live canonical deck when no override is supplied', () => {
+  const sourceDocument = { label: 'iframe-doc' };
+  const liveCanonicalDeck = {
+    metadata: { title: 'Live Deck' },
+    slides: [{ id: 'slide-live' }]
+  };
+  const builder = editorPersistence.createStudioSaveRequestBodyBuilder({
+    getLiveCanonicalDeck: (documentRef) => {
+      assert.equal(documentRef, sourceDocument);
+      return liveCanonicalDeck;
+    },
+    buildSaveRequestBody: (_presentationUrl, cleanHtml, options) => ({
+      cleanHtml,
+      canonicalDeck: options.canonicalDeck
+    })
+  });
+
+  assert.deepEqual(builder(sourceDocument, '<html>provided</html>'), {
+    cleanHtml: '<html>provided</html>',
+    canonicalDeck: liveCanonicalDeck
+  });
+});
+
+test('createStudioSaveRequestBodyBuilder preserves an explicit null canonical deck override', () => {
+  const sourceDocument = { label: 'iframe-doc' };
+  const builder = editorPersistence.createStudioSaveRequestBodyBuilder({
+    getLiveCanonicalDeck: () => {
+      throw new Error('explicit null override must not read the live canonical deck');
+    },
+    capturePersistableDeckState: () => {
+      throw new Error('explicit null override must not capture a canonical deck');
+    },
+    buildPersistableDeckHtml: () => '<html>rebuilt</html>',
+    buildSaveRequestBody: (_presentationUrl, cleanHtml, options) => ({
+      cleanHtml,
+      canonicalDeck: options.canonicalDeck
+    })
+  });
+
+  assert.deepEqual(builder(sourceDocument, null, { canonicalDeck: null }), {
+    cleanHtml: '<html>rebuilt</html>',
+    canonicalDeck: null
+  });
+});
+
 test('resolveStudioSaveRequestCanonicalDeck falls back to the provided canonical deck builder when an override is malformed', () => {
   const fallbackCanonicalDeck = {
     metadata: {
