@@ -141,6 +141,15 @@
       ? options.updateInsertionActionState
       : null;
 
+    function refreshActionState(doc) {
+      if (!updateInsertionActionState) return;
+      try {
+        updateInsertionActionState(doc);
+      } catch (error) {
+        // A toolbar refresh failure must not change the insertion result.
+      }
+    }
+
     function buildCanonicalInsertionBuilders() {
       const importElementToCanonicalNode = deckImportApi
         && typeof deckImportApi.importElementToCanonicalNode === 'function'
@@ -183,7 +192,7 @@
       const iframeDoc = getIframeDoc();
       const activeSlide = getActiveSlide(iframeDoc);
       if (!activeSlide) {
-        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        refreshActionState(iframeDoc);
         return false;
       }
 
@@ -202,7 +211,7 @@
             })
           : null;
       } catch (err) {
-        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        refreshActionState(iframeDoc);
         return false;
       }
       const insertionLayoutMode = normalizeLayoutMode(normalizedInsertOptions.layoutMode)
@@ -261,7 +270,7 @@
         && newElement
         && !canonicalDeck) {
         removeInsertedElement(newElement);
-        if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+        refreshActionState(iframeDoc);
         return false;
       }
 
@@ -279,7 +288,7 @@
           );
           if (finalizeResult === false) {
             removeInsertedElement(newElement);
-            if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+            refreshActionState(iframeDoc);
             return false;
           }
           return true;
@@ -292,33 +301,33 @@
               captureStudioHistoryState(saveHistoryState, false, transaction, canonicalDeck)
             )) {
               removeInsertedElement(newElement);
-              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              refreshActionState(iframeDoc);
               return false;
             }
           } else if (transaction) {
             if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, false, transaction))) {
               removeInsertedElement(newElement);
-              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              refreshActionState(iframeDoc);
               return false;
             }
           } else {
             if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState))) {
               removeInsertedElement(newElement);
-              if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+              refreshActionState(iframeDoc);
               return false;
             }
           }
         }
         if (triggerAutoSave && triggerAutoSave() === false) {
           removeInsertedElement(newElement);
-          if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+          refreshActionState(iframeDoc);
           return false;
         }
         if (triggerAutoVersion) triggerAutoVersion(versionLabel);
         return true;
       }
 
-      if (updateInsertionActionState) updateInsertionActionState(iframeDoc);
+      refreshActionState(iframeDoc);
       return false;
     }
 

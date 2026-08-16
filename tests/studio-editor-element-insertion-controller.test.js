@@ -259,6 +259,20 @@ test('element insertion controller refreshes insertion state when no active slid
   assert.deepEqual(calls, [doc]);
 });
 
+test('element insertion controller preserves the result when action-state refresh throws', () => {
+  const controller = elementInsertionController.createStudioEditorElementInsertionController({
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => null,
+    updateInsertionActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.insert('h2'), false);
+  });
+});
+
 test('element insertion controller fails closed before DOM mutation when canonical baseline construction throws', () => {
   let insertionCalls = 0;
   const calls = [];
