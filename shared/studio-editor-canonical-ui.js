@@ -70,7 +70,33 @@
     return isValidCanonicalDeck(rebuiltCanonicalDeck) ? rebuiltCanonicalDeck : null;
   }
 
+  function createStudioEditorCanonicalDeckResolver(options = {}) {
+    const resolverOptions = {
+      getPendingCanonicalDeck: typeof options.getPendingCanonicalDeck === 'function'
+        ? options.getPendingCanonicalDeck
+        : null,
+      resolveLiveCanonicalDeck: typeof options.resolveLiveCanonicalDeck === 'function'
+        ? options.resolveLiveCanonicalDeck
+        : null,
+      getSessionToken: typeof options.getSessionToken === 'function'
+        ? options.getSessionToken
+        : null,
+      buildCanonicalDeck: typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null,
+      isCanonicalDeck: typeof options.isCanonicalDeck === 'function'
+        ? options.isCanonicalDeck
+        : null
+    };
+
+    return (sourceDoc = null, buildOptions = {}) => resolveStudioEditorCanonicalDeck(sourceDoc, {
+      ...resolverOptions,
+      buildOptions
+    });
+  }
+
   return {
-    resolveStudioEditorCanonicalDeck
+    resolveStudioEditorCanonicalDeck,
+    createStudioEditorCanonicalDeckResolver
   };
 });

@@ -172,3 +172,24 @@ test('canonical UI reader fails closed for malformed rebuilt state', () => {
 
   assert.equal(result, null);
 });
+
+test('canonical UI resolver factory owns dependency composition', () => {
+  const sourceDoc = { id: 'iframe-doc' };
+  const liveDeck = { slides: [{ id: 'live-slide' }] };
+  const calls = [];
+  const resolveCanonicalDeck = canonicalUi.createStudioEditorCanonicalDeckResolver({
+    resolveLiveCanonicalDeck(doc, sessionToken) {
+      calls.push([doc, sessionToken]);
+      return liveDeck;
+    },
+    getSessionToken() {
+      return 7;
+    },
+    isCanonicalDeck(value) {
+      return !!value && Array.isArray(value.slides);
+    }
+  });
+
+  assert.equal(resolveCanonicalDeck(sourceDoc, { preferLiveCanonicalDeck: true }), liveDeck);
+  assert.deepEqual(calls, [[sourceDoc, 7]]);
+});
