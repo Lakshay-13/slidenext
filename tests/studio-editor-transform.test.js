@@ -594,6 +594,33 @@ test('buildStudioTransformSelectionState excludes hidden elements from transform
   });
 });
 
+test('buildStudioTransformSelectionState fails closed when canonical readers throw', () => {
+  const hiddenReaderError = { id: 'hidden-reader-error', isConnected: true };
+  const lockedReaderError = { id: 'locked-reader-error', isConnected: true };
+
+  assert.deepEqual(transformState.buildStudioTransformSelectionState([hiddenReaderError], {
+    isHidden: () => {
+      throw new Error('stale hidden state');
+    },
+    isLocked: () => false,
+    isFreeformPositioned: () => true
+  }), {
+    selection: [],
+    canTransform: false
+  });
+
+  assert.deepEqual(transformState.buildStudioTransformSelectionState([lockedReaderError], {
+    isHidden: () => false,
+    isLocked: () => {
+      throw new Error('stale locked state');
+    },
+    isFreeformPositioned: () => true
+  }), {
+    selection: [lockedReaderError],
+    canTransform: false
+  });
+});
+
 test('getStudioSlideMetrics, getStudioRectOnSlide, and getStudioPointerOnSlide convert browser geometry into slide coordinates', () => {
   const metrics = transformState.getStudioSlideMetrics({
     clientWidth: 1920,

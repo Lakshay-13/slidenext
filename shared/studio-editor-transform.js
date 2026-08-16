@@ -100,7 +100,14 @@
       ? options.isHidden
       : () => false;
 
-    return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element) && !isHidden(element);
+      } catch (error) {
+        // A stale canonical reader must not start a transform session.
+        return false;
+      }
+    });
   }
 
   function buildStudioTransformSelectionState(elements = [], options = {}) {
@@ -115,7 +122,11 @@
     return {
       selection,
       canTransform: selection.length > 0 && selection.every((element) => {
-        return !isLocked(element) && isFreeformPositioned(element);
+        try {
+          return !isLocked(element) && isFreeformPositioned(element);
+        } catch (error) {
+          return false;
+        }
       })
     };
   }
