@@ -398,6 +398,44 @@ test('syncStudioPresentationMetadataPersistedCanonicalDeck updates the persisted
   ]);
 });
 
+test('syncStudioPresentationMetadataPersistedCanonicalDeck contains thumbnail refresh failures', () => {
+  const calls = [];
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+
+  assert.doesNotThrow(() => {
+    assert.equal(
+      editorPersistence.syncStudioPresentationMetadataPersistedCanonicalDeck({
+        id: 'onboarding-presentation',
+        canonicalDeck
+      }, {
+        resolveStoredCanonicalDeck: () => canonicalDeck,
+        getIframeDoc: () => null,
+        generateThumbnails() {
+          calls.push('generateThumbnails');
+          throw new Error('thumbnail refresh failed');
+        },
+        syncStudioChromeToActiveSlide() {
+          calls.push('syncStudioChromeToActiveSlide');
+        },
+        updateDeckReadyToolbarActionState() {
+          calls.push('updateDeckReadyToolbarActionState');
+        }
+      }),
+      canonicalDeck
+    );
+  });
+
+  assert.deepEqual(calls, [
+    'generateThumbnails',
+    'syncStudioChromeToActiveSlide',
+    'updateDeckReadyToolbarActionState'
+  ]);
+});
+
 test('syncStudioPresentationMetadataPersistedCanonicalDeck skips persistence refresh when metadata has no stored canonical deck', () => {
   const calls = [];
 

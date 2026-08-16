@@ -23,6 +23,15 @@
     }
   }
 
+  function refreshPersistenceThumbnailsSafely(generateThumbnails) {
+    if (typeof generateThumbnails !== 'function') return;
+    try {
+      generateThumbnails();
+    } catch (err) {
+      // Fallback thumbnail refresh must not interrupt metadata synchronization.
+    }
+  }
+
   function asPlainObject(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return {};
@@ -222,7 +231,7 @@
     const iframeDoc = getIframeDoc();
     if (!iframeDoc) {
       if (typeof options.generateThumbnails === 'function') {
-        options.generateThumbnails();
+        refreshPersistenceThumbnailsSafely(options.generateThumbnails);
       }
       if (typeof options.syncStudioChromeToActiveSlide === 'function') {
         options.syncStudioChromeToActiveSlide(iframeDoc);
