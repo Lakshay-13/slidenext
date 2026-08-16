@@ -1358,6 +1358,7 @@
   <script src="/shared/studio-editor-canonical-runtime-options.js"></script>
   <script src="/shared/studio-editor-canonical-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-canonical-runtime-accessors.js"></script>
   <script src="/shared/presentation-metadata.js"></script>
   <script src="/shared/image-position.js"></script>
   <script src="/shared/deck-import.js"></script>
@@ -5607,16 +5608,26 @@
           getDocument: getIframeDoc
         })
       : null;
-    const studioEditorCanonicalRuntime = studioEditorCanonicalRuntimeOptions
-      && typeof SlideNextStudioEditorCanonicalShellRuntime !== 'undefined'
-      && SlideNextStudioEditorCanonicalShellRuntime
-      && typeof SlideNextStudioEditorCanonicalShellRuntime.createStudioEditorCanonicalShellRuntime === 'function'
-      ? SlideNextStudioEditorCanonicalShellRuntime.createStudioEditorCanonicalShellRuntime({
+    const studioEditorCanonicalRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorCanonicalRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorCanonicalRuntimeAccessors
+      : null;
+    const studioEditorCanonicalRuntimeAccessors = studioEditorCanonicalRuntimeAccessorsApi
+      && typeof studioEditorCanonicalRuntimeAccessorsApi
+        .createStudioEditorCanonicalRuntimeAccessors === 'function'
+      ? studioEditorCanonicalRuntimeAccessorsApi
+        .createStudioEditorCanonicalRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorCanonicalShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorCanonicalShellRuntime
+            : null,
           canonicalRuntimeApi: typeof SlideNextStudioEditorCanonicalRuntime !== 'undefined'
             ? SlideNextStudioEditorCanonicalRuntime
             : null,
           runtimeOptions: studioEditorCanonicalRuntimeOptions
         })
+      : null;
+    const studioEditorCanonicalRuntime = studioEditorCanonicalRuntimeAccessors
+      ? studioEditorCanonicalRuntimeAccessors.runtime
       : null;
     const studioEditorCanonicalState = studioEditorCanonicalRuntime
       ? studioEditorCanonicalRuntime.canonicalState
