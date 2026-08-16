@@ -59,8 +59,19 @@ test('index routes captured persistable deck state installation through the shel
     fileContent,
     /<script src="\/shared\/studio-editor-captured-persistable-deck-state-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-captured-persistable-deck-state-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorCapturedPersistableDeckStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorCapturedPersistableDeckStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorCapturedPersistableDeckStateRuntimeAccessorsApi\s*\.\s*createStudioEditorCapturedPersistableDeckStateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorCapturedPersistableDeckStateShellRuntimeApi\s*\.\s*createStudioEditorCapturedPersistableDeckStateShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorCapturedPersistableDeckStateGlobalApi\s*=\s*studioEditorCapturedPersistableDeckStateShellRuntime/

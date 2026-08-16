@@ -1625,6 +1625,7 @@
   <script src="/shared/studio-editor-persistable-deck-build-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-captured-persistable-deck-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
@@ -6769,24 +6770,35 @@
       typeof SlideNextStudioEditorCapturedPersistableDeckStateShellRuntime !== 'undefined'
       ? SlideNextStudioEditorCapturedPersistableDeckStateShellRuntime
       : null;
-    const studioEditorCapturedPersistableDeckStateShellRuntime =
-      studioEditorCapturedPersistableDeckStateShellRuntimeApi
-      && typeof studioEditorCapturedPersistableDeckStateShellRuntimeApi
-        .createStudioEditorCapturedPersistableDeckStateShellRuntime === 'function'
-      ? studioEditorCapturedPersistableDeckStateShellRuntimeApi
-        .createStudioEditorCapturedPersistableDeckStateShellRuntime({
-          actionApi: typeof SlideNextStudioEditorCapturedPersistableDeckStateAction !== 'undefined'
-            ? SlideNextStudioEditorCapturedPersistableDeckStateAction
-            : null,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null
+    const studioEditorCapturedPersistableDeckStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorCapturedPersistableDeckStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorCapturedPersistableDeckStateRuntimeAccessors
+      : null;
+    const studioEditorCapturedPersistableDeckStateRuntimeAccessors =
+      studioEditorCapturedPersistableDeckStateRuntimeAccessorsApi
+      && typeof studioEditorCapturedPersistableDeckStateRuntimeAccessorsApi
+        .createStudioEditorCapturedPersistableDeckStateRuntimeAccessors === 'function'
+      ? studioEditorCapturedPersistableDeckStateRuntimeAccessorsApi
+        .createStudioEditorCapturedPersistableDeckStateRuntimeAccessors({
+          runtimeApi: studioEditorCapturedPersistableDeckStateShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorCapturedPersistableDeckStateAction !== 'undefined'
+              ? SlideNextStudioEditorCapturedPersistableDeckStateAction
+              : null,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null
+          }
         })
       : null;
+    const studioEditorCapturedPersistableDeckStateShellRuntime =
+      studioEditorCapturedPersistableDeckStateRuntimeAccessors
+        ? studioEditorCapturedPersistableDeckStateRuntimeAccessors.runtime
+        : null;
     const studioEditorCapturedPersistableDeckStateAction = studioEditorCapturedPersistableDeckStateShellRuntime
       && studioEditorCapturedPersistableDeckStateShellRuntime.isAvailable === true
       ? studioEditorCapturedPersistableDeckStateShellRuntime.capturedPersistableDeckStateAction
