@@ -90,6 +90,23 @@
       }
     }
 
+    function runLegacyPersistenceHooks(versionLabel = '') {
+      if (triggerAutoSave) {
+        try {
+          triggerAutoSave();
+        } catch (err) {
+          // Keep the committed history entry and continue the remaining persistence hooks.
+        }
+      }
+      if (triggerAutoVersion && versionLabel) {
+        try {
+          triggerAutoVersion(versionLabel);
+        } catch (err) {
+          // A version notification failure must not change the committed master mutation.
+        }
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -267,8 +284,7 @@
           if (typeof onRejected === 'function') onRejected();
           return null;
         }
-        if (triggerAutoSave) triggerAutoSave();
-        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+        runLegacyPersistenceHooks(versionLabel);
       }
       publishMasterSlidesChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
