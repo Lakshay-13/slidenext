@@ -368,7 +368,7 @@
   }
 
   function resolveStudioSlideNavigationDirection(event = {}, hasSelection = false) {
-    if (event.ctrlKey || event.metaKey || event.altKey) return 0;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return 0;
     if (event.key === 'PageDown') return 1;
     if (event.key === 'PageUp') return -1;
     if (hasSelection) return 0;
@@ -529,6 +529,7 @@
         && !event.ctrlKey
         && !event.metaKey
         && !event.altKey
+        && !event.shiftKey
         && (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'ArrowLeft' || event.key === 'PageDown' || event.key === 'PageUp')) {
         event.preventDefault();
         event.stopPropagation();

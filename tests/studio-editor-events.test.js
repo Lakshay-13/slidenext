@@ -429,12 +429,16 @@ test('createStudioFrameKeydownHandler leaves modified arrow and page shortcuts u
   handler(modifiedArrowEvent);
   const modifiedPageEvent = createKeyboardEvent({ key: 'PageDown', altKey: true });
   handler(modifiedPageEvent);
+  const modifiedShiftPageEvent = createKeyboardEvent({ key: 'PageDown', shiftKey: true });
+  handler(modifiedShiftPageEvent);
 
   assert.deepEqual(calls, { navigation: [], nudge: [] });
   assert.equal(modifiedArrowEvent.prevented, 0);
   assert.equal(modifiedArrowEvent.stopped, 0);
   assert.equal(modifiedPageEvent.prevented, 0);
   assert.equal(modifiedPageEvent.stopped, 0);
+  assert.equal(modifiedShiftPageEvent.prevented, 0);
+  assert.equal(modifiedShiftPageEvent.stopped, 0);
 });
 
 test('createStudioFrameKeydownHandler does not intercept undo and redo while typing', () => {
@@ -831,6 +835,10 @@ test('createStudioGlobalKeydownHandler leaves modified nudge shortcuts untouched
   const event = createKeyboardEvent({ key: 'ArrowLeft', metaKey: true });
   handler(event);
 
+  const modifiedPageEvent = createKeyboardEvent({ key: 'PageDown', shiftKey: true });
+  handler(modifiedPageEvent);
+
   assert.deepEqual(calls, []);
   assert.equal(event.prevented, 0);
+  assert.equal(modifiedPageEvent.prevented, 0);
 });
