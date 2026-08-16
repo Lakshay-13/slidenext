@@ -649,6 +649,7 @@ test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides 
 
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {
     includeLayers: true,
+    preferCanonicalLayers: false,
     buildCanonicalDeck() {
       return {
         slides: [
@@ -695,12 +696,11 @@ test('buildStudioDeckSnapshot merges live layer snapshots onto canonical slides 
   });
 });
 
-test('buildStudioDeckSnapshot can keep canonical layer snapshots when requested', () => {
+test('buildStudioDeckSnapshot uses canonical layer snapshots by default', () => {
   const doc = { label: 'doc' };
   let liveLayerSnapshotCalls = 0;
   const result = deckSnapshot.buildStudioDeckSnapshot(doc, {
     includeLayers: true,
-    preferCanonicalLayers: true,
     canonicalLayerOptions: {
       isSelectedNode(node) {
         return node.id === 'node-2';

@@ -276,9 +276,7 @@
 
       return buildDeckSnapshot(doc, {
         includeLayers: !!buildOptions.includeLayers,
-        ...(buildOptions.preferCanonicalLayers
-          ? { preferCanonicalLayers: true }
-          : {}),
+        preferCanonicalLayers: buildOptions.preferCanonicalLayers !== false,
         ...(buildOptions.canonicalLayerOptions
           ? { canonicalLayerOptions: buildOptions.canonicalLayerOptions }
           : {}),
@@ -345,7 +343,7 @@
       ...deckSnapshot,
       slides: deckSnapshot.slides.map((slideSnapshot) => {
         const slideEl = getSlideById ? getSlideById(slideSnapshot.id, doc) : null;
-        if (options.preferCanonicalLayers || !slideEl || !buildSlideLayerSnapshot) {
+        if (options.preferCanonicalLayers !== false || !slideEl || !buildSlideLayerSnapshot) {
           return slideSnapshot;
         }
         return {
