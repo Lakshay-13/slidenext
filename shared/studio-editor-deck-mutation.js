@@ -192,7 +192,7 @@
       invokeStudioEditorThumbnailRefresh(generateThumbnails);
     }
     if (resolvedMutationOptions.refreshLayersList) {
-      updateLayersList(resolvedMutationOptions.doc);
+      invokeStudioEditorUiRefresh(() => updateLayersList(resolvedMutationOptions.doc));
     }
     const historyArgs = [
       resolvedMutationOptions.debounceHistory === true,

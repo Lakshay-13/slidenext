@@ -146,6 +146,31 @@ test('finalizeStudioEditorDeckMutation preserves fallback persistence when thumb
   assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Style']]);
 });
 
+test('finalizeStudioEditorDeckMutation preserves fallback persistence when layer refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorDeckMutation(
+    'Auto: Style',
+    { refreshLayersList: true, doc: { id: 'editor-document' } },
+    {
+      updateLayersList() {
+        throw new Error('layer refresh unavailable');
+      },
+      saveHistoryState() {
+        calls.push('history');
+      },
+      triggerAutoSave() {
+        calls.push('save');
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Style');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Style']]);
+});
+
 test('finalizeStudioEditorDeckMutation forwards the mutation document in its fallback lifecycle', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];
