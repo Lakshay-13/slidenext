@@ -23,7 +23,23 @@
     return resolveActiveSlide(doc, options.domOptions || {});
   }
 
+  function createStudioEditorActiveSlideResolver(options = {}) {
+    const domApi = options.domApi && typeof options.domApi === 'object'
+      ? options.domApi
+      : null;
+    const activeSlideResolver = typeof options.activeSlideResolver === 'function'
+      ? options.activeSlideResolver
+      : null;
+
+    return (doc, domOptions = {}) => getStudioEditorActiveSlide(doc, {
+      domApi,
+      activeSlideResolver,
+      domOptions
+    });
+  }
+
   return {
-    getStudioEditorActiveSlide
+    getStudioEditorActiveSlide,
+    createStudioEditorActiveSlideResolver
   };
 });

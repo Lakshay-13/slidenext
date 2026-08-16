@@ -47,3 +47,19 @@ test('getStudioEditorActiveSlide fails closed without a resolver', () => {
     null
   );
 });
+
+test('createStudioEditorActiveSlideResolver owns DOM option composition', () => {
+  const calls = [];
+  const doc = { id: 'iframe-doc' };
+  const domOptions = { slideAttrName: 'data-slide-id' };
+  const activeSlide = { id: 'slide-1' };
+  const resolveActiveSlide = activeSlideAdapter.createStudioEditorActiveSlideResolver({
+    activeSlideResolver(docValue, optionsValue) {
+      calls.push([docValue, optionsValue]);
+      return activeSlide;
+    }
+  });
+
+  assert.equal(resolveActiveSlide(doc, domOptions), activeSlide);
+  assert.deepEqual(calls, [[doc, domOptions]]);
+});

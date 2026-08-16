@@ -4605,18 +4605,25 @@
       : null;
 
     const studioEditorActiveSlideResolver = studioEditorActiveSlideAdapter
-      && typeof studioEditorActiveSlideAdapter.getStudioEditorActiveSlide === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioActiveSlide === 'function'
-      ? (doc, options) => studioEditorActiveSlideAdapter.getStudioEditorActiveSlide(
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
-      : null;
+      && typeof studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver === 'function'
+      ? studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver({
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null
+        })
+      : studioEditorActiveSlideAdapter
+        && typeof studioEditorActiveSlideAdapter.getStudioEditorActiveSlide === 'function'
+        && typeof SlideNextStudioEditorDom !== 'undefined'
+        && SlideNextStudioEditorDom
+        && typeof SlideNextStudioEditorDom.getStudioActiveSlide === 'function'
+        ? (doc, options) => studioEditorActiveSlideAdapter.getStudioEditorActiveSlide(
+            doc,
+            {
+              domApi: SlideNextStudioEditorDom,
+              domOptions: options
+            }
+          )
+        : null;
 
     const studioEditorActiveSlideIdAdapter = typeof SlideNextStudioEditorActiveSlideIdAdapter !== 'undefined'
       && SlideNextStudioEditorActiveSlideIdAdapter
