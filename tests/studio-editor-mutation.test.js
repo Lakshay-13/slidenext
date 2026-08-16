@@ -283,6 +283,24 @@ test('createStudioMutationFinalizer fails before UI work when history capture th
   assert.deepEqual(calls, ['history']);
 });
 
+test('createStudioMutationFinalizer converts thrown autosave to rejection', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      throw new Error('autosave unavailable');
+    },
+    triggerAutoVersion() {
+      throw new Error('versioning should not run');
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Rejected Update'), false);
+  assert.deepEqual(calls, ['history']);
+});
+
 test('createStudioMutationFinalizer drops malformed canonical deck sidecars', () => {
   const historyArgs = [];
   const isCanonicalDeck = (value) => (

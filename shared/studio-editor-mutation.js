@@ -72,6 +72,15 @@
     }
   }
 
+  function invokeStudioEditorAutoSave(triggerAutoSave) {
+    if (typeof triggerAutoSave !== 'function') return true;
+    try {
+      return triggerAutoSave() !== false;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
@@ -172,7 +181,7 @@
           return false;
         }
       }
-      if (triggerAutoSave() === false) return false;
+      if (!invokeStudioEditorAutoSave(triggerAutoSave)) return false;
       if (versionLabel) {
         triggerAutoVersion(versionLabel);
       }
