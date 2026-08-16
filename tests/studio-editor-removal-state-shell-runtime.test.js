@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const removalStateShellRuntime = require('../shared/studio-editor-removal-state-shell-runtime.js');
+const removalStateAccessors = require('../shared/studio-editor-removal-state-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -47,6 +48,38 @@ test('removal state shell runtime fails closed when the shared state API is unav
   assert.equal(runtime.removalStateController, null);
 });
 
+test('removal state accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { isAvailable: true, removalStateController: { name: 'removal' } };
+  const runtimeOptions = { getDocument: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorRemovalStateShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const removalStateApi = { name: 'state' };
+  const accessors = removalStateAccessors.createStudioEditorRemovalStateAccessors({
+    runtimeApi,
+    removalStateApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].removalStateApi, removalStateApi);
+  assert.equal(calls[0].getDocument, runtimeOptions.getDocument);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('removal state accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = removalStateAccessors.createStudioEditorRemovalStateAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
+});
+
 test('index routes removal state construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -54,8 +87,14 @@ test('index routes removal state construction through the shell runtime', () => 
     fileContent,
     /<script src="\/shared\/studio-editor-removal-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorRemovalStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorRemovalStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-removal-state-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorRemovalStateAccessorsApi\s*\.\s*createStudioEditorRemovalStateAccessors\(/
+  );
   assert.match(
     fileContent,
     /studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime/

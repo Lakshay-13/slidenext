@@ -1426,6 +1426,7 @@
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-state.js"></script>
   <script src="/shared/studio-editor-removal-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-removal-state-accessors.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-toolbar-state.js"></script>
   <script src="/shared/studio-editor-lock-mutation.js"></script>
@@ -3910,15 +3911,19 @@
     const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
       ? studioEditorLockVisibilityRuntime.lockVisibilityController
       : null;
-    const studioEditorRemovalStateShellRuntimeApi =
-      typeof SlideNextStudioEditorRemovalStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorRemovalStateShellRuntime
+    const studioEditorRemovalStateAccessorsApi =
+      typeof SlideNextStudioEditorRemovalStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorRemovalStateAccessors
       : null;
-    const studioEditorRemovalStateShellRuntime = studioEditorRemovalStateShellRuntimeApi
-      && typeof studioEditorRemovalStateShellRuntimeApi
-        .createStudioEditorRemovalStateShellRuntime === 'function'
-      ? studioEditorRemovalStateShellRuntimeApi
-        .createStudioEditorRemovalStateShellRuntime({
+    const studioEditorRemovalStateAccessors = studioEditorRemovalStateAccessorsApi
+      && typeof studioEditorRemovalStateAccessorsApi
+        .createStudioEditorRemovalStateAccessors === 'function'
+      ? studioEditorRemovalStateAccessorsApi
+        .createStudioEditorRemovalStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorRemovalStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorRemovalStateShellRuntime
+            : null,
+          runtimeOptions: {
           removalStateApi: typeof SlideNextStudioEditorRemovalState !== 'undefined'
             ? SlideNextStudioEditorRemovalState
             : null,
@@ -3933,7 +3938,11 @@
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
             : isElementLocked,
           documentRef: document
+          }
         })
+      : null;
+    const studioEditorRemovalStateShellRuntime = studioEditorRemovalStateAccessors
+      ? studioEditorRemovalStateAccessors.runtime
       : null;
     const studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime
       && studioEditorRemovalStateShellRuntime.isAvailable === true
