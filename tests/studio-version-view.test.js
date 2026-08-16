@@ -311,7 +311,8 @@ test('version view renders a retryable history load error', () => {
   }), true);
   assert.match(list.innerHTML, /Failed to load version history/);
   assert.match(list.innerHTML, /Try again/);
-  assert.match(list.innerHTML, /onclick="loadVersions\(\)"/);
+  assert.match(list.innerHTML, /data-studio-version-action="retry"/);
+  assert.doesNotMatch(list.innerHTML, /onclick=/);
 });
 
 test('version view renders a live loading state', () => {
@@ -356,9 +357,82 @@ test('renderStudioVersionsList renders version labels, timestamps, and actions',
     }
   }), true);
   assert.match(list.innerHTML, /Readable index_20260101_120000_Auto\.html/);
-  assert.match(list.innerHTML, /restoreVersion\('index_20260101_120000_Auto\.html'\)/);
-  assert.match(list.innerHTML, /promptRenameVersion/);
-  assert.match(list.innerHTML, /deleteVersion/);
+  assert.match(list.innerHTML, /data-studio-version-action="restore"/);
+  assert.match(list.innerHTML, /data-studio-version-action="rename"/);
+  assert.match(list.innerHTML, /data-studio-version-action="delete"/);
+  assert.doesNotMatch(list.innerHTML, /onclick=/);
+});
+
+test('version view delegates dynamic history actions without duplicate listeners', () => {
+  const list = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+  const documentRef = {
+    getElementById(id) {
+      return id === 'versionsList' ? list : null;
+    }
+  };
+  const dispatch = (action, attributes = {}) => {
+    let stopped = false;
+    const target = {
+      dataset: {
+        studioVersionAction: action,
+        ...attributes
+      },
+      parentNode: list
+    };
+    list.listeners.click({
+      target,
+      stopPropagation() {
+        stopped = true;
+      }
+    });
+    return stopped;
+  };
+
+  assert.equal(versionView.bindStudioVersionHistoryActions({
+    documentRef,
+    loadVersions() {
+      calls.push(['retry']);
+    },
+    restoreVersion(filename) {
+      calls.push(['restore', filename]);
+    },
+    promptRenameVersion(filename, label) {
+      calls.push(['rename', filename, label]);
+    },
+    deleteVersion(filename) {
+      calls.push(['delete', filename]);
+    }
+  }), true);
+  assert.equal(versionView.bindStudioVersionHistoryActions({
+    documentRef,
+    restoreVersion(filename) {
+      calls.push(['updated-restore', filename]);
+    }
+  }), true);
+
+  assert.equal(dispatch('retry'), false);
+  assert.equal(dispatch('restore', {
+    studioVersionFilename: 'draft.html'
+  }), false);
+  assert.equal(dispatch('rename', {
+    studioVersionFilename: 'draft.html',
+    studioVersionLabel: 'Draft'
+  }), true);
+  assert.equal(dispatch('delete', {
+    studioVersionFilename: 'draft.html'
+  }), true);
+  assert.deepEqual(calls, [
+    ['retry'],
+    ['updated-restore', 'draft.html'],
+    ['rename', 'draft.html', 'Draft'],
+    ['delete', 'draft.html']
+  ]);
 });
 
 test('renderStudioVersionsList renders the empty state and tolerates missing chrome', () => {

@@ -12317,7 +12317,11 @@
         versions,
         presentationUrl,
         deriveVersionDeckBaseName: SlideNextStudioVersionHistory.deriveStudioVersionDeckBaseName,
-        deriveVersionDisplayLabel: VersionBackupUtils.deriveVersionDisplayLabel
+        deriveVersionDisplayLabel: VersionBackupUtils.deriveVersionDisplayLabel,
+        loadVersions: typeof loadVersions === 'function' ? loadVersions : null,
+        restoreVersion: typeof restoreVersion === 'function' ? restoreVersion : null,
+        promptRenameVersion: typeof promptRenameVersion === 'function' ? promptRenameVersion : null,
+        deleteVersion: typeof deleteVersion === 'function' ? deleteVersion : null
       };
       return versionView.syncStudioVersionsList(options);
     }
@@ -12328,7 +12332,8 @@
         : null;
       if (!versionView || typeof versionView.setStudioVersionHistoryErrorState !== 'function') return false;
       return versionView.setStudioVersionHistoryErrorState({
-        documentRef: document
+        documentRef: document,
+        loadVersions: typeof loadVersions === 'function' ? loadVersions : null
       });
     }
 

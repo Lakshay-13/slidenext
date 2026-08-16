@@ -10,6 +10,90 @@
     root.SlideNextStudioVersionView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (defaultModalVisibility) {
+  const studioVersionHistoryActionBindings = new WeakMap();
+
+  function escapeStudioVersionMarkup(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[character]));
+  }
+
+  function getStudioVersionActionAttribute(target, name) {
+    if (!target) return '';
+    if (typeof target.getAttribute === 'function') {
+      return target.getAttribute(name) || '';
+    }
+    const datasetKey = name.replace(/^data-/, '').replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+    return target.dataset && target.dataset[datasetKey]
+      ? target.dataset[datasetKey]
+      : '';
+  }
+
+  function findStudioVersionActionTarget(list, event) {
+    let target = event && event.target;
+    if (target && typeof target.closest === 'function') {
+      target = target.closest('[data-studio-version-action]');
+      if (target && list && typeof list.contains === 'function' && !list.contains(target)) {
+        return null;
+      }
+      return target;
+    }
+    while (target && target !== list) {
+      if (getStudioVersionActionAttribute(target, 'data-studio-version-action')) return target;
+      target = target.parentNode;
+    }
+    return target === list ? null : target;
+  }
+
+  function bindStudioVersionHistoryActions(options = {}) {
+    const documentRef = options.documentRef;
+    const list = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('versionsList')
+      : null;
+    if (!list || typeof list.addEventListener !== 'function') return false;
+
+    const handlers = {};
+    [
+      'loadVersions',
+      'restoreVersion',
+      'promptRenameVersion',
+      'deleteVersion'
+    ].forEach((name) => {
+      if (typeof options[name] === 'function') handlers[name] = options[name];
+    });
+    const existingBinding = studioVersionHistoryActionBindings.get(list);
+    if (existingBinding) {
+      Object.assign(existingBinding.handlers, handlers);
+      return true;
+    }
+
+    const binding = { handlers };
+    list.addEventListener('click', (event) => {
+      const target = findStudioVersionActionTarget(list, event);
+      const action = getStudioVersionActionAttribute(target, 'data-studio-version-action');
+      if (!action) return;
+      const filename = getStudioVersionActionAttribute(target, 'data-studio-version-filename');
+      const label = getStudioVersionActionAttribute(target, 'data-studio-version-label');
+      if (action === 'retry' && binding.handlers.loadVersions) {
+        binding.handlers.loadVersions();
+      } else if (action === 'restore' && binding.handlers.restoreVersion) {
+        binding.handlers.restoreVersion(filename);
+      } else if (action === 'rename' && binding.handlers.promptRenameVersion) {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+        binding.handlers.promptRenameVersion(filename, label);
+      } else if (action === 'delete' && binding.handlers.deleteVersion) {
+        if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+        binding.handlers.deleteVersion(filename);
+      }
+    });
+    studioVersionHistoryActionBindings.set(list, binding);
+    return true;
+  }
+
   function hideStudioVersionsDropdown(options = {}) {
     const documentRef = options.documentRef;
     const dropdown = documentRef && typeof documentRef.getElementById === 'function'
@@ -296,10 +380,11 @@
 
     list.innerHTML = `
       <span class="text-rose-400 text-center py-2 text-[11px]" role="alert">Failed to load version history</span>
-      <button type="button" onclick="loadVersions()" class="mx-2 mb-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded text-[11px] font-semibold transition-all">
+      <button type="button" data-studio-version-action="retry" class="mx-2 mb-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded text-[11px] font-semibold transition-all">
         <span class="material-symbols-outlined text-[14px]">refresh</span> Try again
       </button>
     `;
+    bindStudioVersionHistoryActions(options);
     return true;
   }
 
@@ -324,6 +409,7 @@
     const versions = Array.isArray(options.versions) ? options.versions : [];
     if (versions.length === 0) {
       list.innerHTML = '<span class="text-zinc-500 text-center py-2 text-[11px]">No versions saved yet</span>';
+      bindStudioVersionHistoryActions(options);
       return true;
     }
 
@@ -332,28 +418,32 @@
       : (filename) => filename;
     const baseName = options.baseName || '';
     list.innerHTML = versions.map((version) => {
+      const filename = String(version.filename == null ? '' : version.filename);
       const dateValue = new Date(version.createdAt);
       const date = dateValue.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' '
         + dateValue.toLocaleDateString([], { month: 'short', day: 'numeric' });
-      const label = deriveVersionDisplayLabel(version.filename, baseName);
+      const label = deriveVersionDisplayLabel(filename, baseName);
+      const safeFilename = escapeStudioVersionMarkup(filename);
+      const safeLabel = escapeStudioVersionMarkup(label);
 
       return `
           <div class="w-full px-3 py-1.5 hover:bg-white/5 rounded transition-all font-sans text-xs flex justify-between items-center group/item text-zinc-300 relative">
-            <div onclick="restoreVersion('${version.filename}')" class="flex flex-col cursor-pointer flex-1 truncate pr-2">
-              <span class="truncate font-semibold text-zinc-200 group-hover/item:text-white">${label}</span>
+            <div data-studio-version-action="restore" data-studio-version-filename="${safeFilename}" class="flex flex-col cursor-pointer flex-1 truncate pr-2">
+              <span class="truncate font-semibold text-zinc-200 group-hover/item:text-white">${safeLabel}</span>
               <span class="text-zinc-500 font-mono text-[9px] mt-0.5">${date}</span>
             </div>
             <div class="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-              <button onclick="event.stopPropagation(); promptRenameVersion('${version.filename}', '${label.replace(/'/g, "\\'")}')" class="p-1 hover:bg-white/10 hover:text-[#7028d0] text-zinc-400 rounded transition-all flex items-center justify-center" title="Rename Version">
+              <button type="button" data-studio-version-action="rename" data-studio-version-filename="${safeFilename}" data-studio-version-label="${safeLabel}" class="p-1 hover:bg-white/10 hover:text-[#7028d0] text-zinc-400 rounded transition-all flex items-center justify-center" title="Rename Version">
                 <span class="material-symbols-outlined text-[14px]">edit</span>
               </button>
-              <button onclick="event.stopPropagation(); deleteVersion('${version.filename}')" class="p-1 hover:bg-rose-500/20 hover:text-rose-400 text-zinc-400 rounded transition-all flex items-center justify-center" title="Delete Version">
+              <button type="button" data-studio-version-action="delete" data-studio-version-filename="${safeFilename}" class="p-1 hover:bg-rose-500/20 hover:text-rose-400 text-zinc-400 rounded transition-all flex items-center justify-center" title="Delete Version">
                 <span class="material-symbols-outlined text-[14px]">delete</span>
               </button>
             </div>
           </div>
         `;
     }).join('');
+    bindStudioVersionHistoryActions(options);
     return true;
   }
 
@@ -376,6 +466,7 @@
     bindStudioEditorVersionToolbarControls,
     bindStudioEditorSaveVersionModalControls,
     bindStudioEditorRenameVersionModalControls,
+    bindStudioVersionHistoryActions,
     showStudioVersionModal,
     hideStudioVersionModal,
     hideStudioVersionModalImmediately,
