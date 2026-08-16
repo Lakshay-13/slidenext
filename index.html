@@ -1463,6 +1463,7 @@
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-block-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-master-slide-state.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
@@ -4574,70 +4575,80 @@
       studioEditorElementInsertionController
         .bindStudioEditorElementInsertionButtons({ documentRef: document });
     }
-    const studioEditorBlockRuntime = typeof SlideNextStudioEditorBlockShellRuntime !== 'undefined'
-      && SlideNextStudioEditorBlockShellRuntime
-      && typeof SlideNextStudioEditorBlockShellRuntime.createStudioEditorBlockShellRuntime === 'function'
-      ? SlideNextStudioEditorBlockShellRuntime.createStudioEditorBlockShellRuntime({
+    const studioEditorBlockRuntimeAccessorsApi = typeof SlideNextStudioEditorBlockRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorBlockRuntimeAccessors
+      : null;
+    const studioEditorBlockRuntimeAccessors = studioEditorBlockRuntimeAccessorsApi
+      && typeof studioEditorBlockRuntimeAccessorsApi.createStudioEditorBlockRuntimeAccessors === 'function'
+      ? studioEditorBlockRuntimeAccessorsApi.createStudioEditorBlockRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorBlockShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorBlockShellRuntime
+            : null,
           blockRuntimeApi: typeof SlideNextStudioEditorBlockRuntime !== 'undefined'
             ? SlideNextStudioEditorBlockRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorBlockController !== 'undefined'
-            ? SlideNextStudioEditorBlockController
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(getIframeDoc())
-            : buildEditorCanonicalDeck(getIframeDoc()),
-          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
-            getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          renderApi: typeof SlideNextDeckRender !== 'undefined'
-            ? SlideNextDeckRender
-            : null,
-          insertionMutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
-            ? SlideNextStudioEditorSlideInsertionMutation
-            : null,
-          insertionTransactionApi: typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
-            ? SlideNextStudioEditorSlideInsertionTransaction
-            : null,
-          slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
-            ? SlideNextStudioEditorSlideCommands
-            : null,
-          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
-            ? SlideNextStudioDeckView
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          getDocument: () => getIframeDoc(),
-          getActiveSlide: (doc) => getActiveSlide(doc),
-          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
-          getSelectedNodeIds: () => getCommittedSelectedEditorElementIds(getIframeDoc()),
-          prepareElement: (...args) => makeElementsHoverable(...args),
-          createMarkupTransactionCapture: (...args) => {
-            const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorBlockController !== 'undefined'
+              ? SlideNextStudioEditorBlockController
+              : null,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+              ? SlideNextStudioEditorCanonicalState
+              : null,
+            getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(getIframeDoc())
+              : buildEditorCanonicalDeck(getIframeDoc()),
+            getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+              getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            renderApi: typeof SlideNextDeckRender !== 'undefined'
+              ? SlideNextDeckRender
+              : null,
+            insertionMutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
+              ? SlideNextStudioEditorSlideInsertionMutation
+              : null,
+            insertionTransactionApi: typeof SlideNextStudioEditorSlideInsertionTransaction !== 'undefined'
+              ? SlideNextStudioEditorSlideInsertionTransaction
+              : null,
+            slideCommandsApi: typeof SlideNextStudioEditorSlideCommands !== 'undefined'
+              ? SlideNextStudioEditorSlideCommands
+              : null,
+            deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+              ? SlideNextStudioDeckView
+              : null,
+            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
               ? SlideNextStudioEditorTransaction
-              : null;
-            return transactionApi
-              && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
-              ? transactionApi.createStudioMarkupTransactionCapture(...args)
-              : null;
-          },
-          getElementId: (element) => assignEditorElementId(element),
-          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
-          finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          triggerAutoSave: (...args) => triggerAutoSave(...args),
-          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          onBlocksChanged: () => updateBlockActionState()
+              : null,
+            getDocument: () => getIframeDoc(),
+            getActiveSlide: (doc) => getActiveSlide(doc),
+            getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
+            getSelectedNodeIds: () => getCommittedSelectedEditorElementIds(getIframeDoc()),
+            prepareElement: (...args) => makeElementsHoverable(...args),
+            createMarkupTransactionCapture: (...args) => {
+              const transactionApi = typeof SlideNextStudioEditorTransaction !== 'undefined'
+                ? SlideNextStudioEditorTransaction
+                : null;
+              return transactionApi
+                && typeof transactionApi.createStudioMarkupTransactionCapture === 'function'
+                ? transactionApi.createStudioMarkupTransactionCapture(...args)
+                : null;
+            },
+            getElementId: (element) => assignEditorElementId(element),
+            finalizeInsertedElements: (...args) => finalizeInsertedElements(...args),
+            finalizeMutation: (...args) => finalizeSlideMutationPersistence(...args),
+            saveHistoryState: (...args) => saveHistoryState(...args),
+            triggerAutoSave: (...args) => triggerAutoSave(...args),
+            triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+            onBlocksChanged: () => updateBlockActionState()
+          }
         })
+      : null;
+    const studioEditorBlockRuntime = studioEditorBlockRuntimeAccessors
+      ? studioEditorBlockRuntimeAccessors.runtime
       : null;
     const studioEditorBlockController = studioEditorBlockRuntime
       ? studioEditorBlockRuntime.blockController
