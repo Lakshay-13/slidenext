@@ -60,6 +60,15 @@
       }
     }
 
+    function refreshActionState() {
+      if (!updateAlignmentActionState) return;
+      try {
+        updateAlignmentActionState();
+      } catch (error) {
+        // A toolbar refresh failure must not change the alignment result.
+      }
+    }
+
     function applyLayoutMutation(nextItems, versionLabel) {
       if (!finalizeDeckMutation) return false;
       const getAlignmentElementId = (element) => assignElementId(element);
@@ -132,7 +141,7 @@
       if (!buildAlignmentActionState) return false;
       const alignmentActionState = buildAlignmentActionState().alignmentActionState;
       if (!alignmentActionState.canAlign) {
-        if (updateAlignmentActionState) updateAlignmentActionState();
+        refreshActionState();
         return false;
       }
 
@@ -150,7 +159,7 @@
       if (!buildAlignmentActionState) return false;
       const alignmentActionState = buildAlignmentActionState().alignmentActionState;
       if (!alignmentActionState.canAlign || alignmentActionState.selection.length < 3) {
-        if (updateAlignmentActionState) updateAlignmentActionState();
+        refreshActionState();
         return false;
       }
 

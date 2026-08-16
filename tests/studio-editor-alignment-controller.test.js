@@ -81,6 +81,25 @@ test('alignment controller refreshes state and fails closed for unavailable acti
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('alignment controller preserves the result when action-state refresh throws', () => {
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    buildAlignmentActionState: () => ({
+      alignmentActionState: {
+        canAlign: false,
+        selection: []
+      }
+    }),
+    updateAlignmentActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.align('left'), false);
+    assert.equal(controller.distribute('vertical'), false);
+  });
+});
+
 test('alignment controller fails closed before DOM mutation when finalization is unavailable', () => {
   let applyCalls = 0;
   const controller = alignmentController.createStudioEditorAlignmentController({
