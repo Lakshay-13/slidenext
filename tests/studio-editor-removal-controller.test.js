@@ -66,6 +66,25 @@ test('removal controller refreshes removal state when deletion is unavailable', 
   assert.deepEqual(calls, [[false, doc]]);
 });
 
+test('removal controller fails closed when action-state construction throws', () => {
+  let removeCalls = 0;
+  const doc = { id: 'doc' };
+  const controller = removalController.createStudioEditorRemovalController({
+    buildRemovalSelectionActionState: () => {
+      throw new Error('selection state unavailable');
+    },
+    getIframeDoc: () => doc,
+    applyRemovalMutation: () => {
+      removeCalls += 1;
+      return { didRemove: true, transaction: null };
+    },
+    finalizeRemovalActionResult: (result, currentDoc) => ({ result, currentDoc })
+  });
+
+  assert.deepEqual(controller.remove(), { result: false, currentDoc: doc });
+  assert.equal(removeCalls, 0);
+});
+
 test('removal controller fails closed before DOM mutation when canonical removal construction throws', () => {
   let removeCalls = 0;
   const doc = { id: 'doc' };

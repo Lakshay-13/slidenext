@@ -111,7 +111,12 @@
     function remove(sourceDoc) {
       const doc = sourceDoc || getIframeDoc();
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
-      const removalActionState = buildRemovalSelectionActionState(doc);
+      let removalActionState = null;
+      try {
+        removalActionState = buildRemovalSelectionActionState(doc);
+      } catch (error) {
+        return finalizeRemovalActionResult(false, doc);
+      }
       if (!removalActionState.canRemove) return finalizeRemovalActionResult(false, doc);
       if (!finalizeDeckMutation) return finalizeRemovalActionResult(false, doc);
       const getRemovalElementId = (element) => assignElementId(element);
