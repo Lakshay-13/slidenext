@@ -740,6 +740,43 @@ function loadResolveCurrentStudioPersistenceStateFromCapture(fileContent, contex
   vm.runInContext(helperSource, context);
 }
 
+test('submitSaveVersion fails closed when preflight callbacks throw', async () => {
+  let alertCalls = 0;
+  const submitWithDocumentFailure = submitSaveVersionAction
+    .createStudioEditorSubmitSaveVersionAction({
+      getDocumentRef() {
+        throw new Error('document unavailable');
+      },
+      getAlert: () => () => {
+        alertCalls += 1;
+      }
+    });
+
+  await assert.doesNotReject(submitWithDocumentFailure());
+  assert.equal(alertCalls, 0);
+
+  const submitWithCheckpointFailure = submitSaveVersionAction
+    .createStudioEditorSubmitSaveVersionAction({
+      getDocumentRef: () => ({
+        getElementById: () => ({ value: 'Checkpoint A' })
+      }),
+      getCaptureSessionState: () => ({
+        presentationUrl: '/presentations/demo/index.html',
+        sessionToken: 1
+      }),
+      getIframeDocument() {
+        throw new Error('iframe unavailable');
+      },
+      getAlert: () => (message) => {
+        assert.equal(message, 'Save version failed: editor content is unavailable.');
+        alertCalls += 1;
+      }
+    });
+
+  await assert.doesNotReject(submitWithCheckpointFailure());
+  assert.equal(alertCalls, 1);
+});
+
 function loadResolveCurrentStudioVersionCheckpointPersistenceState(fileContent, context) {
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   context.studioEditorVersionCheckpointStateAction =

@@ -45,29 +45,50 @@
       : () => {};
 
     async function submitSaveVersion() {
-      const documentRef = getDocumentRef();
-      const input = documentRef.getElementById('versionCheckpointName');
+      let documentRef;
+      let input;
+      try {
+        documentRef = getDocumentRef();
+        input = documentRef && typeof documentRef.getElementById === 'function'
+          ? documentRef.getElementById('versionCheckpointName')
+          : null;
+      } catch (error) {
+        return;
+      }
+      if (!input || typeof input.value !== 'string') return;
       const versionName = input.value.trim();
       if (!versionName) {
         getAlert()('Please enter a version name.');
         return;
       }
 
-      const captureSessionState = getCaptureSessionState();
+      let captureSessionState;
+      try {
+        captureSessionState = getCaptureSessionState();
+      } catch (error) {
+        return;
+      }
       const sessionState = typeof captureSessionState === 'function'
         ? captureSessionState() || {}
         : captureSessionState || {};
       const scheduledPresentationUrl = sessionState.presentationUrl;
       const scheduledSessionToken = sessionState.sessionToken;
-      const iframeDoc = getIframeDocument();
-      const resolveCheckpointState = getResolveCheckpointState();
-      const versionCheckpointPersistenceState = typeof resolveCheckpointState === 'function'
-        ? resolveCheckpointState(
-            iframeDoc,
-            scheduledPresentationUrl,
-            scheduledSessionToken
-          )
-        : null;
+      let iframeDoc = null;
+      let resolveCheckpointState = null;
+      let versionCheckpointPersistenceState = null;
+      try {
+        iframeDoc = getIframeDocument();
+        resolveCheckpointState = getResolveCheckpointState();
+        versionCheckpointPersistenceState = typeof resolveCheckpointState === 'function'
+          ? resolveCheckpointState(
+              iframeDoc,
+              scheduledPresentationUrl,
+              scheduledSessionToken
+            )
+          : null;
+      } catch (error) {
+        versionCheckpointPersistenceState = null;
+      }
       if (!versionCheckpointPersistenceState) {
         getAlert()('Save version failed: editor content is unavailable.');
         return;
