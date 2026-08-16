@@ -244,14 +244,20 @@
     function bindStudioEditorPreviewButtons(options = {}) {
       const previewDocument = options.documentRef || documentRef;
       if (!previewDocument || typeof previewDocument.getElementById !== 'function') {
-        return { launch: false };
+        return { launch: false, close: false, fullscreen: false };
       }
-      const button = previewDocument.getElementById('launchPreviewBtn');
-      if (!button || typeof button.addEventListener !== 'function') {
-        return { launch: false };
-      }
-      button.addEventListener('click', launch);
-      return { launch: true };
+      const bindButton = (id, handler) => {
+        const button = previewDocument.getElementById(id);
+        if (!button || typeof button.addEventListener !== 'function') return false;
+        button.addEventListener('click', handler);
+        return true;
+      };
+
+      return {
+        launch: bindButton('launchPreviewBtn', launch),
+        close: bindButton('closePresentationBtn', closeModal),
+        fullscreen: bindButton('toggleIframeFullscreenBtn', toggleFullscreen)
+      };
     }
 
     return {

@@ -59,21 +59,33 @@ test('launches the shared preview with the live editor session state', () => {
   }]);
 });
 
-test('preview controller binds the Present button without an inline handler', () => {
+test('preview controller binds presentation chrome without inline handlers', () => {
   const calls = [];
-  const button = {
-    listeners: {},
-    addEventListener(type, handler) {
-      this.listeners[type] = handler;
-    }
-  };
+  const buttons = {};
+  ['launchPreviewBtn', 'closePresentationBtn', 'toggleIframeFullscreenBtn'].forEach((id) => {
+    buttons[id] = {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    };
+  });
+  const shellDocument = { id: 'shell-document' };
   const controller = previewController.createStudioEditorPreviewController({
     previewApi: {
       launchStudioPresentation(options) {
         calls.push(options);
         return true;
+      },
+      resetStudioPresentationUiState(options) {
+        calls.push(['close', options]);
+      },
+      toggleStudioPresentationFullscreen(options) {
+        calls.push(['fullscreen', options]);
+        return true;
       }
     },
+    documentRef: shellDocument,
     resolveReadyState: () => ({ canLaunchPreview: true }),
     resolvePresentationUrl: () => '/presentations/demo/index.html',
     resolveActiveSlideIndex: () => 1,
@@ -81,22 +93,29 @@ test('preview controller binds the Present button without an inline handler', ()
   });
   const documentRef = {
     getElementById(id) {
-      return id === 'launchPreviewBtn' ? button : null;
+      return buttons[id] || null;
     }
   };
 
   assert.deepEqual(
     controller.bindStudioEditorPreviewButtons({ documentRef }),
-    { launch: true }
+    { launch: true, close: true, fullscreen: true }
   );
-  assert.equal(typeof button.listeners.click, 'function');
-  assert.equal(button.listeners.click(), true);
+  Object.values(buttons).forEach((button) => {
+    assert.equal(typeof button.listeners.click, 'function');
+  });
+  assert.equal(buttons.launchPreviewBtn.listeners.click(), true);
+  assert.equal(buttons.closePresentationBtn.listeners.click(), true);
+  assert.equal(buttons.toggleIframeFullscreenBtn.listeners.click(), true);
   assert.deepEqual(calls, [{
-    document: null,
+    document: shellDocument,
     startSlideIdx: 1,
     presentationUrl: '/presentations/demo/index.html',
     previewHtml: '<html>preview</html>'
-  }]);
+  }, ['close', { document: shellDocument }], ['fullscreen', {
+    document: shellDocument,
+    consoleRef: undefined
+  }]]);
 });
 
 test('opens the presentation modal through the shared preview controller', () => {

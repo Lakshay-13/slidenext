@@ -51,10 +51,11 @@ function attachEditorPreviewController(context) {
 
 test('Present button uses shared preview controller wiring instead of an inline handler', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const presentButtonLine = fileContent.split('\n').find((line) => line.includes('id="launchPreviewBtn"'));
-
-  assert.ok(presentButtonLine);
-  assert.doesNotMatch(presentButtonLine, /onclick=/);
+  ['launchPreviewBtn', 'closePresentationBtn', 'toggleIframeFullscreenBtn'].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing presentation control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
   assert.match(fileContent, /bindStudioEditorPreviewButtons\(\{ documentRef: document \}\)/);
 });
 
