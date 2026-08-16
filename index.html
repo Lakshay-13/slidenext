@@ -1023,7 +1023,7 @@
             <div class="flex flex-col gap-2 pt-1">
               <label for="blockNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Reusable Block</label>
               <input id="blockNameInput" type="text" value="Saved Block" placeholder="Name this selection" class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed" />
-              <button id="saveSelectionBlockBtn" onclick="saveSelectedElementsAsBlock()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="saveSelectionBlockBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
                 <span class="material-symbols-outlined text-[14px] text-[#7028d0]">bookmark_add</span>
                 Save Selected Block
               </button>
@@ -4353,6 +4353,16 @@
     const studioEditorBlockController = studioEditorBlockRuntime
       ? studioEditorBlockRuntime.blockController
       : null;
+    const studioEditorBlockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
+      ? SlideNextStudioEditorBlockView
+      : null;
+    if (studioEditorBlockView
+      && typeof studioEditorBlockView.bindStudioEditorBlockControls === 'function') {
+      studioEditorBlockView.bindStudioEditorBlockControls({
+        documentRef: document,
+        saveSelectedElementsAsBlock: (...args) => saveSelectedElementsAsBlock(...args)
+      });
+    }
     const studioEditorTemplateRuntime = typeof SlideNextStudioEditorTemplateShellRuntime !== 'undefined'
       && SlideNextStudioEditorTemplateShellRuntime
       && typeof SlideNextStudioEditorTemplateShellRuntime.createStudioEditorTemplateShellRuntime === 'function'

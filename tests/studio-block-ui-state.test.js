@@ -113,6 +113,41 @@ test('shared block view wires insert and remove actions to injected callbacks', 
   assert.deepEqual(calls, [['insert', 'hero'], ['remove', 'hero']]);
 });
 
+test('shared block view binds the save control to the editor command', () => {
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    blockView.bindStudioEditorBlockControls({
+      documentRef: {
+        getElementById(id) {
+          return id === 'saveSelectionBlockBtn' ? button : null;
+        }
+      },
+      saveSelectedElementsAsBlock() {
+        calls.push('save');
+      }
+    }),
+    { saveSelectionBlockBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['save']);
+});
+
+test('editor binds the saved-block control without an inline handler', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const line = fileContent.split('\n')
+    .find((candidate) => candidate.includes('id="saveSelectionBlockBtn"'));
+  assert.ok(line);
+  assert.doesNotMatch(line, /onclick=/);
+  assert.match(fileContent, /bindStudioEditorBlockControls\(/);
+});
+
 test('shared block state sync updates block controls before rendering the library', () => {
   const controls = {
     saveSelectionBlockBtn: { disabled: false },

@@ -69,6 +69,23 @@
     });
   }
 
+  function bindStudioEditorBlockControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const saveSelectedElementsAsBlock = typeof options.saveSelectedElementsAsBlock === 'function'
+      ? options.saveSelectedElementsAsBlock
+      : null;
+    const button = documentRef.getElementById('saveSelectionBlockBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { saveSelectionBlockBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (saveSelectedElementsAsBlock) saveSelectedElementsAsBlock();
+    });
+    return { saveSelectionBlockBtn: true };
+  }
+
   function createStudioBlockStateSync(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -97,6 +114,7 @@
   return {
     renderStudioBlockLibrary,
     syncStudioBlockState,
+    bindStudioEditorBlockControls,
     createStudioBlockStateSync
   };
 });
