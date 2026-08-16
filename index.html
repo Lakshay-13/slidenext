@@ -1665,6 +1665,7 @@
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-theme-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-theme-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-lifecycle-controller.js"></script>
@@ -7116,26 +7117,37 @@
           setAutoSaveStatus: setStudioAutoSaveStatus
         })
       : null;
-    const studioEditorThemeRuntime = typeof SlideNextStudioEditorThemeShellRuntime !== 'undefined'
-      && SlideNextStudioEditorThemeShellRuntime
-      && typeof SlideNextStudioEditorThemeShellRuntime.createStudioEditorThemeShellRuntime === 'function'
-      ? SlideNextStudioEditorThemeShellRuntime.createStudioEditorThemeShellRuntime({
+    const studioEditorThemeRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorThemeRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorThemeRuntimeAccessors
+      : null;
+    const studioEditorThemeRuntimeAccessors = studioEditorThemeRuntimeAccessorsApi
+      && typeof studioEditorThemeRuntimeAccessorsApi
+        .createStudioEditorThemeRuntimeAccessors === 'function'
+      ? studioEditorThemeRuntimeAccessorsApi
+        .createStudioEditorThemeRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorThemeShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorThemeShellRuntime
+            : null,
           themeRuntimeApi: typeof SlideNextStudioEditorThemeRuntime !== 'undefined'
             ? SlideNextStudioEditorThemeRuntime
             : null,
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorThemeController !== 'undefined'
-            ? SlideNextStudioEditorThemeController
-            : null,
-          themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
-            ? SlideNextStudioThemeView
-            : null,
-          documentRef: document,
-          localStorageRef: localStorage,
-          getIframeDocument: getIframeDoc,
-          resolveDarkMode: () => document.documentElement.classList.contains('dark')
+            controllerApi: typeof SlideNextStudioEditorThemeController !== 'undefined'
+              ? SlideNextStudioEditorThemeController
+              : null,
+            themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
+              ? SlideNextStudioThemeView
+              : null,
+            documentRef: document,
+            localStorageRef: localStorage,
+            getIframeDocument: getIframeDoc,
+            resolveDarkMode: () => document.documentElement.classList.contains('dark')
           }
         })
+      : null;
+    const studioEditorThemeRuntime = studioEditorThemeRuntimeAccessors
+      ? studioEditorThemeRuntimeAccessors.runtime
       : null;
     const studioEditorThemeController = studioEditorThemeRuntime
       ? studioEditorThemeRuntime.themeController
