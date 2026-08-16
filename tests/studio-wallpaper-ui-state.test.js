@@ -158,6 +158,40 @@ test('resolveCurrentStudioWallpaperActionState reports wallpaper readiness from 
   );
 });
 
+test('renderWallpaperPresets binds generated preset actions through the shared wallpaper view', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const calls = [];
+  const applyPresetWallpaper = () => {};
+  const context = {
+    SlideNextStudioEditorWallpaperView: {
+      renderStudioWallpaperPresets(options) {
+        calls.push(['render', options]);
+        return true;
+      },
+      bindStudioWallpaperPresetActions(options) {
+        calls.push(['bind', options]);
+        return true;
+      }
+    },
+    document: {},
+    wallpaperPresetsData: {},
+    applyPresetWallpaper
+  };
+  const source = extractFunctionSource(
+    fileContent,
+    'function renderWallpaperPresets() {',
+    '\n\n    function renderThemeTokenPresets() {'
+  );
+  vm.createContext(context);
+  vm.runInContext(source, context);
+
+  assert.equal(context.renderWallpaperPresets(), true);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0][0], 'render');
+  assert.equal(calls[1][0], 'bind');
+  assert.equal(calls[1][1].applyPresetWallpaper, applyPresetWallpaper);
+});
+
 test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = {

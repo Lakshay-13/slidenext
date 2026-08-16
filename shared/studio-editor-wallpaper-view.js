@@ -12,6 +12,19 @@
     root.SlideNextStudioEditorWallpaperView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (colorUtils) {
+  const studioWallpaperPresetActionBindings = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  function escapeWallpaperAttribute(value) {
+    return typeof value === 'string'
+      ? value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+      : '';
+  }
+
   function readInlineStyleValue(element, property) {
     return element && element.style && typeof element.style[property] === 'string'
       ? element.style[property].trim()
@@ -170,13 +183,62 @@
 
     const presetData = options.presetData || {};
     const renderPresets = (presets) => (Array.isArray(presets) ? presets : []).map((preset) => `
-        <button onclick="applyPresetWallpaper('${preset.value}')" class="h-8 rounded border border-white/10 hover:border-[#7028d0]/50 hover:scale-105 active:scale-95 transition-all relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:scale-100 disabled:active:scale-100" title="${preset.name}" style="background: ${preset.value};">
+        <button type="button" data-wallpaper-preset-value="${escapeWallpaperAttribute(preset.value)}" class="h-8 rounded border border-white/10 hover:border-[#7028d0]/50 hover:scale-105 active:scale-95 transition-all relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:scale-100 disabled:active:scale-100" title="${escapeWallpaperAttribute(preset.name)}" style="background: ${preset.value};">
           <span class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100"></span>
         </button>
       `).join('');
 
     solidsContainer.innerHTML = renderPresets(presetData.solid);
     gradientsContainer.innerHTML = renderPresets(presetData.gradient);
+    return true;
+  }
+
+  function bindStudioWallpaperPresetActions(options = {}) {
+    const documentRef = options.documentRef;
+    const applyPresetWallpaper = typeof options.applyPresetWallpaper === 'function'
+      ? options.applyPresetWallpaper
+      : null;
+    if (!documentRef || typeof documentRef.getElementById !== 'function' || !applyPresetWallpaper) {
+      return false;
+    }
+
+    const containers = [
+      documentRef.getElementById('wallpaperSolidsList'),
+      documentRef.getElementById('wallpaperGradientsList')
+    ].filter(Boolean);
+    if (containers.length === 0) return false;
+
+    containers.forEach((container) => {
+      if (typeof container.addEventListener !== 'function') return;
+      let binding = studioWallpaperPresetActionBindings
+        && studioWallpaperPresetActionBindings.get(container);
+      if (!binding) {
+        binding = { applyPresetWallpaper };
+        binding.handleClick = (event) => {
+          const eventTarget = event && event.target;
+          const presetButton = eventTarget && typeof eventTarget.closest === 'function'
+            ? eventTarget.closest('[data-wallpaper-preset-value]')
+            : null;
+          if (!presetButton
+            || (typeof container.contains === 'function' && !container.contains(presetButton))) {
+            return;
+          }
+          const value = presetButton.dataset
+            && typeof presetButton.dataset.wallpaperPresetValue === 'string'
+            ? presetButton.dataset.wallpaperPresetValue
+            : typeof presetButton.getAttribute === 'function'
+              ? presetButton.getAttribute('data-wallpaper-preset-value') || ''
+              : '';
+          if (value) binding.applyPresetWallpaper(value);
+        };
+        container.addEventListener('click', binding.handleClick);
+        if (studioWallpaperPresetActionBindings) {
+          studioWallpaperPresetActionBindings.set(container, binding);
+        }
+      } else {
+        binding.applyPresetWallpaper = applyPresetWallpaper;
+      }
+    });
     return true;
   }
 
@@ -605,6 +667,7 @@
     resolveStudioActiveSlideBackgroundPaint,
     resolveStudioActiveSlideSolidWallpaperColor,
     renderStudioWallpaperPresets,
+    bindStudioWallpaperPresetActions,
     applyStudioWallpaperToSlides,
     setStudioWallpaperTab,
     bindStudioWallpaperTabControls,

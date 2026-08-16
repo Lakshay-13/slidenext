@@ -164,7 +164,8 @@ test('renderStudioWallpaperPresets renders both preset collections into their co
       gradient: [{ name: 'Deep Sea', value: 'linear-gradient(135deg, #0a1128 0%, #000000 100%)' }]
     }
   }), true);
-  assert.match(elements.wallpaperSolidsList.innerHTML, /applyPresetWallpaper\('#050505'\)/);
+  assert.match(elements.wallpaperSolidsList.innerHTML, /data-wallpaper-preset-value="#050505"/);
+  assert.doesNotMatch(elements.wallpaperSolidsList.innerHTML, /onclick=/);
   assert.match(elements.wallpaperSolidsList.innerHTML, /title="Obsidian"/);
   assert.match(elements.wallpaperGradientsList.innerHTML, /Deep Sea/);
   assert.match(elements.wallpaperGradientsList.innerHTML, /linear-gradient/);
@@ -172,6 +173,60 @@ test('renderStudioWallpaperPresets renders both preset collections into their co
 
 test('renderStudioWallpaperPresets tolerates missing wallpaper containers', () => {
   assert.equal(wallpaperView.renderStudioWallpaperPresets({ documentRef: null }), false);
+});
+
+test('bindStudioWallpaperPresetActions delegates both preset collections and replaces callbacks without duplicate listeners', () => {
+  const listeners = {};
+  const createContainer = (value) => {
+    const button = {
+      dataset: { wallpaperPresetValue: value },
+      closest(selector) {
+        return selector === '[data-wallpaper-preset-value]' ? this : null;
+      }
+    };
+    const container = {
+      button,
+      addEventListener(type, handler) {
+        listeners[value] = handler;
+      },
+      contains(target) {
+        return target === button;
+      }
+    };
+    return container;
+  };
+  const solids = createContainer('#050505');
+  const gradients = createContainer('linear-gradient(red, blue)');
+  const calls = [];
+  const documentRef = {
+    getElementById(id) {
+      return id === 'wallpaperSolidsList'
+        ? solids
+        : id === 'wallpaperGradientsList'
+          ? gradients
+          : null;
+    }
+  };
+
+  assert.equal(wallpaperView.bindStudioWallpaperPresetActions({
+    documentRef,
+    applyPresetWallpaper(value) {
+      calls.push(['first', value]);
+    }
+  }), true);
+  assert.equal(wallpaperView.bindStudioWallpaperPresetActions({
+    documentRef,
+    applyPresetWallpaper(value) {
+      calls.push(['second', value]);
+    }
+  }), true);
+
+  listeners['#050505']({ target: solids.button });
+  listeners['linear-gradient(red, blue)']({ target: gradients.button });
+  assert.deepEqual(calls, [
+    ['second', '#050505'],
+    ['second', 'linear-gradient(red, blue)']
+  ]);
 });
 
 test('syncStudioCustomGradientAngleChrome updates the angle label', () => {

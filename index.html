@@ -11556,10 +11556,17 @@
         ? SlideNextStudioEditorWallpaperView
         : null;
       if (!wallpaperView || typeof wallpaperView.renderStudioWallpaperPresets !== 'function') return false;
-      return wallpaperView.renderStudioWallpaperPresets({
+      const didRender = wallpaperView.renderStudioWallpaperPresets({
         documentRef: document,
         presetData: wallpaperPresetsData
       });
+      if (typeof wallpaperView.bindStudioWallpaperPresetActions === 'function') {
+        wallpaperView.bindStudioWallpaperPresetActions({
+          documentRef: document,
+          applyPresetWallpaper
+        });
+      }
+      return didRender;
     }
 
     function renderThemeTokenPresets() {
