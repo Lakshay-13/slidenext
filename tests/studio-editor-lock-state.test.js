@@ -80,6 +80,21 @@ test('buildStudioLockActionState derives button state from live selections only'
   });
 });
 
+test('buildStudioLockActionState disables lock controls when lock state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(lockState.buildStudioLockActionState([live], {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    hasSelection: true,
+    canToggle: false,
+    allLocked: false,
+    canRemove: false
+  });
+});
+
 test('buildStudioLockToolbarState derives lock control chrome from the live selection state', () => {
   assert.deepEqual(lockState.buildStudioLockToolbarState([
     { id: 1, isConnected: true, locked: false }

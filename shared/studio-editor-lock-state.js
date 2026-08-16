@@ -13,7 +13,13 @@
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element);
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
   function buildStudioLockActionState(elements = [], options = {}) {
@@ -25,14 +31,28 @@
       ? options.canMutateDeck
       : () => true;
     const hasSelection = selection.length > 0;
-    const canToggle = canMutateDeck() && hasSelection;
-    const hasLockedSelection = canToggle && selection.some((element) => isLocked(element));
+    let canToggle = false;
+    let allLocked = false;
+    let canRemove = false;
+    try {
+      canToggle = canMutateDeck() && hasSelection;
+      if (canToggle) {
+        const hasLockedSelection = selection.some((element) => isLocked(element));
+        allLocked = selection.every((element) => isLocked(element));
+        canRemove = !hasLockedSelection;
+      }
+    } catch (error) {
+      // Keep lock and deletion controls disabled when canonical lock state is uncertain.
+      canToggle = false;
+      allLocked = false;
+      canRemove = false;
+    }
 
     return {
       hasSelection,
       canToggle,
-      allLocked: canToggle && selection.every((element) => isLocked(element)),
-      canRemove: canToggle && !hasLockedSelection
+      allLocked,
+      canRemove
     };
   }
 
