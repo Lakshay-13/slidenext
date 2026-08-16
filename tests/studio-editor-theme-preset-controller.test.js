@@ -47,3 +47,58 @@ test('theme preset controller rolls back CSS tokens when canonical finalization 
     { '--color-primary': '#111111' }
   ]);
 });
+
+test('theme preset controller fails closed when readiness, iframe, or token application throws', () => {
+  const baseOptions = {
+    presetData: { dusk: { name: 'Dusk', tokens: { '--color-primary': '#ffffff' } } },
+    presetId: 'dusk'
+  };
+
+  assert.equal(controller.applyStudioThemeTokenPreset({
+    ...baseOptions,
+    resolveReadyState() {
+      throw new Error('ready state unavailable');
+    }
+  }), false);
+
+  assert.equal(controller.applyStudioThemeTokenPreset({
+    ...baseOptions,
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getIframeDocument() {
+      throw new Error('iframe unavailable');
+    }
+  }), false);
+
+  assert.equal(controller.applyStudioThemeTokenPreset({
+    ...baseOptions,
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getIframeDocument: () => ({ documentElement: { style: {} } }),
+    canonicalThemeApi: {
+      buildStudioCanonicalThemeBaseline: () => ({ slides: [] }),
+      buildStudioCanonicalThemeDeck: () => ({ slides: [] }),
+      applyStudioCanonicalThemeTokenUpdates() {
+        throw new Error('token write failed');
+      }
+    },
+    canonicalDeckApi: {}
+  }), false);
+});
+
+test('theme preset controller preserves a committed mutation when action refresh throws', () => {
+  assert.equal(controller.applyStudioThemeTokenPreset({
+    presetData: { dusk: { name: 'Dusk', tokens: { '--color-primary': '#ffffff' } } },
+    presetId: 'dusk',
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getIframeDocument: () => ({ documentElement: { style: {} } }),
+    canonicalThemeApi: {
+      buildStudioCanonicalThemeBaseline: () => ({ slides: [] }),
+      buildStudioCanonicalThemeDeck: () => ({ slides: [] }),
+      applyStudioCanonicalThemeTokenUpdates: () => true
+    },
+    canonicalDeckApi: {},
+    finalizeMutation: () => true,
+    updateActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  }), true);
+});

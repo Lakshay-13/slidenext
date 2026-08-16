@@ -15,14 +15,24 @@
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canUseDeckActions: false });
-    const readyState = resolveReadyState();
+    let readyState;
+    try {
+      readyState = resolveReadyState();
+    } catch (error) {
+      return false;
+    }
     if (!preset || !preset.tokens || !readyState || !readyState.canUseDeckActions) {
       return false;
     }
 
-    const iframeDoc = typeof options.getIframeDocument === 'function'
-      ? options.getIframeDocument()
-      : null;
+    let iframeDoc = null;
+    try {
+      iframeDoc = typeof options.getIframeDocument === 'function'
+        ? options.getIframeDocument()
+        : null;
+    } catch (error) {
+      return false;
+    }
     const canonicalThemeApi = options.canonicalThemeApi
       || (root && root.SlideNextStudioEditorCanonicalTheme)
       || null;
@@ -67,13 +77,27 @@
       && typeof iframeDoc.documentElement.style.getPropertyValue === 'function'
       ? iframeDoc.documentElement.style
       : null;
-    const previousTokenValues = rootStyle
-      ? Object.keys(preset.tokens).reduce((values, tokenName) => {
-          values[tokenName] = rootStyle.getPropertyValue(tokenName);
-          return values;
-        }, {})
-      : null;
-    if (!canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, preset.tokens)) {
+    let previousTokenValues = null;
+    try {
+      previousTokenValues = rootStyle
+        ? Object.keys(preset.tokens).reduce((values, tokenName) => {
+            values[tokenName] = rootStyle.getPropertyValue(tokenName);
+            return values;
+          }, {})
+        : null;
+    } catch (error) {
+      return false;
+    }
+    let didApplyTokens = false;
+    try {
+      didApplyTokens = canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(
+        iframeDoc,
+        preset.tokens
+      );
+    } catch (error) {
+      return false;
+    }
+    if (!didApplyTokens) {
       return false;
     }
 
@@ -94,13 +118,21 @@
     if (finalized === false) {
       if (previousTokenValues
         && typeof canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates === 'function') {
-        canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, previousTokenValues);
+        try {
+          canonicalThemeApi.applyStudioCanonicalThemeTokenUpdates(iframeDoc, previousTokenValues);
+        } catch (error) {
+          // Preserve the failed finalization result if rollback cannot complete.
+        }
       }
       return false;
     }
 
     if (typeof options.updateActionState === 'function') {
-      options.updateActionState(iframeDoc);
+      try {
+        options.updateActionState(iframeDoc);
+      } catch (error) {
+        // A toolbar refresh failure must not undo a committed theme mutation.
+      }
     }
     return true;
   }
