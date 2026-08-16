@@ -307,6 +307,25 @@ test('finalizeStudioEditorSelectionToggleMutation preserves selection and persis
   ]);
 });
 
+test('finalizeStudioEditorSelectionToggleMutation preserves persistence when selection UI refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorSelectionToggleMutation(
+    'Auto: Locked Element',
+    { doc: { id: 'editor-document' } },
+    {
+      syncSelectionUi() {
+        throw new Error('selection chrome unavailable');
+      },
+      finalizeMutation(label, options) {
+        calls.push([label, options.refreshThumbnails]);
+      }
+    }
+  );
+
+  assert.equal(result, true);
+  assert.deepEqual(calls, [['Auto: Locked Element', false]]);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation propagates explicit persistence failures', () => {
   const result = deckMutation.finalizeStudioEditorSelectionToggleMutation(
     'Auto: Locked Element',

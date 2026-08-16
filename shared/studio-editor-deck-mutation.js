@@ -226,7 +226,7 @@
       });
     }
     if (!mutationOptions.skipSelectionUi) {
-      syncSelectionUi(mutationOptions.doc);
+      invokeStudioEditorUiRefresh(() => syncSelectionUi(mutationOptions.doc));
     }
     if (!finalizeMutation) return false;
     const result = invokeStudioEditorDeckMutationFinalizer(finalizeMutation, versionLabel, {
