@@ -1412,6 +1412,7 @@
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-clipboard-insertion-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-shell-runtime.js"></script>
@@ -4427,43 +4428,53 @@
     const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
       ? studioEditorClipboardPayloadRuntime.payloadController
       : null;
-    const studioEditorClipboardInsertionRuntime = typeof SlideNextStudioEditorClipboardInsertionShellRuntime !== 'undefined'
-      && SlideNextStudioEditorClipboardInsertionShellRuntime
-      && typeof SlideNextStudioEditorClipboardInsertionShellRuntime.createStudioEditorClipboardInsertionShellRuntime === 'function'
-      ? SlideNextStudioEditorClipboardInsertionShellRuntime.createStudioEditorClipboardInsertionShellRuntime({
+    const studioEditorClipboardInsertionRuntimeAccessorsApi = typeof SlideNextStudioEditorClipboardInsertionRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorClipboardInsertionRuntimeAccessors
+      : null;
+    const studioEditorClipboardInsertionRuntimeAccessors = studioEditorClipboardInsertionRuntimeAccessorsApi
+      && typeof studioEditorClipboardInsertionRuntimeAccessorsApi.createStudioEditorClipboardInsertionRuntimeAccessors === 'function'
+      ? studioEditorClipboardInsertionRuntimeAccessorsApi.createStudioEditorClipboardInsertionRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorClipboardInsertionShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorClipboardInsertionShellRuntime
+            : null,
           insertionRuntimeApi: typeof SlideNextStudioEditorClipboardInsertionRuntime !== 'undefined'
             ? SlideNextStudioEditorClipboardInsertionRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorClipboardInsertionController !== 'undefined'
-            ? SlideNextStudioEditorClipboardInsertionController
-            : null,
-          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-            ? SlideNextStudioEditorClipboard
-            : null,
-          mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
-            ? SlideNextStudioEditorClipboardMutation
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          clipboardTransactionApi: typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
-            ? SlideNextStudioEditorClipboardTransaction
-            : null,
-          getIframeDoc: () => getIframeDoc(),
-          getActiveSlide: (doc) => getActiveSlide(doc),
-          getEditorSlideId: (slide) => getEditorSlideId(slide),
-          getSlideMetrics: (slide) => getSlideMetrics(slide),
-          makeElementsHoverable: (element) => makeElementsHoverable(element),
-          getRectOnSlide: (...args) => getRectOnSlide(...args),
-          getOffsetPx: () => DUPLICATE_OFFSET_PX,
-          getElementId: (element) => {
-            if (typeof assignEditorElementId === 'function') {
-              const assignedId = assignEditorElementId(element);
-              if (assignedId) return assignedId;
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorClipboardInsertionController !== 'undefined'
+              ? SlideNextStudioEditorClipboardInsertionController
+              : null,
+            clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
+              ? SlideNextStudioEditorClipboard
+              : null,
+            mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
+              ? SlideNextStudioEditorClipboardMutation
+              : null,
+            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+              ? SlideNextStudioEditorTransaction
+              : null,
+            clipboardTransactionApi: typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
+              ? SlideNextStudioEditorClipboardTransaction
+              : null,
+            getIframeDoc: () => getIframeDoc(),
+            getActiveSlide: (doc) => getActiveSlide(doc),
+            getEditorSlideId: (slide) => getEditorSlideId(slide),
+            getSlideMetrics: (slide) => getSlideMetrics(slide),
+            makeElementsHoverable: (element) => makeElementsHoverable(element),
+            getRectOnSlide: (...args) => getRectOnSlide(...args),
+            getOffsetPx: () => DUPLICATE_OFFSET_PX,
+            getElementId: (element) => {
+              if (typeof assignEditorElementId === 'function') {
+                const assignedId = assignEditorElementId(element);
+                if (assignedId) return assignedId;
+              }
+              return element && element.dataset && element.dataset.editorId;
             }
-            return element && element.dataset && element.dataset.editorId;
           }
         })
+      : null;
+    const studioEditorClipboardInsertionRuntime = studioEditorClipboardInsertionRuntimeAccessors
+      ? studioEditorClipboardInsertionRuntimeAccessors.runtime
       : null;
     const studioEditorClipboardInsertionController = studioEditorClipboardInsertionRuntime
       ? studioEditorClipboardInsertionRuntime.insertionController
