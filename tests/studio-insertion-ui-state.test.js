@@ -475,3 +475,10 @@ test('updateInsertionActionState caches the shared insertion toolbar synchronize
   assert.equal(calls.filter(([name]) => name === 'factory').length, 1);
   assert.deepEqual(calls.filter(([name]) => name === 'sync').map(([, currentDoc]) => currentDoc), [doc, doc]);
 });
+
+test('index keeps slide insertion controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="addSlideBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="duplicateSlideBtn"[^>]*onclick=/);
+});

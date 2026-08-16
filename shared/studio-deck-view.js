@@ -419,6 +419,34 @@
     return true;
   }
 
+  function bindStudioEditorSlideInsertionControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const addSlideNode = typeof options.addSlideNode === 'function'
+      ? options.addSlideNode
+      : null;
+    const duplicateSlideNode = typeof options.duplicateSlideNode === 'function'
+      ? options.duplicateSlideNode
+      : null;
+    const bindings = {};
+    [
+      ['addSlideBtn', addSlideNode],
+      ['duplicateSlideBtn', duplicateSlideNode]
+    ].forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function syncStudioInsertionToolbarActionState(options = {}) {
     const actionState = options.actionState || resolveStudioInsertionActionState(options.doc, {
       getActiveSlide: options.getActiveSlide,
@@ -1404,6 +1432,7 @@
     createStudioZoomToolbarActionStateSync,
     resolveStudioInsertionActionState,
     renderStudioInsertionToolbarActionState,
+    bindStudioEditorSlideInsertionControls,
     syncStudioInsertionToolbarActionState,
     createStudioInsertionToolbarActionStateSync,
     resolveStudioWallpaperActionState,

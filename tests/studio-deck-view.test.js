@@ -1660,3 +1660,41 @@ test('buildStudioSourceHtml can render from a canonical deck when the live edito
 
   assert.match(result, /slidesContainer/);
 });
+
+test('deck view binds add and duplicate slide controls', () => {
+  const controls = {
+    addSlideBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    },
+    duplicateSlideBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    deckView.bindStudioEditorSlideInsertionControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      addSlideNode() {
+        calls.push('add');
+      },
+      duplicateSlideNode() {
+        calls.push('duplicate');
+      }
+    }),
+    { addSlideBtn: true, duplicateSlideBtn: true }
+  );
+  controls.addSlideBtn.listeners.click();
+  controls.duplicateSlideBtn.listeners.click();
+  assert.deepEqual(calls, ['add', 'duplicate']);
+});
