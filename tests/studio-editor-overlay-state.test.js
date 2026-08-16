@@ -35,3 +35,15 @@ test('buildStudioSelectionOverlayState only reports visible live selections', ()
     hasVisibleSelection: true
   });
 });
+
+test('getStudioVisibleSelection fails closed when the hidden reader throws', () => {
+  const visible = { id: 'visible', isConnected: true };
+  const stale = { id: 'stale', isConnected: true };
+
+  assert.deepEqual(overlayState.getStudioVisibleSelection([visible, stale], {
+    isHidden: (element) => {
+      if (element === stale) throw new Error('stale hidden state');
+      return false;
+    }
+  }), [visible]);
+});

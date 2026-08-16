@@ -16,7 +16,14 @@
       ? options.isHidden
       : () => false;
 
-    return selection.filter((element) => isEligibleElement(element) && !isHidden(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element) && !isHidden(element);
+      } catch (error) {
+        // A stale canonical reader must not break selection chrome updates.
+        return false;
+      }
+    });
   }
 
   function buildStudioSelectionOverlayState(elements = [], options = {}) {
