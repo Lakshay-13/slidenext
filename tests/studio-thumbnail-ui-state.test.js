@@ -133,6 +133,46 @@ test('syncStudioThumbnailList derives the slide-delete affordance from snapshot 
   assert.equal(thumbnailsList.children[0].style.containIntrinsicSize, '72px');
 });
 
+test('renderStudioThumbnailList escapes legacy slide metadata and delete handler arguments', () => {
+  const thumbnailsList = createListContainer();
+  const documentRef = {
+    getElementById(id) {
+      return id === 'thumbnailsList' ? thumbnailsList : null;
+    },
+    createElement() {
+      return createThumbCard();
+    }
+  };
+
+  assert.equal(thumbnailView.renderStudioThumbnailList({
+    documentRef,
+    deckSnapshot: {
+      activeSlideId: 'slide-1',
+      slides: [{
+        id: "slide-1'); alert('unexpected') //",
+        index: 0,
+        title: '<img src=x onerror=alert(1)>',
+        backgroundLabel: '" onmouseover="alert(2)'
+      }, {
+        id: 'slide-2',
+        index: 1,
+        title: 'Second',
+        backgroundLabel: 'Solid'
+      }]
+    },
+    canMutateSlides: true,
+    canDeleteSlides: true
+  }), true);
+
+  const cardMarkup = thumbnailsList.children[0].innerHTML;
+  assert.doesNotMatch(cardMarkup, /<img src=x/);
+  assert.match(cardMarkup, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(cardMarkup, /&quot; onmouseover=&quot;alert\(2\)/);
+  assert.ok(cardMarkup.includes("deleteSlideNodeById('slide-1\\');"));
+  assert.ok(cardMarkup.includes("alert(\\'unexpected\\')"));
+  assert.doesNotMatch(cardMarkup, /deleteSlideNodeById\('slide-1'\); alert\('unexpected'\)/);
+});
+
 test('renderStudioThumbnailList groups slides by section and labels unsectioned slides', () => {
   const thumbnailsList = createListContainer();
   const documentRef = {

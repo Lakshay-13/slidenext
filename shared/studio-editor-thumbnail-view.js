@@ -17,6 +17,23 @@
     return true;
   }
 
+  function escapeStudioThumbnailMarkup(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escapeStudioThumbnailHandlerArgument(value) {
+    const escapedScriptValue = String(value == null ? '' : value)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n');
+    return escapeStudioThumbnailMarkup(`'${escapedScriptValue}'`);
+  }
+
   function renderStudioThumbnailList(options = {}) {
     const documentRef = options.documentRef;
     const listContainer = documentRef && typeof documentRef.getElementById === 'function'
@@ -86,11 +103,11 @@
             ${String(slide.index + 1).padStart(2, '0')}
           </div>
           <div class="flex-grow overflow-hidden">
-            <h4 class="text-xs font-semibold text-white truncate font-sans">${slide.title}</h4>
-            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${slide.backgroundLabel}</p>
+            <h4 class="text-xs font-semibold text-white truncate font-sans">${escapeStudioThumbnailMarkup(slide.title)}</h4>
+            <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${escapeStudioThumbnailMarkup(slide.backgroundLabel)}</p>
           </div>
           ${canDeleteSlides && canMutateSlides ? `
-            <button onclick="event.stopPropagation(); deleteSlideNodeById('${slide.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
+            <button onclick="event.stopPropagation(); deleteSlideNodeById(${escapeStudioThumbnailHandlerArgument(slide.id)})" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
               <span class="material-symbols-outlined text-[15px]">delete</span>
             </button>
           ` : ''}
