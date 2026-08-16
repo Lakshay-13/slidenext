@@ -867,6 +867,18 @@ test('finalizeStudioLayerOrderMutation preserves layer UI ordering around shared
   ]);
 });
 
+test('finalizeStudioLayerOrderMutation preserves delegated results when layer controls refresh throws', () => {
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    finalizeMutation() {
+      return 'delegated';
+    },
+    updateLayerOrderActionState() {
+      throw new Error('layer controls unavailable');
+    }
+  }), 'delegated');
+});
+
 test('finalizeStudioLayerOrderMutation forwards canonical decks to fallback history persistence', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

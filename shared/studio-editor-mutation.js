@@ -343,7 +343,7 @@
         ...(hasCanonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
       });
       if (typeof options.updateLayerOrderActionState === 'function') {
-        options.updateLayerOrderActionState();
+        invokeStudioEditorUiRefresh(options.updateLayerOrderActionState);
       }
       return result;
     }
