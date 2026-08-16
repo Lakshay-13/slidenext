@@ -148,3 +148,22 @@ test('index wires structural slide mutations through the runtime module', () => 
     /function applyEditorSlideDeletionWithTransaction\(/
   );
 });
+
+test('index keeps structural slide-mutation dependencies from being shadowed', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const start = fileContent.indexOf('const studioEditorSlideMutationRuntime =');
+  const end = fileContent.indexOf(
+    'const studioEditorSlideReorderController =',
+    start
+  );
+  assert.ok(start >= 0);
+  assert.ok(end > start);
+
+  const wiring = fileContent.slice(start, end);
+  assert.equal((wiring.match(/\binsertionApi:/g) || []).length, 1);
+  assert.equal((wiring.match(/\binsertionTransactionApi:/g) || []).length, 1);
+  assert.equal((wiring.match(/\btransactionApi:/g) || []).length, 1);
+  assert.match(wiring, /SlideNextStudioEditorSlideInsertionController/);
+  assert.doesNotMatch(wiring, /SlideNextStudioEditorElementInsertionTransaction/);
+  assert.doesNotMatch(wiring, /SlideNextStudioEditorInsertion/);
+});
