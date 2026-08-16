@@ -83,7 +83,14 @@ test('editor loads the asset insertion bridge and keeps a thin compatibility han
 
   assert.match(source, /<script src="\/shared\/studio-editor-asset-insertion\.js"><\/script>/);
   assert.match(source, /<script src="\/shared\/studio-editor-asset-insertion-shell-runtime\.js"><\/script>/);
-  assert.match(source, /createStudioEditorAssetInsertionShellRuntime/);
+  assert.match(
+    source,
+    /<script src="\/shared\/studio-editor-asset-insertion-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    source,
+    /createStudioEditorAssetInsertionRuntimeAccessors/
+  );
   assert.match(
     source,
     /studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime/

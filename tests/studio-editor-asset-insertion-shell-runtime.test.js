@@ -4,8 +4,42 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const assetInsertionShellRuntime = require('../shared/studio-editor-asset-insertion-shell-runtime.js');
+const assetInsertionRuntimeAccessors = require('../shared/studio-editor-asset-insertion-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('asset insertion runtime accessors delegate to the shell runtime', () => {
+  const runtime = { isAvailable: true, assetInsertionController: { insert() {} } };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorAssetInsertionShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const assetInsertionApi = { name: 'asset-insertion' };
+  const getDocument = () => null;
+
+  const result = assetInsertionRuntimeAccessors
+    .createStudioEditorAssetInsertionRuntimeAccessors({
+      runtimeApi: shellRuntimeApi,
+      assetInsertionApi,
+      runtimeOptions: { getDocument }
+    });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.assetInsertionApi, assetInsertionApi);
+  assert.equal(receivedOptions.getDocument, getDocument);
+});
+
+test('asset insertion runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    assetInsertionRuntimeAccessors.createStudioEditorAssetInsertionRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('asset insertion shell runtime forwards canonical insertion dependencies', () => {
   let receivedOptions = null;
@@ -50,8 +84,19 @@ test('index routes asset insertion construction through the shell runtime', () =
     fileContent,
     /<script src="\/shared\/studio-editor-asset-insertion-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorAssetInsertionShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorAssetInsertionShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-asset-insertion-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(fileContent, /studioEditorAssetInsertionRuntimeAccessorsApi/);
+  assert.match(
+    fileContent,
+    /studioEditorAssetInsertionRuntimeAccessorsApi\s*\.\s*createStudioEditorAssetInsertionRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorAssetInsertionShellRuntimeApi\s*\.\s*createStudioEditorAssetInsertionShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime/

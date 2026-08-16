@@ -1485,6 +1485,7 @@
   <script src="/shared/studio-editor-asset-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-asset-insertion.js"></script>
   <script src="/shared/studio-editor-asset-insertion-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-asset-insertion-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -4893,29 +4894,37 @@
         addAssetToLibrary: (...args) => addAssetToLibrary(...args)
       });
     }
-    const studioEditorAssetInsertionShellRuntimeApi =
-      typeof SlideNextStudioEditorAssetInsertionShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorAssetInsertionShellRuntime
+    const studioEditorAssetInsertionRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorAssetInsertionRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorAssetInsertionRuntimeAccessors
       : null;
-    const studioEditorAssetInsertionShellRuntime = studioEditorAssetInsertionShellRuntimeApi
-      && typeof studioEditorAssetInsertionShellRuntimeApi
-        .createStudioEditorAssetInsertionShellRuntime === 'function'
-      ? studioEditorAssetInsertionShellRuntimeApi
-        .createStudioEditorAssetInsertionShellRuntime({
+    const studioEditorAssetInsertionRuntimeAccessors = studioEditorAssetInsertionRuntimeAccessorsApi
+      && typeof studioEditorAssetInsertionRuntimeAccessorsApi
+        .createStudioEditorAssetInsertionRuntimeAccessors === 'function'
+      ? studioEditorAssetInsertionRuntimeAccessorsApi
+        .createStudioEditorAssetInsertionRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorAssetInsertionShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorAssetInsertionShellRuntime
+            : null,
           assetInsertionApi: typeof SlideNextStudioEditorAssetInsertion !== 'undefined'
             ? SlideNextStudioEditorAssetInsertion
             : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          getDocument: () => getIframeDoc(),
-          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(sourceDoc || getIframeDoc())
-            : typeof buildEditorCanonicalDeck === 'function'
-              ? buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
+          runtimeOptions: {
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
               : null,
-          insertionController: studioEditorElementInsertionController
+            getDocument: () => getIframeDoc(),
+            resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(sourceDoc || getIframeDoc())
+              : typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc || getIframeDoc())
+                : null,
+            insertionController: studioEditorElementInsertionController
+          }
         })
+      : null;
+    const studioEditorAssetInsertionShellRuntime = studioEditorAssetInsertionRuntimeAccessors
+      ? studioEditorAssetInsertionRuntimeAccessors.runtime
       : null;
     const studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime
       && studioEditorAssetInsertionShellRuntime.isAvailable === true
