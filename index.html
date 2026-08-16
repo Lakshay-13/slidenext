@@ -1467,6 +1467,7 @@
   <script src="/shared/studio-editor-canonical-insertion.js"></script>
   <script src="/shared/studio-editor-block-view.js"></script>
   <script src="/shared/studio-editor-block-state.js"></script>
+  <script src="/shared/studio-editor-block-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-block-controller.js"></script>
   <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
@@ -11874,31 +11875,47 @@
         && typeof studioEditorContentStateCoordinator.syncBlock === 'function') {
         return studioEditorContentStateCoordinator.syncBlock(doc);
       }
-      const blockStateApi = typeof SlideNextStudioEditorBlockState !== 'undefined'
+      const blockStateRuntimeApi =
+        typeof SlideNextStudioEditorBlockState !== 'undefined'
         ? SlideNextStudioEditorBlockState
         : null;
-      if (!blockStateApi
-        || typeof blockStateApi.createStudioEditorBlockStateController !== 'function') {
+      const blockStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorBlockStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorBlockStateRuntimeAccessors
+        : null;
+      const blockStateRuntimeAccessors =
+        blockStateRuntimeAccessorsApi
+        && typeof blockStateRuntimeAccessorsApi
+          .createStudioEditorBlockStateRuntimeAccessors === 'function'
+        ? blockStateRuntimeAccessorsApi
+          .createStudioEditorBlockStateRuntimeAccessors({
+            runtimeApi: blockStateRuntimeApi
+          })
+        : null;
+      if (!blockStateRuntimeAccessors
+        || typeof blockStateRuntimeAccessors
+          .createStudioEditorBlockStateController !== 'function') {
         return false;
       }
       if (!updateBlockActionState.controller) {
         const blockView = typeof SlideNextStudioEditorBlockView !== 'undefined'
           ? SlideNextStudioEditorBlockView
           : null;
-        updateBlockActionState.controller = blockStateApi.createStudioEditorBlockStateController({
-          blockView,
-          getDocument: () => getIframeDoc(),
-          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
-          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          selectionHasLockedElements: typeof selectionHasLockedElements === 'function'
-            ? selectionHasLockedElements
-            : null,
-          isElementLocked: typeof isElementLocked === 'function' ? isElementLocked : null,
-          insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
-          removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null,
-          documentRef: document
-        });
+        updateBlockActionState.controller = blockStateRuntimeAccessors
+          .createStudioEditorBlockStateController({
+            blockView,
+            getDocument: () => getIframeDoc(),
+            getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+            getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            selectionHasLockedElements: typeof selectionHasLockedElements === 'function'
+              ? selectionHasLockedElements
+              : null,
+            isElementLocked: typeof isElementLocked === 'function' ? isElementLocked : null,
+            insertBlock: typeof insertSavedBlock === 'function' ? insertSavedBlock : null,
+            removeBlock: typeof removeSavedBlock === 'function' ? removeSavedBlock : null,
+            documentRef: document
+          });
       }
       return updateBlockActionState.controller
         && typeof updateBlockActionState.controller.sync === 'function'

@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const blockView = require('../shared/studio-editor-block-view.js');
 const blockState = require('../shared/studio-editor-block-state.js');
+const blockStateRuntimeAccessors = require('../shared/studio-editor-block-state-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,6 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function runSourceWithCanonicalUi(source, context) {
   context.SlideNextStudioEditorBlockState = blockState;
+  context.SlideNextStudioEditorBlockStateRuntimeAccessors = blockStateRuntimeAccessors;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
     fileContent,
