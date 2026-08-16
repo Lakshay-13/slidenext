@@ -27,10 +27,6 @@
       .replace(/'/g, '&#39;');
   }
 
-  function inlineHandlerArgument(value) {
-    return escapeHtml(JSON.stringify(normalizeString(value)));
-  }
-
   function getPresentationLibraryActionAttribute(target, name) {
     if (!target) return '';
     if (typeof target.getAttribute === 'function') {
