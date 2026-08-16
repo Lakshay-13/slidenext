@@ -77,8 +77,19 @@ test('index routes reusable persisted html sanitizer installation through the sh
     fileContent,
     /<script src="\/shared\/studio-editor-reusable-persisted-html-sanitizer-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-reusable-persisted-html-sanitizer-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorReusablePersistedHtmlSanitizerShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorReusablePersistedHtmlSanitizerRuntimeAccessorsApi\s*\.\s*createStudioEditorReusablePersistedHtmlSanitizerRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi\s*\.\s*createStudioEditorReusablePersistedHtmlSanitizerShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorReusablePersistedHtmlSanitizerGlobalApi\s*=\s*studioEditorReusablePersistedHtmlSanitizerShellRuntime/

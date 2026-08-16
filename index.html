@@ -1616,6 +1616,7 @@
   <script src="/shared/studio-editor-persistable-deck-sanitizer-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
@@ -6622,30 +6623,41 @@
       typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerShellRuntime !== 'undefined'
       ? SlideNextStudioEditorReusablePersistedHtmlSanitizerShellRuntime
       : null;
-    const studioEditorReusablePersistedHtmlSanitizerShellRuntime =
-      studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
-      && typeof studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
-        .createStudioEditorReusablePersistedHtmlSanitizerShellRuntime === 'function'
-      ? studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi
-        .createStudioEditorReusablePersistedHtmlSanitizerShellRuntime({
-          actionApi: typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
-            ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
-            : null,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
-            ? SlideNextDeckPersistence
-            : null,
-          buildEditorPersistableDeckSanitizerOptions: studioEditorPersistableDeckSanitizerAction,
-          getDeckSanitizerOptions: getEditorDeckSanitizerOptions,
-          DOMParser: typeof DOMParser === 'function' ? DOMParser : null
+    const studioEditorReusablePersistedHtmlSanitizerRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorReusablePersistedHtmlSanitizerRuntimeAccessors
+      : null;
+    const studioEditorReusablePersistedHtmlSanitizerRuntimeAccessors =
+      studioEditorReusablePersistedHtmlSanitizerRuntimeAccessorsApi
+      && typeof studioEditorReusablePersistedHtmlSanitizerRuntimeAccessorsApi
+        .createStudioEditorReusablePersistedHtmlSanitizerRuntimeAccessors === 'function'
+      ? studioEditorReusablePersistedHtmlSanitizerRuntimeAccessorsApi
+        .createStudioEditorReusablePersistedHtmlSanitizerRuntimeAccessors({
+          runtimeApi: studioEditorReusablePersistedHtmlSanitizerShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorReusablePersistedHtmlSanitizerAction !== 'undefined'
+              ? SlideNextStudioEditorReusablePersistedHtmlSanitizerAction
+              : null,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+              ? SlideNextDeckPersistence
+              : null,
+            buildEditorPersistableDeckSanitizerOptions: studioEditorPersistableDeckSanitizerAction,
+            getDeckSanitizerOptions: getEditorDeckSanitizerOptions,
+            DOMParser: typeof DOMParser === 'function' ? DOMParser : null
+          }
         })
       : null;
+    const studioEditorReusablePersistedHtmlSanitizerShellRuntime =
+      studioEditorReusablePersistedHtmlSanitizerRuntimeAccessors
+        ? studioEditorReusablePersistedHtmlSanitizerRuntimeAccessors.runtime
+        : null;
     const studioEditorReusablePersistedHtmlSanitizerAction =
       studioEditorReusablePersistedHtmlSanitizerShellRuntime
       && studioEditorReusablePersistedHtmlSanitizerShellRuntime.isAvailable === true
