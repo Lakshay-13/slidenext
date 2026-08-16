@@ -137,10 +137,21 @@
       return true;
     }
 
+    function resolveAlignmentActionState() {
+      if (!buildAlignmentActionState) return null;
+      try {
+        const actionState = buildAlignmentActionState();
+        return actionState && actionState.alignmentActionState
+          ? actionState.alignmentActionState
+          : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
     function align(action = '') {
-      if (!buildAlignmentActionState) return false;
-      const alignmentActionState = buildAlignmentActionState().alignmentActionState;
-      if (!alignmentActionState.canAlign) {
+      const alignmentActionState = resolveAlignmentActionState();
+      if (!alignmentActionState || !alignmentActionState.canAlign) {
         refreshActionState();
         return false;
       }
@@ -156,9 +167,10 @@
     }
 
     function distribute(axis = '') {
-      if (!buildAlignmentActionState) return false;
-      const alignmentActionState = buildAlignmentActionState().alignmentActionState;
-      if (!alignmentActionState.canAlign || alignmentActionState.selection.length < 3) {
+      const alignmentActionState = resolveAlignmentActionState();
+      if (!alignmentActionState
+        || !alignmentActionState.canAlign
+        || alignmentActionState.selection.length < 3) {
         refreshActionState();
         return false;
       }

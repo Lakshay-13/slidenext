@@ -81,6 +81,20 @@ test('alignment controller refreshes state and fails closed for unavailable acti
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('alignment controller fails closed when action-state construction throws', () => {
+  const calls = [];
+  const controller = alignmentController.createStudioEditorAlignmentController({
+    buildAlignmentActionState() {
+      throw new Error('selection state unavailable');
+    },
+    updateAlignmentActionState: () => calls.push('update')
+  });
+
+  assert.equal(controller.align('left'), false);
+  assert.equal(controller.distribute('horizontal'), false);
+  assert.deepEqual(calls, ['update', 'update']);
+});
+
 test('alignment controller preserves the result when action-state refresh throws', () => {
   const controller = alignmentController.createStudioEditorAlignmentController({
     buildAlignmentActionState: () => ({
