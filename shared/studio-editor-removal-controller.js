@@ -99,6 +99,15 @@
       }
     }
 
+    function restoreRemovalSelection(selectedElementIds, doc) {
+      if (!restoreSelection) return;
+      try {
+        restoreSelection(selectedElementIds, doc);
+      } catch (err) {
+        // Selection chrome is secondary; preserve the failed removal result.
+      }
+    }
+
     function remove(sourceDoc) {
       const doc = sourceDoc || getIframeDoc();
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
@@ -163,7 +172,7 @@
       });
       if (finalizeResult === false) {
         rollbackRemovalMutation(mutation.transaction, doc);
-        if (restoreSelection) restoreSelection(selectedElementIds, doc);
+        restoreRemovalSelection(selectedElementIds, doc);
         return finalizeRemovalActionResult(false, doc);
       }
       return true;

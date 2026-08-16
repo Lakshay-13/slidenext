@@ -260,3 +260,33 @@ test('removal controller restores selection when rollback throws', () => {
   assert.doesNotThrow(() => assert.equal(controller.remove(), false));
   assert.deepEqual(calls, ['rollback', 'restoreSelection', 'finalizeAction']);
 });
+
+test('removal controller preserves the failed result when selection restoration throws', () => {
+  const calls = [];
+  const doc = { id: 'doc' };
+  const target = { dataset: { editorId: 'node-1' } };
+  const controller = removalController.createStudioEditorRemovalController({
+    buildRemovalSelectionActionState: () => ({
+      canRemove: true,
+      selection: [target]
+    }),
+    getIframeDoc: () => doc,
+    assignElementId: (element) => element.dataset.editorId,
+    applyRemovalMutation: () => ({ didRemove: true, transaction: { type: 'markup' } }),
+    finalizeDeckMutation: () => false,
+    rollbackMutation: () => calls.push('rollback'),
+    restoreSelection: () => {
+      calls.push('restoreSelection');
+      throw new Error('selection chrome unavailable');
+    },
+    finalizeRemovalActionResult: (result, sourceDoc) => {
+      assert.equal(result, false);
+      assert.equal(sourceDoc, doc);
+      calls.push('finalizeAction');
+      return false;
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.remove(), false));
+  assert.deepEqual(calls, ['rollback', 'restoreSelection', 'finalizeAction']);
+});
