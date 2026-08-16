@@ -219,7 +219,12 @@
     const getSelectionOptions = typeof options.getSelectionOptions === 'function'
       ? options.getSelectionOptions
       : () => ({});
-    const selectionOptions = getSelectionOptions();
+    let selectionOptions;
+    try {
+      selectionOptions = getSelectionOptions() || {};
+    } catch (error) {
+      return false;
+    }
     if (typeof selectionOptions.isEligibleElement === 'function') {
       try {
         if (selectionOptions.isEligibleElement(target) === false) return false;
