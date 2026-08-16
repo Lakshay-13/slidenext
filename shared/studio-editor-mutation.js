@@ -63,6 +63,15 @@
     }
   }
 
+  function invokeStudioEditorUiRefresh(refreshUi, ...args) {
+    if (typeof refreshUi !== 'function') return;
+    try {
+      refreshUi(...args);
+    } catch (err) {
+      // Editor chrome refresh is secondary to the committed mutation.
+    }
+  }
+
   function resolveStudioMutationOptions(mutationOptions = {}, options = {}) {
     const sourceOptions = mutationOptions && typeof mutationOptions === 'object'
       ? mutationOptions
@@ -150,7 +159,7 @@
         }
       }
       if (resolvedMutationOptions.syncSelectionOverlay) {
-        syncSelectionOverlay(resolvedMutationOptions.doc);
+        invokeStudioEditorUiRefresh(syncSelectionOverlay, resolvedMutationOptions.doc);
       }
       if (resolvedMutationOptions.refreshThumbnails !== false) {
         invokeStudioEditorThumbnailRefresh(generateThumbnails);

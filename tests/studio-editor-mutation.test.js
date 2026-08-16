@@ -62,6 +62,29 @@ test('createStudioMutationFinalizer preserves persistence when thumbnail refresh
   assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Moved Element']]);
 });
 
+test('createStudioMutationFinalizer preserves persistence when selection overlay refresh throws', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    syncSelectionOverlay() {
+      throw new Error('selection overlay unavailable');
+    },
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Moved Element', {
+    syncSelectionOverlay: true
+  }), 'Auto: Moved Element');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Moved Element']]);
+});
+
 test('createStudioMutationFinalizer forwards the mutation document to selection UI refreshes', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];
