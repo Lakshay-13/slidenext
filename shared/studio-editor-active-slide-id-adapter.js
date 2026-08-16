@@ -23,7 +23,23 @@
     return resolveActiveSlideId(doc, options.domOptions || {});
   }
 
+  function createStudioEditorActiveSlideIdResolver(options = {}) {
+    const domApi = options.domApi && typeof options.domApi === 'object'
+      ? options.domApi
+      : null;
+    const activeSlideIdResolver = typeof options.activeSlideIdResolver === 'function'
+      ? options.activeSlideIdResolver
+      : null;
+
+    return (doc, domOptions = {}) => getStudioEditorActiveSlideId(doc, {
+      domApi,
+      activeSlideIdResolver,
+      domOptions
+    });
+  }
+
   return {
-    getStudioEditorActiveSlideId
+    getStudioEditorActiveSlideId,
+    createStudioEditorActiveSlideIdResolver
   };
 });

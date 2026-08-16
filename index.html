@@ -4632,18 +4632,25 @@
       : null;
 
     const studioEditorActiveSlideIdResolver = studioEditorActiveSlideIdAdapter
-      && typeof studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioActiveSlideId === 'function'
-      ? (doc, options) => studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId(
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
-      : null;
+      && typeof studioEditorActiveSlideIdAdapter.createStudioEditorActiveSlideIdResolver === 'function'
+      ? studioEditorActiveSlideIdAdapter.createStudioEditorActiveSlideIdResolver({
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null
+        })
+      : studioEditorActiveSlideIdAdapter
+        && typeof studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId === 'function'
+        && typeof SlideNextStudioEditorDom !== 'undefined'
+        && SlideNextStudioEditorDom
+        && typeof SlideNextStudioEditorDom.getStudioActiveSlideId === 'function'
+        ? (doc, options) => studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId(
+            doc,
+            {
+              domApi: SlideNextStudioEditorDom,
+              domOptions: options
+            }
+          )
+        : null;
 
     const studioEditorChromeNodePrunerAdapter = typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'
       && SlideNextStudioEditorChromeNodePrunerAdapter
