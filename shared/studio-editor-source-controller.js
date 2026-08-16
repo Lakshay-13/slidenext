@@ -302,6 +302,7 @@
           return true;
         };
     let sourceMode = 'html';
+    const sourceButtonBindings = new WeakMap();
 
     function canUseDeckActions() {
       let actionState;
@@ -442,7 +443,10 @@
       const bindButton = (id, handler) => {
         const button = sourceDocument.getElementById(id);
         if (!button || typeof button.addEventListener !== 'function') return false;
-        button.addEventListener('click', handler);
+        if (!sourceButtonBindings.has(button)) {
+          button.addEventListener('click', handler);
+          sourceButtonBindings.set(button, handler);
+        }
         return true;
       };
 

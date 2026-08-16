@@ -78,6 +78,44 @@ test('source view controls use shared controller wiring instead of inline handle
   assert.match(fileContent, /bindStudioEditorSourceButtons\(\{ documentRef: document \}\)/);
 });
 
+test('source view control binding is idempotent for an existing document', () => {
+  const buttons = {};
+  [
+    'openSourceViewBtn',
+    'sourceViewHtmlTab',
+    'sourceViewCssTab',
+    'applySourceViewBtn',
+    'closeSourceViewBtn'
+  ].forEach((id) => {
+    buttons[id] = {
+      listeners: [],
+      addEventListener(type, handler) {
+        this.listeners.push({ type, handler });
+      }
+    };
+  });
+  const controller = sourceController.createStudioEditorSourceController({
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    }
+  });
+
+  assert.deepEqual(
+    controller.bindStudioEditorSourceButtons(),
+    { open: true, html: true, css: true, apply: true, close: true }
+  );
+  assert.deepEqual(
+    controller.bindStudioEditorSourceButtons(),
+    { open: true, html: true, css: true, apply: true, close: true }
+  );
+  Object.values(buttons).forEach((button) => {
+    assert.equal(button.listeners.length, 1);
+    assert.equal(button.listeners[0].type, 'click');
+  });
+});
+
 test('resetStudioSourceViewUiState clears stale source modal chrome', () => {
   const elements = {
     sourceViewModal: {
