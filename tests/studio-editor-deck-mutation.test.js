@@ -420,6 +420,31 @@ test('finalizeStudioEditorLayerOrderMutation converts thrown fallback autosave t
   }), false);
 });
 
+test('finalizeStudioEditorLayerOrderMutation preserves persistence when layer refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Layer Order', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState() {},
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    updateLayersList: () => {
+      throw new Error('layer list unavailable');
+    },
+    updateLayerOrderActionState() {
+      calls.push('actions');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.equal(result, 'Auto: Layer Order');
+  assert.deepEqual(calls, ['save', 'actions', ['version', 'Auto: Layer Order']]);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };

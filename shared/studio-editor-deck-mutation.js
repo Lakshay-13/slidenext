@@ -53,6 +53,15 @@
     }
   }
 
+  function invokeStudioEditorUiRefresh(refreshUi) {
+    if (typeof refreshUi !== 'function') return;
+    try {
+      refreshUi();
+    } catch (err) {
+      // Editor chrome refresh is secondary to the committed mutation.
+    }
+  }
+
   function createStudioEditorDeckMutationFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -317,7 +326,7 @@
       if (!invokeStudioEditorAutoSave(options.triggerAutoSave)) return false;
     }
     if (typeof options.updateLayersList === 'function') {
-      options.updateLayersList();
+      invokeStudioEditorUiRefresh(options.updateLayersList);
     }
     if (typeof options.updateLayerOrderActionState === 'function') {
       options.updateLayerOrderActionState();
