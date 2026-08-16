@@ -615,6 +615,29 @@ test('finalizeStudioEditorWallpaperMutation converts thrown fallback autosave to
   ), false);
 });
 
+test('finalizeStudioEditorWallpaperMutation preserves the result when version notification throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Changed Background',
+    { id: 'tx' },
+    null,
+    {
+      saveHistoryState() {
+        calls.push('history');
+      },
+      triggerAutoSave() {
+        calls.push('save');
+      },
+      triggerAutoVersion() {
+        throw new Error('version notification unavailable');
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Changed Background');
+  assert.deepEqual(calls, ['history', 'save']);
+});
+
 test('finalizeStudioEditorWallpaperMutation contains thrown persistence failures', () => {
   assert.equal(deckMutation.finalizeStudioEditorWallpaperMutation(
     'Auto: Background',
