@@ -3248,6 +3248,9 @@
           onSelectSlide: (slideId) => {
             setActiveSlideById(slideId, undefined, { captureHistory: true });
           },
+          onDeleteSlide: (slideId) => {
+            deleteSlideNodeById(slideId);
+          },
           reorderSlidesById: (sourceSlideId, targetSlideId) => {
             reorderSlidesById(sourceSlideId, targetSlideId);
           }

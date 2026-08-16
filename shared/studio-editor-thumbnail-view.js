@@ -6,7 +6,7 @@
   if (root) {
     root.SlideNextStudioEditorThumbnailView = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
   function setStudioThumbnailSlideCount(options = {}) {
     const documentRef = options.documentRef;
     const slideCountLabel = documentRef && typeof documentRef.getElementById === 'function'
@@ -23,15 +23,6 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function escapeStudioThumbnailHandlerArgument(value) {
-    const escapedScriptValue = String(value == null ? '' : value)
-      .replace(/\\/g, '\\\\')
-      .replace(/'/g, "\\'")
-      .replace(/\r/g, '\\r')
-      .replace(/\n/g, '\\n');
-    return escapeStudioThumbnailMarkup(`'${escapedScriptValue}'`);
   }
 
   function renderStudioThumbnailList(options = {}) {
@@ -69,6 +60,11 @@
     const onSelectSlide = typeof options.onSelectSlide === 'function'
       ? options.onSelectSlide
       : () => {};
+    const onDeleteSlide = typeof options.onDeleteSlide === 'function'
+      ? options.onDeleteSlide
+      : root && typeof root.deleteSlideNodeById === 'function'
+        ? root.deleteSlideNodeById
+        : () => {};
     const setupDragAndDropThumbnail = typeof options.setupDragAndDropThumbnail === 'function'
       ? options.setupDragAndDropThumbnail
       : () => {};
@@ -106,12 +102,21 @@
             <h4 class="text-xs font-semibold text-white truncate font-sans">${escapeStudioThumbnailMarkup(slide.title)}</h4>
             <p class="text-[10px] text-zinc-500 font-mono uppercase mt-0.5">${escapeStudioThumbnailMarkup(slide.backgroundLabel)}</p>
           </div>
-          ${canDeleteSlides && canMutateSlides ? `
-            <button onclick="event.stopPropagation(); deleteSlideNodeById(${escapeStudioThumbnailHandlerArgument(slide.id)})" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5" title="Delete Slide">
-              <span class="material-symbols-outlined text-[15px]">delete</span>
-            </button>
-          ` : ''}
         `;
+
+      if (canDeleteSlides && canMutateSlides && typeof documentRef.createElement === 'function'
+        && typeof thumbCard.appendChild === 'function') {
+        const deleteButton = documentRef.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-500/20 text-zinc-500 hover:text-rose-400 rounded transition-all absolute right-2 top-2.5';
+        deleteButton.title = 'Delete Slide';
+        deleteButton.innerHTML = '<span class="material-symbols-outlined text-[15px]">delete</span>';
+        deleteButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          onDeleteSlide(slide.id);
+        });
+        thumbCard.appendChild(deleteButton);
+      }
 
       if (canMutateSlides) {
         thumbCard.addEventListener('click', () => onSelectSlide(slide.id));

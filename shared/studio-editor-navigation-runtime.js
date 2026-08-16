@@ -94,6 +94,7 @@
           buildDeckSnapshot: options.buildDeckSnapshot,
           getActiveSlideIndex: options.getActiveSlideIndex,
           onSelectSlide: options.onSelectSlide,
+          onDeleteSlide: options.onDeleteSlide,
           reorderSlidesById: options.reorderSlidesById
         })
       : null;

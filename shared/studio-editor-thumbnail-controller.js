@@ -29,6 +29,9 @@
     const onSelectSlide = typeof options.onSelectSlide === 'function'
       ? options.onSelectSlide
       : () => {};
+    const onDeleteSlide = typeof options.onDeleteSlide === 'function'
+      ? options.onDeleteSlide
+      : () => {};
     const reorderSlidesById = typeof options.reorderSlidesById === 'function'
       ? options.reorderSlidesById
       : () => {};
@@ -94,6 +97,7 @@
               : getActiveSlideIndex(iframeDoc, deckSnapshot)
           ),
           onSelectSlide,
+          onDeleteSlide,
           setupDragAndDropThumbnail: attach
         });
       }
@@ -109,6 +113,7 @@
         ),
         canMutateSlides: !!iframeDoc,
         onSelectSlide,
+        onDeleteSlide,
         setupDragAndDropThumbnail: attach
       };
       if (typeof thumbnailView.syncStudioThumbnailList === 'function') {

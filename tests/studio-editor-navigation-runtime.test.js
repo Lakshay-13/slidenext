@@ -57,6 +57,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
     buildDeckSnapshot() {},
     getActiveSlideIndex() {},
     onSelectSlide() {},
+    onDeleteSlide() {},
     reorderSlidesById() {}
   };
   const api = (name, factoryName, result) => ({
@@ -95,6 +96,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
   assert.equal(calls[3][1].buildDeckSnapshot, callbacks.buildDeckSnapshot);
   assert.equal(calls[3][1].deckViewApi, callbacks.deckViewApi);
   assert.equal(calls[3][1].onSelectSlide, callbacks.onSelectSlide);
+  assert.equal(calls[3][1].onDeleteSlide, callbacks.onDeleteSlide);
   assert.equal(calls[3][1].reorderSlidesById, callbacks.reorderSlidesById);
 });
 

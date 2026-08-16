@@ -43,8 +43,13 @@ function createThumbCard() {
     listeners: [],
     style: {},
     textContent: '',
+    children: [],
     addEventListener(type, handler) {
       this.listeners.push({ type, handler });
+    },
+    appendChild(child) {
+      this.children.push(child);
+      return child;
     }
   };
 }
@@ -128,13 +133,15 @@ test('syncStudioThumbnailList derives the slide-delete affordance from snapshot 
     canMutateSlides: true
   }), true);
   assert.equal(thumbnailsList.children.length, 2);
-  assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById/);
+  assert.equal(thumbnailsList.children[0].children.length, 1);
+  assert.equal(thumbnailsList.children[0].children[0].title, 'Delete Slide');
   assert.equal(thumbnailsList.children[0].style.contentVisibility, 'auto');
   assert.equal(thumbnailsList.children[0].style.containIntrinsicSize, '72px');
 });
 
-test('renderStudioThumbnailList escapes legacy slide metadata and delete handler arguments', () => {
+test('renderStudioThumbnailList escapes legacy slide metadata and binds delete actions without inline handlers', () => {
   const thumbnailsList = createListContainer();
+  let deletedSlideId = '';
   const documentRef = {
     getElementById(id) {
       return id === 'thumbnailsList' ? thumbnailsList : null;
@@ -161,16 +168,21 @@ test('renderStudioThumbnailList escapes legacy slide metadata and delete handler
       }]
     },
     canMutateSlides: true,
-    canDeleteSlides: true
+    canDeleteSlides: true,
+    onDeleteSlide(slideId) {
+      deletedSlideId = slideId;
+    }
   }), true);
 
   const cardMarkup = thumbnailsList.children[0].innerHTML;
   assert.doesNotMatch(cardMarkup, /<img src=x/);
   assert.match(cardMarkup, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.match(cardMarkup, /&quot; onmouseover=&quot;alert\(2\)/);
-  assert.ok(cardMarkup.includes("deleteSlideNodeById('slide-1\\');"));
-  assert.ok(cardMarkup.includes("alert(\\'unexpected\\')"));
-  assert.doesNotMatch(cardMarkup, /deleteSlideNodeById\('slide-1'\); alert\('unexpected'\)/);
+  assert.doesNotMatch(cardMarkup, /onclick|deleteSlideNodeById/);
+  const deleteButton = thumbnailsList.children[0].children[0];
+  assert.equal(deleteButton.title, 'Delete Slide');
+  deleteButton.listeners[0].handler({ stopPropagation() {} });
+  assert.equal(deletedSlideId, "slide-1'); alert('unexpected') //");
 });
 
 test('renderStudioThumbnailList groups slides by section and labels unsectioned slides', () => {
@@ -286,7 +298,7 @@ test('syncStudioEditorThumbnails assembles the live editor snapshot before rende
   assert.equal(slideCountLabel.textContent, '2 / 2');
   assert.equal(thumbnailsList.children.length, 2);
   assert.equal(thumbnailsList.children[1].draggable, true);
-  assert.match(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById/);
+  assert.equal(thumbnailsList.children[1].children.length, 1);
 });
 
 test('attachStudioThumbnailDragAndDrop preserves thumbnail drag state and reorder behavior', () => {
@@ -479,8 +491,8 @@ test('generateThumbnails hides the slide delete affordance when only one slide r
   context.generateThumbnails();
   assert.equal(slideCountLabel.textContent, '1 / 2');
   assert.equal(thumbnailsList.children.length, 2);
-  assert.match(thumbnailsList.children[0].innerHTML, /deleteSlideNodeById\('slide-1'\)/);
-  assert.match(thumbnailsList.children[1].innerHTML, /deleteSlideNodeById\('slide-2'\)/);
+  assert.equal(thumbnailsList.children[0].children.length, 1);
+  assert.equal(thumbnailsList.children[1].children.length, 1);
   assert.equal(getIframeDocCalls, 2);
 });
 

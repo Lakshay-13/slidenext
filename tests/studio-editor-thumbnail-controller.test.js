@@ -26,6 +26,7 @@ function createController(overrides = {}) {
     buildDeckSnapshot: () => deckSnapshot,
     getActiveSlideIndex: () => 1,
     onSelectSlide: (slideId) => calls.push(['select', slideId]),
+    onDeleteSlide: (slideId) => calls.push(['delete', slideId]),
     reorderSlidesById: (sourceSlideId, targetSlideId) => calls.push(['reorder', sourceSlideId, targetSlideId]),
     ...overrides
   });
@@ -44,17 +45,20 @@ test('thumbnail controller assembles shared render and drag dependencies', () =>
   assert.equal(calls[0][1].buildDeckSnapshot(iframeDoc), deckSnapshot);
   assert.equal(calls[0][1].getActiveSlideIndex(iframeDoc, deckSnapshot), 1);
   assert.equal(typeof calls[0][1].onSelectSlide, 'function');
+  assert.equal(typeof calls[0][1].onDeleteSlide, 'function');
   assert.equal(typeof calls[0][1].setupDragAndDropThumbnail, 'function');
   calls[0][1].onSelectSlide('slide-2');
   assert.deepEqual(calls[1], ['select', 'slide-2']);
+  calls[0][1].onDeleteSlide('slide-2');
+  assert.deepEqual(calls[2], ['delete', 'slide-2']);
   assert.equal(controller.attach(card), true);
-  assert.equal(calls[2][0], 'attach');
-  assert.equal(calls[2][1], card);
-  assert.equal(typeof calls[2][2].getDraggedSlideId, 'function');
-  calls[2][2].setDraggedSlideId('slide-1');
-  assert.equal(calls[2][2].getDraggedSlideId(), 'slide-1');
-  calls[2][2].onReorder('slide-1', 'slide-2');
-  assert.deepEqual(calls[3], ['reorder', 'slide-1', 'slide-2']);
+  assert.equal(calls[3][0], 'attach');
+  assert.equal(calls[3][1], card);
+  assert.equal(typeof calls[3][2].getDraggedSlideId, 'function');
+  calls[3][2].setDraggedSlideId('slide-1');
+  assert.equal(calls[3][2].getDraggedSlideId(), 'slide-1');
+  calls[3][2].onReorder('slide-1', 'slide-2');
+  assert.deepEqual(calls[4], ['reorder', 'slide-1', 'slide-2']);
 });
 
 test('thumbnail controller supports the legacy thumbnail view fallback', () => {
