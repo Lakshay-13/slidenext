@@ -1160,8 +1160,7 @@
       return false;
     }
 
-    activateSlideByIndex(index);
-    return true;
+    return activateSlideByIndex(index) !== false;
   }
 
   function captureStudioDeckViewBeforeSlideMutation(options = {}) {

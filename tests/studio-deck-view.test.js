@@ -912,6 +912,30 @@ test('setStudioDeckActiveSlide rejects invalid indices before mutating the live 
   assert.equal(syncCalls, 0);
 });
 
+test('setStudioDeckActiveSlideById reports activation failures', () => {
+  const doc = { id: 'iframe-doc' };
+  const calls = [];
+
+  assert.equal(
+    deckView.setStudioDeckActiveSlideById('slide-2', {
+      doc,
+      getSlideIndexById(slideId, sourceDoc) {
+        calls.push(['resolve', slideId, sourceDoc]);
+        return 1;
+      },
+      activateSlideByIndex(index) {
+        calls.push(['activate', index]);
+        return false;
+      }
+    }),
+    false
+  );
+  assert.deepEqual(calls, [
+    ['resolve', 'slide-2', doc],
+    ['activate', 1]
+  ]);
+});
+
 test('resolveStudioInsertionActionState derives slide insertion readiness from the active slide and slide container resolvers', () => {
   assert.deepEqual(
     deckView.resolveStudioInsertionActionState(null),
