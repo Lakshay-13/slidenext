@@ -29,8 +29,8 @@ test('editor forwards the group and ungroup documents into the selection reader'
     source,
     /<script src="\/shared\/studio-editor-ungroup-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(source, /studioEditorUngroupStateShellRuntimeApi/);
-  assert.match(source, /createStudioEditorUngroupStateShellRuntime/);
+  assert.match(source, /studioEditorUngroupStateAccessorsApi/);
+  assert.match(source, /createStudioEditorUngroupStateAccessors/);
   assert.match(
     source,
     /studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime/

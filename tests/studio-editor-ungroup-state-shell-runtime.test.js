@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ungroupStateShellRuntime = require('../shared/studio-editor-ungroup-state-shell-runtime.js');
+const ungroupStateAccessors = require('../shared/studio-editor-ungroup-state-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -49,6 +50,38 @@ test('ungroup-state shell runtime fails closed when the shared state API is unav
   assert.equal(runtime.ungroupStateController, null);
 });
 
+test('ungroup-state accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { isAvailable: true, ungroupStateController: { name: 'ungroup' } };
+  const runtimeOptions = { getDocument: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorUngroupStateShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const ungroupStateApi = { name: 'state' };
+  const accessors = ungroupStateAccessors.createStudioEditorUngroupStateAccessors({
+    runtimeApi,
+    ungroupStateApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].ungroupStateApi, ungroupStateApi);
+  assert.equal(calls[0].getDocument, runtimeOptions.getDocument);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('ungroup-state accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = ungroupStateAccessors.createStudioEditorUngroupStateAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
+});
+
 test('index routes ungroup-state construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -56,8 +89,14 @@ test('index routes ungroup-state construction through the shell runtime', () => 
     fileContent,
     /<script src="\/shared\/studio-editor-ungroup-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorUngroupStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorUngroupStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-ungroup-state-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorUngroupStateAccessorsApi\s*\.\s*createStudioEditorUngroupStateAccessors\(/
+  );
   assert.match(
     fileContent,
     /studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime/

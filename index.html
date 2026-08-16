@@ -1494,6 +1494,7 @@
   <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-ungroup-state.js"></script>
   <script src="/shared/studio-editor-ungroup-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-ungroup-state-accessors.js"></script>
   <script src="/shared/studio-editor-ungroup-transaction.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
@@ -4069,15 +4070,19 @@
       && studioEditorGroupStateShellRuntime.isAvailable === true
       ? studioEditorGroupStateShellRuntime.groupStateController
       : null;
-    const studioEditorUngroupStateShellRuntimeApi =
-      typeof SlideNextStudioEditorUngroupStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorUngroupStateShellRuntime
+    const studioEditorUngroupStateAccessorsApi =
+      typeof SlideNextStudioEditorUngroupStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorUngroupStateAccessors
       : null;
-    const studioEditorUngroupStateShellRuntime = studioEditorUngroupStateShellRuntimeApi
-      && typeof studioEditorUngroupStateShellRuntimeApi
-        .createStudioEditorUngroupStateShellRuntime === 'function'
-      ? studioEditorUngroupStateShellRuntimeApi
-        .createStudioEditorUngroupStateShellRuntime({
+    const studioEditorUngroupStateAccessors = studioEditorUngroupStateAccessorsApi
+      && typeof studioEditorUngroupStateAccessorsApi
+        .createStudioEditorUngroupStateAccessors === 'function'
+      ? studioEditorUngroupStateAccessorsApi
+        .createStudioEditorUngroupStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorUngroupStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorUngroupStateShellRuntime
+            : null,
+          runtimeOptions: {
           ungroupStateApi: typeof SlideNextStudioEditorUngroupState !== 'undefined'
             ? SlideNextStudioEditorUngroupState
             : null,
@@ -4089,7 +4094,11 @@
           getActiveSlide,
           getLiveSelectedElements,
           isEditorGroupElement
+          }
         })
+      : null;
+    const studioEditorUngroupStateShellRuntime = studioEditorUngroupStateAccessors
+      ? studioEditorUngroupStateAccessors.runtime
       : null;
     const studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime
       && studioEditorUngroupStateShellRuntime.isAvailable === true
