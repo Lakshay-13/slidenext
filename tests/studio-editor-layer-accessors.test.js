@@ -119,14 +119,12 @@ test('layer accessors compose arrangement through the shared controller', () => 
     selectionHasLockedElements,
     refreshLayerOrderUi,
     reorderSlideLayers,
-    syncLayerOrderZIndexInput,
     finalizeLayerOrderMutation
   });
 
   function selectionHasLockedElements() {}
   function refreshLayerOrderUi() {}
   function reorderSlideLayers() {}
-  function syncLayerOrderZIndexInput() {}
   function finalizeLayerOrderMutation() {}
 
   assert.equal(accessors.arrangeElementLayer('front'), 'arranged');
@@ -140,8 +138,9 @@ test('layer accessors compose arrangement through the shared controller', () => 
   assert.equal(delegatedOptions.selectionHasLockedElements, selectionHasLockedElements);
   assert.equal(delegatedOptions.refreshLayerOrderUi, refreshLayerOrderUi);
   assert.equal(delegatedOptions.reorderSlideLayers, reorderSlideLayers);
-  assert.equal(delegatedOptions.syncLayerOrderZIndexInput, syncLayerOrderZIndexInput);
   assert.equal(delegatedOptions.finalizeLayerOrderMutation, finalizeLayerOrderMutation);
+  assert.equal(typeof delegatedOptions.syncLayerOrderZIndexInput, 'function');
+  assert.equal(delegatedOptions.syncLayerOrderZIndexInput({}), null);
 });
 
 test('layer accessors compose layer UI refresh through the shared controller', () => {
@@ -170,6 +169,26 @@ test('layer accessors compose layer UI refresh through the shared controller', (
   ]);
 });
 
+test('layer accessors prefer the live z-index synchronizer', () => {
+  const target = { id: 'target' };
+  const calls = [];
+  const synchronizer = (currentTarget) => {
+    calls.push(currentTarget);
+    return 'synced';
+  };
+  const accessors = layerAccessors.createStudioEditorLayerAccessors({
+    getLayerOrderZIndexSynchronizer: () => synchronizer,
+    layerOrderApi: {
+      syncStudioLayerOrderZIndexInput() {
+        throw new Error('fallback synchronizer should not run');
+      }
+    }
+  });
+
+  assert.equal(accessors.syncLayerOrderZIndexInput(target), 'synced');
+  assert.deepEqual(calls, [target]);
+});
+
 test('index loads and installs the layer accessor module before editor orchestration', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const scriptIndex = fileContent.indexOf(
@@ -192,4 +211,5 @@ test('index loads and installs the layer accessor module before editor orchestra
   );
   assert.match(accessorBlock, /getLiveSelectedElements:/);
   assert.match(accessorBlock, /updateLayerOrderActionState:/);
+  assert.match(accessorBlock, /getLayerOrderZIndexSynchronizer:/);
 });

@@ -149,7 +149,7 @@
         selectionHasLockedElements: options.selectionHasLockedElements,
         refreshLayerOrderUi: options.refreshLayerOrderUi,
         reorderSlideLayers: options.reorderSlideLayers,
-        syncLayerOrderZIndexInput: options.syncLayerOrderZIndexInput,
+        syncLayerOrderZIndexInput,
         finalizeLayerOrderMutation: options.finalizeLayerOrderMutation
       });
     }
@@ -165,6 +165,56 @@
       });
     }
 
+    function syncLayerOrderZIndexInput(target) {
+      const getSynchronizer = typeof options.getLayerOrderZIndexSynchronizer === 'function'
+        ? options.getLayerOrderZIndexSynchronizer
+        : () => options.layerOrderZIndexSynchronizer;
+      const synchronizer = getSynchronizer();
+      if (typeof synchronizer === 'function') {
+        return synchronizer(target);
+      }
+
+      const layerOrderView = options.layerOrderApi
+        || (root && root.SlideNextStudioEditorLayerOrder)
+        || null;
+      if (!layerOrderView || typeof layerOrderView.syncStudioLayerOrderZIndexInput !== 'function') {
+        return null;
+      }
+      const targetId = target && target.dataset && target.dataset.editorId;
+      const targetDocument = target && target.ownerDocument ? target.ownerDocument : null;
+      let canonicalDeck = null;
+      const resolveCanonicalDeck = typeof options.resolveCanonicalDeck === 'function'
+        ? options.resolveCanonicalDeck
+        : null;
+      const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
+      if (targetId && resolveCanonicalDeck) {
+        try {
+          canonicalDeck = resolveCanonicalDeck(targetDocument || getIframeDoc());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      } else if (targetId && buildCanonicalDeck) {
+        try {
+          canonicalDeck = buildCanonicalDeck(targetDocument || getIframeDoc());
+        } catch (error) {
+          canonicalDeck = null;
+        }
+      }
+      const resolveCanonicalNode = typeof options.resolveCanonicalNode === 'function'
+        ? options.resolveCanonicalNode
+        : null;
+      const canonicalTarget = resolveCanonicalNode
+        ? resolveCanonicalNode(target, canonicalDeck)
+        : null;
+      return layerOrderView.syncStudioLayerOrderZIndexInput({
+        documentRef: options.documentRef || null,
+        target,
+        canonicalTarget
+      });
+    }
+
     return {
       updateLayersList,
       resolveLayerRowElement: resolveRow,
@@ -172,7 +222,8 @@
       toggleLayerVisibilityByRef,
       changeLayerZIndexByRef,
       arrangeElementLayer,
-      refreshLayerOrderUi
+      refreshLayerOrderUi,
+      syncLayerOrderZIndexInput
     };
   }
 
@@ -189,7 +240,10 @@
         : false,
       refreshLayerOrderUi: (options) => typeof accessors.refreshLayerOrderUi === 'function'
         ? accessors.refreshLayerOrderUi(options)
-        : false
+        : false,
+      syncLayerOrderZIndexInput: (target) => typeof accessors.syncLayerOrderZIndexInput === 'function'
+        ? accessors.syncLayerOrderZIndexInput(target)
+        : null
     };
   }
 

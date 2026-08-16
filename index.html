@@ -1856,8 +1856,20 @@
           liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
             ? SlideNextStudioEditorLiveSelection
             : null,
-          getSelectedElements: typeof getStudioSelectedElements === 'function'
-            ? getStudioSelectedElements
+          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+            ? SlideNextStudioEditorLayerOrder
+            : null,
+          getLayerOrderZIndexSynchronizer: () => typeof studioEditorLayerOrderZIndexSynchronizer !== 'undefined'
+            ? studioEditorLayerOrderZIndexSynchronizer
+            : null,
+          resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck(sourceDoc)
+            : null,
+          buildCanonicalDeck: (sourceDoc) => typeof buildEditorCanonicalDeck === 'function'
+            ? buildEditorCanonicalDeck(sourceDoc)
+            : null,
+          resolveCanonicalNode: (target, canonicalDeck) => typeof resolveEditorCanonicalNodeForElement === 'function'
+            ? resolveEditorCanonicalNodeForElement(target, canonicalDeck)
             : null,
           syncLayerOrderZIndexInput,
           finalizeLayerOrderMutation,
@@ -11476,6 +11488,11 @@
       : null;
 
     function syncLayerOrderZIndexInput(target) {
+      if (typeof studioEditorLayerAccessors !== 'undefined'
+        && studioEditorLayerAccessors
+        && typeof studioEditorLayerAccessors.syncLayerOrderZIndexInput === 'function') {
+        return studioEditorLayerAccessors.syncLayerOrderZIndexInput(target);
+      }
       if (typeof studioEditorLayerOrderZIndexSynchronizer === 'function') {
         return studioEditorLayerOrderZIndexSynchronizer(target);
       }
