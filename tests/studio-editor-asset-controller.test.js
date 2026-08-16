@@ -568,6 +568,42 @@ test('applyAsset restores the previous DOM source when history capture throws', 
   assert.equal(inspectorSyncs, 1);
 });
 
+test('applyAsset contains a thrown DOM rollback when persistence rejects', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [{ id: 'hero', name: 'Hero', src: '/hero.png' }],
+    slides: [{ id: 'slide-1', nodes: [{ id: 'image-1', type: 'image', attributes: { src: '/old.png' } }] }]
+  });
+  const selectedImage = {
+    dataset: { editorId: 'image-1' },
+    src: '/old.png',
+    attributes: { src: '/old.png' },
+    setAttributeCalls: 0,
+    getAttribute(name) {
+      return this.attributes[name] || null;
+    },
+    setAttribute(name, value) {
+      this.setAttributeCalls += 1;
+      if (this.setAttributeCalls === 2) {
+        throw new Error('DOM rollback failed');
+      }
+      this.attributes[name] = value;
+      this[name] = value;
+    },
+    removeAttribute() {}
+  };
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getSelectedImage: () => selectedImage,
+    finalizeMutation: () => false
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.applyAsset('hero'), false);
+  });
+});
+
 test('applyAsset refuses missing, unselected, and locked image targets', () => {
   let deck = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'hero', src: '/hero.png' }],

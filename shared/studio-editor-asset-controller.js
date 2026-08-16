@@ -115,6 +115,15 @@
       }
     }
 
+    function rejectMutationSafely(onRejected) {
+      if (typeof onRejected !== 'function') return;
+      try {
+        onRejected();
+      } catch (error) {
+        // Rollback failure must not change the rejected asset mutation result.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -190,9 +199,7 @@
           finalizeResult = false;
         }
         if (finalizeResult === false) {
-          if (typeof commitOptions.onRejected === 'function') {
-            commitOptions.onRejected();
-          }
+          rejectMutationSafely(commitOptions.onRejected);
           return null;
         }
       } else {
@@ -200,9 +207,7 @@
           && isStudioHistoryCaptureFailure(
             captureStudioHistoryState(saveHistoryState, false, null, nextCanonicalDeck)
           )) {
-          if (typeof commitOptions.onRejected === 'function') {
-            commitOptions.onRejected();
-          }
+          rejectMutationSafely(commitOptions.onRejected);
           return null;
         }
         triggerAutoSaveSafely();
