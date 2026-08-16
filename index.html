@@ -1382,6 +1382,7 @@
   <script src="/shared/studio-editor-layer-order-state-accessors.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-layer-order-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
   <script src="/shared/studio-editor-interaction-state-coordinator.js"></script>
   <script src="/shared/studio-editor-layer-view.js"></script>
@@ -4252,39 +4253,52 @@
     const studioEditorRemovalController = studioEditorRemovalRuntime
       ? studioEditorRemovalRuntime.removalController
       : null;
-    const studioEditorLayerOrderRuntime = typeof SlideNextStudioEditorLayerOrderShellRuntime !== 'undefined'
-      && SlideNextStudioEditorLayerOrderShellRuntime
-      && typeof SlideNextStudioEditorLayerOrderShellRuntime.createStudioEditorLayerOrderShellRuntime === 'function'
-      ? SlideNextStudioEditorLayerOrderShellRuntime.createStudioEditorLayerOrderShellRuntime({
+    const studioEditorLayerOrderRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorLayerOrderRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderRuntimeAccessors
+      : null;
+    const studioEditorLayerOrderRuntimeAccessors = studioEditorLayerOrderRuntimeAccessorsApi
+      && typeof studioEditorLayerOrderRuntimeAccessorsApi
+        .createStudioEditorLayerOrderRuntimeAccessors === 'function'
+      ? studioEditorLayerOrderRuntimeAccessorsApi
+        .createStudioEditorLayerOrderRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorLayerOrderShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderShellRuntime
+            : null,
           layerOrderRuntimeApi: typeof SlideNextStudioEditorLayerOrderRuntime !== 'undefined'
             ? SlideNextStudioEditorLayerOrderRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
-            ? SlideNextStudioEditorLayerOrderController
-            : null,
-          layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-            ? SlideNextStudioEditorLayerOrder
-            : null,
-          canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-            ? SlideNextStudioEditorCanonicalLayout
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          getActiveSlide: (...args) => getActiveSlide(...args),
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
-          isElementLocked: (...args) => isElementLocked(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          applyLayerOrder: (...args) => applySlideLayerOrder(...args),
-          rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
+              ? SlideNextStudioEditorLayerOrderController
+              : null,
+            layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
+              ? SlideNextStudioEditorLayerOrder
+              : null,
+            canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
+              ? SlideNextStudioEditorCanonicalLayout
+              : null,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            getActiveSlide: (...args) => getActiveSlide(...args),
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
+            isElementLocked: (...args) => isElementLocked(...args),
+            assignElementId: (...args) => assignEditorElementId(...args),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            applyLayerOrder: (...args) => applySlideLayerOrder(...args),
+            rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
+          }
         })
+      : null;
+    const studioEditorLayerOrderRuntime = studioEditorLayerOrderRuntimeAccessors
+      ? studioEditorLayerOrderRuntimeAccessors.runtime
       : null;
     const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
       ? studioEditorLayerOrderRuntime.layerOrderController

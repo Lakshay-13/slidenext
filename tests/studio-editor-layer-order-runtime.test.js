@@ -65,7 +65,7 @@ test('index wires layer order through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorLayerOrderShellRuntime\.createStudioEditorLayerOrderShellRuntime\(/
+    /createStudioEditorLayerOrderRuntimeAccessors\(/
   );
   assert.match(
     fileContent,
