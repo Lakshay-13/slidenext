@@ -115,7 +115,7 @@ test('index wires navigation composition through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorNavigationShellRuntime\.createStudioEditorNavigationShellRuntime\(/
+    /studioEditorNavigationAccessorsApi\.createStudioEditorNavigationAccessors\(/
   );
   assert.match(fileContent, /isCanonicalDeck: getEditorCanonicalDeckValidator\(\)/);
   assert.doesNotMatch(

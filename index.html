@@ -1785,6 +1785,7 @@
   <script src="/shared/studio-editor-navigation-sync.js"></script>
   <script src="/shared/studio-editor-navigation-runtime.js"></script>
   <script src="/shared/studio-editor-navigation-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-navigation-accessors.js"></script>
   <script src="/shared/studio-editor-navigation-ui-bridge.js"></script>
   <script src="/shared/studio-editor-navigation-ui-shell-runtime.js"></script>
   <script src="/shared/studio-editor-navigation-ui-accessors.js"></script>
@@ -3238,10 +3239,15 @@
     const studioEditorSourceCssApplier = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceCssApplier
       : null;
-    const studioEditorNavigationRuntime = typeof SlideNextStudioEditorNavigationShellRuntime !== 'undefined'
-      && SlideNextStudioEditorNavigationShellRuntime
-      && typeof SlideNextStudioEditorNavigationShellRuntime.createStudioEditorNavigationShellRuntime === 'function'
-      ? SlideNextStudioEditorNavigationShellRuntime.createStudioEditorNavigationShellRuntime({
+    const studioEditorNavigationAccessorsApi = typeof SlideNextStudioEditorNavigationAccessors !== 'undefined'
+      ? SlideNextStudioEditorNavigationAccessors
+      : null;
+    const studioEditorNavigationAccessors = studioEditorNavigationAccessorsApi
+      && typeof studioEditorNavigationAccessorsApi.createStudioEditorNavigationAccessors === 'function'
+      ? studioEditorNavigationAccessorsApi.createStudioEditorNavigationAccessors({
+          runtimeApi: typeof SlideNextStudioEditorNavigationShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorNavigationShellRuntime
+            : null,
           navigationRuntimeApi: typeof SlideNextStudioEditorNavigationRuntime !== 'undefined'
             ? SlideNextStudioEditorNavigationRuntime
             : null,
@@ -3327,6 +3333,9 @@
             reorderSlidesById(sourceSlideId, targetSlideId);
           }
         })
+      : null;
+    const studioEditorNavigationRuntime = studioEditorNavigationAccessors
+      ? studioEditorNavigationAccessors.runtime
       : null;
     const studioEditorNavigationController = studioEditorNavigationRuntime
       ? studioEditorNavigationRuntime.navigationController

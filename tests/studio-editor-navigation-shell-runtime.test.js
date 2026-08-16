@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-navigation-shell-runtime.js');
+const navigationAccessors = require('../shared/studio-editor-navigation-accessors.js');
 
 test('navigation shell runtime resolves controller and view dependencies', () => {
   let receivedOptions = null;
@@ -81,4 +82,40 @@ test('navigation shell runtime safely returns null without a runtime factory', (
     shellRuntime.createStudioEditorNavigationShellRuntime({ navigationRuntimeApi: {} }),
     null
   );
+});
+
+test('navigation accessors compose the shell runtime and preserve its result', () => {
+  const runtime = { navigationController: { name: 'navigation' } };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorNavigationShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const navigationApi = { name: 'navigation-api' };
+  const callbacks = {
+    getDocument: () => ({ id: 'document' }),
+    getSlides: () => []
+  };
+  const accessors = navigationAccessors.createStudioEditorNavigationAccessors({
+    runtimeApi,
+    navigationApi,
+    ...callbacks
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].navigationApi, navigationApi);
+  assert.equal(calls[0].getDocument, callbacks.getDocument);
+  assert.equal(calls[0].getSlides, callbacks.getSlides);
+  assert.equal(calls[0].runtimeApi, undefined);
+});
+
+test('navigation accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = navigationAccessors.createStudioEditorNavigationAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });
