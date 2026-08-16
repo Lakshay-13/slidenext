@@ -1734,6 +1734,7 @@
   <script src="/shared/studio-editor-frame-runtime-options.js"></script>
   <script src="/shared/studio-editor-frame-runtime.js"></script>
   <script src="/shared/studio-editor-frame-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-frame-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-frame-initializer.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -7086,16 +7087,26 @@
           syncInspectorForSelection
         })
       : null;
-    const studioEditorFrameRuntime = studioEditorFrameRuntimeOptions
-      && typeof SlideNextStudioEditorFrameShellRuntime !== 'undefined'
-      && SlideNextStudioEditorFrameShellRuntime
-      && typeof SlideNextStudioEditorFrameShellRuntime.createStudioEditorFrameShellRuntime === 'function'
-      ? SlideNextStudioEditorFrameShellRuntime.createStudioEditorFrameShellRuntime({
+    const studioEditorFrameRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorFrameRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorFrameRuntimeAccessors
+      : null;
+    const studioEditorFrameRuntimeAccessors = studioEditorFrameRuntimeAccessorsApi
+      && typeof studioEditorFrameRuntimeAccessorsApi
+        .createStudioEditorFrameRuntimeAccessors === 'function'
+      ? studioEditorFrameRuntimeAccessorsApi
+        .createStudioEditorFrameRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorFrameShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorFrameShellRuntime
+            : null,
           frameRuntimeApi: typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
             ? SlideNextStudioEditorFrameRuntime
             : null,
           runtimeOptions: studioEditorFrameRuntimeOptions
         })
+      : null;
+    const studioEditorFrameRuntime = studioEditorFrameRuntimeAccessors
+      ? studioEditorFrameRuntimeAccessors.runtime
       : null;
     const studioEditorFrameInteractionStateController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameInteractionStateController
