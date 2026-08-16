@@ -604,6 +604,39 @@ test('assignMasterSlide restores the active slide when persistence rejects', () 
   assert.equal(masterSlidesChanged, 0);
 });
 
+test('assignMasterSlide preserves the rejected result when rollback throws', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [] } }],
+    slides: [{ id: 'slide-1', nodes: [] }]
+  });
+  const controller = masterSlideController.createStudioEditorMasterSlideController({
+    canonicalDeckApi: canonicalDeck,
+    renderApi: { renderCanonicalSlide: () => '<section></section>' },
+    getCanonicalDeck: () => deck,
+    getActiveSlideId: () => 'slide-1',
+    getDocument: () => ({
+      createElement() {
+        return {
+          content: {
+            firstElementChild: {
+              replaceWith() {
+                throw new Error('rollback unavailable');
+              }
+            }
+          },
+          set innerHTML(value) {
+            this.html = value;
+          }
+        };
+      }
+    }),
+    getSlides: () => [{ replaceWith() {} }],
+    finalizeMutation: () => false
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.assignMasterSlide('master-1'), false));
+});
+
 test('assignMasterSlide restores the active slide when canonical finalization throws', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     masterSlides: [{ id: 'master-1', name: 'Brand Base', slide: { nodes: [{ id: 'footer' }] } }],

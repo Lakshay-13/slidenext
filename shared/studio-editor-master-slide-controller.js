@@ -107,6 +107,15 @@
       }
     }
 
+    function rejectMasterMutation(onRejected) {
+      if (typeof onRejected !== 'function') return;
+      try {
+        onRejected();
+      } catch (err) {
+        // Rollback chrome is secondary; preserve the rejected mutation result.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -287,11 +296,11 @@
         try {
           finalizeResult = finalizeMutation(versionLabel, null, nextCanonicalDeck);
         } catch (err) {
-          if (typeof onRejected === 'function') onRejected();
+          rejectMasterMutation(onRejected);
           return null;
         }
         if (finalizeResult === false) {
-          if (typeof onRejected === 'function') onRejected();
+          rejectMasterMutation(onRejected);
           return null;
         }
       } else {
@@ -299,7 +308,7 @@
           && isStudioHistoryCaptureFailure(
             captureStudioHistoryState(saveHistoryState, false, null, nextCanonicalDeck)
           )) {
-          if (typeof onRejected === 'function') onRejected();
+          rejectMasterMutation(onRejected);
           return null;
         }
         runLegacyPersistenceHooks(versionLabel);
