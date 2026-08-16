@@ -126,6 +126,23 @@
     });
   }
 
+  function bindStudioEditorAssetControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const addAssetToLibrary = typeof options.addAssetToLibrary === 'function'
+      ? options.addAssetToLibrary
+      : null;
+    const button = documentRef.getElementById('addAssetBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { addAssetBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (addAssetToLibrary) addAssetToLibrary();
+    });
+    return { addAssetBtn: true };
+  }
+
   function createStudioAssetStateSync(options = {}) {
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
@@ -155,6 +172,7 @@
     renderStudioAssetLibrary,
     resolveStudioAssetActionState,
     syncStudioAssetState,
+    bindStudioEditorAssetControls,
     createStudioAssetStateSync
   };
 });

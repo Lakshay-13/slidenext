@@ -165,6 +165,41 @@ test('shared asset view renders previews only for image sources', () => {
   assert.equal(list.children[2].children[0].children[0].tagName, 'span');
 });
 
+test('shared asset view binds the add control to the editor command', () => {
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    assetView.bindStudioEditorAssetControls({
+      documentRef: {
+        getElementById(id) {
+          return id === 'addAssetBtn' ? button : null;
+        }
+      },
+      addAssetToLibrary() {
+        calls.push('add');
+      }
+    }),
+    { addAssetBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['add']);
+});
+
+test('editor binds the asset add control without an inline handler', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const line = fileContent.split('\n')
+    .find((candidate) => candidate.includes('id="addAssetBtn"'));
+  assert.ok(line);
+  assert.doesNotMatch(line, /onclick=/);
+  assert.match(fileContent, /bindStudioEditorAssetControls\(/);
+});
+
 test('shared asset view explains how to populate an empty library', () => {
   const list = {
     children: [],

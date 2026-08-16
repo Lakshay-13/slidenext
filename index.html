@@ -1041,7 +1041,7 @@
           </div>
           <input id="assetNameInput" type="text" value="New Asset" placeholder="Asset name" class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
           <input id="assetSourceInput" type="text" placeholder="https://... or /path/to/file" class="w-full p-2 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
-          <button id="addAssetBtn" onclick="addAssetToLibrary()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+          <button id="addAssetBtn" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
             <span class="material-symbols-outlined text-[14px] text-[#7028d0]">add_photo_alternate</span>
             Add Asset
           </button>
@@ -4502,6 +4502,16 @@
     const studioEditorAssetController = studioEditorAssetRuntime
       ? studioEditorAssetRuntime.assetController
       : null;
+    const studioEditorAssetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
+      ? SlideNextStudioEditorAssetView
+      : null;
+    if (studioEditorAssetView
+      && typeof studioEditorAssetView.bindStudioEditorAssetControls === 'function') {
+      studioEditorAssetView.bindStudioEditorAssetControls({
+        documentRef: document,
+        addAssetToLibrary: (...args) => addAssetToLibrary(...args)
+      });
+    }
     const studioEditorAssetInsertionShellRuntimeApi =
       typeof SlideNextStudioEditorAssetInsertionShellRuntime !== 'undefined'
       ? SlideNextStudioEditorAssetInsertionShellRuntime
