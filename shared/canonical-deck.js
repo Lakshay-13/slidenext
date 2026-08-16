@@ -101,10 +101,11 @@
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
     }
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
-    if (!isCanonicalDeck(deck)) {
+    if (!deckWasCanonical && !isCanonicalDeck(deck)) {
       return null;
     }
     return insertCanonicalAsset(deck, assetLike, deck.assets.length);
@@ -923,11 +924,12 @@
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
     }
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const templates = Array.isArray(deck.templates) ? deck.templates : [];
-    if (!isCanonicalDeck(deck)
+    if ((!deckWasCanonical && !isCanonicalDeck(deck))
       || !templateLike
       || typeof templateLike !== 'object'
       || !Number.isInteger(index)
@@ -945,12 +947,13 @@
   }
 
   function removeCanonicalTemplate(deckLike, templateId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedTemplateId = normalizeString(templateId).trim();
     const templates = Array.isArray(deck.templates) ? deck.templates : [];
-    if (!isCanonicalDeck(deck) || !normalizedTemplateId) {
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedTemplateId) {
       return null;
     }
 
