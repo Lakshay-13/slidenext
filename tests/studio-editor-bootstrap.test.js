@@ -125,3 +125,13 @@ test('index installs the shared editor bootstrap instead of owning the DOM-ready
   assert.match(fileContent, /SlideNextStudioEditorBootstrap\.createStudioEditorBootstrap\(/);
   assert.doesNotMatch(fileContent, /document\.addEventListener\('DOMContentLoaded', \(\) => \{/);
 });
+
+test('index constructs global shortcuts before registering the DOM-ready bootstrap', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const shortcutsIndex = fileContent.indexOf('const studioEditorGlobalShortcutsController =');
+  const bootstrapIndex = fileContent.indexOf('const studioEditorBootstrap =');
+
+  assert.ok(shortcutsIndex >= 0);
+  assert.ok(bootstrapIndex >= 0);
+  assert.ok(shortcutsIndex < bootstrapIndex);
+});

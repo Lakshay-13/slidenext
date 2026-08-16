@@ -7781,33 +7781,6 @@
       document.documentElement.classList.remove('dark');
     }
 
-    const studioEditorBootstrap = typeof SlideNextStudioEditorBootstrap !== 'undefined'
-      && SlideNextStudioEditorBootstrap
-      && typeof SlideNextStudioEditorBootstrap.createStudioEditorBootstrap === 'function'
-      ? SlideNextStudioEditorBootstrap.createStudioEditorBootstrap({
-          documentRef: document,
-          windowRef: window,
-          savedTheme,
-          loadPresentations,
-          renderWallpaperPresets,
-          renderThemeTokenPresets,
-          updateWallpaperActionState,
-          updateThemeTokenActionState,
-          updateGridSnapActionState,
-          updateDeckReadyToolbarActionState,
-          updateBlockActionState,
-          updateTemplateActionState,
-          updateMasterSlideActionState,
-          updateAssetLibraryState,
-          bindStudioGlobalKeydownHandler,
-          applyZoom,
-          syncCanvasRulers
-        })
-      : null;
-    if (studioEditorBootstrap && typeof studioEditorBootstrap.bindDomReady === 'function') {
-      studioEditorBootstrap.bindDomReady();
-    }
-
     const studioEditorGlobalShortcutsController =
       typeof SlideNextStudioEditorGlobalShortcutsController !== 'undefined'
       && SlideNextStudioEditorGlobalShortcutsController
@@ -7848,6 +7821,33 @@
         && typeof studioEditorGlobalShortcutsController.bind === 'function'
         ? studioEditorGlobalShortcutsController.bind()
         : false;
+    }
+
+    const studioEditorBootstrap = typeof SlideNextStudioEditorBootstrap !== 'undefined'
+      && SlideNextStudioEditorBootstrap
+      && typeof SlideNextStudioEditorBootstrap.createStudioEditorBootstrap === 'function'
+      ? SlideNextStudioEditorBootstrap.createStudioEditorBootstrap({
+          documentRef: document,
+          windowRef: window,
+          savedTheme,
+          loadPresentations,
+          renderWallpaperPresets,
+          renderThemeTokenPresets,
+          updateWallpaperActionState,
+          updateThemeTokenActionState,
+          updateGridSnapActionState,
+          updateDeckReadyToolbarActionState,
+          updateBlockActionState,
+          updateTemplateActionState,
+          updateMasterSlideActionState,
+          updateAssetLibraryState,
+          bindStudioGlobalKeydownHandler,
+          applyZoom,
+          syncCanvasRulers
+        })
+      : null;
+    if (studioEditorBootstrap && typeof studioEditorBootstrap.bindDomReady === 'function') {
+      studioEditorBootstrap.bindDomReady();
     }
 
     // 2. Viewer Presentation Modal
