@@ -35,6 +35,15 @@
     }
   }
 
+  function invokeStudioEditorAutoSave(triggerAutoSave) {
+    if (typeof triggerAutoSave !== 'function') return true;
+    try {
+      return triggerAutoSave() !== false;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function createStudioEditorDeckMutationFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -166,7 +175,7 @@
       historyArgs.push(resolvedMutationOptions.canonicalDeck);
     }
     if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, ...historyArgs))) return false;
-    if (triggerAutoSave() === false) return false;
+    if (!invokeStudioEditorAutoSave(triggerAutoSave)) return false;
     if (versionLabel) {
       triggerAutoVersion(versionLabel);
     }

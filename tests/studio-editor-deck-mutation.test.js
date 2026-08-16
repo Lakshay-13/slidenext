@@ -173,6 +173,20 @@ test('finalizeStudioEditorDeckMutation converts thrown fallback history to rejec
   }), false);
 });
 
+test('finalizeStudioEditorDeckMutation converts thrown fallback autosave to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorDeckMutation('Auto: Rejected', {
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState: () => ({ didCapture: true }),
+    triggerAutoSave: () => {
+      throw new Error('autosave unavailable');
+    },
+    triggerAutoVersion: () => {
+      throw new Error('versioning should not run');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };
