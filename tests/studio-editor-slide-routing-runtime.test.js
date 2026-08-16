@@ -49,7 +49,11 @@ test('index wires slide routing through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorSlideRoutingShellRuntime\.createStudioEditorSlideRoutingShellRuntime\(/
+    /<script src="\/shared\/studio-editor-slide-routing-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorSlideRoutingAccessorsApi\.createStudioEditorSlideRoutingAccessors\(/
   );
   assert.doesNotMatch(
     fileContent,

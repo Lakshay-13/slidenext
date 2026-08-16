@@ -1525,6 +1525,7 @@
   <script src="/shared/studio-editor-slide-routing-controller.js"></script>
   <script src="/shared/studio-editor-slide-routing-runtime.js"></script>
   <script src="/shared/studio-editor-slide-routing-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-slide-routing-accessors.js"></script>
   <script src="/shared/studio-editor-active-slide-view.js"></script>
   <script src="/shared/studio-editor-active-slide-controller.js"></script>
   <script src="/shared/studio-editor-thumbnail-view.js"></script>
@@ -3565,10 +3566,16 @@
         updateActiveSlideSection
       });
     }
-    const studioEditorSlideRoutingRuntime = typeof SlideNextStudioEditorSlideRoutingShellRuntime !== 'undefined'
-      && SlideNextStudioEditorSlideRoutingShellRuntime
-      && typeof SlideNextStudioEditorSlideRoutingShellRuntime.createStudioEditorSlideRoutingShellRuntime === 'function'
-      ? SlideNextStudioEditorSlideRoutingShellRuntime.createStudioEditorSlideRoutingShellRuntime({
+    const studioEditorSlideRoutingAccessorsApi =
+      typeof SlideNextStudioEditorSlideRoutingAccessors !== 'undefined'
+      ? SlideNextStudioEditorSlideRoutingAccessors
+      : null;
+    const studioEditorSlideRoutingAccessors = studioEditorSlideRoutingAccessorsApi
+      && typeof studioEditorSlideRoutingAccessorsApi.createStudioEditorSlideRoutingAccessors === 'function'
+      ? studioEditorSlideRoutingAccessorsApi.createStudioEditorSlideRoutingAccessors({
+          runtimeApi: typeof SlideNextStudioEditorSlideRoutingShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorSlideRoutingShellRuntime
+            : null,
           routingRuntimeApi: typeof SlideNextStudioEditorSlideRoutingRuntime !== 'undefined'
             ? SlideNextStudioEditorSlideRoutingRuntime
             : null,
@@ -3585,6 +3592,9 @@
           reorderSlidesByIndex: (fromIdx, toIdx) => reorderSlides(fromIdx, toIdx)
           }
         })
+      : null;
+    const studioEditorSlideRoutingRuntime = studioEditorSlideRoutingAccessors
+      ? studioEditorSlideRoutingAccessors.runtime
       : null;
     const studioEditorSlideRoutingController = studioEditorSlideRoutingRuntime
       ? studioEditorSlideRoutingRuntime.slideRoutingController
