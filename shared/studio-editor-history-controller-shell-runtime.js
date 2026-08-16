@@ -25,9 +25,10 @@
       return null;
     }
 
-    return historyRuntimeApi.createStudioEditorHistoryControllerRuntime(
-      options.runtimeOptions || {}
-    );
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return historyRuntimeApi.createStudioEditorHistoryControllerRuntime(runtimeOptions || {});
   }
 
   return {

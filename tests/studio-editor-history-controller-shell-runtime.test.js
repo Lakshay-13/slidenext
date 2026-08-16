@@ -22,6 +22,33 @@ test('history controller shell runtime delegates prepared history options', () =
   assert.equal(receivedOptions, runtimeOptions);
 });
 
+test('history controller shell runtime accepts flattened options from the runtime accessors', () => {
+  let receivedOptions = null;
+  const runtimeOptions = {
+    getDocument: () => null,
+    historyStateApi: { name: 'history-state' }
+  };
+  const historyRuntimeApi = {
+    createStudioEditorHistoryControllerRuntime(options) {
+      receivedOptions = options;
+      return { name: 'history-runtime' };
+    }
+  };
+
+  assert.deepEqual(
+    shellRuntime.createStudioEditorHistoryControllerShellRuntime({
+      historyRuntimeApi,
+      ...runtimeOptions
+    }),
+    { name: 'history-runtime' }
+  );
+  assert.deepEqual(receivedOptions, {
+    getDocument: runtimeOptions.getDocument,
+    historyStateApi: runtimeOptions.historyStateApi,
+    historyRuntimeApi
+  });
+});
+
 test('history controller shell runtime safely handles missing options or factory', () => {
   let receivedOptions = null;
   const historyRuntimeApi = {
@@ -35,7 +62,7 @@ test('history controller shell runtime safely handles missing options or factory
     shellRuntime.createStudioEditorHistoryControllerShellRuntime({ historyRuntimeApi }),
     null
   );
-  assert.deepEqual(receivedOptions, {});
+  assert.deepEqual(receivedOptions, { historyRuntimeApi });
   assert.equal(shellRuntime.createStudioEditorHistoryControllerShellRuntime({}), null);
   assert.equal(
     shellRuntime.createStudioEditorHistoryControllerShellRuntime({ historyRuntimeApi: {} }),
