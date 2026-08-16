@@ -13,7 +13,13 @@
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element);
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
   function buildStudioRemovalActionState(elements = [], options = {}) {
@@ -25,12 +31,21 @@
       ? options.canMutateDeck
       : () => true;
     const hasSelection = selection.length > 0;
-    const deckReady = canMutateDeck();
+    let deckReady = false;
+    let hasLockedSelection = false;
+    try {
+      deckReady = canMutateDeck();
+      hasLockedSelection = selection.some((element) => isLocked(element));
+    } catch (error) {
+      // Never remove elements when deck or canonical lock state is uncertain.
+      deckReady = false;
+      hasLockedSelection = true;
+    }
 
     return {
       selection,
       hasSelection,
-      canRemove: deckReady && hasSelection && !selection.some((element) => isLocked(element))
+      canRemove: deckReady && hasSelection && !hasLockedSelection
     };
   }
 

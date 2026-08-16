@@ -84,6 +84,20 @@ test('buildStudioRemovalActionState derives delete availability from live unlock
   });
 });
 
+test('buildStudioRemovalActionState disables deletion when lock state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(removal.buildStudioRemovalActionState([live], {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    selection: [live],
+    hasSelection: true,
+    canRemove: false
+  });
+});
+
 test('createStudioRemovalActionStateBuilder resolves selection and slide readiness through shared callbacks', () => {
   const doc = { id: 'doc' };
   const slide = { id: 'slide-1' };
