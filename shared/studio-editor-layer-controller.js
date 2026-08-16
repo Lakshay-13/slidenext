@@ -10,6 +10,75 @@
     root.SlideNextStudioEditorLayerController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (layerView) {
+  const studioLayerListActionBindings = typeof WeakMap === 'function' ? new WeakMap() : null;
+
+  function readStudioLayerAction(element) {
+    if (!element) return '';
+    if (element.dataset && typeof element.dataset.studioLayerAction === 'string') {
+      return element.dataset.studioLayerAction;
+    }
+    return typeof element.getAttribute === 'function'
+      ? element.getAttribute('data-studio-layer-action') || ''
+      : '';
+  }
+
+  function resolveStudioLayerActionTarget(event, listContainer) {
+    const eventTarget = event && event.target;
+    if (!eventTarget || typeof eventTarget.closest !== 'function') return null;
+    const actionTarget = eventTarget.closest('[data-studio-layer-action]');
+    if (!actionTarget) return null;
+    if (typeof listContainer.contains === 'function' && !listContainer.contains(actionTarget)) {
+      return null;
+    }
+    return actionTarget;
+  }
+
+  function createStudioLayerActionEvent(event, actionTarget) {
+    const actionEvent = event && typeof event === 'object'
+      ? Object.create(event)
+      : {};
+    Object.defineProperty(actionEvent, 'currentTarget', {
+      configurable: true,
+      value: actionTarget
+    });
+    return actionEvent;
+  }
+
+  function bindStudioLayerListActions(options = {}) {
+    const listContainer = options.listContainer;
+    if (!listContainer || typeof listContainer.addEventListener !== 'function') return false;
+
+    let binding = studioLayerListActionBindings && studioLayerListActionBindings.get(listContainer);
+    if (!binding) {
+      binding = { options };
+      binding.handleClick = (event) => {
+        const actionTarget = resolveStudioLayerActionTarget(event, listContainer);
+        const action = readStudioLayerAction(actionTarget);
+        if (!action) return;
+        const actionOptions = binding.options || {};
+        const actionEvent = createStudioLayerActionEvent(event, actionTarget);
+        if (action === 'select') {
+          selectStudioLayerElementByRef({ ...actionOptions, event: actionEvent });
+        } else if (action === 'toggle-visibility') {
+          toggleStudioLayerVisibilityByRef({ ...actionOptions, event: actionEvent });
+        } else if (action === 'z-index-forward' || action === 'z-index-backward') {
+          changeStudioLayerZIndexByRef({
+            ...actionOptions,
+            action: action === 'z-index-forward' ? 'forward' : 'backward',
+            event: actionEvent
+          });
+        }
+      };
+      listContainer.addEventListener('click', binding.handleClick);
+      if (studioLayerListActionBindings) {
+        studioLayerListActionBindings.set(listContainer, binding);
+      }
+    } else {
+      binding.options = options;
+    }
+    return true;
+  }
+
   function resolveStudioLayerRowElement(options = {}) {
     const row = options.row;
     if (!row) return null;
@@ -449,16 +518,25 @@
       }
     };
 
+    const listContainer = documentRef.getElementById('slideLayersList');
+    const layerRenderOptions = {
+      documentRef,
+      ...renderOptions
+    };
+    const bindLayerActions = () => bindStudioLayerListActions({
+      listContainer,
+      ...(options.layerActionOptions || {}),
+      getElementByEditorId
+    });
+
     if (typeof view.renderStudioLayersListInDocument === 'function') {
-      return view.renderStudioLayersListInDocument({
-        documentRef,
-        ...renderOptions
-      });
+      const didRender = view.renderStudioLayersListInDocument(layerRenderOptions);
+      bindLayerActions();
+      return didRender;
     }
 
-    const listContainer = documentRef.getElementById('slideLayersList');
     if (!listContainer || typeof view.renderStudioLayersList !== 'function') return false;
-    listContainer.innerHTML = view.renderStudioLayersList(renderOptions);
+    listContainer.innerHTML = view.renderStudioLayersList(layerRenderOptions);
     const rows = listContainer.children;
     if (rows) {
       for (let index = 0; index < rows.length; index += 1) {
@@ -468,6 +546,7 @@
         }
       }
     }
+    bindLayerActions();
     return true;
   }
 
@@ -477,6 +556,7 @@
     refreshStudioLayerOrderUi,
     syncStudioLayerOrderActionState,
     resolveStudioLayerRowElement,
+    bindStudioLayerListActions,
     selectStudioLayerElementByRef,
     toggleStudioLayerVisibilityByRef,
     syncStudioLayerList

@@ -78,7 +78,7 @@ function createLayerAccessors(context) {
 function getLayerButtonAttributes(html, displayName) {
   const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(
-    `${escapedDisplayName}[\\s\\S]*?changeLayerZIndexByRef\\(event, 'forward'\\)"([^>]*)title="Bring Forward"[\\s\\S]*?changeLayerZIndexByRef\\(event, 'backward'\\)"([^>]*)title="Send Backward"`,
+    `${escapedDisplayName}[\\s\\S]*?data-studio-layer-action="z-index-forward"([^>]*)title="Bring Forward"[\\s\\S]*?data-studio-layer-action="z-index-backward"([^>]*)title="Send Backward"`,
     'm'
   );
   const match = html.match(pattern);
@@ -92,7 +92,7 @@ function getLayerButtonAttributes(html, displayName) {
 function getLayerVisibilityButtonAttrs(html, displayName) {
   const escapedDisplayName = displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const pattern = new RegExp(
-    `${escapedDisplayName}[\\s\\S]*?toggleLayerVisibilityByRef\\(event\\)"([^>]*)title="(?:Show|Hide) Element"`,
+    `${escapedDisplayName}[\\s\\S]*?data-studio-layer-action="toggle-visibility"([^>]*)title="(?:Show|Hide) Element"`,
     'm'
   );
   const match = html.match(pattern);
@@ -316,7 +316,7 @@ test('updateLayersList renders canonical layer snapshots when the editor frame i
   createLayerAccessors(context).updateLayersList();
 
   assert.match(listContainer.innerHTML, /Heading: &quot;Welcome&quot;|Heading: "Welcome"/);
-  assert.match(listContainer.innerHTML, /selectLayerElementByRef\(event\)" disabled/);
+  assert.match(listContainer.innerHTML, /data-studio-layer-action="select" disabled/);
   const layerButtons = getLayerButtonAttributes(listContainer.innerHTML, 'Heading: "Welcome"');
   assert.equal(hasDisabledAttribute(layerButtons.forwardAttrs), true);
   assert.equal(hasDisabledAttribute(layerButtons.backwardAttrs), true);

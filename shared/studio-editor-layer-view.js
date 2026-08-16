@@ -33,7 +33,7 @@
 
       return `
           <div class="flex items-center justify-between p-2 rounded-lg border text-xs font-mono transition-all ${activeClass}" style="content-visibility: auto; contain-intrinsic-size: 32px;">
-            <button onclick="selectLayerElementByRef(event)" ${canRunLayerActions ? '' : 'disabled'} class="flex-1 text-left flex items-center gap-2 truncate pr-1 disabled:opacity-60 disabled:cursor-not-allowed" style="min-width: 0;">
+            <button type="button" data-studio-layer-action="select" ${canRunLayerActions ? '' : 'disabled'} class="flex-1 text-left flex items-center gap-2 truncate pr-1 disabled:opacity-60 disabled:cursor-not-allowed" style="min-width: 0;">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0] flex-shrink-0">${layer.typeIcon}</span>
               <span class="truncate" style="font-size: 10px;">${layer.displayName}</span>
               ${layer.isLocked ? '<span class="material-symbols-outlined text-[11px] text-amber-400 flex-shrink-0" title="Locked">lock</span>' : ''}
@@ -41,13 +41,13 @@
               <span class="text-[9px] text-zinc-500 font-bold ml-auto flex-shrink-0">z:${layer.zIndex}</span>
             </button>
             <div class="flex items-center gap-1 flex-shrink-0 ml-1">
-              <button onclick="toggleLayerVisibilityByRef(event)" ${canToggleLayerVisibility ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
+              <button type="button" data-studio-layer-action="toggle-visibility" ${canToggleLayerVisibility ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="${layer.isHidden ? 'Show Element' : 'Hide Element'}">
                 <span class="material-symbols-outlined text-[12px]">${layer.isHidden ? 'visibility' : 'visibility_off'}</span>
               </button>
-              <button onclick="changeLayerZIndexByRef(event, 'forward')" ${layerOrderActionState.canBringForward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
+              <button type="button" data-studio-layer-action="z-index-forward" ${layerOrderActionState.canBringForward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Bring Forward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_up</span>
               </button>
-              <button onclick="changeLayerZIndexByRef(event, 'backward')" ${layerOrderActionState.canSendBackward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Send Backward">
+              <button type="button" data-studio-layer-action="z-index-backward" ${layerOrderActionState.canSendBackward ? '' : 'disabled'} class="p-0.5 hover:bg-white/10 text-zinc-400 hover:text-white rounded disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-zinc-400" title="Send Backward">
                 <span class="material-symbols-outlined text-[12px]">keyboard_arrow_down</span>
               </button>
             </div>

@@ -43,7 +43,26 @@
           ? options.getSelectedElementIds
           : null,
         getElementByEditorId,
-        buildLayerOrderSelectionActionState: options.buildLayerOrderSelectionActionState
+        buildLayerOrderSelectionActionState: options.buildLayerOrderSelectionActionState,
+        layerActionOptions: {
+          resolveLayerRowElement,
+          selectElement: options.selectElement,
+          updateLayersList: (...args) => refreshLayersList(...args),
+          getCommittedSelectedEditorElementIds: options.getCommittedSelectedEditorElementIds,
+          deselectElement: options.deselectElement,
+          restoreCommittedSelectionByIdsOnActiveSlide: options.restoreCommittedSelectionByIdsOnActiveSlide,
+          applyEditorSelectionState: options.applyEditorSelectionState,
+          refreshSelectionClasses: options.refreshSelectionClasses,
+          toggleSelectedElementsVisibility: options.toggleSelectedElementsVisibility,
+          refreshLayerOrderUi: options.refreshLayerOrderUi,
+          isElementLocked: options.isElementLocked,
+          reorderSlideLayers: options.reorderSlideLayers,
+          liveSelectionApi: options.liveSelectionApi,
+          getSelectedElements: options.getSelectedElements,
+          syncLayerOrderZIndexInput: options.syncLayerOrderZIndexInput,
+          finalizeLayerOrderMutation: options.finalizeLayerOrderMutation,
+          rollbackLayerOrderMutation: options.rollbackLayerOrderMutation
+        }
       });
     }
 

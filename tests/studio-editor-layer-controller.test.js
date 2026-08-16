@@ -42,6 +42,71 @@ test('resolveStudioLayerRowElement returns null for stale or incomplete rows', (
   assert.deepEqual(calls, []);
 });
 
+test('bindStudioLayerListActions delegates clicks with the action button as currentTarget', () => {
+  const listeners = {};
+  const row = {
+    dataset: { editorElementId: 'node-1' },
+    closest(selector) {
+      return selector === '[class*="border"]' ? this : null;
+    }
+  };
+  const actionTarget = {
+    dataset: { studioLayerAction: 'z-index-forward' },
+    closest(selector) {
+      return selector === '[data-studio-layer-action]' ? this : row;
+    }
+  };
+  const listContainer = {
+    addEventListener(type, handler) {
+      listeners[type] = handler;
+    },
+    contains(target) {
+      return target === actionTarget;
+    }
+  };
+  const calls = [];
+  const event = {
+    target: actionTarget,
+    preventDefault() {
+      calls.push('preventDefault');
+    },
+    stopPropagation() {
+      calls.push('stopPropagation');
+    }
+  };
+
+  assert.equal(layerController.bindStudioLayerListActions({
+    listContainer,
+    getElementByEditorId() {
+      return { id: 'node-1' };
+    },
+    isElementLocked() {
+      return false;
+    },
+    reorderSlideLayers(action, elements) {
+      calls.push(['reorder', action, elements[0].id]);
+      return true;
+    },
+    finalizeLayerOrderMutation(label) {
+      calls.push(['finalize', label]);
+      return label;
+    },
+    syncLayerOrderZIndexInput() {
+      calls.push('sync-z-index');
+    }
+  }), true);
+
+  listeners.click(event);
+
+  assert.deepEqual(calls, [
+    'preventDefault',
+    'stopPropagation',
+    ['reorder', 'forward', 'node-1'],
+    ['finalize', 'Auto: Rearranged Layers']
+  ]);
+  assert.equal(typeof event.currentTarget, 'undefined');
+});
+
 test('selectStudioLayerElementByRef refreshes stale rows and preserves selection modifiers', () => {
   const row = { id: 'row-1' };
   const target = { id: 'node-1' };

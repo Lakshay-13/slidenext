@@ -60,10 +60,11 @@ test('renderStudioLayersList preserves layer labels and action availability', ()
   assert.match(html, /title="Locked"/);
   assert.match(html, /title="Show Element"/);
   assert.match(html, /title="Bring Forward"/);
-  assert.match(html, /onclick="changeLayerZIndexByRef\(event, 'backward'\)" disabled/);
+  assert.match(html, /data-studio-layer-action="z-index-backward" disabled/);
   assert.match(html, /content-visibility: auto/);
   assert.match(html, /contain-intrinsic-size: 32px/);
-  assert.equal((html.match(/onclick="selectLayerElementByRef\(event\)"/g) || []).length, 2);
+  assert.equal((html.match(/data-studio-layer-action="select"/g) || []).length, 2);
+  assert.doesNotMatch(html, /onclick=/);
 });
 
 test('renderStudioLayersListInDocument mounts rows and stores stable editor element ids', () => {
