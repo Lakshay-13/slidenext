@@ -391,6 +391,30 @@ test('finalizeStudioEditorLayerOrderMutation contains thrown persistence failure
   ), false);
 });
 
+test('finalizeStudioEditorLayerOrderMutation preserves delegated results when action refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Layer Order', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    finalizeMutation(label, mutationOptions) {
+      calls.push([label, mutationOptions]);
+      return label;
+    },
+    updateLayerOrderActionState: () => {
+      throw new Error('layer action state unavailable');
+    }
+  });
+
+  assert.equal(result, 'Auto: Layer Order');
+  assert.deepEqual(calls, [['Auto: Layer Order', {
+    refreshThumbnails: false,
+    refreshLayersList: true,
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }]]);
+});
+
 test('finalizeStudioEditorLayerOrderMutation converts thrown fallback history to rejection', () => {
   assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Rejected', {
     transaction: { id: 'tx' },
