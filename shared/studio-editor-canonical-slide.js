@@ -25,6 +25,15 @@
     return deckLike.slides.find((slide) => slide && slide.id === normalizedSlideId) || null;
   }
 
+  function createStudioEditorCanonicalSlideResolver(options = {}) {
+    const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
+      ? options.canonicalDeckApi
+      : null;
+    return (deckLike, slideId) => findStudioCanonicalSlideById(deckLike, slideId, {
+      canonicalDeckApi
+    });
+  }
+
   function createStudioCanonicalSlideMutationBuilders(options = {}) {
     const canonicalDeckApi = options.canonicalDeckApi && typeof options.canonicalDeckApi === 'object'
       ? options.canonicalDeckApi
@@ -425,6 +434,7 @@
 
   return {
     findStudioCanonicalSlideById,
+    createStudioEditorCanonicalSlideResolver,
     buildStudioCanonicalAddSlideBaseline,
     buildStudioCanonicalAddSlideDeck,
     createStudioCanonicalAddSlideMutationBuilders,

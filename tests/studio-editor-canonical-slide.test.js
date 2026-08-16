@@ -30,6 +30,21 @@ test('findStudioCanonicalSlideById preserves a local fallback when the shared re
   );
 });
 
+test('createStudioEditorCanonicalSlideResolver reuses the canonical deck API', () => {
+  const calls = [];
+  const canonicalDeckApi = {
+    findCanonicalSlideById(deck, slideId) {
+      calls.push([deck, slideId]);
+      return { id: slideId };
+    }
+  };
+  const resolver = canonicalSlide.createStudioEditorCanonicalSlideResolver({ canonicalDeckApi });
+  const deck = { slides: [] };
+
+  assert.deepEqual(resolver(deck, 'slide-1'), { id: 'slide-1' });
+  assert.deepEqual(calls, [[deck, 'slide-1']]);
+});
+
 test('buildStudioCanonicalDuplicateSlideBaseline builds from the source document', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({ slides: [{ id: 'slide-1' }] });
   const sourceDocument = { id: 'editor-doc' };

@@ -8398,18 +8398,35 @@
     }
 
     function findEditorCanonicalSlideById(canonicalDeck, slideId) {
-      const canonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
-        ? SlideNextStudioEditorCanonicalSlide
-        : null;
+      if (typeof studioEditorCanonicalSlideResolver !== 'undefined'
+        && typeof studioEditorCanonicalSlideResolver === 'function') {
+        return studioEditorCanonicalSlideResolver(canonicalDeck, slideId);
+      }
+      const canonicalSlideApi = typeof studioEditorCanonicalSlideApi !== 'undefined'
+        ? studioEditorCanonicalSlideApi
+        : typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+          ? SlideNextStudioEditorCanonicalSlide
+          : null;
       if (!canonicalSlideApi
         || typeof canonicalSlideApi.findStudioCanonicalSlideById !== 'function') return null;
-      const canonicalDeckApi = typeof SlideNextCanonicalDeck !== 'undefined'
-        ? SlideNextCanonicalDeck
-        : null;
       return canonicalSlideApi.findStudioCanonicalSlideById(canonicalDeck, slideId, {
-        canonicalDeckApi
+        canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+          ? SlideNextCanonicalDeck
+          : null
       }) || null;
     }
+
+    const studioEditorCanonicalSlideApi = typeof SlideNextStudioEditorCanonicalSlide !== 'undefined'
+      ? SlideNextStudioEditorCanonicalSlide
+      : null;
+    const studioEditorCanonicalSlideResolver = studioEditorCanonicalSlideApi
+      && typeof studioEditorCanonicalSlideApi.createStudioEditorCanonicalSlideResolver === 'function'
+      ? studioEditorCanonicalSlideApi.createStudioEditorCanonicalSlideResolver({
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null
+        })
+      : null;
 
     function buildEditorMutationCanonicalDeck(sourceDoc, buildOptions = {}) {
       if (!studioEditorCanonicalBridge
