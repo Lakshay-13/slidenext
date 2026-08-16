@@ -2966,3 +2966,11 @@ test('index keeps version toolbar controls free of inline handlers', () => {
   assert.doesNotMatch(fileContent, /id="studioVersionBtn"[^>]*onclick=/);
   assert.doesNotMatch(fileContent, /id="studioSaveBtn"[^>]*onclick=/);
 });
+
+test('index keeps save-version modal controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="versionCheckpointName"[^>]*onkeydown=/);
+  assert.doesNotMatch(fileContent, /id="cancelSaveVersionBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="confirmSaveVersionBtn"[^>]*onclick=/);
+});

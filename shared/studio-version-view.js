@@ -62,6 +62,44 @@
     return bindings;
   }
 
+  function bindStudioEditorSaveVersionModalControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const submitSaveVersion = typeof options.submitSaveVersion === 'function'
+      ? options.submitSaveVersion
+      : null;
+    const closeSaveVersionModal = typeof options.closeSaveVersionModal === 'function'
+      ? options.closeSaveVersionModal
+      : null;
+    const bindings = {};
+    const input = documentRef.getElementById('versionCheckpointName');
+    if (!input || typeof input.addEventListener !== 'function') {
+      bindings.versionCheckpointName = false;
+    } else {
+      input.addEventListener('keydown', (event) => {
+        if (event && event.key === 'Enter' && submitSaveVersion) submitSaveVersion();
+      });
+      bindings.versionCheckpointName = true;
+    }
+
+    [
+      ['cancelSaveVersionBtn', closeSaveVersionModal],
+      ['confirmSaveVersionBtn', submitSaveVersion]
+    ].forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function resolveModalVisibility(options = {}) {
     return options.modalVisibility && typeof options.modalVisibility === 'object'
       ? options.modalVisibility
@@ -298,6 +336,7 @@
     hideStudioVersionsDropdown,
     toggleStudioVersionsDropdown,
     bindStudioEditorVersionToolbarControls,
+    bindStudioEditorSaveVersionModalControls,
     showStudioVersionModal,
     hideStudioVersionModal,
     hideStudioVersionModalImmediately,
