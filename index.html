@@ -1596,6 +1596,7 @@
   <script src="/shared/studio-editor-transform-controller.js"></script>
   <script src="/shared/studio-editor-transform-runtime.js"></script>
   <script src="/shared/studio-editor-transform-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-transform-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
@@ -5474,10 +5475,19 @@
         )
       : null;
 
-    const studioEditorTransformRuntime = typeof SlideNextStudioEditorTransformShellRuntime !== 'undefined'
-      && SlideNextStudioEditorTransformShellRuntime
-      && typeof SlideNextStudioEditorTransformShellRuntime.createStudioEditorTransformShellRuntime === 'function'
-      ? SlideNextStudioEditorTransformShellRuntime.createStudioEditorTransformShellRuntime({
+    const studioEditorTransformRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorTransformRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorTransformRuntimeAccessors
+      : null;
+    const studioEditorTransformRuntimeAccessors = studioEditorTransformRuntimeAccessorsApi
+      && typeof studioEditorTransformRuntimeAccessorsApi
+        .createStudioEditorTransformRuntimeAccessors === 'function'
+      ? studioEditorTransformRuntimeAccessorsApi
+        .createStudioEditorTransformRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorTransformShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorTransformShellRuntime
+            : null,
+          runtimeOptions: {
           transformRuntimeApi: typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
             ? SlideNextStudioEditorTransformRuntime
             : null,
@@ -5546,7 +5556,11 @@
           minSizePx: MIN_ELEMENT_SIZE_PX,
           dragOverflowMarginPx: DRAG_OVERFLOW_MARGIN_PX,
           snapDistancePx: SNAP_THRESHOLD_PX
+          }
         })
+      : null;
+    const studioEditorTransformRuntime = studioEditorTransformRuntimeAccessors
+      ? studioEditorTransformRuntimeAccessors.runtime
       : null;
     const studioEditorTransformController = studioEditorTransformRuntime
       ? studioEditorTransformRuntime.transformController
