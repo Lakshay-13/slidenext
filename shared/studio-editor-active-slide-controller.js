@@ -29,6 +29,21 @@
     const canonicalDeckApi = options.canonicalDeckApi
       || (root && root.SlideNextCanonicalDeck)
       || null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : canonicalDeckApi && typeof canonicalDeckApi.isCanonicalDeck === 'function'
+        ? canonicalDeckApi.isCanonicalDeck
+        : null;
+    const isValidCanonicalDeck = (value) => {
+      if (!value) return false;
+      try {
+        return isCanonicalDeck
+          ? isCanonicalDeck(value) === true
+          : Array.isArray(value.slides);
+      } catch (error) {
+        return false;
+      }
+    };
     const canonicalSlideApi = options.canonicalSlideApi
       || (root && root.SlideNextStudioEditorCanonicalSlide)
       || null;
@@ -179,7 +194,7 @@
         }
         const activeSlideId = getSlideId(activeSlide) || activeSlide.id
           || (activeSlide.dataset && activeSlide.dataset.slideId) || '';
-        if (canonicalDeck && Array.isArray(canonicalDeck.slides)) {
+        if (isValidCanonicalDeck(canonicalDeck)) {
           if (canonicalSlideApi
             && typeof canonicalSlideApi.findStudioCanonicalSlideById === 'function') {
             try {
@@ -232,6 +247,7 @@
           },
           buildEditorDeckSnapshot,
           buildEditorCanonicalDeck,
+          ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
           createActiveSlideTransaction: transactionApi
             && typeof transactionApi.createStudioActiveSlideTransaction === 'function'
             ? transactionApi.createStudioActiveSlideTransaction

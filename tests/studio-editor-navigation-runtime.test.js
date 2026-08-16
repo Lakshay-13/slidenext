@@ -21,6 +21,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
     notesView: {},
     deckSnapshotApi: {},
     canonicalSlideApi: {},
+    isCanonicalDeck() {},
     documentRef: {},
     getDocument() {},
     getWindow() {},
@@ -87,6 +88,7 @@ test('navigation runtime composes navigation, active slide, sync, and thumbnails
   assert.equal(calls[1][1].buildEditorCanonicalDeck, callbacks.buildEditorCanonicalDeck);
   assert.equal(calls[1][1].resolveCanonicalDeck, callbacks.resolveCanonicalDeck);
   assert.equal(calls[1][1].canonicalSlideApi, callbacks.canonicalSlideApi);
+  assert.equal(calls[1][1].isCanonicalDeck, callbacks.isCanonicalDeck);
   assert.equal(calls[1][1].setCustomGradientType, callbacks.setCustomGradientType);
   assert.equal(calls[1][1].setCurrentSlideId, callbacks.setCurrentSlideId);
   assert.equal(calls[2][1].activeSlideController, activeSlideController);
@@ -115,6 +117,7 @@ test('index wires navigation composition through the runtime module', () => {
     fileContent,
     /SlideNextStudioEditorNavigationShellRuntime\.createStudioEditorNavigationShellRuntime\(/
   );
+  assert.match(fileContent, /isCanonicalDeck: getEditorCanonicalDeckValidator\(\)/);
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorNavigationController\.createStudioEditorNavigationController\(/

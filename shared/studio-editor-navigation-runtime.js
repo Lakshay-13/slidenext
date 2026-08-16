@@ -44,6 +44,7 @@
           deckViewApi: options.deckViewApi,
           deckSnapshotApi: options.deckSnapshotApi,
           canonicalSlideApi: options.canonicalSlideApi,
+          isCanonicalDeck: options.isCanonicalDeck,
           transactionApi: options.transactionApi,
           documentRef: options.documentRef,
           getCurrentSlideIndex: options.getCurrentSlideIndex,

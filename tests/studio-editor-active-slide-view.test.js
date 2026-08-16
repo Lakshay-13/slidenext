@@ -258,6 +258,37 @@ test('syncStudioActiveSlideChrome converts thrown navigation history capture to 
   assert.equal(currentSlideIndex, 1);
 });
 
+test('syncStudioActiveSlideChrome rejects an invalid canonical history sidecar', () => {
+  let currentSlideIndex = 0;
+  const historyCalls = [];
+  const didSync = activeSlideView.syncStudioActiveSlideChrome({ label: 'iframe-doc' }, {
+    captureHistory: true,
+    getCurrentSlideIndex: () => currentSlideIndex,
+    updateCurrentPresentationSessionState(nextState) {
+      currentSlideIndex = nextState.slideIndex;
+    },
+    syncStudioActiveSlideView(doc, options) {
+      options.setCurrentSlideIndex(1);
+      return { didSync: true };
+    },
+    getActiveSlide() {
+      return { id: 'slide-2' };
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [] };
+    },
+    isCanonicalDeck() {
+      return false;
+    },
+    saveHistoryState(...args) {
+      historyCalls.push(args);
+    }
+  });
+
+  assert.equal(didSync, true);
+  assert.deepEqual(historyCalls, [[false]]);
+});
+
 test('syncStudioActiveSlideChrome refreshes speaker notes for the active slide', () => {
   const calls = [];
 

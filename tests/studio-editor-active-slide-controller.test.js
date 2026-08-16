@@ -200,3 +200,44 @@ test('active-slide controller prefers canonical active slide for wallpaper reade
   ]]);
   assert.equal(buildCanonicalDeckCalls, 0);
 });
+
+test('active-slide controller falls back to the DOM slide when canonical validation fails', () => {
+  const domSlide = { id: 'slide-1' };
+  const wallpaperSlides = [];
+  const controller = activeSlideController.createStudioEditorActiveSlideController({
+    activeSlideView: {
+      syncStudioActiveSlideChrome(doc, options) {
+        options.syncCustomGradientControls(domSlide);
+        options.syncWallpaperTabChrome(domSlide);
+        options.syncSolidWallpaperControl(domSlide);
+        return true;
+      }
+    },
+    wallpaperView: {
+      syncStudioCustomGradientControls(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      },
+      syncStudioWallpaperTabChrome(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      },
+      syncStudioSolidWallpaperControl(options) {
+        wallpaperSlides.push(options.activeSlide);
+        return { didApply: false };
+      }
+    },
+    buildEditorCanonicalDeck() {
+      return { slides: [{ id: 'slide-1' }] };
+    },
+    isCanonicalDeck() {
+      return false;
+    },
+    getSlideId(slide) {
+      return slide.id;
+    }
+  });
+
+  assert.equal(controller.sync({ id: 'iframe-document' }), true);
+  assert.deepEqual(wallpaperSlides, [domSlide, domSlide, domSlide]);
+});

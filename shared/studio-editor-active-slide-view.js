@@ -64,6 +64,19 @@
     const buildEditorCanonicalDeck = typeof options.buildEditorCanonicalDeck === 'function'
       ? options.buildEditorCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const isValidCanonicalDeck = (value) => {
+      if (!value) return false;
+      try {
+        return isCanonicalDeck
+          ? isCanonicalDeck(value) === true
+          : Array.isArray(value.slides);
+      } catch (error) {
+        return false;
+      }
+    };
     const resolveActiveSlideIndex = typeof options.resolveStudioActiveSlideIndex === 'function'
       ? options.resolveStudioActiveSlideIndex
       : (deckSnapshot, fallbackIndex) => fallbackIndex;
@@ -117,7 +130,7 @@
         } catch (err) {
           canonicalDeck = null;
         }
-        if (canonicalDeck) {
+        if (isValidCanonicalDeck(canonicalDeck)) {
           historyResult = captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
         } else {
           historyResult = captureStudioHistoryState(saveHistoryState, false);
