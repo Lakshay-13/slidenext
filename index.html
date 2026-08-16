@@ -1756,6 +1756,7 @@
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
   <script src="/shared/studio-editor-selection-ui-mutation-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-selection-ui-mutation-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-selection-state-adapter.js"></script>
   <script src="/shared/studio-editor-selection-commit-adapter.js"></script>
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
@@ -11377,16 +11378,26 @@
       typeof SlideNextStudioEditorSelectionUiMutationShellRuntime !== 'undefined'
       ? SlideNextStudioEditorSelectionUiMutationShellRuntime
       : null;
-    const studioEditorSelectionUiMutationShellRuntime = studioEditorSelectionUiMutationShellRuntimeApi
-      && typeof studioEditorSelectionUiMutationShellRuntimeApi
-        .createStudioEditorSelectionUiMutationShellRuntime === 'function'
-      ? studioEditorSelectionUiMutationShellRuntimeApi
-        .createStudioEditorSelectionUiMutationShellRuntime({
-          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
-            ? SlideNextStudioEditorSelection
-            : null
-        })
+    const studioEditorSelectionUiMutationRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorSelectionUiMutationRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorSelectionUiMutationRuntimeAccessors
       : null;
+    const studioEditorSelectionUiMutationRuntimeAccessors =
+      studioEditorSelectionUiMutationRuntimeAccessorsApi
+      && typeof studioEditorSelectionUiMutationRuntimeAccessorsApi
+        .createStudioEditorSelectionUiMutationRuntimeAccessors === 'function'
+      ? studioEditorSelectionUiMutationRuntimeAccessorsApi
+        .createStudioEditorSelectionUiMutationRuntimeAccessors({
+          runtimeApi: studioEditorSelectionUiMutationShellRuntimeApi,
+          runtimeOptions: {
+            selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+              ? SlideNextStudioEditorSelection
+              : null
+          }
+        })
+      : { runtime: null };
+    const studioEditorSelectionUiMutationShellRuntime =
+      studioEditorSelectionUiMutationRuntimeAccessors.runtime;
     const studioEditorSelectionUiMutationSynchronizer = studioEditorSelectionUiMutationShellRuntime
       && studioEditorSelectionUiMutationShellRuntime.isAvailable === true
       && typeof studioEditorSelectionUiMutationShellRuntime.sync === 'function'

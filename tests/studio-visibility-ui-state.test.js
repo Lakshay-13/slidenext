@@ -18,6 +18,7 @@ const lockVisibilityRollbackAdapter = require('../shared/studio-editor-lock-visi
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const lockVisibilityController = require('../shared/studio-editor-lock-visibility-controller.js');
 const selectionUiMutationShellRuntime = require('../shared/studio-editor-selection-ui-mutation-shell-runtime.js');
+const selectionUiMutationRuntimeAccessors = require('../shared/studio-editor-selection-ui-mutation-runtime-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -49,6 +50,7 @@ function loadSyncSelectionUiAfterMutation(fileContent, context) {
     '\n\n    function finalizeSelectionToggleMutation(versionLabel, options = {}) {'
   );
   context.SlideNextStudioEditorSelectionUiMutationShellRuntime = selectionUiMutationShellRuntime;
+  context.SlideNextStudioEditorSelectionUiMutationRuntimeAccessors = selectionUiMutationRuntimeAccessors;
   vm.runInContext(helperSource, context);
 }
 

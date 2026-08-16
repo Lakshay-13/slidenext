@@ -42,7 +42,7 @@ test('index routes selection UI mutation synchronization through the shell runti
   );
   assert.match(
     fileContent,
-    /studioEditorSelectionUiMutationShellRuntimeApi\s*\.\s*createStudioEditorSelectionUiMutationShellRuntime\(/
+    /studioEditorSelectionUiMutationRuntimeAccessorsApi\s*\.\s*createStudioEditorSelectionUiMutationRuntimeAccessors\(/
   );
   assert.match(
     fileContent,
