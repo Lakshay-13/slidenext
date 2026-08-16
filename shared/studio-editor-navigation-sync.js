@@ -30,15 +30,24 @@
     let observer = null;
     let syncTimer = null;
 
+    function invokeAuxiliarySync(callback, doc) {
+      if (typeof callback !== 'function') return;
+      try {
+        callback(doc);
+      } catch (error) {
+        // One auxiliary panel must not block the remaining navigation sync.
+      }
+    }
+
     function sync(doc = getDocument(), syncOptions = {}) {
       const didSync = activeSlideController
         && typeof activeSlideController.sync === 'function'
         ? activeSlideController.sync(doc, syncOptions)
         : false;
-      if (syncLayoutModeControl) syncLayoutModeControl(doc);
-      if (updateTemplateActionState) updateTemplateActionState(doc);
-      if (updateMasterSlideActionState) updateMasterSlideActionState(doc);
-      if (updateAssetLibraryState) updateAssetLibraryState(doc);
+      invokeAuxiliarySync(syncLayoutModeControl, doc);
+      invokeAuxiliarySync(updateTemplateActionState, doc);
+      invokeAuxiliarySync(updateMasterSlideActionState, doc);
+      invokeAuxiliarySync(updateAssetLibraryState, doc);
       return didSync;
     }
 

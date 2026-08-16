@@ -30,6 +30,35 @@ test('navigation sync coordinates active-slide refresh and auxiliary action stat
   ]);
 });
 
+test('navigation sync continues auxiliary refreshes when one panel throws', () => {
+  const calls = [];
+  const controller = navigationSync.createStudioEditorNavigationSync({
+    activeSlideController: {
+      sync() {
+        calls.push('sync');
+        return true;
+      }
+    },
+    syncLayoutModeControl() {
+      throw new Error('layout refresh failed');
+    },
+    updateTemplateActionState() {
+      calls.push('template');
+    },
+    updateMasterSlideActionState() {
+      calls.push('master');
+    },
+    updateAssetLibraryState() {
+      calls.push('assets');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.sync(), true);
+  });
+  assert.deepEqual(calls, ['sync', 'template', 'master', 'assets']);
+});
+
 test('navigation sync delegates slide navigation methods and fails closed without controllers', () => {
   const calls = [];
   const iframeDoc = { id: 'frame' };
