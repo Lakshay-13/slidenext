@@ -25,9 +25,10 @@
       return null;
     }
 
-    return canonicalRuntimeApi.createStudioEditorCanonicalRuntime(
-      options.runtimeOptions || {}
-    );
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return canonicalRuntimeApi.createStudioEditorCanonicalRuntime(runtimeOptions || {});
   }
 
   return {
