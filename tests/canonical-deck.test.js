@@ -86,6 +86,51 @@ test('createCanonicalNode preserves an explicit asset reference without requirin
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'backgroundAssetId'), false);
 });
 
+test('createCanonicalDeck keeps known asset references aligned when duplicate ids are normalized', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    assets: [
+      { id: 'photo', src: 'one.png' },
+      { id: 'photo', src: 'two.png' }
+    ],
+    blocks: [{
+      id: 'block-1',
+      nodes: [{ id: 'block-image', assetId: 'photo' }]
+    }],
+    templates: [{
+      id: 'template-1',
+      slide: { layout: { background: { assetId: 'photo' } } }
+    }],
+    masterSlides: [{
+      id: 'master-1',
+      slide: { nodes: [{ id: 'master-image', backgroundAssetId: 'photo' }] }
+    }],
+    slides: [{
+      id: 'slide-1',
+      layout: { background: { assetId: 'photo' } },
+      nodes: [{
+        id: 'image-1',
+        assetId: 'photo',
+        attributes: {
+          'data-asset-id': ' photo ',
+          'data-background-asset': 'photo'
+        },
+        children: [{ id: 'child-image', backgroundAssetId: 'photo' }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(deck.assets.map((asset) => asset.id), ['photo', 'photo-2']);
+  assert.equal(deck.slides[0].layout.background.assetId, 'photo');
+  assert.equal(deck.slides[0].nodes[0].assetId, 'photo');
+  assert.equal(deck.slides[0].nodes[0].children[0].backgroundAssetId, 'photo');
+  assert.equal(deck.slides[0].nodes[0].attributes['data-asset-id'], 'photo');
+  assert.equal(deck.slides[0].nodes[0].attributes['data-background-asset'], 'photo');
+  assert.equal(deck.blocks[0].nodes[0].assetId, 'photo');
+  assert.equal(deck.templates[0].slide.layout.background.assetId, 'photo');
+  assert.equal(deck.masterSlides[0].slide.nodes[0].backgroundAssetId, 'photo');
+  assert.equal(canonicalDeck.isCanonicalDeck(deck), true);
+});
+
 test('createCanonicalNode preserves optional rendered bounds without adding them to legacy nodes', () => {
   const node = canonicalDeck.createCanonicalNode({
     id: 'flow-node',

@@ -331,6 +331,67 @@
     });
   }
 
+  function remapCanonicalAssetId(value, assetIdAliases) {
+    const normalizedAssetId = normalizeString(value).trim();
+    if (!normalizedAssetId || !assetIdAliases || !assetIdAliases.has(normalizedAssetId)) {
+      return value;
+    }
+    return assetIdAliases.get(normalizedAssetId);
+  }
+
+  function remapCanonicalNodeAssetReferences(node, assetIdAliases) {
+    if (!node || typeof node !== 'object') return node;
+
+    const nextNode = { ...node };
+    ['assetId', 'backgroundAssetId'].forEach((property) => {
+      if (Object.prototype.hasOwnProperty.call(nextNode, property)) {
+        nextNode[property] = remapCanonicalAssetId(nextNode[property], assetIdAliases);
+      }
+    });
+
+    if (nextNode.attributes && typeof nextNode.attributes === 'object') {
+      const nextAttributes = { ...nextNode.attributes };
+      ['data-asset-id', 'data-asset', 'data-background-asset-id', 'data-background-asset']
+        .forEach((attribute) => {
+          if (Object.prototype.hasOwnProperty.call(nextAttributes, attribute)) {
+            nextAttributes[attribute] = remapCanonicalAssetId(nextAttributes[attribute], assetIdAliases);
+          }
+        });
+      nextNode.attributes = nextAttributes;
+    }
+
+    if (Array.isArray(nextNode.children)) {
+      nextNode.children = nextNode.children.map((child) => (
+        remapCanonicalNodeAssetReferences(child, assetIdAliases)
+      ));
+    }
+    return nextNode;
+  }
+
+  function remapCanonicalSlideAssetReferences(slide, assetIdAliases) {
+    if (!slide || typeof slide !== 'object') return slide;
+    const nextSlide = { ...slide };
+    const layout = slide.layout && typeof slide.layout === 'object' ? slide.layout : {};
+    const background = layout.background && typeof layout.background === 'object'
+      ? layout.background
+      : {};
+    if (Object.prototype.hasOwnProperty.call(background, 'assetId')) {
+      nextSlide.layout = {
+        ...layout,
+        background: {
+          ...background,
+          assetId: remapCanonicalAssetId(background.assetId, assetIdAliases)
+        }
+      };
+    }
+    if (Array.isArray(slide.nodes)) {
+      nextSlide.nodes = slide.nodes.map((node) => (
+        remapCanonicalNodeAssetReferences(node, assetIdAliases)
+      ));
+    }
+    return nextSlide;
+  }
+
   function createCanonicalDeck(seed = {}) {
     const deck = asPlainObject(seed);
     const metadata = asPlainObject(deck.metadata);
@@ -366,6 +427,19 @@
     const nodeIds = new Set();
     const inlineScriptIds = new Set();
 
+    const canonicalAssetIdAliases = new Map();
+    const canonicalAssets = normalizedAssets.map((asset, assetIndex) => {
+      const sourceAssetId = normalizeString(asset.id).trim() || `asset-${assetIndex + 1}`;
+      const canonicalAssetId = createUniqueCanonicalId(sourceAssetId, `asset-${assetIndex + 1}`, assetIds);
+      if (!canonicalAssetIdAliases.has(sourceAssetId)) {
+        canonicalAssetIdAliases.set(sourceAssetId, canonicalAssetId);
+      }
+      return {
+        ...asset,
+        id: canonicalAssetId
+      };
+    });
+
     return {
       kind: DECK_KIND,
       schemaVersion: DECK_SCHEMA_VERSION,
@@ -391,15 +465,17 @@
         },
         aspectRatio: normalizeString(layout.aspectRatio)
       },
-      assets: normalizedAssets.map((asset, assetIndex) => ({
-        ...asset,
-        id: createUniqueCanonicalId(asset.id, `asset-${assetIndex + 1}`, assetIds)
-      })),
+      assets: canonicalAssets,
       ...(hasBlocksCollection
         ? {
             blocks: normalizedBlocks.map((block, blockIndex) => ({
               ...block,
               id: createUniqueCanonicalId(block.id, `block-${blockIndex + 1}`, blockIds)
+            })).map((block) => ({
+              ...block,
+              nodes: block.nodes.map((node) => (
+                remapCanonicalNodeAssetReferences(node, canonicalAssetIdAliases)
+              ))
             }))
           }
         : {}),
@@ -408,6 +484,9 @@
             templates: normalizedTemplates.map((template, templateIndex) => ({
               ...template,
               id: createUniqueCanonicalId(template.id, `template-${templateIndex + 1}`, templateIds)
+            })).map((template) => ({
+              ...template,
+              slide: remapCanonicalSlideAssetReferences(template.slide, canonicalAssetIdAliases)
             }))
           }
         : {}),
@@ -420,6 +499,9 @@
                 `master-slide-${masterIndex + 1}`,
                 masterSlideIds
               )
+            })).map((master) => ({
+              ...master,
+              slide: remapCanonicalSlideAssetReferences(master.slide, canonicalAssetIdAliases)
             }))
           }
         : {}),
@@ -427,7 +509,7 @@
         ...slide,
         id: createUniqueCanonicalId(slide.id, `slide-${slideIndex + 1}`, slideIds),
         nodes: normalizeCanonicalNodeIds(slide.nodes, nodeIds)
-      })),
+      })).map((slide) => remapCanonicalSlideAssetReferences(slide, canonicalAssetIdAliases)),
       notes: {
         deck: normalizeString(notes.deck)
       },
