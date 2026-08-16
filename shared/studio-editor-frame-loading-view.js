@@ -7,6 +7,8 @@
     root.SlideNextStudioEditorFrameLoadingView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const frameLoadingButtonBindings = new WeakMap();
+
   function setStudioEditorFrameLoadingState(options = {}) {
     const documentRef = options.documentRef;
     const loadingEl = documentRef && typeof documentRef.getElementById === 'function'
@@ -82,9 +84,19 @@
     if (!button || typeof button.addEventListener !== 'function') {
       return { studioFrameLoadingRetryBtn: false };
     }
-    button.addEventListener('click', () => {
-      if (retryStudioEditorFrame) retryStudioEditorFrame();
-    });
+    let binding = frameLoadingButtonBindings.get(button);
+    if (!binding) {
+      binding = {
+        retryStudioEditorFrame,
+        handleClick: () => {
+          if (binding.retryStudioEditorFrame) binding.retryStudioEditorFrame();
+        }
+      };
+      button.addEventListener('click', binding.handleClick);
+      frameLoadingButtonBindings.set(button, binding);
+    } else {
+      binding.retryStudioEditorFrame = retryStudioEditorFrame;
+    }
     return { studioFrameLoadingRetryBtn: true };
   }
 

@@ -114,3 +114,37 @@ test('frame loading view binds retry to the shared editor retry action', () => {
   retryButton.listeners.click();
   assert.deepEqual(calls, ['retry']);
 });
+
+test('frame loading view updates a retry binding without duplicating listeners', () => {
+  const registrations = [];
+  const firstCalls = [];
+  const secondCalls = [];
+  const retryButton = {
+    addEventListener(type, handler) {
+      registrations.push([type, handler]);
+    }
+  };
+  const documentRef = {
+    getElementById(id) {
+      return id === 'studioFrameLoadingRetryBtn' ? retryButton : null;
+    }
+  };
+
+  frameLoadingView.bindStudioEditorFrameLoadingControls({
+    documentRef,
+    retryStudioEditorFrame() {
+      firstCalls.push('retry');
+    }
+  });
+  frameLoadingView.bindStudioEditorFrameLoadingControls({
+    documentRef,
+    retryStudioEditorFrame() {
+      secondCalls.push('retry');
+    }
+  });
+
+  assert.equal(registrations.length, 1);
+  registrations[0][1]();
+  assert.deepEqual(firstCalls, []);
+  assert.deepEqual(secondCalls, ['retry']);
+});
