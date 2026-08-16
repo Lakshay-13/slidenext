@@ -51,6 +51,14 @@ test('canStudioCopySelection allows unlocked selections', () => {
   }), true);
 });
 
+test('canStudioCopySelection fails closed when lock state throws', () => {
+  assert.equal(clipboardState.canStudioCopySelection([{ id: 'live' }], {
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), false);
+});
+
 test('getStudioClipboardSelection filters stale selections and preserves ordered selection', () => {
   const stale = { id: 1, isConnected: false };
   const first = { id: 2, isConnected: true };

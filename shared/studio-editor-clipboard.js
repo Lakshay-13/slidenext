@@ -63,7 +63,12 @@
     const isLocked = typeof options.isLocked === 'function'
       ? options.isLocked
       : () => false;
-    return !eligibleSelection.some((element) => isLocked(element));
+    try {
+      return !eligibleSelection.some((element) => isLocked(element));
+    } catch (error) {
+      // Never copy when canonical lock state is uncertain.
+      return false;
+    }
   }
 
   function buildStudioClipboardActionState(elements = [], clipboard = null, options = {}) {
