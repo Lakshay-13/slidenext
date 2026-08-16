@@ -1544,6 +1544,37 @@ test('syncStudioHistoryButtons resolves editor controls from the document', () =
   assert.equal(buttons.studioRedoBtn.disabled, false);
 });
 
+test('bindStudioHistoryButtons wires undo and redo commands to editor controls', () => {
+  const buttonIds = ['studioUndoBtn', 'studioRedoBtn'];
+  const buttons = Object.fromEntries(buttonIds.map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+
+  assert.deepEqual(
+    studioHistory.bindStudioHistoryButtons({
+      documentRef: {
+        getElementById(id) {
+          return buttons[id] || null;
+        }
+      },
+      editorUndo() {
+        calls.push('undo');
+      },
+      editorRedo() {
+        calls.push('redo');
+      }
+    }),
+    { studioUndoBtn: true, studioRedoBtn: true }
+  );
+  buttons.studioUndoBtn.listeners.click();
+  buttons.studioRedoBtn.listeners.click();
+  assert.deepEqual(calls, ['undo', 'redo']);
+});
+
 test('createStudioHistoryButtonStateSync resolves document and stacks through callbacks', () => {
   const documentRef = { id: 'editor-document' };
   const calls = [];

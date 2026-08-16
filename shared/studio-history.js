@@ -723,6 +723,31 @@
     };
   }
 
+  function bindStudioHistoryButtons(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const editorUndo = typeof options.editorUndo === 'function' ? options.editorUndo : null;
+    const editorRedo = typeof options.editorRedo === 'function' ? options.editorRedo : null;
+    const bindings = {};
+    const buttonHandlers = [
+      ['studioUndoBtn', editorUndo],
+      ['studioRedoBtn', editorRedo]
+    ];
+    buttonHandlers.forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function scheduleStudioHistoryCapture(currentTimer, debounce, captureFn, options = {}) {
     const clearScheduledCapture = typeof options.clearScheduledCapture === 'function'
       ? options.clearScheduledCapture
@@ -1176,6 +1201,7 @@
     createStudioHistoryButtonUpdater,
     syncStudioHistoryButtons,
     createStudioHistoryButtonStateSync,
+    bindStudioHistoryButtons,
     scheduleStudioHistoryCapture,
     createStudioHistorySaveHandler,
     restoreStudioHistoryTransaction,
