@@ -152,6 +152,10 @@ test('index wires layout editing through the runtime module', () => {
     /SlideNextStudioEditorLayoutShellRuntime\.createStudioEditorLayoutShellRuntime\(/
   );
   assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);
+  assert.doesNotMatch(
+    fileContent,
+    /id="convertFlowToFreeformBtn"[^>]*onclick=/
+  );
   assert.match(fileContent, /function rollbackEditorPositionLayoutMutation\(/);
   assert.match(fileContent, /rollbackPositionMutation: \(\.\.\.args\) => rollbackEditorPositionLayoutMutation\(\.\.\.args\)/);
   assert.match(

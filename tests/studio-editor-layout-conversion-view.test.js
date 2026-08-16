@@ -47,3 +47,26 @@ test('getStudioLayoutConversionMessage uses a safe fallback for unknown planner 
     'This selection cannot be converted yet.'
   );
 });
+
+test('bindStudioEditorLayoutConversionControl wires conversion to the command button', () => {
+  const button = { listeners: {}, addEventListener(type, handler) {
+    this.listeners[type] = handler;
+  } };
+  const calls = [];
+
+  assert.deepEqual(
+    conversionView.bindStudioEditorLayoutConversionControl({
+      documentRef: {
+        getElementById(id) {
+          return id === 'convertFlowToFreeformBtn' ? button : null;
+        }
+      },
+      convertSelectedElementsToFreeform() {
+        calls.push('convert');
+      }
+    }),
+    { convertFlowToFreeformBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['convert']);
+});

@@ -39,8 +39,26 @@
     return true;
   }
 
+  function bindStudioEditorLayoutConversionControl(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const convertSelectedElementsToFreeform = typeof options.convertSelectedElementsToFreeform === 'function'
+      ? options.convertSelectedElementsToFreeform
+      : null;
+    const button = documentRef.getElementById('convertFlowToFreeformBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { convertFlowToFreeformBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (convertSelectedElementsToFreeform) convertSelectedElementsToFreeform();
+    });
+    return { convertFlowToFreeformBtn: true };
+  }
+
   return {
     getStudioLayoutConversionMessage,
-    syncStudioLayoutConversionControl
+    syncStudioLayoutConversionControl,
+    bindStudioEditorLayoutConversionControl
   };
 });
