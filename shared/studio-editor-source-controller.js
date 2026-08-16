@@ -234,6 +234,15 @@
     const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
       ? options.isCanonicalDeck
       : null;
+    function completeSourceAutoSave() {
+      if (!triggerAutoSave) return true;
+      try {
+        return triggerAutoSave() !== false;
+      } catch (err) {
+        // Keep source application failure-controlled when autosave throws.
+        return false;
+      }
+    }
     const beforeApply = typeof options.beforeApply === 'function'
       ? options.beforeApply
       : createStudioEditorSourceHistoryBaselineCapture({
@@ -261,7 +270,7 @@
             );
             if (isStudioHistoryCaptureFailure(historyCaptureResult)) return false;
           }
-          if (triggerAutoSave && triggerAutoSave() === false) return false;
+          if (!completeSourceAutoSave()) return false;
           return true;
         };
     let sourceMode = 'html';

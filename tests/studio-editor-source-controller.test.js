@@ -414,6 +414,21 @@ test('source controller rejects the default commit when history capture throws',
   assert.equal(autoSaveCalls, 0);
 });
 
+test('source controller rejects the default commit when autosave throws', () => {
+  const { calls, controller } = createController({
+    afterApply: undefined,
+    saveHistoryState() {
+      return { didCapture: true };
+    },
+    triggerAutoSave() {
+      throw new Error('autosave unavailable');
+    }
+  });
+
+  controller.applySourceHtml('<html></html>');
+  assert.equal(calls[0][2].afterApply({ slides: [] }), false);
+});
+
 test('source controller reports source engine unavailability without throwing', () => {
   const { controller } = createController({ sourceApi: null });
 
