@@ -171,6 +171,31 @@ test('finalizeStudioEditorDeckMutation preserves fallback persistence when layer
   assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Style']]);
 });
 
+test('finalizeStudioEditorDeckMutation preserves fallback persistence when selection overlay refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorDeckMutation(
+    'Auto: Style',
+    { syncSelectionOverlay: true, doc: { id: 'editor-document' } },
+    {
+      syncSelectionOverlay() {
+        throw new Error('selection overlay unavailable');
+      },
+      saveHistoryState() {
+        calls.push('history');
+      },
+      triggerAutoSave() {
+        calls.push('save');
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Style');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Style']]);
+});
+
 test('finalizeStudioEditorDeckMutation forwards the mutation document in its fallback lifecycle', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];

@@ -186,7 +186,7 @@
             : mutationOptions;
     })();
     if (resolvedMutationOptions.syncSelectionOverlay) {
-      syncSelectionOverlay(resolvedMutationOptions.doc);
+      invokeStudioEditorUiRefresh(() => syncSelectionOverlay(resolvedMutationOptions.doc));
     }
     if (resolvedMutationOptions.refreshThumbnails !== false) {
       invokeStudioEditorThumbnailRefresh(generateThumbnails);
