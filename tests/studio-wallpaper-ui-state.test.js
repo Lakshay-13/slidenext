@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
+const wallpaperAccessors = require('../shared/studio-editor-wallpaper-accessors.js');
 const wallpaperGradientActions = require('../shared/studio-editor-wallpaper-gradient-actions.js');
 const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-transaction-actions.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -190,6 +191,52 @@ test('renderWallpaperPresets binds generated preset actions through the shared w
   assert.equal(calls[0][0], 'render');
   assert.equal(calls[1][0], 'bind');
   assert.equal(calls[1][1].applyPresetWallpaper, applyPresetWallpaper);
+});
+
+test('wallpaper accessors gate tab changes and persist state after the view applies them', () => {
+  const calls = [];
+  const documentRef = { id: 'editor-document' };
+  const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors({
+    resolveActionState() {
+      calls.push(['state']);
+      return { canUseWallpaperControls: true };
+    },
+    getDocument() {
+      return documentRef;
+    },
+    getWallpaperView() {
+      return {
+        setStudioWallpaperTab(options) {
+          calls.push(['view', options]);
+          return true;
+        }
+      };
+    },
+    setWallpaperTabState(tab) {
+      calls.push(['persist', tab]);
+    }
+  });
+
+  assert.equal(accessors.setWallpaperTab('custom'), true);
+  assert.deepEqual(calls, [
+    ['state'],
+    ['view', { documentRef, tab: 'custom' }],
+    ['persist', 'custom']
+  ]);
+});
+
+test('wallpaper accessors do not touch the view when wallpaper controls are unavailable', () => {
+  let viewCalls = 0;
+  const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors({
+    resolveActionState: () => ({ canUseWallpaperControls: false }),
+    getWallpaperView() {
+      viewCalls += 1;
+      return null;
+    }
+  });
+
+  assert.equal(accessors.setWallpaperTab('custom'), false);
+  assert.equal(viewCalls, 0);
 });
 
 test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {

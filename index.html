@@ -1510,6 +1510,7 @@
   <script src="/shared/studio-editor-grid-snap-shell-runtime.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
+  <script src="/shared/studio-editor-wallpaper-accessors.js"></script>
   <script src="/shared/studio-editor-wallpaper-gradient-actions.js"></script>
   <script src="/shared/studio-editor-wallpaper-controller.js"></script>
   <script src="/shared/studio-editor-wallpaper-state-controller.js"></script>
@@ -11576,7 +11577,28 @@
     }
 
     // Wallpaper / Background styles Tabs
+    const studioEditorWallpaperAccessorsApi = typeof SlideNextStudioEditorWallpaperAccessors !== 'undefined'
+      ? SlideNextStudioEditorWallpaperAccessors
+      : null;
+    const studioEditorWallpaperAccessors = studioEditorWallpaperAccessorsApi
+      && typeof studioEditorWallpaperAccessorsApi.createStudioEditorWallpaperAccessors === 'function'
+      ? studioEditorWallpaperAccessorsApi.createStudioEditorWallpaperAccessors({
+          resolveActionState: resolveCurrentStudioWallpaperActionState,
+          getDocument: () => document,
+          getWallpaperView: () => typeof SlideNextStudioEditorWallpaperView !== 'undefined'
+            ? SlideNextStudioEditorWallpaperView
+            : null,
+          setWallpaperTabState: typeof setStudioWallpaperTab === 'function'
+            ? setStudioWallpaperTab
+            : null
+        })
+      : null;
     function setWallpaperTab(tab) {
+      if (typeof studioEditorWallpaperAccessors !== 'undefined'
+        && studioEditorWallpaperAccessors
+        && typeof studioEditorWallpaperAccessors.setWallpaperTab === 'function') {
+        return studioEditorWallpaperAccessors.setWallpaperTab(tab);
+      }
       if (!resolveCurrentStudioWallpaperActionState().canUseWallpaperControls) {
         return false;
       }
