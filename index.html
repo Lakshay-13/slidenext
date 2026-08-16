@@ -1056,30 +1056,30 @@
           <!-- Text content editor -->
           <div class="flex flex-col gap-2" id="inspectorTextContentGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Text Copy Content</label>
-            <textarea id="elTextContent" oninput="applySelectedElementStyle('text', this.value)" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
+            <textarea id="elTextContent" rows="3" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all resize-none"></textarea>
           </div>
 
           <!-- Structured chart data editor -->
           <div class="flex flex-col gap-2 hidden" id="inspectorChartGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Chart Title</label>
-            <input id="elChartTitle" type="text" onchange="applySelectedElementStyle('chartTitle', this.value)" placeholder="Quarterly trend" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <input id="elChartTitle" type="text" placeholder="Quarterly trend" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Chart Values</label>
-            <input id="elChartValues" type="text" onchange="applySelectedElementStyle('chartValues', this.value)" placeholder="42, 68, 55, 86" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <input id="elChartValues" type="text" placeholder="42, 68, 55, 86" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
             <span class="text-[9px] text-zinc-500 font-mono">Comma-separated values; one value per bar.</span>
           </div>
 
           <!-- Image Source editor (Only displays for images) -->
           <div class="flex flex-col gap-2 hidden" id="inspectorImageGroup">
             <label class="text-[10px] font-mono text-zinc-500 uppercase">Image Asset URL</label>
-            <input type="text" id="elImageSrc" onchange="applySelectedElementStyle('src', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
+            <input type="text" id="elImageSrc" class="w-full p-2.5 bg-zinc-900 border border-white/5 hover:border-white/10 focus:border-[#7028d0]/50 rounded-lg text-xs font-mono text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all" />
             <label class="text-[10px] font-mono text-zinc-500 uppercase mt-1">Image Fit</label>
-            <select id="elImageFit" onchange="applySelectedElementStyle('objectFit', this.value)" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <select id="elImageFit" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="fill">Fill Frame</option>
               <option value="contain">Fit Inside</option>
               <option value="cover">Crop to Frame</option>
             </select>
             <label class="text-[10px] font-mono text-zinc-500 uppercase mt-1">Crop Position</label>
-            <select id="elImagePosition" onchange="applySelectedElementStyle('objectPosition', this.value)" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            <select id="elImagePosition" disabled class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed">
               <option value="left top">Top Left</option>
               <option value="center top">Top Center</option>
               <option value="right top">Top Right</option>
@@ -1102,13 +1102,13 @@
                 <span>Font Size:</span>
                 <span class="text-white font-bold" id="fontSizeVal">16px</span>
               </div>
-              <input type="range" id="elFontSize" min="8" max="96" value="16" oninput="applySelectedElementStyle('size', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elFontSize" min="8" max="96" value="16" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Font Family -->
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Font Family</label>
-              <select id="elFontFamily" onchange="applySelectedElementStyle('family', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+              <select id="elFontFamily" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                 <option value="'Geist', sans-serif">Geist Sans</option>
                 <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
                 <option value="system-ui, sans-serif">System Sans</option>
@@ -1119,7 +1119,7 @@
             <!-- Font Weight -->
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Weight</label>
-              <select id="elFontWeight" onchange="applySelectedElementStyle('weight', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+              <select id="elFontWeight" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                 <option value="300">Light</option>
                 <option value="400">Regular</option>
                 <option value="500">Medium</option>
@@ -1131,14 +1131,14 @@
             <div class="grid grid-cols-2 gap-2">
               <div class="flex flex-col gap-2">
                 <label for="elFontStyle" class="text-[10px] font-mono text-zinc-500 uppercase">Style</label>
-                <select id="elFontStyle" onchange="applySelectedElementStyle('italic', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <select id="elFontStyle" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                   <option value="normal">Regular</option>
                   <option value="italic">Italic</option>
                 </select>
               </div>
               <div class="flex flex-col gap-2">
                 <label for="elTextDecoration" class="text-[10px] font-mono text-zinc-500 uppercase">Decoration</label>
-                <select id="elTextDecoration" onchange="applySelectedElementStyle('underline', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+                <select id="elTextDecoration" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                   <option value="none">None</option>
                   <option value="underline">Underline</option>
                 </select>
@@ -1147,7 +1147,7 @@
 
             <div class="flex flex-col gap-2">
               <label for="elLineHeight" class="text-[10px] font-mono text-zinc-500 uppercase">Line Height</label>
-              <select id="elLineHeight" onchange="applySelectedElementStyle('lineHeight', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+              <select id="elLineHeight" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                 <option value="1">Compact</option>
                 <option value="1.15">Tight</option>
                 <option value="1.2">Default</option>
@@ -1162,16 +1162,16 @@
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Alignment</label>
               <div class="grid grid-cols-4 gap-1.5 bg-zinc-900 p-1 rounded-lg border border-white/5">
-                <button onclick="applySelectedElementStyle('align', 'left')" id="alignLeftBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                <button id="alignLeftBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
                   <span class="material-symbols-outlined text-[16px]">format_align_left</span>
                 </button>
-                <button onclick="applySelectedElementStyle('align', 'center')" id="alignCenterBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                <button id="alignCenterBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
                   <span class="material-symbols-outlined text-[16px]">format_align_center</span>
                 </button>
-                <button onclick="applySelectedElementStyle('align', 'right')" id="alignRightBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                <button id="alignRightBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
                   <span class="material-symbols-outlined text-[16px]">format_align_right</span>
                 </button>
-                <button onclick="applySelectedElementStyle('align', 'justify')" id="alignJustifyBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
+                <button id="alignJustifyBtn" class="py-1 flex items-center justify-center hover:bg-white/5 text-zinc-400 hover:text-white rounded transition-all">
                   <span class="material-symbols-outlined text-[16px]">format_align_justify</span>
                 </button>
               </div>
@@ -1180,7 +1180,7 @@
             <!-- Custom text color -->
             <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
               <span class="text-xs font-mono text-zinc-400">Text Paint:</span>
-              <input type="color" id="elTextColor" oninput="applySelectedElementStyle('color', this.value)" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              <input type="color" id="elTextColor" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
             </div>
 
             <div class="flex flex-col gap-2">
@@ -1188,7 +1188,7 @@
                 <span>Opacity:</span>
                 <span class="text-white font-bold" id="opacityVal">100%</span>
               </div>
-              <input type="range" id="elOpacity" min="10" max="100" value="100" oninput="applySelectedElementStyle('opacity', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elOpacity" min="10" max="100" value="100" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
           </div>
 
@@ -1199,7 +1199,7 @@
             <!-- Border Style -->
             <div class="flex flex-col gap-2">
               <label class="text-[10px] font-mono text-zinc-500 uppercase">Border Style</label>
-              <select id="elBorderStyle" onchange="applySelectedElementStyle('borderStyle', this.value)" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
+              <select id="elBorderStyle" class="w-full p-2.5 bg-zinc-900 border border-white/5 focus:border-[#7028d0]/50 rounded-lg text-xs font-sans text-white focus:outline-none transition-all">
                 <option value="none">None</option>
                 <option value="solid">Solid</option>
                 <option value="dashed">Dashed</option>
@@ -1214,7 +1214,7 @@
                 <span>Border Width:</span>
                 <span class="text-white font-bold" id="borderWidthVal">0px</span>
               </div>
-              <input type="range" id="elBorderWidth" min="0" max="20" value="0" oninput="applySelectedElementStyle('borderWidth', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elBorderWidth" min="0" max="20" value="0" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Border Radius -->
@@ -1223,13 +1223,13 @@
                 <span>Corner Radius:</span>
                 <span class="text-white font-bold" id="borderRadiusVal">0px</span>
               </div>
-              <input type="range" id="elBorderRadius" min="0" max="100" value="0" oninput="applySelectedElementStyle('borderRadius', this.value)" class="w-full accent-[#7028d0] cursor-pointer" />
+              <input type="range" id="elBorderRadius" min="0" max="100" value="0" class="w-full accent-[#7028d0] cursor-pointer" />
             </div>
 
             <!-- Border Color -->
             <div class="flex items-center justify-between p-2.5 bg-zinc-900 border border-white/5 rounded-lg">
               <span class="text-xs font-mono text-zinc-400">Border Color:</span>
-              <input type="color" id="elBorderColor" oninput="applySelectedElementStyle('borderColor', this.value)" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
+              <input type="color" id="elBorderColor" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer" />
             </div>
           </div>
 
@@ -1252,7 +1252,7 @@
             </div>
             <div class="flex items-center justify-between p-2 bg-zinc-900 border border-white/5 rounded-lg text-xs font-mono">
               <span class="text-zinc-400">z-index:</span>
-              <input type="number" id="elZIndex" onchange="applySelectedElementStyle('zIndex', this.value)" class="w-16 bg-zinc-950 border border-white/10 text-white rounded text-center py-0.5 focus:outline-none" />
+              <input type="number" id="elZIndex" class="w-16 bg-zinc-950 border border-white/10 text-white rounded text-center py-0.5 focus:outline-none" />
             </div>
           </div>
 
@@ -4071,6 +4071,10 @@
     const studioEditorStyleController = studioEditorStyleRuntime
       ? studioEditorStyleRuntime.styleController
       : null;
+    if (studioEditorStyleController
+      && typeof studioEditorStyleController.bindStudioEditorStyleControls === 'function') {
+      studioEditorStyleController.bindStudioEditorStyleControls({ documentRef: document });
+    }
     const studioEditorClipboardRuntime = typeof SlideNextStudioEditorClipboardShellRuntime !== 'undefined'
       && SlideNextStudioEditorClipboardShellRuntime
       && typeof SlideNextStudioEditorClipboardShellRuntime.createStudioEditorClipboardShellRuntime === 'function'

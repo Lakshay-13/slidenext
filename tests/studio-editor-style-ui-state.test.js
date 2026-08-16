@@ -200,13 +200,49 @@ test('style inspector inputs do not wire duplicate inline version checkpoints', 
   });
 });
 
+test('style inspector controls delegate through the shared style controller', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  [
+    'elTextContent',
+    'elChartTitle',
+    'elChartValues',
+    'elImageSrc',
+    'elImageFit',
+    'elImagePosition',
+    'elFontSize',
+    'elFontFamily',
+    'elFontWeight',
+    'elFontStyle',
+    'elTextDecoration',
+    'elLineHeight',
+    'alignLeftBtn',
+    'alignCenterBtn',
+    'alignRightBtn',
+    'alignJustifyBtn',
+    'elTextColor',
+    'elOpacity',
+    'elBorderStyle',
+    'elBorderWidth',
+    'elBorderRadius',
+    'elBorderColor',
+    'elZIndex'
+  ].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing style control: ${id}`);
+    assert.doesNotMatch(line, /onclick=|onchange=|oninput=/);
+  });
+  assert.match(
+    fileContent,
+    /bindStudioEditorStyleControls\(\{ documentRef: document \}\)/
+  );
+});
+
 test('image asset URL commits on change instead of every keystroke', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const control = fileContent.match(/<input[^>]*id="elImageSrc"[^>]*>/);
 
   assert.ok(control, 'image asset URL control should exist');
-  assert.match(control[0], /onchange="applySelectedElementStyle\('src', this\.value\)"/);
-  assert.doesNotMatch(control[0], /oninput=/);
+  assert.doesNotMatch(control[0], /onchange=|oninput=/);
 });
 
 test('updateStyleActionState disables style controls whenever the current selection cannot accept style edits', () => {

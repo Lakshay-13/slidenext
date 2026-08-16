@@ -4,6 +4,77 @@ const styleController = require('../shared/studio-editor-style-controller.js');
 const canonicalDeck = require('../shared/canonical-deck.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 
+test('style controller binds inspector controls with their existing event cadence', () => {
+  const valueBindings = [
+    ['elTextContent', 'input', 'text'],
+    ['elChartTitle', 'change', 'chartTitle'],
+    ['elChartValues', 'change', 'chartValues'],
+    ['elImageSrc', 'change', 'src'],
+    ['elImageFit', 'change', 'objectFit'],
+    ['elImagePosition', 'change', 'objectPosition'],
+    ['elFontSize', 'input', 'size'],
+    ['elFontFamily', 'change', 'family'],
+    ['elFontWeight', 'change', 'weight'],
+    ['elFontStyle', 'change', 'italic'],
+    ['elTextDecoration', 'change', 'underline'],
+    ['elLineHeight', 'change', 'lineHeight'],
+    ['elTextColor', 'input', 'color'],
+    ['elOpacity', 'input', 'opacity'],
+    ['elBorderStyle', 'change', 'borderStyle'],
+    ['elBorderWidth', 'input', 'borderWidth'],
+    ['elBorderRadius', 'input', 'borderRadius'],
+    ['elBorderColor', 'input', 'borderColor'],
+    ['elZIndex', 'change', 'zIndex']
+  ];
+  const alignmentBindings = [
+    ['alignLeftBtn', 'left'],
+    ['alignCenterBtn', 'center'],
+    ['alignRightBtn', 'right'],
+    ['alignJustifyBtn', 'justify']
+  ];
+  const controlIds = [
+    ...valueBindings.map(([id]) => id),
+    ...alignmentBindings.map(([id]) => id)
+  ];
+  const controls = Object.fromEntries(controlIds.map((id) => [id, {
+    value: `value:${id}`,
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(_selection, prop, value) {
+        calls.push([prop, value]);
+        return { canApply: false };
+      }
+    },
+    getIframeDoc: () => ({})
+  });
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindStudioEditorStyleControls({ documentRef }),
+    Object.fromEntries(controlIds.map((id) => [id, true]))
+  );
+  valueBindings.forEach(([id, eventName]) => {
+    controls[id].listeners[eventName]({ currentTarget: controls[id] });
+  });
+  alignmentBindings.forEach(([id]) => {
+    controls[id].listeners.click({ currentTarget: controls[id] });
+  });
+  assert.deepEqual(calls, [
+    ...valueBindings.map(([, , prop], index) => [prop, `value:${valueBindings[index][0]}`]),
+    ...alignmentBindings.map(([, value]) => ['align', value])
+  ]);
+});
+
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
   const buildCanonicalDeck = () => ({ id: 'live' });

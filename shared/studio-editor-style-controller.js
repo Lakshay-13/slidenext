@@ -411,8 +411,69 @@
       return true;
     }
 
+    function bindStudioEditorStyleControls(options = {}) {
+      const styleDocument = options.documentRef || documentRef;
+      if (!styleDocument || typeof styleDocument.getElementById !== 'function') {
+        return {};
+      }
+
+      const bindings = {};
+      const valueControls = [
+        ['elTextContent', 'input', 'text'],
+        ['elChartTitle', 'change', 'chartTitle'],
+        ['elChartValues', 'change', 'chartValues'],
+        ['elImageSrc', 'change', 'src'],
+        ['elImageFit', 'change', 'objectFit'],
+        ['elImagePosition', 'change', 'objectPosition'],
+        ['elFontSize', 'input', 'size'],
+        ['elFontFamily', 'change', 'family'],
+        ['elFontWeight', 'change', 'weight'],
+        ['elFontStyle', 'change', 'italic'],
+        ['elTextDecoration', 'change', 'underline'],
+        ['elLineHeight', 'change', 'lineHeight'],
+        ['elTextColor', 'input', 'color'],
+        ['elOpacity', 'input', 'opacity'],
+        ['elBorderStyle', 'change', 'borderStyle'],
+        ['elBorderWidth', 'input', 'borderWidth'],
+        ['elBorderRadius', 'input', 'borderRadius'],
+        ['elBorderColor', 'input', 'borderColor'],
+        ['elZIndex', 'change', 'zIndex']
+      ];
+      valueControls.forEach(([id, eventName, prop]) => {
+        const control = styleDocument.getElementById(id);
+        if (!control || typeof control.addEventListener !== 'function') {
+          bindings[id] = false;
+          return;
+        }
+        control.addEventListener(eventName, (event) => {
+          const source = event && (event.currentTarget || event.target);
+          apply(prop, source && source.value);
+        });
+        bindings[id] = true;
+      });
+
+      const alignmentControls = [
+        ['alignLeftBtn', 'left'],
+        ['alignCenterBtn', 'center'],
+        ['alignRightBtn', 'right'],
+        ['alignJustifyBtn', 'justify']
+      ];
+      alignmentControls.forEach(([id, value]) => {
+        const control = styleDocument.getElementById(id);
+        if (!control || typeof control.addEventListener !== 'function') {
+          bindings[id] = false;
+          return;
+        }
+        control.addEventListener('click', () => apply('align', value));
+        bindings[id] = true;
+      });
+
+      return bindings;
+    }
+
     return {
-      apply
+      apply,
+      bindStudioEditorStyleControls
     };
   }
 
