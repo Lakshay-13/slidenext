@@ -18,7 +18,7 @@ test('grid snap editor wiring delegates state ownership to the shared controller
   );
   assert.match(
     fileContent,
-    /SlideNextStudioEditorGridSnapShellRuntime\.createStudioEditorGridSnapShellRuntime\(/
+    /studioEditorGridSnapRuntimeAccessorsApi\s*\.\s*createStudioEditorGridSnapRuntimeAccessors\(/
   );
   assert.doesNotMatch(fileContent, /let isGridSnapEnabled = false/);
 });

@@ -4,8 +4,41 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const gridSnapRuntime = require('../shared/studio-editor-grid-snap-runtime.js');
+const gridSnapRuntimeAccessors = require('../shared/studio-editor-grid-snap-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('grid snap runtime accessors delegate to the shell runtime', () => {
+  const runtime = { name: 'grid-snap-shell' };
+  let receivedOptions = null;
+  const shellRuntimeApi = {
+    createStudioEditorGridSnapShellRuntime(options) {
+      receivedOptions = options;
+      return runtime;
+    }
+  };
+  const gridSnapRuntimeApi = { name: 'grid-snap-runtime' };
+  const gridSnapView = { name: 'grid-snap-view' };
+
+  const result = gridSnapRuntimeAccessors.createStudioEditorGridSnapRuntimeAccessors({
+    runtimeApi: shellRuntimeApi,
+    gridSnapRuntimeApi,
+    runtimeOptions: { gridSnapView }
+  });
+
+  assert.deepEqual(result, { runtime });
+  assert.equal(receivedOptions.gridSnapRuntimeApi, gridSnapRuntimeApi);
+  assert.equal(receivedOptions.gridSnapView, gridSnapView);
+});
+
+test('grid snap runtime accessors fail closed without a shell runtime', () => {
+  assert.deepEqual(
+    gridSnapRuntimeAccessors.createStudioEditorGridSnapRuntimeAccessors({
+      runtimeApi: null
+    }),
+    { runtime: null }
+  );
+});
 
 test('grid snap runtime composes controller dependencies without changing them', () => {
   const calls = [];
@@ -46,6 +79,14 @@ test('index wires grid snap state through the runtime module', () => {
     /<script src="\/shared\/studio-editor-grid-snap-shell-runtime\.js"><\/script>/
   );
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-grid-snap-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorGridSnapRuntimeAccessorsApi\s*\.\s*createStudioEditorGridSnapRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorGridSnapShellRuntime\.createStudioEditorGridSnapShellRuntime\(/
   );
