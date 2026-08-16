@@ -45,8 +45,8 @@ test('overlay accessors return undefined when the shared overlay renderer is una
 test('editor composes selection overlay synchronization through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /studioEditorSelectionOverlayShellRuntimeApi/);
-  assert.match(source, /createStudioEditorSelectionOverlayShellRuntime\(/);
+  assert.match(source, /studioEditorSelectionOverlayAccessorsApi/);
+  assert.match(source, /createStudioEditorSelectionOverlayAccessors\(/);
   assert.match(
     source,
     /getTransformSelectionState: \(doc\) => getTransformSelectionState\(getStudioSelectedElements\(doc\), doc\),/

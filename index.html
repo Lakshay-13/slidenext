@@ -1744,6 +1744,7 @@
   <script src="/shared/studio-editor-overlay.js"></script>
   <script src="/shared/studio-editor-overlay-accessors.js"></script>
   <script src="/shared/studio-editor-selection-overlay-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-selection-overlay-accessors.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
   <script src="/shared/studio-editor-history-state.js"></script>
@@ -9701,14 +9702,23 @@
         : null;
     }
 
-    const studioEditorSelectionOverlayShellRuntimeApi =
-      typeof SlideNextStudioEditorSelectionOverlayShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorSelectionOverlayShellRuntime
+    const studioEditorSelectionOverlayAccessorsApi =
+      typeof SlideNextStudioEditorSelectionOverlayAccessors !== 'undefined'
+      ? SlideNextStudioEditorSelectionOverlayAccessors
       : null;
-    const studioEditorSelectionOverlayShellRuntime = studioEditorSelectionOverlayShellRuntimeApi
-      && typeof studioEditorSelectionOverlayShellRuntimeApi
-        .createStudioEditorSelectionOverlayShellRuntime === 'function'
-      ? studioEditorSelectionOverlayShellRuntimeApi.createStudioEditorSelectionOverlayShellRuntime({
+    const studioEditorSelectionOverlayAccessors = studioEditorSelectionOverlayAccessorsApi
+      && typeof studioEditorSelectionOverlayAccessorsApi
+        .createStudioEditorSelectionOverlayAccessors === 'function'
+      ? studioEditorSelectionOverlayAccessorsApi.createStudioEditorSelectionOverlayAccessors({
+          runtimeApi: typeof SlideNextStudioEditorSelectionOverlayShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorSelectionOverlayShellRuntime
+            : null,
+          overlayApi: typeof SlideNextStudioEditorOverlay !== 'undefined'
+            ? SlideNextStudioEditorOverlay
+            : null,
+          overlayStateApi: typeof SlideNextStudioEditorOverlayState !== 'undefined'
+            ? SlideNextStudioEditorOverlayState
+            : null,
           getCurrentDocument: typeof getIframeDoc === 'function' ? () => getIframeDoc() : () => null,
           getActiveSlide: typeof getActiveSlide === 'function' ? (doc) => getActiveSlide(doc) : null,
           getSelectedElements: (doc) => getStudioSelectedElements(doc),
@@ -9720,9 +9730,9 @@
           hideDragHud: () => hideDragHud()
         })
       : null;
-    var studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayShellRuntime
-      && typeof studioEditorSelectionOverlayShellRuntime.sync === 'function'
-      ? studioEditorSelectionOverlayShellRuntime.sync
+    var studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayAccessors
+      && typeof studioEditorSelectionOverlayAccessors.sync === 'function'
+      ? studioEditorSelectionOverlayAccessors.sync
       : null;
 
     function syncSelectionOverlay() {
