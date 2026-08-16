@@ -119,6 +119,66 @@ test('wallpaper controller skips unchanged paints and unavailable decks', () => 
   assert.equal(mutationCalls, 0);
 });
 
+test('wallpaper controller fails closed when editor callbacks throw', () => {
+  assert.equal(controller.applyStudioPresetWallpaper({
+    resolveActionState() {
+      throw new Error('editor state unavailable');
+    }
+  }), false);
+
+  assert.equal(controller.applyStudioPresetWallpaper({
+    background: '#ffffff',
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    applyMutation() {
+      throw new Error('mutation failed');
+    }
+  }), false);
+
+  assert.equal(controller.applyStudioWallpaperToAllSlides({
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    getSlides() {
+      throw new Error('slide read failed');
+    },
+    applyMutation() {
+      throw new Error('mutation should not run');
+    }
+  }), false);
+});
+
+test('wallpaper controller keeps committed mutations successful when notification hooks throw', () => {
+  assert.equal(controller.applyStudioPresetWallpaper({
+    background: '#ffffff',
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    applyMutation: () => ({ didChange: true, transaction: { id: 'tx' } }),
+    finalizeMutation: () => true,
+    setPendingCustomWallpaperVersion() {
+      throw new Error('state hook failed');
+    }
+  }), true);
+
+  assert.equal(controller.applyStudioWallpaperToAllSlides({
+    resolveActionState: () => ({
+      canUseWallpaperControls: true,
+      activeSlide: { style: { background: '#111111' } }
+    }),
+    getSlides: () => [{ id: 'slide-1' }],
+    applyMutation: () => ({ didChange: true, transaction: { id: 'tx-all' } }),
+    finalizeMutation: () => true,
+    alertRef() {
+      throw new Error('alert unavailable');
+    }
+  }), true);
+});
+
 test('wallpaper controller applies the active paint to all slides and alerts after finalization', () => {
   const calls = [];
   const slides = [{ id: 'slide-1' }, { id: 'slide-2' }];

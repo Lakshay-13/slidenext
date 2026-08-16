@@ -15,15 +15,49 @@
     }
   }
 
-  function applyStudioPresetWallpaper(options = {}) {
+  function resolveStudioWallpaperActionContext(options = {}) {
     const resolveActionState = typeof options.resolveActionState === 'function'
       ? options.resolveActionState
       : () => ({ canUseWallpaperControls: false });
     const getIframeDocument = typeof options.getIframeDocument === 'function'
       ? options.getIframeDocument
       : () => null;
-    const iframeDoc = getIframeDocument();
-    const actionState = resolveActionState(iframeDoc);
+    try {
+      const iframeDoc = getIframeDocument();
+      return {
+        iframeDoc,
+        actionState: resolveActionState(iframeDoc)
+      };
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function resolveStudioWallpaperPaint(wallpaperView, slide) {
+    try {
+      if (wallpaperView
+        && typeof wallpaperView.resolveStudioActiveSlideBackgroundPaint === 'function') {
+        return wallpaperView.resolveStudioActiveSlideBackgroundPaint(slide) || '';
+      }
+      return slide && slide.style && slide.style.background || '';
+    } catch (err) {
+      return '';
+    }
+  }
+
+  function invokeStudioWallpaperRollback(rollbackMutation, ...args) {
+    if (typeof rollbackMutation !== 'function') return;
+    try {
+      rollbackMutation(...args);
+    } catch (err) {
+      // Rollback is best effort after a rejected mutation.
+    }
+  }
+
+  function applyStudioPresetWallpaper(options = {}) {
+    const actionContext = resolveStudioWallpaperActionContext(options);
+    if (!actionContext) return false;
+    const { iframeDoc, actionState } = actionContext;
     if (!actionState || !actionState.canUseWallpaperControls || !actionState.activeSlide) {
       return false;
     }
@@ -31,13 +65,9 @@
     const wallpaperView = options.wallpaperView
       || (root && root.SlideNextStudioEditorWallpaperView)
       || null;
-    const readBackgroundPaint = wallpaperView
-      && typeof wallpaperView.resolveStudioActiveSlideBackgroundPaint === 'function'
-      ? wallpaperView.resolveStudioActiveSlideBackgroundPaint
-      : (slide) => slide && slide.style && slide.style.background || '';
     const background = options.background;
-    const currentBackground = readBackgroundPaint(actionState.canonicalActiveSlide)
-      || readBackgroundPaint(actionState.activeSlide);
+    const currentBackground = resolveStudioWallpaperPaint(wallpaperView, actionState.canonicalActiveSlide)
+      || resolveStudioWallpaperPaint(wallpaperView, actionState.activeSlide);
     if (currentBackground === background) return false;
 
     const applyMutation = typeof options.applyMutation === 'function'
@@ -53,10 +83,15 @@
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : () => '';
-    const mutation = applyMutation(actionState.activeSlide, background, {
-      sourceDocument: iframeDoc,
-      getSlideId: () => getSlideId(actionState.activeSlide)
-    });
+    let mutation;
+    try {
+      mutation = applyMutation(actionState.activeSlide, background, {
+        sourceDocument: iframeDoc,
+        getSlideId: () => getSlideId(actionState.activeSlide)
+      });
+    } catch (err) {
+      return false;
+    }
     if (!mutation || !mutation.didChange) return false;
 
     const versionLabel = options.isCustomInput ? '' : 'Auto: Changed Background';
@@ -69,24 +104,23 @@
         )
       : invokeStudioWallpaperFinalizer(finalizeMutation, versionLabel, mutation.transaction);
     if (finalizeResult === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      invokeStudioWallpaperRollback(rollbackMutation, mutation.transaction, iframeDoc);
       return false;
     }
     if (typeof options.setPendingCustomWallpaperVersion === 'function') {
-      options.setPendingCustomWallpaperVersion(!!options.isCustomInput);
+      try {
+        options.setPendingCustomWallpaperVersion(!!options.isCustomInput);
+      } catch (err) {
+        // The mutation is already finalized; preserve the successful result.
+      }
     }
     return true;
   }
 
   function applyStudioWallpaperToAllSlides(options = {}) {
-    const resolveActionState = typeof options.resolveActionState === 'function'
-      ? options.resolveActionState
-      : () => ({ canUseWallpaperControls: false });
-    const getIframeDocument = typeof options.getIframeDocument === 'function'
-      ? options.getIframeDocument
-      : () => null;
-    const iframeDoc = getIframeDocument();
-    const actionState = resolveActionState(iframeDoc);
+    const actionContext = resolveStudioWallpaperActionContext(options);
+    if (!actionContext) return false;
+    const { iframeDoc, actionState } = actionContext;
     if (!actionState || !actionState.canUseWallpaperControls || !actionState.activeSlide) {
       return false;
     }
@@ -94,12 +128,8 @@
     const wallpaperView = options.wallpaperView
       || (root && root.SlideNextStudioEditorWallpaperView)
       || null;
-    const readBackgroundPaint = wallpaperView
-      && typeof wallpaperView.resolveStudioActiveSlideBackgroundPaint === 'function'
-      ? wallpaperView.resolveStudioActiveSlideBackgroundPaint
-      : (slide) => slide && slide.style && slide.style.background || '';
-    const background = readBackgroundPaint(actionState.canonicalActiveSlide)
-      || readBackgroundPaint(actionState.activeSlide);
+    const background = resolveStudioWallpaperPaint(wallpaperView, actionState.canonicalActiveSlide)
+      || resolveStudioWallpaperPaint(wallpaperView, actionState.activeSlide);
     if (!background) return false;
 
     const getSlides = typeof options.getSlides === 'function' ? options.getSlides : null;
@@ -117,10 +147,15 @@
     const getSlideId = typeof options.getSlideId === 'function'
       ? options.getSlideId
       : () => '';
-    const mutation = applyMutation(getSlides(iframeDoc), background, {
-      sourceDocument: iframeDoc,
-      getSlideId
-    });
+    let mutation;
+    try {
+      mutation = applyMutation(getSlides(iframeDoc), background, {
+        sourceDocument: iframeDoc,
+        getSlideId
+      });
+    } catch (err) {
+      return false;
+    }
     if (!mutation || !mutation.didChange) return false;
 
     const versionLabel = 'Auto: Applied Background to All Slides';
@@ -133,7 +168,7 @@
         )
       : invokeStudioWallpaperFinalizer(finalizeMutation, versionLabel, mutation.transaction);
     if (finalizeResult === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction, iframeDoc);
+      invokeStudioWallpaperRollback(rollbackMutation, mutation.transaction, iframeDoc);
       return false;
     }
 
@@ -143,7 +178,11 @@
         ? root.alert.bind(root)
         : null;
     if (alertRef) {
-      alertRef('Successfully applied active background paint to all slides in the deck.');
+      try {
+        alertRef('Successfully applied active background paint to all slides in the deck.');
+      } catch (err) {
+        // A notification failure must not turn a committed mutation into an error.
+      }
     }
     return true;
   }
