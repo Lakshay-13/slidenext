@@ -1521,6 +1521,7 @@
   <script src="/shared/studio-editor-slide-metadata-controller.js"></script>
   <script src="/shared/studio-editor-slide-metadata-runtime.js"></script>
   <script src="/shared/studio-editor-slide-metadata-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-slide-metadata-accessors.js"></script>
   <script src="/shared/studio-editor-slide-routing-controller.js"></script>
   <script src="/shared/studio-editor-slide-routing-runtime.js"></script>
   <script src="/shared/studio-editor-slide-routing-shell-runtime.js"></script>
@@ -3491,10 +3492,16 @@
         duplicateSlideNode
       });
     }
-    const studioEditorSlideMetadataRuntime = typeof SlideNextStudioEditorSlideMetadataShellRuntime !== 'undefined'
-      && SlideNextStudioEditorSlideMetadataShellRuntime
-      && typeof SlideNextStudioEditorSlideMetadataShellRuntime.createStudioEditorSlideMetadataShellRuntime === 'function'
-      ? SlideNextStudioEditorSlideMetadataShellRuntime.createStudioEditorSlideMetadataShellRuntime({
+    const studioEditorSlideMetadataAccessorsApi =
+      typeof SlideNextStudioEditorSlideMetadataAccessors !== 'undefined'
+      ? SlideNextStudioEditorSlideMetadataAccessors
+      : null;
+    const studioEditorSlideMetadataAccessors = studioEditorSlideMetadataAccessorsApi
+      && typeof studioEditorSlideMetadataAccessorsApi.createStudioEditorSlideMetadataAccessors === 'function'
+      ? studioEditorSlideMetadataAccessorsApi.createStudioEditorSlideMetadataAccessors({
+          runtimeApi: typeof SlideNextStudioEditorSlideMetadataShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorSlideMetadataShellRuntime
+            : null,
           metadataRuntimeApi: typeof SlideNextStudioEditorSlideMetadataRuntime !== 'undefined'
             ? SlideNextStudioEditorSlideMetadataRuntime
             : null,
@@ -3540,6 +3547,9 @@
           syncChrome: (...args) => syncStudioChromeToActiveSlide(...args)
           }
         })
+      : null;
+    const studioEditorSlideMetadataRuntime = studioEditorSlideMetadataAccessors
+      ? studioEditorSlideMetadataAccessors.runtime
       : null;
     const studioEditorSlideMetadataController = studioEditorSlideMetadataRuntime
       ? studioEditorSlideMetadataRuntime.slideMetadataController

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const shellRuntime = require('../shared/studio-editor-slide-metadata-shell-runtime.js');
+const metadataAccessors = require('../shared/studio-editor-slide-metadata-accessors.js');
 
 test('slide metadata shell runtime delegates the prepared metadata options', () => {
   let receivedOptions = null;
@@ -29,4 +30,34 @@ test('slide metadata shell runtime safely handles missing runtime factories', ()
     shellRuntime.createStudioEditorSlideMetadataShellRuntime({ metadataRuntimeApi: {} }),
     null
   );
+});
+
+test('slide metadata accessors compose the shell runtime and preserve its result', () => {
+  const runtime = { slideMetadataController: { name: 'metadata' } };
+  const runtimeOptions = { getActiveSlide: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorSlideMetadataShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const accessors = metadataAccessors.createStudioEditorSlideMetadataAccessors({
+    runtimeApi,
+    metadataRuntimeApi: { name: 'runtime' },
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].metadataRuntimeApi.name, 'runtime');
+  assert.equal(calls[0].runtimeOptions, runtimeOptions);
+});
+
+test('slide metadata accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = metadataAccessors.createStudioEditorSlideMetadataAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
 });
