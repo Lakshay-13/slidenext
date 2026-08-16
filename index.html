@@ -1482,6 +1482,7 @@
   <script src="/shared/studio-editor-asset-controller.js"></script>
   <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-asset-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-asset-insertion.js"></script>
   <script src="/shared/studio-editor-asset-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
@@ -4824,50 +4825,60 @@
         closeRenameVersionModal
       });
     }
-    const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
-      && SlideNextStudioEditorAssetShellRuntime
-      && typeof SlideNextStudioEditorAssetShellRuntime.createStudioEditorAssetShellRuntime === 'function'
-      ? SlideNextStudioEditorAssetShellRuntime.createStudioEditorAssetShellRuntime({
+    const studioEditorAssetRuntimeAccessorsApi = typeof SlideNextStudioEditorAssetRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorAssetRuntimeAccessors
+      : null;
+    const studioEditorAssetRuntimeAccessors = studioEditorAssetRuntimeAccessorsApi
+      && typeof studioEditorAssetRuntimeAccessorsApi.createStudioEditorAssetRuntimeAccessors === 'function'
+      ? studioEditorAssetRuntimeAccessorsApi.createStudioEditorAssetRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorAssetShellRuntime
+            : null,
           assetRuntimeApi: typeof SlideNextStudioEditorAssetRuntime !== 'undefined'
             ? SlideNextStudioEditorAssetRuntime
             : null,
-          controllerApi: typeof SlideNextStudioEditorAssetController !== 'undefined'
-            ? SlideNextStudioEditorAssetController
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
-            ? resolveEditorUiCanonicalDeck(getIframeDoc())
-            : buildEditorCanonicalDeck(getIframeDoc()),
-          getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
-            getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getDocument: () => getIframeDoc(),
-          getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
-          getSelectedImage: (doc) => {
-            const selectedElements = getStudioSelectedElements(doc);
-            const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
-              ? selectedElements[0]
-              : null;
-            return candidate && candidate.tagName && candidate.tagName.toLowerCase() === 'img'
-              ? candidate
-              : null;
-          },
-          getElementId: (element) => assignEditorElementId(element),
-          isElementLocked: (element) => isElementLocked(element),
-          syncInspectorForSelection: () => syncInspectorForSelection(),
-          saveHistoryState: (...args) => saveHistoryState(...args),
-          triggerAutoSave: (...args) => triggerAutoSave(...args),
-          triggerAutoVersion: (...args) => triggerAutoVersion(...args),
-          finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
-          onAssetsChanged: () => updateAssetLibraryState()
+          runtimeOptions: {
+            controllerApi: typeof SlideNextStudioEditorAssetController !== 'undefined'
+              ? SlideNextStudioEditorAssetController
+              : null,
+            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+              ? SlideNextCanonicalDeck
+              : null,
+            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+              ? SlideNextStudioEditorCanonicalState
+              : null,
+            getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(getIframeDoc())
+              : buildEditorCanonicalDeck(getIframeDoc()),
+            getCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
+              getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getDocument: () => getIframeDoc(),
+            getActiveSlideId: (doc) => getActiveSlideId(doc || getIframeDoc()),
+            getSelectedImage: (doc) => {
+              const selectedElements = getStudioSelectedElements(doc);
+              const candidate = Array.isArray(selectedElements) && selectedElements.length === 1
+                ? selectedElements[0]
+                : null;
+              return candidate && candidate.tagName && candidate.tagName.toLowerCase() === 'img'
+                ? candidate
+                : null;
+            },
+            getElementId: (element) => assignEditorElementId(element),
+            isElementLocked: (element) => isElementLocked(element),
+            syncInspectorForSelection: () => syncInspectorForSelection(),
+            saveHistoryState: (...args) => saveHistoryState(...args),
+            triggerAutoSave: (...args) => triggerAutoSave(...args),
+            triggerAutoVersion: (...args) => triggerAutoVersion(...args),
+            finalizeMutation: (...args) => finalizeEditorDeckMutation(...args),
+            onAssetsChanged: () => updateAssetLibraryState()
+          }
         })
+      : null;
+    const studioEditorAssetRuntime = studioEditorAssetRuntimeAccessors
+      ? studioEditorAssetRuntimeAccessors.runtime
       : null;
     const studioEditorAssetController = studioEditorAssetRuntime
       ? studioEditorAssetRuntime.assetController

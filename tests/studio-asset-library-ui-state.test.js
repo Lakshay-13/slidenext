@@ -41,14 +41,14 @@ function runSourceWithCanonicalUi(source, context) {
 
 test('asset runtime wiring prefers the live canonical deck resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runtimeStart = fileContent.indexOf('const studioEditorAssetRuntime =');
+  const runtimeStart = fileContent.indexOf('const studioEditorAssetRuntimeAccessorsApi =');
   const runtimeEnd = fileContent.indexOf('const studioEditorAssetController =', runtimeStart);
   assert.notEqual(runtimeStart, -1);
   assert.notEqual(runtimeEnd, -1);
 
   const runtimeSource = fileContent.slice(runtimeStart, runtimeEnd);
   const callbackStart = runtimeSource.indexOf('getCanonicalDeck:');
-  const callbackEnd = runtimeSource.indexOf('\n          getCanonicalDeckBaseline', callbackStart);
+  const callbackEnd = runtimeSource.indexOf('\n            getCanonicalDeckBaseline', callbackStart);
   assert.notEqual(callbackStart, -1);
   assert.notEqual(callbackEnd, -1);
 
