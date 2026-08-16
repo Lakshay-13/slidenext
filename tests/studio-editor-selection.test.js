@@ -253,6 +253,33 @@ test('selectStudioElement skips ineligible resolved targets before committing', 
   ]);
 });
 
+test('selectStudioElement fails closed when eligibility resolution throws', () => {
+  const calls = [];
+
+  assert.equal(studioSelection.selectStudioElement({
+    element: { id: 'stale-node' },
+    resolveEditableTarget(element) {
+      calls.push(['resolveEditableTarget', element]);
+      return element;
+    },
+    getSelectionOptions() {
+      calls.push('getSelectionOptions');
+      return {
+        isEligibleElement() {
+          throw new Error('active slide is stale');
+        }
+      };
+    },
+    commitSelectionState() {
+      calls.push('commitSelectionState');
+    }
+  }), false);
+  assert.deepEqual(calls.map((call) => Array.isArray(call) ? call[0] : call), [
+    'resolveEditableTarget',
+    'getSelectionOptions'
+  ]);
+});
+
 test('deselectStudioElement clears selection and hides the drag HUD on clear', () => {
   const calls = [];
   const hideDragHud = () => {};

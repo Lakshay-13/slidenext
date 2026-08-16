@@ -220,9 +220,12 @@
       ? options.getSelectionOptions
       : () => ({});
     const selectionOptions = getSelectionOptions();
-    if (typeof selectionOptions.isEligibleElement === 'function'
-      && selectionOptions.isEligibleElement(target) === false) {
-      return false;
+    if (typeof selectionOptions.isEligibleElement === 'function') {
+      try {
+        if (selectionOptions.isEligibleElement(target) === false) return false;
+      } catch (error) {
+        return false;
+      }
     }
     const nextSelectionState = updateStudioSelection(
       Array.isArray(options.selectedElements) ? options.selectedElements : [],
