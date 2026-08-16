@@ -1473,6 +1473,7 @@
   <script src="/shared/studio-editor-block-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-master-slide-state.js"></script>
+  <script src="/shared/studio-editor-master-slide-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-state.js"></script>
   <script src="/shared/studio-editor-template-state-runtime-accessors.js"></script>
@@ -11820,30 +11821,46 @@
         && typeof studioEditorContentStateCoordinator.syncMasterSlide === 'function') {
         return studioEditorContentStateCoordinator.syncMasterSlide(doc);
       }
-      const masterSlideStateApi = typeof SlideNextStudioEditorMasterSlideState !== 'undefined'
+      const masterSlideStateRuntimeApi =
+        typeof SlideNextStudioEditorMasterSlideState !== 'undefined'
         ? SlideNextStudioEditorMasterSlideState
         : null;
-      if (!masterSlideStateApi
-        || typeof masterSlideStateApi.createStudioEditorMasterSlideStateController !== 'function') {
+      const masterSlideStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorMasterSlideStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorMasterSlideStateRuntimeAccessors
+        : null;
+      const masterSlideStateRuntimeAccessors =
+        masterSlideStateRuntimeAccessorsApi
+        && typeof masterSlideStateRuntimeAccessorsApi
+          .createStudioEditorMasterSlideStateRuntimeAccessors === 'function'
+        ? masterSlideStateRuntimeAccessorsApi
+          .createStudioEditorMasterSlideStateRuntimeAccessors({
+            runtimeApi: masterSlideStateRuntimeApi
+          })
+        : null;
+      if (!masterSlideStateRuntimeAccessors
+        || typeof masterSlideStateRuntimeAccessors
+          .createStudioEditorMasterSlideStateController !== 'function') {
         return false;
       }
       if (!updateMasterSlideActionState.controller) {
         const masterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
           ? SlideNextStudioEditorMasterSlideView
           : null;
-        updateMasterSlideActionState.controller = masterSlideStateApi.createStudioEditorMasterSlideStateController({
-          masterSlideView,
-          getDocument: () => getIframeDoc(),
-          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
-          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
-          getActiveSlideId: (sourceDoc) => typeof getActiveSlideId === 'function'
-            ? getActiveSlideId(sourceDoc)
-            : '',
-          findCanonicalSlide: (canonicalDeck, slideId) => findEditorCanonicalSlideById(canonicalDeck, slideId),
-          applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
-          removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null,
-          documentRef: document
-        });
+        updateMasterSlideActionState.controller = masterSlideStateRuntimeAccessors
+          .createStudioEditorMasterSlideStateController({
+            masterSlideView,
+            getDocument: () => getIframeDoc(),
+            getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+            getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+            getActiveSlideId: (sourceDoc) => typeof getActiveSlideId === 'function'
+              ? getActiveSlideId(sourceDoc)
+              : '',
+            findCanonicalSlide: (canonicalDeck, slideId) => findEditorCanonicalSlideById(canonicalDeck, slideId),
+            applyMasterSlide: typeof applySavedMasterSlide === 'function' ? applySavedMasterSlide : null,
+            removeMasterSlide: typeof removeSavedMasterSlide === 'function' ? removeSavedMasterSlide : null,
+            documentRef: document
+          });
       }
       return updateMasterSlideActionState.controller
         && typeof updateMasterSlideActionState.controller.sync === 'function'
