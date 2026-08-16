@@ -8142,6 +8142,9 @@
           : null,
         saveHistoryState: options.saveHistoryState,
         buildCanonicalDeck: options.buildCanonicalDeck,
+        isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+          ? getEditorCanonicalDeckValidator()
+          : null,
         getActiveSlideId: options.getActiveSlideId,
         getSelectedElementIds: options.getSelectedElementIds
       });

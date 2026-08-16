@@ -609,7 +609,10 @@ test('createEditorSlideMutationRestoreStateCapturer delegates construction to th
     },
     getActiveSlideId() {},
     getCommittedSelectedElementIds() {},
-    saveHistoryState() {}
+    saveHistoryState() {},
+    getEditorCanonicalDeckValidator() {
+      return function isCanonicalDeck() {};
+    }
   };
 
   vm.createContext(context);
@@ -630,6 +633,7 @@ test('createEditorSlideMutationRestoreStateCapturer delegates construction to th
   assert.equal(delegatedOptions[0].getActiveSlideId, context.getActiveSlideId);
   assert.equal(delegatedOptions[0].getCommittedSelectedElementIds, context.getCommittedSelectedElementIds);
   assert.equal(typeof delegatedOptions[0].captureStudioDeckViewBeforeSlideMutation, 'function');
+  assert.equal(typeof delegatedOptions[0].isCanonicalDeck, 'function');
 });
 
 test('restoreSelectionAfterPreservedSlideMutation delegates preservation ordering to shared selection', () => {

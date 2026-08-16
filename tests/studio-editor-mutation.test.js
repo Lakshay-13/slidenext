@@ -860,6 +860,32 @@ test('createStudioSlideMutationRestoreStateCapturer records a canonical baseline
   ]);
 });
 
+test('createStudioSlideMutationRestoreStateCapturer drops an invalid canonical baseline', () => {
+  const iframeDoc = { id: 'editor-doc' };
+  const calls = [];
+  const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
+    buildCanonicalDeck(doc, options) {
+      calls.push(['buildCanonicalDeck', doc, options]);
+      return { kind: 'invalid-deck' };
+    },
+    isCanonicalDeck() {
+      return false;
+    },
+    saveHistoryState(...args) {
+      calls.push(['saveHistoryState', ...args]);
+    },
+    getActiveSlideId: () => 'slide-1',
+    getCommittedSelectedElementIds: () => []
+  });
+
+  captureState(iframeDoc);
+
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', iframeDoc, { preferLiveCanonicalDeck: false }],
+    ['saveHistoryState']
+  ]);
+});
+
 test('createStudioSlideMutationRestoreStateCapturer marks object-form baseline failures', () => {
   const captureState = mutation.createStudioSlideMutationRestoreStateCapturer({
     saveHistoryState: () => ({ didCapture: false }),

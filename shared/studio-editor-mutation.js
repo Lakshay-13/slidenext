@@ -299,13 +299,21 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     const captureHistoryBaseline = buildCanonicalDeck
       ? (iframeDoc) => {
-          const canonicalDeck = buildCanonicalDeck(iframeDoc, {
-            preferLiveCanonicalDeck: false
-          });
-          if (canonicalDeck) {
+          let canonicalDeck = null;
+          try {
+            canonicalDeck = buildCanonicalDeck(iframeDoc, {
+              preferLiveCanonicalDeck: false
+            });
+          } catch (err) {
+            canonicalDeck = null;
+          }
+          if (isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)) {
             return captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck);
           } else {
             return captureStudioHistoryState(saveHistoryState);

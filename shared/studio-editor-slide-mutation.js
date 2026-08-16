@@ -112,6 +112,9 @@
     const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
       ? options.buildCanonicalDeck
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const createRestoreStateCapturer = mutationApi
       && typeof mutationApi.createStudioSlideMutationRestoreStateCapturer === 'function'
       ? mutationApi.createStudioSlideMutationRestoreStateCapturer
@@ -126,6 +129,7 @@
         captureStudioDeckViewBeforeSlideMutation,
         saveHistoryState,
         buildCanonicalDeck: options.buildCanonicalDeck,
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         getActiveSlideId,
         getCommittedSelectedElementIds
       });
@@ -136,6 +140,7 @@
         doc: iframeDoc,
         saveHistoryState,
         buildCanonicalDeck,
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         getActiveSlideId,
         getCommittedSelectedElementIds
       });
@@ -150,8 +155,11 @@
           canonicalDeck = null;
         }
       }
-      const historyCaptureResult = canonicalDeck
-        ? captureStudioHistoryState(saveHistoryState, false, null, canonicalDeck)
+      const validCanonicalDeck = isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
+        ? canonicalDeck
+        : null;
+      const historyCaptureResult = validCanonicalDeck
+        ? captureStudioHistoryState(saveHistoryState, false, null, validCanonicalDeck)
         : captureStudioHistoryState(saveHistoryState);
       if (isStudioHistoryCaptureFailure(historyCaptureResult)) {
         return {

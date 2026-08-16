@@ -189,6 +189,29 @@ test('createStudioEditorSlideMutationRestoreStateCapturer uses a canonical basel
   ]);
 });
 
+test('createStudioEditorSlideMutationRestoreStateCapturer drops an invalid fallback baseline', () => {
+  const calls = [];
+  const capture = slideMutation.createStudioEditorSlideMutationRestoreStateCapturer({
+    buildCanonicalDeck() {
+      return { kind: 'invalid-deck' };
+    },
+    isCanonicalDeck() {
+      return false;
+    },
+    saveHistoryState(...args) {
+      calls.push(args);
+    },
+    getActiveSlideId: () => 'slide-2',
+    getSelectedElementIds: () => []
+  });
+
+  assert.deepEqual(capture({ id: 'doc' }), {
+    preservedActiveSlideId: 'slide-2',
+    preservedSelectionIds: []
+  });
+  assert.deepEqual(calls, [[]]);
+});
+
 test('createStudioEditorSlideMutationRestoreStateCapturer passes canonical capture options to deck view fallback', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let delegatedOptions = null;
@@ -202,6 +225,9 @@ test('createStudioEditorSlideMutationRestoreStateCapturer passes canonical captu
     buildCanonicalDeck() {
       return canonicalDeck;
     },
+    isCanonicalDeck() {
+      return true;
+    },
     saveHistoryState() {},
     getActiveSlideId() {},
     getSelectedElementIds() {}
@@ -212,6 +238,7 @@ test('createStudioEditorSlideMutationRestoreStateCapturer passes canonical captu
     preservedSelectionIds: []
   });
   assert.equal(delegatedOptions.buildCanonicalDeck(), canonicalDeck);
+  assert.equal(typeof delegatedOptions.isCanonicalDeck, 'function');
 });
 
 test('restoreStudioEditorDeckViewAfterSlideMutation forwards slide restore options', () => {
