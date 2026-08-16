@@ -111,6 +111,14 @@
       ? options.setActiveSlide
       : () => {};
 
+    function refreshHistoryThumbnailsSafely() {
+      try {
+        generateThumbnails();
+      } catch (error) {
+        // Thumbnail refresh must not invalidate an otherwise successful restore.
+      }
+    }
+
     function applySlidePresenceState(slideId, snapshot) {
       const normalizedSlideId = typeof slideId === 'string' ? slideId.trim() : '';
       if (!normalizedSlideId || !snapshot || typeof snapshot !== 'object') return false;
@@ -153,7 +161,7 @@
         makeElementsHoverable(slide);
       }
 
-      generateThumbnails();
+      refreshHistoryThumbnailsSafely();
       return true;
     }
 
@@ -277,7 +285,7 @@
               const slideElements = slideIds.map((slideId) => resolveElementById(`slide:${slideId}`, iframeDoc));
               if (slideElements.some((slide) => !slide)) return false;
               slideElements.forEach((slide) => slidesContainer.appendChild(slide));
-              generateThumbnails();
+              refreshHistoryThumbnailsSafely();
               return true;
             },
             applySlidePresenceState,
@@ -291,7 +299,7 @@
               element.innerHTML = markup;
               makeElementsHoverable(element);
               if (element.id === 'slidesContainer') {
-                generateThumbnails();
+                refreshHistoryThumbnailsSafely();
               }
               return true;
             },
@@ -339,7 +347,7 @@
               makeElementsHoverable,
               setupIframeDragging,
               bindDeckNavigationSync,
-              generateThumbnails
+              generateThumbnails: refreshHistoryThumbnailsSafely
             });
           },
           restoreActiveSlide: (nextHistoryEntry) => {

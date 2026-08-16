@@ -378,3 +378,68 @@ test('history restore applies active-slide transactions without rebuilding the f
     { captureHistory: false, preserveSelection: true }
   ]]);
 });
+
+test('history restore contains thumbnail refresh failures during transaction replay', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const slideOne = { id: 'slide-1' };
+  const slideTwo = { id: 'slide-2' };
+  const slidesContainer = {
+    appendChild(slide) {
+      this.lastSlide = slide;
+    }
+  };
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi,
+    transactionApi,
+    getIframeDoc: () => iframeDoc,
+    resolveElementById(editorId) {
+      if (editorId === 'slides-container') return slidesContainer;
+      if (editorId === 'slide:slide-1') return slideOne;
+      if (editorId === 'slide:slide-2') return slideTwo;
+      return null;
+    },
+    generateThumbnails() {
+      throw new Error('thumbnail refresh failed');
+    }
+  });
+
+  const result = restoreHandler(
+    { html: '', selectedElementIds: [] },
+    {
+      direction: 'redo',
+      transaction: transactionApi.createStudioSlideOrderTransaction(
+        ['slide-1', 'slide-2'],
+        ['slide-2', 'slide-1']
+      )
+    }
+  );
+
+  assert.equal(result.didRestoreTransaction, true);
+  assert.equal(slidesContainer.lastSlide, slideOne);
+});
+
+test('history restore contains thumbnail refresh failures during legacy frame setup', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const restoreHandler = historyRestore.createStudioEditorHistoryRestoreHandler({
+    historyApi: {
+      normalizeStudioHistoryEntry(entry) {
+        return entry;
+      },
+      restoreStudioHistoryEntry(entry, options) {
+        return { frameSetup: options.restoreFrameSetup(entry) };
+      },
+      restoreStudioHistoryFrameSetup(entry, options) {
+        options.generateThumbnails();
+        return { didRestoreDoc: true, restoredHtmlLength: 1 };
+      }
+    },
+    getIframeDoc: () => iframeDoc,
+    generateThumbnails() {
+      throw new Error('thumbnail refresh failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(restoreHandler({ html: '<main>restored</main>' }), undefined);
+  });
+});
