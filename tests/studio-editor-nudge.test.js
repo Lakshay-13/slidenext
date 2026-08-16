@@ -240,6 +240,22 @@ test('buildStudioNudgeActionState derives geometry readiness from the resolved s
   });
 });
 
+test('buildStudioNudgeActionState fails closed when layout geometry throws', () => {
+  const selectionState = { selection: [{ id: 'node-1' }], canNudge: true };
+  const result = nudge.buildStudioNudgeActionState(selectionState, {
+    doc: { id: 'doc' },
+    slide: { id: 'slide-1' },
+    slideMetrics: { logicalWidth: 1920, logicalHeight: 1080 },
+    buildPositionedLayoutItems() {
+      throw new Error('stale geometry');
+    }
+  });
+
+  assert.deepEqual(result.nudgeLayoutItems, []);
+  assert.equal(result.canResolveNudgeLayout, false);
+  assert.equal(result.canNudge, false);
+});
+
 test('createStudioNudgeActionStateBuilder resolves editor geometry through shared callbacks', () => {
   const doc = { id: 'doc' };
   const slide = { id: 'slide-1' };

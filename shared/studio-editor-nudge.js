@@ -62,9 +62,15 @@
     const buildPositionedLayoutItems = typeof options.buildPositionedLayoutItems === 'function'
       ? options.buildPositionedLayoutItems
       : () => [];
-    const nudgeLayoutItems = resolvedDoc && slide && canNudgeSelection
-      ? buildPositionedLayoutItems(selection, slideMetrics)
-      : [];
+    let nudgeLayoutItems = [];
+    if (resolvedDoc && slide && canNudgeSelection) {
+      try {
+        const resolvedLayoutItems = buildPositionedLayoutItems(selection, slideMetrics);
+        nudgeLayoutItems = Array.isArray(resolvedLayoutItems) ? resolvedLayoutItems : [];
+      } catch (error) {
+        nudgeLayoutItems = [];
+      }
+    }
     const canResolveNudgeLayout = nudgeLayoutItems.length === selection.length
       && nudgeLayoutItems.length > 0;
 
