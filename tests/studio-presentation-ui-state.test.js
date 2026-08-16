@@ -49,6 +49,15 @@ function attachEditorPreviewController(context) {
   return context;
 }
 
+test('Present button uses shared preview controller wiring instead of an inline handler', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const presentButtonLine = fileContent.split('\n').find((line) => line.includes('id="launchPreviewBtn"'));
+
+  assert.ok(presentButtonLine);
+  assert.doesNotMatch(presentButtonLine, /onclick=/);
+  assert.match(fileContent, /bindStudioEditorPreviewButtons\(\{ documentRef: document \}\)/);
+});
+
 test('preview controller wiring supplies the canonical snapshot resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const start = fileContent.indexOf('const studioEditorDeckViewRuntime =');

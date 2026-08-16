@@ -241,6 +241,19 @@
       });
     }
 
+    function bindStudioEditorPreviewButtons(options = {}) {
+      const previewDocument = options.documentRef || documentRef;
+      if (!previewDocument || typeof previewDocument.getElementById !== 'function') {
+        return { launch: false };
+      }
+      const button = previewDocument.getElementById('launchPreviewBtn');
+      if (!button || typeof button.addEventListener !== 'function') {
+        return { launch: false };
+      }
+      button.addEventListener('click', launch);
+      return { launch: true };
+    }
+
     return {
       launch,
       launchPreview: launch,
@@ -250,6 +263,7 @@
       syncFullscreenIcon,
       launchUrl,
       launchHtml,
+      bindStudioEditorPreviewButtons,
       createStudioEditorPreviewFallbackHtmlTransformer,
       createStudioEditorPreviewDeckViewHtmlOptions
     };

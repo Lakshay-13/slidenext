@@ -59,6 +59,46 @@ test('launches the shared preview with the live editor session state', () => {
   }]);
 });
 
+test('preview controller binds the Present button without an inline handler', () => {
+  const calls = [];
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const controller = previewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation(options) {
+        calls.push(options);
+        return true;
+      }
+    },
+    resolveReadyState: () => ({ canLaunchPreview: true }),
+    resolvePresentationUrl: () => '/presentations/demo/index.html',
+    resolveActiveSlideIndex: () => 1,
+    buildPreviewHtml: () => '<html>preview</html>'
+  });
+  const documentRef = {
+    getElementById(id) {
+      return id === 'launchPreviewBtn' ? button : null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindStudioEditorPreviewButtons({ documentRef }),
+    { launch: true }
+  );
+  assert.equal(typeof button.listeners.click, 'function');
+  assert.equal(button.listeners.click(), true);
+  assert.deepEqual(calls, [{
+    document: null,
+    startSlideIdx: 1,
+    presentationUrl: '/presentations/demo/index.html',
+    previewHtml: '<html>preview</html>'
+  }]);
+});
+
 test('opens the presentation modal through the shared preview controller', () => {
   const calls = [];
   const iframeDocument = { id: 'editor-document' };
