@@ -368,7 +368,7 @@
       if (!invokeStudioEditorAutoSave(options.triggerAutoSave)) return false;
     }
     if (typeof options.updateLayersList === 'function') {
-      options.updateLayersList();
+      invokeStudioEditorUiRefresh(options.updateLayersList);
     }
     if (typeof options.updateLayerOrderActionState === 'function') {
       options.updateLayerOrderActionState();

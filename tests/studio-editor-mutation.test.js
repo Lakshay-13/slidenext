@@ -950,6 +950,28 @@ test('finalizeStudioLayerOrderMutation converts thrown fallback autosave to reje
   assert.deepEqual(calls, ['history']);
 });
 
+test('finalizeStudioLayerOrderMutation preserves versioning when layer refresh throws', () => {
+  const calls = [];
+
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    updateLayersList() {
+      throw new Error('layers unavailable');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  }), 'Auto: Layer Order');
+
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Layer Order']]);
+});
+
 test('finalizeStudioLayerOrderMutation propagates rejected fallback history', () => {
   assert.equal(mutation.finalizeStudioLayerOrderMutation({
     versionLabel: 'Auto: Rejected Layer Order',
