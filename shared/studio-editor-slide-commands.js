@@ -35,6 +35,15 @@
     }
   }
 
+  function refreshStudioSlideThumbnails(options = {}) {
+    if (typeof options.generateThumbnails !== 'function') return;
+    try {
+      options.generateThumbnails();
+    } catch (err) {
+      // Thumbnail refresh failure must not change the slide mutation result.
+    }
+  }
+
   function getStudioSlideCommandDocument(options = {}) {
     const getIframeDoc = typeof options.getIframeDoc === 'function'
       ? options.getIframeDoc
@@ -182,9 +191,7 @@
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
 
-    if (typeof options.generateThumbnails === 'function') {
-      options.generateThumbnails();
-    }
+    refreshStudioSlideThumbnails(options);
     if (typeof options.setActiveSlide === 'function') {
       options.setActiveSlide(insertionIndex);
     }
@@ -204,9 +211,7 @@
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Duplicated Slide', appliedMutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
-      if (typeof options.generateThumbnails === 'function') {
-        options.generateThumbnails();
-      }
+      refreshStudioSlideThumbnails(options);
       if (typeof options.setActiveSlide === 'function') {
         options.setActiveSlide(sourceIndex);
       }
@@ -315,9 +320,7 @@
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
 
-    if (typeof options.generateThumbnails === 'function') {
-      options.generateThumbnails();
-    }
+    refreshStudioSlideThumbnails(options);
     if (typeof options.setActiveSlide === 'function') {
       options.setActiveSlide(newIndex);
     }
@@ -337,9 +340,7 @@
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Added Slide', appliedMutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
-      if (typeof options.generateThumbnails === 'function') {
-        options.generateThumbnails();
-      }
+      refreshStudioSlideThumbnails(options);
       if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
         const preservedState = slideMutationState && typeof slideMutationState === 'object'
           ? slideMutationState
@@ -434,9 +435,7 @@
       ? { ...mutation, transaction: slidePresenceTransaction }
       : mutation;
 
-    if (typeof options.generateThumbnails === 'function') {
-      options.generateThumbnails();
-    }
+    refreshStudioSlideThumbnails(options);
     const remainingSlides = getSlides(iframeDoc);
     if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
       options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
@@ -464,9 +463,7 @@
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Deleted Slide', appliedMutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
-      if (typeof options.generateThumbnails === 'function') {
-        options.generateThumbnails();
-      }
+      refreshStudioSlideThumbnails(options);
       if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
         options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
           preservedActiveSlideId: slideMutationState.preservedActiveSlideId,
@@ -557,9 +554,7 @@
       ? { ...mutation, transaction: slideOrderTransaction }
       : mutation;
 
-    if (typeof options.generateThumbnails === 'function') {
-      options.generateThumbnails();
-    }
+    refreshStudioSlideThumbnails(options);
     const slideCount = getSlides(iframeDoc).length;
     if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
       options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
@@ -584,9 +579,7 @@
       : invokeStudioSlideCommandFinalizer(finalizeMutation, 'Auto: Reordered Slides', appliedMutation.transaction);
     if (finalized === false) {
       if (rollbackMutation) rollbackMutation(appliedMutation.transaction, iframeDoc);
-      if (typeof options.generateThumbnails === 'function') {
-        options.generateThumbnails();
-      }
+      refreshStudioSlideThumbnails(options);
       if (typeof options.restoreDeckViewAfterSlideMutation === 'function') {
         options.restoreDeckViewAfterSlideMutation(iframeDoc, slideMutationState.preservedSelectionIds, {
           preservedActiveSlideId: slideMutationState.preservedActiveSlideId,

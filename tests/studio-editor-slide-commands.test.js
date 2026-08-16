@@ -459,6 +459,30 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
   ]);
 });
 
+test('addStudioSlideNode preserves the mutation when thumbnail refresh throws', () => {
+  const doc = { id: 'editor-doc' };
+  const container = { id: 'slides-container' };
+  const newSlide = { id: 'slide-2' };
+  let finalized = false;
+
+  assert.equal(slideCommands.addStudioSlideNode({
+    getIframeDoc: () => doc,
+    resolveInsertionActionState: () => ({ canAddSlide: true }),
+    getSlideContainer: () => container,
+    getSlides: () => [{ id: 'slide-1' }],
+    createBlankSlide: () => newSlide,
+    applyInsertion: () => ({ didApply: true, transaction: { id: 'tx' } }),
+    generateThumbnails() {
+      throw new Error('thumbnail refresh failed');
+    },
+    finalizeMutation: () => {
+      finalized = true;
+      return true;
+    }
+  }), true);
+  assert.equal(finalized, true);
+});
+
 test('addStudioSlideNode prefers a scoped slide-presence transaction when the new slide is serializable', () => {
   const doc = { id: 'editor-doc' };
   const container = { id: 'slides-container' };
