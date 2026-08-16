@@ -775,12 +775,14 @@
   }
 
   function reorderCanonicalSlides(deckLike, sourceSlideId, targetSlideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const sourceId = normalizeString(sourceSlideId).trim();
     const targetId = normalizeString(targetSlideId).trim();
-    if (!isCanonicalDeck(deck) || !sourceId || !targetId || sourceId === targetId) {
+    if ((!deckWasCanonical && !isCanonicalDeck(deck))
+      || !sourceId || !targetId || sourceId === targetId) {
       return null;
     }
 
@@ -803,11 +805,13 @@
   }
 
   function removeCanonicalSlide(deckLike, slideId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedSlideId = normalizeString(slideId).trim();
-    if (!isCanonicalDeck(deck) || deck.slides.length <= 1 || !normalizedSlideId) {
+    if ((!deckWasCanonical && !isCanonicalDeck(deck))
+      || deck.slides.length <= 1 || !normalizedSlideId) {
       return null;
     }
 
@@ -826,10 +830,11 @@
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
     }
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
-    if (!isCanonicalDeck(deck)) {
+    if (!deckWasCanonical && !isCanonicalDeck(deck)) {
       return null;
     }
     return insertCanonicalSlide(deck, slideLike, deck.slides.length);
@@ -1166,10 +1171,11 @@
     if (!deckLike || typeof deckLike !== 'object') {
       return null;
     }
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
-    if (!isCanonicalDeck(deck)
+    if ((!deckWasCanonical && !isCanonicalDeck(deck))
       || !slideLike
       || typeof slideLike !== 'object'
       || !Number.isInteger(index)
