@@ -1621,6 +1621,7 @@
   <script src="/shared/presentation-dashboard-accessors.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-toolbar-state-coordinator.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
   <script src="/shared/studio-editor-style-transaction.js"></script>
@@ -9680,6 +9681,43 @@
               : null
         })
       : null;
+    const studioEditorToolbarStateCoordinatorApi = typeof SlideNextStudioEditorToolbarStateCoordinator !== 'undefined'
+      ? SlideNextStudioEditorToolbarStateCoordinator
+      : null;
+    const studioEditorToolbarStateCoordinator = studioEditorToolbarStateCoordinatorApi
+      && typeof studioEditorToolbarStateCoordinatorApi
+        .createStudioEditorToolbarStateCoordinator === 'function'
+      ? studioEditorToolbarStateCoordinatorApi.createStudioEditorToolbarStateCoordinator({
+          lockToolbarStateApi: typeof SlideNextStudioEditorLockToolbarState !== 'undefined'
+            ? SlideNextStudioEditorLockToolbarState
+            : null,
+          visibilityToolbarStateApi: typeof SlideNextStudioEditorVisibilityToolbarState !== 'undefined'
+            ? SlideNextStudioEditorVisibilityToolbarState
+            : null,
+          styleToolbarStateApi: typeof SlideNextStudioEditorStyleToolbarState !== 'undefined'
+            ? SlideNextStudioEditorStyleToolbarState
+            : null,
+          lockView: typeof SlideNextStudioEditorLockState !== 'undefined'
+            ? SlideNextStudioEditorLockState
+            : null,
+          visibilityView: typeof SlideNextStudioEditorVisibilityState !== 'undefined'
+            ? SlideNextStudioEditorVisibilityState
+            : null,
+          styleView: typeof SlideNextStudioEditorStyle !== 'undefined'
+            ? SlideNextStudioEditorStyle
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          getActiveSlide,
+          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+            : isElementLocked,
+          getHiddenState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+            ? getEditorCanonicalVisibilityReader('hidden', sourceDoc, isElementHidden)
+            : isElementHidden,
+          documentRef: document
+        })
+      : null;
 
     const studioEditorLiveSelectionAdapter = typeof SlideNextStudioEditorLiveSelectionAdapter !== 'undefined'
       && SlideNextStudioEditorLiveSelectionAdapter
@@ -9892,6 +9930,11 @@
     }
 
     function updateLockActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorToolbarStateCoordinator !== 'undefined'
+        && studioEditorToolbarStateCoordinator
+        && typeof studioEditorToolbarStateCoordinator.syncLock === 'function') {
+        return studioEditorToolbarStateCoordinator.syncLock(doc);
+      }
       const lockToolbarState = typeof SlideNextStudioEditorLockToolbarState !== 'undefined'
         ? SlideNextStudioEditorLockToolbarState
         : null;
@@ -9954,6 +9997,11 @@
     }
 
     function updateVisibilityActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorToolbarStateCoordinator !== 'undefined'
+        && studioEditorToolbarStateCoordinator
+        && typeof studioEditorToolbarStateCoordinator.syncVisibility === 'function') {
+        return studioEditorToolbarStateCoordinator.syncVisibility(doc);
+      }
       const visibilityToolbarState = typeof SlideNextStudioEditorVisibilityToolbarState !== 'undefined'
         ? SlideNextStudioEditorVisibilityToolbarState
         : null;
@@ -10096,6 +10144,11 @@
     }
 
     function updateStyleActionState(doc = getIframeDoc()) {
+      if (typeof studioEditorToolbarStateCoordinator !== 'undefined'
+        && studioEditorToolbarStateCoordinator
+        && typeof studioEditorToolbarStateCoordinator.syncStyle === 'function') {
+        return studioEditorToolbarStateCoordinator.syncStyle(doc);
+      }
       const styleToolbarState = typeof SlideNextStudioEditorStyleToolbarState !== 'undefined'
         ? SlideNextStudioEditorStyleToolbarState
         : null;
