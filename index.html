@@ -1628,6 +1628,7 @@
   <script src="/shared/studio-editor-captured-persistable-deck-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-runtime-accessors.js"></script>
@@ -6812,33 +6813,44 @@
       typeof SlideNextStudioEditorPersistableDeckStateShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistableDeckStateShellRuntime
       : null;
-    const studioEditorPersistableDeckStateShellRuntime =
-      studioEditorPersistableDeckStateShellRuntimeApi
-      && typeof studioEditorPersistableDeckStateShellRuntimeApi
-        .createStudioEditorPersistableDeckStateShellRuntime === 'function'
-      ? studioEditorPersistableDeckStateShellRuntimeApi
-        .createStudioEditorPersistableDeckStateShellRuntime({
-          actionApi: typeof SlideNextStudioEditorPersistableDeckStateAction !== 'undefined'
-            ? SlideNextStudioEditorPersistableDeckStateAction
-            : null,
-          getDocument: getIframeDoc,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          getCaptureBuildState: () => captureEditorPersistableDeckBuildState,
-          getResolveCapturedState: () => resolveEditorCapturedPersistableDeckState,
-          getCapturePlaybackState: () => capturePersistedDeckPlaybackState,
-          resolveCanonicalDeck: (providedCanonicalDeck, doc) =>
-            resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
-              sourceDocument: doc,
-              buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
-            })
+    const studioEditorPersistableDeckStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistableDeckStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistableDeckStateRuntimeAccessors
+      : null;
+    const studioEditorPersistableDeckStateRuntimeAccessors =
+      studioEditorPersistableDeckStateRuntimeAccessorsApi
+      && typeof studioEditorPersistableDeckStateRuntimeAccessorsApi
+        .createStudioEditorPersistableDeckStateRuntimeAccessors === 'function'
+      ? studioEditorPersistableDeckStateRuntimeAccessorsApi
+        .createStudioEditorPersistableDeckStateRuntimeAccessors({
+          runtimeApi: studioEditorPersistableDeckStateShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorPersistableDeckStateAction !== 'undefined'
+              ? SlideNextStudioEditorPersistableDeckStateAction
+              : null,
+            getDocument: getIframeDoc,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            getCaptureBuildState: () => captureEditorPersistableDeckBuildState,
+            getResolveCapturedState: () => resolveEditorCapturedPersistableDeckState,
+            getCapturePlaybackState: () => capturePersistedDeckPlaybackState,
+            resolveCanonicalDeck: (providedCanonicalDeck, doc) =>
+              resolveEditorCanonicalDeckOverride(providedCanonicalDeck, {
+                sourceDocument: doc,
+                buildCanonicalDeck: () => buildEditorCanonicalDeck(doc)
+              })
+          }
         })
       : null;
+    const studioEditorPersistableDeckStateShellRuntime =
+      studioEditorPersistableDeckStateRuntimeAccessors
+        ? studioEditorPersistableDeckStateRuntimeAccessors.runtime
+        : null;
     const studioEditorPersistableDeckStateAction = studioEditorPersistableDeckStateShellRuntime
       && studioEditorPersistableDeckStateShellRuntime.isAvailable === true
       ? studioEditorPersistableDeckStateShellRuntime.persistableDeckStateAction
