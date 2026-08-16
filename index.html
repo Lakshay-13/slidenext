@@ -1379,6 +1379,7 @@
   <script src="/shared/studio-editor-layer-order-controller.js"></script>
   <script src="/shared/studio-editor-layer-order-state.js"></script>
   <script src="/shared/studio-editor-layer-order-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-layer-order-state-accessors.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
@@ -4104,15 +4105,19 @@
       && studioEditorUngroupStateShellRuntime.isAvailable === true
       ? studioEditorUngroupStateShellRuntime.ungroupStateController
       : null;
-    const studioEditorLayerOrderStateShellRuntimeApi =
-      typeof SlideNextStudioEditorLayerOrderStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorLayerOrderStateShellRuntime
+    const studioEditorLayerOrderStateAccessorsApi =
+      typeof SlideNextStudioEditorLayerOrderStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderStateAccessors
       : null;
-    const studioEditorLayerOrderStateShellRuntime = studioEditorLayerOrderStateShellRuntimeApi
-      && typeof studioEditorLayerOrderStateShellRuntimeApi
-        .createStudioEditorLayerOrderStateShellRuntime === 'function'
-      ? studioEditorLayerOrderStateShellRuntimeApi
-        .createStudioEditorLayerOrderStateShellRuntime({
+    const studioEditorLayerOrderStateAccessors = studioEditorLayerOrderStateAccessorsApi
+      && typeof studioEditorLayerOrderStateAccessorsApi
+        .createStudioEditorLayerOrderStateAccessors === 'function'
+      ? studioEditorLayerOrderStateAccessorsApi
+        .createStudioEditorLayerOrderStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorLayerOrderStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorLayerOrderStateShellRuntime
+            : null,
+          runtimeOptions: {
           layerOrderStateApi: typeof SlideNextStudioEditorLayerOrderState !== 'undefined'
             ? SlideNextStudioEditorLayerOrderState
             : null,
@@ -4124,7 +4129,11 @@
           getActiveSlide,
           getNormalizedSlideLayerOrder,
           getLockedState: () => isElementLocked
+          }
         })
+      : null;
+    const studioEditorLayerOrderStateShellRuntime = studioEditorLayerOrderStateAccessors
+      ? studioEditorLayerOrderStateAccessors.runtime
       : null;
     const studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellRuntime
       && studioEditorLayerOrderStateShellRuntime.isAvailable === true
