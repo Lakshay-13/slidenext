@@ -405,6 +405,21 @@ test('finalizeStudioEditorLayerOrderMutation converts thrown fallback history to
   }), false);
 });
 
+test('finalizeStudioEditorLayerOrderMutation converts thrown fallback autosave to rejection', () => {
+  assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Layer Order', {
+    transaction: { id: 'tx' },
+    canonicalDeck: { kind: 'slidenext.deck', slides: [] }
+  }, {
+    saveHistoryState() {},
+    triggerAutoSave: () => {
+      throw new Error('autosave unavailable');
+    },
+    updateLayersList: () => {
+      throw new Error('layers should not refresh after autosave failure');
+    }
+  }), false);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback ordering', () => {
   const calls = [];
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
