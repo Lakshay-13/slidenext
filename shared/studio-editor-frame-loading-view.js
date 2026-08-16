@@ -64,6 +64,7 @@
       }
     }
     if (typeof loadingEl.setAttribute === 'function') {
+      loadingEl.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
       loadingEl.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
       loadingEl.setAttribute('aria-hidden', isReady ? 'true' : 'false');
     }

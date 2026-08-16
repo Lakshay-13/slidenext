@@ -54,7 +54,11 @@ test('frame loading view exposes loading, error, and ready states', () => {
   assert.equal(loadingEl.classList.contains('hidden'), false);
   assert.equal(iconEl.classList.contains('animate-spin'), true);
   assert.equal(textEl.textContent, 'Loading presentation...');
-  assert.deepEqual(attributes, { 'aria-busy': 'true', 'aria-hidden': 'false' });
+  assert.deepEqual(attributes, {
+    'aria-live': 'polite',
+    'aria-busy': 'true',
+    'aria-hidden': 'false'
+  });
 
   frameLoadingView.setStudioEditorFrameLoadingState({ documentRef, state: 'error' });
   assert.equal(textEl.textContent, 'Unable to initialize this presentation.');
@@ -62,14 +66,22 @@ test('frame loading view exposes loading, error, and ready states', () => {
   assert.equal(retryEl.classList.contains('hidden'), false);
   assert.equal(retryEl.disabled, false);
   assert.deepEqual(retryAttributes, { 'aria-hidden': 'false', 'aria-disabled': 'false' });
-  assert.deepEqual(attributes, { 'aria-busy': 'false', 'aria-hidden': 'false' });
+  assert.deepEqual(attributes, {
+    'aria-live': 'assertive',
+    'aria-busy': 'false',
+    'aria-hidden': 'false'
+  });
 
   frameLoadingView.setStudioEditorFrameLoadingState({ documentRef, state: 'ready' });
   assert.equal(loadingEl.classList.contains('hidden'), true);
   assert.equal(retryEl.classList.contains('hidden'), true);
   assert.equal(retryEl.disabled, true);
   assert.equal(textEl.textContent, 'Presentation ready');
-  assert.deepEqual(attributes, { 'aria-busy': 'false', 'aria-hidden': 'true' });
+  assert.deepEqual(attributes, {
+    'aria-live': 'polite',
+    'aria-busy': 'false',
+    'aria-hidden': 'true'
+  });
   assert.deepEqual(retryAttributes, { 'aria-hidden': 'true', 'aria-disabled': 'true' });
 });
 
