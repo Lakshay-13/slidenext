@@ -65,6 +65,14 @@ test('index routes selection composition through the shell runtime', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-selection-composition-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorSelectionCompositionRuntimeAccessorsApi\s*\.\s*createStudioEditorSelectionCompositionRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorSelectionCompositionShellRuntimeApi\s*\.\s*createStudioEditorSelectionCompositionShellRuntime\(/
   );
   assert.match(

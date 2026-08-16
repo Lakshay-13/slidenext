@@ -1761,6 +1761,7 @@
   <script src="/shared/studio-editor-selection-class-adapter.js"></script>
   <script src="/shared/studio-editor-selection-composition.js"></script>
   <script src="/shared/studio-editor-selection-composition-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-selection-composition-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
@@ -9928,34 +9929,46 @@
       typeof SlideNextStudioEditorSelectionCompositionShellRuntime !== 'undefined'
       ? SlideNextStudioEditorSelectionCompositionShellRuntime
       : null;
-    const studioEditorSelectionCompositionShellRuntime = studioEditorSelectionCompositionShellRuntimeApi
-      && typeof studioEditorSelectionCompositionShellRuntimeApi
-        .createStudioEditorSelectionCompositionShellRuntime === 'function'
-      ? studioEditorSelectionCompositionShellRuntimeApi
-        .createStudioEditorSelectionCompositionShellRuntime({
-          compositionApi: typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
-            ? SlideNextStudioEditorSelectionComposition
-            : null,
-          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
-            ? SlideNextStudioEditorSelection
-            : null,
-          selectionStateAdapter: studioEditorSelectionStateAdapter,
-          selectionCommitAdapter: studioEditorSelectionCommitAdapter,
-          selectionClassAdapter: studioEditorSelectionClassAdapter,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getSelectionOptions: () => getEditorSelectionOptions(),
-          getRefreshSelectionOptions: (sourceDoc) => getEditorSelectionOptions({ doc: sourceDoc }),
-          setSelectionState: (selectionState) => setStudioSelectionState(selectionState),
-          clearSelectionState: () => clearStudioSelectionState(),
-          syncSelectionOverlay: (...args) => syncSelectionOverlay(...args),
-          syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
-          updateLayersList: (...args) => {
-            if (typeof updateLayersList === 'function') return updateLayersList(...args);
-            return false;
+    const studioEditorSelectionCompositionRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorSelectionCompositionRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorSelectionCompositionRuntimeAccessors
+      : null;
+    const studioEditorSelectionCompositionRuntimeAccessors =
+      studioEditorSelectionCompositionRuntimeAccessorsApi
+      && typeof studioEditorSelectionCompositionRuntimeAccessorsApi
+        .createStudioEditorSelectionCompositionRuntimeAccessors === 'function'
+      ? studioEditorSelectionCompositionRuntimeAccessorsApi
+        .createStudioEditorSelectionCompositionRuntimeAccessors({
+          runtimeApi: studioEditorSelectionCompositionShellRuntimeApi,
+          runtimeOptions: {
+            compositionApi: typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
+              ? SlideNextStudioEditorSelectionComposition
+              : null,
+            selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+              ? SlideNextStudioEditorSelection
+              : null,
+            selectionStateAdapter: studioEditorSelectionStateAdapter,
+            selectionCommitAdapter: studioEditorSelectionCommitAdapter,
+            selectionClassAdapter: studioEditorSelectionClassAdapter,
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getSelectionOptions: () => getEditorSelectionOptions(),
+            getRefreshSelectionOptions: (sourceDoc) => getEditorSelectionOptions({ doc: sourceDoc }),
+            setSelectionState: (selectionState) => setStudioSelectionState(selectionState),
+            clearSelectionState: () => clearStudioSelectionState(),
+            syncSelectionOverlay: (...args) => syncSelectionOverlay(...args),
+            syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
+            updateLayersList: (...args) => {
+              if (typeof updateLayersList === 'function') return updateLayersList(...args);
+              return false;
+            }
           }
         })
       : null;
+    const studioEditorSelectionCompositionShellRuntime =
+      studioEditorSelectionCompositionRuntimeAccessors
+        ? studioEditorSelectionCompositionRuntimeAccessors.runtime
+        : null;
     const studioEditorSelectionCompositionController = studioEditorSelectionCompositionShellRuntime
       && studioEditorSelectionCompositionShellRuntime.isAvailable === true
       ? studioEditorSelectionCompositionShellRuntime.selectionCompositionController
