@@ -5,14 +5,17 @@
   const historyResultApi = typeof module === 'object' && module.exports
     ? require('./studio-editor-history-result.js')
     : root && root.SlideNextStudioEditorHistoryResult;
-  const api = factory(interactionOptions, historyResultApi);
+  const pointerAttachment = typeof module === 'object' && module.exports
+    ? require('./studio-editor-pointer-attachment.js')
+    : root && root.SlideNextStudioEditorPointerAttachment;
+  const api = factory(interactionOptions, historyResultApi, pointerAttachment);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorTransform = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (interactionOptions, historyResultApi) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (interactionOptions, historyResultApi, pointerAttachment) {
   const STUDIO_RESIZE_WIDTH_TAGS = new Set(['img', 'table', 'pre', 'code', 'div', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const STUDIO_RESIZE_HEIGHT_TAGS = new Set(['img', 'table', 'pre', 'code', 'div']);
   const DEFAULT_DRAG_START_THRESHOLD_PX = interactionOptions
@@ -24,6 +27,10 @@
     ? interactionOptions.DEFAULT_SNAP_THRESHOLD_PX
     : 12;
   const STUDIO_TRANSFORM_MOVED_VERSION_LABEL = 'Auto: Moved Element';
+  const studioPointerAttachmentManager = pointerAttachment
+    && typeof pointerAttachment.createStudioPointerAttachmentManager === 'function'
+    ? pointerAttachment.createStudioPointerAttachmentManager()
+    : null;
 
   const isStudioHistoryCaptureFailure = historyResultApi
     && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
@@ -1248,33 +1255,20 @@
     };
   }
 
+  function detachStudioTransformPointerHandlers(doc) {
+    return studioPointerAttachmentManager
+      && typeof studioPointerAttachmentManager.detach === 'function'
+      ? studioPointerAttachmentManager.detach(doc)
+      : false;
+  }
+
   function attachStudioTransformPointerHandlers(doc, handlers, options = {}) {
-    const body = doc && doc.body;
-    if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
-
-    if (options.preventNativeDrag !== false && typeof doc.addEventListener === 'function') {
-      doc.addEventListener('dragstart', (event) => {
-        if (event && typeof event.preventDefault === 'function') event.preventDefault();
-      }, true);
-    }
-
-    [
-      ['pointerdown', handlers.handlePointerDown],
-      ['pointermove', handlers.handlePointerMove],
-      ['pointerup', handlers.handlePointerUp],
-      ['pointercancel', handlers.handlePointerCancel],
-      ['lostpointercapture', handlers.handlePointerCancel]
-    ].forEach(([eventName, handler]) => {
-      if (typeof handler === 'function') body.addEventListener(eventName, handler, true);
-    });
-
-    const frameWindow = doc.defaultView;
-    if (frameWindow
-      && typeof frameWindow.addEventListener === 'function'
-      && typeof handlers.handleWindowBlur === 'function') {
-      frameWindow.addEventListener('blur', handlers.handleWindowBlur, true);
-    }
-    return true;
+    return studioPointerAttachmentManager
+      && typeof studioPointerAttachmentManager.attach === 'function'
+      ? studioPointerAttachmentManager.attach(doc, handlers, {
+          preventNativeDrag: options.preventNativeDrag !== false
+        })
+      : false;
   }
 
   function buildStudioPositionedLayoutItem(element, options = {}) {
@@ -1960,6 +1954,7 @@
     buildStudioTransformStyleTransaction,
     buildStudioTransformCanonicalLayoutUpdates,
     createStudioTransformSessionFinalizer,
+    detachStudioTransformPointerHandlers,
     attachStudioTransformPointerHandlers,
     buildStudioPositionedLayoutItem,
     buildStudioPositionedLayoutItems,

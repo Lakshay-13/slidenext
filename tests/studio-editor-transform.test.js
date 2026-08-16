@@ -436,6 +436,57 @@ test('attachStudioTransformPointerHandlers binds the shared pointer lifecycle', 
   });
 });
 
+test('attachStudioTransformPointerHandlers replaces an existing attachment before rebinding', () => {
+  const listeners = [];
+  const target = {
+    addEventListener(type, handler, capture) {
+      listeners.push({ type, handler, capture });
+    },
+    removeEventListener(type, handler, capture) {
+      const index = listeners.findIndex((listener) => (
+        listener.type === type
+        && listener.handler === handler
+        && listener.capture === capture
+      ));
+      if (index >= 0) listeners.splice(index, 1);
+    }
+  };
+  const doc = {
+    ...target,
+    body: target,
+    defaultView: target
+  };
+  const firstHandlers = {
+    handlePointerDown() {},
+    handlePointerMove() {}
+  };
+  const secondHandlers = {
+    handlePointerDown() {},
+    handlePointerMove() {}
+  };
+
+  assert.equal(transformState.attachStudioTransformPointerHandlers(doc, firstHandlers), true);
+  assert.equal(
+    transformState.attachStudioTransformPointerHandlers(doc, secondHandlers, {
+      preventNativeDrag: false
+    }),
+    true
+  );
+  assert.equal(
+    listeners.filter(({ handler }) => handler === firstHandlers.handlePointerDown).length,
+    0
+  );
+  assert.equal(
+    listeners.filter(({ handler }) => handler === secondHandlers.handlePointerDown).length,
+    1
+  );
+  assert.equal(listeners.some(({ type }) => type === 'dragstart'), false);
+
+  assert.equal(transformState.detachStudioTransformPointerHandlers(doc), true);
+  assert.equal(listeners.length, 0);
+  assert.equal(transformState.detachStudioTransformPointerHandlers(doc), false);
+});
+
 test('attachStudioTransformPointerHandlers tolerates missing editor frame targets', () => {
   assert.equal(transformState.attachStudioTransformPointerHandlers(null, {}), false);
   assert.equal(transformState.attachStudioTransformPointerHandlers({ body: {} }, {}), false);

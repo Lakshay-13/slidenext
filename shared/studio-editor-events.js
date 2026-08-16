@@ -11,15 +11,21 @@
   const keyboard = typeof module === 'object' && module.exports
     ? require('./studio-editor-keyboard')
     : root && root.SlideNextStudioEditorKeyboard;
-  const api = factory(liveSelection, nudge, transform, keyboard);
+  const pointerAttachment = typeof module === 'object' && module.exports
+    ? require('./studio-editor-pointer-attachment')
+    : root && root.SlideNextStudioEditorPointerAttachment;
+  const api = factory(liveSelection, nudge, transform, keyboard, pointerAttachment);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioEditorEvents = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform, keyboard) {
-  const studioPointerAttachmentRegistry = new WeakMap();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform, keyboard, pointerAttachment) {
+  const studioPointerAttachmentManager = pointerAttachment
+    && typeof pointerAttachment.createStudioPointerAttachmentManager === 'function'
+    ? pointerAttachment.createStudioPointerAttachmentManager()
+    : null;
 
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
@@ -323,55 +329,19 @@
   }
 
   function detachStudioPointerHandlers(doc) {
-    const registration = doc && studioPointerAttachmentRegistry.get(doc);
-    if (!registration) return false;
-
-    registration.listeners.forEach(({ target, eventName, handler, capture }) => {
-      if (target && typeof target.removeEventListener === 'function') {
-        target.removeEventListener(eventName, handler, capture);
-      }
-    });
-    studioPointerAttachmentRegistry.delete(doc);
-    return true;
+    return studioPointerAttachmentManager
+      && typeof studioPointerAttachmentManager.detach === 'function'
+      ? studioPointerAttachmentManager.detach(doc)
+      : false;
   }
 
   function attachStudioPointerHandlers(doc, handlers, options = {}) {
-    const body = doc && doc.body;
-    if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
-
-    detachStudioPointerHandlers(doc);
-
-    const listeners = [];
-    const addListener = (target, eventName, handler, capture) => {
-      if (!target || typeof target.addEventListener !== 'function'
-        || typeof handler !== 'function') return;
-      target.addEventListener(eventName, handler, capture);
-      listeners.push({ target, eventName, handler, capture });
-    };
-
-    if (options.preventNativeDrag && typeof doc.addEventListener === 'function') {
-      const preventNativeDrag = (event) => {
-        if (event && typeof event.preventDefault === 'function') event.preventDefault();
-      };
-      addListener(doc, 'dragstart', preventNativeDrag, true);
-    }
-
-    [
-      ['pointerdown', handlers.handlePointerDown],
-      ['pointermove', handlers.handlePointerMove],
-      ['pointerup', handlers.handlePointerUp],
-      ['pointercancel', handlers.handlePointerCancel],
-      ['lostpointercapture', handlers.handlePointerCancel]
-    ].forEach(([eventName, handler]) => addListener(body, eventName, handler, true));
-
-    const frameWindow = doc.defaultView;
-    if (frameWindow
-      && typeof frameWindow.addEventListener === 'function'
-      && typeof handlers.handleWindowBlur === 'function') {
-      addListener(frameWindow, 'blur', handlers.handleWindowBlur, true);
-    }
-    studioPointerAttachmentRegistry.set(doc, { listeners });
-    return true;
+    return studioPointerAttachmentManager
+      && typeof studioPointerAttachmentManager.attach === 'function'
+      ? studioPointerAttachmentManager.attach(doc, handlers, {
+          preventNativeDrag: options.preventNativeDrag === true
+        })
+      : false;
   }
 
   function attachStudioMarqueePointerHandlers(doc, handlers) {
