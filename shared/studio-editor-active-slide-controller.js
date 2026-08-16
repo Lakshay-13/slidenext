@@ -209,98 +209,103 @@
         return canonicalWallpaperSlide || activeSlide;
       };
 
-      return activeSlideView.syncStudioActiveSlideChrome(doc, {
-        ...syncOptions,
-        getCurrentSlideIndex,
-        getPreserveSelectionOnNextActiveSlideSync: getPreserveSelection,
-        setPreserveSelectionOnNextActiveSlideSync: setPreserveSelection,
-        updateCurrentPresentationSessionState,
-        setCurrentSlideId,
-        updateActiveThumbnailCardState,
-        setSlideCountLabel,
-        refreshActionStateChrome: (nextDoc) => {
-          updateInsertionActionState(nextDoc);
-          updateZoomActionState(nextDoc);
-          updateWallpaperActionState(nextDoc);
-        },
-        syncSelectionChrome: (preserveSelection) => {
-          if (!preserveSelection) {
-            deselectElement();
-          } else {
-            updateLayersList(doc);
+      const syncActiveSlideChrome = () => activeSlideView.syncStudioActiveSlideChrome(doc, {
+          ...syncOptions,
+          getCurrentSlideIndex,
+          getPreserveSelectionOnNextActiveSlideSync: getPreserveSelection,
+          setPreserveSelectionOnNextActiveSlideSync: setPreserveSelection,
+          updateCurrentPresentationSessionState,
+          setCurrentSlideId,
+          updateActiveThumbnailCardState,
+          setSlideCountLabel,
+          refreshActionStateChrome: (nextDoc) => {
+            updateInsertionActionState(nextDoc);
+            updateZoomActionState(nextDoc);
+            updateWallpaperActionState(nextDoc);
+          },
+          syncSelectionChrome: (preserveSelection) => {
+            if (!preserveSelection) {
+              deselectElement();
+            } else {
+              updateLayersList(doc);
+            }
+          },
+          buildEditorDeckSnapshot,
+          buildEditorCanonicalDeck,
+          createActiveSlideTransaction: transactionApi
+            && typeof transactionApi.createStudioActiveSlideTransaction === 'function'
+            ? transactionApi.createStudioActiveSlideTransaction
+            : null,
+          resolveStudioActiveSlideIndex,
+          saveHistoryState,
+          syncStudioActiveSlideView,
+          getSlides,
+          deselectElement,
+          applyViewportTransform: (nextDoc, activeIndex) => {
+            const container = nextDoc && typeof nextDoc.getElementById === 'function'
+              ? nextDoc.getElementById('slidesContainer')
+              : null;
+            if (container && container.style) {
+              container.style.transform = 'translateX(-' + (activeIndex * 100) + 'vw)';
+            }
+          },
+          pruneEditorChromeNodes,
+          getSlideId,
+          updateIframeNavigationUI,
+          getActiveSlide,
+          syncSpeakerNotesControl: (activeSlide) => {
+            if (!notesView || typeof notesView.syncStudioSpeakerNotesControl !== 'function') return false;
+            return notesView.syncStudioSpeakerNotesControl({
+              documentRef,
+              activeSlide,
+              canEdit: canEdit(activeSlide)
+            });
+          },
+          syncSlideSectionControl: (activeSlide) => {
+            if (!notesView || typeof notesView.syncStudioSlideSectionControl !== 'function') return false;
+            return notesView.syncStudioSlideSectionControl({
+              documentRef,
+              activeSlide,
+              canEdit: canEdit(activeSlide)
+            });
+          },
+          syncCustomGradientControls: (activeSlide) => {
+            if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
+            const result = wallpaperView.syncStudioCustomGradientControls({
+              documentRef,
+              activeSlide: resolveWallpaperSlide(activeSlide),
+              rgbToHex
+            });
+            if (!result || !result.didApply) return false;
+            setCustomGradientType(result.gradientType);
+            return true;
+          },
+          syncWallpaperTabChrome: (activeSlide, wallpaperOptions = {}) => {
+            if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
+            const result = wallpaperView.syncStudioWallpaperTabChrome({
+              documentRef,
+              activeSlide: resolveWallpaperSlide(activeSlide),
+              wallpaperTab: typeof getWallpaperTab() === 'string' ? getWallpaperTab() : '',
+              didSyncCustomGradientControls: wallpaperOptions.didSyncCustomGradientControls
+            });
+            if (!result || !result.didApply) return false;
+            setWallpaperTab(result.wallpaperTab);
+            return true;
+          },
+          syncSolidWallpaperControl: (activeSlide) => {
+            if (!wallpaperView || typeof wallpaperView.syncStudioSolidWallpaperControl !== 'function') return false;
+            return wallpaperView.syncStudioSolidWallpaperControl({
+              documentRef,
+              activeSlide: resolveWallpaperSlide(activeSlide),
+              rgbToHex
+            });
           }
-        },
-        buildEditorDeckSnapshot,
-        buildEditorCanonicalDeck,
-        createActiveSlideTransaction: transactionApi
-          && typeof transactionApi.createStudioActiveSlideTransaction === 'function'
-          ? transactionApi.createStudioActiveSlideTransaction
-          : null,
-        resolveStudioActiveSlideIndex,
-        saveHistoryState,
-        syncStudioActiveSlideView,
-        getSlides,
-        deselectElement,
-        applyViewportTransform: (nextDoc, activeIndex) => {
-          const container = nextDoc && typeof nextDoc.getElementById === 'function'
-            ? nextDoc.getElementById('slidesContainer')
-            : null;
-          if (container && container.style) {
-            container.style.transform = 'translateX(-' + (activeIndex * 100) + 'vw)';
-          }
-        },
-        pruneEditorChromeNodes,
-        getSlideId,
-        updateIframeNavigationUI,
-        getActiveSlide,
-        syncSpeakerNotesControl: (activeSlide) => {
-          if (!notesView || typeof notesView.syncStudioSpeakerNotesControl !== 'function') return false;
-          return notesView.syncStudioSpeakerNotesControl({
-            documentRef,
-            activeSlide,
-            canEdit: canEdit(activeSlide)
-          });
-        },
-        syncSlideSectionControl: (activeSlide) => {
-          if (!notesView || typeof notesView.syncStudioSlideSectionControl !== 'function') return false;
-          return notesView.syncStudioSlideSectionControl({
-            documentRef,
-            activeSlide,
-            canEdit: canEdit(activeSlide)
-          });
-        },
-        syncCustomGradientControls: (activeSlide) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioCustomGradientControls !== 'function') return false;
-          const result = wallpaperView.syncStudioCustomGradientControls({
-            documentRef,
-            activeSlide: resolveWallpaperSlide(activeSlide),
-            rgbToHex
-          });
-          if (!result || !result.didApply) return false;
-          setCustomGradientType(result.gradientType);
-          return true;
-        },
-        syncWallpaperTabChrome: (activeSlide, wallpaperOptions = {}) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioWallpaperTabChrome !== 'function') return false;
-          const result = wallpaperView.syncStudioWallpaperTabChrome({
-            documentRef,
-            activeSlide: resolveWallpaperSlide(activeSlide),
-            wallpaperTab: typeof getWallpaperTab() === 'string' ? getWallpaperTab() : '',
-            didSyncCustomGradientControls: wallpaperOptions.didSyncCustomGradientControls
-          });
-          if (!result || !result.didApply) return false;
-          setWallpaperTab(result.wallpaperTab);
-          return true;
-        },
-        syncSolidWallpaperControl: (activeSlide) => {
-          if (!wallpaperView || typeof wallpaperView.syncStudioSolidWallpaperControl !== 'function') return false;
-          return wallpaperView.syncStudioSolidWallpaperControl({
-            documentRef,
-            activeSlide: resolveWallpaperSlide(activeSlide),
-            rgbToHex
-          });
-        }
-      });
+        });
+      try {
+        return syncActiveSlideChrome();
+      } catch (error) {
+        return false;
+      }
     }
 
     return {

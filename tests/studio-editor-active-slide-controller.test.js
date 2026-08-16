@@ -117,6 +117,18 @@ test('active-slide controller synchronizes wallpaper state and fails closed with
   assert.equal(unavailable.sync(null), false);
 });
 
+test('active-slide controller fails closed when the chrome composition throws', () => {
+  const controller = activeSlideController.createStudioEditorActiveSlideController({
+    activeSlideView: {
+      syncStudioActiveSlideChrome() {
+        throw new Error('active-slide chrome failed');
+      }
+    }
+  });
+
+  assert.equal(controller.sync({ id: 'iframe-document' }), false);
+});
+
 test('active-slide controller prefers canonical active slide for wallpaper readers', () => {
   const canonicalSlide = {
     id: 'slide-1',
