@@ -1742,6 +1742,7 @@
   <script src="/shared/studio-editor-hoverable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-overlay.js"></script>
+  <script src="/shared/studio-editor-overlay-accessors.js"></script>
   <script src="/shared/studio-editor-selection-overlay-shell-runtime.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
@@ -9560,8 +9561,27 @@
       && typeof SlideNextStudioEditorOverlay.renderStudioMarqueeSelectionForActiveSlide === 'function'
       ? (options) => SlideNextStudioEditorOverlay.renderStudioMarqueeSelectionForActiveSlide(options)
       : null;
+    const studioEditorOverlayAccessorsApi = typeof SlideNextStudioEditorOverlayAccessors !== 'undefined'
+      ? SlideNextStudioEditorOverlayAccessors
+      : null;
+    const studioEditorOverlayAccessors = studioEditorOverlayAccessorsApi
+      && typeof studioEditorOverlayAccessorsApi.createStudioEditorOverlayAccessors === 'function'
+      ? studioEditorOverlayAccessorsApi.createStudioEditorOverlayAccessors({
+          getOverlay: () => typeof SlideNextStudioEditorOverlay !== 'undefined'
+            ? SlideNextStudioEditorOverlay
+            : null,
+          getDocument: getIframeDoc,
+          getActiveSlide,
+          getOverlayOptions: () => getEditorOverlayOptions()
+        })
+      : null;
 
     function renderMarqueeSelection(rect) {
+      if (studioEditorOverlayAccessors
+        && typeof studioEditorOverlayAccessors.renderMarqueeSelection === 'function') {
+        const delegatedResult = studioEditorOverlayAccessors.renderMarqueeSelection(rect);
+        if (typeof delegatedResult !== 'undefined') return delegatedResult;
+      }
       const doc = getIframeDoc();
       return typeof studioEditorMarqueeRenderer === 'function'
         ? studioEditorMarqueeRenderer({

@@ -4,8 +4,43 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const overlayView = require('../shared/studio-editor-overlay.js');
+const overlayAccessors = require('../shared/studio-editor-overlay-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+
+test('overlay accessors delegate marquee rendering with the current editor context', () => {
+  const documentRef = { id: 'iframe-document' };
+  const activeSlide = { id: 'active-slide' };
+  const rect = { left: 10, top: 20, right: 80, bottom: 90 };
+  const calls = [];
+  const overlay = {
+    renderStudioMarqueeSelectionForActiveSlide(options) {
+      calls.push(options);
+      return 'rendered';
+    }
+  };
+  const accessors = overlayAccessors.createStudioEditorOverlayAccessors({
+    getOverlay: () => overlay,
+    getDocument: () => documentRef,
+    getActiveSlide: () => activeSlide,
+    getOverlayOptions: () => ({ marker: 'overlay-options' })
+  });
+
+  assert.equal(accessors.renderMarqueeSelection(rect), 'rendered');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].documentRef, documentRef);
+  assert.equal(calls[0].getActiveSlide(), activeSlide);
+  assert.equal(calls[0].rect, rect);
+  assert.equal(calls[0].marker, 'overlay-options');
+});
+
+test('overlay accessors return undefined when the shared overlay renderer is unavailable', () => {
+  const accessors = overlayAccessors.createStudioEditorOverlayAccessors({
+    getOverlay: () => null
+  });
+
+  assert.equal(accessors.renderMarqueeSelection({}), undefined);
+});
 
 test('editor composes selection overlay synchronization through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
