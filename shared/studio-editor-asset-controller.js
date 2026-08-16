@@ -97,6 +97,24 @@
       }
     }
 
+    function triggerAutoSaveSafely() {
+      if (!triggerAutoSave) return;
+      try {
+        triggerAutoSave();
+      } catch (error) {
+        // Autosave failure must not change an already captured asset mutation.
+      }
+    }
+
+    function triggerAutoVersionSafely(versionLabel) {
+      if (!triggerAutoVersion || !versionLabel) return;
+      try {
+        triggerAutoVersion(versionLabel);
+      } catch (error) {
+        // Versioning failure must not change an already captured asset mutation.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -187,8 +205,8 @@
           }
           return null;
         }
-        if (triggerAutoSave) triggerAutoSave();
-        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+        triggerAutoSaveSafely();
+        triggerAutoVersionSafely(versionLabel);
       }
       publishAssetsChanged(nextCanonicalDeck);
       return nextCanonicalDeck;

@@ -232,6 +232,32 @@ test('asset controller preserves a committed asset mutation when publication thr
   assert.equal(committedDeck.assets[0].id, 'hero');
 });
 
+test('asset controller preserves a committed asset mutation when autosave and version callbacks throw', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1' }]
+  });
+  let committedDeck = sourceDeck;
+  const controller = assetController.createStudioEditorAssetController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => committedDeck,
+    saveHistoryState: (_debounce, _transaction, nextDeck) => {
+      committedDeck = nextDeck;
+    },
+    triggerAutoSave() {
+      throw new Error('autosave failed');
+    },
+    triggerAutoVersion() {
+      throw new Error('version callback failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    const result = controller.addAsset({ id: 'hero', src: '/hero.png' });
+    assert.equal(result.assets[0].id, 'hero');
+  });
+  assert.equal(committedDeck.assets[0].id, 'hero');
+});
+
 test('asset controller fails closed when removing an asset canonical mutation throws', () => {
   const sourceDeck = canonicalDeck.createCanonicalDeck({
     assets: [{ id: 'unused', name: 'Unused', src: '/unused.png' }],
