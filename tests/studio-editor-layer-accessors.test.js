@@ -144,6 +144,32 @@ test('layer accessors compose arrangement through the shared controller', () => 
   assert.equal(delegatedOptions.finalizeLayerOrderMutation, finalizeLayerOrderMutation);
 });
 
+test('layer accessors compose layer UI refresh through the shared controller', () => {
+  const calls = [];
+  const updateLayersList = (doc) => calls.push(['layers', doc]);
+  const updateLayerOrderActionState = (doc) => calls.push(['actions', doc]);
+  const options = { refreshLayersList: true, result: 'refreshed' };
+  const accessors = layerAccessors.createStudioEditorLayerAccessors({
+    controller: {
+      refreshStudioLayerOrderUi(controllerOptions) {
+        calls.push(['refresh', controllerOptions]);
+        controllerOptions.updateLayersList('doc');
+        controllerOptions.updateLayerOrderActionState('doc');
+        return controllerOptions.result;
+      }
+    },
+    updateLayersList,
+    updateLayerOrderActionState
+  });
+
+  assert.equal(accessors.refreshLayerOrderUi(options), 'refreshed');
+  assert.deepEqual(calls, [
+    ['refresh', { ...options, updateLayersList, updateLayerOrderActionState }],
+    ['layers', 'doc'],
+    ['actions', 'doc']
+  ]);
+});
+
 test('index loads and installs the layer accessor module before editor orchestration', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const scriptIndex = fileContent.indexOf(
@@ -165,4 +191,5 @@ test('index loads and installs the layer accessor module before editor orchestra
     /rollbackLayerOrderMutation: \(\.\.\.args\) => rollbackEditorLayerOrderMutation\(\.\.\.args\)/
   );
   assert.match(accessorBlock, /getLiveSelectedElements:/);
+  assert.match(accessorBlock, /updateLayerOrderActionState:/);
 });

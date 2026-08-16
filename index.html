@@ -1833,6 +1833,10 @@
             : null,
           getElementByEditorId,
           buildLayerOrderSelectionActionState,
+          updateLayersList: typeof updateLayersList === 'function' ? updateLayersList : null,
+          updateLayerOrderActionState: typeof updateLayerOrderActionState === 'function'
+            ? updateLayerOrderActionState
+            : null,
           getSelectedElements: typeof getStudioSelectedElements === 'function'
             ? getStudioSelectedElements
             : null,
@@ -11508,6 +11512,11 @@
     }
 
     function refreshLayerOrderUi(options = {}) {
+      if (typeof studioEditorLayerAccessors !== 'undefined'
+        && studioEditorLayerAccessors
+        && typeof studioEditorLayerAccessors.refreshLayerOrderUi === 'function') {
+        return studioEditorLayerAccessors.refreshLayerOrderUi(options);
+      }
       const layerController = typeof SlideNextStudioEditorLayerController !== 'undefined'
         ? SlideNextStudioEditorLayerController
         : null;

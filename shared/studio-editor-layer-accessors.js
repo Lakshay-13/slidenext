@@ -154,13 +154,25 @@
       });
     }
 
+    function refreshLayerOrderUi(refreshOptions = {}) {
+      if (!controller || typeof controller.refreshStudioLayerOrderUi !== 'function') {
+        return false;
+      }
+      return controller.refreshStudioLayerOrderUi({
+        ...refreshOptions,
+        updateLayersList: options.updateLayersList,
+        updateLayerOrderActionState: options.updateLayerOrderActionState
+      });
+    }
+
     return {
       updateLayersList,
       resolveLayerRowElement: resolveRow,
       selectLayerElementByRef,
       toggleLayerVisibilityByRef,
       changeLayerZIndexByRef,
-      arrangeElementLayer
+      arrangeElementLayer,
+      refreshLayerOrderUi
     };
   }
 
@@ -174,6 +186,9 @@
       changeLayerZIndexByRef: (event, action) => accessors.changeLayerZIndexByRef(event, action),
       arrangeElementLayer: (action, doc) => typeof accessors.arrangeElementLayer === 'function'
         ? accessors.arrangeElementLayer(action, doc)
+        : false,
+      refreshLayerOrderUi: (options) => typeof accessors.refreshLayerOrderUi === 'function'
+        ? accessors.refreshLayerOrderUi(options)
         : false
     };
   }
