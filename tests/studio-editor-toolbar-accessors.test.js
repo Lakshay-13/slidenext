@@ -57,6 +57,10 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     'nudgeSelectionLeftBtn',
     'nudgeSelectionRightBtn',
     'nudgeSelectionDownBtn',
+    'arrangeLayerFrontBtn',
+    'arrangeLayerBackBtn',
+    'arrangeLayerForwardBtn',
+    'arrangeLayerBackwardBtn',
     'toggleGridSnapBtn'
   ];
   const controls = Object.fromEntries(controlIds.map((id) => [id, {
@@ -80,7 +84,8 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     },
     nudgeController: {
       nudge: (dx, dy) => calls.push(['nudge', dx, dy])
-    }
+    },
+    arrangeElementLayer: (action) => calls.push(['layer', action])
   });
   const documentRef = {
     getElementById(id) {
@@ -108,6 +113,10 @@ test('toolbar accessors bind layout controls to shared controllers', () => {
     ['nudge', -1, 0],
     ['nudge', 1, 0],
     ['nudge', 0, 1],
+    ['layer', 'front'],
+    ['layer', 'back'],
+    ['layer', 'forward'],
+    ['layer', 'backward'],
     ['grid']
   ]);
 });
@@ -179,6 +188,10 @@ test('editor loads toolbar accessors after the theme runtime', () => {
     'nudgeSelectionLeftBtn',
     'nudgeSelectionRightBtn',
     'nudgeSelectionDownBtn',
+    'arrangeLayerFrontBtn',
+    'arrangeLayerBackBtn',
+    'arrangeLayerForwardBtn',
+    'arrangeLayerBackwardBtn',
     'toggleGridSnapBtn'
   ].forEach((id) => {
     const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));

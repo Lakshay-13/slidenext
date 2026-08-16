@@ -13,6 +13,9 @@
     const alignmentController = options.alignmentController || null;
     const groupController = options.groupController || null;
     const nudgeController = options.nudgeController || null;
+    const arrangeElementLayer = typeof options.arrangeElementLayer === 'function'
+      ? options.arrangeElementLayer
+      : null;
 
     function call(controller, methodName, fallback, ...args) {
       return controller && typeof controller[methodName] === 'function'
@@ -33,6 +36,7 @@
       groupSelectedElements: () => call(groupController, 'group', false),
       ungroupSelectedElements: () => call(groupController, 'ungroup', false),
       nudgeSelectedElements: (dx, dy) => call(nudgeController, 'nudge', false, dx, dy),
+      arrangeElementLayer: (action) => arrangeElementLayer ? arrangeElementLayer(action) : false,
       toggleGlobalTheme: () => call(themeController, 'toggleGlobalTheme', false),
       syncIframeTheme: () => call(themeController, 'syncIframeTheme', false),
       bindStudioEditorLayoutControls: (options = {}) => {
@@ -55,6 +59,10 @@
           ['nudgeSelectionLeftBtn', () => call(nudgeController, 'nudge', false, -1, 0)],
           ['nudgeSelectionRightBtn', () => call(nudgeController, 'nudge', false, 1, 0)],
           ['nudgeSelectionDownBtn', () => call(nudgeController, 'nudge', false, 0, 1)],
+          ['arrangeLayerFrontBtn', () => arrangeElementLayer ? arrangeElementLayer('front') : false],
+          ['arrangeLayerBackBtn', () => arrangeElementLayer ? arrangeElementLayer('back') : false],
+          ['arrangeLayerForwardBtn', () => arrangeElementLayer ? arrangeElementLayer('forward') : false],
+          ['arrangeLayerBackwardBtn', () => arrangeElementLayer ? arrangeElementLayer('backward') : false],
           ['toggleGridSnapBtn', () => call(gridSnapController, 'toggle', false)]
         ];
         buttonHandlers.forEach(([id, handler]) => {
@@ -91,6 +99,9 @@
         : false,
       nudgeSelectedElements: (dx, dy) => typeof accessors.nudgeSelectedElements === 'function'
         ? accessors.nudgeSelectedElements(dx, dy)
+        : false,
+      arrangeElementLayer: (action) => typeof accessors.arrangeElementLayer === 'function'
+        ? accessors.arrangeElementLayer(action)
         : false,
       toggleGlobalTheme: () => accessors.toggleGlobalTheme(),
       syncIframeTheme: () => accessors.syncIframeTheme()
