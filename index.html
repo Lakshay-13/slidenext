@@ -1841,6 +1841,7 @@
   <script src="/shared/studio-editor-version-delete-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-modal-controller.js"></script>
   <script src="/shared/studio-editor-version-rename-modal-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-version-rename-modal-runtime-accessors.js"></script>
   <script src="/shared/studio-version-view.js"></script>
   <script src="/shared/studio-version-history.js"></script>
   <script src="/shared/studio-editor-version-history-controller.js"></script>
@@ -2832,26 +2833,36 @@
         })
       : {};
     Object.assign(globalThis, studioEditorVersionRenameStateGlobalApi);
-    const studioEditorVersionRenameModalShellRuntimeApi =
-      typeof SlideNextStudioEditorVersionRenameModalShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorVersionRenameModalShellRuntime
+    const studioEditorVersionRenameModalRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorVersionRenameModalRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorVersionRenameModalRuntimeAccessors
       : null;
-    const studioEditorVersionRenameModalShellRuntime = studioEditorVersionRenameModalShellRuntimeApi
-      && typeof studioEditorVersionRenameModalShellRuntimeApi
-        .createStudioEditorVersionRenameModalShellRuntime === 'function'
-      ? studioEditorVersionRenameModalShellRuntimeApi
-        .createStudioEditorVersionRenameModalShellRuntime({
-          modalControllerApi: typeof SlideNextStudioEditorVersionRenameModalController !== 'undefined'
-            ? SlideNextStudioEditorVersionRenameModalController
+    const studioEditorVersionRenameModalRuntimeAccessors =
+      studioEditorVersionRenameModalRuntimeAccessorsApi
+      && typeof studioEditorVersionRenameModalRuntimeAccessorsApi
+        .createStudioEditorVersionRenameModalRuntimeAccessors === 'function'
+      ? studioEditorVersionRenameModalRuntimeAccessorsApi
+        .createStudioEditorVersionRenameModalRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorVersionRenameModalShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorVersionRenameModalShellRuntime
             : null,
-          documentRef: document,
-          setRenameState: (...args) => setStudioRenameVersionState(...args),
-          clearRenameState: (...args) => clearStudioRenameVersionState(...args),
-          createVersionActionContext: (...args) => createCurrentStudioVersionActionContext(...args),
-          resetRenameButton: (...args) => resetCurrentStudioRenameVersionButtonState(...args),
-          showModal: (...args) => showCurrentStudioVersionModal(...args),
-          hideModal: (...args) => hideCurrentStudioVersionModal(...args)
+          runtimeOptions: {
+            modalControllerApi: typeof SlideNextStudioEditorVersionRenameModalController !== 'undefined'
+              ? SlideNextStudioEditorVersionRenameModalController
+              : null,
+            documentRef: document,
+            setRenameState: (...args) => setStudioRenameVersionState(...args),
+            clearRenameState: (...args) => clearStudioRenameVersionState(...args),
+            createVersionActionContext: (...args) => createCurrentStudioVersionActionContext(...args),
+            resetRenameButton: (...args) => resetCurrentStudioRenameVersionButtonState(...args),
+            showModal: (...args) => showCurrentStudioVersionModal(...args),
+            hideModal: (...args) => hideCurrentStudioVersionModal(...args)
+          }
         })
+      : null;
+    const studioEditorVersionRenameModalShellRuntime =
+      studioEditorVersionRenameModalRuntimeAccessors
+      ? studioEditorVersionRenameModalRuntimeAccessors.runtime
       : null;
     const studioEditorVersionRenameModalController = studioEditorVersionRenameModalShellRuntime
       && studioEditorVersionRenameModalShellRuntime.isAvailable === true

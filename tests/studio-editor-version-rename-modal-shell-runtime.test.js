@@ -57,10 +57,18 @@ test('index routes version rename modal construction through the shell runtime',
   );
   assert.match(
     fileContent,
-    /studioEditorVersionRenameModalShellRuntimeApi\s*\.\s*createStudioEditorVersionRenameModalShellRuntime\(/
+    /<script src="\/shared\/studio-editor-version-rename-modal-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorVersionRenameModalRuntimeAccessors\(/
   );
   assert.match(
     fileContent,
     /studioEditorVersionRenameModalController = studioEditorVersionRenameModalShellRuntime/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorVersionRenameModalShellRuntimeApi\s*\.\s*createStudioEditorVersionRenameModalShellRuntime\(/
   );
 });
