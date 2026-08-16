@@ -1700,6 +1700,7 @@
   <script src="/shared/studio-editor-theme-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
+  <script src="/shared/studio-editor-session-bridge-controller.js"></script>
   <script src="/shared/studio-editor-session-lifecycle-controller.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
@@ -7001,6 +7002,22 @@
     const studioEditorSessionStateController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionStateController
       : null;
+    const studioEditorSessionBridgeControllerApi =
+      typeof SlideNextStudioEditorSessionBridgeController !== 'undefined'
+      ? SlideNextStudioEditorSessionBridgeController
+      : null;
+    const studioEditorSessionBridgeController = studioEditorSessionBridgeControllerApi
+      && typeof studioEditorSessionBridgeControllerApi
+        .createStudioEditorSessionBridgeController === 'function'
+      ? studioEditorSessionBridgeControllerApi.createStudioEditorSessionBridgeController({
+          sessionStateController: studioEditorSessionStateController,
+          sessionApi: typeof SlideNextStudioEditorSession !== 'undefined'
+            ? SlideNextStudioEditorSession
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken
+        })
+      : null;
     const studioEditorSessionResetController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionResetController
       : null;
@@ -8355,6 +8372,11 @@
 
     // 3. Studio Presentation Workspace Mode
     function createCurrentStudioSessionStateReaders() {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.createReaders === 'function') {
+        return studioEditorSessionBridgeController.createReaders();
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.readers === 'function') {
@@ -8367,6 +8389,11 @@
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.createReaderOptions === 'function') {
+        return studioEditorSessionBridgeController.createReaderOptions(options);
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.readerOptions === 'function') {
@@ -8379,6 +8406,11 @@
     }
 
     function captureCurrentStudioSessionState() {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.capture === 'function') {
+        return studioEditorSessionBridgeController.capture();
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.capture === 'function') {
@@ -8427,6 +8459,11 @@
     }
 
     function updateCurrentPresentationSessionState(nextState = {}) {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.update === 'function') {
+        return studioEditorSessionBridgeController.update(nextState);
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.update === 'function') {
@@ -8436,6 +8473,11 @@
     }
 
     function createCurrentStudioFrameLoadHandler(options = {}) {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.createFrameLoadHandler === 'function') {
+        return studioEditorSessionBridgeController.createFrameLoadHandler(options);
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.createFrameLoadHandler === 'function') {
@@ -8445,6 +8487,12 @@
     }
 
     function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = '', options = {}) {
+      if (typeof studioEditorSessionBridgeController !== 'undefined'
+        && studioEditorSessionBridgeController
+        && typeof studioEditorSessionBridgeController.shouldHandleFrameLoad === 'function') {
+        return studioEditorSessionBridgeController
+          .shouldHandleFrameLoad(expectedPresentationUrl, options);
+      }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.shouldHandleFrameLoad === 'function') {
