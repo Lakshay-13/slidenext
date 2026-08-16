@@ -111,7 +111,55 @@
     };
   }
 
+  function createStudioEditorSelectAllElementsOnActiveSlideAdapter(options = {}) {
+    const selectionApi = options.selectionApi && typeof options.selectionApi === 'object'
+      ? options.selectionApi
+      : null;
+    const getActiveSlide = typeof options.getActiveSlide === 'function'
+      ? options.getActiveSlide
+      : () => null;
+    const getElements = typeof options.getElements === 'function'
+      ? options.getElements
+      : () => [];
+    const isSelectableElement = typeof options.isSelectableElement === 'function'
+      ? options.isSelectableElement
+      : () => true;
+    const getSelectionOptions = typeof options.getSelectionOptions === 'function'
+      ? options.getSelectionOptions
+      : () => ({});
+    const commitSelectionState = typeof options.commitSelectionState === 'function'
+      ? options.commitSelectionState
+      : () => false;
+
+    return function selectAllElementsOnActiveSlide(doc = null) {
+      if (!selectionApi
+        || typeof selectionApi.selectAllStudioElementsOnActiveSlide !== 'function') {
+        return false;
+      }
+      return selectionApi.selectAllStudioElementsOnActiveSlide({
+        getActiveSlide,
+        getElements,
+        isSelectableElement: (element, activeSlide) => isSelectableElement(
+          element,
+          doc,
+          activeSlide
+        ),
+        getSelectionOptions: (selectionOptions = {}) => getSelectionOptions(
+          doc,
+          selectionOptions
+        ),
+        commitSelectionState: (nextSelectionState, selectionOptions = {}) => commitSelectionState(
+          doc,
+          nextSelectionState,
+          selectionOptions
+        ),
+        doc
+      });
+    };
+  }
+
   return {
-    createStudioEditorSelectionCompositionController
+    createStudioEditorSelectionCompositionController,
+    createStudioEditorSelectAllElementsOnActiveSlideAdapter
   };
 });

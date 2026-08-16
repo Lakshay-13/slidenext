@@ -9817,8 +9817,52 @@
       && typeof SlideNextStudioEditorSelection.selectAllStudioElementsOnActiveSlide === 'function'
       ? (selectionOptions) => SlideNextStudioEditorSelection.selectAllStudioElementsOnActiveSlide(selectionOptions)
       : null;
+    const studioEditorSelectionCompositionApi = typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
+      ? SlideNextStudioEditorSelectionComposition
+      : null;
+    const studioEditorSelectAllElementsAdapter = studioEditorSelectionCompositionApi
+      && typeof studioEditorSelectionCompositionApi
+        .createStudioEditorSelectAllElementsOnActiveSlideAdapter === 'function'
+      ? studioEditorSelectionCompositionApi
+        .createStudioEditorSelectAllElementsOnActiveSlideAdapter({
+          selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
+            ? SlideNextStudioEditorSelection
+            : null,
+          getActiveSlide,
+          getElements: getNormalizedSlideLayerOrder,
+          isSelectableElement: (element, sourceDoc) => {
+            const readLockedState = getEditorCanonicalVisibilityReader(
+              'locked',
+              sourceDoc,
+              isElementLocked
+            );
+            const readHiddenState = getEditorCanonicalVisibilityReader(
+              'hidden',
+              sourceDoc,
+              isElementHidden
+            );
+            return !readLockedState(element) && !readHiddenState(element);
+          },
+          getSelectionOptions: (sourceDoc, selectionOptions = {}) => getEditorSelectionOptions({
+            ...selectionOptions,
+            doc: sourceDoc
+          }),
+          commitSelectionState: (sourceDoc, nextSelectionState, selectionOptions = {}) => (
+            commitEditorSelectionState(
+              nextSelectionState,
+              {
+                ...selectionOptions,
+                doc: sourceDoc
+              }
+            )
+          )
+        })
+      : null;
 
     function selectAllElementsOnActiveSlide(doc = getIframeDoc()) {
+      if (typeof studioEditorSelectAllElementsAdapter === 'function') {
+        return studioEditorSelectAllElementsAdapter(doc);
+      }
       if (typeof studioEditorSelectAllElements !== 'function') return false;
       const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
       const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);

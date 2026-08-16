@@ -82,3 +82,59 @@ test('selection composition fails closed when shared adapters are unavailable', 
   assert.equal(controller.commit({}), false);
   assert.equal(cleared, 2);
 });
+
+test('select-all adapter binds document-scoped selection callbacks', () => {
+  const doc = { id: 'doc-1' };
+  const activeSlide = { id: 'slide-1' };
+  const selectedElements = [{ id: 'node-1' }];
+  const calls = [];
+  const selectionApi = {
+    selectAllStudioElementsOnActiveSlide(options) {
+      calls.push(options);
+      const slide = options.getActiveSlide(options.doc);
+      const elements = options.getElements(slide);
+      assert.equal(options.isSelectableElement(elements[0], slide), true);
+      options.commitSelectionState(
+        { selectedElements: elements },
+        { source: 'test' }
+      );
+      return 'delegated';
+    }
+  };
+  const adapter = composition.createStudioEditorSelectAllElementsOnActiveSlideAdapter({
+    selectionApi,
+    getActiveSlide: (currentDoc) => {
+      assert.equal(currentDoc, doc);
+      return activeSlide;
+    },
+    getElements: (slide) => {
+      assert.equal(slide, activeSlide);
+      return selectedElements;
+    },
+    isSelectableElement: (element, currentDoc, slide) => {
+      assert.equal(element, selectedElements[0]);
+      assert.equal(currentDoc, doc);
+      assert.equal(slide, activeSlide);
+      return true;
+    },
+    getSelectionOptions: (currentDoc, selectionOptions) => {
+      assert.equal(currentDoc, doc);
+      return { ...selectionOptions, doc: currentDoc };
+    },
+    commitSelectionState: (currentDoc, nextSelectionState, selectionOptions) => {
+      assert.equal(currentDoc, doc);
+      assert.deepEqual(nextSelectionState, { selectedElements });
+      assert.deepEqual(selectionOptions, { source: 'test' });
+    }
+  });
+
+  assert.equal(adapter(doc), 'delegated');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, doc);
+});
+
+test('select-all adapter fails closed when the shared selection API is unavailable', () => {
+  const adapter = composition.createStudioEditorSelectAllElementsOnActiveSlideAdapter();
+
+  assert.equal(adapter({ id: 'doc-1' }), false);
+});
