@@ -344,6 +344,29 @@ test('createStudioMutationFinalizer drops malformed canonical deck sidecars', ()
   ]);
 });
 
+test('createStudioMutationFinalizer repairs malformed sidecars from the canonical baseline', () => {
+  const historyArgs = [];
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    isCanonicalDeck: (value) => (
+      !!value && value.kind === 'slidenext.deck' && Array.isArray(value.slides)
+    ),
+    buildCanonicalDeckBaseline() {
+      return canonicalDeck;
+    },
+    saveHistoryState(...args) {
+      historyArgs.push(args);
+    }
+  });
+
+  finalizeMutation('Auto: Rebuilt Sidecar', {
+    transaction: { id: 'tx-explicit' },
+    canonicalDeck: { invalid: true }
+  });
+
+  assert.deepEqual(historyArgs, [[false, { id: 'tx-explicit' }, canonicalDeck]]);
+});
+
 test('createStudioMutationFinalizer rejects malformed sidecars without a custom validator', () => {
   const historyArgs = [];
   const finalizeMutation = mutation.createStudioMutationFinalizer({

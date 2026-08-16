@@ -95,32 +95,39 @@
       ? mutationOptions
       : {};
     const isCanonicalDeck = options.isCanonicalDeck;
+    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
+      ? options.buildCanonicalDeckBaseline
+      : typeof options.buildCanonicalDeck === 'function'
+        ? options.buildCanonicalDeck
+        : null;
+    const resolveCanonicalDeckBaseline = () => {
+      if (!buildCanonicalDeckBaseline) return null;
+      try {
+        const canonicalDeck = buildCanonicalDeckBaseline(undefined, {
+          preferLiveCanonicalDeck: false
+        });
+        return isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
+          ? canonicalDeck
+          : null;
+      } catch (err) {
+        return null;
+      }
+    };
     const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(sourceOptions, 'canonicalDeck');
     if (hasCanonicalDeck) {
       if (isValidStudioCanonicalDeck(sourceOptions.canonicalDeck, isCanonicalDeck)) {
         return sourceOptions;
       }
       const { canonicalDeck, ...optionsWithoutCanonicalDeck } = sourceOptions;
-      return optionsWithoutCanonicalDeck;
-    }
-    const buildCanonicalDeckBaseline = typeof options.buildCanonicalDeckBaseline === 'function'
-      ? options.buildCanonicalDeckBaseline
-      : typeof options.buildCanonicalDeck === 'function'
-        ? options.buildCanonicalDeck
-        : null;
-    if (!buildCanonicalDeckBaseline) {
-      return sourceOptions;
+      const rebuiltCanonicalDeck = resolveCanonicalDeckBaseline();
+      return rebuiltCanonicalDeck
+        ? { ...optionsWithoutCanonicalDeck, canonicalDeck: rebuiltCanonicalDeck }
+        : optionsWithoutCanonicalDeck;
     }
 
-    let canonicalDeck = null;
-    try {
-      canonicalDeck = buildCanonicalDeckBaseline();
-    } catch (err) {
-      // Do not interrupt mutation persistence when a legacy deck cannot import.
-      canonicalDeck = null;
-    }
-    return isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
-      ? { ...sourceOptions, canonicalDeck }
+    const rebuiltCanonicalDeck = resolveCanonicalDeckBaseline();
+    return rebuiltCanonicalDeck
+      ? { ...sourceOptions, canonicalDeck: rebuiltCanonicalDeck }
       : sourceOptions;
   }
 
