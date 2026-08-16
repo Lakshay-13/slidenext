@@ -100,8 +100,24 @@ test('index routes persistable deck html installation through the shell runtime'
     fileContent,
     /<script src="\/shared\/studio-editor-persistable-deck-html-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persistable-deck-html-runtime-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorPersistableDeckHtmlRuntimeAccessors\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorPersistableDeckHtmlShellRuntime =\s*studioEditorPersistableDeckHtmlRuntimeAccessors/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistableDeckHtmlShellRuntimeApi\s*\.createStudioEditorPersistableDeckHtmlShellRuntime\(/
+  );
   assert.match(fileContent, /studioEditorPersistableDeckHtmlShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorPersistableDeckHtmlShellRuntime/);
+  assert.match(fileContent, /createStudioEditorPersistableDeckHtmlRuntimeAccessors/);
   assert.match(
     fileContent,
     /studioEditorPersistableDeckHtmlGlobalApi\s*=\s*studioEditorPersistableDeckHtmlShellRuntime/
