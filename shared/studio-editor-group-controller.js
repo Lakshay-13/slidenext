@@ -263,10 +263,27 @@
       }
     }
 
+    function resolveGroupActionState() {
+      if (!buildGroupSelectionActionState) return null;
+      try {
+        return buildGroupSelectionActionState();
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function resolveUngroupActionState() {
+      if (!buildUngroupSelectionActionState) return null;
+      try {
+        return buildUngroupSelectionActionState();
+      } catch (error) {
+        return null;
+      }
+    }
+
     function group() {
-      if (!buildGroupSelectionActionState) return false;
-      const groupActionState = buildGroupSelectionActionState();
-      if (!groupActionState.canGroup) {
+      const groupActionState = resolveGroupActionState();
+      if (!groupActionState || !groupActionState.canGroup) {
         refreshActionState();
         return false;
       }
@@ -376,9 +393,8 @@
     }
 
     function ungroup() {
-      if (!buildUngroupSelectionActionState) return false;
-      const ungroupActionState = buildUngroupSelectionActionState();
-      if (!ungroupActionState.canUngroup) {
+      const ungroupActionState = resolveUngroupActionState();
+      if (!ungroupActionState || !ungroupActionState.canUngroup) {
         refreshActionState();
         return false;
       }

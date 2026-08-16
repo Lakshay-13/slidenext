@@ -406,6 +406,23 @@ test('group controller refreshes state and fails closed when actions are unavail
   assert.deepEqual(calls, ['update', 'update']);
 });
 
+test('group controller fails closed when action-state construction throws', () => {
+  const calls = [];
+  const controller = groupController.createStudioEditorGroupController({
+    buildGroupSelectionActionState() {
+      throw new Error('group state unavailable');
+    },
+    buildUngroupSelectionActionState() {
+      throw new Error('ungroup state unavailable');
+    },
+    updateGroupActionState: () => calls.push('update')
+  });
+
+  assert.equal(controller.group(), false);
+  assert.equal(controller.ungroup(), false);
+  assert.deepEqual(calls, ['update', 'update']);
+});
+
 test('group controller preserves the result when action-state refresh throws', () => {
   const controller = groupController.createStudioEditorGroupController({
     buildGroupSelectionActionState: () => ({ canGroup: false }),
