@@ -404,9 +404,7 @@
     if (typeof options.triggerAutoSave === 'function') {
       if (!invokeStudioEditorAutoSave(options.triggerAutoSave)) return false;
     }
-    if (versionLabel && typeof options.triggerAutoVersion === 'function') {
-      options.triggerAutoVersion(versionLabel);
-    }
+    invokeStudioEditorAutoVersion(options.triggerAutoVersion, versionLabel);
     return versionLabel;
   }
 

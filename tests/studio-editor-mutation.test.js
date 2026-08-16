@@ -1088,6 +1088,23 @@ test('finalizeStudioWallpaperMutation converts thrown fallback autosave to rejec
   assert.deepEqual(calls, ['history']);
 });
 
+test('finalizeStudioWallpaperMutation preserves the result when version notification throws', () => {
+  const calls = [];
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      throw new Error('version notification unavailable');
+    }
+  }), 'Auto: Background');
+  assert.deepEqual(calls, ['history', 'save']);
+});
+
 test('finalizeStudioWallpaperMutation forwards an optional canonical deck sidecar', () => {
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
   let delegatedOptions = null;
