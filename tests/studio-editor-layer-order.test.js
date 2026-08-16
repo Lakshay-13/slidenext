@@ -82,6 +82,26 @@ test('buildStudioLayerOrderActionState disables locked, deck-not-ready, and no-o
   });
 });
 
+test('buildStudioLayerOrderActionState disables reordering when lock state throws', () => {
+  const element = { id: 'element', isConnected: true };
+
+  assert.deepEqual(layerOrder.buildStudioLayerOrderActionState([element], {
+    orderedElements: [element],
+    isLocked: () => {
+      throw new Error('stale locked state');
+    }
+  }), {
+    selection: [element],
+    hasSelection: true,
+    hasLockedSelection: true,
+    canReorder: false,
+    canBringToFront: false,
+    canSendToBack: false,
+    canBringForward: false,
+    canSendBackward: false
+  });
+});
+
 test('createStudioLayerOrderActionStateBuilder preserves explicit ordering and document overrides', () => {
   const doc = { id: 'doc' };
   const slide = { id: 'slide' };

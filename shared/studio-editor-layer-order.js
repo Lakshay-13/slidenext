@@ -12,7 +12,13 @@
     const isEligibleElement = typeof options.isEligibleElement === 'function'
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
-    const eligibleSelection = selection.filter((element) => isEligibleElement(element));
+    const eligibleSelection = selection.filter((element) => {
+      try {
+        return isEligibleElement(element);
+      } catch (error) {
+        return false;
+      }
+    });
     const orderedElements = Array.isArray(options.orderedElements) ? options.orderedElements : null;
 
     if (!orderedElements) {
@@ -34,7 +40,13 @@
       ? options.canMutateDeck
       : () => true;
     const hasSelection = selection.length > 0;
-    const hasLockedSelection = selection.some((element) => isLocked(element));
+    let hasLockedSelection = false;
+    try {
+      hasLockedSelection = selection.some((element) => isLocked(element));
+    } catch (error) {
+      // Never permit layer mutations when canonical lock state is uncertain.
+      hasLockedSelection = true;
+    }
     const canReorder = canMutateDeck() && hasSelection && !hasLockedSelection && orderedElements.length > 0;
 
     const canRunAction = (action) => {
