@@ -121,6 +121,31 @@ test('finalizeStudioEditorDeckMutation preserves canonical fallback history beha
   ]);
 });
 
+test('finalizeStudioEditorDeckMutation preserves fallback persistence when thumbnail refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorDeckMutation(
+    'Auto: Style',
+    { transaction: { id: 'tx' } },
+    {
+      generateThumbnails() {
+        throw new Error('thumbnail refresh unavailable');
+      },
+      saveHistoryState() {
+        calls.push('history');
+      },
+      triggerAutoSave() {
+        calls.push('save');
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Style');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Style']]);
+});
+
 test('finalizeStudioEditorDeckMutation forwards the mutation document in its fallback lifecycle', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];
@@ -410,6 +435,32 @@ test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback
     ['save'],
     ['version', 'Auto: Changed Background']
   ]);
+});
+
+test('finalizeStudioEditorWallpaperMutation preserves fallback persistence when thumbnail refresh throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Changed Background',
+    { id: 'tx' },
+    null,
+    {
+      generateThumbnails() {
+        throw new Error('thumbnail refresh unavailable');
+      },
+      saveHistoryState() {
+        calls.push('history');
+      },
+      triggerAutoSave() {
+        calls.push('save');
+      },
+      triggerAutoVersion(label) {
+        calls.push(['version', label]);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Changed Background');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Changed Background']]);
 });
 
 test('finalizeStudioEditorWallpaperMutation propagates fallback history rejection', () => {

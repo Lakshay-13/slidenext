@@ -44,6 +44,15 @@
     }
   }
 
+  function invokeStudioEditorThumbnailRefresh(generateThumbnails) {
+    if (typeof generateThumbnails !== 'function') return;
+    try {
+      generateThumbnails();
+    } catch (err) {
+      // Thumbnail refresh is secondary to the committed mutation.
+    }
+  }
+
   function createStudioEditorDeckMutationFinalizer(options = {}) {
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
@@ -162,7 +171,7 @@
       syncSelectionOverlay(resolvedMutationOptions.doc);
     }
     if (resolvedMutationOptions.refreshThumbnails !== false) {
-      generateThumbnails();
+      invokeStudioEditorThumbnailRefresh(generateThumbnails);
     }
     if (resolvedMutationOptions.refreshLayersList) {
       updateLayersList(resolvedMutationOptions.doc);
@@ -347,7 +356,7 @@
       });
     }
     if (typeof options.generateThumbnails === 'function') {
-      options.generateThumbnails();
+      invokeStudioEditorThumbnailRefresh(options.generateThumbnails);
     }
     if (typeof options.saveHistoryState === 'function') {
       if (canonicalDeck) {
