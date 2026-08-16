@@ -329,7 +329,7 @@
       invokeStudioEditorUiRefresh(options.updateLayersList);
     }
     if (typeof options.updateLayerOrderActionState === 'function') {
-      options.updateLayerOrderActionState();
+      invokeStudioEditorUiRefresh(options.updateLayerOrderActionState);
     }
     if (versionLabel && typeof options.triggerAutoVersion === 'function') {
       options.triggerAutoVersion(versionLabel);
