@@ -203,6 +203,15 @@
       }
     }
 
+    function refreshMasterThumbnails() {
+      if (!generateThumbnails) return;
+      try {
+        generateThumbnails();
+      } catch (err) {
+        // Thumbnail chrome is secondary; preserve the rendered master mutation.
+      }
+    }
+
     function replaceActiveSlide(nextCanonicalDeck) {
       const documentRef = getDocument();
       const activeSlideId = resolveActiveSlideId();
@@ -252,7 +261,7 @@
         return false;
       }
       refreshMasterActiveSlide(activeSlideIndex);
-      if (generateThumbnails) generateThumbnails();
+      refreshMasterThumbnails();
 
       return {
         didApply: true,
@@ -266,7 +275,7 @@
             return false;
           }
           refreshMasterActiveSlide(activeSlideIndex);
-          if (generateThumbnails) generateThumbnails();
+          refreshMasterThumbnails();
           return true;
         }
       };
