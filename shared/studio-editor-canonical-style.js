@@ -187,6 +187,17 @@
       ));
     }
 
+    if (prop === 'chartDirection' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
+      const element = selection[0];
+      return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(
+        canonicalDeckBeforeMutation,
+        [{
+          id: resolveElementId(element, getElementId),
+          attributes: { 'data-chart-direction': `${value}` }
+        }]
+      ));
+    }
+
     if (prop === 'src' && typeof canonicalDeckApi.updateCanonicalNodeAttributes === 'function') {
       const element = selection[0];
       return runCanonicalStyleMutation(() => canonicalDeckApi.updateCanonicalNodeAttributes(canonicalDeckBeforeMutation, [{

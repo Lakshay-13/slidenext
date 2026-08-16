@@ -310,6 +310,7 @@ test('syncStudioInspectorContentControls exposes canonical chart values for char
   const chartGroup = createClassList(['hidden']);
   const chartValuesInput = { value: '' };
   const chartTitleInput = { value: '' };
+  const chartDirectionInput = { value: '' };
   const chart = {
     tagName: 'DIV',
     classList: {
@@ -328,7 +329,8 @@ test('syncStudioInspectorContentControls exposes canonical chart values for char
         return {
           inspectorChartGroup: { classList: chartGroup },
           elChartValues: chartValuesInput,
-          elChartTitle: chartTitleInput
+          elChartTitle: chartTitleInput,
+          elChartDirection: chartDirectionInput
         }[id] || null;
       }
     },
@@ -337,7 +339,8 @@ test('syncStudioInspectorContentControls exposes canonical chart values for char
     canonicalNode: {
       attributes: {
         'data-chart-values': '12,24,18,30',
-        'data-chart-title': 'Updated trend'
+        'data-chart-title': 'Updated trend',
+        'data-chart-direction': 'horizontal'
       }
     },
     computedStyles: {}
@@ -345,6 +348,7 @@ test('syncStudioInspectorContentControls exposes canonical chart values for char
   assert.equal(chartGroup.contains('hidden'), false);
   assert.equal(chartValuesInput.value, '12,24,18,30');
   assert.equal(chartTitleInput.value, 'Updated trend');
+  assert.equal(chartDirectionInput.value, 'horizontal');
 });
 
 test('syncStudioInspectorContentControls prefers canonical image source data', () => {

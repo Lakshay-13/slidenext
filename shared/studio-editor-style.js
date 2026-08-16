@@ -12,6 +12,7 @@
     text: 'Auto: Edited Text',
     chartValues: 'Auto: Edited Chart Data',
     chartTitle: 'Auto: Edited Chart Title',
+    chartDirection: 'Auto: Changed Chart Orientation',
     family: 'Auto: Changed Font Family',
     weight: 'Auto: Changed Font Weight',
     italic: 'Auto: Changed Font Style',

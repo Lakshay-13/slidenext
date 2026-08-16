@@ -422,6 +422,7 @@
         ['elTextContent', 'input', 'text'],
         ['elChartTitle', 'change', 'chartTitle'],
         ['elChartValues', 'change', 'chartValues'],
+        ['elChartDirection', 'change', 'chartDirection'],
         ['elImageSrc', 'change', 'src'],
         ['elImageFit', 'change', 'objectFit'],
         ['elImagePosition', 'change', 'objectPosition'],

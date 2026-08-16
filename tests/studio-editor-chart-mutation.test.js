@@ -27,7 +27,7 @@ function createChart(values = [42, 68, 55, 86]) {
       if (name === 'data-chart-value') this.dataset.chartValue = String(value);
     }
   }));
-  const chartBody = { children: bars, classList: createClassList(['editor-chart-bars']) };
+  const chartBody = { children: bars, style: {}, classList: createClassList(['editor-chart-bars']) };
   const title = {
     textContent: 'Quarterly trend',
     children: [],
@@ -38,10 +38,13 @@ function createChart(values = [42, 68, 55, 86]) {
     children: [title, chartBody],
     classList: createClassList(['editor-chart']),
     getAttribute(name) {
-      return name === 'data-chart-values' ? this.dataset.chartValues : null;
+      if (name === 'data-chart-values') return this.dataset.chartValues || null;
+      if (name === 'data-chart-direction') return this.dataset.chartDirection || null;
+      return null;
     },
     setAttribute(name, value) {
       if (name === 'data-chart-values') this.dataset.chartValues = String(value);
+      if (name === 'data-chart-direction') this.dataset.chartDirection = String(value);
     }
   };
   Object.defineProperty(chart, 'innerHTML', {
@@ -128,4 +131,24 @@ test('chart title mutation rejects non-chart selections without changing the tit
   );
   assert.equal(title.textContent, 'Quarterly trend');
   assert.equal(chartMutation.getStudioChartTitle(chart), 'Quarterly trend');
+});
+
+test('chart direction mutation updates the live layout and records a reversible transaction', () => {
+  const { chart, bars } = createChart([10, 20]);
+  const body = chart.children[1];
+  const result = chartMutation.applyStudioChartDirectionMutationWithTransaction(
+    [chart],
+    'horizontal',
+    {
+      transactionApi: transaction,
+      getElementId: (element) => element.dataset.editorId
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.displayValue, 'horizontal');
+  assert.equal(chart.dataset.chartDirection, 'horizontal');
+  assert.equal(body.style.flexDirection, 'column');
+  assert.deepEqual(bars.map((bar) => bar.style.width), ['50%', '100%']);
+  assert.deepEqual(result.transaction.operations.map((operation) => operation.type), ['dataset', 'markup']);
 });

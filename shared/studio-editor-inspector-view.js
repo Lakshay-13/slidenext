@@ -169,6 +169,8 @@
     if (chartValuesInput) chartValuesInput.value = '42,68,55,86';
     const chartTitleInput = documentRef.getElementById('elChartTitle');
     if (chartTitleInput) chartTitleInput.value = 'Quarterly trend';
+    const chartDirectionInput = documentRef.getElementById('elChartDirection');
+    if (chartDirectionInput) chartDirectionInput.value = 'vertical';
     const imageFitInput = documentRef.getElementById('elImageFit');
     if (imageFitInput) {
       imageFitInput.value = 'fill';
@@ -195,6 +197,7 @@
       ['elTextContent', ''],
       ['elChartValues', '42,68,55,86'],
       ['elChartTitle', 'Quarterly trend'],
+      ['elChartDirection', 'vertical'],
       ['elImageSrc', ''],
       ['elFontSize', '16'],
       ['fontSizeVal', '16px', 'textContent'],
@@ -251,6 +254,7 @@
     const chartGroup = documentRef.getElementById('inspectorChartGroup');
     const chartValuesInput = documentRef.getElementById('elChartValues');
     const chartTitleInput = documentRef.getElementById('elChartTitle');
+    const chartDirectionInput = documentRef.getElementById('elChartDirection');
     const imageSrcInput = documentRef.getElementById('elImageSrc');
     const imageFitInput = documentRef.getElementById('elImageFit');
     const imagePositionInput = documentRef.getElementById('elImagePosition');
@@ -275,6 +279,17 @@
         : '';
       if (chartTitleInput) {
         chartTitleInput.value = canonicalChartTitle || readStudioInspectorChartTitle(primaryElement);
+      }
+      const canonicalChartDirection = options.canonicalNode
+        && options.canonicalNode.attributes
+        && typeof options.canonicalNode.attributes['data-chart-direction'] === 'string'
+        ? options.canonicalNode.attributes['data-chart-direction']
+        : '';
+      const chartDirection = canonicalChartDirection
+        || readStudioInspectorAttribute(primaryElement, 'data-chart-direction')
+        || 'vertical';
+      if (chartDirectionInput) {
+        chartDirectionInput.value = chartDirection === 'horizontal' ? 'horizontal' : 'vertical';
       }
     } else if (chartGroup) {
       chartGroup.classList.add('hidden');

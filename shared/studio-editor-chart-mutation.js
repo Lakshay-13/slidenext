@@ -124,6 +124,74 @@
       : '';
   }
 
+  function getStudioChartBodyElement(element) {
+    if (!element) return null;
+    if (typeof element.querySelector === 'function') {
+      return element.querySelector('.editor-chart-bars') || null;
+    }
+    if (element.classList
+      && typeof element.classList.contains === 'function'
+      && element.classList.contains('editor-chart-bars')) {
+      return element;
+    }
+    if (element.children && typeof element.children.length === 'number') {
+      for (const child of Array.from(element.children)) {
+        const body = getStudioChartBodyElement(child);
+        if (body) return body;
+      }
+    }
+    return null;
+  }
+
+  function normalizeStudioChartDirection(value) {
+    return `${value ?? ''}`.trim().toLowerCase() === 'horizontal'
+      ? 'horizontal'
+      : 'vertical';
+  }
+
+  function applyStudioChartDirectionLayout(chart, direction) {
+    const body = getStudioChartBodyElement(chart);
+    const bars = getStudioChartBars(chart);
+    if (!body || !body.style || bars.length === 0) return false;
+
+    const values = getStudioChartValues(chart);
+    const maxValue = Math.max(...values, 0);
+    const percentages = bars.map((bar, index) => {
+      const value = Number(values[index]);
+      return maxValue > 0 && Number.isFinite(value) ? (value / maxValue) * 100 : 0;
+    });
+
+    if (direction === 'horizontal') {
+      body.style.flexDirection = 'column';
+      body.style.alignItems = 'flex-start';
+      body.style.justifyContent = 'flex-start';
+      body.style.borderBottom = 'none';
+      body.style.borderLeft = '1px solid rgba(255, 255, 255, 0.16)';
+      bars.forEach((bar, index) => {
+        if (!bar.style) return;
+        bar.style.width = `${percentages[index]}%`;
+        bar.style.height = '18px';
+        bar.style.flex = '0 0 auto';
+        bar.style.borderRadius = '0 6px 6px 0';
+      });
+      return true;
+    }
+
+    body.style.flexDirection = '';
+    body.style.alignItems = 'flex-end';
+    body.style.justifyContent = '';
+    body.style.borderBottom = '1px solid rgba(255, 255, 255, 0.16)';
+    body.style.borderLeft = '';
+    bars.forEach((bar, index) => {
+      if (!bar.style) return;
+      bar.style.width = '';
+      bar.style.height = `${percentages[index]}%`;
+      bar.style.flex = '1';
+      bar.style.borderRadius = '6px 6px 0 0';
+    });
+    return true;
+  }
+
   function createChartMarkupTransaction(chart, beforeMarkup, afterMarkup, options) {
     const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
       ? options.transactionApi
@@ -236,6 +304,71 @@
     };
   }
 
+  function createChartDirectionTransaction(
+    chart,
+    beforeDirection,
+    afterDirection,
+    beforeMarkup,
+    afterMarkup,
+    options
+  ) {
+    const transactionApi = options.transactionApi && typeof options.transactionApi === 'object'
+      ? options.transactionApi
+      : null;
+    if (!transactionApi) return null;
+    const getElementId = typeof options.getElementId === 'function'
+      ? options.getElementId
+      : (element) => element && element.dataset && element.dataset.editorId;
+    const datasetTransaction = typeof transactionApi.createStudioDatasetTransaction === 'function'
+      ? transactionApi.createStudioDatasetTransaction([{
+          element: chart,
+          elementId: getElementId(chart),
+          property: 'chartDirection',
+          before: beforeDirection,
+          after: afterDirection
+        }], { getElementId })
+      : null;
+    const markupTransaction = createChartMarkupTransaction(
+      chart,
+      beforeMarkup,
+      afterMarkup,
+      options
+    );
+    if (datasetTransaction && markupTransaction
+      && typeof transactionApi.mergeStudioEditorTransactions === 'function') {
+      return transactionApi.mergeStudioEditorTransactions(datasetTransaction, markupTransaction);
+    }
+    return datasetTransaction || markupTransaction || null;
+  }
+
+  function applyStudioChartDirectionMutationWithTransaction(elements = [], value, options = {}) {
+    const selection = Array.isArray(elements) ? elements : [];
+    const charts = selection.filter(isStudioChartElement);
+    if (charts.length !== 1) {
+      return { didApply: false, displayValue: `${value}`, transaction: null };
+    }
+
+    const chart = charts[0];
+    const direction = normalizeStudioChartDirection(value);
+    const beforeDirection = readStudioChartAttribute(chart, 'data-chart-direction');
+    const beforeMarkup = typeof chart.innerHTML === 'string' ? chart.innerHTML : '';
+    writeStudioChartAttribute(chart, 'data-chart-direction', direction);
+    applyStudioChartDirectionLayout(chart, direction);
+    const afterMarkup = typeof chart.innerHTML === 'string' ? chart.innerHTML : '';
+    return {
+      didApply: true,
+      displayValue: direction,
+      transaction: createChartDirectionTransaction(
+        chart,
+        beforeDirection,
+        direction,
+        beforeMarkup,
+        afterMarkup,
+        options
+      )
+    };
+  }
+
   return {
     MAX_CHART_VALUES,
     isStudioChartElement,
@@ -243,7 +376,9 @@
     getStudioChartValues,
     getStudioChartTitleElement,
     getStudioChartTitle,
+    normalizeStudioChartDirection,
     applyStudioChartValuesMutationWithTransaction,
-    applyStudioChartTitleMutationWithTransaction
+    applyStudioChartTitleMutationWithTransaction,
+    applyStudioChartDirectionMutationWithTransaction
   };
 });

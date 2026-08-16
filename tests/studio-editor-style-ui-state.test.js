@@ -208,6 +208,7 @@ test('style inspector controls delegate through the shared style controller', ()
     'elTextContent',
     'elChartTitle',
     'elChartValues',
+    'elChartDirection',
     'elImageSrc',
     'elImageFit',
     'elImagePosition',

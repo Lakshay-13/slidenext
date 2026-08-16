@@ -106,3 +106,27 @@ test('applyStudioStyleMutationWithTransaction delegates chart titles to the char
   assert.equal(result.transaction.id, 'tx-title');
   assert.equal(receivedValue, 'Updated trend');
 });
+
+test('applyStudioStyleMutationWithTransaction delegates chart direction to the chart mutation adapter', () => {
+  const selection = [{ dataset: { editorId: 'chart-1' } }];
+  let receivedValue = null;
+  const result = styleMutation.applyStudioStyleMutationWithTransaction(
+    styleState,
+    selection,
+    'chartDirection',
+    'horizontal',
+    {
+      chartApi: {
+        applyStudioChartDirectionMutationWithTransaction(currentSelection, value) {
+          assert.equal(currentSelection, selection);
+          receivedValue = value;
+          return { didApply: true, displayValue: value, transaction: { id: 'tx-direction' } };
+        }
+      }
+    }
+  );
+
+  assert.equal(result.didApply, true);
+  assert.equal(result.transaction.id, 'tx-direction');
+  assert.equal(receivedValue, 'horizontal');
+});
