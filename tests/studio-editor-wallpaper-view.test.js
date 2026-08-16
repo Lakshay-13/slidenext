@@ -482,3 +482,42 @@ test('index keeps the solid wallpaper color picker free of inline handlers', () 
   assert.doesNotMatch(fileContent, /id="wallpaperCustomColor"[^>]*oninput=/);
   assert.doesNotMatch(fileContent, /id="wallpaperCustomColor"[^>]*onchange=/);
 });
+
+test('bindStudioCustomGradientColorControls preserves both color-stop event contracts', () => {
+  const controls = Object.fromEntries(['cgColor1', 'cgColor2'].map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioCustomGradientColorControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      applyCustomGradient() {
+        calls.push('apply');
+      },
+      flushPendingWallpaperVersion() {
+        calls.push('flush');
+      }
+    }),
+    { cgColor1: true, cgColor2: true }
+  );
+  controls.cgColor1.listeners.input();
+  controls.cgColor1.listeners.change();
+  controls.cgColor2.listeners.input();
+  controls.cgColor2.listeners.change();
+  assert.deepEqual(calls, ['apply', 'flush', 'apply', 'flush']);
+});
+
+test('index keeps custom-gradient color stops free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="cgColor1"[^>]*(oninput|onchange)=/);
+  assert.doesNotMatch(fileContent, /id="cgColor2"[^>]*(oninput|onchange)=/);
+});
