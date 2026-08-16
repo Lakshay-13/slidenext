@@ -2,6 +2,9 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const accessors = require('../shared/studio-editor-session-runtime-accessors.js');
+const sessionApi = require('../shared/studio-editor-session.js');
+const sessionRuntime = require('../shared/studio-editor-session-runtime.js');
+const sessionShellRuntime = require('../shared/studio-editor-session-shell-runtime.js');
 
 test('session runtime accessors delegate shell construction and preserve runtime options', () => {
   let receivedOptions = null;
@@ -40,4 +43,29 @@ test('session runtime accessors fail closed without a shell factory', () => {
     accessors.createStudioEditorSessionRuntimeAccessors({ runtimeApi: null }),
     { runtime: null }
   );
+});
+
+test('session runtime accessors preserve launch state through the real runtime composition', () => {
+  let presentationUrl = '';
+  const result = accessors.createStudioEditorSessionRuntimeAccessors({
+    runtimeApi: sessionShellRuntime,
+    sessionRuntimeApi: sessionRuntime,
+    runtimeOptions: {
+      sessionApi,
+      getPresentationUrl: () => presentationUrl,
+      getSessionToken: () => 1,
+      setPresentationUrl(nextUrl) {
+        presentationUrl = nextUrl;
+      }
+    }
+  });
+
+  assert.equal(typeof result.runtime.sessionStateController.update, 'function');
+  assert.deepEqual(
+    result.runtime.sessionStateController.update({
+      presentationUrl: '/presentations/example/index.html'
+    }),
+    { presentationUrl: '/presentations/example/index.html' }
+  );
+  assert.equal(presentationUrl, '/presentations/example/index.html');
 });
