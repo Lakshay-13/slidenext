@@ -10,6 +10,8 @@
     root.SlideNextPresentationLibraryView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (presentationLibrary) {
+  const presentationLibraryActionBindings = new WeakMap();
+
   function normalizeString(value) {
     return typeof value === 'string' ? value : '';
   }
@@ -25,6 +27,62 @@
 
   function inlineHandlerArgument(value) {
     return escapeHtml(JSON.stringify(normalizeString(value)));
+  }
+
+  function getPresentationLibraryActionAttribute(target, name) {
+    if (!target) return '';
+    if (typeof target.getAttribute === 'function') {
+      return target.getAttribute(name) || '';
+    }
+    const datasetKey = name.replace(/^data-/, '').replace(/-([a-z])/g, (_, character) => character.toUpperCase());
+    return target.dataset && target.dataset[datasetKey]
+      ? target.dataset[datasetKey]
+      : '';
+  }
+
+  function findPresentationLibraryActionTarget(container, event) {
+    let target = event && event.target;
+    if (target && typeof target.closest === 'function') {
+      target = target.closest('[data-presentation-library-action]');
+      if (target && container && typeof container.contains === 'function' && !container.contains(target)) {
+        return null;
+      }
+      return target;
+    }
+    while (target && target !== container) {
+      if (getPresentationLibraryActionAttribute(target, 'data-presentation-library-action')) return target;
+      target = target.parentNode;
+    }
+    return target === container ? null : target;
+  }
+
+  function bindPresentationLibraryActions(options = {}) {
+    const documentRef = options.documentRef;
+    const loader = documentRef && typeof documentRef.getElementById === 'function'
+      ? documentRef.getElementById('loader')
+      : null;
+    if (!loader || typeof loader.addEventListener !== 'function') return false;
+
+    const handlers = {};
+    if (typeof options.loadPresentations === 'function') {
+      handlers.loadPresentations = options.loadPresentations;
+    }
+    const existingBinding = presentationLibraryActionBindings.get(loader);
+    if (existingBinding) {
+      Object.assign(existingBinding.handlers, handlers);
+      return true;
+    }
+
+    const binding = { handlers };
+    loader.addEventListener('click', (event) => {
+      const target = findPresentationLibraryActionTarget(loader, event);
+      const action = getPresentationLibraryActionAttribute(target, 'data-presentation-library-action');
+      if (action === 'retry' && binding.handlers.loadPresentations) {
+        binding.handlers.loadPresentations();
+      }
+    });
+    presentationLibraryActionBindings.set(loader, binding);
+    return true;
   }
 
   function resolveCategories(data) {
@@ -72,10 +130,11 @@
       loader.innerHTML = `
         <span class="material-symbols-outlined text-[36px] text-rose-500">error</span>
         <p class="text-xs text-rose-400 font-mono mt-2 uppercase tracking-widest" role="alert">${escapeHtml(message)}</p>
-        <button type="button" onclick="loadPresentations()" class="mt-4 inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all">
+        <button type="button" data-presentation-library-action="retry" class="mt-4 inline-flex items-center gap-1.5 px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold transition-all">
           <span class="material-symbols-outlined text-[16px]">refresh</span> Try again
         </button>
       `;
+      bindPresentationLibraryActions(options);
       loader.classList.remove('hidden');
     }
     if (categoryTabs) categoryTabs.classList.add('hidden');
@@ -139,6 +198,7 @@
   }
 
   return {
+    bindPresentationLibraryActions,
     setPresentationLibraryLoadingState,
     setPresentationLibraryErrorState,
     renderPresentationLibraryCategories,

@@ -68,7 +68,8 @@
       if (view && typeof view.setPresentationLibraryErrorState === 'function') {
         return view.setPresentationLibraryErrorState({
           documentRef,
-          message: 'Failed to load SlideNext workspace'
+          message: 'Failed to load SlideNext workspace',
+          loadPresentations: load
         });
       }
 

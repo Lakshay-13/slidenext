@@ -178,6 +178,7 @@ test('dashboard controller delegates load failures to the shared retryable error
   assert.equal(errors.length, 1);
   assert.deepEqual(renderedErrors, [{
     documentRef,
-    message: 'Failed to load SlideNext workspace'
+    message: 'Failed to load SlideNext workspace',
+    loadPresentations: controller.load
   }]);
 });

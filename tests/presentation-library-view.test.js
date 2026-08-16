@@ -62,9 +62,45 @@ test('setPresentationLibraryErrorState renders a retryable error state', () => {
   assert.equal(loader.classList.contains('hidden'), false);
   assert.match(loader.innerHTML, /Workspace unavailable/);
   assert.match(loader.innerHTML, /Try again/);
-  assert.match(loader.innerHTML, /onclick="loadPresentations\(\)"/);
+  assert.match(loader.innerHTML, /data-presentation-library-action="retry"/);
+  assert.doesNotMatch(loader.innerHTML, /onclick=/);
   assert.equal(categoryTabs.classList.contains('hidden'), true);
   assert.equal(presentationsGrid.classList.contains('hidden'), true);
+});
+
+test('presentation library view delegates retry actions without duplicate listeners', () => {
+  const loader = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+  const documentRef = {
+    getElementById(id) {
+      return id === 'loader' ? loader : null;
+    }
+  };
+
+  assert.equal(presentationLibraryView.bindPresentationLibraryActions({
+    documentRef,
+    loadPresentations() {
+      calls.push('initial');
+    }
+  }), true);
+  assert.equal(presentationLibraryView.bindPresentationLibraryActions({
+    documentRef,
+    loadPresentations() {
+      calls.push('updated');
+    }
+  }), true);
+  loader.listeners.click({
+    target: {
+      dataset: { presentationLibraryAction: 'retry' },
+      parentNode: loader
+    }
+  });
+  assert.deepEqual(calls, ['updated']);
 });
 
 test('renderPresentationLibraryCategories renders active and inactive category tabs', () => {
