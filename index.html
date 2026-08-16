@@ -1673,6 +1673,7 @@
   <script src="/shared/presentation-dashboard-accessors.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-style-toolbar-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-toolbar-state-coordinator.js"></script>
   <script src="/shared/studio-editor-chart-mutation.js"></script>
   <script src="/shared/studio-editor-style-mutation.js"></script>
@@ -11349,31 +11350,47 @@
         && typeof studioEditorToolbarStateCoordinator.syncStyle === 'function') {
         return studioEditorToolbarStateCoordinator.syncStyle(doc);
       }
-      const styleToolbarState = typeof SlideNextStudioEditorStyleToolbarState !== 'undefined'
+      const styleToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorStyleToolbarState !== 'undefined'
         ? SlideNextStudioEditorStyleToolbarState
         : null;
-      if (!styleToolbarState
-        || typeof styleToolbarState.createStudioEditorStyleToolbarStateController !== 'function') {
+      const styleToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorStyleToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorStyleToolbarStateRuntimeAccessors
+        : null;
+      const styleToolbarStateRuntimeAccessors =
+        styleToolbarStateRuntimeAccessorsApi
+        && typeof styleToolbarStateRuntimeAccessorsApi
+          .createStudioEditorStyleToolbarStateRuntimeAccessors === 'function'
+        ? styleToolbarStateRuntimeAccessorsApi
+          .createStudioEditorStyleToolbarStateRuntimeAccessors({
+            runtimeApi: styleToolbarStateRuntimeApi
+          })
+        : null;
+      if (!styleToolbarStateRuntimeAccessors
+        || typeof styleToolbarStateRuntimeAccessors
+          .createStudioEditorStyleToolbarStateController !== 'function') {
         return false;
       }
       if (!updateStyleActionState.controller) {
         const styleView = typeof SlideNextStudioEditorStyle !== 'undefined'
           ? SlideNextStudioEditorStyle
           : null;
-        updateStyleActionState.controller = styleToolbarState.createStudioEditorStyleToolbarStateController({
-          styleView,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getLockedState(sourceDoc) {
-            const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
-              && typeof buildEditorCanonicalDeck === 'function';
-            return canReadCanonicalState
-              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-              : isElementLocked;
-          },
-          documentRef: document
-        });
+        updateStyleActionState.controller = styleToolbarStateRuntimeAccessors
+          .createStudioEditorStyleToolbarStateController({
+            styleView,
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getLockedState(sourceDoc) {
+              const canReadCanonicalState = typeof getEditorCanonicalVisibilityReader === 'function'
+                && typeof buildEditorCanonicalDeck === 'function';
+              return canReadCanonicalState
+                ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+                : isElementLocked;
+            },
+            documentRef: document
+          });
       }
       return updateStyleActionState.controller
         && typeof updateStyleActionState.controller.sync === 'function'

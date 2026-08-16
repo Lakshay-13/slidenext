@@ -10,6 +10,7 @@ const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const styleState = require('../shared/studio-editor-style.js');
 const styleToolbarState = require('../shared/studio-editor-style-toolbar-state.js');
+const styleToolbarStateRuntimeAccessors = require('../shared/studio-editor-style-toolbar-state-runtime-accessors.js');
 const studioMutation = require('../shared/studio-editor-mutation.js');
 const studioTransaction = require('../shared/studio-editor-transaction.js');
 const styleMutation = require('../shared/studio-editor-style-mutation.js');
@@ -32,6 +33,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function runStyleActionStateSource(source, context) {
   context.SlideNextStudioEditorStyleToolbarState = styleToolbarState;
+  context.SlideNextStudioEditorStyleToolbarStateRuntimeAccessors = styleToolbarStateRuntimeAccessors;
   vm.createContext(context);
   vm.runInContext(source, context);
 }
