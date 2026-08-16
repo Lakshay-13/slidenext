@@ -1485,6 +1485,7 @@
     <script src="/shared/studio-editor-alignment-controller.js"></script>
     <script src="/shared/studio-editor-alignment-state.js"></script>
     <script src="/shared/studio-editor-alignment-state-shell-runtime.js"></script>
+    <script src="/shared/studio-editor-alignment-state-accessors.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-state-shell-runtime.js"></script>
@@ -3987,15 +3988,19 @@
       && studioEditorMotionStateShellRuntime.isAvailable === true
       ? studioEditorMotionStateShellRuntime.motionStateController
       : null;
-    const studioEditorAlignmentStateShellRuntimeApi =
-      typeof SlideNextStudioEditorAlignmentStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorAlignmentStateShellRuntime
+    const studioEditorAlignmentStateAccessorsApi =
+      typeof SlideNextStudioEditorAlignmentStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorAlignmentStateAccessors
       : null;
-    const studioEditorAlignmentStateShellRuntime = studioEditorAlignmentStateShellRuntimeApi
-      && typeof studioEditorAlignmentStateShellRuntimeApi
-        .createStudioEditorAlignmentStateShellRuntime === 'function'
-      ? studioEditorAlignmentStateShellRuntimeApi
-        .createStudioEditorAlignmentStateShellRuntime({
+    const studioEditorAlignmentStateAccessors = studioEditorAlignmentStateAccessorsApi
+      && typeof studioEditorAlignmentStateAccessorsApi
+        .createStudioEditorAlignmentStateAccessors === 'function'
+      ? studioEditorAlignmentStateAccessorsApi
+        .createStudioEditorAlignmentStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorAlignmentStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorAlignmentStateShellRuntime
+            : null,
+          runtimeOptions: {
           alignmentStateApi: typeof SlideNextStudioEditorAlignmentState !== 'undefined'
             ? SlideNextStudioEditorAlignmentState
             : null,
@@ -4008,7 +4013,11 @@
             ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
             : isElementLocked,
           documentRef: document
+          }
         })
+      : null;
+    const studioEditorAlignmentStateShellRuntime = studioEditorAlignmentStateAccessors
+      ? studioEditorAlignmentStateAccessors.runtime
       : null;
     const studioEditorAlignmentStateController = studioEditorAlignmentStateShellRuntime
       && studioEditorAlignmentStateShellRuntime.isAvailable === true
