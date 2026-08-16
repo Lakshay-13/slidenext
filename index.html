@@ -1814,6 +1814,7 @@
   <script src="/shared/studio-editor-slide-collection-adapter.js"></script>
   <script src="/shared/studio-editor-slide-accessors.js"></script>
   <script src="/shared/studio-editor-slide-editable-elements-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-editable-elements-accessors.js"></script>
   <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
   <script src="/shared/studio-editor-editable-target-adapter.js"></script>
   <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
@@ -5556,7 +5557,28 @@
       ? SlideNextStudioEditorSlideEditableElementsAdapter
       : null;
 
-    const studioEditorSlideEditableElementsReader = studioEditorSlideEditableElementsAdapter
+    const studioEditorSlideEditableElementsAccessorsApi =
+      typeof SlideNextStudioEditorSlideEditableElementsAccessors !== 'undefined'
+      ? SlideNextStudioEditorSlideEditableElementsAccessors
+      : null;
+    const studioEditorSlideEditableElementsAccessors = studioEditorSlideEditableElementsAccessorsApi
+      && typeof studioEditorSlideEditableElementsAccessorsApi
+        .createStudioEditorSlideEditableElementsAccessors === 'function'
+      ? studioEditorSlideEditableElementsAccessorsApi
+        .createStudioEditorSlideEditableElementsAccessors({
+          slideEditableElementsAdapter: studioEditorSlideEditableElementsAdapter,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          getDomOptions: (overrides = {}) => getEditorDomOptions(overrides)
+        })
+      : null;
+
+    const studioEditorSlideEditableElementsReader = typeof studioEditorSlideEditableElementsAccessors !== 'undefined'
+      && studioEditorSlideEditableElementsAccessors
+      && typeof studioEditorSlideEditableElementsAccessors.getSlideEditableElements === 'function'
+      ? (slide, options) => studioEditorSlideEditableElementsAccessors.getSlideEditableElements(slide, options)
+      : studioEditorSlideEditableElementsAdapter
       && typeof studioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom

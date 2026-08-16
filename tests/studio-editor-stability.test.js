@@ -3198,6 +3198,8 @@ test('editor composes slide editable-element collection through the shared adapt
     '\n\n    function getNormalizedSlideLayerOrder'
   );
 
+  assert.match(source, /<script src="\/shared\/studio-editor-slide-editable-elements-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorSlideEditableElementsAccessors =/);
   assert.match(source, /const studioEditorSlideEditableElementsAdapter =/);
   assert.match(source, /SlideNextStudioEditorSlideEditableElementsAdapter/);
   assert.match(source, /const studioEditorSlideEditableElementsReader =/);
