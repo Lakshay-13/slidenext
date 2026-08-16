@@ -237,6 +237,24 @@ test('finalizeStudioEditorDeckMutation converts thrown fallback autosave to reje
   }), false);
 });
 
+test('finalizeStudioEditorDeckMutation preserves the result when version notification throws', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorDeckMutation('Auto: Style', {}, {
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion() {
+      throw new Error('version notification unavailable');
+    }
+  });
+
+  assert.equal(result, 'Auto: Style');
+  assert.deepEqual(calls, ['history', 'save']);
+});
+
 test('finalizeStudioEditorSelectionToggleMutation preserves selection and persistence ordering', () => {
   const calls = [];
   const documentRef = { id: 'editor-document' };
