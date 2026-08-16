@@ -18,7 +18,11 @@
 
     return selection.filter((item) => {
       const element = item && item.element ? item.element : item;
-      return !!item && !isLocked(element) && isFreeformPositioned(element);
+      try {
+        return !!item && !isLocked(element) && isFreeformPositioned(element);
+      } catch (error) {
+        return false;
+      }
     });
   }
 

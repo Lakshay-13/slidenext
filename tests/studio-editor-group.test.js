@@ -76,6 +76,19 @@ test('getStudioGroupableSelection excludes locked and flow-positioned items', ()
   }), items);
 });
 
+test('getStudioGroupableSelection excludes items when state readers throw', () => {
+  const safe = { element: { id: 'safe' } };
+  const stale = { element: { id: 'stale' } };
+
+  assert.deepEqual(group.getStudioGroupableSelection([safe, stale], {
+    isLocked: (element) => {
+      if (element.id === 'stale') throw new Error('stale locked state');
+      return false;
+    },
+    isFreeformPositioned: () => true
+  }), [safe]);
+});
+
 test('buildStudioGroupPlan computes a group bounds and child-relative positions', () => {
   const items = buildItems();
   assert.deepEqual(group.buildStudioGroupPlan(items, {
