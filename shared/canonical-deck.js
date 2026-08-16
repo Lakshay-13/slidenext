@@ -687,11 +687,12 @@
   }
 
   function findCanonicalNodeById(deckLike, nodeId) {
-    const deck = isCanonicalDeck(deckLike)
+    const deckWasCanonical = isCanonicalDeck(deckLike);
+    const deck = deckWasCanonical
       ? deckLike
       : createCanonicalDeck(deckLike);
     const normalizedNodeId = normalizeString(nodeId).trim();
-    if (!isCanonicalDeck(deck) || !normalizedNodeId) return null;
+    if ((!deckWasCanonical && !isCanonicalDeck(deck)) || !normalizedNodeId) return null;
 
     function findNode(nodes = []) {
       for (const node of Array.isArray(nodes) ? nodes : []) {

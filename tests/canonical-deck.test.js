@@ -1368,3 +1368,15 @@ test('findCanonicalNodeById resolves nested slide nodes without exposing DOM sta
   });
   assert.equal(canonicalDeck.findCanonicalNodeById(deck, 'missing-node'), null);
 });
+
+test('findCanonicalNodeById normalizes a malformed canonical-shaped deck before lookup', () => {
+  const deck = canonicalDeck.createCanonicalDeck({
+    slides: [{
+      id: 'slide-1',
+      nodes: [{ id: 'node-1' }]
+    }]
+  });
+  deck.slides[0].nodes[0].id = '';
+
+  assert.equal(canonicalDeck.findCanonicalNodeById(deck, 'node-1').id, 'node-1');
+});
