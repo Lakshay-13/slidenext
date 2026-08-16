@@ -34,6 +34,15 @@
       ? options.updateHistoryButtons
       : null;
 
+    function refreshHistoryButtons() {
+      if (!updateHistoryButtons) return;
+      try {
+        updateHistoryButtons();
+      } catch (err) {
+        // A reset is already committed; a history UI failure must not undo it.
+      }
+    }
+
     function reset() {
       const clearedTimerState = persistenceApi
         && typeof persistenceApi.clearStudioPersistenceTimers === 'function'
@@ -60,7 +69,7 @@
         });
       }
       if (clearHistoryStacks) clearHistoryStacks();
-      if (updateHistoryButtons) updateHistoryButtons();
+      refreshHistoryButtons();
       return true;
     }
 

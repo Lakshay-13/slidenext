@@ -50,3 +50,22 @@ test('session reset controller safely resets without optional collaborators', ()
   const controller = resetController.createStudioEditorSessionResetController();
   assert.equal(controller.reset(), true);
 });
+
+test('session reset controller preserves the reset when history UI refresh throws', () => {
+  const calls = [];
+  const controller = resetController.createStudioEditorSessionResetController({
+    applyPersistedDeckState: () => calls.push('applyPersistedDeckState'),
+    clearHistoryStacks: () => calls.push('clearHistoryStacks'),
+    updateHistoryButtons: () => {
+      calls.push('updateHistoryButtons');
+      throw new Error('history UI unavailable');
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.reset(), true));
+  assert.deepEqual(calls, [
+    'applyPersistedDeckState',
+    'clearHistoryStacks',
+    'updateHistoryButtons'
+  ]);
+});
