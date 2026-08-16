@@ -19,6 +19,8 @@
     root.SlideNextStudioEditorEvents = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (liveSelection, nudge, transform, keyboard) {
+  const studioPointerAttachmentRegistry = new WeakMap();
+
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
       return liveSelection.getStudioLiveSelection(elements);
@@ -320,14 +322,38 @@
     });
   }
 
+  function detachStudioPointerHandlers(doc) {
+    const registration = doc && studioPointerAttachmentRegistry.get(doc);
+    if (!registration) return false;
+
+    registration.listeners.forEach(({ target, eventName, handler, capture }) => {
+      if (target && typeof target.removeEventListener === 'function') {
+        target.removeEventListener(eventName, handler, capture);
+      }
+    });
+    studioPointerAttachmentRegistry.delete(doc);
+    return true;
+  }
+
   function attachStudioPointerHandlers(doc, handlers, options = {}) {
     const body = doc && doc.body;
     if (!body || typeof body.addEventListener !== 'function' || !handlers) return false;
 
+    detachStudioPointerHandlers(doc);
+
+    const listeners = [];
+    const addListener = (target, eventName, handler, capture) => {
+      if (!target || typeof target.addEventListener !== 'function'
+        || typeof handler !== 'function') return;
+      target.addEventListener(eventName, handler, capture);
+      listeners.push({ target, eventName, handler, capture });
+    };
+
     if (options.preventNativeDrag && typeof doc.addEventListener === 'function') {
-      doc.addEventListener('dragstart', (event) => {
+      const preventNativeDrag = (event) => {
         if (event && typeof event.preventDefault === 'function') event.preventDefault();
-      }, true);
+      };
+      addListener(doc, 'dragstart', preventNativeDrag, true);
     }
 
     [
@@ -336,16 +362,15 @@
       ['pointerup', handlers.handlePointerUp],
       ['pointercancel', handlers.handlePointerCancel],
       ['lostpointercapture', handlers.handlePointerCancel]
-    ].forEach(([eventName, handler]) => {
-      if (typeof handler === 'function') body.addEventListener(eventName, handler, true);
-    });
+    ].forEach(([eventName, handler]) => addListener(body, eventName, handler, true));
 
     const frameWindow = doc.defaultView;
     if (frameWindow
       && typeof frameWindow.addEventListener === 'function'
       && typeof handlers.handleWindowBlur === 'function') {
-      frameWindow.addEventListener('blur', handlers.handleWindowBlur, true);
+      addListener(frameWindow, 'blur', handlers.handleWindowBlur, true);
     }
+    studioPointerAttachmentRegistry.set(doc, { listeners });
     return true;
   }
 
@@ -682,6 +707,7 @@
     createStudioFrameClickHandler,
     createStudioMarqueePointerHandlers,
     createStudioMarqueeSelectionHandlers,
+    detachStudioPointerHandlers,
     attachStudioPointerHandlers,
     attachStudioMarqueePointerHandlers,
     attachStudioFrameInteractionHandlers,

@@ -148,6 +148,51 @@ test('attachStudioPointerHandlers optionally prevents native drag while binding 
   });
 });
 
+test('attachStudioPointerHandlers replaces an existing attachment before rebinding', () => {
+  const listeners = [];
+  const target = {
+    addEventListener(type, handler, capture) {
+      listeners.push({ type, handler, capture });
+    },
+    removeEventListener(type, handler, capture) {
+      const index = listeners.findIndex((listener) => (
+        listener.type === type
+        && listener.handler === handler
+        && listener.capture === capture
+      ));
+      if (index >= 0) listeners.splice(index, 1);
+    }
+  };
+  const doc = {
+    ...target,
+    body: target,
+    defaultView: target
+  };
+  const firstHandlers = {
+    handlePointerDown() {},
+    handlePointerMove() {}
+  };
+  const secondHandlers = {
+    handlePointerDown() {},
+    handlePointerMove() {}
+  };
+
+  assert.equal(events.attachStudioPointerHandlers(doc, firstHandlers), true);
+  assert.equal(events.attachStudioPointerHandlers(doc, secondHandlers), true);
+  assert.equal(
+    listeners.filter(({ handler }) => handler === firstHandlers.handlePointerDown).length,
+    0
+  );
+  assert.equal(
+    listeners.filter(({ handler }) => handler === secondHandlers.handlePointerDown).length,
+    1
+  );
+
+  assert.equal(events.detachStudioPointerHandlers(doc), true);
+  assert.equal(listeners.length, 0);
+  assert.equal(events.detachStudioPointerHandlers(doc), false);
+});
+
 test('attachStudioMarqueePointerHandlers tolerates missing editor frame targets', () => {
   assert.equal(events.attachStudioMarqueePointerHandlers(null, {}), false);
   assert.equal(events.attachStudioMarqueePointerHandlers({ body: {} }, {}), false);
