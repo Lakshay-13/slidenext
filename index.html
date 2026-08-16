@@ -11588,6 +11588,10 @@
           getWallpaperView: () => typeof SlideNextStudioEditorWallpaperView !== 'undefined'
             ? SlideNextStudioEditorWallpaperView
             : null,
+          getWallpaperPresetData: () => wallpaperPresetsData,
+          getApplyPresetWallpaper: () => typeof applyPresetWallpaper === 'function'
+            ? applyPresetWallpaper
+            : null,
           setWallpaperTabState: typeof setStudioWallpaperTab === 'function'
             ? setStudioWallpaperTab
             : null
@@ -11691,6 +11695,11 @@
 
     // Render preset solid & gradient options
     function renderWallpaperPresets() {
+      if (typeof studioEditorWallpaperAccessors !== 'undefined'
+        && studioEditorWallpaperAccessors
+        && typeof studioEditorWallpaperAccessors.renderWallpaperPresets === 'function') {
+        return studioEditorWallpaperAccessors.renderWallpaperPresets();
+      }
       const wallpaperView = typeof SlideNextStudioEditorWallpaperView !== 'undefined'
         ? SlideNextStudioEditorWallpaperView
         : null;

@@ -239,6 +239,33 @@ test('wallpaper accessors do not touch the view when wallpaper controls are unav
   assert.equal(viewCalls, 0);
 });
 
+test('wallpaper accessors render presets and bind the shared preset action', () => {
+  const calls = [];
+  const documentRef = { id: 'editor-document' };
+  const applyPresetWallpaper = () => {};
+  const presetData = { solids: ['#fff'], gradients: [] };
+  const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors({
+    getDocument: () => documentRef,
+    getWallpaperView: () => ({
+      renderStudioWallpaperPresets(options) {
+        calls.push(['render', options]);
+        return true;
+      },
+      bindStudioWallpaperPresetActions(options) {
+        calls.push(['bind', options]);
+      }
+    }),
+    getWallpaperPresetData: () => presetData,
+    getApplyPresetWallpaper: () => applyPresetWallpaper
+  });
+
+  assert.equal(accessors.renderWallpaperPresets(), true);
+  assert.deepEqual(calls, [
+    ['render', { documentRef, presetData }],
+    ['bind', { documentRef, applyPresetWallpaper }]
+  ]);
+});
+
 test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const doc = {

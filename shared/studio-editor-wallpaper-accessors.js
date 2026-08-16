@@ -20,6 +20,12 @@
     const setWallpaperTabState = typeof options.setWallpaperTabState === 'function'
       ? options.setWallpaperTabState
       : null;
+    const getWallpaperPresetData = typeof options.getWallpaperPresetData === 'function'
+      ? options.getWallpaperPresetData
+      : () => options.wallpaperPresetData || {};
+    const getApplyPresetWallpaper = typeof options.getApplyPresetWallpaper === 'function'
+      ? options.getApplyPresetWallpaper
+      : () => options.applyPresetWallpaper || null;
 
     function setWallpaperTab(tab) {
       const actionState = resolveActionState();
@@ -37,7 +43,25 @@
       return didApply;
     }
 
-    return { setWallpaperTab };
+    function renderWallpaperPresets() {
+      const wallpaperView = getWallpaperView();
+      if (!wallpaperView || typeof wallpaperView.renderStudioWallpaperPresets !== 'function') {
+        return false;
+      }
+      const didRender = wallpaperView.renderStudioWallpaperPresets({
+        documentRef: getDocument(),
+        presetData: getWallpaperPresetData()
+      });
+      if (typeof wallpaperView.bindStudioWallpaperPresetActions === 'function') {
+        wallpaperView.bindStudioWallpaperPresetActions({
+          documentRef: getDocument(),
+          applyPresetWallpaper: getApplyPresetWallpaper()
+        });
+      }
+      return didRender;
+    }
+
+    return { setWallpaperTab, renderWallpaperPresets };
   }
 
   return { createStudioEditorWallpaperAccessors };
