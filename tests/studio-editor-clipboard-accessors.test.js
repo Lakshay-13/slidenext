@@ -28,6 +28,33 @@ test('clipboard accessors preserve the legacy fallback without a controller', ()
   assert.equal(accessors.getClipboard(), clipboard);
 });
 
+test('clipboard accessors bind copy and paste controls to editor commands', () => {
+  const controlIds = ['copySelectionBtn', 'pasteClipboardBtn', 'slidePasteClipboardBtn'];
+  const controls = Object.fromEntries(controlIds.map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+  const accessors = accessorsApi.createStudioEditorClipboardAccessors({
+    copySelectedElements: () => calls.push('copy'),
+    pasteClipboardElements: () => calls.push('paste')
+  });
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    accessors.bindStudioEditorClipboardControls({ documentRef }),
+    Object.fromEntries(controlIds.map((id) => [id, true]))
+  );
+  controlIds.forEach((id) => controls[id].listeners.click());
+  assert.deepEqual(calls, ['copy', 'paste', 'paste']);
+});
+
 test('clipboard global api preserves the editor shell getter name', () => {
   const clipboard = { items: [{ id: 'item-1' }], pasteCount: 0 };
   const globalApi = accessorsApi.createStudioEditorClipboardGlobalApi({
@@ -64,5 +91,11 @@ test('editor loads clipboard accessors and publishes the legacy getter', () => {
   assert.match(fileContent, /studioEditorClipboardAccessorsApi/);
   assert.match(fileContent, /studioEditorClipboardGlobalApi/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorClipboardGlobalApi\)/);
+  ['copySelectionBtn', 'pasteClipboardBtn', 'slidePasteClipboardBtn'].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing clipboard control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
+  assert.match(fileContent, /bindStudioEditorClipboardControls\(\{ documentRef: document \}\)/);
   assert.doesNotMatch(fileContent, /function getStudioEditorClipboard\(\)/);
 });

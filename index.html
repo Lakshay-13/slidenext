@@ -1016,7 +1016,7 @@
                 <span>Bar Chart</span>
               </button>
             </div>
-            <button id="slidePasteClipboardBtn" onclick="pasteClipboardElements()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="slidePasteClipboardBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-mono text-[10px] uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[14px] text-[#7028d0]">content_paste</span>
               Paste Clipboard
             </button>
@@ -1294,11 +1294,11 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <button id="copySelectionBtn" onclick="copySelectedElements()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="copySelectionBtn" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[16px]">content_copy</span>
               Copy Selected
             </button>
-            <button id="pasteClipboardBtn" onclick="pasteClipboardElements()" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
+            <button id="pasteClipboardBtn" disabled class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white text-xs font-mono font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300">
               <span class="material-symbols-outlined text-[16px]">content_paste</span>
               Paste Clipboard
             </button>
@@ -4123,9 +4123,15 @@
       && typeof studioEditorClipboardAccessorsApi.createStudioEditorClipboardAccessors === 'function'
       ? studioEditorClipboardAccessorsApi.createStudioEditorClipboardAccessors({
           controller: studioEditorClipboardController,
-          getFallbackClipboard: () => typeof editorClipboard !== 'undefined' ? editorClipboard : null
+          getFallbackClipboard: () => typeof editorClipboard !== 'undefined' ? editorClipboard : null,
+          copySelectedElements: (...args) => copySelectedElements(...args),
+          pasteClipboardElements: (...args) => pasteClipboardElements(...args)
         })
       : null;
+    if (studioEditorClipboardAccessors
+      && typeof studioEditorClipboardAccessors.bindStudioEditorClipboardControls === 'function') {
+      studioEditorClipboardAccessors.bindStudioEditorClipboardControls({ documentRef: document });
+    }
     const studioEditorClipboardGlobalApi = studioEditorClipboardAccessorsApi
       && typeof studioEditorClipboardAccessorsApi.createStudioEditorClipboardGlobalApi === 'function'
       ? studioEditorClipboardAccessorsApi.createStudioEditorClipboardGlobalApi({
