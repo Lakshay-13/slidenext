@@ -590,11 +590,11 @@
       </p>
       <div class="flex flex-col gap-1.5 mt-2">
         <label for="newVersionNameInput" class="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">New Version Name</label>
-        <input type="text" id="newVersionNameInput" placeholder="e.g. V1 Draft, Theme Update" onkeydown="if(event.key === 'Enter') submitRenameVersion()" class="w-full px-3.5 py-2.5 bg-zinc-900 border border-white/10 hover:border-white/20 focus:border-[#7028d0]/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all font-sans" />
+        <input type="text" id="newVersionNameInput" placeholder="e.g. V1 Draft, Theme Update" class="w-full px-3.5 py-2.5 bg-zinc-900 border border-white/10 hover:border-white/20 focus:border-[#7028d0]/50 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#7028d0]/20 transition-all font-sans" />
       </div>
       <div class="flex justify-end gap-3 mt-4">
-        <button onclick="closeRenameVersionModal()" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
-        <button id="confirmRenameVersionBtn" onclick="submitRenameVersion()" class="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(112,40,208,0.2)]">Rename</button>
+        <button id="cancelRenameVersionBtn" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
+        <button id="confirmRenameVersionBtn" class="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(112,40,208,0.2)]">Rename</button>
       </div>
     </div>
   </div>
@@ -4513,6 +4513,14 @@
         documentRef: document,
         submitSaveVersion,
         closeSaveVersionModal
+      });
+    }
+    if (studioEditorVersionView
+      && typeof studioEditorVersionView.bindStudioEditorRenameVersionModalControls === 'function') {
+      studioEditorVersionView.bindStudioEditorRenameVersionModalControls({
+        documentRef: document,
+        submitRenameVersion,
+        closeRenameVersionModal
       });
     }
     const studioEditorAssetRuntime = typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'

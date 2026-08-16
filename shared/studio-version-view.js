@@ -100,6 +100,44 @@
     return bindings;
   }
 
+  function bindStudioEditorRenameVersionModalControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const submitRenameVersion = typeof options.submitRenameVersion === 'function'
+      ? options.submitRenameVersion
+      : null;
+    const closeRenameVersionModal = typeof options.closeRenameVersionModal === 'function'
+      ? options.closeRenameVersionModal
+      : null;
+    const bindings = {};
+    const input = documentRef.getElementById('newVersionNameInput');
+    if (!input || typeof input.addEventListener !== 'function') {
+      bindings.newVersionNameInput = false;
+    } else {
+      input.addEventListener('keydown', (event) => {
+        if (event && event.key === 'Enter' && submitRenameVersion) submitRenameVersion();
+      });
+      bindings.newVersionNameInput = true;
+    }
+
+    [
+      ['cancelRenameVersionBtn', closeRenameVersionModal],
+      ['confirmRenameVersionBtn', submitRenameVersion]
+    ].forEach(([id, handler]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (handler) handler();
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function resolveModalVisibility(options = {}) {
     return options.modalVisibility && typeof options.modalVisibility === 'object'
       ? options.modalVisibility
@@ -337,6 +375,7 @@
     toggleStudioVersionsDropdown,
     bindStudioEditorVersionToolbarControls,
     bindStudioEditorSaveVersionModalControls,
+    bindStudioEditorRenameVersionModalControls,
     showStudioVersionModal,
     hideStudioVersionModal,
     hideStudioVersionModalImmediately,

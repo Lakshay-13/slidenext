@@ -238,6 +238,57 @@ test('version view binds save-version modal controls and only submits on Enter',
   assert.deepEqual(calls, ['submit', 'close', 'submit']);
 });
 
+test('version view binds rename-version modal controls and only submits on Enter', () => {
+  const controls = {
+    newVersionNameInput: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    },
+    cancelRenameVersionBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    },
+    confirmRenameVersionBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    versionView.bindStudioEditorRenameVersionModalControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      submitRenameVersion() {
+        calls.push('submit');
+      },
+      closeRenameVersionModal() {
+        calls.push('close');
+      }
+    }),
+    {
+      newVersionNameInput: true,
+      cancelRenameVersionBtn: true,
+      confirmRenameVersionBtn: true
+    }
+  );
+  controls.newVersionNameInput.listeners.keydown({ key: 'Escape' });
+  assert.deepEqual(calls, []);
+  controls.newVersionNameInput.listeners.keydown({ key: 'Enter' });
+  controls.cancelRenameVersionBtn.listeners.click();
+  controls.confirmRenameVersionBtn.listeners.click();
+  assert.deepEqual(calls, ['submit', 'close', 'submit']);
+});
+
 test('version rename button view helpers render reset and busy states', () => {
   const button = { disabled: true, textContent: 'Renaming...' };
   assert.equal(versionView.resetStudioRenameVersionButton(button), true);

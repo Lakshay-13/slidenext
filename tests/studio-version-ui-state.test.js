@@ -2974,3 +2974,11 @@ test('index keeps save-version modal controls free of inline handlers', () => {
   assert.doesNotMatch(fileContent, /id="cancelSaveVersionBtn"[^>]*onclick=/);
   assert.doesNotMatch(fileContent, /id="confirmSaveVersionBtn"[^>]*onclick=/);
 });
+
+test('index keeps rename-version modal controls free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="newVersionNameInput"[^>]*onkeydown=/);
+  assert.doesNotMatch(fileContent, /id="cancelRenameVersionBtn"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="confirmRenameVersionBtn"[^>]*onclick=/);
+});
