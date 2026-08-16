@@ -37,6 +37,14 @@ test('syncStudioEditorLayoutModeLabel renders structured and freeform states', (
   assert.equal(label.textContent, 'Freeform canvas');
   assert.equal(label.dataset.layoutMode, 'absolute');
   assert.match(label.title, /explicit slide coordinates/);
+
+  assert.equal(layoutModeView.syncStudioEditorLayoutModeLabel({
+    documentRef,
+    mode: 'mixed'
+  }), true);
+  assert.equal(label.textContent, 'Mixed layout');
+  assert.equal(label.dataset.layoutMode, 'mixed');
+  assert.match(label.title, /document flow.*explicit slide coordinates/);
 });
 
 test('syncStudioEditorLayoutModeLabel reports unavailable mode without mutating deck state', () => {

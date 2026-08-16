@@ -25,18 +25,24 @@
           const normalizedValue = value.trim().toLowerCase();
           return normalizedValue === 'freeform' ? 'absolute' : normalizedValue;
         };
-    const mode = normalizeLayoutMode(options.mode);
+    const rawMode = typeof options.mode === 'string' ? options.mode.trim().toLowerCase() : '';
+    const mode = rawMode === 'mixed' ? 'mixed' : normalizeLayoutMode(options.mode);
     const isAbsolute = mode === 'absolute';
     const isFlow = mode === 'flow';
+    const isMixed = mode === 'mixed';
     const text = isAbsolute
       ? 'Freeform canvas'
       : isFlow
         ? 'Structured layout'
+        : isMixed
+          ? 'Mixed layout'
         : 'Layout unavailable';
     const description = isAbsolute
       ? 'Freeform canvas: elements use explicit slide coordinates.'
       : isFlow
         ? 'Structured layout: elements remain in normal document flow.'
+        : isMixed
+          ? 'Mixed layout: some elements use document flow and others use explicit slide coordinates.'
         : 'The active slide layout mode is not available yet.';
 
     label.textContent = text;

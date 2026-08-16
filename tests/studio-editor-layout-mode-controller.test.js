@@ -41,6 +41,33 @@ test('layout mode controller resolves the active canonical mode and delegates la
   ]);
 });
 
+test('layout mode controller prefers the display mode resolver when available', () => {
+  const calls = [];
+  const controller = controllerApi.createStudioEditorLayoutModeController({
+    layoutModeApi: {
+      resolveStudioCanonicalLayoutMode() {
+        calls.push('base');
+        return 'absolute';
+      },
+      resolveStudioCanonicalLayoutDisplayMode() {
+        calls.push('display');
+        return 'mixed';
+      }
+    },
+    layoutModeViewApi: {
+      syncStudioEditorLayoutModeLabel(options) {
+        calls.push(['render', options.mode]);
+        return true;
+      }
+    },
+    resolveCanonicalDeck: () => ({ slides: [] }),
+    resolveActiveSlideId: () => 'slide-1'
+  });
+
+  assert.equal(controller.sync({ id: 'iframe-document' }), true);
+  assert.deepEqual(calls, ['display', ['render', 'mixed']]);
+});
+
 test('layout mode controller preserves unavailable-state fallback when canonical resolution fails', () => {
   let renderedMode = null;
   const controller = controllerApi.createStudioEditorLayoutModeController({

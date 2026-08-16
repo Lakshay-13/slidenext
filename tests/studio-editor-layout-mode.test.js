@@ -36,6 +36,29 @@ test('resolveStudioCanonicalLayoutMode preserves the existing insertion preceden
   );
 });
 
+test('resolveStudioCanonicalLayoutDisplayMode identifies mixed flow and absolute content', () => {
+  const deck = {
+    layout: { mode: 'flow' },
+    slides: [{
+      id: 'slide-1',
+      layout: { mode: 'flow' },
+      nodes: [{
+        layout: { mode: 'flow' },
+        children: [{ layout: { mode: 'absolute' } }]
+      }]
+    }]
+  };
+
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutMode(deck, 'slide-1'),
+    'absolute'
+  );
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutDisplayMode(deck, 'slide-1'),
+    'mixed'
+  );
+});
+
 test('resolveStudioCanonicalLayoutMode supports an explicit fallback for unavailable decks', () => {
   assert.equal(
     layoutMode.resolveStudioCanonicalLayoutMode(null, 'slide-1', { fallbackMode: 'flow' }),

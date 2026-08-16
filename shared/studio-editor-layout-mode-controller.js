@@ -47,7 +47,10 @@
         activeSlideId = '';
       }
 
-      const mode = layoutModeApi.resolveStudioCanonicalLayoutMode(
+      const resolveLayoutMode = typeof layoutModeApi.resolveStudioCanonicalLayoutDisplayMode === 'function'
+        ? layoutModeApi.resolveStudioCanonicalLayoutDisplayMode
+        : layoutModeApi.resolveStudioCanonicalLayoutMode;
+      const mode = resolveLayoutMode(
         canonicalDeck,
         activeSlideId,
         { fallbackMode: '' }
