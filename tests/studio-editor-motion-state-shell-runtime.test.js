@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const motionStateShellRuntime = require('../shared/studio-editor-motion-state-shell-runtime.js');
+const motionStateAccessors = require('../shared/studio-editor-motion-state-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -57,6 +58,38 @@ test('motion-state shell runtime fails closed when the shared state API is unava
   assert.equal(runtime.motionStateController, null);
 });
 
+test('motion-state accessors compose the shell runtime and preserve dependencies', () => {
+  const runtime = { isAvailable: true, motionStateController: { name: 'motion' } };
+  const runtimeOptions = { getDocument: () => null };
+  const calls = [];
+  const runtimeApi = {
+    createStudioEditorMotionStateShellRuntime(options) {
+      calls.push(options);
+      return runtime;
+    }
+  };
+  const motionStateApi = { name: 'state' };
+  const accessors = motionStateAccessors.createStudioEditorMotionStateAccessors({
+    runtimeApi,
+    motionStateApi,
+    runtimeOptions
+  });
+
+  assert.equal(accessors.runtime, runtime);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].motionStateApi, motionStateApi);
+  assert.equal(calls[0].getDocument, runtimeOptions.getDocument);
+  assert.notEqual(calls[0], runtimeOptions);
+});
+
+test('motion-state accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = motionStateAccessors.createStudioEditorMotionStateAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.runtime, null);
+});
+
 test('index routes motion-state construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -64,8 +97,14 @@ test('index routes motion-state construction through the shell runtime', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-motion-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorMotionStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorMotionStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-motion-state-accessors\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorMotionStateAccessorsApi\s*\.\s*createStudioEditorMotionStateAccessors\(/
+  );
   assert.match(
     fileContent,
     /studioEditorMotionStateController = studioEditorMotionStateShellRuntime/

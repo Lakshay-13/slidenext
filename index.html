@@ -1479,6 +1479,7 @@
   <script src="/shared/studio-editor-nudge.js"></script>
   <script src="/shared/studio-editor-motion-state.js"></script>
   <script src="/shared/studio-editor-motion-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-motion-state-accessors.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
     <script src="/shared/studio-editor-alignment.js"></script>
     <script src="/shared/studio-editor-alignment-controller.js"></script>
@@ -3948,15 +3949,19 @@
       && studioEditorRemovalStateShellRuntime.isAvailable === true
       ? studioEditorRemovalStateShellRuntime.removalStateController
       : null;
-    const studioEditorMotionStateShellRuntimeApi =
-      typeof SlideNextStudioEditorMotionStateShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorMotionStateShellRuntime
+    const studioEditorMotionStateAccessorsApi =
+      typeof SlideNextStudioEditorMotionStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorMotionStateAccessors
       : null;
-    const studioEditorMotionStateShellRuntime = studioEditorMotionStateShellRuntimeApi
-      && typeof studioEditorMotionStateShellRuntimeApi
-        .createStudioEditorMotionStateShellRuntime === 'function'
-      ? studioEditorMotionStateShellRuntimeApi
-        .createStudioEditorMotionStateShellRuntime({
+    const studioEditorMotionStateAccessors = studioEditorMotionStateAccessorsApi
+      && typeof studioEditorMotionStateAccessorsApi
+        .createStudioEditorMotionStateAccessors === 'function'
+      ? studioEditorMotionStateAccessorsApi
+        .createStudioEditorMotionStateAccessors({
+          runtimeApi: typeof SlideNextStudioEditorMotionStateShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorMotionStateShellRuntime
+            : null,
+          runtimeOptions: {
           motionStateApi: typeof SlideNextStudioEditorMotionState !== 'undefined'
             ? SlideNextStudioEditorMotionState
             : null,
@@ -3972,7 +3977,11 @@
           getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
           getRectOnSlide,
           documentRef: document
+          }
         })
+      : null;
+    const studioEditorMotionStateShellRuntime = studioEditorMotionStateAccessors
+      ? studioEditorMotionStateAccessors.runtime
       : null;
     const studioEditorMotionStateController = studioEditorMotionStateShellRuntime
       && studioEditorMotionStateShellRuntime.isAvailable === true
