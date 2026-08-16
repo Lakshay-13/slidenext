@@ -83,7 +83,11 @@
         iframe.src = '';
       }
     } else {
-      iframe.srcdoc = '';
+      if (typeof iframe.removeAttribute === 'function') {
+        iframe.removeAttribute('srcdoc');
+      } else {
+        iframe.srcdoc = '';
+      }
       iframe.src = presentationUrl;
     }
     return true;

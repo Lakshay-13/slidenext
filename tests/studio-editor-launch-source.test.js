@@ -88,7 +88,7 @@ test('launch source applier centralizes canonical srcdoc and legacy URL assignme
     launchSource.applyStudioEditorLaunchSource(iframe, '/presentations/legacy/index.html'),
     true
   );
-  assert.equal(iframe.srcdoc, '');
+  assert.deepEqual(removedAttributes, ['src', 'srcdoc']);
   assert.equal(iframe.src, '/presentations/legacy/index.html');
   assert.equal(launchSource.applyStudioEditorLaunchSource(null, '/deck/index.html'), false);
 });
