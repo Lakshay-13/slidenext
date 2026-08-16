@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const navigationUiShellRuntime = require('../shared/studio-editor-navigation-ui-shell-runtime.js');
+const navigationUiAccessors = require('../shared/studio-editor-navigation-ui-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -38,6 +39,36 @@ test('navigation UI shell runtime fails closed when the shared bridge is unavail
   assert.equal(runtime.navigationUiBridge, null);
 });
 
+test('navigation UI accessors compose the shell runtime and expose the available bridge', () => {
+  const bridge = { syncStudioChromeToActiveSlide() {} };
+  const runtimeApi = {
+    createStudioEditorNavigationUiShellRuntime(options) {
+      assert.equal(options.navigationSync.name, 'navigation-sync');
+      assert.equal(options.thumbnailController.name, 'thumbnail-controller');
+      return { isAvailable: true, navigationUiBridge: bridge };
+    }
+  };
+  const accessors = navigationUiAccessors.createStudioEditorNavigationUiAccessors({
+    runtimeApi,
+    navigationUiBridgeApi: { name: 'bridge-api' },
+    navigationSync: { name: 'navigation-sync' },
+    thumbnailController: { name: 'thumbnail-controller' }
+  });
+
+  assert.equal(accessors.isAvailable, true);
+  assert.equal(accessors.navigationUiBridge, bridge);
+  assert.equal(accessors.runtime.navigationUiBridge, bridge);
+});
+
+test('navigation UI accessors fail closed when the shell runtime is unavailable', () => {
+  const accessors = navigationUiAccessors.createStudioEditorNavigationUiAccessors({
+    runtimeApi: null
+  });
+
+  assert.equal(accessors.isAvailable, false);
+  assert.equal(accessors.navigationUiBridge, null);
+});
+
 test('index routes navigation UI bridge construction through the shell runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
@@ -47,10 +78,10 @@ test('index routes navigation UI bridge construction through the shell runtime',
   );
   assert.match(
     fileContent,
-    /studioEditorNavigationUiShellRuntimeApi\s*\.\s*createStudioEditorNavigationUiShellRuntime\(/
+    /studioEditorNavigationUiAccessorsApi\s*\.\s*createStudioEditorNavigationUiAccessors\(/
   );
   assert.match(
     fileContent,
-    /studioEditorNavigationUiBridge = studioEditorNavigationUiShellRuntime/
+    /studioEditorNavigationUiBridge = studioEditorNavigationUiAccessors/
   );
 });

@@ -1787,6 +1787,7 @@
   <script src="/shared/studio-editor-navigation-shell-runtime.js"></script>
   <script src="/shared/studio-editor-navigation-ui-bridge.js"></script>
   <script src="/shared/studio-editor-navigation-ui-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-navigation-ui-accessors.js"></script>
   <script src="/shared/studio-editor-ui-state.js"></script>
   <script src="/shared/studio-preview.js"></script>
   <script src="/shared/studio-editor-preview-controller.js"></script>
@@ -3339,15 +3340,18 @@
     const studioEditorThumbnailController = studioEditorNavigationRuntime
       ? studioEditorNavigationRuntime.thumbnailController
       : null;
-    const studioEditorNavigationUiShellRuntimeApi =
-      typeof SlideNextStudioEditorNavigationUiShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorNavigationUiShellRuntime
+    const studioEditorNavigationUiAccessorsApi =
+      typeof SlideNextStudioEditorNavigationUiAccessors !== 'undefined'
+      ? SlideNextStudioEditorNavigationUiAccessors
       : null;
-    const studioEditorNavigationUiShellRuntime = studioEditorNavigationUiShellRuntimeApi
-      && typeof studioEditorNavigationUiShellRuntimeApi
-        .createStudioEditorNavigationUiShellRuntime === 'function'
-      ? studioEditorNavigationUiShellRuntimeApi
-        .createStudioEditorNavigationUiShellRuntime({
+    const studioEditorNavigationUiAccessors = studioEditorNavigationUiAccessorsApi
+      && typeof studioEditorNavigationUiAccessorsApi
+        .createStudioEditorNavigationUiAccessors === 'function'
+      ? studioEditorNavigationUiAccessorsApi
+        .createStudioEditorNavigationUiAccessors({
+          runtimeApi: typeof SlideNextStudioEditorNavigationUiShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorNavigationUiShellRuntime
+            : null,
           navigationUiBridgeApi: typeof SlideNextStudioEditorNavigationUiBridge !== 'undefined'
             ? SlideNextStudioEditorNavigationUiBridge
             : null,
@@ -3355,9 +3359,9 @@
           thumbnailController: studioEditorThumbnailController
         })
       : null;
-    const studioEditorNavigationUiBridge = studioEditorNavigationUiShellRuntime
-      && studioEditorNavigationUiShellRuntime.isAvailable === true
-      ? studioEditorNavigationUiShellRuntime.navigationUiBridge
+    const studioEditorNavigationUiBridge = studioEditorNavigationUiAccessors
+      && studioEditorNavigationUiAccessors.isAvailable === true
+      ? studioEditorNavigationUiAccessors.navigationUiBridge
       : null;
     const studioEditorSlideMutationRuntime = typeof SlideNextStudioEditorSlideMutationShellRuntime !== 'undefined'
       && SlideNextStudioEditorSlideMutationShellRuntime
