@@ -230,3 +230,33 @@ test('removal controller rolls back and restores selection when finalization thr
   assert.doesNotThrow(() => assert.equal(controller.remove(), false));
   assert.deepEqual(calls, ['deselect', 'rollback', 'restoreSelection', 'finalizeAction']);
 });
+
+test('removal controller restores selection when rollback throws', () => {
+  const calls = [];
+  const doc = { id: 'doc' };
+  const target = { dataset: { editorId: 'node-1' } };
+  const controller = removalController.createStudioEditorRemovalController({
+    buildRemovalSelectionActionState: () => ({
+      canRemove: true,
+      selection: [target]
+    }),
+    getIframeDoc: () => doc,
+    assignElementId: (element) => element.dataset.editorId,
+    applyRemovalMutation: () => ({ didRemove: true, transaction: { type: 'markup' } }),
+    finalizeDeckMutation: () => false,
+    rollbackMutation: () => {
+      calls.push('rollback');
+      throw new Error('rollback failed');
+    },
+    restoreSelection: () => calls.push('restoreSelection'),
+    finalizeRemovalActionResult: (result, sourceDoc) => {
+      assert.equal(result, false);
+      assert.equal(sourceDoc, doc);
+      calls.push('finalizeAction');
+      return false;
+    }
+  });
+
+  assert.doesNotThrow(() => assert.equal(controller.remove(), false));
+  assert.deepEqual(calls, ['rollback', 'restoreSelection', 'finalizeAction']);
+});

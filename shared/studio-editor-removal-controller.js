@@ -90,6 +90,15 @@
       }
     }
 
+    function rollbackRemovalMutation(transaction, doc) {
+      if (!rollbackMutation) return;
+      try {
+        rollbackMutation(transaction, doc);
+      } catch (err) {
+        // Preserve the failed action result so selection restoration can still run.
+      }
+    }
+
     function remove(sourceDoc) {
       const doc = sourceDoc || getIframeDoc();
       if (!buildRemovalSelectionActionState) return finalizeRemovalActionResult(false, doc);
@@ -153,7 +162,7 @@
         ...(canonicalDeck ? { canonicalDeck } : {})
       });
       if (finalizeResult === false) {
-        if (rollbackMutation) rollbackMutation(mutation.transaction, doc);
+        rollbackRemovalMutation(mutation.transaction, doc);
         if (restoreSelection) restoreSelection(selectedElementIds, doc);
         return finalizeRemovalActionResult(false, doc);
       }
