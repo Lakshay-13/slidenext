@@ -1378,6 +1378,7 @@
   <script src="/shared/deck-render.js"></script>
   <script src="/shared/studio-color-utils.js"></script>
   <script src="/shared/studio-element-state.js"></script>
+  <script src="/shared/studio-editor-element-state-accessors.js"></script>
   <script src="/shared/studio-editor-live-selection.js"></script>
   <script src="/shared/studio-editor-inspector-view.js"></script>
   <script src="/shared/studio-editor-inspector-controller.js"></script>
@@ -3965,7 +3966,28 @@
       });
     }
 
-    const studioEditorElementVisibilityStateReader = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorElementStateAccessorsApi =
+      typeof SlideNextStudioEditorElementStateAccessors !== 'undefined'
+      ? SlideNextStudioEditorElementStateAccessors
+      : null;
+    const studioEditorElementStateAccessors = studioEditorElementStateAccessorsApi
+      && typeof studioEditorElementStateAccessorsApi
+        .createStudioEditorElementStateAccessors === 'function'
+      ? studioEditorElementStateAccessorsApi
+        .createStudioEditorElementStateAccessors({
+          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
+            ? SlideNextStudioElementState
+            : null,
+          editorElementIdAttr: EDITOR_ELEMENT_ID_ATTR,
+          transientClassNames: ['editor-selected', 'editor-dragging']
+        })
+      : null;
+
+    const studioEditorElementVisibilityStateReader = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.getVisibilityState === 'function'
+      ? (element) => studioEditorElementStateAccessors.getVisibilityState(element)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.getStudioElementVisibilityState === 'function'
       ? (element) => SlideNextStudioElementState.getStudioElementVisibilityState(element)
@@ -3977,7 +3999,11 @@
         : null;
     }
 
-    const studioEditorElementLockWriter = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorElementLockWriter = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.setLockedState === 'function'
+      ? (element, locked) => studioEditorElementStateAccessors.setLockedState(element, locked)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.setStudioElementLockedState === 'function'
       ? (element, locked) => SlideNextStudioElementState.setStudioElementLockedState(element, locked)
@@ -10825,7 +10851,11 @@
       });
     }
 
-    const studioEditorElementLockReader = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorElementLockReader = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.isLocked === 'function'
+      ? (element) => studioEditorElementStateAccessors.isLocked(element)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.isStudioElementLocked === 'function'
       ? (element) => SlideNextStudioElementState.isStudioElementLocked(element)
@@ -11148,7 +11178,11 @@
       });
     }
 
-    const studioEditorElementHiddenReader = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorElementHiddenReader = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.isHidden === 'function'
+      ? (element) => studioEditorElementStateAccessors.isHidden(element)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.isStudioElementHidden === 'function'
       ? (element) => SlideNextStudioElementState.isStudioElementHidden(element)
@@ -11248,7 +11282,11 @@
       return fallback;
     }
 
-    const studioEditorElementHiddenWriter = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorElementHiddenWriter = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.setHiddenState === 'function'
+      ? (element, hidden) => studioEditorElementStateAccessors.setHiddenState(element, hidden)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.setStudioElementHiddenState === 'function'
       ? (element, hidden) => SlideNextStudioElementState.setStudioElementHiddenState(element, hidden)
@@ -12128,7 +12166,11 @@
         : false;
     }
 
-    const studioEditorDuplicatedSubtreeSanitizer = typeof SlideNextStudioElementState !== 'undefined'
+    const studioEditorDuplicatedSubtreeSanitizer = typeof studioEditorElementStateAccessors !== 'undefined'
+      && studioEditorElementStateAccessors
+      && typeof studioEditorElementStateAccessors.sanitizeDuplicatedSubtree === 'function'
+      ? (root, options) => studioEditorElementStateAccessors.sanitizeDuplicatedSubtree(root, options)
+      : typeof SlideNextStudioElementState !== 'undefined'
       && SlideNextStudioElementState
       && typeof SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree === 'function'
       ? (root, options) => SlideNextStudioElementState.sanitizeStudioDuplicatedSubtree(root, options)

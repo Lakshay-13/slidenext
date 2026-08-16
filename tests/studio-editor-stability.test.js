@@ -1631,6 +1631,8 @@ test('selectAllElementsOnActiveSlide fails closed when the shared selection modu
 test('editor composes element lock reads through the shared element state module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /<script src="\/shared\/studio-editor-element-state-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorElementStateAccessors =/);
   assert.match(source, /const studioEditorElementLockReader =/);
   assert.match(source, /isStudioElementLocked/);
   assert.match(source, /typeof studioEditorElementLockReader === 'function'/);
