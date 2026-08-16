@@ -959,18 +959,18 @@
           <div class="flex flex-col gap-3">
             <h4 class="text-xs font-semibold text-zinc-300 uppercase font-mono tracking-wider">Align Selection</h4>
             <div class="grid grid-cols-3 gap-1.5 bg-zinc-900 p-2 rounded-lg border border-white/5">
-              <button id="alignSelectionLeftBtn" onclick="alignSelectedElements('left')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Left">Left</button>
-              <button id="alignSelectionCenterBtn" onclick="alignSelectedElements('center')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Center">Center</button>
-              <button id="alignSelectionRightBtn" onclick="alignSelectedElements('right')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Right">Right</button>
-              <button id="alignSelectionTopBtn" onclick="alignSelectedElements('top')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Top">Top</button>
-              <button id="alignSelectionMiddleBtn" onclick="alignSelectedElements('middle')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Middle">Middle</button>
-              <button id="alignSelectionBottomBtn" onclick="alignSelectedElements('bottom')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Bottom">Bottom</button>
-              <button id="distributeSelectionHorizontalBtn" onclick="distributeSelectedElements('horizontal')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Horizontally">Distribute H</button>
-              <button id="distributeSelectionVerticalBtn" onclick="distributeSelectedElements('vertical')" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Vertically">Distribute V</button>
+              <button id="alignSelectionLeftBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Left">Left</button>
+              <button id="alignSelectionCenterBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Center">Center</button>
+              <button id="alignSelectionRightBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Right">Right</button>
+              <button id="alignSelectionTopBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Top">Top</button>
+              <button id="alignSelectionMiddleBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Middle">Middle</button>
+              <button id="alignSelectionBottomBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Align Bottom">Bottom</button>
+              <button id="distributeSelectionHorizontalBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Horizontally">Distribute H</button>
+              <button id="distributeSelectionVerticalBtn" class="py-1.5 flex items-center justify-center rounded hover:bg-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Distribute Vertically">Distribute V</button>
             </div>
-            <button id="groupSelectionBtn" onclick="groupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Group Selected">Group</button>
-            <button id="ungroupSelectionBtn" onclick="ungroupSelectedElements()" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Ungroup Selected">Ungroup</button>
-            <button id="toggleGridSnapBtn" onclick="toggleGridSnap()" aria-pressed="false" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all" title="Toggle 20px Grid Snap">Grid Snap: Off</button>
+            <button id="groupSelectionBtn" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Group Selected">Group</button>
+            <button id="ungroupSelectionBtn" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Ungroup Selected">Ungroup</button>
+            <button id="toggleGridSnapBtn" aria-pressed="false" class="py-1.5 flex items-center justify-center rounded bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white transition-all" title="Toggle 20px Grid Snap">Grid Snap: Off</button>
           </div>
 
           <div class="h-[1px] bg-white/5"></div>
@@ -6670,9 +6670,15 @@
       && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors === 'function'
       ? SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
           gridSnapController: studioEditorGridSnapController,
-          themeController: studioEditorThemeController
+          themeController: studioEditorThemeController,
+          alignmentController: studioEditorAlignmentController,
+          groupController: studioEditorGroupController
         })
       : null;
+    if (studioEditorToolbarAccessors
+      && typeof studioEditorToolbarAccessors.bindStudioEditorLayoutControls === 'function') {
+      studioEditorToolbarAccessors.bindStudioEditorLayoutControls({ documentRef: document });
+    }
     const studioEditorToolbarGlobalApi = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
       && SlideNextStudioEditorToolbarAccessors
       && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarGlobalApi === 'function'
@@ -6680,7 +6686,9 @@
           accessors: studioEditorToolbarAccessors
             || SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
               gridSnapController: studioEditorGridSnapController,
-              themeController: studioEditorThemeController
+              themeController: studioEditorThemeController,
+              alignmentController: studioEditorAlignmentController,
+              groupController: studioEditorGroupController
             })
         })
       : {};

@@ -41,6 +41,66 @@ test('toolbar accessors delegate grid snap and theme commands', () => {
   assert.deepEqual(calls, ['grid-sync', 'grid-toggle', 'theme-toggle', 'theme-sync']);
 });
 
+test('toolbar accessors bind layout controls to shared controllers', () => {
+  const controlIds = [
+    'alignSelectionLeftBtn',
+    'alignSelectionCenterBtn',
+    'alignSelectionRightBtn',
+    'alignSelectionTopBtn',
+    'alignSelectionMiddleBtn',
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn',
+    'groupSelectionBtn',
+    'ungroupSelectionBtn',
+    'toggleGridSnapBtn'
+  ];
+  const controls = Object.fromEntries(controlIds.map((id) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+  const accessors = accessorsApi.createStudioEditorToolbarAccessors({
+    gridSnapController: {
+      toggle: () => calls.push(['grid'])
+    },
+    alignmentController: {
+      align: (action) => calls.push(['align', action]),
+      distribute: (axis) => calls.push(['distribute', axis])
+    },
+    groupController: {
+      group: () => calls.push(['group']),
+      ungroup: () => calls.push(['ungroup'])
+    }
+  });
+  const documentRef = {
+    getElementById(id) {
+      return controls[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    accessors.bindStudioEditorLayoutControls({ documentRef }),
+    Object.fromEntries(controlIds.map((id) => [id, true]))
+  );
+  controlIds.forEach((id) => controls[id].listeners.click());
+  assert.deepEqual(calls, [
+    ['align', 'left'],
+    ['align', 'center'],
+    ['align', 'right'],
+    ['align', 'top'],
+    ['align', 'middle'],
+    ['align', 'bottom'],
+    ['distribute', 'horizontal'],
+    ['distribute', 'vertical'],
+    ['group'],
+    ['ungroup'],
+    ['grid']
+  ]);
+});
+
 test('toolbar accessors preserve safe fallbacks without controllers', () => {
   const accessors = accessorsApi.createStudioEditorToolbarAccessors();
 
@@ -93,12 +153,30 @@ test('editor loads toolbar accessors after the theme runtime', () => {
     assert.ok(line, `Missing theme control: ${id}`);
     assert.doesNotMatch(line, /onclick=/);
   });
+  [
+    'alignSelectionLeftBtn',
+    'alignSelectionCenterBtn',
+    'alignSelectionRightBtn',
+    'alignSelectionTopBtn',
+    'alignSelectionMiddleBtn',
+    'alignSelectionBottomBtn',
+    'distributeSelectionHorizontalBtn',
+    'distributeSelectionVerticalBtn',
+    'groupSelectionBtn',
+    'ungroupSelectionBtn',
+    'toggleGridSnapBtn'
+  ].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing layout control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
 
   assert.match(
     fileContent,
     /<script src="\/shared\/studio-editor-toolbar-accessors\.js"><\/script>/
   );
   assert.match(fileContent, /createStudioEditorToolbarAccessors\(/);
+  assert.match(fileContent, /bindStudioEditorLayoutControls\(\{ documentRef: document \}\)/);
   assert.match(fileContent, /studioEditorToolbarAccessors/);
   assert.match(fileContent, /createStudioEditorToolbarGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorToolbarGlobalApi\)/);
