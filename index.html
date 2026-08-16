@@ -1605,6 +1605,7 @@
   <script src="/shared/studio-editor-slide-mutation-accessors.js"></script>
   <script src="/shared/studio-editor-events.js"></script>
   <script src="/shared/studio-editor-global-shortcuts.js"></script>
+  <script src="/shared/studio-editor-global-shortcuts-controller.js"></script>
   <script src="/shared/studio-editor-bootstrap.js"></script>
   <script src="/shared/studio-editor-inline-edit.js"></script>
   <script src="/shared/studio-editor-table-navigation.js"></script>
@@ -7613,18 +7614,19 @@
       studioEditorBootstrap.bindDomReady();
     }
 
-    function bindStudioGlobalKeydownHandler() {
-      const shortcutsApi = typeof SlideNextStudioEditorGlobalShortcuts !== 'undefined'
-        ? SlideNextStudioEditorGlobalShortcuts
-        : null;
-      if (!shortcutsApi || typeof shortcutsApi.bindStudioGlobalKeydownHandler !== 'function') {
-        return false;
-      }
-
-      return shortcutsApi.bindStudioGlobalKeydownHandler({
+    const studioEditorGlobalShortcutsController =
+      typeof SlideNextStudioEditorGlobalShortcutsController !== 'undefined'
+      && SlideNextStudioEditorGlobalShortcutsController
+      && typeof SlideNextStudioEditorGlobalShortcutsController
+        .createStudioEditorGlobalShortcutsController === 'function'
+      ? SlideNextStudioEditorGlobalShortcutsController
+        .createStudioEditorGlobalShortcutsController({
         documentRef: document,
         eventsApi: typeof SlideNextStudioEditorEvents !== 'undefined'
           ? SlideNextStudioEditorEvents
+          : null,
+        shortcutsApi: typeof SlideNextStudioEditorGlobalShortcuts !== 'undefined'
+          ? SlideNextStudioEditorGlobalShortcuts
           : null,
         isEditorActive: () => {
           const editor = document.getElementById('studioEditor');
@@ -7644,7 +7646,14 @@
         duplicateSelectedElements,
         nudgeSelectedElements,
         navigateSlide: typeof navigateEditorSlide === 'function' ? navigateEditorSlide : null
-      });
+      })
+      : null;
+
+    function bindStudioGlobalKeydownHandler() {
+      return studioEditorGlobalShortcutsController
+        && typeof studioEditorGlobalShortcutsController.bind === 'function'
+        ? studioEditorGlobalShortcutsController.bind()
+        : false;
     }
 
     // 2. Viewer Presentation Modal
