@@ -95,3 +95,60 @@ test('export controller fails closed when export actions are unavailable', async
   assert.equal(controller.exportPdf(), false);
   assert.equal(await controller.exportPptx(), false);
 });
+
+test('export controller binds PDF and PPTX buttons without inline handlers', async () => {
+  const calls = [];
+  const buttons = {
+    exportPdfBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    },
+    exportPptxBtn: {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    }
+  };
+  const controller = exportController.createStudioEditorExportController({
+    exportActions: {
+      createStudioPdfExportAction() {
+        return () => {
+          calls.push('pdf');
+          return true;
+        };
+      },
+      createStudioPptxExportAction() {
+        return async () => {
+          calls.push('pptx');
+          return true;
+        };
+      }
+    },
+    documentRef: {
+      getElementById(id) {
+        return buttons[id] || null;
+      }
+    }
+  });
+
+  assert.deepEqual(
+    controller.bindStudioEditorExportButtons({ documentRef: controllerDocument(buttons) }),
+    { pdf: true, pptx: true }
+  );
+  assert.equal(typeof buttons.exportPdfBtn.listeners.click, 'function');
+  assert.equal(typeof buttons.exportPptxBtn.listeners.click, 'function');
+  assert.equal(buttons.exportPdfBtn.listeners.click(), true);
+  assert.equal(await buttons.exportPptxBtn.listeners.click(), true);
+  assert.deepEqual(calls, ['pdf', 'pptx']);
+});
+
+function controllerDocument(buttons) {
+  return {
+    getElementById(id) {
+      return buttons[id] || null;
+    }
+  };
+}

@@ -46,6 +46,18 @@ function loadExportPdfAction(fileContent, context) {
   vm.runInContext(exportPdfSource, context);
 }
 
+test('export toolbar buttons use shared controller wiring instead of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const pdfButtonLine = fileContent.split('\n').find((line) => line.includes('id="exportPdfBtn"'));
+  const pptxButtonLine = fileContent.split('\n').find((line) => line.includes('id="exportPptxBtn"'));
+
+  assert.ok(pdfButtonLine);
+  assert.ok(pptxButtonLine);
+  assert.doesNotMatch(pdfButtonLine, /onclick=/);
+  assert.doesNotMatch(pptxButtonLine, /onclick=/);
+  assert.match(fileContent, /bindStudioEditorExportButtons\(\{ documentRef: document \}\)/);
+});
+
 test('exportPdf delegates a ready deck to the shared browser print exporter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const calls = [];

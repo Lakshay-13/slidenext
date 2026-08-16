@@ -108,9 +108,29 @@
       })();
     }
 
+    function bindStudioEditorExportButtons(options = {}) {
+      const documentRef = options.documentRef;
+      if (!documentRef || typeof documentRef.getElementById !== 'function') {
+        return { pdf: false, pptx: false };
+      }
+
+      const bindButton = (id, handler) => {
+        const button = documentRef.getElementById(id);
+        if (!button || typeof button.addEventListener !== 'function') return false;
+        button.addEventListener('click', handler);
+        return true;
+      };
+
+      return {
+        pdf: bindButton('exportPdfBtn', exportPdf),
+        pptx: bindButton('exportPptxBtn', exportPptx)
+      };
+    }
+
     return {
       exportPdf,
-      exportPptx
+      exportPptx,
+      bindStudioEditorExportButtons
     };
   }
 

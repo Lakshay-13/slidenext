@@ -697,12 +697,12 @@
           <span>Present</span>
         </button>
 
-        <button id="exportPdfBtn" onclick="exportPdf()" aria-busy="false" aria-disabled="false" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PDF">
+        <button id="exportPdfBtn" aria-busy="false" aria-disabled="false" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PDF">
           <span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
           <span>PDF</span>
         </button>
 
-        <button id="exportPptxBtn" onclick="exportPptx()" aria-busy="false" aria-disabled="false" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PPTX">
+        <button id="exportPptxBtn" aria-busy="false" aria-disabled="false" class="px-3 py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white rounded-lg flex items-center gap-1.5 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-zinc-300" title="Export presentation to PPTX">
           <span class="material-symbols-outlined text-[16px]">slideshow</span>
           <span>PPTX</span>
         </button>
@@ -3047,6 +3047,10 @@
     const studioEditorExportController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.exportController
       : null;
+    if (studioEditorExportController
+      && typeof studioEditorExportController.bindStudioEditorExportButtons === 'function') {
+      studioEditorExportController.bindStudioEditorExportButtons({ documentRef: document });
+    }
     const studioEditorDeckSnapshotController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.deckSnapshotController
       : null;
