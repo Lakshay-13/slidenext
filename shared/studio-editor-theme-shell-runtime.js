@@ -23,7 +23,10 @@
       return null;
     }
 
-    return themeRuntimeApi.createStudioEditorThemeRuntime(options.runtimeOptions || {});
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return themeRuntimeApi.createStudioEditorThemeRuntime(runtimeOptions || {});
   }
 
   return {
