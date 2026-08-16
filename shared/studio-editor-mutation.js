@@ -165,7 +165,7 @@
         invokeStudioEditorThumbnailRefresh(generateThumbnails);
       }
       if (resolvedMutationOptions.refreshLayersList) {
-        updateLayersList(resolvedMutationOptions.doc);
+        invokeStudioEditorUiRefresh(updateLayersList, resolvedMutationOptions.doc);
       }
       if (!shouldPublishCanonicalDeckBeforeUi) {
         if (isStudioHistoryCaptureFailure(captureStudioHistoryState(saveHistoryState, ...historyArgs))) {

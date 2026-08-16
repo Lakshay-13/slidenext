@@ -85,6 +85,29 @@ test('createStudioMutationFinalizer preserves persistence when selection overlay
   assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Moved Element']]);
 });
 
+test('createStudioMutationFinalizer preserves persistence when layer refresh throws', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    updateLayersList() {
+      throw new Error('layer refresh unavailable');
+    },
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Moved Element', {
+    refreshLayersList: true
+  }), 'Auto: Moved Element');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Moved Element']]);
+});
+
 test('createStudioMutationFinalizer forwards the mutation document to selection UI refreshes', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];
