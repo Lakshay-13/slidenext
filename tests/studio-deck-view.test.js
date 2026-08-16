@@ -868,6 +868,50 @@ test('createStudioZoomToolbarActionStateSync fails closed when zoom state resolu
   assert.equal(syncState(), false);
 });
 
+test('setStudioDeckActiveSlide rejects invalid indices before mutating the live deck', () => {
+  const createSlide = (isActive) => {
+    const classes = new Set(isActive ? ['slide-active'] : []);
+    return {
+      classList: {
+        add(value) {
+          classes.add(value);
+        },
+        remove(value) {
+          classes.delete(value);
+        },
+        contains(value) {
+          return classes.has(value);
+        }
+      },
+      getClasses() {
+        return [...classes];
+      }
+    };
+  };
+  const slides = [createSlide(true), createSlide(false)];
+  const container = { style: { transform: 'translateX(0vw)' } };
+  let syncCalls = 0;
+
+  for (const index of [1.5, Number.NaN, '1']) {
+    assert.equal(
+      deckView.setStudioDeckActiveSlide(index, {
+        doc: {},
+        getSlides: () => slides,
+        getSlidesContainer: () => container,
+        syncStudioChromeToActiveSlide: () => {
+          syncCalls += 1;
+          return true;
+        }
+      }),
+      false
+    );
+  }
+
+  assert.deepEqual(slides.map((slide) => slide.getClasses()), [['slide-active'], []]);
+  assert.equal(container.style.transform, 'translateX(0vw)');
+  assert.equal(syncCalls, 0);
+});
+
 test('resolveStudioInsertionActionState derives slide insertion readiness from the active slide and slide container resolvers', () => {
   assert.deepEqual(
     deckView.resolveStudioInsertionActionState(null),

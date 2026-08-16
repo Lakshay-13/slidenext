@@ -1091,7 +1091,7 @@
     const preserveSelection = !!options.preserveSelection;
 
     const slides = getSlides(doc);
-    if (index < 0 || index >= slides.length) {
+    if (!Number.isInteger(index) || index < 0 || index >= slides.length) {
       return false;
     }
 
