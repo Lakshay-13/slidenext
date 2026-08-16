@@ -5124,6 +5124,37 @@
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
         })
       : null;
+    const studioEditorCanonicalDeckViewStateResolver = studioEditorCanonicalDeckViewStateOptionsResolverApi
+      && typeof studioEditorCanonicalDeckViewStateOptionsResolverApi
+        .createStudioEditorCanonicalDeckViewStateResolver === 'function'
+      ? studioEditorCanonicalDeckViewStateOptionsResolverApi
+        .createStudioEditorCanonicalDeckViewStateResolver({
+          deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
+            ? SlideNextStudioDeckView
+            : null,
+          getPendingCanonicalDeck: typeof getStudioPendingEditorCanonicalDeck === 'function'
+            ? getStudioPendingEditorCanonicalDeck
+            : null,
+          resolveLiveCanonicalDeck: (sourceDoc) => (
+            typeof resolveEditorLiveCanonicalDeck === 'function'
+              ? resolveEditorLiveCanonicalDeck(
+                  sourceDoc,
+                  typeof getStudioEditorSessionToken === 'function'
+                    ? getStudioEditorSessionToken()
+                    : null
+                )
+              : null
+          ),
+          fallbackBuildCanonicalDeck: (sourceDoc) => (
+            typeof resolveEditorUiCanonicalDeck === 'function'
+              ? resolveEditorUiCanonicalDeck(sourceDoc)
+              : typeof buildEditorCanonicalDeck === 'function'
+                ? buildEditorCanonicalDeck(sourceDoc)
+                : null
+          ),
+          fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
+        })
+      : null;
     const studioEditorPersistableDeckHtmlShellRuntimeApi =
       typeof SlideNextStudioEditorPersistableDeckHtmlShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistableDeckHtmlShellRuntime
@@ -6928,6 +6959,17 @@
     }
 
     function resolveEditorCanonicalDeckViewState(doc = getIframeDoc(), options = {}) {
+      if (typeof studioEditorCanonicalDeckViewStateResolver !== 'undefined'
+        && typeof studioEditorCanonicalDeckViewStateResolver === 'function') {
+        return studioEditorCanonicalDeckViewStateResolver(doc, {
+          buildCanonicalDeck: options.buildCanonicalDeck,
+          getPendingCanonicalDeck: options.getPendingCanonicalDeck,
+          resolveLiveActiveSlideId: options.resolveLiveActiveSlideId,
+          resolveLiveCanonicalDeck: options.resolveLiveCanonicalDeck,
+          fallbackBuildCanonicalDeck: options.fallbackBuildCanonicalDeck,
+          fallbackResolveLiveActiveSlideId: options.fallbackResolveLiveActiveSlideId
+        });
+      }
       const editorCanonicalViewStateApi = typeof SlideNextStudioEditorCanonicalViewState !== 'undefined'
         ? SlideNextStudioEditorCanonicalViewState
         : null;

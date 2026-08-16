@@ -77,6 +77,38 @@ test('canonical view state options resolver reuses shared dependencies', () => {
   assert.equal(calls[0].resolveLiveActiveSlideId, resolveLiveActiveSlideId);
 });
 
+test('canonical view state resolver reuses shared dependencies and live deck resolution', () => {
+  const doc = { id: 'editor-doc' };
+  const calls = [];
+  const getPendingCanonicalDeck = () => ({ slides: [{ id: 'pending-slide' }] });
+  const resolveLiveCanonicalDeck = () => ({ slides: [{ id: 'live-slide' }] });
+  const resolver = canonicalViewState.createStudioEditorCanonicalDeckViewStateResolver({
+    deckViewApi: {
+      createStudioDeckViewCanonicalStateOptions(options) {
+        calls.push(options);
+        return options;
+      },
+      resolveStudioCanonicalDeckViewState(nextDoc, options) {
+        return {
+          doc: nextDoc,
+          liveCanonicalDeck: options.resolveLiveCanonicalDeck(nextDoc),
+          pendingCanonicalDeck: options.getPendingCanonicalDeck(nextDoc)
+        };
+      }
+    },
+    getPendingCanonicalDeck,
+    resolveLiveCanonicalDeck
+  });
+
+  const result = resolver(doc, { resolveLiveActiveSlideId: () => 'slide-live' });
+
+  assert.equal(result.doc, doc);
+  assert.deepEqual(result.liveCanonicalDeck, { slides: [{ id: 'live-slide' }] });
+  assert.deepEqual(result.pendingCanonicalDeck, { slides: [{ id: 'pending-slide' }] });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].getPendingCanonicalDeck, getPendingCanonicalDeck);
+});
+
 test('canonical view state resolver delegates the normalized options and preserves live slide state', () => {
   const doc = { id: 'editor-doc' };
   const buildCanonicalDeck = () => ({ slides: [] });

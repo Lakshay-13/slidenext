@@ -157,6 +157,40 @@
     };
   }
 
+  function createStudioEditorCanonicalDeckViewStateResolver(options = {}) {
+    const deckViewApi = resolveDeckViewApi(options);
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
+    const fallbackBuildCanonicalDeck = typeof options.fallbackBuildCanonicalDeck === 'function'
+      ? options.fallbackBuildCanonicalDeck
+      : null;
+    const fallbackResolveLiveActiveSlideId = typeof options.fallbackResolveLiveActiveSlideId === 'function'
+      ? options.fallbackResolveLiveActiveSlideId
+      : null;
+    const resolveLiveCanonicalDeck = typeof options.resolveLiveCanonicalDeck === 'function'
+      ? options.resolveLiveCanonicalDeck
+      : null;
+
+    return (doc, nextOptions = {}) => resolveStudioEditorCanonicalDeckViewState(doc, {
+      deckViewApi,
+      buildCanonicalDeck: nextOptions.buildCanonicalDeck,
+      getPendingCanonicalDeck: typeof nextOptions.getPendingCanonicalDeck === 'function'
+        ? nextOptions.getPendingCanonicalDeck
+        : getPendingCanonicalDeck,
+      resolveLiveActiveSlideId: nextOptions.resolveLiveActiveSlideId,
+      resolveLiveCanonicalDeck: typeof nextOptions.resolveLiveCanonicalDeck === 'function'
+        ? nextOptions.resolveLiveCanonicalDeck
+        : resolveLiveCanonicalDeck,
+      fallbackBuildCanonicalDeck: typeof nextOptions.fallbackBuildCanonicalDeck === 'function'
+        ? nextOptions.fallbackBuildCanonicalDeck
+        : fallbackBuildCanonicalDeck,
+      fallbackResolveLiveActiveSlideId: typeof nextOptions.fallbackResolveLiveActiveSlideId === 'function'
+        ? nextOptions.fallbackResolveLiveActiveSlideId
+        : fallbackResolveLiveActiveSlideId
+    });
+  }
+
   function createStudioEditorDeckViewSharedOptions(doc, options = {}) {
     const deckViewApi = resolveDeckViewApi(options);
     if (!deckViewApi || typeof deckViewApi.createStudioDeckViewSharedOptions !== 'function') {
@@ -370,6 +404,7 @@
     createStudioEditorCanonicalDeckResolverWithBuilder,
     createStudioEditorCanonicalDeckViewStateOptions,
     createStudioEditorCanonicalDeckViewStateOptionsResolver,
+    createStudioEditorCanonicalDeckViewStateResolver,
     resolveStudioEditorCanonicalDeckViewState,
     createStudioEditorDeckViewSharedOptions,
     resolveStudioEditorFallbackActiveSlideId,
