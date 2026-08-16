@@ -46,6 +46,21 @@ test('getStudioAlignmentSelection filters locked items and requires two unlocked
   }).canAlign, false);
 });
 
+test('getStudioAlignmentSelection excludes items when lock state throws', () => {
+  const safe = { element: { id: 'safe' } };
+  const stale = { element: { id: 'stale' } };
+
+  assert.deepEqual(alignment.buildStudioAlignmentActionState([safe, stale], {
+    isLocked: (element) => {
+      if (element.id === 'stale') throw new Error('stale locked state');
+      return false;
+    }
+  }), {
+    selection: [safe],
+    canAlign: false
+  });
+});
+
 test('createStudioAlignmentActionStateBuilder composes motion state with call-time lock resolution', () => {
   const doc = { id: 'doc' };
   const layoutItems = [{ element: { id: 'first' } }, { element: { id: 'second' } }];
