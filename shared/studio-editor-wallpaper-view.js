@@ -404,6 +404,23 @@
     return { cgAngle: true };
   }
 
+  function bindStudioWallpaperApplyAllControl(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const applyWallpaperToAllSlides = typeof options.applyWallpaperToAllSlides === 'function'
+      ? options.applyWallpaperToAllSlides
+      : null;
+    const button = documentRef.getElementById('applyWallpaperToAllSlidesBtn');
+    if (!button || typeof button.addEventListener !== 'function') {
+      return { applyWallpaperToAllSlidesBtn: false };
+    }
+    button.addEventListener('click', () => {
+      if (applyWallpaperToAllSlides) applyWallpaperToAllSlides();
+    });
+    return { applyWallpaperToAllSlidesBtn: true };
+  }
+
   function resetStudioWallpaperUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -595,6 +612,7 @@
     bindStudioWallpaperSolidColorControl,
     bindStudioCustomGradientColorControls,
     bindStudioCustomGradientAngleControl,
+    bindStudioWallpaperApplyAllControl,
     resetStudioWallpaperUiState,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,

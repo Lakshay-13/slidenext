@@ -927,7 +927,7 @@
             </div>
 
             <!-- Apply to All button -->
-            <button id="applyWallpaperToAllSlidesBtn" onclick="applyWallpaperToAllSlides()" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-[#7028d0] hover:text-white font-mono text-[9px] uppercase tracking-wider rounded flex items-center justify-center gap-1 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-[#7028d0]">
+            <button id="applyWallpaperToAllSlidesBtn" class="py-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-[#7028d0] hover:text-white font-mono text-[9px] uppercase tracking-wider rounded flex items-center justify-center gap-1 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-zinc-900 disabled:hover:text-[#7028d0]">
               <span class="material-symbols-outlined text-[14px]">done_all</span> Apply active paint to all slides
             </button>
           </div>
@@ -11468,6 +11468,15 @@
           : null,
         flushPendingWallpaperVersion: typeof flushPendingWallpaperVersion === 'function'
           ? flushPendingWallpaperVersion
+          : null
+      });
+    }
+    if (studioEditorWallpaperViewApi
+      && typeof studioEditorWallpaperViewApi.bindStudioWallpaperApplyAllControl === 'function') {
+      studioEditorWallpaperViewApi.bindStudioWallpaperApplyAllControl({
+        documentRef: document,
+        applyWallpaperToAllSlides: typeof applyWallpaperToAllSlides === 'function'
+          ? applyWallpaperToAllSlides
           : null
       });
     }

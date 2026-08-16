@@ -559,3 +559,35 @@ test('index keeps the custom-gradient angle slider free of inline handlers', () 
   assert.doesNotMatch(fileContent, /id="cgAngle"[^>]*oninput=/);
   assert.doesNotMatch(fileContent, /id="cgAngle"[^>]*onchange=/);
 });
+
+test('bindStudioWallpaperApplyAllControl wires the shared apply-all action', () => {
+  const button = {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  };
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioWallpaperApplyAllControl({
+      documentRef: {
+        getElementById(id) {
+          return id === 'applyWallpaperToAllSlidesBtn' ? button : null;
+        }
+      },
+      applyWallpaperToAllSlides() {
+        calls.push('apply-all');
+      }
+    }),
+    { applyWallpaperToAllSlidesBtn: true }
+  );
+  button.listeners.click();
+  assert.deepEqual(calls, ['apply-all']);
+});
+
+test('index keeps the wallpaper apply-all control free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="applyWallpaperToAllSlidesBtn"[^>]*onclick=/);
+});
