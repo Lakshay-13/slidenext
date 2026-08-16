@@ -1817,6 +1817,7 @@
   <script src="/shared/studio-editor-slide-editable-elements-accessors.js"></script>
   <script src="/shared/studio-editor-slide-layer-order-adapter.js"></script>
   <script src="/shared/studio-editor-editable-target-adapter.js"></script>
+  <script src="/shared/studio-editor-editable-target-accessors.js"></script>
   <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
   <script src="/shared/studio-editor-hoverable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
@@ -5631,7 +5632,28 @@
       ? SlideNextStudioEditorEditableTargetAdapter
       : null;
 
-    const studioEditorEditableTargetResolver = studioEditorEditableTargetAdapter
+    const studioEditorEditableTargetAccessorsApi =
+      typeof SlideNextStudioEditorEditableTargetAccessors !== 'undefined'
+      ? SlideNextStudioEditorEditableTargetAccessors
+      : null;
+    const studioEditorEditableTargetAccessors = studioEditorEditableTargetAccessorsApi
+      && typeof studioEditorEditableTargetAccessorsApi
+        .createStudioEditorEditableTargetAccessors === 'function'
+      ? studioEditorEditableTargetAccessorsApi
+        .createStudioEditorEditableTargetAccessors({
+          editableTargetAdapter: studioEditorEditableTargetAdapter,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          getDomOptions: (overrides = {}) => getEditorDomOptions(overrides)
+        })
+      : null;
+
+    const studioEditorEditableTargetResolver = typeof studioEditorEditableTargetAccessors !== 'undefined'
+      && studioEditorEditableTargetAccessors
+      && typeof studioEditorEditableTargetAccessors.resolveEditableTarget === 'function'
+      ? (node, options) => studioEditorEditableTargetAccessors.resolveEditableTarget(node, options)
+      : studioEditorEditableTargetAdapter
       && typeof studioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom

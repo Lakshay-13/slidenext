@@ -3431,6 +3431,8 @@ test('editor composes editable-target resolution through the shared adapter', ()
     '\n\n    function resolveInlineTextEditTarget'
   );
 
+  assert.match(source, /<script src="\/shared\/studio-editor-editable-target-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorEditableTargetAccessors =/);
   assert.match(source, /const studioEditorEditableTargetAdapter =/);
   assert.match(source, /SlideNextStudioEditorEditableTargetAdapter/);
   assert.match(source, /const studioEditorEditableTargetResolver =/);
