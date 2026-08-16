@@ -80,6 +80,19 @@ test('nudge controller refreshes motion state and fails closed when movement is 
   assert.deepEqual(calls, [{ id: 'doc' }]);
 });
 
+test('nudge controller preserves the result when action-state refresh throws', () => {
+  const controller = nudgeController.createStudioEditorNudgeController({
+    buildMotionSelectionActionState: () => ({ canNudge: false, doc: { id: 'doc' } }),
+    updateMotionActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    assert.equal(controller.nudge(1, 0), false);
+  });
+});
+
 test('nudge controller fails closed before DOM mutation when finalization is unavailable', () => {
   let applyCalls = 0;
   const controller = nudgeController.createStudioEditorNudgeController({

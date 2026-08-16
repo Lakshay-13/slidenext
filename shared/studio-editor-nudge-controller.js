@@ -57,13 +57,22 @@
       }
     }
 
+    function refreshActionState(doc) {
+      if (!updateMotionActionState) return;
+      try {
+        updateMotionActionState(doc);
+      } catch (error) {
+        // A toolbar refresh failure must not change the nudge result.
+      }
+    }
+
     function nudge(dx, dy, sourceDoc) {
       if (!buildMotionSelectionActionState) return false;
 
       const motionActionState = buildMotionSelectionActionState(sourceDoc);
       const { doc, nudgeLayoutItems, slideBounds } = motionActionState || {};
       if (!motionActionState || !motionActionState.canNudge) {
-        if (updateMotionActionState) updateMotionActionState(doc);
+        refreshActionState(doc);
         return false;
       }
 
