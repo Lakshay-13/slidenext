@@ -4715,7 +4715,19 @@
       ? SlideNextStudioEditorSlideCollectionAdapter
       : null;
 
-    const studioEditorSlidesReader = studioEditorSlideCollectionAdapter
+    const studioEditorSlideCollectionReaders = studioEditorSlideCollectionAdapter
+      && typeof studioEditorSlideCollectionAdapter.createStudioEditorSlideCollectionReaders === 'function'
+      ? studioEditorSlideCollectionAdapter.createStudioEditorSlideCollectionReaders({
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null
+        })
+      : null;
+
+    const studioEditorSlidesReader = studioEditorSlideCollectionReaders
+      && typeof studioEditorSlideCollectionReaders.getStudioEditorSlides === 'function'
+      ? studioEditorSlideCollectionReaders.getStudioEditorSlides
+      : studioEditorSlideCollectionAdapter
       && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlides === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
@@ -4729,7 +4741,10 @@
         )
       : null;
 
-    const studioEditorSlideByIdReader = studioEditorSlideCollectionAdapter
+    const studioEditorSlideByIdReader = studioEditorSlideCollectionReaders
+      && typeof studioEditorSlideCollectionReaders.getStudioEditorSlideById === 'function'
+      ? studioEditorSlideCollectionReaders.getStudioEditorSlideById
+      : studioEditorSlideCollectionAdapter
       && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideById === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom
@@ -4744,7 +4759,10 @@
         )
       : null;
 
-    const studioEditorSlideIndexByIdReader = studioEditorSlideCollectionAdapter
+    const studioEditorSlideIndexByIdReader = studioEditorSlideCollectionReaders
+      && typeof studioEditorSlideCollectionReaders.getStudioEditorSlideIndexById === 'function'
+      ? studioEditorSlideCollectionReaders.getStudioEditorSlideIndexById
+      : studioEditorSlideCollectionAdapter
       && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById === 'function'
       && typeof SlideNextStudioEditorDom !== 'undefined'
       && SlideNextStudioEditorDom

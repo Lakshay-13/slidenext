@@ -95,3 +95,34 @@ test('slide collection adapter fails closed without the requested operation', ()
   assert.equal(slideCollectionAdapter.getStudioEditorSlideById('id', {}), null);
   assert.equal(slideCollectionAdapter.getStudioEditorSlideIndexById('id', {}), -1);
 });
+
+test('createStudioEditorSlideCollectionReaders owns DOM option composition', () => {
+  const calls = [];
+  const doc = { id: 'iframe-doc' };
+  const domOptions = { editorSlideIdAttr: 'data-slide-id' };
+  const readers = slideCollectionAdapter.createStudioEditorSlideCollectionReaders({
+    domApi: {
+      getStudioSlides(docValue, optionsValue) {
+        calls.push(['slides', docValue, optionsValue]);
+        return ['slide-1'];
+      },
+      getStudioSlideById(slideId, docValue, optionsValue) {
+        calls.push(['by-id', slideId, docValue, optionsValue]);
+        return { id: slideId };
+      },
+      getStudioSlideIndexById(slideId, docValue, optionsValue) {
+        calls.push(['index', slideId, docValue, optionsValue]);
+        return 2;
+      }
+    }
+  });
+
+  assert.deepEqual(readers.getStudioEditorSlides(doc, domOptions), ['slide-1']);
+  assert.deepEqual(readers.getStudioEditorSlideById('slide-1', doc, domOptions), { id: 'slide-1' });
+  assert.equal(readers.getStudioEditorSlideIndexById('slide-1', doc, domOptions), 2);
+  assert.deepEqual(calls, [
+    ['slides', doc, domOptions],
+    ['by-id', 'slide-1', doc, domOptions],
+    ['index', 'slide-1', doc, domOptions]
+  ]);
+});

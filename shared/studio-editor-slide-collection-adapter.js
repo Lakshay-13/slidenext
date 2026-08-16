@@ -55,9 +55,49 @@
     return readSlideIndexById(slideId, doc, options.domOptions || {});
   }
 
+  function createStudioEditorSlideCollectionReaders(options = {}) {
+    const domApi = resolveDomApi(options);
+    const slidesReader = typeof options.slidesReader === 'function'
+      ? options.slidesReader
+      : null;
+    const slideByIdReader = typeof options.slideByIdReader === 'function'
+      ? options.slideByIdReader
+      : null;
+    const slideIndexByIdReader = typeof options.slideIndexByIdReader === 'function'
+      ? options.slideIndexByIdReader
+      : null;
+
+    return {
+      getStudioEditorSlides: (doc, domOptions = {}) => getStudioEditorSlides(doc, {
+        domApi,
+        slidesReader,
+        domOptions
+      }),
+      getStudioEditorSlideById: (slideId, doc, domOptions = {}) => getStudioEditorSlideById(
+        slideId,
+        doc,
+        {
+          domApi,
+          slideByIdReader,
+          domOptions
+        }
+      ),
+      getStudioEditorSlideIndexById: (slideId, doc, domOptions = {}) => getStudioEditorSlideIndexById(
+        slideId,
+        doc,
+        {
+          domApi,
+          slideIndexByIdReader,
+          domOptions
+        }
+      )
+    };
+  }
+
   return {
     getStudioEditorSlides,
     getStudioEditorSlideById,
-    getStudioEditorSlideIndexById
+    getStudioEditorSlideIndexById,
+    createStudioEditorSlideCollectionReaders
   };
 });
