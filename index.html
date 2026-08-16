@@ -1709,6 +1709,7 @@
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-bridge-controller.js"></script>
+  <script src="/shared/studio-editor-session-accessors.js"></script>
   <script src="/shared/studio-editor-session-lifecycle-controller.js"></script>
   <script src="/shared/studio-editor-session-reset-controller.js"></script>
   <script src="/shared/studio-editor-session-ui-controller.js"></script>
@@ -7160,6 +7161,22 @@
           getSessionToken: getStudioEditorSessionToken
         })
       : null;
+    const studioEditorSessionAccessorsApi =
+      typeof SlideNextStudioEditorSessionAccessors !== 'undefined'
+        ? SlideNextStudioEditorSessionAccessors
+        : null;
+    const studioEditorSessionAccessors = studioEditorSessionAccessorsApi
+      && typeof studioEditorSessionAccessorsApi.createStudioEditorSessionAccessors === 'function'
+      ? studioEditorSessionAccessorsApi.createStudioEditorSessionAccessors({
+          sessionBridgeController: studioEditorSessionBridgeController,
+          sessionStateController: studioEditorSessionStateController,
+          sessionApi: typeof SlideNextStudioEditorSession !== 'undefined'
+            ? SlideNextStudioEditorSession
+            : null,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getSessionToken: getStudioEditorSessionToken
+        })
+      : null;
     const studioEditorLaunchSourceControllerApi =
       typeof SlideNextStudioEditorLaunchSource !== 'undefined'
       ? SlideNextStudioEditorLaunchSource
@@ -8550,10 +8567,10 @@
 
     // 3. Studio Presentation Workspace Mode
     function createCurrentStudioSessionStateReaders() {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.createReaders === 'function') {
-        return studioEditorSessionBridgeController.createReaders();
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.createReaders === 'function') {
+        return studioEditorSessionAccessors.createReaders();
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
@@ -8567,10 +8584,10 @@
     }
 
     function createCurrentStudioSessionReaderOptions(options = {}) {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.createReaderOptions === 'function') {
-        return studioEditorSessionBridgeController.createReaderOptions(options);
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.createReaderOptions === 'function') {
+        return studioEditorSessionAccessors.createReaderOptions(options);
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
@@ -8584,16 +8601,17 @@
     }
 
     function captureCurrentStudioSessionState() {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.capture === 'function') {
-        return studioEditorSessionBridgeController.capture();
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.capture === 'function') {
+        return studioEditorSessionAccessors.capture();
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
         && typeof studioEditorSessionStateController.capture === 'function') {
         return studioEditorSessionStateController.capture();
       }
+
       const createStudioEditorSessionSnapshotAdapter = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession
@@ -8616,6 +8634,7 @@
           return snapshot;
         }
       }
+
       const createStudioSessionSnapshot = (
         typeof SlideNextStudioEditorSession !== 'undefined'
         && SlideNextStudioEditorSession
@@ -8637,10 +8656,10 @@
     }
 
     function updateCurrentPresentationSessionState(nextState = {}) {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.update === 'function') {
-        return studioEditorSessionBridgeController.update(nextState);
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.update === 'function') {
+        return studioEditorSessionAccessors.update(nextState);
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
@@ -8651,10 +8670,10 @@
     }
 
     function createCurrentStudioFrameLoadHandler(options = {}) {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.createFrameLoadHandler === 'function') {
-        return studioEditorSessionBridgeController.createFrameLoadHandler(options);
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.createFrameLoadHandler === 'function') {
+        return studioEditorSessionAccessors.createFrameLoadHandler(options);
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
         && studioEditorSessionStateController
@@ -8665,10 +8684,10 @@
     }
 
     function shouldHandleCurrentStudioFrameLoad(expectedPresentationUrl = '', options = {}) {
-      if (typeof studioEditorSessionBridgeController !== 'undefined'
-        && studioEditorSessionBridgeController
-        && typeof studioEditorSessionBridgeController.shouldHandleFrameLoad === 'function') {
-        return studioEditorSessionBridgeController
+      if (typeof studioEditorSessionAccessors !== 'undefined'
+        && studioEditorSessionAccessors
+        && typeof studioEditorSessionAccessors.shouldHandleFrameLoad === 'function') {
+        return studioEditorSessionAccessors
           .shouldHandleFrameLoad(expectedPresentationUrl, options);
       }
       if (typeof studioEditorSessionStateController !== 'undefined'
