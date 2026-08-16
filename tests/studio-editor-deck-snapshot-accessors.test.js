@@ -45,6 +45,9 @@ test('deck snapshot accessors preserve the legacy snapshot builder fallback', ()
   let builderOptions = null;
   let domOptions = null;
   const callbacks = {
+    buildCanonicalDeck: () => ({ slides: [] }),
+    getPendingCanonicalDeck: () => ({ slides: [] }),
+    isCanonicalDeck: () => true,
     createDeckViewStateOptions: () => ({ marker: 'view-state' }),
     resolveCanonicalDeckViewState: () => ({ marker: 'canonical-state' }),
     resolveFallbackActiveSlideId: () => 'slide-fallback',
@@ -80,6 +83,9 @@ test('deck snapshot accessors preserve the legacy snapshot builder fallback', ()
   });
   assert.equal(builderOptions.getDocument(), documentRef);
   [
+    'buildCanonicalDeck',
+    'getPendingCanonicalDeck',
+    'isCanonicalDeck',
     'createDeckViewStateOptions',
     'resolveCanonicalDeckViewState',
     'resolveFallbackActiveSlideId',
@@ -111,4 +117,7 @@ test('editor routes deck snapshot construction through the shared accessors', ()
   assert.match(source, /SlideNextStudioEditorDeckSnapshotAccessors/);
   assert.match(source, /accessors\.build\(doc, options\)/);
   assert.match(source, /accessors\.buildFromDom\(doc, options\)/);
+  assert.match(source, /buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'/);
+  assert.match(source, /getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck/);
+  assert.match(source, /isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'/);
 });

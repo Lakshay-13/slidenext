@@ -21,6 +21,15 @@
     const resolveCanonicalDeckViewState = typeof options.resolveCanonicalDeckViewState === 'function'
       ? options.resolveCanonicalDeckViewState
       : () => null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
     const resolveFallbackActiveSlideId = typeof options.resolveFallbackActiveSlideId === 'function'
       ? options.resolveFallbackActiveSlideId
       : () => '';
@@ -90,6 +99,9 @@
 
       const buildDeckSnapshot = createDeckSnapshotBuilder({
         getDocument,
+        buildCanonicalDeck,
+        getPendingCanonicalDeck,
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         createDeckViewStateOptions,
         resolveCanonicalDeckViewState,
         resolveFallbackActiveSlideId,

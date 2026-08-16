@@ -2985,6 +2985,15 @@
             ? SlideNextStudioDeckSnapshot
             : null,
           getDocument: () => getIframeDoc(),
+          buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? (sourceDoc, buildOptions) => resolveEditorUiCanonicalDeck(sourceDoc, buildOptions)
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null,
+          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+          isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+            ? getEditorCanonicalDeckValidator()
+            : null,
           createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
           resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
           resolveFallbackActiveSlideId: (nextDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
