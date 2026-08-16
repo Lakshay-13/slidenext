@@ -82,6 +82,44 @@ test('attachStudioFrameInteractionHandlers binds frame click and keyboard listen
   assert.deepEqual(listeners.get('keydown'), { handler: keydownHandler, capture: true });
 });
 
+test('attachStudioFrameInteractionHandlers replaces an existing frame binding', () => {
+  const listeners = [];
+  const doc = {
+    addEventListener(type, handler, capture) {
+      listeners.push({ type, handler, capture });
+    },
+    removeEventListener(type, handler, capture) {
+      const index = listeners.findIndex((listener) => (
+        listener.type === type
+        && listener.handler === handler
+        && listener.capture === capture
+      ));
+      if (index >= 0) listeners.splice(index, 1);
+    }
+  };
+  const firstClickHandler = () => {};
+  const firstKeydownHandler = () => {};
+  const secondClickHandler = () => {};
+  const secondKeydownHandler = () => {};
+
+  assert.equal(events.attachStudioFrameInteractionHandlers(doc, {
+    clickHandler: firstClickHandler,
+    keydownHandler: firstKeydownHandler
+  }), true);
+  assert.equal(events.attachStudioFrameInteractionHandlers(doc, {
+    clickHandler: secondClickHandler,
+    keydownHandler: secondKeydownHandler
+  }), true);
+  assert.equal(listeners.some(({ handler }) => handler === firstClickHandler), false);
+  assert.equal(listeners.some(({ handler }) => handler === firstKeydownHandler), false);
+  assert.equal(listeners.some(({ handler }) => handler === secondClickHandler), true);
+  assert.equal(listeners.some(({ handler }) => handler === secondKeydownHandler), true);
+
+  assert.equal(events.detachStudioFrameInteractionHandlers(doc), true);
+  assert.equal(listeners.length, 0);
+  assert.equal(events.detachStudioFrameInteractionHandlers(doc), false);
+});
+
 test('attachStudioFrameInteractionHandlers tolerates missing frame documents', () => {
   assert.equal(events.attachStudioFrameInteractionHandlers(null), false);
   assert.equal(events.attachStudioFrameInteractionHandlers({}), false);

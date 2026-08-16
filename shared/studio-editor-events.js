@@ -26,6 +26,7 @@
     && typeof pointerAttachment.createStudioPointerAttachmentManager === 'function'
     ? pointerAttachment.createStudioPointerAttachmentManager()
     : null;
+  const studioFrameInteractionAttachmentRegistry = new WeakMap();
 
   function getFrameShortcutSelection(elements = []) {
     if (liveSelection && typeof liveSelection.getStudioLiveSelection === 'function') {
@@ -348,18 +349,36 @@
     return attachStudioPointerHandlers(doc, handlers);
   }
 
+  function detachStudioFrameInteractionHandlers(doc) {
+    const registration = doc && studioFrameInteractionAttachmentRegistry.get(doc);
+    if (!registration) return false;
+
+    registration.listeners.forEach(({ eventName, handler }) => {
+      if (typeof doc.removeEventListener === 'function') {
+        doc.removeEventListener(eventName, handler, true);
+      }
+    });
+    studioFrameInteractionAttachmentRegistry.delete(doc);
+    return true;
+  }
+
   function attachStudioFrameInteractionHandlers(doc, options = {}) {
     if (!doc || typeof doc.addEventListener !== 'function') return false;
-    let didAttach = false;
+
+    detachStudioFrameInteractionHandlers(doc);
+    const listeners = [];
     [
       ['click', options.clickHandler],
       ['keydown', options.keydownHandler]
     ].forEach(([eventName, handler]) => {
       if (typeof handler !== 'function') return;
       doc.addEventListener(eventName, handler, true);
-      didAttach = true;
+      listeners.push({ eventName, handler });
     });
-    return didAttach;
+    if (listeners.length === 0) return false;
+
+    studioFrameInteractionAttachmentRegistry.set(doc, { listeners });
+    return true;
   }
 
   function resolveStudioSlideNavigationDirection(event = {}, hasSelection = false) {
@@ -680,6 +699,7 @@
     detachStudioPointerHandlers,
     attachStudioPointerHandlers,
     attachStudioMarqueePointerHandlers,
+    detachStudioFrameInteractionHandlers,
     attachStudioFrameInteractionHandlers,
     createStudioFrameKeydownHandler,
     createStudioGlobalKeydownHandler
