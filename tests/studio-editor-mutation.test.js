@@ -928,6 +928,28 @@ test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering'
   ]);
 });
 
+test('finalizeStudioLayerOrderMutation converts thrown fallback autosave to rejection', () => {
+  const calls = [];
+
+  assert.equal(mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Rejected Layer Order',
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      throw new Error('autosave unavailable');
+    },
+    updateLayersList() {
+      throw new Error('layers should not refresh');
+    },
+    triggerAutoVersion() {
+      throw new Error('versioning should not run');
+    }
+  }), false);
+
+  assert.deepEqual(calls, ['history']);
+});
+
 test('finalizeStudioLayerOrderMutation propagates rejected fallback history', () => {
   assert.equal(mutation.finalizeStudioLayerOrderMutation({
     versionLabel: 'Auto: Rejected Layer Order',

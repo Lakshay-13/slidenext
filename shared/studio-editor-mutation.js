@@ -365,7 +365,7 @@
       }
     }
     if (typeof options.triggerAutoSave === 'function') {
-      if (options.triggerAutoSave() === false) return false;
+      if (!invokeStudioEditorAutoSave(options.triggerAutoSave)) return false;
     }
     if (typeof options.updateLayersList === 'function') {
       options.updateLayersList();
