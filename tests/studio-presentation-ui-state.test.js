@@ -365,6 +365,25 @@ test('launchPreview does not open preview flows when deck-ready state disables p
   assert.equal(launchPresentationCalls, 0);
 });
 
+test('preview controller fails closed when deck readiness resolution throws', () => {
+  let launchCalls = 0;
+  const controller = editorPreviewController.createStudioEditorPreviewController({
+    previewApi: {
+      launchStudioPresentation() {
+        launchCalls += 1;
+        return true;
+      }
+    },
+    resolveReadyState() {
+      throw new Error('deck readiness unavailable');
+    },
+    resolvePresentationUrl: () => '/presentations/demo/index.html'
+  });
+
+  assert.equal(controller.launch(), false);
+  assert.equal(launchCalls, 0);
+});
+
 test('launchPreview delegates the launch-mode decision to the shared preview helper', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const launchPreviewSource = extractFunctionSource(

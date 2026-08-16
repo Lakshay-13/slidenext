@@ -143,7 +143,12 @@
     }
 
     function launch() {
-      const readyState = resolveReadyState();
+      let readyState;
+      try {
+        readyState = resolveReadyState();
+      } catch (error) {
+        return false;
+      }
       if (!readyState || !readyState.canLaunchPreview) return false;
 
       const presentationUrl = resolvePresentationUrl();
