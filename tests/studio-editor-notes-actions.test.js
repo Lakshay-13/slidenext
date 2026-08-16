@@ -217,6 +217,98 @@ test('applyStudioSpeakerNotesEdit refuses to mutate without a persistence finali
   assert.equal(mutationCalls, 0);
 });
 
+test('applyStudioSpeakerNotesEdit fails closed when editor callbacks throw', () => {
+  const baseOptions = {
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        throw new Error('metadata mutation failed');
+      }
+    },
+    finalizeMutation() {
+      throw new Error('should not finalize');
+    }
+  };
+
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Ignored', {
+    ...baseOptions,
+    resolveReadyState() {
+      throw new Error('ready state unavailable');
+    }
+  }), false);
+
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Ignored', {
+    ...baseOptions,
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument() {
+      throw new Error('document unavailable');
+    }
+  }), false);
+
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Ignored', {
+    ...baseOptions,
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide() {
+      throw new Error('active slide unavailable');
+    }
+  }), false);
+
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Ignored', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    buildCanonicalMetadataBaseline() {
+      throw new Error('canonical baseline unavailable');
+    },
+    buildCanonicalMetadataDeck: () => ({ id: 'unused' }),
+    canonicalMetadataKey: 'notes',
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        throw new Error('should not mutate');
+      }
+    },
+    finalizeMutation() {
+      throw new Error('should not finalize');
+    }
+  }), false);
+});
+
+test('applyStudioSpeakerNotesEdit preserves the mutation result when cleanup callbacks throw', () => {
+  const transaction = { kind: 'notes' };
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        return { didApply: true, transaction };
+      }
+    },
+    finalizeMutation: () => true,
+    syncChrome() {
+      throw new Error('chrome refresh failed');
+    }
+  }), true);
+
+  assert.equal(actions.applyStudioSpeakerNotesEdit('Cue', {
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    getDocument: () => ({ id: 'frame' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    notesApi: {
+      applyStudioSpeakerNotes() {
+        return { didApply: true, transaction };
+      }
+    },
+    finalizeMutation: () => false,
+    rollbackMutation() {
+      throw new Error('rollback failed');
+    },
+    syncChrome() {
+      throw new Error('chrome refresh failed');
+    }
+  }), false);
+});
+
 test('applyStudioSlideSectionEdit uses the section metadata mutation and label', () => {
   const calls = [];
   const result = actions.applyStudioSlideSectionEdit('Research', {

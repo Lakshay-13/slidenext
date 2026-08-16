@@ -11,17 +11,32 @@
     const resolveReadyState = typeof options.resolveReadyState === 'function'
       ? options.resolveReadyState
       : () => ({ canUseDeckActions: false });
-    const actionState = resolveReadyState();
+    let actionState;
+    try {
+      actionState = resolveReadyState();
+    } catch (error) {
+      return false;
+    }
     if (!actionState || !actionState.canUseDeckActions) return false;
 
     const getDocument = typeof options.getDocument === 'function'
       ? options.getDocument
       : () => null;
-    const documentRef = getDocument();
+    let documentRef;
+    try {
+      documentRef = getDocument();
+    } catch (error) {
+      return false;
+    }
     const getActiveSlide = typeof options.getActiveSlide === 'function'
       ? options.getActiveSlide
       : () => null;
-    const activeSlide = getActiveSlide(documentRef);
+    let activeSlide;
+    try {
+      activeSlide = getActiveSlide(documentRef);
+    } catch (error) {
+      return false;
+    }
     const metadataApi = options.metadataApi && typeof options.metadataApi === 'object'
       ? options.metadataApi
       : null;
@@ -48,24 +63,35 @@
     const canonicalMetadataKey = typeof options.canonicalMetadataKey === 'string'
       ? options.canonicalMetadataKey.trim()
       : '';
-    const canonicalDeckBeforeMutation = buildCanonicalMetadataBaseline
-      ? buildCanonicalMetadataBaseline({ sourceDocument: documentRef })
-      : null;
-    const canonicalDeck = buildCanonicalMetadataDeck && canonicalMetadataKey
-      ? buildCanonicalMetadataDeck(activeSlide, {
-          [canonicalMetadataKey]: value
-        }, {
-          sourceDocument: documentRef,
-          canonicalDeckBeforeMutation,
-          getSlideId: options.getSlideId
-        })
-      : null;
+    let canonicalDeckBeforeMutation = null;
+    let canonicalDeck = null;
+    try {
+      canonicalDeckBeforeMutation = buildCanonicalMetadataBaseline
+        ? buildCanonicalMetadataBaseline({ sourceDocument: documentRef })
+        : null;
+      canonicalDeck = buildCanonicalMetadataDeck && canonicalMetadataKey
+        ? buildCanonicalMetadataDeck(activeSlide, {
+            [canonicalMetadataKey]: value
+          }, {
+            sourceDocument: documentRef,
+            canonicalDeckBeforeMutation,
+            getSlideId: options.getSlideId
+          })
+        : null;
+    } catch (error) {
+      return false;
+    }
     if (canonicalDeckBeforeMutation && !canonicalDeck) return false;
 
-    const mutation = applyMetadata(activeSlide, value, {
-      transactionApi: options.transactionApi,
-      getElementId: options.getElementId
-    });
+    let mutation;
+    try {
+      mutation = applyMetadata(activeSlide, value, {
+        transactionApi: options.transactionApi,
+        getElementId: options.getElementId
+      });
+    } catch (error) {
+      return false;
+    }
     if (!mutation || !mutation.didApply) return false;
 
     let finalizeResult = false;
@@ -79,14 +105,28 @@
       finalizeResult = false;
     }
     if (finalizeResult === false) {
-      if (rollbackMutation) rollbackMutation(mutation.transaction || null, documentRef);
+      if (rollbackMutation) {
+        try {
+          rollbackMutation(mutation.transaction || null, documentRef);
+        } catch (error) {
+          // Preserve the failed persistence result if rollback cannot complete.
+        }
+      }
       if (typeof options.syncChrome === 'function') {
-        options.syncChrome(documentRef);
+        try {
+          options.syncChrome(documentRef);
+        } catch (error) {
+          // Preserve the failed persistence result if chrome refresh cannot complete.
+        }
       }
       return false;
     }
     if (typeof options.syncChrome === 'function') {
-      options.syncChrome(documentRef);
+      try {
+        options.syncChrome(documentRef);
+      } catch (error) {
+        // A metadata refresh failure must not undo a committed mutation.
+      }
     }
     return true;
   }
