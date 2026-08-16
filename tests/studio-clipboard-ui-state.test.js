@@ -10,6 +10,7 @@ const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader
 const canonicalInsertion = require('../shared/studio-editor-canonical-insertion.js');
 const clipboardState = require('../shared/studio-editor-clipboard.js');
 const clipboardToolbarState = require('../shared/studio-editor-clipboard-state.js');
+const clipboardToolbarStateRuntimeAccessors = require('../shared/studio-editor-clipboard-state-runtime-accessors.js');
 const clipboardController = require('../shared/studio-editor-clipboard-controller.js');
 const clipboardSelectionController = require('../shared/studio-editor-clipboard-selection-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
@@ -95,6 +96,7 @@ function installClipboardSelectionController(context) {
 
 function runClipboardActionStateSource(source, context) {
   context.SlideNextStudioEditorClipboardState = clipboardToolbarState;
+  context.SlideNextStudioEditorClipboardStateRuntimeAccessors = clipboardToolbarStateRuntimeAccessors;
   vm.createContext(context);
   vm.runInContext(source, context);
   installClipboardSelectionController(context);
