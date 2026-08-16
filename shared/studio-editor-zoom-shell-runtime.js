@@ -23,7 +23,10 @@
       return null;
     }
 
-    return zoomRuntimeApi.createStudioEditorZoomRuntime(options.runtimeOptions || {});
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return zoomRuntimeApi.createStudioEditorZoomRuntime(runtimeOptions || {});
   }
 
   return {
