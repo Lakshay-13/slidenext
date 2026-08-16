@@ -80,6 +80,16 @@
     const onMasterSlidesChanged = typeof options.onMasterSlidesChanged === 'function'
       ? options.onMasterSlidesChanged
       : null;
+
+    function publishMasterSlidesChanged(nextCanonicalDeck) {
+      if (!onMasterSlidesChanged) return;
+      try {
+        onMasterSlidesChanged(nextCanonicalDeck.masterSlides || [], nextCanonicalDeck);
+      } catch (error) {
+        // A listener failure must not change an already committed master mutation.
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -260,9 +270,7 @@
         if (triggerAutoSave) triggerAutoSave();
         if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
       }
-      if (onMasterSlidesChanged) {
-        onMasterSlidesChanged(nextCanonicalDeck.masterSlides || [], nextCanonicalDeck);
-      }
+      publishMasterSlidesChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
     }
 
