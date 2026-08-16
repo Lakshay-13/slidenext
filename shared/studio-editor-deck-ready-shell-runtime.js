@@ -23,7 +23,10 @@
       return null;
     }
 
-    return deckReadyRuntimeApi.createStudioEditorDeckReadyRuntime(options.runtimeOptions || {});
+    const runtimeOptions = Object.prototype.hasOwnProperty.call(options, 'runtimeOptions')
+      ? options.runtimeOptions
+      : options;
+    return deckReadyRuntimeApi.createStudioEditorDeckReadyRuntime(runtimeOptions || {});
   }
 
   return {

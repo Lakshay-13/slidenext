@@ -23,6 +23,33 @@ test('deck-ready shell runtime delegates the prepared readiness options', () => 
   assert.equal(receivedOptions, runtimeOptions);
 });
 
+test('deck-ready shell runtime accepts flattened options from the runtime accessors', () => {
+  let receivedOptions = null;
+  const runtimeOptions = {
+    getDocument: () => null,
+    getSaveButtonState: () => 'ready'
+  };
+  const deckReadyRuntimeApi = {
+    createStudioEditorDeckReadyRuntime(options) {
+      receivedOptions = options;
+      return { name: 'deck-ready-runtime' };
+    }
+  };
+
+  assert.deepEqual(
+    shellRuntime.createStudioEditorDeckReadyShellRuntime({
+      deckReadyRuntimeApi,
+      ...runtimeOptions
+    }),
+    { name: 'deck-ready-runtime' }
+  );
+  assert.deepEqual(receivedOptions, {
+    getDocument: runtimeOptions.getDocument,
+    getSaveButtonState: runtimeOptions.getSaveButtonState,
+    deckReadyRuntimeApi
+  });
+});
+
 test('deck-ready shell runtime safely handles missing runtime factories', () => {
   assert.equal(shellRuntime.createStudioEditorDeckReadyShellRuntime({}), null);
   assert.equal(
