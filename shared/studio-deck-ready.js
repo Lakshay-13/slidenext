@@ -25,6 +25,7 @@
     'insertHeadingBtn',
     'insertParagraphBtn',
     'insertImageBtn',
+    'insertIconBtn',
     'insertShapeBtn',
     'insertTableBtn',
     'insertCodeBtn',
