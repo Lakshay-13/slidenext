@@ -26,7 +26,7 @@ test('session runtime accessors delegate shell construction and preserve runtime
 
   assert.deepEqual(result, { runtime: runtimeValue });
   assert.deepEqual(receivedOptions, {
-    ...runtimeOptions,
+    runtimeOptions,
     sessionRuntimeApi
   });
 });

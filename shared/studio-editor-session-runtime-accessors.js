@@ -11,7 +11,9 @@
     const runtimeApi = Object.prototype.hasOwnProperty.call(options, 'runtimeApi')
       ? options.runtimeApi
       : root && root.SlideNextStudioEditorSessionShellRuntime;
-    const shellOptions = { ...(options.runtimeOptions || {}) };
+    const shellOptions = {
+      runtimeOptions: options.runtimeOptions || {}
+    };
     if (Object.prototype.hasOwnProperty.call(options, 'sessionRuntimeApi')) {
       shellOptions.sessionRuntimeApi = options.sessionRuntimeApi;
     }
