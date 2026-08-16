@@ -28,6 +28,9 @@
     const triggerAutoVersion = typeof options.triggerAutoVersion === 'function'
       ? options.triggerAutoVersion
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
 
     return function finalizeWallpaperMutation(
       versionLabel = '',
@@ -45,7 +48,8 @@
           generateThumbnails,
           saveHistoryState,
           triggerAutoSave,
-          triggerAutoVersion
+          triggerAutoVersion,
+          isCanonicalDeck
         }
       );
     };

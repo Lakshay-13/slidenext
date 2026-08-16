@@ -15,6 +15,7 @@ test('wallpaper finalization forwards the complete shared mutation contract', ()
   const saveHistoryState = () => {};
   const triggerAutoSave = () => {};
   const triggerAutoVersion = () => {};
+  const isCanonicalDeck = () => true;
   const deckMutationApi = {
     finalizeStudioEditorWallpaperMutation(...args) {
       received = args;
@@ -28,7 +29,8 @@ test('wallpaper finalization forwards the complete shared mutation contract', ()
     generateThumbnails,
     saveHistoryState,
     triggerAutoSave,
-    triggerAutoVersion
+    triggerAutoVersion,
+    isCanonicalDeck
   });
   const canonicalDeck = { kind: 'slidenext.deck', slides: [] };
 
@@ -42,6 +44,7 @@ test('wallpaper finalization forwards the complete shared mutation contract', ()
   assert.equal(received[3].saveHistoryState, saveHistoryState);
   assert.equal(received[3].triggerAutoSave, triggerAutoSave);
   assert.equal(received[3].triggerAutoVersion, triggerAutoVersion);
+  assert.equal(received[3].isCanonicalDeck, isCanonicalDeck);
 });
 
 test('wallpaper finalization fails closed without the shared deck mutation API', () => {
@@ -72,4 +75,5 @@ test('index loads and installs the wallpaper finalization module before editor o
   assert.match(fileContent, /<script src="\/shared\/studio-editor-wallpaper-finalization\.js"><\/script>/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorWallpaperFinalizationGlobalApi\);/);
   assert.match(fileContent, /deckMutationApi: typeof SlideNextStudioEditorDeckMutation/);
+  assert.match(fileContent, /isCanonicalDeck: typeof getEditorCanonicalDeckValidator/);
 });

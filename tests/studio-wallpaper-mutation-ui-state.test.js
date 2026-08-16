@@ -80,7 +80,10 @@ function loadFinalizeWallpaperMutation(fileContent, context) {
     generateThumbnails: context.generateThumbnails,
     saveHistoryState: context.saveHistoryState,
     triggerAutoSave: context.triggerAutoSave,
-    triggerAutoVersion: context.triggerAutoVersion
+    triggerAutoVersion: context.triggerAutoVersion,
+    isCanonicalDeck: typeof context.getEditorCanonicalDeckValidator === 'function'
+      ? context.getEditorCanonicalDeckValidator()
+      : null
   });
   const flushSource = extractFunctionSource(
     fileContent,
@@ -322,7 +325,10 @@ test('finalizeWallpaperMutation delegates its lifecycle adapter to shared mutati
     generateThumbnails() {},
     saveHistoryState() {},
     triggerAutoSave() {},
-    triggerAutoVersion() {}
+    triggerAutoVersion() {},
+    getEditorCanonicalDeckValidator() {
+      return () => true;
+    }
   };
 
   vm.createContext(context);
@@ -333,6 +339,7 @@ test('finalizeWallpaperMutation delegates its lifecycle adapter to shared mutati
   assert.equal(delegatedOptions.transaction, transaction);
   assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
   assert.equal(delegatedOptions.generateThumbnails, context.generateThumbnails);
+  assert.equal(typeof delegatedOptions.isCanonicalDeck, 'function');
 });
 
 test('flushPendingWallpaperVersion commits a custom wallpaper version only when a real custom mutation is pending', () => {

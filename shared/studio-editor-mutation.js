@@ -397,7 +397,12 @@
   function finalizeStudioWallpaperMutation(options = {}) {
     const versionLabel = options.versionLabel || '';
     const transaction = options.transaction || null;
-    const canonicalDeck = options.canonicalDeck || null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeck = isValidStudioCanonicalDeck(options.canonicalDeck, isCanonicalDeck)
+      ? options.canonicalDeck
+      : null;
     if (typeof options.finalizeMutation === 'function') {
       return invokeStudioEditorMutationFinalizer(options.finalizeMutation, versionLabel, {
         transaction,

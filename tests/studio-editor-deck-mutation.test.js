@@ -648,6 +648,24 @@ test('finalizeStudioEditorWallpaperMutation preserves canonical history fallback
   ]);
 });
 
+test('finalizeStudioEditorWallpaperMutation drops invalid fallback canonical decks', () => {
+  const calls = [];
+  const result = deckMutation.finalizeStudioEditorWallpaperMutation(
+    'Auto: Changed Background',
+    { id: 'tx-invalid' },
+    { kind: 'invalid-deck' },
+    {
+      isCanonicalDeck: () => false,
+      saveHistoryState(...args) {
+        calls.push(args);
+      }
+    }
+  );
+
+  assert.equal(result, 'Auto: Changed Background');
+  assert.deepEqual(calls, [[false, { id: 'tx-invalid' }]]);
+});
+
 test('finalizeStudioEditorWallpaperMutation preserves fallback persistence when thumbnail refresh throws', () => {
   const calls = [];
   const result = deckMutation.finalizeStudioEditorWallpaperMutation(

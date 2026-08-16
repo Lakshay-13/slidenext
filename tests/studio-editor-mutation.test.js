@@ -1286,3 +1286,18 @@ test('finalizeStudioWallpaperMutation preserves a canonical sidecar in the fallb
     canonicalDeck
   ]);
 });
+
+test('finalizeStudioWallpaperMutation drops an invalid canonical sidecar in the fallback path', () => {
+  const calls = [];
+
+  mutation.finalizeStudioWallpaperMutation({
+    transaction: { id: 'tx-wallpaper-invalid' },
+    canonicalDeck: { kind: 'invalid-deck' },
+    isCanonicalDeck: () => false,
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  assert.deepEqual(calls, [[false, { id: 'tx-wallpaper-invalid' }]]);
+});

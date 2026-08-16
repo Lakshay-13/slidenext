@@ -379,11 +379,18 @@
     const mutationApi = options.mutationApi && typeof options.mutationApi === 'object'
       ? options.mutationApi
       : null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const validCanonicalDeck = isValidStudioCanonicalDeck(canonicalDeck, isCanonicalDeck)
+      ? canonicalDeck
+      : null;
     if (mutationApi && typeof mutationApi.finalizeStudioWallpaperMutation === 'function') {
       return mutationApi.finalizeStudioWallpaperMutation({
         versionLabel,
         transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {}),
+        ...(validCanonicalDeck ? { canonicalDeck: validCanonicalDeck } : {}),
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         finalizeMutation: options.finalizeMutation,
         generateThumbnails: options.generateThumbnails,
         saveHistoryState: options.saveHistoryState,
@@ -394,16 +401,16 @@
     if (typeof options.finalizeMutation === 'function') {
       return invokeStudioEditorDeckMutationFinalizer(options.finalizeMutation, versionLabel, {
         transaction,
-        ...(canonicalDeck ? { canonicalDeck } : {})
+        ...(validCanonicalDeck ? { canonicalDeck: validCanonicalDeck } : {})
       });
     }
     if (typeof options.generateThumbnails === 'function') {
       invokeStudioEditorThumbnailRefresh(options.generateThumbnails);
     }
     if (typeof options.saveHistoryState === 'function') {
-      if (canonicalDeck) {
+      if (validCanonicalDeck) {
         if (isStudioHistoryCaptureFailure(
-          captureStudioHistoryState(options.saveHistoryState, false, transaction, canonicalDeck)
+          captureStudioHistoryState(options.saveHistoryState, false, transaction, validCanonicalDeck)
         )) return false;
       } else {
         if (isStudioHistoryCaptureFailure(
