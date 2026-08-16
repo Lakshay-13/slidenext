@@ -77,6 +77,20 @@ test('buildStudioVisibilityActionState derives visibility button state from live
   });
 });
 
+test('buildStudioVisibilityActionState disables toggling when hidden state throws', () => {
+  const live = { id: 'live', isConnected: true };
+
+  assert.deepEqual(visibilityState.buildStudioVisibilityActionState([live], {
+    isHidden: () => {
+      throw new Error('stale hidden state');
+    }
+  }), {
+    hasSelection: true,
+    canToggle: false,
+    allHidden: false
+  });
+});
+
 test('buildStudioVisibilityToolbarState derives visibility control chrome from the live selection state', () => {
   assert.deepEqual(visibilityState.buildStudioVisibilityToolbarState([
     { id: 1, isConnected: true, hidden: false }

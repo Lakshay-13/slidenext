@@ -13,7 +13,13 @@
       ? options.isEligibleElement
       : (element) => !!element && (typeof element.isConnected !== 'boolean' || element.isConnected);
 
-    return selection.filter((element) => isEligibleElement(element));
+    return selection.filter((element) => {
+      try {
+        return isEligibleElement(element);
+      } catch (error) {
+        return false;
+      }
+    });
   }
 
   function buildStudioVisibilityActionState(elements = [], options = {}) {
@@ -25,12 +31,21 @@
       ? options.canMutateDeck
       : () => true;
     const hasSelection = selection.length > 0;
-    const canToggle = canMutateDeck() && hasSelection;
+    let canToggle = false;
+    let allHidden = false;
+    try {
+      canToggle = canMutateDeck() && hasSelection;
+      allHidden = canToggle && selection.every((element) => isHidden(element));
+    } catch (error) {
+      // Keep the toolbar disabled when canonical visibility state is uncertain.
+      canToggle = false;
+      allHidden = false;
+    }
 
     return {
       hasSelection,
       canToggle,
-      allHidden: canToggle && selection.every((element) => isHidden(element))
+      allHidden
     };
   }
 
