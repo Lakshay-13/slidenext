@@ -973,6 +973,22 @@ test('finalizeStudioLayerOrderMutation forwards canonical decks to fallback hist
   assert.deepEqual(calls, [[false, { id: 'tx-layer-order-fallback' }, canonicalDeck]]);
 });
 
+test('finalizeStudioLayerOrderMutation drops invalid fallback canonical decks', () => {
+  const calls = [];
+
+  mutation.finalizeStudioLayerOrderMutation({
+    versionLabel: 'Auto: Layer Order',
+    transaction: { id: 'tx-layer-order-invalid' },
+    canonicalDeck: { kind: 'invalid-deck' },
+    isCanonicalDeck: () => false,
+    saveHistoryState(...args) {
+      calls.push(args);
+    }
+  });
+
+  assert.deepEqual(calls, [[false, { id: 'tx-layer-order-invalid' }]]);
+});
+
 test('finalizeStudioLayerOrderMutation falls back to layer persistence ordering', () => {
   const calls = [];
   const transaction = { id: 'tx-layer-order-fallback' };

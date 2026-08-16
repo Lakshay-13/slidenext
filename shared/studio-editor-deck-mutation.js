@@ -10,6 +10,25 @@
     root.SlideNextStudioEditorDeckMutation = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (historyResultApi) {
+  function isStudioCanonicalDeckLike(value) {
+    return !!value
+      && typeof value === 'object'
+      && !Array.isArray(value)
+      && Array.isArray(value.slides);
+  }
+
+  function isValidStudioCanonicalDeck(value, validator) {
+    if (!value) return false;
+    const validate = typeof validator === 'function'
+      ? validator
+      : isStudioCanonicalDeckLike;
+    try {
+      return validate(value) === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   const isStudioHistoryCaptureFailure = historyResultApi
     && typeof historyResultApi.isStudioHistoryCaptureFailure === 'function'
     ? historyResultApi.isStudioHistoryCaptureFailure
@@ -289,7 +308,15 @@
       ? options.mutationApi
       : null;
     const transaction = resolvedMutationOptions.transaction || null;
-    const canonicalDeck = resolvedMutationOptions.canonicalDeck || null;
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const canonicalDeck = isValidStudioCanonicalDeck(
+      resolvedMutationOptions.canonicalDeck,
+      isCanonicalDeck
+    )
+      ? resolvedMutationOptions.canonicalDeck
+      : null;
     const finalizeMutation = typeof options.finalizeMutation === 'function'
       ? options.finalizeMutation
       : null;
@@ -298,6 +325,7 @@
         versionLabel,
         transaction,
         ...(canonicalDeck ? { canonicalDeck } : {}),
+        ...(isCanonicalDeck ? { isCanonicalDeck } : {}),
         finalizeMutation,
         saveHistoryState: options.saveHistoryState,
         triggerAutoSave: options.triggerAutoSave,

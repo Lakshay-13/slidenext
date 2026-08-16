@@ -346,13 +346,18 @@
     const versionLabel = options.versionLabel || '';
     const transaction = options.transaction || null;
     const hasCanonicalDeck = Object.prototype.hasOwnProperty.call(options, 'canonicalDeck');
+    const isCanonicalDeck = typeof options.isCanonicalDeck === 'function'
+      ? options.isCanonicalDeck
+      : null;
+    const hasValidCanonicalDeck = hasCanonicalDeck
+      && isValidStudioCanonicalDeck(options.canonicalDeck, isCanonicalDeck);
     const finalizeMutation = options.finalizeMutation;
     if (typeof finalizeMutation === 'function') {
       const result = invokeStudioEditorMutationFinalizer(finalizeMutation, versionLabel, {
         refreshThumbnails: false,
         refreshLayersList: true,
         transaction,
-        ...(hasCanonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
+        ...(hasValidCanonicalDeck ? { canonicalDeck: options.canonicalDeck } : {})
       });
       if (typeof options.updateLayerOrderActionState === 'function') {
         invokeStudioEditorUiRefresh(options.updateLayerOrderActionState);
@@ -361,7 +366,7 @@
     }
 
     if (typeof options.saveHistoryState === 'function') {
-      if (hasCanonicalDeck) {
+      if (hasValidCanonicalDeck) {
         if (isStudioHistoryCaptureFailure(
           captureStudioHistoryState(
             options.saveHistoryState,

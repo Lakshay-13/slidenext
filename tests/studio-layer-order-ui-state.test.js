@@ -469,6 +469,11 @@ test('finalizeLayerOrderMutation delegates its lifecycle adapter to shared mutat
     finalizeEditorDeckMutation() {},
     saveHistoryState() {},
     triggerAutoSave() {},
+    getEditorCanonicalDeckValidator() {
+      return function isCanonicalDeck() {
+        return true;
+      };
+    },
     updateLayersList() {},
     updateLayerOrderActionState() {},
     triggerAutoVersion() {}
@@ -485,6 +490,7 @@ test('finalizeLayerOrderMutation delegates its lifecycle adapter to shared mutat
   assert.equal(delegatedOptions.transaction.id, transaction.id);
   assert.equal(delegatedOptions.canonicalDeck, canonicalDeck);
   assert.equal(delegatedOptions.finalizeMutation, context.finalizeEditorDeckMutation);
+  assert.equal(typeof delegatedOptions.isCanonicalDeck, 'function');
   assert.equal(delegatedOptions.updateLayerOrderActionState, context.updateLayerOrderActionState);
 });
 

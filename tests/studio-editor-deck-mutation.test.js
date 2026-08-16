@@ -454,6 +454,25 @@ test('finalizeStudioEditorLayerOrderMutation preserves layer chrome and history 
   ]);
 });
 
+test('finalizeStudioEditorLayerOrderMutation drops invalid fallback canonical decks', () => {
+  const calls = [];
+
+  assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation(
+    'Auto: Layer Order',
+    {
+      transaction: { id: 'tx-invalid' },
+      canonicalDeck: { kind: 'invalid-deck' }
+    },
+    {
+      isCanonicalDeck: () => false,
+      saveHistoryState(...args) {
+        calls.push(args);
+      }
+    }
+  ), 'Auto: Layer Order');
+  assert.deepEqual(calls, [[false, { id: 'tx-invalid' }]]);
+});
+
 test('finalizeStudioEditorLayerOrderMutation propagates fallback history rejection', () => {
   assert.equal(deckMutation.finalizeStudioEditorLayerOrderMutation('Auto: Rejected', {
     transaction: { id: 'tx' },
