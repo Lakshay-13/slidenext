@@ -240,6 +240,9 @@
     const getCurrentDocument = typeof options.getCurrentDocument === 'function'
       ? options.getCurrentDocument
       : () => null;
+    const getPendingCanonicalDeck = typeof options.getPendingCanonicalDeck === 'function'
+      ? options.getPendingCanonicalDeck
+      : null;
     const resolveActiveSlideId = typeof options.resolveActiveSlideId === 'function'
       ? options.resolveActiveSlideId
       : () => '';

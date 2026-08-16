@@ -425,6 +425,24 @@ test('source controller forwards the live canonical baseline to source applicati
   assert.equal(calls[0][2].canonicalDeckBaseline, canonicalDeckBaseline);
 });
 
+test('source controller builds the default history baseline with pending canonical state', () => {
+  const pendingCanonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'pending' }] };
+  let capturedHistoryArgs = null;
+  const { calls, controller } = createController({
+    beforeApply: undefined,
+    getPendingCanonicalDeck: () => pendingCanonicalDeck,
+    saveHistoryState(...args) {
+      capturedHistoryArgs = args;
+      return { didCapture: true };
+    }
+  });
+
+  controller.applySourceHtml('<html></html>');
+
+  assert.equal(calls[0][2].beforeApply(), true);
+  assert.deepEqual(capturedHistoryArgs, [false, null, pendingCanonicalDeck]);
+});
+
 test('source controller forwards the pre-apply history capture callback', () => {
   const captureHistoryEntry = () => ({ html: '<section class="slide">Original</section>' });
   const { calls, controller } = createController({ captureHistoryEntry });
