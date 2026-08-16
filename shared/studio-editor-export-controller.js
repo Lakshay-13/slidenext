@@ -59,6 +59,7 @@
       : () => {};
     const pdfExport = options.pdfExport || null;
     const pptxExport = options.pptxExport || null;
+    const exportButtonBindings = new WeakMap();
 
     function exportPdf() {
       if (!exportActions || typeof exportActions.createStudioPdfExportAction !== 'function') {
@@ -117,7 +118,10 @@
       const bindButton = (id, handler) => {
         const button = documentRef.getElementById(id);
         if (!button || typeof button.addEventListener !== 'function') return false;
-        button.addEventListener('click', handler);
+        if (!exportButtonBindings.has(button)) {
+          button.addEventListener('click', handler);
+          exportButtonBindings.set(button, handler);
+        }
         return true;
       };
 

@@ -145,6 +145,32 @@ test('export controller binds PDF and PPTX buttons without inline handlers', asy
   assert.deepEqual(calls, ['pdf', 'pptx']);
 });
 
+test('export controller reuses button bindings without duplicate exports', () => {
+  const buttons = Object.fromEntries(['exportPdfBtn', 'exportPptxBtn'].map((id) => [id, {
+    listeners: [],
+    addEventListener(type, handler) {
+      this.listeners.push({ type, handler });
+    }
+  }]));
+  const controller = exportController.createStudioEditorExportController({
+    exportActions: {
+      createStudioPdfExportAction() {
+        return () => true;
+      },
+      createStudioPptxExportAction() {
+        return async () => true;
+      }
+    }
+  });
+  const documentRef = controllerDocument(buttons);
+
+  controller.bindStudioEditorExportButtons({ documentRef });
+  controller.bindStudioEditorExportButtons({ documentRef });
+
+  assert.equal(buttons.exportPdfBtn.listeners.length, 1);
+  assert.equal(buttons.exportPptxBtn.listeners.length, 1);
+});
+
 function controllerDocument(buttons) {
   return {
     getElementById(id) {
