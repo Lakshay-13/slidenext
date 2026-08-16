@@ -373,3 +373,28 @@ test('attachStudioInlineTextEditHandlers installs a capture-phase double-click h
   assert.deepEqual(registration.slice(0, 2), ['dblclick', controller.handleDoubleClick]);
   assert.equal(registration[2], true);
 });
+
+test('attachStudioInlineTextEditHandlers replaces the previous document handler', () => {
+  const registrations = [];
+  const removals = [];
+  const doc = {
+    addEventListener(name, handler, capture) {
+      registrations.push([name, handler, capture]);
+    },
+    removeEventListener(name, handler, capture) {
+      removals.push([name, handler, capture]);
+    }
+  };
+
+  const firstController = inlineEdit.attachStudioInlineTextEditHandlers(doc, {});
+  const secondController = inlineEdit.attachStudioInlineTextEditHandlers(doc, {});
+
+  assert.equal(registrations.length, 2);
+  assert.equal(removals.length, 1);
+  assert.deepEqual(removals[0], ['dblclick', firstController.handleDoubleClick, true]);
+  assert.notEqual(secondController.handleDoubleClick, firstController.handleDoubleClick);
+  assert.equal(inlineEdit.detachStudioInlineTextEditHandlers(doc), true);
+  assert.equal(inlineEdit.detachStudioInlineTextEditHandlers(doc), false);
+  assert.equal(removals.length, 2);
+  assert.deepEqual(removals[1], ['dblclick', secondController.handleDoubleClick, true]);
+});

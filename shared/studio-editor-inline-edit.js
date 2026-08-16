@@ -8,6 +8,7 @@
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const EDITING_ATTRIBUTE = 'data-editor-inline-editing';
+  const inlineTextEditAttachmentRegistry = new WeakMap();
 
   function hasStudioInlineElementChildren(element) {
     return !!(element
@@ -250,16 +251,32 @@
     };
   }
 
+  function detachStudioInlineTextEditHandlers(doc) {
+    if (!doc || !inlineTextEditAttachmentRegistry.has(doc)) return false;
+    const attachment = inlineTextEditAttachmentRegistry.get(doc);
+    if (typeof doc.removeEventListener === 'function') {
+      doc.removeEventListener('dblclick', attachment.handler, true);
+    }
+    inlineTextEditAttachmentRegistry.delete(doc);
+    return true;
+  }
+
   function attachStudioInlineTextEditHandlers(doc, options = {}) {
     if (!doc || typeof doc.addEventListener !== 'function') return null;
+    detachStudioInlineTextEditHandlers(doc);
     const controller = createStudioInlineTextEditController(options);
     doc.addEventListener('dblclick', controller.handleDoubleClick, true);
+    inlineTextEditAttachmentRegistry.set(doc, {
+      handler: controller.handleDoubleClick,
+      controller
+    });
     return controller;
   }
 
   return {
     resolveStudioInlineTextEditTarget,
     createStudioInlineTextEditController,
+    detachStudioInlineTextEditHandlers,
     attachStudioInlineTextEditHandlers
   };
 });
