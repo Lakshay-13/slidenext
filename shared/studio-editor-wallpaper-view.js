@@ -273,6 +273,33 @@
     return true;
   }
 
+  function bindStudioWallpaperTabControls(options = {}) {
+    const documentRef = options.documentRef;
+    if (!documentRef || typeof documentRef.getElementById !== 'function') return {};
+
+    const setWallpaperTab = typeof options.setWallpaperTab === 'function'
+      ? options.setWallpaperTab
+      : null;
+    const bindings = {};
+    const controls = [
+      ['wpTabSolid', 'solid'],
+      ['wpTabPresets', 'presets'],
+      ['wpTabCustom', 'custom']
+    ];
+    controls.forEach(([id, tab]) => {
+      const button = documentRef.getElementById(id);
+      if (!button || typeof button.addEventListener !== 'function') {
+        bindings[id] = false;
+        return;
+      }
+      button.addEventListener('click', () => {
+        if (setWallpaperTab) setWallpaperTab(tab);
+      });
+      bindings[id] = true;
+    });
+    return bindings;
+  }
+
   function resetStudioWallpaperUiState(options = {}) {
     const documentRef = options.documentRef;
     if (!documentRef || typeof documentRef.getElementById !== 'function') return false;
@@ -459,6 +486,7 @@
     renderStudioWallpaperPresets,
     applyStudioWallpaperToSlides,
     setStudioWallpaperTab,
+    bindStudioWallpaperTabControls,
     resetStudioWallpaperUiState,
     resolveStudioActiveSlideGradientBackground,
     syncStudioSolidWallpaperControl,

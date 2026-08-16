@@ -1,7 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const wallpaperView = require('../shared/studio-editor-wallpaper-view.js');
+
+const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
 test('resolveStudioActiveSlideSolidWallpaperColor handles solid and gradient backgrounds', () => {
   assert.equal(
@@ -363,4 +367,44 @@ test('syncStudioCustomGradientControls updates linear gradient inputs and chrome
   assert.equal(elements.cgAngle.value, '210');
   assert.equal(elements.cgAngleVal.textContent, '210°');
   assert.equal(elements.cgAngleGroup.classList.contains('hidden'), false);
+});
+
+test('bindStudioWallpaperTabControls wires the three wallpaper tabs', () => {
+  const controls = Object.fromEntries([
+    ['wpTabSolid', 'solid'],
+    ['wpTabPresets', 'presets'],
+    ['wpTabCustom', 'custom']
+  ].map(([id]) => [id, {
+    listeners: {},
+    addEventListener(type, handler) {
+      this.listeners[type] = handler;
+    }
+  }]));
+  const calls = [];
+
+  assert.deepEqual(
+    wallpaperView.bindStudioWallpaperTabControls({
+      documentRef: {
+        getElementById(id) {
+          return controls[id] || null;
+        }
+      },
+      setWallpaperTab(tab) {
+        calls.push(tab);
+      }
+    }),
+    { wpTabSolid: true, wpTabPresets: true, wpTabCustom: true }
+  );
+  controls.wpTabSolid.listeners.click();
+  controls.wpTabPresets.listeners.click();
+  controls.wpTabCustom.listeners.click();
+  assert.deepEqual(calls, ['solid', 'presets', 'custom']);
+});
+
+test('index keeps wallpaper tab navigation free of inline handlers', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+
+  assert.doesNotMatch(fileContent, /id="wpTabSolid"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="wpTabPresets"[^>]*onclick=/);
+  assert.doesNotMatch(fileContent, /id="wpTabCustom"[^>]*onclick=/);
 });
