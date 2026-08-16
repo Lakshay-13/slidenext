@@ -8363,21 +8363,27 @@
       const historyOptionsApi = typeof SlideNextStudioEditorHistoryOptions !== 'undefined'
         ? SlideNextStudioEditorHistoryOptions
         : null;
-      if (historyOptionsApi
-        && typeof historyOptionsApi.createStudioEditorHistoryStackOptionsResolver === 'function') {
-        if (typeof getEditorHistoryStackOptions.resolver !== 'function') {
-          getEditorHistoryStackOptions.resolver = historyOptionsApi.createStudioEditorHistoryStackOptionsResolver({
-            getHistoryOptions: (nextOptions) => getEditorHistoryOptions(nextOptions),
-            getHistoryApi: () => typeof SlideNextStudioHistory !== 'undefined'
-              ? SlideNextStudioHistory
-              : null,
-            isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
-              ? getEditorCanonicalDeckValidator()
-              : null
-          });
-        }
-        if (typeof getEditorHistoryStackOptions.resolver === 'function') {
-          return getEditorHistoryStackOptions.resolver(options);
+      if (historyOptionsApi) {
+        const createStackOptionsAdapter = typeof historyOptionsApi.createStudioEditorHistoryStackOptionsAdapter === 'function'
+          ? historyOptionsApi.createStudioEditorHistoryStackOptionsAdapter
+          : typeof historyOptionsApi.createStudioEditorHistoryStackOptionsResolver === 'function'
+            ? historyOptionsApi.createStudioEditorHistoryStackOptionsResolver
+            : null;
+        if (createStackOptionsAdapter) {
+          if (typeof getEditorHistoryStackOptions.adapter !== 'function') {
+            getEditorHistoryStackOptions.adapter = createStackOptionsAdapter({
+              getHistoryOptions: (nextOptions) => getEditorHistoryOptions(nextOptions),
+              getHistoryApi: () => typeof SlideNextStudioHistory !== 'undefined'
+                ? SlideNextStudioHistory
+                : null,
+              isCanonicalDeck: typeof getEditorCanonicalDeckValidator === 'function'
+                ? getEditorCanonicalDeckValidator()
+                : null
+            });
+          }
+          if (typeof getEditorHistoryStackOptions.adapter === 'function') {
+            return getEditorHistoryStackOptions.adapter(options);
+          }
         }
       }
       const historyApi = typeof SlideNextStudioHistory !== 'undefined'

@@ -120,8 +120,16 @@
     };
   }
 
+  function createStudioEditorHistoryStackOptionsAdapter(options = {}) {
+    const resolveStackOptions = createStudioEditorHistoryStackOptionsResolver(options);
+    return function resolveStudioEditorHistoryStackOptions(historyInput = {}) {
+      return resolveStackOptions(historyInput);
+    };
+  }
+
   return {
     createStudioEditorHistoryOptionsResolver,
-    createStudioEditorHistoryStackOptionsResolver
+    createStudioEditorHistoryStackOptionsResolver,
+    createStudioEditorHistoryStackOptionsAdapter
   };
 });

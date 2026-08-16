@@ -121,6 +121,26 @@ test('history stack options resolver adds history behavior while preserving call
   assert.equal(result.maxUndoEntries, 12);
 });
 
+test('history stack options adapter delegates to the shared resolver', () => {
+  const calls = [];
+  const adapter = historyOptions.createStudioEditorHistoryStackOptionsAdapter({
+    getHistoryOptions(options) {
+      calls.push(options);
+      return { source: 'history-options' };
+    },
+    getHistoryApi: () => null
+  });
+
+  assert.deepEqual(adapter({ custom: true }), {
+    source: 'history-options',
+    normalizeEntry: undefined,
+    areEntriesEqual: undefined,
+    maxUndoEntries: 50,
+    custom: true
+  });
+  assert.deepEqual(calls, [{ custom: true }]);
+});
+
 test('editor loads the history options module before using the inline compatibility adapter', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(fileContent, /<script src="\/shared\/studio-editor-history-options\.js"><\/script>/);
