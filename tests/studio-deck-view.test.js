@@ -258,6 +258,18 @@ test('captureStudioDeckViewBeforeSlideMutation falls back when canonical baselin
   assert.deepEqual(calls, [[]]);
 });
 
+test('captureStudioDeckViewBeforeSlideMutation drops an invalid canonical baseline', () => {
+  const calls = [];
+
+  deckView.captureStudioDeckViewBeforeSlideMutation({
+    buildCanonicalDeck: () => ({ slides: [] }),
+    isCanonicalDeck: () => false,
+    saveHistoryState: (...args) => calls.push(args)
+  });
+
+  assert.deepEqual(calls, [[]]);
+});
+
 test('applyStudioSlideReorderMutation moves a slide node and captures the container markup transaction', () => {
   const draggedNode = { id: 'slide-1' };
   const beforeNode = { id: 'slide-3' };
