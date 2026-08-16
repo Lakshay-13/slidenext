@@ -74,8 +74,19 @@ test('index routes persisted deck playback state installation through the shell 
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-deck-playback-state-shell-runtime\.js"><\/script>/
   );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-deck-playback-state-runtime-accessors\.js"><\/script>/
+  );
   assert.match(fileContent, /studioEditorPersistedDeckPlaybackStateShellRuntimeApi/);
-  assert.match(fileContent, /createStudioEditorPersistedDeckPlaybackStateShellRuntime/);
+  assert.match(
+    fileContent,
+    /studioEditorPersistedDeckPlaybackStateRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedDeckPlaybackStateRuntimeAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorPersistedDeckPlaybackStateShellRuntimeApi\s*\.\s*createStudioEditorPersistedDeckPlaybackStateShellRuntime\(/
+  );
   assert.match(
     fileContent,
     /studioEditorPersistedDeckPlaybackStateGlobalApi\s*=\s*studioEditorPersistedDeckPlaybackStateShellRuntime/

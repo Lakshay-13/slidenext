@@ -1619,6 +1619,7 @@
   <script src="/shared/studio-editor-reusable-persisted-html-sanitizer-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-playback-state-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-persisted-deck-playback-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-build-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-captured-persistable-deck-state-action.js"></script>
@@ -6673,32 +6674,43 @@
       typeof SlideNextStudioEditorPersistedDeckPlaybackStateShellRuntime !== 'undefined'
       ? SlideNextStudioEditorPersistedDeckPlaybackStateShellRuntime
       : null;
-    const studioEditorPersistedDeckPlaybackStateShellRuntime =
-      studioEditorPersistedDeckPlaybackStateShellRuntimeApi
-      && typeof studioEditorPersistedDeckPlaybackStateShellRuntimeApi
-        .createStudioEditorPersistedDeckPlaybackStateShellRuntime === 'function'
-      ? studioEditorPersistedDeckPlaybackStateShellRuntimeApi
-        .createStudioEditorPersistedDeckPlaybackStateShellRuntime({
-          actionApi: typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
-            ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
-            : null,
-          getDocument: getIframeDoc,
-          getPersistenceController: () => studioEditorPersistenceController,
-          persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
-            ? SlideNextStudioEditorPersistence
-            : null,
-          persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
-            ? SlideNextStudioEditorPersistenceState
-            : null,
-          deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
-            ? SlideNextDeckPersistence
-            : null,
-          getSlides,
-          slideIdAttr: EDITOR_SLIDE_ID_ATTR,
-          buildCanonicalDeck: (doc) => buildEditorCanonicalDeck(doc),
-          resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId
+    const studioEditorPersistedDeckPlaybackStateRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorPersistedDeckPlaybackStateRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorPersistedDeckPlaybackStateRuntimeAccessors
+      : null;
+    const studioEditorPersistedDeckPlaybackStateRuntimeAccessors =
+      studioEditorPersistedDeckPlaybackStateRuntimeAccessorsApi
+      && typeof studioEditorPersistedDeckPlaybackStateRuntimeAccessorsApi
+        .createStudioEditorPersistedDeckPlaybackStateRuntimeAccessors === 'function'
+      ? studioEditorPersistedDeckPlaybackStateRuntimeAccessorsApi
+        .createStudioEditorPersistedDeckPlaybackStateRuntimeAccessors({
+          runtimeApi: studioEditorPersistedDeckPlaybackStateShellRuntimeApi,
+          runtimeOptions: {
+            actionApi: typeof SlideNextStudioEditorPersistedDeckPlaybackStateAction !== 'undefined'
+              ? SlideNextStudioEditorPersistedDeckPlaybackStateAction
+              : null,
+            getDocument: getIframeDoc,
+            getPersistenceController: () => studioEditorPersistenceController,
+            persistenceApi: typeof SlideNextStudioEditorPersistence !== 'undefined'
+              ? SlideNextStudioEditorPersistence
+              : null,
+            persistenceStateApi: typeof SlideNextStudioEditorPersistenceState !== 'undefined'
+              ? SlideNextStudioEditorPersistenceState
+              : null,
+            deckPersistenceApi: typeof SlideNextDeckPersistence !== 'undefined'
+              ? SlideNextDeckPersistence
+              : null,
+            getSlides,
+            slideIdAttr: EDITOR_SLIDE_ID_ATTR,
+            buildCanonicalDeck: (doc) => buildEditorCanonicalDeck(doc),
+            resolveFallbackActiveSlideId: resolveEditorFallbackActiveSlideId
+          }
         })
       : null;
+    const studioEditorPersistedDeckPlaybackStateShellRuntime =
+      studioEditorPersistedDeckPlaybackStateRuntimeAccessors
+        ? studioEditorPersistedDeckPlaybackStateRuntimeAccessors.runtime
+        : null;
     const studioEditorPersistedDeckPlaybackStateAction = studioEditorPersistedDeckPlaybackStateShellRuntime
       && studioEditorPersistedDeckPlaybackStateShellRuntime.isAvailable === true
       ? studioEditorPersistedDeckPlaybackStateShellRuntime.persistedDeckPlaybackStateAction
