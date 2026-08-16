@@ -1345,6 +1345,8 @@
   <script src="/shared/studio-editor-canonical-theme.js"></script>
   <script src="/shared/studio-editor-theme-preset-controller.js"></script>
   <script src="/shared/studio-editor-theme-view.js"></script>
+  <script src="/shared/studio-editor-theme-toolbar-state.js"></script>
+  <script src="/shared/studio-editor-theme-toolbar-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-presets.js"></script>
   <script src="/shared/studio-editor-canonical-state.js"></script>
   <script src="/shared/studio-editor-canonical-deck.js"></script>
@@ -13223,29 +13225,46 @@
     }
 
     function updateThemeTokenActionState(doc = getIframeDoc()) {
-      const themeView = typeof SlideNextStudioEditorThemeView !== 'undefined'
-        ? SlideNextStudioEditorThemeView
+      const themeToolbarStateRuntimeApi =
+        typeof SlideNextStudioEditorThemeToolbarState !== 'undefined'
+        ? SlideNextStudioEditorThemeToolbarState
         : null;
-      if (!themeView || typeof themeView.syncStudioThemeTokenPresetActionState !== 'function') return false;
-      if (typeof themeView.createStudioThemeTokenPresetActionStateSync === 'function') {
-        if (typeof updateThemeTokenActionState.sync !== 'function') {
-          updateThemeTokenActionState.sync = themeView.createStudioThemeTokenPresetActionStateSync({
+      const themeToolbarStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorThemeToolbarStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorThemeToolbarStateRuntimeAccessors
+        : null;
+      const themeToolbarStateRuntimeAccessors =
+        themeToolbarStateRuntimeAccessorsApi
+        && typeof themeToolbarStateRuntimeAccessorsApi
+          .createStudioEditorThemeToolbarStateRuntimeAccessors === 'function'
+        ? themeToolbarStateRuntimeAccessorsApi
+          .createStudioEditorThemeToolbarStateRuntimeAccessors({
+            runtimeApi: themeToolbarStateRuntimeApi
+          })
+        : null;
+      if (!themeToolbarStateRuntimeAccessors
+        || typeof themeToolbarStateRuntimeAccessors
+          .createStudioEditorThemeToolbarStateController !== 'function') {
+        return false;
+      }
+      if (!updateThemeTokenActionState.controller) {
+        const themeView = typeof SlideNextStudioEditorThemeView !== 'undefined'
+          ? SlideNextStudioEditorThemeView
+          : null;
+        updateThemeTokenActionState.controller = themeToolbarStateRuntimeAccessors
+          .createStudioEditorThemeToolbarStateController({
+            themeView,
             getDocument: () => getIframeDoc(),
             getActionState: (sourceDoc) => ({
               canUseThemeTokenControls: !!resolveCurrentStudioDeckReadyActionState(sourceDoc).canUseDeckActions
             }),
-            getDocumentRef: () => document
+            documentRef: document
           });
-        }
-        if (typeof updateThemeTokenActionState.sync === 'function') {
-          return updateThemeTokenActionState.sync(doc);
-        }
       }
-      const readyState = resolveCurrentStudioDeckReadyActionState(doc);
-      return themeView.syncStudioThemeTokenPresetActionState({
-        documentRef: document,
-        canUseThemeTokenControls: !!readyState.canUseDeckActions
-      });
+      return updateThemeTokenActionState.controller
+        && typeof updateThemeTokenActionState.controller.sync === 'function'
+        ? updateThemeTokenActionState.controller.sync(doc)
+        : false;
     }
 
     function resolveCurrentStudioDeckReadyActionState(doc = getIframeDoc()) {

@@ -5,6 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const themeView = require('../shared/studio-editor-theme-view.js');
 const themePresetController = require('../shared/studio-editor-theme-preset-controller.js');
+const themeToolbarState = require('../shared/studio-editor-theme-toolbar-state.js');
+const themeToolbarStateRuntimeAccessors = require('../shared/studio-editor-theme-toolbar-state-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -175,6 +177,8 @@ test('applyStudioThemeTokenPreset fails closed when canonical setup throws', () 
 test('index routes theme-token mutations through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/studio-editor-theme-preset-controller\.js"/);
+  assert.match(source, /src="\/shared\/studio-editor-theme-toolbar-state\.js"/);
+  assert.match(source, /src="\/shared\/studio-editor-theme-toolbar-state-runtime-accessors\.js"/);
   assert.match(source, /themePresetController\.applyStudioThemeTokenPreset/);
   assert.match(
     source,
@@ -259,6 +263,8 @@ test('updateThemeTokenActionState delegates deck readiness to the shared theme v
       return iframeDoc;
     }
   };
+  context.SlideNextStudioEditorThemeToolbarState = themeToolbarState;
+  context.SlideNextStudioEditorThemeToolbarStateRuntimeAccessors = themeToolbarStateRuntimeAccessors;
   loadFunction(fileContent, 'function updateThemeTokenActionState(doc = getIframeDoc()) {', '\n\n    function updateDeckReadyToolbarActionState', context);
 
   assert.equal(context.updateThemeTokenActionState(), 'synced');
@@ -342,6 +348,8 @@ test('updateThemeTokenActionState caches the shared theme synchronizer when avai
     }
   };
 
+  context.SlideNextStudioEditorThemeToolbarState = themeToolbarState;
+  context.SlideNextStudioEditorThemeToolbarStateRuntimeAccessors = themeToolbarStateRuntimeAccessors;
   vm.createContext(context);
   vm.runInContext(source, context);
 
