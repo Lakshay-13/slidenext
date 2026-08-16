@@ -5,6 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const templateView = require('../shared/studio-editor-template-view.js');
 const templateState = require('../shared/studio-editor-template-state.js');
+const templateStateRuntimeAccessors = require('../shared/studio-editor-template-state-runtime-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -18,6 +19,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
 
 function runSourceWithCanonicalUi(source, context) {
   context.SlideNextStudioEditorTemplateState = templateState;
+  context.SlideNextStudioEditorTemplateStateRuntimeAccessors = templateStateRuntimeAccessors;
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolverSource = extractFunctionSource(
     fileContent,

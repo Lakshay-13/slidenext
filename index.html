@@ -1475,6 +1475,7 @@
   <script src="/shared/studio-editor-master-slide-state.js"></script>
   <script src="/shared/studio-editor-template-view.js"></script>
   <script src="/shared/studio-editor-template-state.js"></script>
+  <script src="/shared/studio-editor-template-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-template-controller.js"></script>
   <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-template-shell-runtime.js"></script>
@@ -11770,26 +11771,42 @@
         && typeof studioEditorContentStateCoordinator.syncTemplate === 'function') {
         return studioEditorContentStateCoordinator.syncTemplate(doc);
       }
-      const templateStateApi = typeof SlideNextStudioEditorTemplateState !== 'undefined'
+      const templateStateRuntimeApi =
+        typeof SlideNextStudioEditorTemplateState !== 'undefined'
         ? SlideNextStudioEditorTemplateState
         : null;
-      if (!templateStateApi
-        || typeof templateStateApi.createStudioEditorTemplateStateController !== 'function') {
+      const templateStateRuntimeAccessorsApi =
+        typeof SlideNextStudioEditorTemplateStateRuntimeAccessors !== 'undefined'
+        ? SlideNextStudioEditorTemplateStateRuntimeAccessors
+        : null;
+      const templateStateRuntimeAccessors =
+        templateStateRuntimeAccessorsApi
+        && typeof templateStateRuntimeAccessorsApi
+          .createStudioEditorTemplateStateRuntimeAccessors === 'function'
+        ? templateStateRuntimeAccessorsApi
+          .createStudioEditorTemplateStateRuntimeAccessors({
+            runtimeApi: templateStateRuntimeApi
+          })
+        : null;
+      if (!templateStateRuntimeAccessors
+        || typeof templateStateRuntimeAccessors
+          .createStudioEditorTemplateStateController !== 'function') {
         return false;
       }
       if (!updateTemplateActionState.controller) {
         const templateView = typeof SlideNextStudioEditorTemplateView !== 'undefined'
           ? SlideNextStudioEditorTemplateView
           : null;
-        updateTemplateActionState.controller = templateStateApi.createStudioEditorTemplateStateController({
-          templateView,
-          getDocument: () => getIframeDoc(),
-          getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
-          getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
-          insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
-          removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null,
-          documentRef: document
-        });
+        updateTemplateActionState.controller = templateStateRuntimeAccessors
+          .createStudioEditorTemplateStateController({
+            templateView,
+            getDocument: () => getIframeDoc(),
+            getCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+            getActiveSlide: (sourceDoc) => getActiveSlide(sourceDoc),
+            insertTemplate: typeof insertSavedTemplate === 'function' ? insertSavedTemplate : null,
+            removeTemplate: typeof removeSavedTemplate === 'function' ? removeSavedTemplate : null,
+            documentRef: document
+          });
       }
       return updateTemplateActionState.controller
         && typeof updateTemplateActionState.controller.sync === 'function'
