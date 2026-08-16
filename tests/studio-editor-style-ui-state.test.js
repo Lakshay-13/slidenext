@@ -545,7 +545,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
 
@@ -607,7 +607,7 @@ test('applySelectedElementStyle returns false and refreshes style controls when 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
 
@@ -671,7 +671,7 @@ test('applySelectedElementStyle delegates unsuccessful result refresh to the sha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
   const calls = [];
@@ -710,7 +710,7 @@ test('applySelectedElementStyle delegates mutation and transaction assembly to t
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
   const element = { isConnected: true, style: { color: 'red' } };
@@ -773,7 +773,7 @@ test('applySelectedElementStyle falls back to style-action refresh when inspecto
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
 
@@ -837,7 +837,7 @@ test('applySelectedElementStyle tolerates missing style feedback labels after su
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
 
@@ -940,7 +940,7 @@ test('applySelectedElementStyle refreshes the layer list when the z-index change
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
 
@@ -1052,7 +1052,7 @@ test('applySelectedElementStyle forwards a reversible CSS style transaction', ()
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
   const element = {
@@ -1133,7 +1133,7 @@ test('applySelectedElementStyle forwards a reversible text property transaction'
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
   const element = {
@@ -1224,7 +1224,7 @@ test('applySelectedElementStyle persists image source edits in the canonical nod
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const applySelectedElementStyleSource = extractFunctionSource(
     fileContent,
-    'function applySelectedElementStyle(prop, val) {',
+    'function applySelectedElementStyle(prop, val, options = {}) {',
     '\n\n    // Delete active selection'
   );
   const element = {

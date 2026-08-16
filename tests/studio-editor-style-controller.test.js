@@ -76,6 +76,34 @@ test('style controller binds inspector controls with their existing event cadenc
   ]);
 });
 
+test('style controller accepts an explicit target selection for inline text commits', () => {
+  const selectedElement = { id: 'selected' };
+  const inlineTarget = { id: 'inline-target' };
+  const calls = [];
+  const controller = styleController.createStudioEditorStyleController({
+    styleApi: {
+      buildStudioStyleMutationPlan(elements) {
+        calls.push(['plan', elements]);
+        return { canApply: true, selection: elements, versionLabel: 'Auto: Edited Text' };
+      }
+    },
+    getSelectedElements: () => [selectedElement],
+    getIframeDoc: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    applyStyleMutation: (_styleApi, elements, prop, value) => {
+      calls.push(['apply', elements, prop, value]);
+      return { didApply: true, displayValue: value, transaction: null };
+    },
+    finalizeDeckMutation: () => true
+  });
+
+  assert.equal(controller.apply('text', 'Edited', { elements: [inlineTarget] }), true);
+  assert.deepEqual(calls, [
+    ['plan', [inlineTarget]],
+    ['apply', [inlineTarget], 'text', 'Edited']
+  ]);
+});
+
 test('style controller assembles mutation, feedback, canonical, and finalization dependencies', () => {
   const calls = [];
   const buildCanonicalDeck = () => ({ id: 'live' });

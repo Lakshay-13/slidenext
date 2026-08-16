@@ -7546,8 +7546,8 @@
           isElementHidden,
           commitSelectionState: commitEditorSelectionState,
           getOverlayOptions: getEditorOverlayOptions,
-          onInlineEditCommit: ({ text }) => {
-            return applySelectedElementStyle('text', text);
+          onInlineEditCommit: ({ element, text }) => {
+            return applySelectedElementStyle('text', text, { elements: [element] });
           },
           onInlineEditEnd: () => {
             syncSelectionOverlay();
@@ -11952,10 +11952,10 @@
     }
 
     // Apply styles immediately to active selected elements
-    function applySelectedElementStyle(prop, val) {
+    function applySelectedElementStyle(prop, val, options = {}) {
       return studioEditorStyleController
         && typeof studioEditorStyleController.apply === 'function'
-        ? studioEditorStyleController.apply(prop, val)
+        ? studioEditorStyleController.apply(prop, val, options)
         : false;
     }
 

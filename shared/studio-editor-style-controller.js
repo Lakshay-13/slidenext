@@ -307,7 +307,7 @@
       return !!(rollbackResult && rollbackResult.didApply);
     }
 
-    function apply(prop, value) {
+    function apply(prop, value, options = {}) {
       if (!styleApi || typeof styleApi.buildStudioStyleMutationPlan !== 'function') {
         return finalizeStyleActionResult(false);
       }
@@ -315,7 +315,10 @@
       let styleMutationPlan = null;
       try {
         doc = getIframeDoc();
-        styleMutationPlan = styleApi.buildStudioStyleMutationPlan(getSelectedElements(doc), prop, value, {
+        const targetElements = Array.isArray(options.elements)
+          ? options.elements
+          : getSelectedElements(doc);
+        styleMutationPlan = styleApi.buildStudioStyleMutationPlan(targetElements, prop, value, {
           isLocked: resolveLockedReader(doc),
           canMutateDeck: () => !!getActiveSlide(doc)
         });
