@@ -108,6 +108,15 @@
         pendingTransaction = null;
       }
     }
+    const rebuildCanonicalDeckFromCurrentDocument = () => {
+      if (!buildCanonicalDeck) return null;
+      try {
+        const canonicalDeck = buildCanonicalDeck(sourceDocument);
+        return isValidDeck(canonicalDeck) ? canonicalDeck : null;
+      } catch (error) {
+        return null;
+      }
+    };
     if (pendingTransaction && buildMutationCanonicalDeck) {
       try {
         const mutationCanonicalDeck = buildMutationCanonicalDeck(sourceDocument);
@@ -117,6 +126,13 @@
       } catch (error) {
         // Fall back to the live baseline when a legacy mutation rebuild fails.
       }
+    }
+
+    // A pending mutation makes the stored baseline potentially stale. Prefer a
+    // fresh import from the current editor document before using that baseline.
+    if (pendingTransaction) {
+      const currentCanonicalDeck = rebuildCanonicalDeckFromCurrentDocument();
+      if (currentCanonicalDeck) return currentCanonicalDeck;
     }
 
     if (getCanonicalDeckBaseline) {
@@ -129,16 +145,8 @@
         // Continue to the DOM-derived canonical builder.
       }
     }
-    if (buildCanonicalDeck) {
-      try {
-        const canonicalDeck = buildCanonicalDeck(sourceDocument);
-        if (isValidDeck(canonicalDeck)) {
-          return canonicalDeck;
-        }
-      } catch (error) {
-        // Export actions fail closed when no usable canonical deck exists.
-      }
-    }
+    const canonicalDeck = rebuildCanonicalDeckFromCurrentDocument();
+    if (canonicalDeck) return canonicalDeck;
     return null;
   }
 

@@ -289,6 +289,31 @@ test('PDF and PPTX exports rebuild from the current DOM while a transaction is p
   assert.equal(fallbackBuildCalls, 0);
 });
 
+test('export canonical resolution prefers a fresh current-document rebuild over a stale baseline', () => {
+  const currentDeck = { slides: [{ id: 'current-slide' }] };
+  const staleBaseline = { slides: [{ id: 'stale-slide' }] };
+  let baselineCalls = 0;
+  let rebuildCalls = 0;
+
+  const resolvedDeck = exportActions.resolveStudioExportCanonicalDeck({
+    sourceDocument: { id: 'editor-document' },
+    getPendingTransaction: () => ({ id: 'pending-transaction' }),
+    buildMutationCanonicalDeck: () => null,
+    buildCanonicalDeck: () => {
+      rebuildCalls += 1;
+      return currentDeck;
+    },
+    getCanonicalDeckBaseline: () => {
+      baselineCalls += 1;
+      return staleBaseline;
+    }
+  });
+
+  assert.equal(resolvedDeck, currentDeck);
+  assert.equal(rebuildCalls, 1);
+  assert.equal(baselineCalls, 0);
+});
+
 test('PDF and PPTX exports prefer a pending canonical sidecar before rebuilding', async () => {
   const sourceDocument = { id: 'editor-document' };
   const pendingDeck = { slides: [{ id: 'pending-slide' }] };
