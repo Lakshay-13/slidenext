@@ -71,6 +71,15 @@
       ? options.updateActionState
       : null;
 
+    function refreshActionState(doc) {
+      if (!updateActionState) return;
+      try {
+        updateActionState(doc);
+      } catch (error) {
+        // A toolbar refresh failure must not change the conversion result.
+      }
+    }
+
     function buildPlan(doc = null) {
       const resolvedDoc = doc || getDocument();
       const activeSlide = getActiveSlide(resolvedDoc);
@@ -157,11 +166,11 @@
       const plan = buildPlan(doc);
       if (!plan.canConvert || !transactionApi
         || typeof transactionApi.createStudioStyleTransaction !== 'function') {
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
       if (!finalizeDeckMutation) {
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
 
@@ -179,7 +188,7 @@
         transaction = null;
       }
       if (!transaction) {
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
 
@@ -192,12 +201,12 @@
       if (canonicalLayoutApi
         && typeof canonicalLayoutApi.createStudioCanonicalLayoutMutationBuilder === 'function'
         && !canonicalDeck) {
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
       if (!applyConversionStyles(plan.items)) {
         restoreConversionStyles(plan.items);
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
 
@@ -214,10 +223,10 @@
       }
       if (finalizeResult === false) {
         restoreConversionStyles(plan.items);
-        if (updateActionState) updateActionState(doc);
+        refreshActionState(doc);
         return false;
       }
-      if (updateActionState) updateActionState(doc);
+      refreshActionState(doc);
       return true;
     }
 

@@ -267,6 +267,25 @@ test('convert restores flow styles when finalization throws', () => {
   assert.deepEqual(updates, [{ id: 'doc' }]);
 });
 
+test('convert preserves the result when action-state refresh throws', () => {
+  const element = {
+    style: { position: '', margin: '8px', left: '', top: '', width: '50%', height: '' }
+  };
+  const controller = controllerApi.createStudioEditorLayoutConversionController({
+    conversionApi: { buildStudioFlowToFreeformPlan: () => createPlan(element) },
+    transactionApi: { createStudioStyleTransaction: () => ({ kind: 'style' }) },
+    getDocument: () => ({ id: 'doc' }),
+    getActiveSlide: () => ({ id: 'slide-1' }),
+    finalizeDeckMutation: () => true,
+    updateActionState() {
+      throw new Error('toolbar refresh failed');
+    }
+  });
+
+  assert.equal(controller.convert(), true);
+  assert.equal(element.style.position, 'absolute');
+});
+
 test('convert does not mutate when the planner rejects the selection', () => {
   const element = {
     style: { position: '', margin: '8px' }
