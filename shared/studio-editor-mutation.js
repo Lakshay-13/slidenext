@@ -371,7 +371,7 @@
       invokeStudioEditorUiRefresh(options.updateLayersList);
     }
     if (typeof options.updateLayerOrderActionState === 'function') {
-      options.updateLayerOrderActionState();
+      invokeStudioEditorUiRefresh(options.updateLayerOrderActionState);
     }
     invokeStudioEditorAutoVersion(options.triggerAutoVersion, versionLabel);
     return versionLabel;
