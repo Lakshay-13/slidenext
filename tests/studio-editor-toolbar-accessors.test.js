@@ -88,6 +88,12 @@ test('toolbar accessors publish the global consumed by the editor shell', () => 
 test('editor loads toolbar accessors after the theme runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  ['globalThemeToggleBtn', 'studioThemeToggleBtn'].forEach((id) => {
+    const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+    assert.ok(line, `Missing theme control: ${id}`);
+    assert.doesNotMatch(line, /onclick=/);
+  });
+
   assert.match(
     fileContent,
     /<script src="\/shared\/studio-editor-toolbar-accessors\.js"><\/script>/

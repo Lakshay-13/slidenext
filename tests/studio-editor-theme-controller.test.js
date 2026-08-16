@@ -44,6 +44,40 @@ test('toggles the global theme and wires the shared view callback back to iframe
   assert.equal(typeof callbacks[0].syncIframeTheme, 'function');
 });
 
+test('theme controller binds both theme buttons without inline handlers', () => {
+  const calls = [];
+  const buttons = {};
+  ['globalThemeToggleBtn', 'studioThemeToggleBtn'].forEach((id) => {
+    buttons[id] = {
+      listeners: {},
+      addEventListener(type, handler) {
+        this.listeners[type] = handler;
+      }
+    };
+  });
+  const controller = themeController.createStudioEditorThemeController({
+    themeViewApi: {
+      toggleStudioGlobalTheme() {
+        calls.push('toggle');
+        return { didApply: true };
+      }
+    }
+  });
+  const documentRef = {
+    getElementById(id) {
+      return buttons[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindStudioEditorThemeButtons({ documentRef }),
+    { global: true, editor: true }
+  );
+  buttons.globalThemeToggleBtn.listeners.click();
+  buttons.studioThemeToggleBtn.listeners.click();
+  assert.deepEqual(calls, ['toggle', 'toggle']);
+});
+
 test('fails closed when the shared theme view is unavailable', () => {
   const controller = themeController.createStudioEditorThemeController({ themeViewApi: null });
 

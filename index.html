@@ -475,7 +475,7 @@
       <span class="material-symbols-outlined text-[18px]">add</span>
       <span>New Deck</span>
     </button>
-    <button onclick="toggleGlobalTheme()" class="p-2.5 bg-zinc-900/60 hover:bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Toggle Light/Dark Theme">
+    <button id="globalThemeToggleBtn" class="p-2.5 bg-zinc-900/60 hover:bg-zinc-800 border border-white/10 text-zinc-400 hover:text-white rounded-lg transition-all flex items-center justify-center" title="Toggle Light/Dark Theme">
       <span class="material-symbols-outlined text-[20px]" id="themeIcon">light_mode</span>
     </button>
   </div>
@@ -716,7 +716,7 @@
         <div class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest mr-2" id="autoSaveStatus" role="status" aria-live="polite" aria-atomic="true" aria-busy="false">Saved to disk</div>
 
         <!-- Editor Theme Toggle -->
-        <button onclick="toggleGlobalTheme()" class="p-2 bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 text-zinc-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="Toggle Light/Dark Theme">
+        <button id="studioThemeToggleBtn" class="p-2 bg-zinc-900/50 hover:bg-zinc-800/80 border border-white/5 text-zinc-400 hover:text-white rounded-lg flex items-center justify-center transition-all" title="Toggle Light/Dark Theme">
           <span class="material-symbols-outlined text-[16px]" id="themeIconEditor">light_mode</span>
         </button>
 
@@ -6618,6 +6618,10 @@
     const studioEditorThemeController = studioEditorThemeRuntime
       ? studioEditorThemeRuntime.themeController
       : null;
+    if (studioEditorThemeController
+      && typeof studioEditorThemeController.bindStudioEditorThemeButtons === 'function') {
+      studioEditorThemeController.bindStudioEditorThemeButtons({ documentRef: document });
+    }
     const studioEditorDeckReadyRuntime = typeof SlideNextStudioEditorDeckReadyShellRuntime !== 'undefined'
       && SlideNextStudioEditorDeckReadyShellRuntime
       && typeof SlideNextStudioEditorDeckReadyShellRuntime.createStudioEditorDeckReadyShellRuntime === 'function'

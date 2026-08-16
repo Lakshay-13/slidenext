@@ -46,9 +46,28 @@
       return !!(result && result.didApply);
     }
 
+    function bindStudioEditorThemeButtons(options = {}) {
+      const themeDocument = options.documentRef || documentRef;
+      if (!themeDocument || typeof themeDocument.getElementById !== 'function') {
+        return { global: false, editor: false };
+      }
+      const bindButton = (id) => {
+        const button = themeDocument.getElementById(id);
+        if (!button || typeof button.addEventListener !== 'function') return false;
+        button.addEventListener('click', toggleGlobalTheme);
+        return true;
+      };
+
+      return {
+        global: bindButton('globalThemeToggleBtn'),
+        editor: bindButton('studioThemeToggleBtn')
+      };
+    }
+
     return {
       toggleGlobalTheme,
-      syncIframeTheme
+      syncIframeTheme,
+      bindStudioEditorThemeButtons
     };
   }
 
