@@ -93,10 +93,69 @@ test('submitCreatePresentation keeps the form open and reports creation errors',
   ]);
 });
 
+test('creation controller binds the modal controls without inline handlers', () => {
+  const calls = [];
+  const elements = {};
+  ['createPresentationBtn', 'cancelCreatePresentationBtn', 'createPresentationModal', 'createPresentationModalContent']
+    .forEach((id) => {
+      elements[id] = {
+        listeners: {},
+        addEventListener(type, handler) {
+          this.listeners[type] = handler;
+        }
+      };
+    });
+  const controller = presentationCreationController.createPresentationController({
+    documentRef: {
+      getElementById(id) {
+        return elements[id] || null;
+      }
+    },
+    presentationCreationView: {
+      openPresentationCreationModal() {
+        calls.push('open');
+        return true;
+      },
+      closePresentationCreationModal() {
+        calls.push('close');
+        return true;
+      },
+      setPresentationCreationError() {},
+      setPresentationCreationBusyState() {}
+    },
+    presentationLibrary: {
+      async createPresentation() {
+        return { url: '/presentations/new/index.html', title: 'New', category: 'General' };
+      }
+    }
+  });
+  const documentRef = {
+    getElementById(id) {
+      return elements[id] || null;
+    }
+  };
+
+  assert.deepEqual(
+    controller.bindPresentationCreationButtons({ documentRef }),
+    { open: true, close: true, submit: true, backdrop: true }
+  );
+  elements.createPresentationBtn.listeners.click();
+  elements.cancelCreatePresentationBtn.listeners.click();
+  elements.createPresentationModal.listeners.click({ target: elements.createPresentationModal });
+  assert.deepEqual(calls, ['open', 'close', 'close']);
+  assert.equal(typeof elements.createPresentationModalContent.listeners.submit, 'function');
+});
+
 test('dashboard markup exposes the new deck control and creation form', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /id="createPresentationBtn"/);
   assert.match(source, /id="createPresentationModal"/);
   assert.match(source, /id="createPresentationTitle"/);
-  assert.match(source, /onsubmit="submitCreatePresentation\(event\)"/);
+  ['createPresentationBtn', 'cancelCreatePresentationBtn', 'createPresentationModalContent']
+    .forEach((id) => {
+      const line = source.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
+      assert.ok(line, `Missing creation control: ${id}`);
+      assert.doesNotMatch(line, /onclick=|onsubmit=/);
+    });
+  assert.match(source, /bindPresentationCreationButtons\(\{ documentRef: document \}\)/);
 });

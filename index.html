@@ -471,7 +471,7 @@
 
   <!-- Dashboard Top Right Toolbar -->
   <div class="absolute top-6 right-6 z-30 flex items-center gap-3">
-    <button id="createPresentationBtn" onclick="openCreatePresentationModal()" class="px-3.5 py-2.5 bg-[#7028d0] hover:bg-[#6030d8] text-black rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-[0_0_18px_rgba(112,40,208,0.2)] active:scale-95" title="Create a blank presentation">
+    <button id="createPresentationBtn" class="px-3.5 py-2.5 bg-[#7028d0] hover:bg-[#6030d8] text-black rounded-lg transition-all flex items-center justify-center gap-1.5 text-xs font-bold shadow-[0_0_18px_rgba(112,40,208,0.2)] active:scale-95" title="Create a blank presentation">
       <span class="material-symbols-outlined text-[18px]">add</span>
       <span>New Deck</span>
     </button>
@@ -533,8 +533,8 @@
   </div>
 
   <!-- Create Presentation Modal -->
-  <div id="createPresentationModal" class="fixed inset-0 z-[140] bg-black/60 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200" onclick="if(event.target === this) closeCreatePresentationModal()">
-    <form id="createPresentationModalContent" onsubmit="submitCreatePresentation(event)" class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-6 w-[min(420px,92vw)] flex flex-col gap-4 transform scale-95 transition-transform duration-200">
+  <div id="createPresentationModal" class="fixed inset-0 z-[140] bg-black/60 backdrop-blur-md flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
+    <form id="createPresentationModalContent" class="bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-6 w-[min(420px,92vw)] flex flex-col gap-4 transform scale-95 transition-transform duration-200">
       <div class="flex items-start gap-3">
         <span class="material-symbols-outlined text-[#7028d0] text-2xl">add_to_photos</span>
         <div>
@@ -548,7 +548,7 @@
       </div>
       <p id="createPresentationError" class="hidden text-xs text-rose-400 leading-relaxed" role="alert"></p>
       <div class="flex justify-end gap-3 mt-1">
-        <button type="button" onclick="closeCreatePresentationModal()" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
+        <button id="cancelCreatePresentationBtn" type="button" class="px-4 py-2 text-xs font-mono text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg transition-all">Cancel</button>
         <button id="createPresentationSubmitBtn" type="submit" class="px-4 py-2 text-xs font-bold text-black bg-gradient-to-r from-[#7028d0] to-[#6030d8] hover:from-[#5050e8] hover:to-[#6030d8] rounded-lg transition-all hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(112,40,208,0.2)] disabled:opacity-50 disabled:pointer-events-none">
           <span class="material-symbols-outlined text-[15px] align-middle">add</span>
           <span id="createPresentationSubmitLabel">Create Deck</span>
@@ -2823,6 +2823,10 @@
     const presentationCreationController = presentationDashboardRuntime
       ? presentationDashboardRuntime.creationController
       : null;
+    if (presentationCreationController
+      && typeof presentationCreationController.bindPresentationCreationButtons === 'function') {
+      presentationCreationController.bindPresentationCreationButtons({ documentRef: document });
+    }
     const presentationDashboardAccessors = typeof SlideNextPresentationDashboardAccessors !== 'undefined'
       && SlideNextPresentationDashboardAccessors
       && typeof SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors === 'function'

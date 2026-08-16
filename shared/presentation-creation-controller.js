@@ -38,6 +38,40 @@
       return view.closePresentationCreationModal({ documentRef });
     }
 
+    function bindPresentationCreationButtons(options = {}) {
+      const creationDocument = options.documentRef || documentRef;
+      if (!creationDocument || typeof creationDocument.getElementById !== 'function') {
+        return { open: false, close: false, submit: false, backdrop: false };
+      }
+      const bindButton = (id, handler) => {
+        const button = getElement(creationDocument, id);
+        if (!button || typeof button.addEventListener !== 'function') return false;
+        button.addEventListener('click', handler);
+        return true;
+      };
+      const modal = getElement(creationDocument, 'createPresentationModal');
+      const form = getElement(creationDocument, 'createPresentationModalContent');
+      let backdrop = false;
+      if (modal && typeof modal.addEventListener === 'function') {
+        modal.addEventListener('click', (event) => {
+          if (event && event.target === modal) close();
+        });
+        backdrop = true;
+      }
+      let submitBound = false;
+      if (form && typeof form.addEventListener === 'function') {
+        form.addEventListener('submit', submit);
+        submitBound = true;
+      }
+
+      return {
+        open: bindButton('createPresentationBtn', open),
+        close: bindButton('cancelCreatePresentationBtn', close),
+        submit: submitBound,
+        backdrop
+      };
+    }
+
     async function submit(event) {
       if (event && typeof event.preventDefault === 'function') {
         event.preventDefault();
@@ -91,7 +125,8 @@
     return {
       open,
       close,
-      submit
+      submit,
+      bindPresentationCreationButtons
     };
   }
 
