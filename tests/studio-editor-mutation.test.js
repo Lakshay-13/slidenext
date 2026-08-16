@@ -41,6 +41,27 @@ test('createStudioMutationFinalizer runs mutation side effects in a stable order
   ]);
 });
 
+test('createStudioMutationFinalizer preserves persistence when thumbnail refresh throws', () => {
+  const calls = [];
+  const finalizeMutation = mutation.createStudioMutationFinalizer({
+    generateThumbnails() {
+      throw new Error('thumbnail refresh failed');
+    },
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  });
+
+  assert.equal(finalizeMutation('Auto: Moved Element'), 'Auto: Moved Element');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Moved Element']]);
+});
+
 test('createStudioMutationFinalizer forwards the mutation document to selection UI refreshes', () => {
   const documentRef = { id: 'editor-document' };
   const receivedDocuments = [];
@@ -871,6 +892,26 @@ test('finalizeStudioWallpaperMutation delegates or preserves wallpaper persisten
     'save',
     ['version', 'Auto: Background']
   ]);
+});
+
+test('finalizeStudioWallpaperMutation preserves fallback persistence when thumbnail refresh throws', () => {
+  const calls = [];
+  assert.equal(mutation.finalizeStudioWallpaperMutation({
+    versionLabel: 'Auto: Background',
+    generateThumbnails() {
+      throw new Error('thumbnail refresh failed');
+    },
+    saveHistoryState() {
+      calls.push('history');
+    },
+    triggerAutoSave() {
+      calls.push('save');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    }
+  }), 'Auto: Background');
+  assert.deepEqual(calls, ['history', 'save', ['version', 'Auto: Background']]);
 });
 
 test('finalizeStudioWallpaperMutation forwards an optional canonical deck sidecar', () => {
