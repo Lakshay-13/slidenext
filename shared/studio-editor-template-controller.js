@@ -131,6 +131,23 @@
       }
     }
 
+    function runLegacyPersistenceHooks(versionLabel = '') {
+      if (triggerAutoSave) {
+        try {
+          triggerAutoSave();
+        } catch (err) {
+          // Keep the committed history entry and continue the remaining persistence hooks.
+        }
+      }
+      if (triggerAutoVersion && versionLabel) {
+        try {
+          triggerAutoVersion(versionLabel);
+        } catch (err) {
+          // A version notification failure must not change the committed template mutation.
+        }
+      }
+    }
+
     function isValidCanonicalDeck(value) {
       if (!value) return false;
       const validate = canonicalDeckApi
@@ -210,8 +227,7 @@
           )) {
           return null;
         }
-        if (triggerAutoSave) triggerAutoSave();
-        if (triggerAutoVersion && versionLabel) triggerAutoVersion(versionLabel);
+        runLegacyPersistenceHooks(versionLabel);
       }
       publishTemplatesChanged(nextCanonicalDeck);
       return nextCanonicalDeck;
@@ -391,8 +407,7 @@
           if (setActiveSlide) setActiveSlide(activeSlideIndex);
           return false;
         }
-        if (triggerAutoSave) triggerAutoSave();
-        if (triggerAutoVersion) triggerAutoVersion(versionLabel);
+        runLegacyPersistenceHooks(versionLabel);
       }
       return true;
     }

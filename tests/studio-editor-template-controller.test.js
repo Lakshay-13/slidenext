@@ -62,6 +62,39 @@ test('template controller preserves a committed save when publication throws', (
   });
 });
 
+test('template controller preserves publication when legacy autosave throws', () => {
+  const sourceDeck = canonicalDeck.createCanonicalDeck({
+    slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
+  });
+  const calls = [];
+  const controller = templateController.createStudioEditorTemplateController({
+    canonicalDeckApi: canonicalDeck,
+    getCanonicalDeck: () => sourceDeck,
+    getActiveSlideId: () => 'slide-1',
+    saveHistoryState() {},
+    triggerAutoSave() {
+      calls.push('save');
+      throw new Error('autosave failed');
+    },
+    triggerAutoVersion(label) {
+      calls.push(['version', label]);
+    },
+    onTemplatesChanged() {
+      calls.push('templates');
+    }
+  });
+
+  assert.doesNotThrow(() => {
+    const result = controller.saveActiveSlide({ id: 'hero-template', name: 'Hero Template' });
+    assert.equal(result.templates[0].id, 'hero-template');
+  });
+  assert.deepEqual(calls, [
+    'save',
+    ['version', 'Auto: Saved Template "Hero Template"'],
+    'templates'
+  ]);
+});
+
 test('template mutations prefer valid pending canonical state over the live baseline', () => {
   const liveDeck = canonicalDeck.createCanonicalDeck({
     slides: [{ id: 'slide-1', title: 'Hero', nodes: [{ id: 'title', text: 'Hello' }] }]
