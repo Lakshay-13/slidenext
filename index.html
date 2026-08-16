@@ -1806,6 +1806,7 @@
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
   <script src="/shared/studio-editor-deck-ready-shell-runtime.js"></script>
+  <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-canonical-view-state.js"></script>
@@ -7156,31 +7157,42 @@
       && typeof studioEditorThemeController.bindStudioEditorThemeButtons === 'function') {
       studioEditorThemeController.bindStudioEditorThemeButtons({ documentRef: document });
     }
-    const studioEditorDeckReadyRuntime = typeof SlideNextStudioEditorDeckReadyShellRuntime !== 'undefined'
-      && SlideNextStudioEditorDeckReadyShellRuntime
-      && typeof SlideNextStudioEditorDeckReadyShellRuntime.createStudioEditorDeckReadyShellRuntime === 'function'
-      ? SlideNextStudioEditorDeckReadyShellRuntime.createStudioEditorDeckReadyShellRuntime({
+    const studioEditorDeckReadyRuntimeAccessorsApi =
+      typeof SlideNextStudioEditorDeckReadyRuntimeAccessors !== 'undefined'
+      ? SlideNextStudioEditorDeckReadyRuntimeAccessors
+      : null;
+    const studioEditorDeckReadyRuntimeAccessors = studioEditorDeckReadyRuntimeAccessorsApi
+      && typeof studioEditorDeckReadyRuntimeAccessorsApi
+        .createStudioEditorDeckReadyRuntimeAccessors === 'function'
+      ? studioEditorDeckReadyRuntimeAccessorsApi
+        .createStudioEditorDeckReadyRuntimeAccessors({
+          runtimeApi: typeof SlideNextStudioEditorDeckReadyShellRuntime !== 'undefined'
+            ? SlideNextStudioEditorDeckReadyShellRuntime
+            : null,
           deckReadyRuntimeApi: typeof SlideNextStudioEditorDeckReadyRuntime !== 'undefined'
             ? SlideNextStudioEditorDeckReadyRuntime
             : null,
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
-            ? SlideNextStudioEditorDeckReadyController
-            : null,
-          deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
-            ? SlideNextStudioDeckReady
-            : null,
-          getDocumentRef: () => document,
-          getDocument: getIframeDoc,
-          getPresentationUrl: getStudioCurrentPresentationUrl,
-          getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
-          resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
-            persistedDeckState
-          ),
-          getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
-          getSaveButtonState: getStudioSaveButtonState
+            controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
+              ? SlideNextStudioEditorDeckReadyController
+              : null,
+            deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
+              ? SlideNextStudioDeckReady
+              : null,
+            getDocumentRef: () => document,
+            getDocument: getIframeDoc,
+            getPresentationUrl: getStudioCurrentPresentationUrl,
+            getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
+            resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
+              persistedDeckState
+            ),
+            getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
+            getSaveButtonState: getStudioSaveButtonState
           }
         })
+      : null;
+    const studioEditorDeckReadyRuntime = studioEditorDeckReadyRuntimeAccessors
+      ? studioEditorDeckReadyRuntimeAccessors.runtime
       : null;
     const studioEditorDeckReadyController = studioEditorDeckReadyRuntime
       ? studioEditorDeckReadyRuntime.deckReadyController
