@@ -1623,6 +1623,7 @@
   <script src="/shared/studio-editor-position-layout-transaction.js"></script>
   <script src="/shared/studio-editor-dom.js"></script>
   <script src="/shared/studio-editor-frame-accessors.js"></script>
+  <script src="/shared/studio-editor-frame-accessors-shell-composition.js"></script>
   <script src="/shared/studio-editor-slide-commands.js"></script>
   <script src="/shared/studio-editor-slide-deletion-mutation.js"></script>
   <script src="/shared/studio-editor-slide-deletion-transaction.js"></script>
@@ -1962,19 +1963,25 @@
     // Global Editor State
     const EDITOR_ELEMENT_ID_ATTR = 'data-editor-id';
     const EDITOR_SLIDE_ID_ATTR = 'data-slide-id';
-    const studioEditorFrameAccessorsApi = typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
-      ? SlideNextStudioEditorFrameAccessors
+    const studioEditorFrameAccessorsShellCompositionApi =
+      typeof SlideNextStudioEditorFrameAccessorsShellComposition !== 'undefined'
+      ? SlideNextStudioEditorFrameAccessorsShellComposition
       : null;
-    let studioEditorFrameAccessors = studioEditorFrameAccessorsApi
-      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors === 'function'
-      ? studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors({ documentRef: document })
-      : null;
-    const earlyStudioEditorFrameGlobalApi = studioEditorFrameAccessorsApi
-      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi === 'function'
-      ? studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi({
-          accessors: studioEditorFrameAccessors
+    const earlyStudioEditorFrameAccessorsShellComposition =
+      studioEditorFrameAccessorsShellCompositionApi
+      && typeof studioEditorFrameAccessorsShellCompositionApi
+        .createStudioEditorFrameAccessorsShellComposition === 'function'
+      ? studioEditorFrameAccessorsShellCompositionApi
+        .createStudioEditorFrameAccessorsShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
+            ? SlideNextStudioEditorFrameAccessors
+            : null,
+          accessorOptions: { documentRef: document }
         })
-      : {};
+      : { accessors: null, globalApi: {} };
+    let studioEditorFrameAccessors = earlyStudioEditorFrameAccessorsShellComposition.accessors;
+    const earlyStudioEditorFrameGlobalApi =
+      earlyStudioEditorFrameAccessorsShellComposition.globalApi;
     Object.assign(globalThis, earlyStudioEditorFrameGlobalApi);
     const studioEditorLayerShellCompositionApi =
       typeof SlideNextStudioEditorLayerShellComposition !== 'undefined'
@@ -7177,39 +7184,43 @@
       && Array.isArray(editorConfiguration.RESIZE_HANDLE_DIRECTIONS)
       ? editorConfiguration.RESIZE_HANDLE_DIRECTIONS
       : ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'];
-    studioEditorFrameAccessors = studioEditorFrameAccessorsApi
-      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors === 'function'
-      ? studioEditorFrameAccessorsApi.createStudioEditorFrameAccessors({
-          documentRef: document,
-          domOptions: {
-            slideAttrName: EDITOR_SLIDE_ID_ATTR,
-            elementAttrName: EDITOR_ELEMENT_ID_ATTR,
-            slideSelector: '.slide',
-            selectableSelector: EDITOR_SELECTABLE_SELECTOR,
-            parentTargetSelector: EDITOR_PARENT_TARGET_SELECTOR,
-            inlineTextTags: EDITOR_INLINE_TEXT_TAGS,
-            blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer']
-          },
-          overlayOptions: {
-            selectionOverlayId: 'editorSelectionOverlay',
-            guidesLayerId: 'editorGuidesLayer',
-            dragHudId: 'editorDragHud',
-            resizeHandleDirections: RESIZE_HANDLE_DIRECTIONS,
-            resizeHandleClassName: 'editor-resize-handle',
-            resizeHandleDirectionAttr: 'data-dir',
-            guideLineClassName: 'editor-guide-line',
-            guideLineVerticalClassName: 'vertical',
-            guideLineHorizontalClassName: 'horizontal',
-            visibleClassName: 'visible'
+    const studioEditorFrameAccessorsShellComposition =
+      studioEditorFrameAccessorsShellCompositionApi
+      && typeof studioEditorFrameAccessorsShellCompositionApi
+        .createStudioEditorFrameAccessorsShellComposition === 'function'
+      ? studioEditorFrameAccessorsShellCompositionApi
+        .createStudioEditorFrameAccessorsShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorFrameAccessors !== 'undefined'
+            ? SlideNextStudioEditorFrameAccessors
+            : null,
+          accessorOptions: {
+            documentRef: document,
+            domOptions: {
+              slideAttrName: EDITOR_SLIDE_ID_ATTR,
+              elementAttrName: EDITOR_ELEMENT_ID_ATTR,
+              slideSelector: '.slide',
+              selectableSelector: EDITOR_SELECTABLE_SELECTOR,
+              parentTargetSelector: EDITOR_PARENT_TARGET_SELECTOR,
+              inlineTextTags: EDITOR_INLINE_TEXT_TAGS,
+              blockedIds: ['editorSelectionOverlay', 'editorGuidesLayer', 'editorDragHud', 'slidesContainer']
+            },
+            overlayOptions: {
+              selectionOverlayId: 'editorSelectionOverlay',
+              guidesLayerId: 'editorGuidesLayer',
+              dragHudId: 'editorDragHud',
+              resizeHandleDirections: RESIZE_HANDLE_DIRECTIONS,
+              resizeHandleClassName: 'editor-resize-handle',
+              resizeHandleDirectionAttr: 'data-dir',
+              guideLineClassName: 'editor-guide-line',
+              guideLineVerticalClassName: 'vertical',
+              guideLineHorizontalClassName: 'horizontal',
+              visibleClassName: 'visible'
+            }
           }
         })
-      : null;
-    const studioEditorFrameGlobalApi = studioEditorFrameAccessorsApi
-      && typeof studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi === 'function'
-      ? studioEditorFrameAccessorsApi.createStudioEditorFrameGlobalApi({
-          accessors: studioEditorFrameAccessors
-        })
-      : {};
+      : { accessors: null, globalApi: {} };
+    studioEditorFrameAccessors = studioEditorFrameAccessorsShellComposition.accessors;
+    const studioEditorFrameGlobalApi = studioEditorFrameAccessorsShellComposition.globalApi;
     Object.assign(globalThis, studioEditorFrameGlobalApi);
     const studioEditorFrameRuntimeOptionsApi = typeof SlideNextStudioEditorFrameRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorFrameRuntimeOptions

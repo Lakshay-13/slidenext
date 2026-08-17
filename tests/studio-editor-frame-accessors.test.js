@@ -114,7 +114,11 @@ test('editor loads and consumes the frame accessor module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-frame-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorFrameAccessors\(/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-frame-accessors-shell-composition\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorFrameAccessorsShellComposition\(/);
   assert.match(fileContent, /studioEditorFrameAccessors/);
   assert.match(fileContent, /studioEditorFrameGlobalApi/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorFrameGlobalApi\)/);
@@ -122,4 +126,12 @@ test('editor loads and consumes the frame accessor module', () => {
   assert.doesNotMatch(fileContent, /function getStudioFrame\(\)/);
   assert.doesNotMatch(fileContent, /function getIframeDoc\(\)/);
   assert.doesNotMatch(fileContent, /function getEditorDomOptions\(options = \{\}\)/);
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorFrameAccessorsApi\s*\.\s*createStudioEditorFrameAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorFrameAccessorsApi\s*\.\s*createStudioEditorFrameGlobalApi\(/
+  );
 });
