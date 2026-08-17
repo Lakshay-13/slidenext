@@ -96,10 +96,14 @@ test('index routes layer-order state construction through the shell runtime', ()
   );
   assert.match(
     fileContent,
-    /studioEditorLayerOrderStateAccessorsApi\s*\.\s*createStudioEditorLayerOrderStateAccessors\(/
+    /<script src="\/shared\/studio-editor-layer-order-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellRuntime/
+    /studioEditorLayerOrderStateShellCompositionApi\s*\.\s*createStudioEditorLayerOrderStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellComposition/
   );
 });

@@ -71,11 +71,13 @@ test('index wires layer order through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-layer-order-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorLayerOrderStateAccessorsApi/);
-  assert.match(fileContent, /createStudioEditorLayerOrderStateAccessors/);
   assert.match(
     fileContent,
-    /studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellRuntime/
+    /studioEditorLayerOrderStateShellCompositionApi\s*\.\s*createStudioEditorLayerOrderStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellComposition/
   );
   assert.match(
     fileContent,
