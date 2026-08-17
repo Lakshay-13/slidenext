@@ -1844,6 +1844,7 @@
   <script src="/shared/studio-editor-freeform-position-adapter.js"></script>
   <script src="/shared/studio-editor-positioned-layout-item-adapter.js"></script>
   <script src="/shared/studio-editor-closest-positioned-ancestor-adapter.js"></script>
+  <script src="/shared/studio-editor-geometry-composition.js"></script>
   <script src="/shared/studio-editor-active-slide-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-id-adapter.js"></script>
   <script src="/shared/studio-editor-active-slide-accessors.js"></script>
@@ -4925,24 +4926,34 @@
       ? studioEditorGridSnapShellComposition.controller
       : null;
 
-    const studioEditorFreeformPositionAdapter = typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'
-      && SlideNextStudioEditorFreeformPositionAdapter
-      && typeof SlideNextStudioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned === 'function'
-      ? SlideNextStudioEditorFreeformPositionAdapter
+    const studioEditorGeometryCompositionApi = typeof SlideNextStudioEditorGeometryComposition !== 'undefined'
+      ? SlideNextStudioEditorGeometryComposition
       : null;
-
-    const studioEditorFreeformPositionReader = studioEditorFreeformPositionAdapter
-      && typeof studioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
-      ? (element, options) => studioEditorFreeformPositionAdapter.isStudioEditorFreeformPositioned(
-          element,
-          {
-            transformApi: SlideNextStudioEditorTransform,
-            positionOptions: options
-          }
-        )
+    const studioEditorGeometryComposition = studioEditorGeometryCompositionApi
+      && typeof studioEditorGeometryCompositionApi.createStudioEditorGeometryComposition === 'function'
+      ? studioEditorGeometryCompositionApi.createStudioEditorGeometryComposition({
+          freeformPositionAdapterApi: typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'
+            ? SlideNextStudioEditorFreeformPositionAdapter
+            : null,
+          transformSelectionStateAdapterApi: typeof SlideNextStudioEditorTransformSelectionStateAdapter !== 'undefined'
+            ? SlideNextStudioEditorTransformSelectionStateAdapter
+            : null,
+          positionedLayoutItemsAdapterApi: typeof SlideNextStudioEditorPositionedLayoutItemsAdapter !== 'undefined'
+            ? SlideNextStudioEditorPositionedLayoutItemsAdapter
+            : null,
+          closestPositionedAncestorAdapterApi: typeof SlideNextStudioEditorClosestPositionedAncestorAdapter !== 'undefined'
+            ? SlideNextStudioEditorClosestPositionedAncestorAdapter
+            : null,
+          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+            ? SlideNextStudioEditorTransform
+            : null,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null
+        })
+      : null;
+    const studioEditorFreeformPositionReader = studioEditorGeometryComposition
+      ? studioEditorGeometryComposition.freeformPositionReader
       : null;
 
     function isElementFreeformPositioned(element, options) {
@@ -4951,46 +4962,12 @@
         : false;
     }
 
-    const studioEditorTransformSelectionStateAdapter = typeof SlideNextStudioEditorTransformSelectionStateAdapter !== 'undefined'
-      && SlideNextStudioEditorTransformSelectionStateAdapter
-      && typeof SlideNextStudioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState === 'function'
-      ? SlideNextStudioEditorTransformSelectionStateAdapter
+    const studioEditorTransformSelectionStateBuilder = studioEditorGeometryComposition
+      ? studioEditorGeometryComposition.transformSelectionStateBuilder
       : null;
 
-    const studioEditorTransformSelectionStateBuilder = studioEditorTransformSelectionStateAdapter
-      && typeof studioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.buildStudioTransformSelectionState === 'function'
-      ? (elements, options) => studioEditorTransformSelectionStateAdapter.buildStudioEditorTransformSelectionState(
-          elements,
-          {
-            transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
-              ? SlideNextStudioEditorTransform
-              : null,
-            selectionOptions: options
-          }
-        )
-      : null;
-
-    const studioEditorPositionedLayoutItemsAdapter = typeof SlideNextStudioEditorPositionedLayoutItemsAdapter !== 'undefined'
-      && SlideNextStudioEditorPositionedLayoutItemsAdapter
-      && typeof SlideNextStudioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems === 'function'
-      ? SlideNextStudioEditorPositionedLayoutItemsAdapter
-      : null;
-
-    const studioEditorPositionedLayoutItemsBuilder = studioEditorPositionedLayoutItemsAdapter
-      && typeof studioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.buildStudioPositionedLayoutItems === 'function'
-      ? (elements, options) => studioEditorPositionedLayoutItemsAdapter.buildStudioEditorPositionedLayoutItems(
-          elements,
-          {
-            transformApi: SlideNextStudioEditorTransform,
-            layoutOptions: options
-          }
-        )
+    const studioEditorPositionedLayoutItemsBuilder = studioEditorGeometryComposition
+      ? studioEditorGeometryComposition.positionedLayoutItemsBuilder
       : null;
 
     function buildEditorPositionedLayoutItems(elements, options) {
@@ -4999,21 +4976,8 @@
         : [];
     }
 
-    const studioEditorClosestPositionedAncestorAdapter = typeof SlideNextStudioEditorClosestPositionedAncestorAdapter !== 'undefined'
-      && SlideNextStudioEditorClosestPositionedAncestorAdapter
-      && typeof SlideNextStudioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor === 'function'
-      ? SlideNextStudioEditorClosestPositionedAncestorAdapter
-      : null;
-
-    const studioEditorClosestPositionedAncestorResolver = studioEditorClosestPositionedAncestorAdapter
-      && typeof studioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioClosestPositionedAncestor === 'function'
-      ? (element) => studioEditorClosestPositionedAncestorAdapter.getStudioEditorClosestPositionedAncestor(
-          element,
-          { domApi: SlideNextStudioEditorDom }
-        )
+    const studioEditorClosestPositionedAncestorResolver = studioEditorGeometryComposition
+      ? studioEditorGeometryComposition.closestPositionedAncestorResolver
       : null;
 
     function getEditorClosestPositionedAncestor(element) {

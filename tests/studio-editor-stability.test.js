@@ -1258,10 +1258,9 @@ test('getPointerOnSlide fails closed when the shared transform module is unavail
 test('editor composes freeform-position reads through the shared transform module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /studio-editor-geometry-composition\.js/);
+  assert.match(source, /const studioEditorGeometryComposition =/);
   assert.match(source, /const studioEditorFreeformPositionReader =/);
-  assert.match(source, /const studioEditorFreeformPositionAdapter =/);
-  assert.match(source, /isStudioFreeformPositioned/);
-  assert.match(source, /typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorFreeformPositionReader === 'function'/);
   assert.doesNotMatch(source, /isElementFreeformPositioned\.reader/);
 });
@@ -1270,13 +1269,14 @@ test('isElementFreeformPositioned delegates the element and options to the share
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const freeformReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorFreeformPositionAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorTransformSelectionStateBuilder ='
   );
   const element = { id: 'element-1' };
   const options = { view: { id: 'view-1' } };
   const calls = [];
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorFreeformPositionAdapter: require('../shared/studio-editor-freeform-position-adapter.js'),
     SlideNextStudioEditorTransform: {
       isStudioFreeformPositioned(elementValue, optionsValue) {
@@ -1299,10 +1299,11 @@ test('isElementFreeformPositioned fails closed when the shared transform module 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const freeformReaderSource = extractFunctionSource(
     fileContent,
-    'const studioEditorFreeformPositionAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorTransformSelectionStateBuilder ='
   );
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorFreeformPositionAdapter: require('../shared/studio-editor-freeform-position-adapter.js'),
     SlideNextStudioEditorTransform: null
   };
@@ -1317,10 +1318,8 @@ test('editor composes transform selection-state building through the shared tran
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorTransformSelectionStateBuilder =/);
-  assert.match(source, /const studioEditorTransformSelectionStateAdapter =/);
-  assert.match(source, /buildStudioEditorTransformSelectionState/);
-  assert.match(source, /buildStudioTransformSelectionState/);
-  assert.match(source, /typeof SlideNextStudioEditorTransformSelectionStateAdapter !== 'undefined'/);
+  assert.match(source, /const studioEditorGeometryComposition =/);
+  assert.match(source, /transformSelectionStateAdapterApi/);
   assert.doesNotMatch(source, /getTransformSelectionState\.builder/);
 });
 
@@ -1328,14 +1327,15 @@ test('transform selection-state building delegates elements and options to the s
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectionStateSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformSelectionStateAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorPositionedLayoutItemsBuilder ='
   );
   const elements = [{ id: 'element-1' }];
   const options = { isLocked: () => false };
   const calls = [];
   const state = { canTransform: true, selection: elements };
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorTransformSelectionStateAdapter: require('../shared/studio-editor-transform-selection-state-adapter.js'),
     SlideNextStudioEditorTransform: {
       buildStudioTransformSelectionState(elementsValue, optionsValue) {
@@ -1359,10 +1359,13 @@ test('transform selection-state building fails closed when the shared transform 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const selectionStateSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformSelectionStateAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorPositionedLayoutItemsBuilder ='
   );
-  const context = { SlideNextStudioEditorTransform: null };
+  const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
+    SlideNextStudioEditorTransform: null
+  };
   context.SlideNextStudioEditorTransformSelectionStateAdapter = require('../shared/studio-editor-transform-selection-state-adapter.js');
 
   vm.createContext(context);
@@ -1375,10 +1378,8 @@ test('editor composes positioned-layout-items building through the shared transf
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorPositionedLayoutItemsBuilder =/);
-  assert.match(source, /const studioEditorPositionedLayoutItemsAdapter =/);
-  assert.match(source, /buildStudioEditorPositionedLayoutItems/);
-  assert.match(source, /buildStudioPositionedLayoutItems/);
-  assert.match(source, /typeof SlideNextStudioEditorPositionedLayoutItemsAdapter !== 'undefined'/);
+  assert.match(source, /const studioEditorGeometryComposition =/);
+  assert.match(source, /positionedLayoutItemsAdapterApi/);
   assert.doesNotMatch(source, /buildEditorPositionedLayoutItems\.builder/);
 });
 
@@ -1386,14 +1387,15 @@ test('positioned-layout-items building delegates elements and options to the sha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemsAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    function buildEditorPositionedLayoutItems'
   );
   const elements = [{ id: 'element-1' }, { id: 'element-2' }];
   const options = { slideMetrics: { scaleX: 2 } };
   const calls = [];
   const layoutItems = [{ element: elements[0] }, { element: elements[1] }];
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorPositionedLayoutItemsAdapter: require('../shared/studio-editor-positioned-layout-items-adapter.js'),
     SlideNextStudioEditorTransform: {
       buildStudioPositionedLayoutItems(elementsValue, optionsValue) {
@@ -1417,10 +1419,11 @@ test('positioned-layout-items building fails closed when the shared transform mo
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const positionedItemsSource = extractFunctionSource(
     fileContent,
-    'const studioEditorPositionedLayoutItemsAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    function buildEditorPositionedLayoutItems'
   );
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorTransform: null,
     SlideNextStudioEditorPositionedLayoutItemsAdapter: require('../shared/studio-editor-positioned-layout-items-adapter.js')
   };
@@ -2012,9 +2015,8 @@ test('editor composes positioned-ancestor lookup through the shared DOM module',
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorClosestPositionedAncestorResolver =/);
-  assert.match(source, /const studioEditorClosestPositionedAncestorAdapter =/);
-  assert.match(source, /getStudioClosestPositionedAncestor/);
-  assert.match(source, /typeof SlideNextStudioEditorClosestPositionedAncestorAdapter !== 'undefined'/);
+  assert.match(source, /const studioEditorGeometryComposition =/);
+  assert.match(source, /closestPositionedAncestorAdapterApi/);
   assert.match(source, /typeof studioEditorClosestPositionedAncestorResolver === 'function'/);
   assert.doesNotMatch(source, /getEditorClosestPositionedAncestor\.resolver/);
 });
@@ -2023,13 +2025,14 @@ test('getEditorClosestPositionedAncestor delegates the element to the shared DOM
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const ancestorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClosestPositionedAncestorAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorActiveSlideAdapter ='
   );
   const element = { id: 'element-1' };
   const ancestor = { id: 'parent-1' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorClosestPositionedAncestorAdapter: require('../shared/studio-editor-closest-positioned-ancestor-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioClosestPositionedAncestor(value) {
@@ -2050,10 +2053,11 @@ test('getEditorClosestPositionedAncestor fails closed when the shared DOM module
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const ancestorSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClosestPositionedAncestorAdapter =',
-    'const studioEditorTransformRuntime ='
+    'const studioEditorGeometryCompositionApi =',
+    '\n\n    const studioEditorActiveSlideAdapter ='
   );
   const context = {
+    SlideNextStudioEditorGeometryComposition: require('../shared/studio-editor-geometry-composition.js'),
     SlideNextStudioEditorClosestPositionedAncestorAdapter: require('../shared/studio-editor-closest-positioned-ancestor-adapter.js'),
     SlideNextStudioEditorDom: null
   };
