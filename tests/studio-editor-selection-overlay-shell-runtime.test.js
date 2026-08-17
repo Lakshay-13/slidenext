@@ -86,10 +86,14 @@ test('index routes selection overlay synchronization through the shell runtime',
   );
   assert.match(
     fileContent,
-    /studioEditorSelectionOverlayAccessorsApi\.createStudioEditorSelectionOverlayAccessors\(/
+    /<script src="\/shared\/studio-editor-selection-overlay-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayAccessors/
+    /studioEditorSelectionOverlayCompositionApi[\s\S]*createStudioEditorSelectionOverlayComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayComposition/
   );
 });

@@ -1867,6 +1867,7 @@
   <script src="/shared/studio-editor-overlay-accessors.js"></script>
   <script src="/shared/studio-editor-selection-overlay-shell-runtime.js"></script>
   <script src="/shared/studio-editor-selection-overlay-accessors.js"></script>
+  <script src="/shared/studio-editor-selection-overlay-composition.js"></script>
   <script src="/shared/studio-history.js"></script>
   <script src="/shared/studio-editor-history-options.js"></script>
   <script src="/shared/studio-editor-history-state.js"></script>
@@ -10412,14 +10413,19 @@
         : null;
     }
 
-    const studioEditorSelectionOverlayAccessorsApi =
-      typeof SlideNextStudioEditorSelectionOverlayAccessors !== 'undefined'
-      ? SlideNextStudioEditorSelectionOverlayAccessors
-      : null;
-    const studioEditorSelectionOverlayAccessors = studioEditorSelectionOverlayAccessorsApi
-      && typeof studioEditorSelectionOverlayAccessorsApi
-        .createStudioEditorSelectionOverlayAccessors === 'function'
-      ? studioEditorSelectionOverlayAccessorsApi.createStudioEditorSelectionOverlayAccessors({
+    const studioEditorSelectionOverlayCompositionApi =
+      typeof SlideNextStudioEditorSelectionOverlayComposition !== 'undefined'
+        ? SlideNextStudioEditorSelectionOverlayComposition
+        : null;
+    const studioEditorSelectionOverlayComposition =
+      studioEditorSelectionOverlayCompositionApi
+      && typeof studioEditorSelectionOverlayCompositionApi
+        .createStudioEditorSelectionOverlayComposition === 'function'
+      ? studioEditorSelectionOverlayCompositionApi
+        .createStudioEditorSelectionOverlayComposition({
+          accessorsApi: typeof SlideNextStudioEditorSelectionOverlayAccessors !== 'undefined'
+            ? SlideNextStudioEditorSelectionOverlayAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorSelectionOverlayShellRuntime !== 'undefined'
             ? SlideNextStudioEditorSelectionOverlayShellRuntime
             : null,
@@ -10440,9 +10446,9 @@
           hideDragHud: () => hideDragHud()
         })
       : null;
-    var studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayAccessors
-      && typeof studioEditorSelectionOverlayAccessors.sync === 'function'
-      ? studioEditorSelectionOverlayAccessors.sync
+    var studioEditorSelectionOverlaySynchronizer = studioEditorSelectionOverlayComposition
+      && typeof studioEditorSelectionOverlayComposition.sync === 'function'
+      ? studioEditorSelectionOverlayComposition.sync
       : null;
 
     function syncSelectionOverlay() {
