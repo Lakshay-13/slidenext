@@ -153,6 +153,14 @@ test('index wires layout editing through the runtime module', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-layout-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorLayoutShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorLayoutAccessorsApi\.createStudioEditorLayoutAccessors\(/
   );
   assert.match(fileContent, /function convertSelectedElementsToFreeform\(\)/);

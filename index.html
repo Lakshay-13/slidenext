@@ -1557,6 +1557,7 @@
   <script src="/shared/studio-editor-layout-runtime.js"></script>
   <script src="/shared/studio-editor-layout-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layout-accessors.js"></script>
+  <script src="/shared/studio-editor-layout-shell-composition.js"></script>
   <script src="/shared/studio-editor-ruler.js"></script>
   <script src="/shared/studio-editor-canvas.js"></script>
   <script src="/shared/studio-editor-canvas-shell-runtime.js"></script>
@@ -3783,13 +3784,17 @@
     const studioEditorSlideRoutingController = studioEditorSlideRoutingRuntime
       ? studioEditorSlideRoutingRuntime.slideRoutingController
       : null;
-    const studioEditorLayoutAccessorsApi =
-      typeof SlideNextStudioEditorLayoutAccessors !== 'undefined'
-      ? SlideNextStudioEditorLayoutAccessors
+    const studioEditorLayoutShellCompositionApi =
+      typeof SlideNextStudioEditorLayoutShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLayoutShellComposition
       : null;
-    const studioEditorLayoutAccessors = studioEditorLayoutAccessorsApi
-      && typeof studioEditorLayoutAccessorsApi.createStudioEditorLayoutAccessors === 'function'
-      ? studioEditorLayoutAccessorsApi.createStudioEditorLayoutAccessors({
+    const studioEditorLayoutShellComposition = studioEditorLayoutShellCompositionApi
+      && typeof studioEditorLayoutShellCompositionApi
+        .createStudioEditorLayoutShellComposition === 'function'
+      ? studioEditorLayoutShellCompositionApi.createStudioEditorLayoutShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorLayoutAccessors !== 'undefined'
+            ? SlideNextStudioEditorLayoutAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorLayoutShellRuntime !== 'undefined'
             ? SlideNextStudioEditorLayoutShellRuntime
             : null,
@@ -3926,9 +3931,10 @@
           prepareGroup: (...args) => makeElementsHoverable(...args)
           }
         })
-      : null;
+      : { accessors: null, runtime: null };
+    const studioEditorLayoutAccessors = studioEditorLayoutShellComposition.accessors;
     const studioEditorLayoutRuntime = studioEditorLayoutAccessors
-      ? studioEditorLayoutAccessors.runtime
+      ? studioEditorLayoutShellComposition.runtime
       : null;
     const studioEditorNudgeController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.nudgeController
