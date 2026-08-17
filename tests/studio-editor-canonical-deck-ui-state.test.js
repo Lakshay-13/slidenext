@@ -2020,6 +2020,7 @@ test('resolveEditorCanonicalDeckViewState delegates resolver orchestration to th
   let delegatedArgs = null;
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       resolveStudioCanonicalDeckViewState(doc, options) {
         delegatedArgs = { doc, options };
@@ -2168,7 +2169,7 @@ test('createEditorCanonicalDeckResolverWithBuilder reuses the shared canonical r
   ]);
 });
 
-test('resolveEditorCanonicalDeckViewState reuses the local deck view state options helper when available', () => {
+test('resolveEditorCanonicalDeckViewState fails closed instead of using a direct deck view fallback', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const resolveEditorCanonicalDeckViewStateSource = extractFunctionSource(
     fileContent,
@@ -2216,11 +2217,10 @@ test('resolveEditorCanonicalDeckViewState reuses the local deck view state optio
   });
 
   assert.equal(result.liveActiveSlideId, '');
-  assert.equal(result.resolvedCanonicalDeck, canonicalDeck);
+  assert.equal(result.resolvedCanonicalDeck, null);
   assert.deepEqual(calls, [
     ['createEditorCanonicalDeckViewStateOptions', true],
-    ['resolveLiveActiveSlideId', iframeDoc],
-    ['buildCanonicalDeck', iframeDoc]
+    ['resolveLiveActiveSlideId', iframeDoc]
   ]);
 });
 

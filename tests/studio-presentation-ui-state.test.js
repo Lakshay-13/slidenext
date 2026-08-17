@@ -1147,6 +1147,7 @@ test('buildEditorPreviewHtml reuses the resolved live canonical deck when previe
   };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
