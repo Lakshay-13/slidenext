@@ -1417,6 +1417,7 @@
   <script src="/shared/studio-editor-element-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-element-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-element-insertion-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-element-insertion-shell-composition.js"></script>
   <script src="/shared/studio-editor-selection-bounds.js"></script>
   <script src="/shared/studio-editor-overlay-state.js"></script>
   <script src="/shared/studio-editor-clipboard.js"></script>
@@ -4535,31 +4536,17 @@
     const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
       ? studioEditorClipboardSelectionRuntime.selectionController
       : null;
-    const studioEditorElementInsertionRuntimeAccessorsApi = typeof SlideNextStudioEditorElementInsertionRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorElementInsertionRuntimeAccessors
+    const studioEditorElementInsertionShellCompositionApi =
+      typeof SlideNextStudioEditorElementInsertionShellComposition !== 'undefined'
+      ? SlideNextStudioEditorElementInsertionShellComposition
       : null;
-    const studioEditorElementInsertionRuntimeAccessors = studioEditorElementInsertionRuntimeAccessorsApi
-      && typeof studioEditorElementInsertionRuntimeAccessorsApi.createStudioEditorElementInsertionRuntimeAccessors === 'function'
-      ? studioEditorElementInsertionRuntimeAccessorsApi.createStudioEditorElementInsertionRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorElementInsertionShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorElementInsertionShellRuntime
-            : null,
-          insertionRuntimeApi: typeof SlideNextStudioEditorElementInsertionRuntime !== 'undefined'
-            ? SlideNextStudioEditorElementInsertionRuntime
-            : null,
+    const studioEditorElementInsertionShellComposition =
+      studioEditorElementInsertionShellCompositionApi
+      && typeof studioEditorElementInsertionShellCompositionApi
+        .createStudioEditorElementInsertionShellComposition === 'function'
+      ? studioEditorElementInsertionShellCompositionApi
+        .createStudioEditorElementInsertionShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorElementInsertionController !== 'undefined'
-              ? SlideNextStudioEditorElementInsertionController
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-              ? SlideNextStudioEditorCanonicalInsertion
-              : null,
-            deckImportApi: typeof SlideNextDeckImport !== 'undefined'
-              ? SlideNextDeckImport
-              : null,
             getIframeDoc: (...args) => getIframeDoc(...args),
             getActiveSlide: (...args) => getActiveSlide(...args),
             getEditorSlideId: (...args) => getEditorSlideId(...args),
@@ -4581,8 +4568,11 @@
           }
         })
       : null;
-    const studioEditorElementInsertionRuntime = studioEditorElementInsertionRuntimeAccessors
-      ? studioEditorElementInsertionRuntimeAccessors.runtime
+    const studioEditorElementInsertionRuntimeAccessors = studioEditorElementInsertionShellComposition
+      ? studioEditorElementInsertionShellComposition.accessors
+      : null;
+    const studioEditorElementInsertionRuntime = studioEditorElementInsertionShellComposition
+      ? studioEditorElementInsertionShellComposition.runtime
       : null;
     const studioEditorElementInsertionController = studioEditorElementInsertionRuntime
       ? studioEditorElementInsertionRuntime.elementInsertionController

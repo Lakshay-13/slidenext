@@ -111,7 +111,11 @@ test('index wires element insertion through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorElementInsertionRuntimeAccessorsApi\s*\.\s*createStudioEditorElementInsertionRuntimeAccessors\(/
+    /studioEditorElementInsertionShellCompositionApi\s*\.\s*createStudioEditorElementInsertionShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-element-insertion-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,
