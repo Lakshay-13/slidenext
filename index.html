@@ -5157,18 +5157,6 @@
       && studioEditorSlideEditableElementsAccessors
       && typeof studioEditorSlideEditableElementsAccessors.getSlideEditableElements === 'function'
       ? (slide, options) => studioEditorSlideEditableElementsAccessors.getSlideEditableElements(slide, options)
-      : studioEditorSlideEditableElementsAdapter
-      && typeof studioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioSlideEditableElements === 'function'
-      ? (slide, options) => studioEditorSlideEditableElementsAdapter.getStudioEditorSlideEditableElements(
-          slide,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlideLayerOrderAdapter = typeof SlideNextStudioEditorSlideLayerOrderAdapter !== 'undefined'

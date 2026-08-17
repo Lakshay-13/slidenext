@@ -19,6 +19,7 @@ const overlayAccessors = require('../shared/studio-editor-overlay-accessors.js')
 const activeSlideAccessors = require('../shared/studio-editor-active-slide-accessors.js');
 const slideAccessors = require('../shared/studio-editor-slide-accessors.js');
 const elementIdentityAccessors = require('../shared/studio-editor-element-identity-accessors.js');
+const slideEditableElementsAccessors = require('../shared/studio-editor-slide-editable-elements-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
@@ -3057,6 +3058,7 @@ test('editor composes slide editable-element collection through the shared adapt
   assert.match(source, /SlideNextStudioEditorSlideEditableElementsAdapter/);
   assert.match(source, /const studioEditorSlideEditableElementsReader =/);
   assert.match(source, /typeof slideEditableElementsReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideEditableElementsAdapter\.getStudioEditorSlideEditableElements\(/);
   assert.doesNotMatch(getSlideEditableElementsSource, /SlideNextStudioEditorDom\.getStudioSlideEditableElements/);
 });
 
@@ -3076,6 +3078,7 @@ test('getSlideEditableElements delegates through the shared adapter', () => {
   const options = { selectableSelector: '[data-editor-id]' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideEditableElementsAccessors: slideEditableElementsAccessors,
     SlideNextStudioEditorSlideEditableElementsAdapter: require('../shared/studio-editor-slide-editable-elements-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideEditableElements(slideValue, optionsValue) {
@@ -3110,6 +3113,7 @@ test('getSlideEditableElements fails closed when the shared adapter is unavailab
     '\n\n    function getNormalizedSlideLayerOrder'
   );
   const context = {
+    SlideNextStudioEditorSlideEditableElementsAccessors: slideEditableElementsAccessors,
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {
       return {};
