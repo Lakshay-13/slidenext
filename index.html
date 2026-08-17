@@ -7592,16 +7592,6 @@
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null
         });
       }
-      const resolveStudioLiveActiveSlide = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.resolveStudioLiveActiveSlide === 'function'
-        ? SlideNextStudioDeckView.resolveStudioLiveActiveSlide
-        : null;
-      if (resolveStudioLiveActiveSlide) {
-        return resolveStudioLiveActiveSlide(doc);
-      }
       return null;
     }
 

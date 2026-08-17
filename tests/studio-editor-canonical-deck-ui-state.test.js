@@ -11,6 +11,7 @@ const canonicalPersistenceAdapter = require('../shared/studio-editor-canonical-p
 const editorPersistence = require('../shared/studio-editor-persistence.js');
 const editorPersistenceState = require('../shared/studio-editor-persistence-state.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const deckView = require('../shared/studio-deck-view.js');
 const deckViewBuildOptions = require('../shared/studio-editor-deck-view-build-options.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
@@ -1813,6 +1814,7 @@ test('resolveEditorLiveActiveSlideId delegates to the shared deck view helper wh
   const iframeDoc = { label: 'iframe-doc' };
   let delegatedArgs = null;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       resolveStudioLiveActiveSlideId(doc, options) {
         delegatedArgs = { doc, options };
@@ -1854,6 +1856,7 @@ test('resolveEditorLiveActiveSlide delegates to the shared editor DOM active sli
   };
   const activeSlide = { id: 'slide-active-el' };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       resolveStudioLiveActiveSlide(nextDoc) {
         assert.equal(nextDoc, iframeDoc);
