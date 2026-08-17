@@ -395,8 +395,9 @@
     const filename = typeof options.filename === 'string' && options.filename.trim()
       ? options.filename
       : 'slidenext-presentation.pptx';
+    let activeExportPromise = null;
 
-    return async function exportPptx() {
+    async function runExportPptx() {
       const actionState = resolveStudioExportReadyState(resolveReadyState);
       if (!actionState || !actionState.canUseDeckActions) return false;
 
@@ -468,6 +469,20 @@
           !resolveStudioExportReadyState(resolveReadyState).canUseDeckActions
         );
       }
+    }
+
+    return function exportPptx() {
+      if (activeExportPromise) return activeExportPromise;
+
+      const nextExportPromise = runExportPptx();
+      let guardedExportPromise;
+      guardedExportPromise = nextExportPromise.finally(() => {
+        if (activeExportPromise === guardedExportPromise) {
+          activeExportPromise = null;
+        }
+      });
+      activeExportPromise = guardedExportPromise;
+      return guardedExportPromise;
     };
   }
 

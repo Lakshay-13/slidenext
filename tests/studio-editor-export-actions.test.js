@@ -403,6 +403,37 @@ test('PPTX export forwards exporter failure details to the status callback', asy
   ]);
 });
 
+test('PPTX export reuses a pending request instead of starting a duplicate export', async () => {
+  let resolveExport;
+  let exportCalls = 0;
+  const exportPptx = exportActions.createStudioPptxExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pptxExport: {
+      exportStudioPptx() {
+        exportCalls += 1;
+        return new Promise((resolve) => {
+          resolveExport = () => resolve({ success: true });
+        });
+      }
+    }
+  });
+
+  const firstRequest = exportPptx();
+  const duplicateRequest = exportPptx();
+  assert.equal(firstRequest, duplicateRequest);
+  assert.equal(exportCalls, 1);
+
+  resolveExport();
+  assert.equal(await firstRequest, true);
+  assert.equal(await duplicateRequest, true);
+
+  const secondRequest = exportPptx();
+  assert.equal(exportCalls, 2);
+  resolveExport();
+  assert.equal(await secondRequest, true);
+});
+
 test('PPTX export derives warning state from warning details when the count is absent', async () => {
   const statuses = [];
   const exportPptx = exportActions.createStudioPptxExportAction({
