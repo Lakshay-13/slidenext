@@ -1912,7 +1912,8 @@
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
   <script src="/shared/studio-editor-deck-ready-shell-runtime.js"></script>
-    <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-deck-ready-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-deck-ready-shell-composition.js"></script>
     <script src="/shared/deck-html.js"></script>
     <script src="/shared/studio-deck-view.js"></script>
     <script src="/shared/studio-editor-insertion-toolbar-state.js"></script>
@@ -7366,46 +7367,47 @@
     const studioEditorThemeRuntimeAccessors = studioEditorThemeShellComposition.runtimeAccessors;
     const studioEditorThemeRuntime = studioEditorThemeShellComposition.runtime;
     const studioEditorThemeController = studioEditorThemeShellComposition.themeController;
-    const studioEditorDeckReadyRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorDeckReadyRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorDeckReadyRuntimeAccessors
+    const studioEditorDeckReadyShellCompositionApi =
+      typeof SlideNextStudioEditorDeckReadyShellComposition !== 'undefined'
+      ? SlideNextStudioEditorDeckReadyShellComposition
       : null;
-    const studioEditorDeckReadyRuntimeAccessors = studioEditorDeckReadyRuntimeAccessorsApi
-      && typeof studioEditorDeckReadyRuntimeAccessorsApi
-        .createStudioEditorDeckReadyRuntimeAccessors === 'function'
-      ? studioEditorDeckReadyRuntimeAccessorsApi
-        .createStudioEditorDeckReadyRuntimeAccessors({
+    const studioEditorDeckReadyShellComposition =
+      studioEditorDeckReadyShellCompositionApi
+      && typeof studioEditorDeckReadyShellCompositionApi
+        .createStudioEditorDeckReadyShellComposition === 'function'
+      ? studioEditorDeckReadyShellCompositionApi
+        .createStudioEditorDeckReadyShellComposition({
+          runtimeAccessorsApi: typeof SlideNextStudioEditorDeckReadyRuntimeAccessors !== 'undefined'
+            ? SlideNextStudioEditorDeckReadyRuntimeAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorDeckReadyShellRuntime !== 'undefined'
             ? SlideNextStudioEditorDeckReadyShellRuntime
             : null,
           deckReadyRuntimeApi: typeof SlideNextStudioEditorDeckReadyRuntime !== 'undefined'
             ? SlideNextStudioEditorDeckReadyRuntime
             : null,
-          runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
-              ? SlideNextStudioEditorDeckReadyController
-              : null,
-            deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
-              ? SlideNextStudioDeckReady
-              : null,
-            getDocumentRef: () => document,
-            getDocument: getIframeDoc,
-            getPresentationUrl: getStudioCurrentPresentationUrl,
-            getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
-            resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
-              persistedDeckState
-            ),
-            getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
-            getSaveButtonState: getStudioSaveButtonState
-          }
+          controllerApi: typeof SlideNextStudioEditorDeckReadyController !== 'undefined'
+            ? SlideNextStudioEditorDeckReadyController
+            : null,
+          deckReadyApi: typeof SlideNextStudioDeckReady !== 'undefined'
+            ? SlideNextStudioDeckReady
+            : null,
+          getDocumentRef: () => document,
+          getDocument: getIframeDoc,
+          getPresentationUrl: getStudioCurrentPresentationUrl,
+          getPersistedDeckState: () => getCurrentEditorPersistedDeckState(),
+          resolvePersistedDeckStateWithContent: (persistedDeckState) => resolveEditorPersistedDeckStateWithContent(
+            persistedDeckState
+          ),
+          getStoredCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
+          getSaveButtonState: getStudioSaveButtonState
         })
-      : null;
-    const studioEditorDeckReadyRuntime = studioEditorDeckReadyRuntimeAccessors
-      ? studioEditorDeckReadyRuntimeAccessors.runtime
-      : null;
-    const studioEditorDeckReadyController = studioEditorDeckReadyRuntime
-      ? studioEditorDeckReadyRuntime.deckReadyController
-      : null;
+      : { runtimeAccessors: null, runtime: null, deckReadyController: null };
+    const studioEditorDeckReadyRuntimeAccessors =
+      studioEditorDeckReadyShellComposition.runtimeAccessors;
+    const studioEditorDeckReadyRuntime = studioEditorDeckReadyShellComposition.runtime;
+    const studioEditorDeckReadyController =
+      studioEditorDeckReadyShellComposition.deckReadyController;
     const studioEditorToolbarShellCompositionApi =
       typeof SlideNextStudioEditorToolbarShellComposition !== 'undefined'
       ? SlideNextStudioEditorToolbarShellComposition
