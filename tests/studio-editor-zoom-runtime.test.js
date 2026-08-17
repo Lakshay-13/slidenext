@@ -49,8 +49,9 @@ test('index wires zoom behavior through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorZoomRuntimeOptionsApi\.createStudioEditorZoomRuntimeOptions\(/
+    /<script src="\/shared\/studio-editor-zoom-shell-composition\.js"><\/script>/
   );
+  assert.match(fileContent, /createStudioEditorZoomShellComposition\(/);
   assert.match(
     fileContent,
     /<script src="\/shared\/studio-editor-zoom-runtime\.js"><\/script>/
@@ -65,11 +66,11 @@ test('index wires zoom behavior through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /createStudioEditorZoomRuntimeAccessors\(/
+    /studioEditorZoomRuntimeAccessors = studioEditorZoomShellComposition\.runtimeAccessors/
   );
   assert.match(
     fileContent,
-    /studioEditorZoomRuntime = studioEditorZoomRuntimeAccessors/
+    /studioEditorZoomRuntime = studioEditorZoomShellComposition\.runtime/
   );
   assert.doesNotMatch(
     fileContent,
@@ -78,5 +79,13 @@ test('index wires zoom behavior through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorZoomController\.createStudioEditorZoomController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorZoomRuntimeOptionsApi\.createStudioEditorZoomRuntimeOptions\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorZoomRuntimeAccessorsApi\s*\.\s*createStudioEditorZoomRuntimeAccessors\(/
   );
 });

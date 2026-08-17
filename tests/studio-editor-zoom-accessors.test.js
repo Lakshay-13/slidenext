@@ -149,16 +149,31 @@ test('editor loads zoom accessors after the zoom runtime', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-zoom-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorZoomAccessors\(/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-zoom-shell-composition\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorZoomShellComposition\(/);
   ['zoomOutBtn', 'zoomSelect', 'zoomInBtn'].forEach((id) => {
     const line = fileContent.split('\n').find((candidate) => candidate.includes(`id="${id}"`));
     assert.ok(line, `Missing zoom control: ${id}`);
     assert.doesNotMatch(line, /onclick=|onchange=/);
   });
-  assert.match(fileContent, /bindStudioEditorZoomControls\(\{ documentRef: document \}\)/);
+  assert.match(
+    fileContent,
+    /studioEditorZoomShellCompositionApi\s*\.\s*createStudioEditorZoomShellComposition\(/
+  );
+  assert.match(fileContent, /documentRef: document/);
   assert.match(fileContent, /studioEditorZoomAccessors/);
-  assert.match(fileContent, /createStudioEditorZoomGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorZoomGlobalApi\)/);
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorZoomAccessors\.createStudioEditorZoomAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorZoomAccessors\.createStudioEditorZoomGlobalApi\(/
+  );
   assert.doesNotMatch(fileContent, /function syncCanvasRulers\(\)/);
   assert.doesNotMatch(fileContent, /function applyZoom\(scaleVal\)/);
   assert.doesNotMatch(fileContent, /function zoomIn\(\)/);
