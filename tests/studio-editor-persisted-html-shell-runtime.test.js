@@ -63,8 +63,15 @@ test('index routes persisted html installation through the shell runtime', () =>
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-html-runtime-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorPersistedHtmlShellRuntimeApi/);
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-html-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorPersistedHtmlShellComposition\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /studioEditorPersistedHtmlRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedHtmlRuntimeAccessors\(/
   );

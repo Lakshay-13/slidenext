@@ -1652,6 +1652,7 @@
   <script src="/shared/studio-editor-persisted-html-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-html-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-persisted-html-shell-composition.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-action.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persisted-deck-state-runtime-accessors.js"></script>
@@ -6381,21 +6382,16 @@
       && studioEditorCanonicalPersistenceShellRuntime.isAvailable === true
       ? studioEditorCanonicalPersistenceShellRuntime.canonicalPersistenceAdapter
       : null;
-    const studioEditorPersistedHtmlShellRuntimeApi =
-      typeof SlideNextStudioEditorPersistedHtmlShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorPersistedHtmlShellRuntime
+    const studioEditorPersistedHtmlShellCompositionApi =
+      typeof SlideNextStudioEditorPersistedHtmlShellComposition !== 'undefined'
+      ? SlideNextStudioEditorPersistedHtmlShellComposition
       : null;
-    const studioEditorPersistedHtmlRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorPersistedHtmlRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorPersistedHtmlRuntimeAccessors
-      : null;
-    const studioEditorPersistedHtmlRuntimeAccessors =
-      studioEditorPersistedHtmlRuntimeAccessorsApi
-      && typeof studioEditorPersistedHtmlRuntimeAccessorsApi
-        .createStudioEditorPersistedHtmlRuntimeAccessors === 'function'
-      ? studioEditorPersistedHtmlRuntimeAccessorsApi
-        .createStudioEditorPersistedHtmlRuntimeAccessors({
-          runtimeApi: studioEditorPersistedHtmlShellRuntimeApi,
+    const studioEditorPersistedHtmlShellComposition =
+      studioEditorPersistedHtmlShellCompositionApi
+      && typeof studioEditorPersistedHtmlShellCompositionApi
+        .createStudioEditorPersistedHtmlShellComposition === 'function'
+      ? studioEditorPersistedHtmlShellCompositionApi
+        .createStudioEditorPersistedHtmlShellComposition({
           runtimeOptions: {
             actionApi: typeof SlideNextStudioEditorPersistedHtmlAction !== 'undefined'
               ? SlideNextStudioEditorPersistedHtmlAction
@@ -6410,8 +6406,11 @@
           }
         })
       : null;
+    const studioEditorPersistedHtmlRuntimeAccessors = studioEditorPersistedHtmlShellComposition
+      ? studioEditorPersistedHtmlShellComposition.accessors
+      : null;
     const studioEditorPersistedHtmlShellRuntime = studioEditorPersistedHtmlRuntimeAccessors
-      ? studioEditorPersistedHtmlRuntimeAccessors.runtime
+      ? studioEditorPersistedHtmlShellComposition.runtime
       : null;
     const studioEditorPersistedHtmlAction = studioEditorPersistedHtmlShellRuntime
       && studioEditorPersistedHtmlShellRuntime.isAvailable === true

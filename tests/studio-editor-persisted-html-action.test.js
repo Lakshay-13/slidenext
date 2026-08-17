@@ -92,6 +92,14 @@ test('index loads and installs the shared persisted html action', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-persisted-html-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorPersistedHtmlShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorPersistedHtmlRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedHtmlRuntimeAccessors\(/
   );
   assert.doesNotMatch(
