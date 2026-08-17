@@ -913,6 +913,7 @@ test('buildEditorPreviewHtml reuses the shared deck-view html builder when the p
     }
   };
 
+  context.SlideNextStudioEditorCanonicalViewState = canonicalViewState;
   context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({});
   vm.createContext(context);
   vm.runInContext(buildEditorPreviewHtmlSource, context);

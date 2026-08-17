@@ -7847,10 +7847,7 @@
           deckViewApi: typeof SlideNextStudioDeckView !== 'undefined' ? SlideNextStudioDeckView : null
         });
       }
-      const buildStudioDeckHtml = resolveStudioDeckViewMethod('buildStudioDeckHtml');
-      return buildStudioDeckHtml
-        ? buildStudioDeckHtml(doc, options)
-        : '';
+      return '';
     }
 
     function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {
