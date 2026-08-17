@@ -17,6 +17,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const overlayAccessors = require('../shared/studio-editor-overlay-accessors.js');
 const activeSlideAccessors = require('../shared/studio-editor-active-slide-accessors.js');
+const slideAccessors = require('../shared/studio-editor-slide-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
@@ -2294,6 +2295,7 @@ test('editor composes slide-ID assignment through the shared DOM module', () => 
   assert.match(source, /const studioEditorSlideIdAdapter =/);
   assert.match(source, /typeof SlideNextStudioEditorSlideIdAdapter !== 'undefined'/);
   assert.match(source, /typeof slideIdAssigner === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideIdAdapter\.assignStudioEditorSlideId\(/);
   const assignEditorSlideIdSource = extractFunctionSource(
     source,
     'function assignEditorSlideId(slide, options = {}) {',
@@ -2318,6 +2320,7 @@ test('assignEditorSlideId delegates the slide and DOM options to the shared DOM 
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideIdAdapter: require('../shared/studio-editor-slide-id-adapter.js'),
     SlideNextStudioEditorDom: {
       assignStudioSlideId(slideValue, optionsValue) {
@@ -2353,6 +2356,7 @@ test('assignEditorSlideId fails closed when the shared DOM module is unavailable
     '\n\n    function getEditorSlideId'
   );
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideIdAdapter: require('../shared/studio-editor-slide-id-adapter.js'),
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {
@@ -2372,6 +2376,7 @@ test('editor composes slide-ID reads through the shared DOM module', () => {
   assert.match(source, /const studioEditorSlideIdReader =/);
   assert.match(source, /const studioEditorSlideIdAdapter =/);
   assert.match(source, /typeof slideIdReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideIdAdapter\.getStudioEditorSlideId\(/);
   const getEditorSlideIdSource = extractFunctionSource(
     source,
     'function getEditorSlideId(slide, options = {}) {',
@@ -2396,6 +2401,7 @@ test('getEditorSlideId delegates the slide and DOM options to the shared DOM mod
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideIdAdapter: require('../shared/studio-editor-slide-id-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideId(slideValue, optionsValue) {
@@ -2431,6 +2437,7 @@ test('getEditorSlideId fails closed when the shared DOM module is unavailable', 
     '\n\n    function getSlides'
   );
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideIdAdapter: require('../shared/studio-editor-slide-id-adapter.js'),
     SlideNextStudioEditorDom: null,
     getEditorDomOptions() {

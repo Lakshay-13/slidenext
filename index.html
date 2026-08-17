@@ -5044,37 +5044,11 @@
     const studioEditorSlideIdAssigner = studioEditorSlideAccessors
       && typeof studioEditorSlideAccessors.assignSlideId === 'function'
       ? (slide, options) => studioEditorSlideAccessors.assignSlideId(slide, options)
-      : typeof studioEditorSlideIdAdapter !== 'undefined'
-      && studioEditorSlideIdAdapter
-      && typeof studioEditorSlideIdAdapter.assignStudioEditorSlideId === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.assignStudioSlideId === 'function'
-      ? (slide, options) => studioEditorSlideIdAdapter.assignStudioEditorSlideId(
-          slide,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlideIdReader = studioEditorSlideAccessors
       && typeof studioEditorSlideAccessors.getSlideId === 'function'
       ? (slide, options) => studioEditorSlideAccessors.getSlideId(slide, options)
-      : typeof studioEditorSlideIdAdapter !== 'undefined'
-      && studioEditorSlideIdAdapter
-      && typeof studioEditorSlideIdAdapter.getStudioEditorSlideId === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioSlideId === 'function'
-      ? (slide, options) => studioEditorSlideIdAdapter.getStudioEditorSlideId(
-          slide,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlidesReader = studioEditorSlideAccessors
