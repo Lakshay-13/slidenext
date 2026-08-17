@@ -1615,6 +1615,7 @@
   <script src="/shared/studio-editor-position-layout-rollback-adapter.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback.js"></script>
   <script src="/shared/studio-editor-slide-mutation-rollback-adapter.js"></script>
+  <script src="/shared/studio-editor-slide-mutation-rollback-composition.js"></script>
   <script src="/shared/studio-editor-layout-conversion-mutation.js"></script>
   <script src="/shared/studio-editor-layout-conversion-controller.js"></script>
   <script src="/shared/studio-editor-slide-mutation.js"></script>
@@ -8692,31 +8693,33 @@
         : false;
     }
 
+    const studioEditorSlideMutationRollbackComposition = typeof SlideNextStudioEditorSlideMutationRollbackComposition !== 'undefined'
+      && SlideNextStudioEditorSlideMutationRollbackComposition
+      && typeof SlideNextStudioEditorSlideMutationRollbackComposition.createStudioEditorSlideMutationRollbackComposition === 'function'
+      ? SlideNextStudioEditorSlideMutationRollbackComposition.createStudioEditorSlideMutationRollbackComposition({
+          rollbackAdapter: typeof SlideNextStudioEditorSlideMutationRollbackAdapter !== 'undefined'
+            ? SlideNextStudioEditorSlideMutationRollbackAdapter
+            : null,
+          rollbackApi: typeof SlideNextStudioEditorSlideMutationRollback !== 'undefined'
+            ? SlideNextStudioEditorSlideMutationRollback
+            : null,
+          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
+            ? SlideNextStudioEditorTransaction
+            : null,
+          getIframeDoc,
+          getSlideById,
+          getSlides,
+          getElementByEditorId,
+          makeElementsHoverable,
+          generateThumbnails
+        })
+      : null;
+
     function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {
-      const rollbackAdapter = typeof SlideNextStudioEditorSlideMutationRollbackAdapter !== 'undefined'
-        ? SlideNextStudioEditorSlideMutationRollbackAdapter
-        : null;
-      const rollbackMutation = rollbackAdapter
-        && typeof rollbackAdapter.rollbackStudioEditorSlideMutation === 'function'
-        ? rollbackAdapter.rollbackStudioEditorSlideMutation
-        : null;
-      if (!rollbackMutation) {
-        return false;
-      }
-      return rollbackMutation(transaction, sourceDoc, {
-        rollbackApi: typeof SlideNextStudioEditorSlideMutationRollback !== 'undefined'
-          ? SlideNextStudioEditorSlideMutationRollback
-          : null,
-        transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-          ? SlideNextStudioEditorTransaction
-          : null,
-        getIframeDoc: typeof getIframeDoc === 'function' ? getIframeDoc : null,
-        getSlideById: typeof getSlideById === 'function' ? getSlideById : null,
-        getSlides: typeof getSlides === 'function' ? getSlides : null,
-        getElementByEditorId: typeof getElementByEditorId === 'function' ? getElementByEditorId : null,
-        makeElementsHoverable: typeof makeElementsHoverable === 'function' ? makeElementsHoverable : null,
-        generateThumbnails: typeof generateThumbnails === 'function' ? generateThumbnails : null
-      });
+      return studioEditorSlideMutationRollbackComposition
+        && typeof studioEditorSlideMutationRollbackComposition.rollback === 'function'
+        ? studioEditorSlideMutationRollbackComposition.rollback(transaction, sourceDoc)
+        : false;
     }
 
     // Swap node indices in iframe and re-render

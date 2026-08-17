@@ -16,6 +16,7 @@ const slideReorderTransaction = require('../shared/studio-editor-slide-reorder-t
 const slideMutation = require('../shared/studio-editor-slide-mutation.js');
 const slideMutationRollback = require('../shared/studio-editor-slide-mutation-rollback.js');
 const slideMutationRollbackAdapter = require('../shared/studio-editor-slide-mutation-rollback-adapter.js');
+const slideMutationRollbackComposition = require('../shared/studio-editor-slide-mutation-rollback-composition.js');
 const committedSelectionRestoreAdapter = require('../shared/studio-editor-committed-selection-restore-adapter.js');
 const preservedSelectionRestoreAdapter = require('../shared/studio-editor-preserved-selection-restore-adapter.js');
 const deckView = require('../shared/studio-deck-view.js');
@@ -43,6 +44,20 @@ test('editor composes preserved selection restore through the shared selection A
   assert.match(source, /restoreStudioEditorPreservedSelectionAfterSlideMutation/);
   assert.match(source, /if \(!restoreSelection\) return false/);
   assert.doesNotMatch(source, /restoreSelectionAfterPreservedSlideMutation\.restorer/);
+});
+
+test('editor composes slide mutation rollback through the shared rollback boundary', () => {
+  const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const rollbackSource = extractFunctionSource(
+    source,
+    'function rollbackEditorSlideMutation(transaction, sourceDoc = getIframeDoc()) {',
+    '\n\n    // Swap node indices in iframe and re-render'
+  );
+
+  assert.match(source, /const studioEditorSlideMutationRollbackComposition =/);
+  assert.match(source, /createStudioEditorSlideMutationRollbackComposition/);
+  assert.match(rollbackSource, /studioEditorSlideMutationRollbackComposition\.rollback/);
+  assert.doesNotMatch(rollbackSource, /const rollbackAdapter =/);
 });
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -112,6 +127,18 @@ function loadRollbackEditorSlideMutation(fileContent, context) {
   context.SlideNextStudioEditorTransaction = studioTransaction;
   context.SlideNextStudioEditorSlideMutationRollback = slideMutationRollback;
   context.SlideNextStudioEditorSlideMutationRollbackAdapter = slideMutationRollbackAdapter;
+  context.studioEditorSlideMutationRollbackComposition = slideMutationRollbackComposition
+    .createStudioEditorSlideMutationRollbackComposition({
+      rollbackAdapter: context.SlideNextStudioEditorSlideMutationRollbackAdapter,
+      rollbackApi: context.SlideNextStudioEditorSlideMutationRollback,
+      transactionApi: context.SlideNextStudioEditorTransaction,
+      getIframeDoc: context.getIframeDoc,
+      getSlideById: context.getSlideById,
+      getSlides: context.getSlides,
+      getElementByEditorId: context.getElementByEditorId,
+      makeElementsHoverable: context.makeElementsHoverable,
+      generateThumbnails: context.generateThumbnails
+    });
   vm.runInContext(helperSource, context);
 }
 
