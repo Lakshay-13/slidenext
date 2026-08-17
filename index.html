@@ -7638,19 +7638,6 @@
           buildCanonicalDeck
         });
       }
-      const createStudioCanonicalDeckResolver = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-        && typeof SlideNextStudioDeckView.createStudioCanonicalDeckResolver === 'function'
-      )
-        ? SlideNextStudioDeckView.createStudioCanonicalDeckResolver
-        : null;
-      if (createStudioCanonicalDeckResolver) {
-        return createStudioCanonicalDeckResolver(doc, {
-          buildCanonicalDeck
-        });
-      }
-
       return () => null;
     }
 

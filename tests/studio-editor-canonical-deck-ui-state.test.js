@@ -2077,6 +2077,7 @@ test('createEditorCanonicalDeckResolverWithBuilder caches the first canonical de
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView,
     buildEditorCanonicalDeck(nextDoc) {
       calls.push(['buildEditorCanonicalDeck', nextDoc]);
@@ -2143,6 +2144,7 @@ test('createEditorCanonicalDeckResolverWithBuilder reuses the shared canonical r
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioCanonicalDeckResolver(nextDoc, options) {
         calls.push(['createStudioCanonicalDeckResolver', nextDoc, options.buildCanonicalDeck]);
