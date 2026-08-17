@@ -5897,6 +5897,7 @@ test('capturePersistedDeckPlaybackState delegates fallback active slide resoluti
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
@@ -6292,6 +6293,7 @@ test('capturePersistedDeckPlaybackState falls back to the current session slide 
   let canonicalBuildOptions = null;
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId

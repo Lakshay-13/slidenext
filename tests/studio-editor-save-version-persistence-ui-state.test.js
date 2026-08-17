@@ -13,6 +13,7 @@ const persistenceSuccessAction = require('../shared/studio-editor-persistence-su
 const versionPersistenceSuccessAction = require('../shared/studio-editor-version-persistence-success-action.js');
 const saveVersionCheckpointAction = require('../shared/studio-editor-save-version-checkpoint-action.js');
 const deckView = require('../shared/studio-deck-view.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -721,6 +722,7 @@ test('saveVersionCheckpoint reuses a provided canonical deck when fallback playb
   const fetchCalls = [];
   const context = {
     EDITOR_SLIDE_ID_ATTR: 'data-slide-id',
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId

@@ -1600,6 +1600,7 @@ test('resolveEditorFallbackActiveSlideId delegates to the shared deck view helpe
   };
   let delegatedArgs = null;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId(doc, nextCanonicalDeck, options) {
@@ -1658,6 +1659,7 @@ test('resolveEditorFallbackActiveSlideId forwards canonical override resolution 
   let delegatedArgs = null;
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextCanonicalDeck: {
       isCanonicalDeck(deck) {
         calls.push(['isCanonicalDeck', deck]);
@@ -1747,6 +1749,7 @@ test('resolveEditorFallbackActiveSlideId reuses the local deck view shared optio
     }
   };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       resolveStudioFallbackActiveSlideId(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };

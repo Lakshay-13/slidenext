@@ -20,6 +20,7 @@ const historyRedoAction = require('../shared/studio-editor-history-redo-action.j
 const historyRestore = require('../shared/studio-editor-history-restore.js');
 const historyRestoreAction = require('../shared/studio-editor-history-restore-action.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -727,6 +728,7 @@ test('createHistoryEntry captures a model-only history entry when the editor fra
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewSharedOptions: deckView.createStudioDeckViewSharedOptions,
       resolveStudioFallbackActiveSlideId: deckView.resolveStudioFallbackActiveSlideId
