@@ -3061,6 +3061,7 @@ test('createEditorCanonicalDeckViewStateOptions delegates callback normalization
     source: 'shared'
   };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewCanonicalStateOptions(options) {
         calls.push(options);
