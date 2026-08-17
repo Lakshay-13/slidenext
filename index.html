@@ -1576,6 +1576,7 @@
   <script src="/shared/studio-editor-grid-snap-runtime.js"></script>
   <script src="/shared/studio-editor-grid-snap-shell-runtime.js"></script>
   <script src="/shared/studio-editor-grid-snap-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-grid-snap-shell-composition.js"></script>
   <script src="/shared/studio-theme-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-view.js"></script>
   <script src="/shared/studio-editor-wallpaper-accessors.js"></script>
@@ -4890,35 +4891,30 @@
       ? studioEditorAssetInsertionShellComposition.controller
       : null;
     const GRID_SNAP_SIZE_PX = 20;
-    const studioEditorGridSnapRuntimeAccessorsApi = typeof SlideNextStudioEditorGridSnapRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorGridSnapRuntimeAccessors
+    const studioEditorGridSnapShellCompositionApi =
+      typeof SlideNextStudioEditorGridSnapShellComposition !== 'undefined'
+      ? SlideNextStudioEditorGridSnapShellComposition
       : null;
-    const studioEditorGridSnapRuntimeAccessors = studioEditorGridSnapRuntimeAccessorsApi
-      && typeof studioEditorGridSnapRuntimeAccessorsApi.createStudioEditorGridSnapRuntimeAccessors === 'function'
-      ? studioEditorGridSnapRuntimeAccessorsApi.createStudioEditorGridSnapRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorGridSnapShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorGridSnapShellRuntime
-            : null,
-          gridSnapRuntimeApi: typeof SlideNextStudioEditorGridSnapRuntime !== 'undefined'
-            ? SlideNextStudioEditorGridSnapRuntime
-            : null,
+    const studioEditorGridSnapShellComposition =
+      studioEditorGridSnapShellCompositionApi
+      && typeof studioEditorGridSnapShellCompositionApi
+        .createStudioEditorGridSnapShellComposition === 'function'
+      ? studioEditorGridSnapShellCompositionApi
+        .createStudioEditorGridSnapShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorGridSnapController !== 'undefined'
-              ? SlideNextStudioEditorGridSnapController
-              : null,
-            gridSnapView: typeof SlideNextStudioEditorGridSnapView !== 'undefined'
-              ? SlideNextStudioEditorGridSnapView
-              : null,
             documentRef: document,
             gridSizePx: GRID_SNAP_SIZE_PX
           }
         })
       : null;
-    const studioEditorGridSnapRuntime = studioEditorGridSnapRuntimeAccessors
-      ? studioEditorGridSnapRuntimeAccessors.runtime
+    const studioEditorGridSnapRuntimeAccessors = studioEditorGridSnapShellComposition
+      ? studioEditorGridSnapShellComposition.accessors
       : null;
-    const studioEditorGridSnapController = studioEditorGridSnapRuntime
-      ? studioEditorGridSnapRuntime.gridSnapController
+    const studioEditorGridSnapRuntime = studioEditorGridSnapShellComposition
+      ? studioEditorGridSnapShellComposition.runtime
+      : null;
+    const studioEditorGridSnapController = studioEditorGridSnapShellComposition
+      ? studioEditorGridSnapShellComposition.controller
       : null;
 
     const studioEditorFreeformPositionAdapter = typeof SlideNextStudioEditorFreeformPositionAdapter !== 'undefined'
