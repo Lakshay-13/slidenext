@@ -1436,6 +1436,7 @@
   <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-clipboard-selection-shell-composition.js"></script>
   <script src="/shared/studio-editor-clipboard-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-accessors.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
@@ -4504,25 +4505,17 @@
     const studioEditorClipboardInsertionController = studioEditorClipboardInsertionRuntime
       ? studioEditorClipboardInsertionRuntime.insertionController
       : null;
-    const studioEditorClipboardSelectionRuntimeAccessorsApi = typeof SlideNextStudioEditorClipboardSelectionRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorClipboardSelectionRuntimeAccessors
+    const studioEditorClipboardSelectionShellCompositionApi =
+      typeof SlideNextStudioEditorClipboardSelectionShellComposition !== 'undefined'
+      ? SlideNextStudioEditorClipboardSelectionShellComposition
       : null;
-    const studioEditorClipboardSelectionRuntimeAccessors = studioEditorClipboardSelectionRuntimeAccessorsApi
-      && typeof studioEditorClipboardSelectionRuntimeAccessorsApi.createStudioEditorClipboardSelectionRuntimeAccessors === 'function'
-      ? studioEditorClipboardSelectionRuntimeAccessorsApi.createStudioEditorClipboardSelectionRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorClipboardSelectionShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardSelectionShellRuntime
-            : null,
-          selectionRuntimeApi: typeof SlideNextStudioEditorClipboardSelectionRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardSelectionRuntime
-            : null,
+    const studioEditorClipboardSelectionShellComposition =
+      studioEditorClipboardSelectionShellCompositionApi
+      && typeof studioEditorClipboardSelectionShellCompositionApi
+        .createStudioEditorClipboardSelectionShellComposition === 'function'
+      ? studioEditorClipboardSelectionShellCompositionApi
+        .createStudioEditorClipboardSelectionShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorClipboardSelectionController !== 'undefined'
-              ? SlideNextStudioEditorClipboardSelectionController
-              : null,
-            clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-              ? SlideNextStudioEditorClipboard
-              : null,
             getIframeDoc: () => getIframeDoc(),
             getActiveSlide: (doc) => getActiveSlide(doc),
             getSelectedElements: (doc) => getStudioSelectedElements(doc),
@@ -4533,8 +4526,11 @@
           }
         })
       : null;
-    const studioEditorClipboardSelectionRuntime = studioEditorClipboardSelectionRuntimeAccessors
-      ? studioEditorClipboardSelectionRuntimeAccessors.runtime
+    const studioEditorClipboardSelectionRuntimeAccessors = studioEditorClipboardSelectionShellComposition
+      ? studioEditorClipboardSelectionShellComposition.accessors
+      : null;
+    const studioEditorClipboardSelectionRuntime = studioEditorClipboardSelectionShellComposition
+      ? studioEditorClipboardSelectionShellComposition.runtime
       : null;
     const studioEditorClipboardSelectionController = studioEditorClipboardSelectionRuntime
       ? studioEditorClipboardSelectionRuntime.selectionController

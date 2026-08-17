@@ -90,7 +90,11 @@ test('index wires clipboard selection through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorClipboardSelectionRuntimeAccessorsApi\s*\.\s*createStudioEditorClipboardSelectionRuntimeAccessors\(/
+    /studioEditorClipboardSelectionShellCompositionApi\s*\.\s*createStudioEditorClipboardSelectionShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-clipboard-selection-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,

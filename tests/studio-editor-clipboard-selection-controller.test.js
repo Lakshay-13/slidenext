@@ -104,7 +104,12 @@ test('clipboard selection controller fails closed without clipboard APIs', () =>
 
 test('editor routes clipboard selection planning through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const compositionSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared/studio-editor-clipboard-selection-shell-composition.js'),
+    'utf8'
+  );
 
-  assert.match(source, /SlideNextStudioEditorClipboardSelectionController/);
+  assert.match(source, /SlideNextStudioEditorClipboardSelectionShellComposition/);
+  assert.match(compositionSource, /SlideNextStudioEditorClipboardSelectionController/);
   assert.match(source, /studioEditorClipboardSelectionController\.build\(doc\)/);
 });
