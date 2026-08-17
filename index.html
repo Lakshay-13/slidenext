@@ -5116,55 +5116,18 @@
       && studioEditorElementIdentityAccessors
       && typeof studioEditorElementIdentityAccessors.isElementEligible === 'function'
       ? (element, options) => studioEditorElementIdentityAccessors.isElementEligible(element, options)
-      : studioEditorElementIdentityAdapter
-      && typeof studioEditorElementIdentityAdapter.isStudioEditorElementEligible === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.isEligibleEditableElement === 'function'
-      ? (element, options) => studioEditorElementIdentityAdapter.isStudioEditorElementEligible(
-          element,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorElementIdAssigner = typeof studioEditorElementIdentityAccessors !== 'undefined'
       && studioEditorElementIdentityAccessors
       && typeof studioEditorElementIdentityAccessors.assignElementId === 'function'
       ? (element, options) => studioEditorElementIdentityAccessors.assignElementId(element, options)
-      : studioEditorElementIdentityAdapter
-      && typeof studioEditorElementIdentityAdapter.assignStudioEditorElementId === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.assignStudioElementId === 'function'
-      ? (element, options) => studioEditorElementIdentityAdapter.assignStudioEditorElementId(
-          element,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorElementByIdReader = typeof studioEditorElementIdentityAccessors !== 'undefined'
       && studioEditorElementIdentityAccessors
       && typeof studioEditorElementIdentityAccessors.getElementById === 'function'
       ? (editorId, doc, options) => studioEditorElementIdentityAccessors.getElementById(editorId, doc, options)
-      : studioEditorElementIdentityAdapter
-      && typeof studioEditorElementIdentityAdapter.getStudioEditorElementById === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getElementByEditorId === 'function'
-      ? (editorId, doc, options) => studioEditorElementIdentityAdapter.getStudioEditorElementById(
-          editorId,
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlideEditableElementsAdapter = typeof SlideNextStudioEditorSlideEditableElementsAdapter !== 'undefined'
