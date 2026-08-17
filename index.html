@@ -1536,6 +1536,7 @@
   <script src="/shared/studio-editor-ungroup-state.js"></script>
   <script src="/shared/studio-editor-ungroup-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-ungroup-state-accessors.js"></script>
+  <script src="/shared/studio-editor-ungroup-state-shell-composition.js"></script>
   <script src="/shared/studio-editor-ungroup-transaction.js"></script>
   <script src="/shared/studio-editor-group-controller.js"></script>
   <script src="/shared/studio-editor-layout-runtime.js"></script>
@@ -4196,39 +4197,33 @@
     const studioEditorGroupStateController = studioEditorGroupStateShellComposition
       ? studioEditorGroupStateShellComposition.controller
       : null;
-    const studioEditorUngroupStateAccessorsApi =
-      typeof SlideNextStudioEditorUngroupStateAccessors !== 'undefined'
-      ? SlideNextStudioEditorUngroupStateAccessors
+    const studioEditorUngroupStateShellCompositionApi =
+      typeof SlideNextStudioEditorUngroupStateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorUngroupStateShellComposition
       : null;
-    const studioEditorUngroupStateAccessors = studioEditorUngroupStateAccessorsApi
-      && typeof studioEditorUngroupStateAccessorsApi
-        .createStudioEditorUngroupStateAccessors === 'function'
-      ? studioEditorUngroupStateAccessorsApi
-        .createStudioEditorUngroupStateAccessors({
-          runtimeApi: typeof SlideNextStudioEditorUngroupStateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorUngroupStateShellRuntime
-            : null,
+    const studioEditorUngroupStateShellComposition =
+      studioEditorUngroupStateShellCompositionApi
+      && typeof studioEditorUngroupStateShellCompositionApi
+        .createStudioEditorUngroupStateShellComposition === 'function'
+      ? studioEditorUngroupStateShellCompositionApi
+        .createStudioEditorUngroupStateShellComposition({
           runtimeOptions: {
-          ungroupStateApi: typeof SlideNextStudioEditorUngroupState !== 'undefined'
-            ? SlideNextStudioEditorUngroupState
-            : null,
-          groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
-            ? SlideNextStudioEditorGroup
-            : null,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getLiveSelectedElements,
-          isEditorGroupElement
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getLiveSelectedElements,
+            isEditorGroupElement
           }
         })
       : null;
-    const studioEditorUngroupStateShellRuntime = studioEditorUngroupStateAccessors
-      ? studioEditorUngroupStateAccessors.runtime
+    const studioEditorUngroupStateAccessors = studioEditorUngroupStateShellComposition
+      ? studioEditorUngroupStateShellComposition.accessors
       : null;
-    const studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime
-      && studioEditorUngroupStateShellRuntime.isAvailable === true
-      ? studioEditorUngroupStateShellRuntime.ungroupStateController
+    const studioEditorUngroupStateShellRuntime = studioEditorUngroupStateShellComposition
+      ? studioEditorUngroupStateShellComposition.runtime
+      : null;
+    const studioEditorUngroupStateController = studioEditorUngroupStateShellComposition
+      ? studioEditorUngroupStateShellComposition.controller
       : null;
     const studioEditorLayerOrderStateAccessorsApi =
       typeof SlideNextStudioEditorLayerOrderStateAccessors !== 'undefined'

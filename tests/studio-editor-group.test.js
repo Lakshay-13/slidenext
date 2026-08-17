@@ -31,11 +31,13 @@ test('editor forwards the group and ungroup documents into the selection reader'
     source,
     /<script src="\/shared\/studio-editor-ungroup-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(source, /studioEditorUngroupStateAccessorsApi/);
-  assert.match(source, /createStudioEditorUngroupStateAccessors/);
   assert.match(
     source,
-    /studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime/
+    /studioEditorUngroupStateShellCompositionApi\s*\.\s*createStudioEditorUngroupStateShellComposition\(/
+  );
+  assert.match(
+    source,
+    /studioEditorUngroupStateController = studioEditorUngroupStateShellComposition/
   );
   assert.match(
     source,

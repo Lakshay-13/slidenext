@@ -95,10 +95,14 @@ test('index routes ungroup-state construction through the shell runtime', () => 
   );
   assert.match(
     fileContent,
-    /studioEditorUngroupStateAccessorsApi\s*\.\s*createStudioEditorUngroupStateAccessors\(/
+    /<script src="\/shared\/studio-editor-ungroup-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorUngroupStateController = studioEditorUngroupStateShellRuntime/
+    /studioEditorUngroupStateShellCompositionApi\s*\.\s*createStudioEditorUngroupStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorUngroupStateController = studioEditorUngroupStateShellComposition/
   );
 });
