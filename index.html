@@ -1660,6 +1660,7 @@
   <script src="/shared/studio-editor-metadata-persistence-action.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-metadata-persistence-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-metadata-persistence-shell-composition.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-sanitizer-runtime-accessors.js"></script>
@@ -6484,21 +6485,16 @@
       ? studioEditorPersistedDeckStateShellRuntime.persistedDeckStateGlobalApi
       : {};
     Object.assign(globalThis, studioEditorPersistedDeckStateGlobalApi);
-    const studioEditorMetadataPersistenceShellRuntimeApi =
-      typeof SlideNextStudioEditorMetadataPersistenceShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorMetadataPersistenceShellRuntime
+    const studioEditorMetadataPersistenceShellCompositionApi =
+      typeof SlideNextStudioEditorMetadataPersistenceShellComposition !== 'undefined'
+      ? SlideNextStudioEditorMetadataPersistenceShellComposition
       : null;
-    const studioEditorMetadataPersistenceRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorMetadataPersistenceRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorMetadataPersistenceRuntimeAccessors
-      : null;
-    const studioEditorMetadataPersistenceRuntimeAccessors =
-      studioEditorMetadataPersistenceRuntimeAccessorsApi
-      && typeof studioEditorMetadataPersistenceRuntimeAccessorsApi
-        .createStudioEditorMetadataPersistenceRuntimeAccessors === 'function'
-      ? studioEditorMetadataPersistenceRuntimeAccessorsApi
-        .createStudioEditorMetadataPersistenceRuntimeAccessors({
-          runtimeApi: studioEditorMetadataPersistenceShellRuntimeApi,
+    const studioEditorMetadataPersistenceShellComposition =
+      studioEditorMetadataPersistenceShellCompositionApi
+      && typeof studioEditorMetadataPersistenceShellCompositionApi
+        .createStudioEditorMetadataPersistenceShellComposition === 'function'
+      ? studioEditorMetadataPersistenceShellCompositionApi
+        .createStudioEditorMetadataPersistenceShellComposition({
           runtimeOptions: {
             actionApi: typeof SlideNextStudioEditorMetadataPersistenceAction !== 'undefined'
               ? SlideNextStudioEditorMetadataPersistenceAction
@@ -6535,9 +6531,13 @@
           }
         })
       : null;
+    const studioEditorMetadataPersistenceRuntimeAccessors =
+      studioEditorMetadataPersistenceShellComposition
+        ? studioEditorMetadataPersistenceShellComposition.accessors
+        : null;
     const studioEditorMetadataPersistenceShellRuntime =
-      studioEditorMetadataPersistenceRuntimeAccessors
-        ? studioEditorMetadataPersistenceRuntimeAccessors.runtime
+      studioEditorMetadataPersistenceShellComposition
+        ? studioEditorMetadataPersistenceShellComposition.runtime
         : null;
     const studioEditorMetadataPersistenceAction = studioEditorMetadataPersistenceShellRuntime
       && studioEditorMetadataPersistenceShellRuntime.isAvailable === true

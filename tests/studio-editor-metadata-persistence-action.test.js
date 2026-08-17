@@ -88,6 +88,14 @@ test('index loads and installs the shared metadata persistence action', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-metadata-persistence-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorMetadataPersistenceShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorMetadataPersistenceRuntimeAccessorsApi\s*\.\s*createStudioEditorMetadataPersistenceRuntimeAccessors\(/
   );
   assert.doesNotMatch(
