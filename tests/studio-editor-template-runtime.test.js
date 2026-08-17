@@ -118,7 +118,11 @@ test('index wires template persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorTemplateRuntimeAccessorsApi\s*\.\s*createStudioEditorTemplateRuntimeAccessors\(/
+    /studioEditorTemplateShellCompositionApi\s*\.\s*createStudioEditorTemplateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-template-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,

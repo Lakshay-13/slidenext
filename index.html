@@ -1504,6 +1504,7 @@
   <script src="/shared/studio-editor-template-runtime.js"></script>
   <script src="/shared/studio-editor-template-shell-runtime.js"></script>
   <script src="/shared/studio-editor-template-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-template-shell-composition.js"></script>
   <script src="/shared/studio-editor-master-slide-controller.js"></script>
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-shell-runtime.js"></script>
@@ -4658,31 +4659,17 @@
         saveSelectedElementsAsBlock: (...args) => saveSelectedElementsAsBlock(...args)
       });
     }
-    const studioEditorTemplateRuntimeAccessorsApi = typeof SlideNextStudioEditorTemplateRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorTemplateRuntimeAccessors
+    const studioEditorTemplateShellCompositionApi =
+      typeof SlideNextStudioEditorTemplateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorTemplateShellComposition
       : null;
-    const studioEditorTemplateRuntimeAccessors = studioEditorTemplateRuntimeAccessorsApi
-      && typeof studioEditorTemplateRuntimeAccessorsApi.createStudioEditorTemplateRuntimeAccessors === 'function'
-      ? studioEditorTemplateRuntimeAccessorsApi.createStudioEditorTemplateRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorTemplateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorTemplateShellRuntime
-            : null,
-          templateRuntimeApi: typeof SlideNextStudioEditorTemplateRuntime !== 'undefined'
-            ? SlideNextStudioEditorTemplateRuntime
-            : null,
+    const studioEditorTemplateShellComposition =
+      studioEditorTemplateShellCompositionApi
+      && typeof studioEditorTemplateShellCompositionApi
+        .createStudioEditorTemplateShellComposition === 'function'
+      ? studioEditorTemplateShellCompositionApi
+        .createStudioEditorTemplateShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorTemplateController !== 'undefined'
-              ? SlideNextStudioEditorTemplateController
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-              ? SlideNextStudioEditorCanonicalState
-              : null,
-            renderApi: typeof SlideNextDeckRender !== 'undefined'
-              ? SlideNextDeckRender
-              : null,
             getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
               ? resolveEditorUiCanonicalDeck(getIframeDoc())
               : buildEditorCanonicalDeck(getIframeDoc()),
@@ -4710,8 +4697,11 @@
           }
         })
       : null;
-    const studioEditorTemplateRuntime = studioEditorTemplateRuntimeAccessors
-      ? studioEditorTemplateRuntimeAccessors.runtime
+    const studioEditorTemplateRuntimeAccessors = studioEditorTemplateShellComposition
+      ? studioEditorTemplateShellComposition.accessors
+      : null;
+    const studioEditorTemplateRuntime = studioEditorTemplateShellComposition
+      ? studioEditorTemplateShellComposition.runtime
       : null;
     const studioEditorTemplateController = studioEditorTemplateRuntime
       ? studioEditorTemplateRuntime.templateController
