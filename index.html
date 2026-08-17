@@ -1463,6 +1463,7 @@
   <script src="/shared/studio-editor-lock-visibility-runtime.js"></script>
   <script src="/shared/studio-editor-lock-visibility-shell-runtime.js"></script>
   <script src="/shared/studio-editor-lock-visibility-accessors.js"></script>
+  <script src="/shared/studio-editor-lock-visibility-shell-composition.js"></script>
   <script src="/shared/studio-editor-interaction-options.js"></script>
   <script src="/shared/studio-editor-pointer-attachment.js"></script>
   <script src="/shared/studio-editor-transform.js"></script>
@@ -4019,84 +4020,46 @@
       studioEditorElementLockWriter(element, locked);
     }
 
-    const studioEditorLockVisibilityAccessorsApi =
-      typeof SlideNextStudioEditorLockVisibilityAccessors !== 'undefined'
-      ? SlideNextStudioEditorLockVisibilityAccessors
+    const studioEditorLockVisibilityShellCompositionApi =
+      typeof SlideNextStudioEditorLockVisibilityShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLockVisibilityShellComposition
       : null;
-    const studioEditorLockVisibilityAccessors = studioEditorLockVisibilityAccessorsApi
-      && typeof studioEditorLockVisibilityAccessorsApi
-        .createStudioEditorLockVisibilityAccessors === 'function'
-      ? studioEditorLockVisibilityAccessorsApi
-        .createStudioEditorLockVisibilityAccessors({
-          runtimeApi: typeof SlideNextStudioEditorLockVisibilityShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorLockVisibilityShellRuntime
-            : null,
-          lockVisibilityRuntimeApi: typeof SlideNextStudioEditorLockVisibilityRuntime !== 'undefined'
-            ? SlideNextStudioEditorLockVisibilityRuntime
-            : null,
+    const studioEditorLockVisibilityShellComposition =
+      studioEditorLockVisibilityShellCompositionApi
+      && typeof studioEditorLockVisibilityShellCompositionApi
+        .createStudioEditorLockVisibilityShellComposition === 'function'
+      ? studioEditorLockVisibilityShellCompositionApi
+        .createStudioEditorLockVisibilityShellComposition({
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorLockVisibilityController !== 'undefined'
-            ? SlideNextStudioEditorLockVisibilityController
-            : null,
-          lockStateApi: typeof SlideNextStudioEditorLockState !== 'undefined'
-            ? SlideNextStudioEditorLockState
-            : null,
-          visibilityStateApi: typeof SlideNextStudioEditorVisibilityState !== 'undefined'
-            ? SlideNextStudioEditorVisibilityState
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalVisibilityApi: typeof SlideNextStudioEditorCanonicalVisibility !== 'undefined'
-            ? SlideNextStudioEditorCanonicalVisibility
-            : null,
-          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-            ? SlideNextStudioEditorCanonicalState
-            : null,
-          lockTransactionApi: typeof SlideNextStudioEditorLockTransaction !== 'undefined'
-            ? SlideNextStudioEditorLockTransaction
-            : null,
-          lockMutationApi: typeof SlideNextStudioEditorLockMutation !== 'undefined'
-            ? SlideNextStudioEditorLockMutation
-            : null,
-          visibilityTransactionApi: typeof SlideNextStudioEditorVisibilityTransaction !== 'undefined'
-            ? SlideNextStudioEditorVisibilityTransaction
-            : null,
-          visibilityMutationApi: typeof SlideNextStudioEditorVisibilityMutation !== 'undefined'
-            ? SlideNextStudioEditorVisibilityMutation
-            : null,
-          elementStateApi: typeof SlideNextStudioElementState !== 'undefined'
-            ? SlideNextStudioElementState
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          getSelectedElements: getStudioSelectedElements,
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getActiveSlide: (...args) => getActiveSlide(...args),
-          isLocked: (...args) => isElementLocked(...args),
-          isHidden: (...args) => isElementHidden(...args),
-          setLocked: (...args) => setElementLockedState(...args),
-          setHidden: (...args) => setElementHiddenState(...args),
-          getVisibilityState: (...args) => getElementVisibilityState(...args),
-          assignLockElementId: (...args) => assignEditorElementId(...args),
-          assignVisibilityElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
-          rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
+            getSelectedElements: getStudioSelectedElements,
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            getActiveSlide: (...args) => getActiveSlide(...args),
+            isLocked: (...args) => isElementLocked(...args),
+            isHidden: (...args) => isElementHidden(...args),
+            setLocked: (...args) => setElementLockedState(...args),
+            setHidden: (...args) => setElementHiddenState(...args),
+            getVisibilityState: (...args) => getElementVisibilityState(...args),
+            assignLockElementId: (...args) => assignEditorElementId(...args),
+            assignVisibilityElementId: (...args) => assignEditorElementId(...args),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            finalizeSelectionToggleMutation: (...args) => finalizeSelectionToggleMutation(...args),
+            rollbackSelectionToggleMutation: (...args) => rollbackEditorLockVisibilityMutation(...args)
           }
         })
       : null;
-    const studioEditorLockVisibilityRuntime = studioEditorLockVisibilityAccessors
-      ? studioEditorLockVisibilityAccessors.runtime
+    const studioEditorLockVisibilityAccessors = studioEditorLockVisibilityShellComposition
+      ? studioEditorLockVisibilityShellComposition.accessors
       : null;
-    const studioEditorLockVisibilityController = studioEditorLockVisibilityRuntime
-      ? studioEditorLockVisibilityRuntime.lockVisibilityController
+    const studioEditorLockVisibilityRuntime = studioEditorLockVisibilityShellComposition
+      ? studioEditorLockVisibilityShellComposition.runtime
+      : null;
+    const studioEditorLockVisibilityController = studioEditorLockVisibilityShellComposition
+      ? studioEditorLockVisibilityShellComposition.controller
       : null;
     const studioEditorRemovalStateAccessorsApi =
       typeof SlideNextStudioEditorRemovalStateAccessors !== 'undefined'

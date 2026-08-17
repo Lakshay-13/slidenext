@@ -84,7 +84,7 @@ test('index wires lock and visibility through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorLockVisibilityAccessorsApi\s*\.\s*createStudioEditorLockVisibilityAccessors\(/
+    /studioEditorLockVisibilityShellCompositionApi\s*\.\s*createStudioEditorLockVisibilityShellComposition\(/
   );
   assert.doesNotMatch(
     fileContent,
