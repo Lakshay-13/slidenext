@@ -1771,6 +1771,7 @@
   <script src="/shared/studio-editor-state-accessors.js"></script>
   <script src="/shared/studio-editor-shell-state-runtime.js"></script>
   <script src="/shared/studio-editor-shell-state-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-shell-state-composition.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -2043,20 +2044,16 @@
         })
       : {};
     Object.assign(globalThis, studioEditorLayerGlobalApi);
-    const studioEditorShellStateRuntimeApi = typeof SlideNextStudioEditorShellStateRuntime !== 'undefined'
-      ? SlideNextStudioEditorShellStateRuntime
+    const studioEditorShellStateCompositionApi =
+      typeof SlideNextStudioEditorShellStateComposition !== 'undefined'
+      ? SlideNextStudioEditorShellStateComposition
       : null;
-    const studioEditorShellStateRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorShellStateRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorShellStateRuntimeAccessors
-      : null;
-    const studioEditorShellStateRuntimeAccessors =
-      studioEditorShellStateRuntimeAccessorsApi
-      && typeof studioEditorShellStateRuntimeAccessorsApi
-        .createStudioEditorShellStateRuntimeAccessors === 'function'
-      ? studioEditorShellStateRuntimeAccessorsApi
-        .createStudioEditorShellStateRuntimeAccessors({
-          runtimeApi: studioEditorShellStateRuntimeApi,
+    const studioEditorShellStateComposition =
+      studioEditorShellStateCompositionApi
+      && typeof studioEditorShellStateCompositionApi
+        .createStudioEditorShellStateComposition === 'function'
+      ? studioEditorShellStateCompositionApi
+        .createStudioEditorShellStateComposition({
           runtimeOptions: {
           getElementId: (element) => typeof assignEditorElementId === 'function'
             ? assignEditorElementId(element)
@@ -2162,9 +2159,9 @@
           }
           }
         })
-      : { runtime: null };
-    const studioEditorShellStateRuntime =
-      studioEditorShellStateRuntimeAccessors.runtime;
+      : { accessors: { runtime: null }, runtime: null };
+    const studioEditorShellStateRuntimeAccessors = studioEditorShellStateComposition.accessors;
+    const studioEditorShellStateRuntime = studioEditorShellStateComposition.runtime;
     const studioEditorSessionStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.sessionStateBridge
       : null;

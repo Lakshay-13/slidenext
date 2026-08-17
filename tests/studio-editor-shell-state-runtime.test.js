@@ -177,7 +177,11 @@ test('editor loads the shell state runtime after its bridge dependencies', () =>
   );
   assert.match(
     fileContent,
-    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
+    /<script src="\/shared\/studio-editor-shell-state-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorShellStateComposition\(/
   );
   assert.doesNotMatch(
     fileContent,

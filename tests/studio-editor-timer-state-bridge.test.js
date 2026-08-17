@@ -76,7 +76,7 @@ test('editor loads the timer bridge after both timer runtimes', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
+    /createStudioEditorShellStateComposition\(/
   );
   assert.match(fileContent, /studioEditorTimerStateBridge/);
 });

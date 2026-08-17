@@ -36,7 +36,7 @@ test('index wires persisted deck state through the bridge module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorShellStateRuntimeAccessorsApi\s*\.\s*createStudioEditorShellStateRuntimeAccessors\(/
+    /createStudioEditorShellStateComposition\(/
   );
   assert.doesNotMatch(
     fileContent,
