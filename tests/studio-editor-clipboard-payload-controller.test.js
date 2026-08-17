@@ -80,7 +80,12 @@ test('clipboard payload controller fails closed without payload dependencies', (
 
 test('editor routes clipboard payload construction through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const compositionSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared/studio-editor-clipboard-payload-shell-composition.js'),
+    'utf8'
+  );
 
-  assert.match(source, /SlideNextStudioEditorClipboardPayloadController/);
+  assert.match(source, /SlideNextStudioEditorClipboardPayloadShellComposition/);
+  assert.match(compositionSource, /SlideNextStudioEditorClipboardPayloadController/);
   assert.match(source, /studioEditorClipboardPayloadController\.buildPayload\(elements, doc\)/);
 });

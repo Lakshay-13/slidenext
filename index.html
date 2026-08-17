@@ -1426,6 +1426,7 @@
   <script src="/shared/studio-editor-clipboard-payload-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-payload-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-clipboard-payload-shell-composition.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-shell-runtime.js"></script>
@@ -4434,31 +4435,17 @@
         })
       : {};
     Object.assign(globalThis, studioEditorClipboardGlobalApi);
-    const studioEditorClipboardPayloadRuntimeAccessorsApi = typeof SlideNextStudioEditorClipboardPayloadRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorClipboardPayloadRuntimeAccessors
+    const studioEditorClipboardPayloadShellCompositionApi =
+      typeof SlideNextStudioEditorClipboardPayloadShellComposition !== 'undefined'
+      ? SlideNextStudioEditorClipboardPayloadShellComposition
       : null;
-    const studioEditorClipboardPayloadRuntimeAccessors = studioEditorClipboardPayloadRuntimeAccessorsApi
-      && typeof studioEditorClipboardPayloadRuntimeAccessorsApi.createStudioEditorClipboardPayloadRuntimeAccessors === 'function'
-      ? studioEditorClipboardPayloadRuntimeAccessorsApi.createStudioEditorClipboardPayloadRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorClipboardPayloadShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardPayloadShellRuntime
-            : null,
-          payloadRuntimeApi: typeof SlideNextStudioEditorClipboardPayloadRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardPayloadRuntime
-            : null,
+    const studioEditorClipboardPayloadShellComposition =
+      studioEditorClipboardPayloadShellCompositionApi
+      && typeof studioEditorClipboardPayloadShellCompositionApi
+        .createStudioEditorClipboardPayloadShellComposition === 'function'
+      ? studioEditorClipboardPayloadShellCompositionApi
+        .createStudioEditorClipboardPayloadShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorClipboardPayloadController !== 'undefined'
-              ? SlideNextStudioEditorClipboardPayloadController
-              : null,
-            clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-              ? SlideNextStudioEditorClipboard
-              : null,
-            domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-              ? SlideNextStudioEditorDom
-              : null,
-            transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
-              ? SlideNextStudioEditorTransform
-              : null,
             getIframeDoc: () => getIframeDoc(),
             getActiveSlide: (doc) => getActiveSlide(doc),
             getSlideMetrics: (slide) => getSlideMetrics(slide),
@@ -4470,8 +4457,11 @@
           }
         })
       : null;
-    const studioEditorClipboardPayloadRuntime = studioEditorClipboardPayloadRuntimeAccessors
-      ? studioEditorClipboardPayloadRuntimeAccessors.runtime
+    const studioEditorClipboardPayloadRuntimeAccessors = studioEditorClipboardPayloadShellComposition
+      ? studioEditorClipboardPayloadShellComposition.accessors
+      : null;
+    const studioEditorClipboardPayloadRuntime = studioEditorClipboardPayloadShellComposition
+      ? studioEditorClipboardPayloadShellComposition.runtime
       : null;
     const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
       ? studioEditorClipboardPayloadRuntime.payloadController

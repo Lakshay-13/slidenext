@@ -1997,7 +1997,7 @@ test('clipboard payload runtime composes positioned-item building through the ed
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runtimeSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClipboardPayloadRuntimeAccessorsApi =',
+    'const studioEditorClipboardPayloadShellCompositionApi =',
     'const studioEditorClipboardPayloadController ='
   );
 
