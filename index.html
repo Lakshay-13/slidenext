@@ -7804,24 +7804,6 @@
             canonicalDeck,
             options
           );
-      const createStudioDeckViewBuildOptions = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.createStudioDeckViewBuildOptions === 'function'
-        ? SlideNextStudioDeckView.createStudioDeckViewBuildOptions
-        : null;
-      if (createStudioDeckViewBuildOptions) {
-        return createStudioDeckViewBuildOptions(doc, {
-          activeSlideId,
-          buildCanonicalDeck,
-          getPendingCanonicalDeck,
-          resolveLiveActiveSlideId,
-          buildFallbackHtml,
-          buildRenderOptions
-        });
-      }
-
       const {
         resolveCanonicalDeck,
         liveActiveSlideId,

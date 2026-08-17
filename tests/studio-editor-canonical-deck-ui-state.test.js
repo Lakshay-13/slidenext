@@ -2597,6 +2597,70 @@ test('createEditorDeckViewBuildOptions forwards custom build overrides to the sh
   );
 });
 
+test('createEditorDeckViewBuildOptions does not bypass canonical view-state fallback with a direct deck view helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const createEditorDeckViewBuildOptionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewBuildOptions(doc = getIframeDoc()) {',
+    '\n\n    function buildEditorDeckHtml(doc = getIframeDoc(), options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const canonicalDeck = {
+    kind: 'slidenext.deck',
+    schemaVersion: 1,
+    slides: []
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioDeckView: {
+      createStudioDeckViewBuildOptions() {
+        throw new Error('direct deck view build-options fallback should not run');
+      }
+    },
+    createEditorCanonicalDeckViewStateOptions(options = {}) {
+      calls.push(['createEditorCanonicalDeckViewStateOptions', options]);
+      return {
+        buildCanonicalDeck: () => canonicalDeck,
+        getPendingCanonicalDeck: null,
+        resolveLiveActiveSlideId: () => 'slide-live'
+      };
+    },
+    resolveEditorCanonicalDeckViewState(sourceDoc, options) {
+      calls.push(['resolveEditorCanonicalDeckViewState', sourceDoc, options]);
+      return {
+        resolveCanonicalDeck: () => canonicalDeck,
+        liveActiveSlideId: 'slide-live',
+        resolvedCanonicalDeck: canonicalDeck
+      };
+    },
+    buildPersistableDeckHtml() {
+      return '<html>fallback</html>';
+    },
+    buildEditorDeckRenderOptions(_sourceDoc, _canonicalDeck, options = {}) {
+      return { activeSlideId: options.activeSlideId };
+    },
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(createEditorDeckViewBuildOptionsSource, context);
+
+  const result = context.createEditorDeckViewBuildOptions(iframeDoc, {
+    activeSlideId: 'slide-explicit'
+  });
+
+  assert.equal(result.buildCanonicalDeck(), canonicalDeck);
+  assert.equal(result.buildFallbackHtml(), '<html>fallback</html>');
+  assert.deepEqual(JSON.parse(JSON.stringify(result.deckHtmlOptions)), {
+    renderOptions: { activeSlideId: 'slide-explicit' }
+  });
+  assert.equal(calls[0][0], 'createEditorCanonicalDeckViewStateOptions');
+  assert.equal(calls[1][0], 'resolveEditorCanonicalDeckViewState');
+});
+
 test('buildEditorDeckRenderOptions delegates render-option composition to the shared deck view helper when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const buildEditorDeckRenderOptionsSource = extractFunctionSource(
