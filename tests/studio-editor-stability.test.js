@@ -462,7 +462,7 @@ test('clipboard wiring prefers live canonical state and keeps a legacy baseline 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorClipboardRuntimeAccessorsApi =',
+    'const studioEditorClipboardShellCompositionApi =',
     'const studioEditorClipboardController ='
   );
 

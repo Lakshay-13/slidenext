@@ -1439,6 +1439,7 @@
   <script src="/shared/studio-editor-clipboard-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-clipboard-shell-composition.js"></script>
   <script src="/shared/studio-editor-clipboard-state.js"></script>
   <script src="/shared/studio-editor-clipboard-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-removal.js"></script>
@@ -4373,59 +4374,42 @@
       && typeof studioEditorStyleController.bindStudioEditorStyleControls === 'function') {
       studioEditorStyleController.bindStudioEditorStyleControls({ documentRef: document });
     }
-    const studioEditorClipboardRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorClipboardRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorClipboardRuntimeAccessors
+    const studioEditorClipboardShellCompositionApi =
+      typeof SlideNextStudioEditorClipboardShellComposition !== 'undefined'
+      ? SlideNextStudioEditorClipboardShellComposition
       : null;
-    const studioEditorClipboardRuntimeAccessors = studioEditorClipboardRuntimeAccessorsApi
-      && typeof studioEditorClipboardRuntimeAccessorsApi
-        .createStudioEditorClipboardRuntimeAccessors === 'function'
-      ? studioEditorClipboardRuntimeAccessorsApi
-        .createStudioEditorClipboardRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorClipboardShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardShellRuntime
-            : null,
-          clipboardRuntimeApi: typeof SlideNextStudioEditorClipboardRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardRuntime
-            : null,
+    const studioEditorClipboardShellComposition =
+      studioEditorClipboardShellCompositionApi
+      && typeof studioEditorClipboardShellCompositionApi
+        .createStudioEditorClipboardShellComposition === 'function'
+      ? studioEditorClipboardShellCompositionApi
+        .createStudioEditorClipboardShellComposition({
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorClipboardController !== 'undefined'
-            ? SlideNextStudioEditorClipboardController
-            : null,
-          clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-            ? SlideNextStudioEditorClipboard
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalInsertionApi: typeof SlideNextStudioEditorCanonicalInsertion !== 'undefined'
-            ? SlideNextStudioEditorCanonicalInsertion
-            : null,
-          deckImportApi: typeof SlideNextDeckImport !== 'undefined'
-            ? SlideNextDeckImport
-            : null,
-          buildClipboardSelectionMutationPlan: (...args) => buildClipboardSelectionMutationPlan(...args),
-          finalizeClipboardActionResult: (...args) => finalizeClipboardActionResult(...args),
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getActiveSlide: (...args) => getActiveSlide(...args),
-          getEditorSlideId: (...args) => getEditorSlideId(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          insertClipboardPayload: (...args) => insertClipboardPayload(...args),
-          finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
+            buildClipboardSelectionMutationPlan: (...args) => buildClipboardSelectionMutationPlan(...args),
+            finalizeClipboardActionResult: (...args) => finalizeClipboardActionResult(...args),
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            getActiveSlide: (...args) => getActiveSlide(...args),
+            getEditorSlideId: (...args) => getEditorSlideId(...args),
+            assignElementId: (...args) => assignEditorElementId(...args),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            insertClipboardPayload: (...args) => insertClipboardPayload(...args),
+            finalizeInsertedElements: (...args) => finalizeInsertedElements(...args)
           }
         })
       : null;
-    const studioEditorClipboardRuntime = studioEditorClipboardRuntimeAccessors
-      ? studioEditorClipboardRuntimeAccessors.runtime
+    const studioEditorClipboardRuntimeAccessors = studioEditorClipboardShellComposition
+      ? studioEditorClipboardShellComposition.accessors
       : null;
-    const studioEditorClipboardController = studioEditorClipboardRuntime
-      ? studioEditorClipboardRuntime.clipboardController
+    const studioEditorClipboardRuntime = studioEditorClipboardShellComposition
+      ? studioEditorClipboardShellComposition.runtime
+      : null;
+    const studioEditorClipboardController = studioEditorClipboardShellComposition
+      ? studioEditorClipboardShellComposition.controller
       : null;
     const studioEditorClipboardAccessorsApi = typeof SlideNextStudioEditorClipboardAccessors !== 'undefined'
       ? SlideNextStudioEditorClipboardAccessors
