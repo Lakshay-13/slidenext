@@ -1386,6 +1386,7 @@
   <script src="/shared/studio-editor-inspector-controller.js"></script>
   <script src="/shared/studio-editor-inspector-selection-shell-runtime.js"></script>
   <script src="/shared/studio-editor-inspector-selection-accessors.js"></script>
+  <script src="/shared/studio-editor-inspector-selection-composition.js"></script>
   <script src="/shared/studio-editor-layer-order.js"></script>
   <script src="/shared/studio-editor-layer-order-mutation.js"></script>
   <script src="/shared/studio-editor-layer-order-transaction.js"></script>
@@ -10451,15 +10452,19 @@
         : false;
     }
 
-    const studioEditorInspectorSelectionAccessorsApi =
-      typeof SlideNextStudioEditorInspectorSelectionAccessors !== 'undefined'
-      ? SlideNextStudioEditorInspectorSelectionAccessors
-      : null;
-    const studioEditorInspectorSelectionAccessors = studioEditorInspectorSelectionAccessorsApi
-      && typeof studioEditorInspectorSelectionAccessorsApi
-        .createStudioEditorInspectorSelectionAccessors === 'function'
-      ? studioEditorInspectorSelectionAccessorsApi
-        .createStudioEditorInspectorSelectionAccessors({
+    const studioEditorInspectorSelectionCompositionApi =
+      typeof SlideNextStudioEditorInspectorSelectionComposition !== 'undefined'
+        ? SlideNextStudioEditorInspectorSelectionComposition
+        : null;
+    const studioEditorInspectorSelectionComposition =
+      studioEditorInspectorSelectionCompositionApi
+      && typeof studioEditorInspectorSelectionCompositionApi
+        .createStudioEditorInspectorSelectionComposition === 'function'
+      ? studioEditorInspectorSelectionCompositionApi
+        .createStudioEditorInspectorSelectionComposition({
+          accessorsApi: typeof SlideNextStudioEditorInspectorSelectionAccessors !== 'undefined'
+            ? SlideNextStudioEditorInspectorSelectionAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorInspectorSelectionShellRuntime !== 'undefined'
             ? SlideNextStudioEditorInspectorSelectionShellRuntime
             : null,
@@ -10519,9 +10524,9 @@
             : null
         })
       : null;
-    var studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionAccessors
-      && typeof studioEditorInspectorSelectionAccessors.sync === 'function'
-      ? studioEditorInspectorSelectionAccessors.sync
+    var studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionComposition
+      && typeof studioEditorInspectorSelectionComposition.sync === 'function'
+      ? studioEditorInspectorSelectionComposition.sync
       : null;
 
     function syncInspectorForSelection() {

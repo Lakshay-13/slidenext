@@ -91,10 +91,14 @@ test('index routes inspector selection synchronization through the shell runtime
   );
   assert.match(
     fileContent,
-    /studioEditorInspectorSelectionAccessorsApi\s*\.\s*createStudioEditorInspectorSelectionAccessors\(/
+    /<script src="\/shared\/studio-editor-inspector-selection-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionAccessors/
+    /studioEditorInspectorSelectionCompositionApi[\s\S]*createStudioEditorInspectorSelectionComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorInspectorSelectionSynchronizer = studioEditorInspectorSelectionComposition/
   );
 });
