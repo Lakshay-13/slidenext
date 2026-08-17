@@ -7862,11 +7862,6 @@
           buildDeckHtml: (sourceDoc, buildOptions) => buildEditorDeckHtml(sourceDoc, buildOptions)
         });
       }
-      const buildStudioDeckViewHtml = resolveStudioDeckViewMethod('buildStudioDeckViewHtml');
-      if (buildStudioDeckViewHtml) {
-        return buildStudioDeckViewHtml(doc, options);
-      }
-
       const buildSharedHtml = typeof options.buildSharedHtml === 'function'
         ? options.buildSharedHtml
         : null;

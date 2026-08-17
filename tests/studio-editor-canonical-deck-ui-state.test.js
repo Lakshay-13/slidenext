@@ -3088,6 +3088,46 @@ test('buildEditorDeckHtml does not bypass the canonical view-state helper', () =
   assert.equal(calls[0].options.deckViewApi, deckViewApi);
 });
 
+test('buildEditorDeckViewHtml does not bypass the canonical view-state helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const buildEditorDeckViewHtmlSource = extractFunctionSource(
+    fileContent,
+    'function buildEditorDeckViewHtml(doc = getIframeDoc(), options = {}) {',
+    '\n\n    function createEditorDeckViewBuildViewOptionsResolver(options = {}) {'
+  );
+
+  const iframeDoc = { label: 'iframe-doc' };
+  const deckViewApi = {
+    buildStudioDeckViewHtml() {
+      throw new Error('direct deck view html fallback should not run');
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalViewState: {
+      buildStudioEditorDeckViewHtml(doc, options) {
+        calls.push({ doc, options });
+        return '<html>canonical-view</html>';
+      }
+    },
+    SlideNextStudioDeckView: deckViewApi,
+    getIframeDoc() {
+      return iframeDoc;
+    }
+  };
+
+  vm.createContext(context);
+  vm.runInContext(buildEditorDeckViewHtmlSource, context);
+
+  const result = context.buildEditorDeckViewHtml(iframeDoc, { marker: 'test' });
+
+  assert.equal(result, '<html>canonical-view</html>');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].doc, iframeDoc);
+  assert.equal(calls[0].options.marker, 'test');
+  assert.equal(calls[0].options.deckViewApi, deckViewApi);
+});
+
 test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and live-active resolvers when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
