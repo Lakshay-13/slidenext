@@ -1828,6 +1828,7 @@
   <script src="/shared/studio-editor-selection-composition.js"></script>
   <script src="/shared/studio-editor-selection-composition-shell-runtime.js"></script>
   <script src="/shared/studio-editor-selection-composition-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-selection-command-composition.js"></script>
   <script src="/shared/studio-editor-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-committed-selection-restore-adapter.js"></script>
   <script src="/shared/studio-editor-preserved-selection-restore-adapter.js"></script>
@@ -10555,67 +10556,30 @@
     }
 
     // Click Selection highlights
-    const studioEditorElementSelector = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.selectStudioElement === 'function'
-      ? (selectionOptions) => SlideNextStudioEditorSelection.selectStudioElement(selectionOptions)
-      : null;
-
-    function selectElement(el, options = {}) {
-      if (typeof studioEditorElementSelector !== 'function') return false;
-      const doc = Object.prototype.hasOwnProperty.call(options, 'doc')
-        ? options.doc
-        : getIframeDoc();
-      return studioEditorElementSelector({
-        element: el,
-        selectedElements: getStudioSelectedElements(doc),
-        additive: options.additive,
-        toggle: options.toggle,
-        resolveEditableTarget,
-        getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions({
-          ...selectionOptions,
-          doc
-        }),
-        commitSelectionState: (nextSelectionState, selectionOptions = {}) => commitEditorSelectionState(
-          nextSelectionState,
-          {
-            ...selectionOptions,
-            doc
-          }
-        )
-      });
-    }
-
-    const studioEditorElementDeselector = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.deselectStudioElement === 'function'
-      ? (selectionOptions) => SlideNextStudioEditorSelection.deselectStudioElement(selectionOptions)
-      : null;
-
-    function deselectElement() {
-      if (typeof studioEditorElementDeselector !== 'function') return false;
-      return studioEditorElementDeselector({
-        hideDragHud,
-        commitSelectionState: commitEditorSelectionState
-      });
-    }
-
-    const studioEditorSelectAllElements = typeof SlideNextStudioEditorSelection !== 'undefined'
-      && SlideNextStudioEditorSelection
-      && typeof SlideNextStudioEditorSelection.selectAllStudioElementsOnActiveSlide === 'function'
-      ? (selectionOptions) => SlideNextStudioEditorSelection.selectAllStudioElementsOnActiveSlide(selectionOptions)
-      : null;
-    const studioEditorSelectionCompositionApi = typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
-      ? SlideNextStudioEditorSelectionComposition
-      : null;
-    const studioEditorSelectAllElementsAdapter = studioEditorSelectionCompositionApi
-      && typeof studioEditorSelectionCompositionApi
-        .createStudioEditorSelectAllElementsOnActiveSlideAdapter === 'function'
-      ? studioEditorSelectionCompositionApi
-        .createStudioEditorSelectAllElementsOnActiveSlideAdapter({
+    const studioEditorSelectionCommandCompositionApi =
+      typeof SlideNextStudioEditorSelectionCommandComposition !== 'undefined'
+        ? SlideNextStudioEditorSelectionCommandComposition
+        : null;
+    const studioEditorSelectionCommandComposition =
+      studioEditorSelectionCommandCompositionApi
+      && typeof studioEditorSelectionCommandCompositionApi
+        .createStudioEditorSelectionCommandComposition === 'function'
+      ? studioEditorSelectionCommandCompositionApi
+        .createStudioEditorSelectionCommandComposition({
           selectionApi: typeof SlideNextStudioEditorSelection !== 'undefined'
             ? SlideNextStudioEditorSelection
             : null,
+          selectionCompositionApi: typeof SlideNextStudioEditorSelectionComposition !== 'undefined'
+            ? SlideNextStudioEditorSelectionComposition
+            : null,
+          getDocument: () => getIframeDoc(),
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+          resolveEditableTarget,
+          getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions(selectionOptions),
+          commitSelectionState: (nextSelectionState, selectionOptions = {}) => (
+            commitEditorSelectionState(nextSelectionState, selectionOptions)
+          ),
+          hideDragHud,
           getActiveSlide,
           getElements: getNormalizedSlideLayerOrder,
           isSelectableElement: (element, sourceDoc) => {
@@ -10630,47 +10594,29 @@
               isElementHidden
             );
             return !readLockedState(element) && !readHiddenState(element);
-          },
-          getSelectionOptions: (sourceDoc, selectionOptions = {}) => getEditorSelectionOptions({
-            ...selectionOptions,
-            doc: sourceDoc
-          }),
-          commitSelectionState: (sourceDoc, nextSelectionState, selectionOptions = {}) => (
-            commitEditorSelectionState(
-              nextSelectionState,
-              {
-                ...selectionOptions,
-                doc: sourceDoc
-              }
-            )
-          )
+          }
         })
       : null;
 
+    function selectElement(el, options = {}) {
+      return studioEditorSelectionCommandComposition
+        && typeof studioEditorSelectionCommandComposition.selectElement === 'function'
+        ? studioEditorSelectionCommandComposition.selectElement(el, options)
+        : false;
+    }
+
+    function deselectElement() {
+      return studioEditorSelectionCommandComposition
+        && typeof studioEditorSelectionCommandComposition.deselectElement === 'function'
+        ? studioEditorSelectionCommandComposition.deselectElement()
+        : false;
+    }
+
     function selectAllElementsOnActiveSlide(doc = getIframeDoc()) {
-      if (typeof studioEditorSelectAllElementsAdapter === 'function') {
-        return studioEditorSelectAllElementsAdapter(doc);
-      }
-      if (typeof studioEditorSelectAllElements !== 'function') return false;
-      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
-      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
-      return studioEditorSelectAllElements({
-        getActiveSlide,
-        getElements: getNormalizedSlideLayerOrder,
-        isSelectableElement: (element) => !readLockedState(element) && !readHiddenState(element),
-        getSelectionOptions: (selectionOptions = {}) => getEditorSelectionOptions({
-          ...selectionOptions,
-          doc
-        }),
-        commitSelectionState: (nextSelectionState, selectionOptions = {}) => commitEditorSelectionState(
-          nextSelectionState,
-          {
-            ...selectionOptions,
-            doc
-          }
-        ),
-        doc
-      });
+      return studioEditorSelectionCommandComposition
+        && typeof studioEditorSelectionCommandComposition.selectAllElementsOnActiveSlide === 'function'
+        ? studioEditorSelectionCommandComposition.selectAllElementsOnActiveSlide(doc)
+        : false;
     }
 
     const studioEditorElementLockReader = typeof studioEditorElementStateAccessors !== 'undefined'
