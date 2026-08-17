@@ -261,6 +261,10 @@
           !resolveStudioExportReadyState(resolveReadyState).canUseDeckActions
         );
       };
+      const releaseExport = () => {
+        isExportActive = false;
+        restoreExportButton();
+      };
       isExportActive = true;
 
       if (typeof pdfExport.exportStudioPdf === 'function') {
@@ -287,8 +291,7 @@
           } catch (error) {
             return failPdfExport(error);
           } finally {
-            isExportActive = false;
-            restoreExportButton();
+            releaseExport();
           }
         })();
       }
@@ -297,9 +300,13 @@
       try {
         html = buildPreviewHtml(canonicalDeck);
       } catch (error) {
+        releaseExport();
         return failPdfExport(error);
       }
-      if (!html) return failPdfExport();
+      if (!html) {
+        releaseExport();
+        return failPdfExport();
+      }
 
       let printFlowAccepted = false;
       let printFlowFinished = false;
@@ -335,19 +342,17 @@
           },
           onPrint: () => {
             printFlowFinished = true;
-            isExportActive = false;
+            releaseExport();
             if (pdfWarningCount > 0) {
               setStatus('pdf-exported-with-warnings', pdfWarningCount, pdfWarnings, false);
             } else {
               setStatus('pdf-exported');
             }
-            restoreExportButton();
           },
           onError: () => {
             printFlowFinished = true;
-            isExportActive = false;
+            releaseExport();
             setStatus('pdf-export-failed');
-            restoreExportButton();
           }
         });
         if (!didOpenPrintFlow) return failPdfExport();
@@ -358,8 +363,7 @@
         return failPdfExport();
       } finally {
         if (!printFlowAccepted) {
-          isExportActive = false;
-          restoreExportButton();
+          releaseExport();
         }
       }
     };

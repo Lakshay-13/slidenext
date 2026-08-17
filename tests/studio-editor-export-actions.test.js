@@ -139,6 +139,34 @@ test('PDF print export stays active until the print window completes', () => {
   assert.equal(exportPdf(), true);
 });
 
+test('PDF print export releases its active guard when preview generation fails', () => {
+  let previewCalls = 0;
+  let openCalls = 0;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => {
+      previewCalls += 1;
+      if (previewCalls === 1) throw new Error('preview failed');
+      if (previewCalls === 2) return '';
+      return '<html><body><div class="slide">A</div></body></html>';
+    },
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      openStudioPdfPrintWindow(options) {
+        openCalls += 1;
+        options.onPrint();
+        return true;
+      }
+    }
+  });
+
+  assert.equal(exportPdf(), false);
+  assert.equal(exportPdf(), false);
+  assert.equal(exportPdf(), true);
+  assert.equal(previewCalls, 3);
+  assert.equal(openCalls, 1);
+});
+
 test('PDF export preserves preflight warnings when the server response omits warning details', async () => {
   const statuses = [];
   const exportPdf = exportActions.createStudioPdfExportAction({
