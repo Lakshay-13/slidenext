@@ -587,7 +587,13 @@
     const sourceHtml = typeof textareaEl.value === 'string' ? textareaEl.value : '';
     const buffers = getSourceViewBuffers(applyMode.modalEl);
     buffers[applyMode.mode] = sourceHtml;
-    const result = applyCallback(sourceHtml);
+    const applyOptions = applyMode.mode === 'css'
+      && Object.prototype.hasOwnProperty.call(buffers, 'html')
+      ? { sourceHtml: buffers.html }
+      : null;
+    const result = applyOptions
+      ? applyCallback(sourceHtml, applyOptions)
+      : applyCallback(sourceHtml);
     if (result === false || (result && result.success === false)) {
       const message = result && typeof result.error === 'string' && result.error.trim()
         ? result.error.trim()

@@ -634,6 +634,55 @@ test('applyStudioSourceView dispatches CSS mode to the CSS callback', () => {
   assert.equal(appliedCss, textareaEl.value);
 });
 
+test('applyStudioSourceView preserves the edited HTML buffer when applying CSS', async () => {
+  const attributes = {};
+  const modalEl = {
+    classList: createClassList(['hidden', 'opacity-0']),
+    setAttribute(name, value) { attributes[name] = value; },
+    getAttribute(name) { return attributes[name] || null; }
+  };
+  const contentEl = { classList: createClassList(['scale-95']) };
+  const textareaEl = { value: '', scrollTop: 0, setAttribute() {} };
+  const documentStub = {
+    getElementById(id) {
+      return {
+        sourceViewModal: modalEl,
+        sourceViewModalContent: contentEl,
+        sourceViewContent: textareaEl
+      }[id] || null;
+    }
+  };
+  let appliedCss = null;
+
+  assert.equal(preview.openStudioSourceView({
+    document: documentStub,
+    sourceHtml: '<html><body><section class="slide">Original</section></body></html>',
+    sourceCss: '.slide { color: red; }',
+    editable: true
+  }), true);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  textareaEl.value = '<html><body><section class="slide">Edited</section></body></html>';
+  assert.equal(preview.setStudioSourceViewMode({
+    document: documentStub,
+    mode: 'css',
+    editable: true
+  }), true);
+  textareaEl.value = '.slide { color: blue; }';
+
+  assert.equal(preview.applyStudioSourceView({
+    canOpenSourceView: true,
+    document: documentStub,
+    onApplySourceCss(sourceCss, options) {
+      appliedCss = { sourceCss, sourceHtml: options.sourceHtml };
+      return { success: true };
+    }
+  }), true);
+  assert.deepEqual(appliedCss, {
+    sourceCss: '.slide { color: blue; }',
+    sourceHtml: '<html><body><section class="slide">Edited</section></body></html>'
+  });
+});
+
 test('applyStudioSourceView forwards edited source and closes only after a successful apply', async () => {
   const modalEl = { classList: createClassList(['opacity-100']) };
   const contentEl = { classList: createClassList(['scale-100']) };

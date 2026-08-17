@@ -206,6 +206,33 @@ test('source CSS applier rebuilds source HTML before delegating', () => {
   ]);
 });
 
+test('source CSS applier uses the modal HTML buffer when one is provided', () => {
+  const calls = [];
+  const applySourceCss = sourceController.createStudioEditorSourceCssApplier({
+    buildSourceHtml: () => {
+      calls.push(['build']);
+      return '<html>live</html>';
+    },
+    resolveReplaceSourceCss: () => (sourceHtml, sourceCss) => {
+      calls.push(['replace', sourceHtml, sourceCss]);
+      return '<html>updated</html>';
+    },
+    applySourceHtml: (sourceHtml) => {
+      calls.push(['apply', sourceHtml]);
+      return { success: true };
+    }
+  });
+
+  assert.deepEqual(
+    applySourceCss('.slide { color: blue; }', { sourceHtml: '<html>edited</html>' }),
+    { success: true }
+  );
+  assert.deepEqual(calls, [
+    ['replace', '<html>edited</html>', '.slide { color: blue; }'],
+    ['apply', '<html>updated</html>']
+  ]);
+});
+
 test('source CSS applier fails closed when source replacement is unavailable', () => {
   let buildCalls = 0;
   const applySourceCss = sourceController.createStudioEditorSourceCssApplier({

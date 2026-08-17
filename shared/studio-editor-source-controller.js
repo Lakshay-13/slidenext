@@ -196,13 +196,17 @@
       ? options.resolveReplaceSourceCss
       : () => null;
 
-    return function applySourceCss(sourceCss = '') {
+    return function applySourceCss(sourceCss = '', sourceOptions = {}) {
       const replaceSourceCss = resolveReplaceSourceCss();
       if (typeof replaceSourceCss !== 'function') {
         return { success: false, error: 'Source CSS editor is unavailable' };
       }
+      const hasSourceHtml = sourceOptions
+        && typeof sourceOptions === 'object'
+        && typeof sourceOptions.sourceHtml === 'string';
       try {
-        return applySourceHtml(replaceSourceCss(buildSourceHtml(), sourceCss));
+        const sourceHtml = hasSourceHtml ? sourceOptions.sourceHtml : buildSourceHtml();
+        return applySourceHtml(replaceSourceCss(sourceHtml, sourceCss));
       } catch (error) {
         return { success: false, error: 'Source CSS could not be applied' };
       }
