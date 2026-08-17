@@ -795,13 +795,21 @@
   }
 
   function resolveAssetSource(source, options) {
-    if (!source) return '';
-    if (/^(data:|https?:\/\/|file:\/\/)/i.test(source)) return source;
-    if (/^\//.test(source) && options.assetRootDir) {
-      return `${options.assetRootDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
+    if (typeof source !== 'string' || !source.trim()) return '';
+    const normalizedSource = source.trim();
+    if (/^(data:|https?:\/\/|file:\/\/)/i.test(normalizedSource)) return normalizedSource;
+    const withoutUrlDecorators = normalizedSource.split(/[?#]/, 1)[0];
+    let localSource = withoutUrlDecorators;
+    try {
+      localSource = decodeURIComponent(withoutUrlDecorators);
+    } catch (error) {
+      // Keep the original local path when URL decoding fails.
     }
-    if (/^\//.test(source) || !options.assetBaseDir) return source;
-    return `${options.assetBaseDir.replace(/[\\/]$/, '')}/${source.replace(/^[/\\]+/, '')}`;
+    if (/^\//.test(localSource) && options.assetRootDir) {
+      return `${options.assetRootDir.replace(/[\\/]$/, '')}/${localSource.replace(/^[/\\]+/, '')}`;
+    }
+    if (/^\//.test(localSource) || !options.assetBaseDir) return localSource;
+    return `${options.assetBaseDir.replace(/[\\/]$/, '')}/${localSource.replace(/^[/\\]+/, '')}`;
   }
 
   function resolveImageSource(node, deck, options) {

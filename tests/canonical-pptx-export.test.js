@@ -1200,6 +1200,33 @@ test('createCanonicalPptxExport resolves root-relative asset paths through the a
   );
 });
 
+test('createCanonicalPptxExport normalizes local asset URL decorators before resolving paths', () => {
+  let resolvedAssetSource = '';
+  const result = pptxExport.createCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'image-1',
+        type: 'image',
+        attributes: { src: '/presentations/demo/assets/image.png?v=2#hero' },
+        layout: { x: 0, y: 0, width: 100, height: 100 }
+      }]
+    }]
+  }, {
+    PptxGenJS: FakePptx,
+    assetRootDir: '/workspace',
+    assetExists(source) {
+      resolvedAssetSource = source;
+      return true;
+    }
+  });
+
+  assert.equal(resolvedAssetSource, '/workspace/presentations/demo/assets/image.png');
+  assert.equal(
+    result.pptx.slides[0].calls[0].options.path,
+    '/workspace/presentations/demo/assets/image.png'
+  );
+});
+
 test('createCanonicalPptxExport skips missing image files after preflight', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{

@@ -66,6 +66,7 @@ test('createPdfAssetExists resolves local asset paths within the export roots', 
     const assetExists = pdfScript.createPdfAssetExists(temporaryDir, temporaryDir);
 
     assert.equal(assetExists('assets/hero.png'), true);
+    assert.equal(assetExists('assets/hero.png?v=2#hero'), true);
     assert.equal(assetExists('assets/missing.png'), false);
     assert.equal(assetExists('../outside.png'), false);
     assert.equal(assetExists('data:image/png;base64,AAAA'), true);

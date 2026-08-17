@@ -117,13 +117,22 @@ function resolveContainedPath(rootDir, relativePath) {
 function createPdfAssetExists(assetBaseDir = WORKSPACE_ROOT, assetRootDir = WORKSPACE_ROOT) {
   const resolvedAssetRootDir = path.resolve(assetRootDir || WORKSPACE_ROOT);
   const resolvedAssetBaseDir = path.resolve(assetBaseDir || resolvedAssetRootDir);
+  const normalizeLocalAssetSource = (assetSource) => {
+    const withoutUrlDecorators = assetSource.split(/[?#]/, 1)[0];
+    try {
+      return decodeURIComponent(withoutUrlDecorators);
+    } catch (error) {
+      return withoutUrlDecorators;
+    }
+  };
   return (assetSource) => {
     if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
     const source = assetSource.trim();
     if (/^(?:data:|https?:\/\/)/i.test(source)) return true;
-    const sourcePath = source.startsWith('/')
-      ? resolveContainedPath(resolvedAssetRootDir, source.replace(/^[/\\]+/, ''))
-      : resolveContainedPath(resolvedAssetBaseDir, source);
+    const localSource = normalizeLocalAssetSource(source);
+    const sourcePath = localSource.startsWith('/')
+      ? resolveContainedPath(resolvedAssetRootDir, localSource.replace(/^[/\\]+/, ''))
+      : resolveContainedPath(resolvedAssetBaseDir, localSource);
     if (!sourcePath) return false;
     try {
       return fsSync.statSync(sourcePath).isFile();
