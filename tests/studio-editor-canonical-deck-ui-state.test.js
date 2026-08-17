@@ -2863,6 +2863,7 @@ test('createEditorDeckViewHtmlOptions maps canonical html arguments when local h
     return '<html>canonical</html>';
   };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView
   };
 
@@ -2904,6 +2905,7 @@ test('createEditorDeckViewHtmlOptions extends fallback deck view build options w
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView,
     createEditorDeckViewBuildOptions(sourceDoc) {
       calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
@@ -3199,6 +3201,41 @@ test('createEditorDeckViewCanonicalHtmlResolver does not bypass the canonical vi
   const result = context.createEditorDeckViewCanonicalHtmlResolver({ marker: 'test' });
 
   assert.equal(result, 'canonical-resolver');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].marker, 'test');
+  assert.equal(calls[0].deckViewApi, deckViewApi);
+});
+
+test('createEditorDeckViewHtmlOptions does not bypass the canonical view-state helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const optionsSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewHtmlOptions(options = {}) {',
+    '\n\n    function createEditorPreviewFallbackHtmlTransformer(options = {}) {'
+  );
+
+  const deckViewApi = {
+    createStudioDeckViewHtmlOptions() {
+      throw new Error('direct deck view html-options fallback should not run');
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalViewState: {
+      createStudioEditorDeckViewHtmlOptions(options) {
+        calls.push(options);
+        return 'canonical-options';
+      }
+    },
+    SlideNextStudioDeckView: deckViewApi
+  };
+
+  vm.createContext(context);
+  vm.runInContext(optionsSource, context);
+
+  const result = context.createEditorDeckViewHtmlOptions({ marker: 'test' });
+
+  assert.equal(result, 'canonical-options');
   assert.equal(calls.length, 1);
   assert.equal(calls[0].marker, 'test');
   assert.equal(calls[0].deckViewApi, deckViewApi);

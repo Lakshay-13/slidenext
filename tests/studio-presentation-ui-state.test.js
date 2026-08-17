@@ -558,6 +558,7 @@ test('buildEditorPreviewHtml fails closed when the shared deck html helper is un
     ]
   };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
@@ -725,6 +726,7 @@ test('createEditorDeckViewHtmlOptions bundles shared deck view html resolvers wh
   const mapCanonicalHtmlArgs = function mapCanonicalHtmlArgs() {};
   const transformFallbackHtml = function transformFallbackHtml() {};
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView,
     __createEditorDeckViewBuildViewOptionsResolver(options) {
       buildViewOptionsResolverArgs = options;
