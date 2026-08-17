@@ -8,6 +8,12 @@ const accessorsApi = require('../shared/presentation-dashboard-accessors.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 const ACCESSORS_PATH = path.join(__dirname, '..', 'shared', 'presentation-dashboard-accessors.js');
+const SHELL_COMPOSITION_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'presentation-dashboard-shell-composition.js'
+);
 
 test('dashboard accessors delegate dashboard and creation commands', async () => {
   const calls = [];
@@ -119,14 +125,19 @@ test('dashboard accessors publish the global consumed by the editor shell', () =
 
 test('editor loads dashboard accessors after the dashboard runtime', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const shellComposition = fs.readFileSync(SHELL_COMPOSITION_PATH, 'utf8');
 
   assert.match(
     fileContent,
     /<script src="\/shared\/presentation-dashboard-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createPresentationDashboardAccessors\(/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/presentation-dashboard-shell-composition\.js"><\/script>/
+  );
+  assert.match(shellComposition, /createPresentationDashboardAccessors\(/);
+  assert.match(shellComposition, /createPresentationDashboardGlobalApi\(/);
   assert.match(fileContent, /presentationDashboardAccessors/);
-  assert.match(fileContent, /createPresentationDashboardGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, presentationDashboardGlobalApi\)/);
   assert.doesNotMatch(fileContent, /function setPresentationLibraryLoadingState\(\)/);
   assert.doesNotMatch(fileContent, /async function loadPresentations\(\)/);

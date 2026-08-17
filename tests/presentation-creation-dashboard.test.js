@@ -5,6 +5,12 @@ const path = require('node:path');
 const presentationCreationController = require('../shared/presentation-creation-controller.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
+const SHELL_COMPOSITION_PATH = path.join(
+  __dirname,
+  '..',
+  'shared',
+  'presentation-dashboard-shell-composition.js'
+);
 
 function createControllerContext(createPresentation) {
   const titleInput = {
@@ -148,6 +154,7 @@ test('creation controller binds the modal controls without inline handlers', () 
 
 test('dashboard markup exposes the new deck control and creation form', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const shellComposition = fs.readFileSync(SHELL_COMPOSITION_PATH, 'utf8');
   assert.match(source, /id="createPresentationBtn"/);
   assert.match(source, /id="createPresentationModal"/);
   assert.match(source, /id="createPresentationTitle"/);
@@ -157,5 +164,5 @@ test('dashboard markup exposes the new deck control and creation form', () => {
       assert.ok(line, `Missing creation control: ${id}`);
       assert.doesNotMatch(line, /onclick=|onsubmit=/);
     });
-  assert.match(source, /bindPresentationCreationButtons\(\{ documentRef: document \}\)/);
+  assert.match(shellComposition, /bindPresentationCreationButtons\(\{\s*documentRef: options\.documentRef\s*\}\)/);
 });

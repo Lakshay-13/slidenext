@@ -1724,6 +1724,7 @@
   <script src="/shared/presentation-dashboard-controller.js"></script>
   <script src="/shared/presentation-dashboard-runtime.js"></script>
   <script src="/shared/presentation-dashboard-accessors.js"></script>
+  <script src="/shared/presentation-dashboard-shell-composition.js"></script>
   <script src="/shared/studio-editor-style.js"></script>
   <script src="/shared/studio-editor-style-toolbar-state.js"></script>
   <script src="/shared/studio-editor-style-toolbar-state-runtime-accessors.js"></script>
@@ -3021,59 +3022,35 @@
       && Number.isFinite(editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX)
       ? editorInteractionDefaults.DEFAULT_DRAG_OVERFLOW_MARGIN_PX
       : 280;
-    const presentationDashboardRuntime = typeof SlideNextPresentationDashboardRuntime !== 'undefined'
-      && SlideNextPresentationDashboardRuntime
-      && typeof SlideNextPresentationDashboardRuntime.createPresentationDashboardRuntime === 'function'
-      ? SlideNextPresentationDashboardRuntime.createPresentationDashboardRuntime({
+    const presentationDashboardShellCompositionApi =
+      typeof SlideNextPresentationDashboardShellComposition !== 'undefined'
+      ? SlideNextPresentationDashboardShellComposition
+      : null;
+    const presentationDashboardShellComposition = presentationDashboardShellCompositionApi
+      && typeof presentationDashboardShellCompositionApi
+        .createPresentationDashboardShellComposition === 'function'
+      ? presentationDashboardShellCompositionApi
+        .createPresentationDashboardShellComposition({
           documentRef: document,
-          dashboardControllerApi: typeof SlideNextPresentationDashboardController !== 'undefined'
-            ? SlideNextPresentationDashboardController
-            : null,
-          creationControllerApi: typeof SlideNextPresentationCreationController !== 'undefined'
-            ? SlideNextPresentationCreationController
-            : null,
-          presentationLibrary: typeof SlideNextPresentationLibrary !== 'undefined'
-            ? SlideNextPresentationLibrary
-            : null,
-          presentationLibraryView: typeof SlideNextPresentationLibraryView !== 'undefined'
-            ? SlideNextPresentationLibraryView
-            : null,
-          presentationCreationView: typeof SlideNextPresentationCreationView !== 'undefined'
-            ? SlideNextPresentationCreationView
-            : null,
           loadPresentations: () => loadPresentations(),
           launchPresentation: (...args) => launchPresentation(...args),
           launchStudioEditor: (...args) => launchStudioEditor(...args)
         })
       : null;
-    const presentationDashboardController = presentationDashboardRuntime
-      ? presentationDashboardRuntime.dashboardController
+    const presentationDashboardRuntime = presentationDashboardShellComposition
+      ? presentationDashboardShellComposition.runtime
       : null;
-    const presentationCreationController = presentationDashboardRuntime
-      ? presentationDashboardRuntime.creationController
+    const presentationDashboardController = presentationDashboardShellComposition
+      ? presentationDashboardShellComposition.dashboardController
       : null;
-    if (presentationCreationController
-      && typeof presentationCreationController.bindPresentationCreationButtons === 'function') {
-      presentationCreationController.bindPresentationCreationButtons({ documentRef: document });
-    }
-    const presentationDashboardAccessors = typeof SlideNextPresentationDashboardAccessors !== 'undefined'
-      && SlideNextPresentationDashboardAccessors
-      && typeof SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors === 'function'
-      ? SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors({
-          dashboardController: presentationDashboardController,
-          creationController: presentationCreationController
-        })
+    const presentationCreationController = presentationDashboardShellComposition
+      ? presentationDashboardShellComposition.creationController
       : null;
-    const presentationDashboardGlobalApi = typeof SlideNextPresentationDashboardAccessors !== 'undefined'
-      && SlideNextPresentationDashboardAccessors
-      && typeof SlideNextPresentationDashboardAccessors.createPresentationDashboardGlobalApi === 'function'
-      ? SlideNextPresentationDashboardAccessors.createPresentationDashboardGlobalApi({
-          accessors: presentationDashboardAccessors
-            || SlideNextPresentationDashboardAccessors.createPresentationDashboardAccessors({
-              dashboardController: presentationDashboardController,
-              creationController: presentationCreationController
-            })
-        })
+    const presentationDashboardAccessors = presentationDashboardShellComposition
+      ? presentationDashboardShellComposition.accessors
+      : null;
+    const presentationDashboardGlobalApi = presentationDashboardShellComposition
+      ? presentationDashboardShellComposition.globalApi
       : {};
     Object.assign(globalThis, presentationDashboardGlobalApi);
     const studioEditorElementSnapshotRuntimeAccessorsApi =

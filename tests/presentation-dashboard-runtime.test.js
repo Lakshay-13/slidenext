@@ -60,7 +60,8 @@ test('presentation dashboard runtime composes dashboard and creation controllers
 test('index wires dashboard and creation composition through the runtime module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   assert.match(source, /src="\/shared\/presentation-dashboard-runtime\.js"/);
-  assert.match(source, /SlideNextPresentationDashboardRuntime\.createPresentationDashboardRuntime/);
-  assert.match(source, /const presentationDashboardController = presentationDashboardRuntime/);
-  assert.match(source, /const presentationCreationController = presentationDashboardRuntime/);
+  assert.match(source, /src="\/shared\/presentation-dashboard-shell-composition\.js"/);
+  assert.match(source, /SlideNextPresentationDashboardShellComposition/);
+  assert.match(source, /createPresentationDashboardShellComposition/);
+  assert.doesNotMatch(source, /SlideNextPresentationDashboardRuntime\.createPresentationDashboardRuntime/);
 });
