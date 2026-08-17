@@ -676,6 +676,7 @@ test('createEditorDeckViewCanonicalHtmlResolver remaps canonical html arguments 
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView
   };
 

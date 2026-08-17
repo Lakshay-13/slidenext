@@ -3169,6 +3169,41 @@ test('createEditorDeckViewBuildViewOptionsResolver does not bypass the canonical
   assert.equal(calls[0].deckViewApi, deckViewApi);
 });
 
+test('createEditorDeckViewCanonicalHtmlResolver does not bypass the canonical view-state helper', () => {
+  const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const resolverSource = extractFunctionSource(
+    fileContent,
+    'function createEditorDeckViewCanonicalHtmlResolver(options = {}) {',
+    '\n\n    function buildEditorPreviewHtml(doc = getIframeDoc()) {'
+  );
+
+  const deckViewApi = {
+    createStudioDeckViewCanonicalHtmlResolver() {
+      throw new Error('direct deck view canonical-html fallback should not run');
+    }
+  };
+  const calls = [];
+  const context = {
+    SlideNextStudioEditorCanonicalViewState: {
+      createStudioEditorDeckViewCanonicalHtmlResolver(options) {
+        calls.push(options);
+        return 'canonical-resolver';
+      }
+    },
+    SlideNextStudioDeckView: deckViewApi
+  };
+
+  vm.createContext(context);
+  vm.runInContext(resolverSource, context);
+
+  const result = context.createEditorDeckViewCanonicalHtmlResolver({ marker: 'test' });
+
+  assert.equal(result, 'canonical-resolver');
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].marker, 'test');
+  assert.equal(calls[0].deckViewApi, deckViewApi);
+});
+
 test('createEditorCanonicalDeckViewStateOptions reuses provided canonical and live-active resolvers when available', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const helperSource = extractFunctionSource(
