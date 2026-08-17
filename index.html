@@ -1753,6 +1753,7 @@
   <script src="/shared/studio-editor-session-runtime.js"></script>
   <script src="/shared/studio-editor-session-shell-runtime.js"></script>
   <script src="/shared/studio-editor-session-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-session-shell-composition.js"></script>
   <script src="/shared/studio-editor-session-token-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-label-state-controller.js"></script>
   <script src="/shared/studio-editor-presentation-metadata-state-controller.js"></script>
@@ -6873,26 +6874,23 @@
           syncStudioChromeToActiveSlide
         })
       : null;
-    const studioEditorSessionRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorSessionRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorSessionRuntimeAccessors
+    const studioEditorSessionShellCompositionApi =
+      typeof SlideNextStudioEditorSessionShellComposition !== 'undefined'
+      ? SlideNextStudioEditorSessionShellComposition
       : null;
-    const studioEditorSessionRuntimeAccessors = studioEditorSessionRuntimeAccessorsApi
-      && typeof studioEditorSessionRuntimeAccessorsApi
-        .createStudioEditorSessionRuntimeAccessors === 'function'
-      ? studioEditorSessionRuntimeAccessorsApi
-        .createStudioEditorSessionRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorSessionShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorSessionShellRuntime
-            : null,
-          sessionRuntimeApi: typeof SlideNextStudioEditorSessionRuntime !== 'undefined'
-            ? SlideNextStudioEditorSessionRuntime
-            : null,
+    const studioEditorSessionShellComposition = studioEditorSessionShellCompositionApi
+      && typeof studioEditorSessionShellCompositionApi
+        .createStudioEditorSessionShellComposition === 'function'
+      ? studioEditorSessionShellCompositionApi
+        .createStudioEditorSessionShellComposition({
           runtimeOptions: studioEditorSessionRuntimeOptions
         })
       : null;
-    const studioEditorSessionRuntime = studioEditorSessionRuntimeAccessors
-      ? studioEditorSessionRuntimeAccessors.runtime
+    const studioEditorSessionRuntimeAccessors = studioEditorSessionShellComposition
+      ? studioEditorSessionShellComposition.accessors
+      : null;
+    const studioEditorSessionRuntime = studioEditorSessionShellComposition
+      ? studioEditorSessionShellComposition.runtime
       : null;
     const studioEditorSessionStateController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.sessionStateController
