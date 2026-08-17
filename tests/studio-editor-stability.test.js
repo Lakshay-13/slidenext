@@ -1429,8 +1429,9 @@ test('editor composes element lock reads through the shared element state module
   assert.match(source, /<script src="\/shared\/studio-editor-element-state-accessors\.js"><\/script>/);
   assert.match(source, /const studioEditorElementStateAccessors =/);
   assert.match(source, /const studioEditorElementLockReader =/);
-  assert.match(source, /isStudioElementLocked/);
+  assert.match(source, /studioEditorElementStateAccessors\.isLocked/);
   assert.match(source, /typeof studioEditorElementLockReader === 'function'/);
+  assert.doesNotMatch(source, /SlideNextStudioElementState\.isStudioElementLocked/);
   assert.doesNotMatch(source, /isElementLocked\.reader/);
 });
 
@@ -1444,8 +1445,8 @@ test('isElementLocked delegates the element to the shared element state module',
   const element = { id: 'element-1' };
   const calls = [];
   const context = {
-    SlideNextStudioElementState: {
-      isStudioElementLocked(value) {
+    studioEditorElementStateAccessors: {
+      isLocked(value) {
         calls.push(value);
         return true;
       }
@@ -1466,7 +1467,7 @@ test('isElementLocked fails closed when the shared element state module is unava
     'const studioEditorElementLockReader =',
     '\n\n    function resolveEditorCanonicalNodeForElement('
   );
-  const context = { SlideNextStudioElementState: null };
+  const context = { studioEditorElementStateAccessors: null };
 
   vm.createContext(context);
   vm.runInContext(lockReaderSource, context);
@@ -1478,8 +1479,9 @@ test('editor composes element hidden reads through the shared element state modu
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorElementHiddenReader =/);
-  assert.match(source, /isStudioElementHidden/);
+  assert.match(source, /studioEditorElementStateAccessors\.isHidden/);
   assert.match(source, /typeof studioEditorElementHiddenReader === 'function'/);
+  assert.doesNotMatch(source, /SlideNextStudioElementState\.isStudioElementHidden/);
   assert.doesNotMatch(source, /isElementHidden\.reader/);
 });
 
@@ -1493,8 +1495,8 @@ test('isElementHidden delegates the element to the shared element state module',
   const element = { id: 'element-1' };
   const calls = [];
   const context = {
-    SlideNextStudioElementState: {
-      isStudioElementHidden(value) {
+    studioEditorElementStateAccessors: {
+      isHidden(value) {
         calls.push(value);
         return true;
       }
@@ -1515,7 +1517,7 @@ test('isElementHidden fails closed when the shared element state module is unava
     'const studioEditorElementHiddenReader =',
     '\n\n    function getEditorCanonicalVisibilityReader('
   );
-  const context = { SlideNextStudioElementState: null };
+  const context = { studioEditorElementStateAccessors: null };
 
   vm.createContext(context);
   vm.runInContext(hiddenReaderSource, context);
@@ -1527,8 +1529,9 @@ test('editor composes element hidden writes through the shared element state mod
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorElementHiddenWriter =/);
-  assert.match(source, /setStudioElementHiddenState/);
+  assert.match(source, /studioEditorElementStateAccessors\.setHiddenState/);
   assert.match(source, /typeof studioEditorElementHiddenWriter !== 'function'/);
+  assert.doesNotMatch(source, /SlideNextStudioElementState\.setStudioElementHiddenState/);
   assert.doesNotMatch(source, /setElementHiddenState\.writer/);
 });
 
@@ -1542,8 +1545,8 @@ test('setElementHiddenState delegates connected elements and preserves its void 
   const element = { id: 'element-1', isConnected: true };
   const calls = [];
   const context = {
-    SlideNextStudioElementState: {
-      setStudioElementHiddenState(elementValue, hiddenValue) {
+    studioEditorElementStateAccessors: {
+      setHiddenState(elementValue, hiddenValue) {
         calls.push([elementValue, hiddenValue]);
         return 'ignored';
       }
@@ -1564,7 +1567,7 @@ test('setElementHiddenState ignores connected elements when the shared module is
     'const studioEditorElementHiddenWriter =',
     '\n\n    function updateLockActionState('
   );
-  const context = { SlideNextStudioElementState: null };
+  const context = { studioEditorElementStateAccessors: null };
 
   vm.createContext(context);
   vm.runInContext(hiddenWriterSource, context);
@@ -1576,9 +1579,10 @@ test('editor composes visibility snapshots through the shared element state modu
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorElementVisibilityStateReader =/);
-  assert.match(source, /getStudioElementVisibilityState/);
+  assert.match(source, /studioEditorElementStateAccessors\.getVisibilityState/);
   assert.match(source, /getVisibilityState: \(\.\.\.args\) => getElementVisibilityState\(\.\.\.args\)/);
   assert.match(source, /typeof studioEditorElementVisibilityStateReader === 'function'/);
+  assert.doesNotMatch(source, /SlideNextStudioElementState\.getStudioElementVisibilityState/);
   assert.doesNotMatch(source, /getElementVisibilityState\.reader/);
 });
 
@@ -1593,8 +1597,8 @@ test('getElementVisibilityState delegates the element to the shared element stat
   const calls = [];
   const state = { hidden: false, display: '', ariaHidden: null };
   const context = {
-    SlideNextStudioElementState: {
-      getStudioElementVisibilityState(value) {
+    studioEditorElementStateAccessors: {
+      getVisibilityState(value) {
         calls.push(value);
         return state;
       }
@@ -1615,7 +1619,7 @@ test('getElementVisibilityState fails closed when the shared element state modul
     'const studioEditorElementVisibilityStateReader =',
     'const studioEditorLockVisibilityRuntime ='
   );
-  const context = { SlideNextStudioElementState: null };
+  const context = { studioEditorElementStateAccessors: null };
 
   vm.createContext(context);
   vm.runInContext(visibilityStateSource, context);
@@ -1627,9 +1631,10 @@ test('editor composes element lock writes through the shared element state modul
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorElementLockWriter =/);
-  assert.match(source, /setStudioElementLockedState/);
+  assert.match(source, /studioEditorElementStateAccessors\.setLockedState/);
   assert.match(source, /setLocked: \(\.\.\.args\) => setElementLockedState\(\.\.\.args\)/);
   assert.match(source, /typeof studioEditorElementLockWriter !== 'function'/);
+  assert.doesNotMatch(source, /SlideNextStudioElementState\.setStudioElementLockedState/);
   assert.doesNotMatch(source, /setElementLockedState\.writer/);
 });
 
@@ -1643,8 +1648,8 @@ test('setElementLockedState delegates the element and preserves its void contrac
   const element = { id: 'element-1' };
   const calls = [];
   const context = {
-    SlideNextStudioElementState: {
-      setStudioElementLockedState(elementValue, lockedValue) {
+    studioEditorElementStateAccessors: {
+      setLockedState(elementValue, lockedValue) {
         calls.push([elementValue, lockedValue]);
         return 'ignored';
       }
@@ -1665,7 +1670,7 @@ test('setElementLockedState ignores writes when the shared element state module 
     'const studioEditorElementLockWriter =',
     'const studioEditorLockVisibilityRuntime ='
   );
-  const context = { SlideNextStudioElementState: null };
+  const context = { studioEditorElementStateAccessors: null };
 
   vm.createContext(context);
   vm.runInContext(lockWriterSource, context);

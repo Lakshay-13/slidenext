@@ -3993,10 +3993,6 @@
       && studioEditorElementStateAccessors
       && typeof studioEditorElementStateAccessors.getVisibilityState === 'function'
       ? (element) => studioEditorElementStateAccessors.getVisibilityState(element)
-      : typeof SlideNextStudioElementState !== 'undefined'
-      && SlideNextStudioElementState
-      && typeof SlideNextStudioElementState.getStudioElementVisibilityState === 'function'
-      ? (element) => SlideNextStudioElementState.getStudioElementVisibilityState(element)
       : null;
 
     function getElementVisibilityState(element) {
@@ -4009,10 +4005,6 @@
       && studioEditorElementStateAccessors
       && typeof studioEditorElementStateAccessors.setLockedState === 'function'
       ? (element, locked) => studioEditorElementStateAccessors.setLockedState(element, locked)
-      : typeof SlideNextStudioElementState !== 'undefined'
-      && SlideNextStudioElementState
-      && typeof SlideNextStudioElementState.setStudioElementLockedState === 'function'
-      ? (element, locked) => SlideNextStudioElementState.setStudioElementLockedState(element, locked)
       : null;
 
     function setElementLockedState(element, locked) {
@@ -10297,10 +10289,6 @@
       && studioEditorElementStateAccessors
       && typeof studioEditorElementStateAccessors.isLocked === 'function'
       ? (element) => studioEditorElementStateAccessors.isLocked(element)
-      : typeof SlideNextStudioElementState !== 'undefined'
-      && SlideNextStudioElementState
-      && typeof SlideNextStudioElementState.isStudioElementLocked === 'function'
-      ? (element) => SlideNextStudioElementState.isStudioElementLocked(element)
       : null;
 
     function isElementLocked(el) {
@@ -10620,10 +10608,6 @@
       && studioEditorElementStateAccessors
       && typeof studioEditorElementStateAccessors.isHidden === 'function'
       ? (element) => studioEditorElementStateAccessors.isHidden(element)
-      : typeof SlideNextStudioElementState !== 'undefined'
-      && SlideNextStudioElementState
-      && typeof SlideNextStudioElementState.isStudioElementHidden === 'function'
-      ? (element) => SlideNextStudioElementState.isStudioElementHidden(element)
       : null;
 
     function isElementHidden(el) {
@@ -10668,10 +10652,6 @@
       && studioEditorElementStateAccessors
       && typeof studioEditorElementStateAccessors.setHiddenState === 'function'
       ? (element, hidden) => studioEditorElementStateAccessors.setHiddenState(element, hidden)
-      : typeof SlideNextStudioElementState !== 'undefined'
-      && SlideNextStudioElementState
-      && typeof SlideNextStudioElementState.setStudioElementHiddenState === 'function'
-      ? (element, hidden) => SlideNextStudioElementState.setStudioElementHiddenState(element, hidden)
       : null;
 
     function setElementHiddenState(el, hidden) {
