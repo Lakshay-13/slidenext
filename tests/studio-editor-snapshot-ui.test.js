@@ -79,7 +79,9 @@ test('snapshot UI adapter preserves safe fallbacks when shared APIs are unavaila
 test('editor exposes the shared snapshot UI adapter to the inline compatibility wrappers', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /SlideNextStudioEditorSnapshotUi/);
+  assert.match(source, /studio-editor-snapshot-ui\.js/);
+  assert.match(source, /studio-editor-deck-snapshot-shell-composition\.js/);
+  assert.match(source, /studioEditorDeckSnapshotShellComposition/);
   assert.match(source, /studioEditorSnapshotUi\.getActiveSlideIndex\(doc\)/);
   assert.match(source, /studioEditorSnapshotUi\.getLayerDisplayMetadata\(el\)/);
   assert.match(source, /studioEditorSnapshotUi\.buildElementSnapshot\(el\)/);

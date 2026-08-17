@@ -1902,6 +1902,7 @@
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
   <script src="/shared/studio-editor-snapshot-ui.js"></script>
+  <script src="/shared/studio-editor-deck-snapshot-shell-composition.js"></script>
   <script src="/shared/studio-deck-ready.js"></script>
   <script src="/shared/studio-editor-deck-ready-controller.js"></script>
   <script src="/shared/studio-editor-deck-ready-runtime.js"></script>
@@ -3238,14 +3239,17 @@
     const studioEditorDeckSnapshotController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.deckSnapshotController
       : null;
-    const studioEditorDeckSnapshotAccessors = typeof SlideNextStudioEditorDeckSnapshotAccessors !== 'undefined'
-      && SlideNextStudioEditorDeckSnapshotAccessors
-      && typeof SlideNextStudioEditorDeckSnapshotAccessors.createStudioEditorDeckSnapshotAccessors === 'function'
-      ? SlideNextStudioEditorDeckSnapshotAccessors.createStudioEditorDeckSnapshotAccessors({
+    const studioEditorDeckSnapshotShellCompositionApi =
+      typeof SlideNextStudioEditorDeckSnapshotShellComposition !== 'undefined'
+      ? SlideNextStudioEditorDeckSnapshotShellComposition
+      : null;
+    const studioEditorDeckSnapshotShellComposition =
+      studioEditorDeckSnapshotShellCompositionApi
+      && typeof studioEditorDeckSnapshotShellCompositionApi
+        .createStudioEditorDeckSnapshotShellComposition === 'function'
+      ? studioEditorDeckSnapshotShellCompositionApi
+        .createStudioEditorDeckSnapshotShellComposition({
           controller: studioEditorDeckSnapshotController,
-          snapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
-            ? SlideNextStudioDeckSnapshot
-            : null,
           getDocument: () => getIframeDoc(),
           createDeckViewStateOptions: () => createEditorCanonicalDeckViewStateOptions(),
           resolveCanonicalDeckViewState: (nextDoc) => resolveEditorCanonicalDeckViewState(nextDoc),
@@ -3263,21 +3267,17 @@
           getSlideId: getEditorSlideId,
           getSlideEditableElements,
           getNormalizedSlideLayerOrder,
-          buildElementSnapshot: buildEditorElementSnapshot
-        })
-      : null;
-    const studioEditorSnapshotUi = typeof SlideNextStudioEditorSnapshotUi !== 'undefined'
-      && SlideNextStudioEditorSnapshotUi
-      && typeof SlideNextStudioEditorSnapshotUi.createStudioEditorSnapshotUi === 'function'
-      ? SlideNextStudioEditorSnapshotUi.createStudioEditorSnapshotUi({
-          deckSnapshotApi: typeof SlideNextStudioDeckSnapshot !== 'undefined'
-            ? SlideNextStudioDeckSnapshot
-            : null,
-          deckSnapshotAccessors: studioEditorDeckSnapshotAccessors,
+          buildElementSnapshot: buildEditorElementSnapshot,
           elementSnapshotAccessors: studioEditorElementSnapshotAccessors,
           buildEditorDeckSnapshot: (sourceDoc, buildOptions = {}) => buildEditorDeckSnapshot(sourceDoc, buildOptions),
           getCurrentSlideIndex: () => getStudioCurrentSlideIndex()
         })
+      : null;
+    const studioEditorDeckSnapshotAccessors = studioEditorDeckSnapshotShellComposition
+      ? studioEditorDeckSnapshotShellComposition.deckSnapshotAccessors
+      : null;
+    const studioEditorSnapshotUi = studioEditorDeckSnapshotShellComposition
+      ? studioEditorDeckSnapshotShellComposition.snapshotUi
       : null;
     const studioEditorPreviewController = studioEditorDeckViewRuntime
       ? studioEditorDeckViewRuntime.previewController

@@ -114,7 +114,12 @@ test('deck snapshot accessors preserve the legacy snapshot builder fallback', ()
 test('editor routes deck snapshot construction through the shared accessors', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /SlideNextStudioEditorDeckSnapshotAccessors/);
+  assert.match(source, /studio-editor-deck-snapshot-accessors\.js/);
+  assert.match(source, /studioEditorDeckSnapshotShellComposition/);
+  assert.doesNotMatch(
+    source,
+    /SlideNextStudioEditorDeckSnapshotAccessors\.createStudioEditorDeckSnapshotAccessors\(/
+  );
   assert.match(source, /accessors\.build\(doc, options\)/);
   assert.match(source, /accessors\.buildFromDom\(doc, options\)/);
   assert.match(source, /buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'/);

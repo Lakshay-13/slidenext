@@ -84,7 +84,12 @@ test('editor routes deck snapshot construction through the shared controller', (
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /\/shared\/studio-editor-deck-snapshot-controller\.js/);
-  assert.match(source, /SlideNextStudioEditorDeckSnapshotAccessors/);
+  assert.match(source, /studio-editor-deck-snapshot-shell-composition\.js/);
+  assert.match(source, /createStudioEditorDeckSnapshotShellComposition/);
+  assert.doesNotMatch(
+    source,
+    /SlideNextStudioEditorDeckSnapshotAccessors\.createStudioEditorDeckSnapshotAccessors\(/
+  );
   assert.match(source, /accessors\.build\(doc, options\)/);
   assert.match(source, /accessors\.buildFromDom\(doc, options\)/);
 });
