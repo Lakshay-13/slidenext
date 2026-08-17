@@ -1083,9 +1083,11 @@ test('editor composes slide metrics through the shared transform module', () => 
 
   assert.match(source, /const studioEditorSlideMetricsReader =/);
   assert.match(source, /const studioEditorSlideMetricsAdapter =/);
+  assert.match(source, /<script src="\/shared\/studio-editor-geometry-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorGeometryAccessors =/);
   assert.match(source, /getStudioEditorSlideMetrics/);
-  assert.match(source, /getStudioSlideMetrics/);
   assert.match(source, /typeof SlideNextStudioEditorSlideMetricsAdapter !== 'undefined'/);
+  assert.doesNotMatch(source, /studioEditorSlideMetricsAdapter\.getStudioEditorSlideMetrics\(/);
   assert.doesNotMatch(source, /getSlideMetrics\.reader/);
 });
 
@@ -1101,6 +1103,9 @@ test('getSlideMetrics delegates the slide to the shared transform module', () =>
   const metrics = { logicalWidth: 1280, logicalHeight: 720 };
   const context = {
     SlideNextStudioEditorSlideMetricsAdapter: require('../shared/studio-editor-slide-metrics-adapter.js'),
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    studioEditorRectOnSlideAdapter: null,
+    studioEditorPointerOnSlideAdapter: null,
     SlideNextStudioEditorTransform: {
       getStudioSlideMetrics(value) {
         calls.push(value);
@@ -1125,7 +1130,10 @@ test('getSlideMetrics fails closed when the shared transform module is unavailab
   );
   const context = {
     SlideNextStudioEditorTransform: null,
-    SlideNextStudioEditorSlideMetricsAdapter: require('../shared/studio-editor-slide-metrics-adapter.js')
+    SlideNextStudioEditorSlideMetricsAdapter: require('../shared/studio-editor-slide-metrics-adapter.js'),
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    studioEditorRectOnSlideAdapter: null,
+    studioEditorPointerOnSlideAdapter: null
   };
 
   vm.createContext(context);
@@ -1139,9 +1147,11 @@ test('editor composes rectangle conversion through the shared transform module',
 
   assert.match(source, /const studioEditorRectOnSlideReader =/);
   assert.match(source, /const studioEditorRectOnSlideAdapter =/);
-  assert.match(source, /getStudioRectOnSlide/);
+  assert.match(source, /const studioEditorGeometryAccessors =/);
+  assert.match(source, /getStudioEditorRectOnSlide/);
   assert.match(source, /typeof SlideNextStudioEditorRectOnSlideAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorRectOnSlideReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorRectOnSlideAdapter\.getStudioEditorRectOnSlide\(/);
   assert.doesNotMatch(source, /getRectOnSlide\.reader/);
 });
 
@@ -1158,6 +1168,9 @@ test('getRectOnSlide delegates rectangle and metrics to the shared transform mod
   const converted = { left: 5, top: 7, width: 20, height: 10 };
   const context = {
     SlideNextStudioEditorRectOnSlideAdapter: require('../shared/studio-editor-rect-on-slide-adapter.js'),
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    studioEditorSlideMetricsAdapter: null,
+    studioEditorPointerOnSlideAdapter: null,
     SlideNextStudioEditorTransform: {
       getStudioRectOnSlide(rectValue, metricsValue) {
         calls.push([rectValue, metricsValue]);
@@ -1182,7 +1195,10 @@ test('getRectOnSlide fails closed when the shared transform module is unavailabl
   );
   const context = {
     SlideNextStudioEditorRectOnSlideAdapter: require('../shared/studio-editor-rect-on-slide-adapter.js'),
-    SlideNextStudioEditorTransform: null
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    SlideNextStudioEditorTransform: null,
+    studioEditorSlideMetricsAdapter: null,
+    studioEditorPointerOnSlideAdapter: null
   };
 
   vm.createContext(context);
@@ -1196,9 +1212,11 @@ test('editor composes pointer conversion through the shared transform module', (
 
   assert.match(source, /const studioEditorPointerOnSlideReader =/);
   assert.match(source, /const studioEditorPointerOnSlideAdapter =/);
-  assert.match(source, /getStudioPointerOnSlide/);
+  assert.match(source, /const studioEditorGeometryAccessors =/);
+  assert.match(source, /getStudioEditorPointerOnSlide/);
   assert.match(source, /typeof SlideNextStudioEditorPointerOnSlideAdapter !== 'undefined'/);
   assert.match(source, /typeof studioEditorPointerOnSlideReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorPointerOnSlideAdapter\.getStudioEditorPointerOnSlide\(/);
   assert.doesNotMatch(source, /getPointerOnSlide\.reader/);
 });
 
@@ -1215,6 +1233,9 @@ test('getPointerOnSlide delegates the event and metrics to the shared transform 
   const pointer = { x: 55, y: 73 };
   const context = {
     SlideNextStudioEditorPointerOnSlideAdapter: require('../shared/studio-editor-pointer-on-slide-adapter.js'),
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    studioEditorSlideMetricsAdapter: null,
+    studioEditorRectOnSlideAdapter: null,
     SlideNextStudioEditorTransform: {
       getStudioPointerOnSlide(eventValue, metricsValue) {
         calls.push([eventValue, metricsValue]);
@@ -1239,7 +1260,10 @@ test('getPointerOnSlide fails closed when the shared transform module is unavail
   );
   const context = {
     SlideNextStudioEditorPointerOnSlideAdapter: require('../shared/studio-editor-pointer-on-slide-adapter.js'),
-    SlideNextStudioEditorTransform: null
+    SlideNextStudioEditorGeometryAccessors: require('../shared/studio-editor-geometry-accessors.js'),
+    SlideNextStudioEditorTransform: null,
+    studioEditorSlideMetricsAdapter: null,
+    studioEditorRectOnSlideAdapter: null
   };
 
   vm.createContext(context);

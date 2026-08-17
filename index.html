@@ -1852,6 +1852,7 @@
   <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
   <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
   <script src="/shared/studio-editor-pointer-on-slide-adapter.js"></script>
+  <script src="/shared/studio-editor-geometry-accessors.js"></script>
   <script src="/shared/studio-editor-freeform-position-adapter.js"></script>
   <script src="/shared/studio-editor-positioned-layout-item-adapter.js"></script>
   <script src="/shared/studio-editor-closest-positioned-ancestor-adapter.js"></script>
@@ -9836,15 +9837,33 @@
       ? SlideNextStudioEditorSlideMetricsAdapter
       : null;
 
-    const studioEditorSlideMetricsReader = studioEditorSlideMetricsAdapter
-      && typeof studioEditorSlideMetricsAdapter.getStudioEditorSlideMetrics === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.getStudioSlideMetrics === 'function'
-      ? (slide) => studioEditorSlideMetricsAdapter.getStudioEditorSlideMetrics(
-          slide,
-          { transformApi: SlideNextStudioEditorTransform }
-        )
+    const studioEditorRectOnSlideAdapter = typeof SlideNextStudioEditorRectOnSlideAdapter !== 'undefined'
+      && SlideNextStudioEditorRectOnSlideAdapter
+      && typeof SlideNextStudioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide === 'function'
+      ? SlideNextStudioEditorRectOnSlideAdapter
+      : null;
+    const studioEditorPointerOnSlideAdapter = typeof SlideNextStudioEditorPointerOnSlideAdapter !== 'undefined'
+      && SlideNextStudioEditorPointerOnSlideAdapter
+      && typeof SlideNextStudioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide === 'function'
+      ? SlideNextStudioEditorPointerOnSlideAdapter
+      : null;
+    const studioEditorGeometryAccessorsApi = typeof SlideNextStudioEditorGeometryAccessors !== 'undefined'
+      ? SlideNextStudioEditorGeometryAccessors
+      : null;
+    const studioEditorGeometryAccessors = studioEditorGeometryAccessorsApi
+      && typeof studioEditorGeometryAccessorsApi.createStudioEditorGeometryAccessors === 'function'
+      ? studioEditorGeometryAccessorsApi.createStudioEditorGeometryAccessors({
+          slideMetricsAdapter: studioEditorSlideMetricsAdapter,
+          rectOnSlideAdapter: studioEditorRectOnSlideAdapter,
+          pointerOnSlideAdapter: studioEditorPointerOnSlideAdapter,
+          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+            ? SlideNextStudioEditorTransform
+            : null
+        })
+      : null;
+    const studioEditorSlideMetricsReader = studioEditorGeometryAccessors
+      && typeof studioEditorGeometryAccessors.getSlideMetrics === 'function'
+      ? (slide) => studioEditorGeometryAccessors.getSlideMetrics(slide)
       : null;
 
     function getSlideMetrics(slide) {
@@ -9853,22 +9872,9 @@
         : null;
     }
 
-    const studioEditorRectOnSlideAdapter = typeof SlideNextStudioEditorRectOnSlideAdapter !== 'undefined'
-      && SlideNextStudioEditorRectOnSlideAdapter
-      && typeof SlideNextStudioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide === 'function'
-      ? SlideNextStudioEditorRectOnSlideAdapter
-      : null;
-
-    const studioEditorRectOnSlideReader = studioEditorRectOnSlideAdapter
-      && typeof studioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.getStudioRectOnSlide === 'function'
-      ? (rect, slideMetrics) => studioEditorRectOnSlideAdapter.getStudioEditorRectOnSlide(
-          rect,
-          slideMetrics,
-          { transformApi: SlideNextStudioEditorTransform }
-        )
+    const studioEditorRectOnSlideReader = studioEditorGeometryAccessors
+      && typeof studioEditorGeometryAccessors.getRectOnSlide === 'function'
+      ? (rect, slideMetrics) => studioEditorGeometryAccessors.getRectOnSlide(rect, slideMetrics)
       : null;
 
     function getRectOnSlide(rect, slideMetrics) {
@@ -9877,22 +9883,9 @@
         : null;
     }
 
-    const studioEditorPointerOnSlideAdapter = typeof SlideNextStudioEditorPointerOnSlideAdapter !== 'undefined'
-      && SlideNextStudioEditorPointerOnSlideAdapter
-      && typeof SlideNextStudioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide === 'function'
-      ? SlideNextStudioEditorPointerOnSlideAdapter
-      : null;
-
-    const studioEditorPointerOnSlideReader = studioEditorPointerOnSlideAdapter
-      && typeof studioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide === 'function'
-      && typeof SlideNextStudioEditorTransform !== 'undefined'
-      && SlideNextStudioEditorTransform
-      && typeof SlideNextStudioEditorTransform.getStudioPointerOnSlide === 'function'
-      ? (event, slideMetrics) => studioEditorPointerOnSlideAdapter.getStudioEditorPointerOnSlide(
-          event,
-          slideMetrics,
-          { transformApi: SlideNextStudioEditorTransform }
-        )
+    const studioEditorPointerOnSlideReader = studioEditorGeometryAccessors
+      && typeof studioEditorGeometryAccessors.getPointerOnSlide === 'function'
+      ? (event, slideMetrics) => studioEditorGeometryAccessors.getPointerOnSlide(event, slideMetrics)
       : null;
 
     function getPointerOnSlide(e, slideMetrics) {
