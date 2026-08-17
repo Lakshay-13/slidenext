@@ -23,7 +23,7 @@
     throw new Error('SlideNextImagePosition dependency is required');
   }
 
-  const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE']);
+  const DEFAULT_SKIP_TAG_NAMES = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SOURCE']);
   const DEFAULT_IGNORED_THEME_STYLE_IDS = new Set(['editor-style-tag']);
   const DEFAULT_SOURCE_IGNORED_NODE_IDS = ['editor-style-tag', 'editor-theme-override-tag'];
   const DEFAULT_SOURCE_TRANSIENT_CLASSES = ['editor-selected', 'editor-hoverable', 'editor-dragging'];

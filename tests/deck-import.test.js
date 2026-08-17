@@ -772,6 +772,46 @@ test('importHtmlDeckToCanonicalDeck links imported image nodes to collected asse
   assert.equal(deck.slides[0].nodes[0].assetId, 'asset-1');
 });
 
+test('importHtmlDeckToCanonicalDeck keeps media source metadata out of editable node children', () => {
+  const source = createImportedElement({
+    tagName: 'SOURCE',
+    attributes: { src: 'sample.mp4', type: 'video/mp4' },
+    outerHTML: '<source src="sample.mp4" type="video/mp4">'
+  });
+  const video = createImportedElement({
+    tagName: 'VIDEO',
+    children: [source],
+    outerHTML: '<video controls><source src="sample.mp4" type="video/mp4"></video>'
+  });
+  const slide = createImportedElement({
+    tagName: 'SECTION',
+    attributes: { id: 'slide-1' },
+    children: [video],
+    outerHTML: '<section id="slide-1"><video controls><source src="sample.mp4" type="video/mp4"></video></section>'
+  });
+  const assetSelector = 'img[src], video[src], audio[src], source[src], script[src], link[rel~="stylesheet"][href], link[rel~="preload"][href], video[poster]';
+  const doc = createMetadataDocument();
+  doc.querySelectorAll = (selector) => {
+    if (selector === '.slide') return [slide];
+    if (selector === assetSelector) return [source];
+    return [];
+  };
+
+  const deck = deckImport.importHtmlDeckToCanonicalDeck(doc, {
+    sourcePath: '/presentations/media-deck/index.html',
+    stripTransientDeckRuntimeState() {}
+  });
+
+  assert.deepEqual(deck.assets.map(({ id, src, type }) => ({ id, src, type })), [{
+    id: 'asset-1',
+    src: 'sample.mp4',
+    type: 'video'
+  }]);
+  assert.equal(deck.slides[0].nodes[0].type, 'embed');
+  assert.deepEqual(deck.slides[0].nodes[0].children, []);
+  assert.match(deck.slides[0].nodes[0].html, /<source src="sample\.mp4"/);
+});
+
 test('collectDeckThemeTokens reads same-origin :root custom properties and ignores inaccessible stylesheets', () => {
   const doc = {
     documentElement: {
