@@ -50,6 +50,13 @@ const SHIPPED_LEGACY_DECKS = [
   'pinns-presentation'
 ];
 
+const SHIPPED_LEGACY_PPTX_WARNING_COUNTS = {
+  'ai-tools-presentation': 1,
+  'computer-vision-presentation': 2,
+  'onboarding-presentation': 1,
+  'pinns-presentation': 1
+};
+
 const SHIPPED_LEGACY_PDF_WARNING_COUNTS = {
   'ai-tools-presentation': 0,
   'computer-vision-presentation': 1,
@@ -130,7 +137,20 @@ test('PPTX export route preserves one slide per page for every shipped legacy de
       /application\/vnd\.openxmlformats/,
       deckSlug
     );
-    assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '1', deckSlug);
+    assert.equal(
+      response.headers.get('x-slidenext-pptx-warning-count'),
+      String(SHIPPED_LEGACY_PPTX_WARNING_COUNTS[deckSlug]),
+      deckSlug
+    );
+    if (deckSlug === 'computer-vision-presentation') {
+      const warningDetails = JSON.parse(decodeURIComponent(
+        response.headers.get('x-slidenext-pptx-warning-details') || ''
+      ));
+      assert.deepEqual(warningDetails.warnings, [
+        legacyPptxExport.LEGACY_PPTX_WARNING,
+        'PPTX legacy HTML references unavailable asset "sample.mp4"'
+      ], deckSlug);
+    }
     const buffer = Buffer.from(await response.arrayBuffer());
     assert.equal(buffer.subarray(0, 2).toString(), 'PK', deckSlug);
     assert.equal(

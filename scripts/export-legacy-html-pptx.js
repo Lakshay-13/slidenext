@@ -73,7 +73,14 @@ async function createFlattenedLegacyPptx(pagePaths, options = {}) {
 }
 
 async function exportLegacyHtmlToPptx(html, options = {}) {
-  const pdfBuffer = await (options.pdfExportApi || pdfExport).exportLegacyPdfBuffer(html, options);
+  const pdfExportApi = options.pdfExportApi || pdfExport;
+  const preflight = typeof pdfExportApi.preflightLegacyPdfExport === 'function'
+    ? pdfExportApi.preflightLegacyPdfExport(html, {
+        assetBaseDir: options.assetBaseDir,
+        assetRootDir: options.assetRootDir
+      })
+    : { warnings: [] };
+  const pdfBuffer = await pdfExportApi.exportLegacyPdfBuffer(html, options);
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-legacy-pptx-'));
   const pdfPath = path.join(temporaryDir, 'deck.pdf');
   const outputPrefix = path.join(temporaryDir, 'slide');
@@ -93,7 +100,12 @@ async function exportLegacyHtmlToPptx(html, options = {}) {
     return {
       buffer,
       slideCount: pagePaths.length,
-      warnings: [LEGACY_PPTX_WARNING]
+      warnings: [
+        LEGACY_PPTX_WARNING,
+        ...(Array.isArray(preflight.warnings) ? preflight.warnings : []).map((warning) => (
+          typeof warning === 'string' ? warning.replace(/^PDF /, 'PPTX ') : warning
+        )).filter(Boolean)
+      ]
     };
   } finally {
     await fs.rm(temporaryDir, { recursive: true, force: true });
