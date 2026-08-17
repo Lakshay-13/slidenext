@@ -456,6 +456,27 @@ test('preflightStudioPdfExport reports positioned nodes outside the canonical sl
   ]);
 });
 
+test('preflightStudioPdfExport allows explicitly marked decorative overflow', () => {
+  const report = pdfExport.preflightStudioPdfExport({
+    layout: { size: { width: 100, height: 100, unit: 'px' } },
+    slides: [{
+      id: 'slide-1',
+      nodes: [{
+        id: 'metadata-orb',
+        export: { allowOverflow: true },
+        layout: { mode: 'absolute', x: -20, y: 10, width: 40, height: 40 }
+      }, {
+        id: 'attribute-orb',
+        attributes: { 'data-export-allow-overflow': 'true' },
+        layout: { mode: 'absolute', x: 90, y: 10, width: 40, height: 40 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.overflowNodes, []);
+  assert.deepEqual(report.warnings, []);
+});
+
 test('preflightStudioPdfExport uses measured flow bounds for nested overflow diagnostics', () => {
   const report = pdfExport.preflightStudioPdfExport({
     layout: { size: { width: 1000, height: 500, unit: 'px' } },

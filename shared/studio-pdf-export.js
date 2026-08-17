@@ -1,12 +1,15 @@
 (function (root, factory) {
-  const api = factory(root);
+  const canonicalDeckApi = typeof module === 'object' && module.exports
+    ? require('./canonical-deck.js')
+    : root && root.SlideNextCanonicalDeck;
+  const api = factory(root, canonicalDeckApi);
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
   if (root) {
     root.SlideNextStudioPdfExport = api;
   }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root, canonicalDeckApi) {
   const DEFAULT_PAGE_WIDTH = '16in';
   const DEFAULT_PAGE_HEIGHT = '9in';
   const DEFAULT_LOAD_TIMEOUT_MS = 10000;
@@ -283,7 +286,10 @@
       if (!node || typeof node !== 'object') return;
       const nodeId = typeof node.id === 'string' && node.id.trim() ? node.id.trim() : 'unknown';
       const bounds = getStudioPdfNodeBounds(node, origin);
-      if (canvasSize && bounds
+      const allowsOverflow = canonicalDeckApi
+        && typeof canonicalDeckApi.isCanonicalNodeOverflowAllowed === 'function'
+        && canonicalDeckApi.isCanonicalNodeOverflowAllowed(node);
+      if (canvasSize && bounds && !allowsOverflow
         && (bounds.x < 0
           || bounds.y < 0
           || bounds.x + bounds.width > canvasSize.width

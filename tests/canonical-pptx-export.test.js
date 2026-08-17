@@ -1106,6 +1106,28 @@ test('preflightCanonicalPptxExport keeps missing-bounds warnings for exportable 
   assert.ok(report.diagnostics.warnings.includes('Node image-without-bounds has no exportable bounds'));
 });
 
+test('preflightCanonicalPptxExport allows explicitly marked decorative overflow', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    layout: { size: { width: 100, height: 100, unit: 'px' } },
+    slides: [{
+      nodes: [{
+        id: 'metadata-orb',
+        type: 'shape',
+        export: { allowOverflow: true },
+        layout: { x: -20, y: 10, width: 40, height: 40 }
+      }, {
+        id: 'attribute-orb',
+        type: 'shape',
+        attributes: { 'data-export-allow-overflow': 'true' },
+        layout: { x: 90, y: 10, width: 40, height: 40 }
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.overflowNodes, []);
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
 test('preflightCanonicalPptxExport ignores unpositioned inline descendants rendered by flow text parents', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

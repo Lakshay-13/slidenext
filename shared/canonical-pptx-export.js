@@ -1342,13 +1342,15 @@
       const isUnpositionedFlowTextDescendant = flowTextAncestor
         && isTextContainerNode(node)
         && !!nestedText;
+      const allowsOverflow = typeof canonicalDeck.isCanonicalNodeOverflowAllowed === 'function'
+        && canonicalDeck.isCanonicalNodeOverflowAllowed(node);
       if (!hasBounds
         && !hasExportableChildren
         && !isUnpositionedFlowTextDescendant
         && !isStructuralInlineBreakNode(node)
         && isPptxBoundsRelevantNode(node, nestedText)) {
         diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
-      } else if (hasBounds && (
+      } else if (hasBounds && !allowsOverflow && (
         bounds.x < 0
         || bounds.y < 0
         || bounds.x + bounds.width > sourceSize.width

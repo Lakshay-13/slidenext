@@ -199,6 +199,8 @@
       }
     });
     const visibility = asPlainObject(node.visibility);
+    const exportMeta = asPlainObject(node.export);
+    const hasAllowOverflow = Object.prototype.hasOwnProperty.call(exportMeta, 'allowOverflow');
     const assetId = normalizeString(node.assetId).trim();
     const backgroundAssetId = normalizeString(node.backgroundAssetId).trim();
 
@@ -213,6 +215,7 @@
       attributes: asPlainObject(node.attributes),
       ...(assetId ? { assetId } : {}),
       ...(backgroundAssetId ? { backgroundAssetId } : {}),
+      ...(hasAllowOverflow ? { export: { allowOverflow: exportMeta.allowOverflow === true } } : {}),
       style: normalizeString(node.style),
       layout: {
         mode: normalizeLayoutMode(layout.mode),
@@ -231,6 +234,14 @@
         ? node.children.map((child, childIndex) => createCanonicalNode(child, childIndex))
         : []
     };
+  }
+
+  function isCanonicalNodeOverflowAllowed(node) {
+    if (!node || typeof node !== 'object') return false;
+    const exportMeta = asPlainObject(node.export);
+    if (exportMeta.allowOverflow === true) return true;
+    const attributes = asPlainObject(node.attributes);
+    return normalizeString(attributes['data-export-allow-overflow']).trim().toLowerCase() === 'true';
   }
 
   function createCanonicalBlock(seed = {}, index = 0) {
@@ -2224,6 +2235,7 @@
     updateCanonicalAsset,
     removeCanonicalAsset,
     createCanonicalNode,
+    isCanonicalNodeOverflowAllowed,
     createCanonicalBlock,
     createCanonicalTemplate,
     createCanonicalMasterSlide,

@@ -86,6 +86,23 @@ test('createCanonicalNode preserves an explicit asset reference without requirin
   assert.equal(Object.prototype.hasOwnProperty.call(legacyNode, 'backgroundAssetId'), false);
 });
 
+test('createCanonicalNode preserves explicit overflow export metadata and recognizes the HTML opt-in', () => {
+  const metadataNode = canonicalDeck.createCanonicalNode({
+    id: 'decorative-orb',
+    export: { allowOverflow: true }
+  });
+  const attributeNode = canonicalDeck.createCanonicalNode({
+    id: 'decorative-grid',
+    attributes: { 'data-export-allow-overflow': 'true' }
+  });
+  const regularNode = canonicalDeck.createCanonicalNode({ id: 'content' });
+
+  assert.deepEqual(metadataNode.export, { allowOverflow: true });
+  assert.equal(canonicalDeck.isCanonicalNodeOverflowAllowed(metadataNode), true);
+  assert.equal(canonicalDeck.isCanonicalNodeOverflowAllowed(attributeNode), true);
+  assert.equal(canonicalDeck.isCanonicalNodeOverflowAllowed(regularNode), false);
+});
+
 test('createCanonicalDeck keeps known asset references aligned when duplicate ids are normalized', () => {
   const deck = canonicalDeck.createCanonicalDeck({
     assets: [
