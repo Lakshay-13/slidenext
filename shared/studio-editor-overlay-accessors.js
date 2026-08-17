@@ -25,7 +25,7 @@
       const overlay = getOverlay();
       if (!overlay
         || typeof overlay.renderStudioMarqueeSelectionForActiveSlide !== 'function') {
-        return undefined;
+        return false;
       }
       return overlay.renderStudioMarqueeSelectionForActiveSlide({
         documentRef: getDocument(),

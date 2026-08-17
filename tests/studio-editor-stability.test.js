@@ -15,6 +15,7 @@ const transformController = require('../shared/studio-editor-transform-controlle
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const overlayAccessors = require('../shared/studio-editor-overlay-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
@@ -945,9 +946,9 @@ test('renderGuides passes guide definitions and overlay context to the shared ov
 test('editor composes marquee rendering through the shared overlay module', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /const studioEditorMarqueeRenderer =/);
-  assert.match(source, /renderStudioMarqueeSelectionForActiveSlide/);
-  assert.match(source, /typeof studioEditorMarqueeRenderer === 'function'/);
+  assert.match(source, /const studioEditorOverlayAccessors =/);
+  assert.match(source, /studioEditorOverlayAccessors\.renderMarqueeSelection\(rect\)/);
+  assert.doesNotMatch(source, /const studioEditorMarqueeRenderer =/);
   assert.doesNotMatch(source, /renderMarqueeSelection\.renderer/);
 });
 
@@ -955,13 +956,14 @@ test('renderMarqueeSelection passes the rectangle and overlay context to the sha
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const renderMarqueeSource = extractFunctionSource(
     fileContent,
-    'const studioEditorMarqueeRenderer =',
+    'const studioEditorOverlayAccessorsApi =',
     '\n\n    function clearMarqueeSelection() {'
   );
   const iframeDoc = { id: 'doc' };
   const rect = { left: 10, top: 20, right: 80, bottom: 90 };
   const calls = [];
   const context = {
+    SlideNextStudioEditorOverlayAccessors: overlayAccessors,
     SlideNextStudioEditorOverlay: {
       renderStudioMarqueeSelectionForActiveSlide(options) {
         calls.push(options);

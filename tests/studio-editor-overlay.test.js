@@ -34,17 +34,18 @@ test('overlay accessors delegate marquee rendering with the current editor conte
   assert.equal(calls[0].marker, 'overlay-options');
 });
 
-test('overlay accessors return undefined when the shared overlay renderer is unavailable', () => {
+test('overlay accessors fail closed when the shared overlay renderer is unavailable', () => {
   const accessors = overlayAccessors.createStudioEditorOverlayAccessors({
     getOverlay: () => null
   });
 
-  assert.equal(accessors.renderMarqueeSelection({}), undefined);
+  assert.equal(accessors.renderMarqueeSelection({}), false);
 });
 
 test('editor composes selection overlay synchronization through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
+  assert.match(source, /src="\/shared\/studio-editor-overlay-accessors\.js"/);
   assert.match(source, /<script src="\/shared\/studio-editor-selection-overlay-composition\.js"><\/script>/);
   assert.match(source, /studioEditorSelectionOverlayCompositionApi/);
   assert.match(source, /createStudioEditorSelectionOverlayComposition\(/);
