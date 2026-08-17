@@ -1869,6 +1869,7 @@
   <script src="/shared/studio-editor-editable-target-adapter.js"></script>
   <script src="/shared/studio-editor-editable-target-accessors.js"></script>
   <script src="/shared/studio-editor-blank-slide-adapter.js"></script>
+  <script src="/shared/studio-editor-blank-slide-accessors.js"></script>
   <script src="/shared/studio-editor-hoverable-elements-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-adapter.js"></script>
   <script src="/shared/studio-editor-element-identity-accessors.js"></script>
@@ -5227,18 +5228,26 @@
       ? SlideNextStudioEditorBlankSlideAdapter
       : null;
 
-    const studioEditorBlankSlideFactory = studioEditorBlankSlideAdapter
-      && typeof studioEditorBlankSlideAdapter.createStudioEditorBlankSlide === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.createStudioBlankSlide === 'function'
-      ? (doc, options) => studioEditorBlankSlideAdapter.createStudioEditorBlankSlide(
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
+    const studioEditorBlankSlideAccessorsApi =
+      typeof SlideNextStudioEditorBlankSlideAccessors !== 'undefined'
+      ? SlideNextStudioEditorBlankSlideAccessors
+      : null;
+    const studioEditorBlankSlideAccessors = studioEditorBlankSlideAccessorsApi
+      && typeof studioEditorBlankSlideAccessorsApi
+        .createStudioEditorBlankSlideAccessors === 'function'
+      ? studioEditorBlankSlideAccessorsApi
+        .createStudioEditorBlankSlideAccessors({
+          blankSlideAdapter: studioEditorBlankSlideAdapter,
+          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
+            ? SlideNextStudioEditorDom
+            : null,
+          getDomOptions: (overrides = {}) => getEditorDomOptions(overrides)
+        })
+      : null;
+    const studioEditorBlankSlideFactory = typeof studioEditorBlankSlideAccessors !== 'undefined'
+      && studioEditorBlankSlideAccessors
+      && typeof studioEditorBlankSlideAccessors.createBlankSlide === 'function'
+      ? (doc, options) => studioEditorBlankSlideAccessors.createBlankSlide(doc, options)
       : null;
 
     const studioEditorTransformShellCompositionApi =

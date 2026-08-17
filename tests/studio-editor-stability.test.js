@@ -3458,8 +3458,11 @@ test('editor composes blank-slide creation through the shared adapter', () => {
 
   assert.match(source, /const studioEditorBlankSlideAdapter =/);
   assert.match(source, /SlideNextStudioEditorBlankSlideAdapter/);
+  assert.match(source, /<script src="\/shared\/studio-editor-blank-slide-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorBlankSlideAccessors =/);
   assert.match(source, /const studioEditorBlankSlideFactory =/);
   assert.match(source, /typeof studioEditorBlankSlideFactory === 'function'/);
+  assert.doesNotMatch(source, /studioEditorBlankSlideAdapter\.createStudioEditorBlankSlide\(/);
   assert.doesNotMatch(source, /createBlankSlide: \(doc\) => SlideNextStudioEditorDom\.createStudioBlankSlide/);
 });
 
@@ -3473,11 +3476,15 @@ test('blank-slide factory delegates through the shared adapter', () => {
   const calls = [];
   const context = {
     SlideNextStudioEditorBlankSlideAdapter: require('../shared/studio-editor-blank-slide-adapter.js'),
+    SlideNextStudioEditorBlankSlideAccessors: require('../shared/studio-editor-blank-slide-accessors.js'),
     SlideNextStudioEditorDom: {
       createStudioBlankSlide(docValue, optionsValue) {
         calls.push([docValue, optionsValue]);
         return { id: 'slide-1' };
       }
+    },
+    getEditorDomOptions(overrides = {}) {
+      return overrides;
     }
   };
 
