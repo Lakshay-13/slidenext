@@ -111,7 +111,11 @@ test('index wires block persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorBlockRuntimeAccessorsApi\s*\.\s*createStudioEditorBlockRuntimeAccessors\(/
+    /studioEditorBlockShellCompositionApi\s*\.\s*createStudioEditorBlockShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-block-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,

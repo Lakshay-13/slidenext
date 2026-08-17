@@ -1493,6 +1493,7 @@
   <script src="/shared/studio-editor-block-runtime.js"></script>
   <script src="/shared/studio-editor-block-shell-runtime.js"></script>
   <script src="/shared/studio-editor-block-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-block-shell-composition.js"></script>
   <script src="/shared/studio-editor-master-slide-view.js"></script>
   <script src="/shared/studio-editor-master-slide-state.js"></script>
   <script src="/shared/studio-editor-master-slide-state-runtime-accessors.js"></script>
@@ -4583,28 +4584,17 @@
       studioEditorElementInsertionController
         .bindStudioEditorElementInsertionButtons({ documentRef: document });
     }
-    const studioEditorBlockRuntimeAccessorsApi = typeof SlideNextStudioEditorBlockRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorBlockRuntimeAccessors
+    const studioEditorBlockShellCompositionApi =
+      typeof SlideNextStudioEditorBlockShellComposition !== 'undefined'
+      ? SlideNextStudioEditorBlockShellComposition
       : null;
-    const studioEditorBlockRuntimeAccessors = studioEditorBlockRuntimeAccessorsApi
-      && typeof studioEditorBlockRuntimeAccessorsApi.createStudioEditorBlockRuntimeAccessors === 'function'
-      ? studioEditorBlockRuntimeAccessorsApi.createStudioEditorBlockRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorBlockShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorBlockShellRuntime
-            : null,
-          blockRuntimeApi: typeof SlideNextStudioEditorBlockRuntime !== 'undefined'
-            ? SlideNextStudioEditorBlockRuntime
-            : null,
+    const studioEditorBlockShellComposition =
+      studioEditorBlockShellCompositionApi
+      && typeof studioEditorBlockShellCompositionApi
+        .createStudioEditorBlockShellComposition === 'function'
+      ? studioEditorBlockShellCompositionApi
+        .createStudioEditorBlockShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorBlockController !== 'undefined'
-              ? SlideNextStudioEditorBlockController
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-              ? SlideNextStudioEditorCanonicalState
-              : null,
             getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
               ? resolveEditorUiCanonicalDeck(getIframeDoc())
               : buildEditorCanonicalDeck(getIframeDoc()),
@@ -4613,9 +4603,6 @@
               getStudioEditorSessionToken()
             ),
             getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-            renderApi: typeof SlideNextDeckRender !== 'undefined'
-              ? SlideNextDeckRender
-              : null,
             insertionMutationApi: typeof SlideNextStudioEditorSlideInsertionMutation !== 'undefined'
               ? SlideNextStudioEditorSlideInsertionMutation
               : null,
@@ -4627,9 +4614,6 @@
               : null,
             deckViewApi: typeof SlideNextStudioDeckView !== 'undefined'
               ? SlideNextStudioDeckView
-              : null,
-            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-              ? SlideNextStudioEditorTransaction
               : null,
             getDocument: () => getIframeDoc(),
             getActiveSlide: (doc) => getActiveSlide(doc),
@@ -4655,8 +4639,11 @@
           }
         })
       : null;
-    const studioEditorBlockRuntime = studioEditorBlockRuntimeAccessors
-      ? studioEditorBlockRuntimeAccessors.runtime
+    const studioEditorBlockRuntimeAccessors = studioEditorBlockShellComposition
+      ? studioEditorBlockShellComposition.accessors
+      : null;
+    const studioEditorBlockRuntime = studioEditorBlockShellComposition
+      ? studioEditorBlockShellComposition.runtime
       : null;
     const studioEditorBlockController = studioEditorBlockRuntime
       ? studioEditorBlockRuntime.blockController
