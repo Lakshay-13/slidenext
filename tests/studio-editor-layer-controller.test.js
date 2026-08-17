@@ -325,6 +325,36 @@ test('changeStudioLayerZIndexByRef refreshes locked rows without reordering', ()
   assert.deepEqual(calls[5][1], { refreshLayersList: true, result: null });
 });
 
+test('changeStudioLayerZIndexByRef fails closed when lock state resolution throws', () => {
+  const calls = [];
+  const event = {
+    currentTarget: {
+      closest() {
+        return {};
+      }
+    },
+    preventDefault() {},
+    stopPropagation() {}
+  };
+
+  assert.equal(layerController.changeStudioLayerZIndexByRef({
+    event,
+    resolveLayerRowElement: () => ({ id: 'node-1' }),
+    isElementLocked() {
+      throw new Error('lock state unavailable');
+    },
+    reorderSlideLayers() {
+      calls.push('reorder');
+      return true;
+    },
+    refreshLayerOrderUi() {
+      calls.push('refresh');
+    }
+  }), false);
+
+  assert.deepEqual(calls, ['refresh']);
+});
+
 test('changeStudioLayerZIndexByRef finalizes successful reorders and syncs selected z-index', () => {
   const row = { id: 'row-1' };
   const target = { id: 'node-1' };
@@ -481,6 +511,31 @@ test('arrangeStudioElementLayer forwards the editor document to selection callba
     ['selectionHasLockedElements', selectedElements, documentRef],
     ['refreshLayerOrderUi', { doc: documentRef }]
   ]);
+});
+
+test('arrangeStudioElementLayer fails closed when lock state resolution throws', () => {
+  const calls = [];
+  const documentRef = { id: 'editor-doc' };
+  const target = { id: 'node-1' };
+
+  assert.equal(layerController.arrangeStudioElementLayer({
+    action: 'front',
+    getDocument: () => documentRef,
+    getSelectedElements: () => [target],
+    selectionHasLockedElements() {
+      throw new Error('lock state unavailable');
+    },
+    reorderSlideLayers() {
+      calls.push('reorder');
+      return true;
+    },
+    refreshLayerOrderUi(options) {
+      calls.push(['refresh', options]);
+      return false;
+    }
+  }), false);
+
+  assert.deepEqual(calls, [['refresh', { doc: documentRef }]]);
 });
 
 test('arrangeStudioElementLayer forwards the editor document to successful layer persistence', () => {

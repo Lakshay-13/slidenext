@@ -97,6 +97,14 @@
     }
   }
 
+  function readStudioLayerLocked(isLocked, element) {
+    try {
+      return isLocked(element) === true;
+    } catch (error) {
+      return true;
+    }
+  }
+
   function selectStudioLayerElementByRef(options = {}) {
     const event = options.event;
     if (!event) return false;
@@ -218,7 +226,7 @@
     if (!element || typeof options.isElementLocked !== 'function') {
       return refreshAfterNoOp();
     }
-    if (options.isElementLocked(element)) {
+    if (readStudioLayerLocked(options.isElementLocked, element)) {
       return refreshAfterNoOp();
     }
 
@@ -287,9 +295,14 @@
     if (targets.length === 0) {
       return refreshForDocument();
     }
-    if (typeof options.selectionHasLockedElements === 'function'
-      && options.selectionHasLockedElements(targets, resolvedDoc)) {
-      return refreshForDocument();
+    if (typeof options.selectionHasLockedElements === 'function') {
+      let hasLockedElements = false;
+      try {
+        hasLockedElements = options.selectionHasLockedElements(targets, resolvedDoc);
+      } catch (error) {
+        return refreshForDocument();
+      }
+      if (hasLockedElements) return refreshForDocument();
     }
 
     let transaction = null;
