@@ -73,7 +73,7 @@ test('index wires removal through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorRemovalAccessorsApi\s*\.\s*createStudioEditorRemovalAccessors\(/
+    /studioEditorRemovalShellCompositionApi\s*\.\s*createStudioEditorRemovalShellComposition\(/
   );
   assert.match(
     fileContent,

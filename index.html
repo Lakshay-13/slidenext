@@ -1447,6 +1447,7 @@
   <script src="/shared/studio-editor-removal-runtime.js"></script>
   <script src="/shared/studio-editor-removal-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-accessors.js"></script>
+  <script src="/shared/studio-editor-removal-shell-composition.js"></script>
   <script src="/shared/studio-editor-removal-state.js"></script>
   <script src="/shared/studio-editor-removal-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-state-accessors.js"></script>
@@ -4254,63 +4255,42 @@
     const studioEditorLayerOrderStateController = studioEditorLayerOrderStateShellComposition
       ? studioEditorLayerOrderStateShellComposition.controller
       : null;
-    const studioEditorRemovalAccessorsApi =
-      typeof SlideNextStudioEditorRemovalAccessors !== 'undefined'
-      ? SlideNextStudioEditorRemovalAccessors
+    const studioEditorRemovalShellCompositionApi =
+      typeof SlideNextStudioEditorRemovalShellComposition !== 'undefined'
+      ? SlideNextStudioEditorRemovalShellComposition
       : null;
-    const studioEditorRemovalAccessors = studioEditorRemovalAccessorsApi
-      && typeof studioEditorRemovalAccessorsApi.createStudioEditorRemovalAccessors === 'function'
-      ? studioEditorRemovalAccessorsApi.createStudioEditorRemovalAccessors({
-          runtimeApi: typeof SlideNextStudioEditorRemovalShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorRemovalShellRuntime
-            : null,
-          removalRuntimeApi: typeof SlideNextStudioEditorRemovalRuntime !== 'undefined'
-            ? SlideNextStudioEditorRemovalRuntime
-            : null,
+    const studioEditorRemovalShellComposition =
+      studioEditorRemovalShellCompositionApi
+      && typeof studioEditorRemovalShellCompositionApi
+        .createStudioEditorRemovalShellComposition === 'function'
+      ? studioEditorRemovalShellCompositionApi
+        .createStudioEditorRemovalShellComposition({
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorRemovalController !== 'undefined'
-            ? SlideNextStudioEditorRemovalController
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          canonicalRemovalApi: typeof SlideNextStudioEditorCanonicalRemoval !== 'undefined'
-            ? SlideNextStudioEditorCanonicalRemoval
-            : null,
-          removalTransactionApi: typeof SlideNextStudioEditorRemovalTransaction !== 'undefined'
-            ? SlideNextStudioEditorRemovalTransaction
-            : null,
-          removalMutationApi: typeof SlideNextStudioEditorRemovalMutation !== 'undefined'
-            ? SlideNextStudioEditorRemovalMutation
-            : null,
-          removalApi: typeof SlideNextStudioEditorRemoval !== 'undefined'
-            ? SlideNextStudioEditorRemoval
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          buildRemovalSelectionActionState: (...args) => buildRemovalSelectionActionState(...args),
-          finalizeRemovalActionResult: (...args) => finalizeRemovalActionResult(...args),
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          deselectElement: (...args) => deselectElement(...args),
-          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
-          rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
-          restoreSelection: (...args) => restoreCommittedSelectionByIdsOnActiveSlide(...args)
+            buildRemovalSelectionActionState: (...args) => buildRemovalSelectionActionState(...args),
+            finalizeRemovalActionResult: (...args) => finalizeRemovalActionResult(...args),
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            assignElementId: (...args) => assignEditorElementId(...args),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            deselectElement: (...args) => deselectElement(...args),
+            finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args),
+            rollbackMutation: (...args) => rollbackEditorSlideMutation(...args),
+            restoreSelection: (...args) => restoreCommittedSelectionByIdsOnActiveSlide(...args)
           }
         })
       : null;
-    const studioEditorRemovalRuntime = studioEditorRemovalAccessors
-      ? studioEditorRemovalAccessors.runtime
+    const studioEditorRemovalAccessors = studioEditorRemovalShellComposition
+      ? studioEditorRemovalShellComposition.accessors
       : null;
-    const studioEditorRemovalController = studioEditorRemovalRuntime
-      ? studioEditorRemovalRuntime.removalController
+    const studioEditorRemovalRuntime = studioEditorRemovalShellComposition
+      ? studioEditorRemovalShellComposition.runtime
+      : null;
+    const studioEditorRemovalController = studioEditorRemovalShellComposition
+      ? studioEditorRemovalShellComposition.controller
       : null;
     const studioEditorLayerOrderRuntimeAccessorsApi =
       typeof SlideNextStudioEditorLayerOrderRuntimeAccessors !== 'undefined'

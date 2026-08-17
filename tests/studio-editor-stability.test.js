@@ -384,7 +384,7 @@ test('element removal wiring prefers live canonical state and keeps a legacy bas
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorRemovalAccessorsApi =',
+    'const studioEditorRemovalShellCompositionApi =',
     'const studioEditorRemovalController ='
   );
 
