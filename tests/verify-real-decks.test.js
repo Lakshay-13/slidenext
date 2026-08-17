@@ -51,5 +51,6 @@ test('buildCanonicalImportHarnessHtml loads the importer and targets the request
   assert.match(source, /id="canonical-deck-output"/);
   assert.match(source, /src="\/shared\/deck-import\.js"/);
   assert.match(source, /src="\/presentations\/demo\/index\.html"/);
+  assert.match(source, /width:1920px;height:1080px/);
   assert.match(source, /canonicalImportReady/);
 });

@@ -68,7 +68,7 @@ function buildCanonicalImportHarnessHtml(deckPath) {
   return `<!doctype html>
 <html><body>
 <pre id="canonical-deck-output"></pre>
-<iframe id="canonical-deck-frame" src=${JSON.stringify(deckPath)}></iframe>
+<iframe id="canonical-deck-frame" src=${JSON.stringify(deckPath)} style="width:1920px;height:1080px;border:0"></iframe>
 <script src="/shared/canonical-deck.js"></script>
 <script src="/shared/image-position.js"></script>
 <script src="/shared/deck-persistence.js"></script>
