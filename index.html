@@ -1359,6 +1359,7 @@
   <script src="/shared/studio-editor-canonical-deck.js"></script>
   <script src="/shared/studio-editor-canonical-node-adapter.js"></script>
   <script src="/shared/studio-editor-canonical-reader-adapter.js"></script>
+  <script src="/shared/studio-editor-canonical-reader-composition.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-adapter.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-runtime-accessors.js"></script>
@@ -10649,6 +10650,36 @@
               : null
         })
       : null;
+    const studioEditorCanonicalReaderCompositionApi =
+      typeof SlideNextStudioEditorCanonicalReaderComposition !== 'undefined'
+        ? SlideNextStudioEditorCanonicalReaderComposition
+        : null;
+    const studioEditorCanonicalReaderComposition = studioEditorCanonicalReaderCompositionApi
+      && typeof studioEditorCanonicalReaderCompositionApi
+        .createStudioEditorCanonicalReaderComposition === 'function'
+      ? studioEditorCanonicalReaderCompositionApi
+        .createStudioEditorCanonicalReaderComposition({
+          canonicalReaderAdapter: studioEditorCanonicalReaderAdapter,
+          canonicalReaderResolvers: studioEditorCanonicalReaderResolvers,
+          canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
+            ? SlideNextStudioEditorCanonicalState
+            : null,
+          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
+            ? SlideNextCanonicalDeck
+            : null,
+          getElementId: typeof assignEditorElementId === 'function'
+            ? assignEditorElementId
+            : null,
+          resolveCanonicalNode: typeof resolveEditorCanonicalNodeForElement === 'function'
+            ? resolveEditorCanonicalNodeForElement
+            : null,
+          resolveCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
+            ? resolveEditorUiCanonicalDeck
+            : typeof buildEditorCanonicalDeck === 'function'
+              ? buildEditorCanonicalDeck
+              : null
+        })
+      : null;
     const studioEditorToolbarStateCoordinatorApi = typeof SlideNextStudioEditorToolbarStateCoordinator !== 'undefined'
       ? SlideNextStudioEditorToolbarStateCoordinator
       : null;
@@ -10882,6 +10913,13 @@
 
     function getEditorCanonicalVisibilityReader(property, doc = getIframeDoc(), fallbackReader = isElementHidden) {
       const fallback = typeof fallbackReader === 'function' ? fallbackReader : () => false;
+      if (typeof studioEditorCanonicalReaderComposition !== 'undefined'
+        && studioEditorCanonicalReaderComposition
+        && typeof studioEditorCanonicalReaderComposition
+          .getStudioEditorCanonicalVisibilityReader === 'function') {
+        return studioEditorCanonicalReaderComposition
+          .getStudioEditorCanonicalVisibilityReader(property, doc, fallback);
+      }
       if (typeof studioEditorCanonicalReaderResolvers !== 'undefined'
         && studioEditorCanonicalReaderResolvers
         && typeof studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalVisibilityReader === 'function') {
@@ -10932,6 +10970,13 @@
             && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
             ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
             : () => false;
+      if (typeof studioEditorCanonicalReaderComposition !== 'undefined'
+        && studioEditorCanonicalReaderComposition
+        && typeof studioEditorCanonicalReaderComposition
+          .getStudioEditorCanonicalFreeformReader === 'function') {
+        return studioEditorCanonicalReaderComposition
+          .getStudioEditorCanonicalFreeformReader(doc, fallback);
+      }
       if (typeof studioEditorCanonicalReaderResolvers !== 'undefined'
         && studioEditorCanonicalReaderResolvers
         && typeof studioEditorCanonicalReaderResolvers.getStudioEditorCanonicalFreeformReader === 'function') {
