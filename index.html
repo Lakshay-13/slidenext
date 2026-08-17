@@ -1915,6 +1915,7 @@
   <script src="/shared/studio-editor-source-runtime.js"></script>
   <script src="/shared/studio-editor-source-shell-runtime.js"></script>
   <script src="/shared/studio-editor-source-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-source-shell-composition.js"></script>
   <script src="/shared/studio-editor-export-actions.js"></script>
   <script src="/shared/studio-editor-export-controller.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
@@ -3343,18 +3344,14 @@
       && typeof studioEditorSourceController.bindStudioEditorSourceButtons === 'function') {
       studioEditorSourceController.bindStudioEditorSourceButtons({ documentRef: document });
     }
-    const studioEditorSourceRuntimeAccessorsApi = typeof SlideNextStudioEditorSourceRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorSourceRuntimeAccessors
+    const studioEditorSourceShellCompositionApi =
+      typeof SlideNextStudioEditorSourceShellComposition !== 'undefined'
+      ? SlideNextStudioEditorSourceShellComposition
       : null;
-    const studioEditorSourceRuntimeAccessors = studioEditorSourceRuntimeAccessorsApi
-      && typeof studioEditorSourceRuntimeAccessorsApi.createStudioEditorSourceRuntimeAccessors === 'function'
-      ? studioEditorSourceRuntimeAccessorsApi.createStudioEditorSourceRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorSourceShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorSourceShellRuntime
-            : null,
-          sourceRuntimeApi: typeof SlideNextStudioEditorSourceRuntime !== 'undefined'
-            ? SlideNextStudioEditorSourceRuntime
-            : null,
+    const studioEditorSourceShellComposition =
+      studioEditorSourceShellCompositionApi
+      && typeof studioEditorSourceShellCompositionApi.createStudioEditorSourceShellComposition === 'function'
+      ? studioEditorSourceShellCompositionApi.createStudioEditorSourceShellComposition({
           runtimeOptions: {
             sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
               ? SlideNextStudioEditorSourceController
@@ -3394,8 +3391,11 @@
           }
         })
       : null;
-    const studioEditorSourceRuntime = studioEditorSourceRuntimeAccessors
-      ? studioEditorSourceRuntimeAccessors.runtime
+    const studioEditorSourceRuntimeAccessors = studioEditorSourceShellComposition
+      ? studioEditorSourceShellComposition.accessors
+      : null;
+    const studioEditorSourceRuntime = studioEditorSourceShellComposition
+      ? studioEditorSourceShellComposition.runtime
       : null;
     const studioEditorSourceAccessors = studioEditorSourceRuntime
       ? studioEditorSourceRuntime.sourceAccessors
