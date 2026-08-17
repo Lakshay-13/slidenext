@@ -1522,6 +1522,7 @@
   <script src="/shared/studio-editor-asset-insertion.js"></script>
   <script src="/shared/studio-editor-asset-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-insertion-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-asset-insertion-shell-composition.js"></script>
   <script src="/shared/studio-editor-canonical-slide.js"></script>
   <script src="/shared/studio-editor-canonical-metadata.js"></script>
   <script src="/shared/studio-editor-nudge.js"></script>
@@ -4858,25 +4859,17 @@
         addAssetToLibrary: (...args) => addAssetToLibrary(...args)
       });
     }
-    const studioEditorAssetInsertionRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorAssetInsertionRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorAssetInsertionRuntimeAccessors
+    const studioEditorAssetInsertionShellCompositionApi =
+      typeof SlideNextStudioEditorAssetInsertionShellComposition !== 'undefined'
+      ? SlideNextStudioEditorAssetInsertionShellComposition
       : null;
-    const studioEditorAssetInsertionRuntimeAccessors = studioEditorAssetInsertionRuntimeAccessorsApi
-      && typeof studioEditorAssetInsertionRuntimeAccessorsApi
-        .createStudioEditorAssetInsertionRuntimeAccessors === 'function'
-      ? studioEditorAssetInsertionRuntimeAccessorsApi
-        .createStudioEditorAssetInsertionRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorAssetInsertionShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorAssetInsertionShellRuntime
-            : null,
-          assetInsertionApi: typeof SlideNextStudioEditorAssetInsertion !== 'undefined'
-            ? SlideNextStudioEditorAssetInsertion
-            : null,
+    const studioEditorAssetInsertionShellComposition =
+      studioEditorAssetInsertionShellCompositionApi
+      && typeof studioEditorAssetInsertionShellCompositionApi
+        .createStudioEditorAssetInsertionShellComposition === 'function'
+      ? studioEditorAssetInsertionShellCompositionApi
+        .createStudioEditorAssetInsertionShellComposition({
           runtimeOptions: {
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
             getDocument: () => getIframeDoc(),
             resolveCanonicalDeck: (sourceDoc) => typeof resolveEditorUiCanonicalDeck === 'function'
               ? resolveEditorUiCanonicalDeck(sourceDoc || getIframeDoc())
@@ -4887,12 +4880,14 @@
           }
         })
       : null;
-    const studioEditorAssetInsertionShellRuntime = studioEditorAssetInsertionRuntimeAccessors
-      ? studioEditorAssetInsertionRuntimeAccessors.runtime
+    const studioEditorAssetInsertionRuntimeAccessors = studioEditorAssetInsertionShellComposition
+      ? studioEditorAssetInsertionShellComposition.accessors
       : null;
-    const studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime
-      && studioEditorAssetInsertionShellRuntime.isAvailable === true
-      ? studioEditorAssetInsertionShellRuntime.assetInsertionController
+    const studioEditorAssetInsertionShellRuntime = studioEditorAssetInsertionShellComposition
+      ? studioEditorAssetInsertionShellComposition.runtime
+      : null;
+    const studioEditorAssetInsertionController = studioEditorAssetInsertionShellComposition
+      ? studioEditorAssetInsertionShellComposition.controller
       : null;
     const GRID_SNAP_SIZE_PX = 20;
     const studioEditorGridSnapRuntimeAccessorsApi = typeof SlideNextStudioEditorGridSnapRuntimeAccessors !== 'undefined'

@@ -88,10 +88,14 @@ test('index routes asset insertion construction through the shell runtime', () =
     fileContent,
     /<script src="\/shared\/studio-editor-asset-insertion-runtime-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorAssetInsertionRuntimeAccessorsApi/);
   assert.match(
     fileContent,
-    /studioEditorAssetInsertionRuntimeAccessorsApi\s*\.\s*createStudioEditorAssetInsertionRuntimeAccessors\(/
+    /<script src="\/shared\/studio-editor-asset-insertion-shell-composition\.js"><\/script>/
+  );
+  assert.match(fileContent, /studioEditorAssetInsertionShellCompositionApi/);
+  assert.match(
+    fileContent,
+    /studioEditorAssetInsertionShellCompositionApi\s*\.\s*createStudioEditorAssetInsertionShellComposition\(/
   );
   assert.doesNotMatch(
     fileContent,
@@ -99,6 +103,6 @@ test('index routes asset insertion construction through the shell runtime', () =
   );
   assert.match(
     fileContent,
-    /studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime/
+    /studioEditorAssetInsertionController = studioEditorAssetInsertionShellComposition/
   );
 });

@@ -89,11 +89,15 @@ test('editor loads the asset insertion bridge and keeps a thin compatibility han
   );
   assert.match(
     source,
-    /createStudioEditorAssetInsertionRuntimeAccessors/
+    /<script src="\/shared\/studio-editor-asset-insertion-shell-composition\.js"><\/script>/
   );
   assert.match(
     source,
-    /studioEditorAssetInsertionController = studioEditorAssetInsertionShellRuntime/
+    /createStudioEditorAssetInsertionShellComposition/
+  );
+  assert.match(
+    source,
+    /studioEditorAssetInsertionController = studioEditorAssetInsertionShellComposition/
   );
   assert.match(source, /studioEditorAssetInsertionController\.insert\(assetId\)/);
   assert.doesNotMatch(source, /function insertAssetToActiveSlide\(assetId\) \{[\s\S]*findCanonicalAssetById/);
