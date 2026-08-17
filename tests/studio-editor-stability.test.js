@@ -536,10 +536,11 @@ test('nudge eligibility uses the canonical freeform reader with a legacy fallbac
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const nudgeSource = extractFunctionSource(
     fileContent,
-    'function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {',
-    '\n\n    function isElementHidden'
+    'const studioEditorSelectionStateComposition =',
+    '\n\n    function getLiveSelectedElements'
   );
 
+  assert.match(nudgeSource, /getCanonicalFreeformReader:/);
   assert.match(nudgeSource, /getEditorCanonicalFreeformReader\(/);
   assert.doesNotMatch(
     nudgeSource,

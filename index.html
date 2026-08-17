@@ -1839,6 +1839,7 @@
   <script src="/shared/studio-editor-selection-options-adapter.js"></script>
   <script src="/shared/studio-editor-live-selection-adapter.js"></script>
   <script src="/shared/studio-editor-transform-selection-state-adapter.js"></script>
+  <script src="/shared/studio-editor-selection-state-composition.js"></script>
   <script src="/shared/studio-editor-positioned-layout-items-adapter.js"></script>
   <script src="/shared/studio-editor-slide-metrics-adapter.js"></script>
   <script src="/shared/studio-editor-rect-on-slide-adapter.js"></script>
@@ -10865,96 +10866,62 @@
       ? SlideNextStudioEditorLiveSelectionAdapter
       : null;
 
-    function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
-      const getLiveSelection = studioEditorLiveSelectionAdapter
-        && typeof studioEditorLiveSelectionAdapter.getStudioEditorLiveSelection === 'function'
-        ? studioEditorLiveSelectionAdapter.getStudioEditorLiveSelection
-        : null;
-      if (!getLiveSelection) return [];
-      const liveElements = getLiveSelection(
-        elements,
-        {
-          selectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+    const studioEditorSelectionStateComposition = typeof SlideNextStudioEditorSelectionStateComposition !== 'undefined'
+      && SlideNextStudioEditorSelectionStateComposition
+      && typeof SlideNextStudioEditorSelectionStateComposition.createStudioEditorSelectionStateComposition === 'function'
+      ? SlideNextStudioEditorSelectionStateComposition.createStudioEditorSelectionStateComposition({
+          liveSelectionAdapter: studioEditorLiveSelectionAdapter,
+          liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
             ? SlideNextStudioEditorLiveSelection
             : null,
-          getSelectionOptions: () => getEditorSelectionOptions({ doc })
-        }
-      );
-      return liveElements || [];
+          transformApi: typeof SlideNextStudioEditorTransform !== 'undefined'
+            ? SlideNextStudioEditorTransform
+            : null,
+          transformSelectionStateBuilder: typeof studioEditorTransformSelectionStateBuilder === 'function'
+            ? studioEditorTransformSelectionStateBuilder
+            : null,
+          nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
+            ? SlideNextStudioEditorNudge
+            : null,
+          getSelectionOptions: (currentDoc) => getEditorSelectionOptions({ doc: currentDoc }),
+          getCanonicalVisibilityReader: (property, currentDoc, fallbackReader) => (
+            getEditorCanonicalVisibilityReader(property, currentDoc, fallbackReader)
+          ),
+          getCanonicalFreeformReader: (currentDoc, fallbackReader) => (
+            getEditorCanonicalFreeformReader(currentDoc, fallbackReader)
+          ),
+          isElementFreeformPositioned,
+          isElementLocked,
+          isElementHidden
+        })
+      : null;
+
+    function getLiveSelectedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
+      return studioEditorSelectionStateComposition
+        && typeof studioEditorSelectionStateComposition.getLiveSelectedElements === 'function'
+        ? studioEditorSelectionStateComposition.getLiveSelectedElements(elements, doc)
+        : [];
     }
 
     function getTransformSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
-      const selectionStateBuilder = typeof studioEditorTransformSelectionStateBuilder === 'function'
-        ? studioEditorTransformSelectionStateBuilder
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.buildStudioTransformSelectionState === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.buildStudioTransformSelectionState(...args)
-          : null;
-      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
-        ? isElementFreeformPositioned
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
-          : () => false;
-      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
-      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
-      return typeof selectionStateBuilder === 'function'
-        ? selectionStateBuilder(elements, {
-            isLocked: readLockedState,
-            isHidden: readHiddenState,
-            isFreeformPositioned: getEditorCanonicalFreeformReader(
-              doc,
-              freeformPositionFallback
-            )
-          })
+      return studioEditorSelectionStateComposition
+        && typeof studioEditorSelectionStateComposition.getTransformSelectionState === 'function'
+        ? studioEditorSelectionStateComposition.getTransformSelectionState(elements, doc)
         : null;
     }
 
     function selectionHasLockedElements(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
-      const hasStudioLockedLiveSelection = (
-        typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-        && SlideNextStudioEditorLiveSelection
-        && typeof SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection === 'function'
-      )
-        ? SlideNextStudioEditorLiveSelection.hasStudioLockedLiveSelection
-        : null;
-      if (!hasStudioLockedLiveSelection) return false;
-      const readLockedState = getEditorCanonicalVisibilityReader(
-        'locked',
-        doc,
-        isElementLocked
-      );
-      return hasStudioLockedLiveSelection(elements, {
-        isLocked: readLockedState
-      });
+      return studioEditorSelectionStateComposition
+        && typeof studioEditorSelectionStateComposition.selectionHasLockedElements === 'function'
+        ? studioEditorSelectionStateComposition.selectionHasLockedElements(elements, doc)
+        : false;
     }
 
     function getNudgeSelectionState(elements = getStudioSelectedElements(), doc = getIframeDoc()) {
-      const nudgeApi = typeof SlideNextStudioEditorNudge !== 'undefined'
-        ? SlideNextStudioEditorNudge
-        : null;
-      if (!nudgeApi || typeof nudgeApi.buildStudioNudgeSelectionState !== 'function') {
-        return { selection: [], canNudge: false };
-      }
-      const freeformPositionFallback = typeof isElementFreeformPositioned === 'function'
-        ? isElementFreeformPositioned
-        : typeof SlideNextStudioEditorTransform !== 'undefined'
-          && SlideNextStudioEditorTransform
-          && typeof SlideNextStudioEditorTransform.isStudioFreeformPositioned === 'function'
-          ? (...args) => SlideNextStudioEditorTransform.isStudioFreeformPositioned(...args)
-          : () => false;
-      const readLockedState = getEditorCanonicalVisibilityReader('locked', doc, isElementLocked);
-      const readHiddenState = getEditorCanonicalVisibilityReader('hidden', doc, isElementHidden);
-      return nudgeApi.buildStudioNudgeSelectionState(elements, {
-        isLocked: readLockedState,
-        isHidden: readHiddenState,
-        isFreeformPositioned: getEditorCanonicalFreeformReader(
-          doc,
-          freeformPositionFallback
-        )
-      });
+      return studioEditorSelectionStateComposition
+        && typeof studioEditorSelectionStateComposition.getNudgeSelectionState === 'function'
+        ? studioEditorSelectionStateComposition.getNudgeSelectionState(elements, doc)
+        : { selection: [], canNudge: false };
     }
 
     const studioEditorElementHiddenReader = typeof studioEditorElementStateAccessors !== 'undefined'

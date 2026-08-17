@@ -12,6 +12,7 @@ const studioTransform = require('../shared/studio-editor-transform.js');
 const liveSelection = require('../shared/studio-editor-live-selection.js');
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
+const selectionStateComposition = require('../shared/studio-editor-selection-state-composition.js');
 const nudgeController = require('../shared/studio-editor-nudge-controller.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
@@ -98,12 +99,40 @@ function runMotionActionStateSource(source, context) {
   vm.runInContext(source, context);
 }
 
+function installSelectionStateComposition(context) {
+  context.studioEditorSelectionStateComposition = selectionStateComposition
+    .createStudioEditorSelectionStateComposition({
+      liveSelectionAdapter: context.studioEditorLiveSelectionAdapter || null,
+      liveSelectionApi: context.SlideNextStudioEditorLiveSelection || null,
+      transformApi: context.SlideNextStudioEditorTransform || null,
+      transformSelectionStateBuilder: context.studioEditorTransformSelectionStateBuilder || null,
+      nudgeApi: context.SlideNextStudioEditorNudge || null,
+      getSelectionOptions: (doc) => typeof context.getEditorSelectionOptions === 'function'
+        ? context.getEditorSelectionOptions({ doc })
+        : {},
+      getCanonicalVisibilityReader: (property, doc, fallbackReader) => (
+        typeof context.getEditorCanonicalVisibilityReader === 'function'
+          ? context.getEditorCanonicalVisibilityReader(property, doc, fallbackReader)
+          : fallbackReader
+      ),
+      getCanonicalFreeformReader: (doc, fallbackReader) => (
+        typeof context.getEditorCanonicalFreeformReader === 'function'
+          ? context.getEditorCanonicalFreeformReader(doc, fallbackReader)
+          : fallbackReader
+      ),
+      isElementFreeformPositioned: context.isElementFreeformPositioned,
+      isElementLocked: context.isElementLocked,
+      isElementHidden: context.isElementHidden
+    });
+}
+
 function loadGetNudgeSelectionState(fileContent, context) {
   const helperSource = extractFunctionSource(
     fileContent,
     'function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function isElementHidden(el) {'
   );
+  installSelectionStateComposition(context);
   vm.runInContext(helperSource, context);
 }
 
@@ -123,6 +152,7 @@ function loadGetTransformSelectionState(fileContent, context) {
     'function getTransformSelectionState(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function selectionHasLockedElements(elements = selectedElements, doc = getIframeDoc()) {'
   );
+  installSelectionStateComposition(context);
   vm.runInContext(helperSource, context);
 }
 
@@ -132,6 +162,7 @@ function loadSelectionHasLockedElements(fileContent, context) {
     'function selectionHasLockedElements(elements = selectedElements, doc = getIframeDoc()) {',
     '\n\n    function getNudgeSelectionState(elements = selectedElements, doc = getIframeDoc()) {'
   );
+  installSelectionStateComposition(context);
   vm.runInContext(helperSource, context);
 }
 

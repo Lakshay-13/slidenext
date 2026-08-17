@@ -17,6 +17,7 @@ const committedSelectionIdsAdapter = require('../shared/studio-editor-committed-
 const idListEqualityAdapter = require('../shared/studio-editor-id-list-equality-adapter.js');
 const selectionOptionsAdapter = require('../shared/studio-editor-selection-options-adapter.js');
 const liveSelectionAdapter = require('../shared/studio-editor-live-selection-adapter.js');
+const selectionStateComposition = require('../shared/studio-editor-selection-state-composition.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const metadataPersistenceAction = require('../shared/studio-editor-metadata-persistence-action.js');
 const studioStateAccessors = require('../shared/studio-editor-state-accessors.js');
@@ -156,8 +157,9 @@ test('editor composes live selection filtering through the shared selection API'
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
   assert.match(source, /const studioEditorLiveSelectionAdapter =/);
-  assert.match(source, /getStudioEditorLiveSelection/);
-  assert.match(source, /if \(!getLiveSelection\) return \[\]/);
+  assert.match(source, /const studioEditorSelectionStateComposition =/);
+  assert.match(source, /liveSelectionAdapter: studioEditorLiveSelectionAdapter/);
+  assert.match(source, /getLiveSelectedElements\(elements, doc\)/);
 });
 
 function extractFunctionSource(fileContent, startMarker, endMarker) {
@@ -976,6 +978,12 @@ test('getLiveSelectedElements keeps only connected selections on the active slid
   context.SlideNextStudioEditorSelectionOptionsAdapter = selectionOptionsAdapter;
   context.studioEditorLiveSelectionAdapter = liveSelectionAdapter;
   vm.runInContext(getEditorSelectionOptionsSource, context);
+  context.studioEditorSelectionStateComposition = selectionStateComposition
+    .createStudioEditorSelectionStateComposition({
+      liveSelectionAdapter,
+      liveSelectionApi: context.SlideNextStudioEditorLiveSelection,
+      getSelectionOptions: (doc) => context.getEditorSelectionOptions({ doc })
+    });
   vm.runInContext(getLiveSelectedElementsSource, context);
 
   assert.deepEqual(context.getLiveSelectedElements(), [activeElement]);
@@ -997,6 +1005,8 @@ test('getLiveSelectedElements fails closed when live-selection filtering is unav
   installSelectionAccessors(context);
 
   vm.createContext(context);
+  context.studioEditorSelectionStateComposition = selectionStateComposition
+    .createStudioEditorSelectionStateComposition();
   vm.runInContext(getLiveSelectedElementsSource, context);
 
   assert.equal(context.getLiveSelectedElements([], { id: 'doc' }).length, 0);
