@@ -79,6 +79,14 @@ test('index loads and installs the shared persisted deck state action', () => {
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-persisted-deck-state-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorPersistedDeckStateShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorPersistedDeckStateRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedDeckStateRuntimeAccessors\(/
   );
   assert.doesNotMatch(

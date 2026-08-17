@@ -73,8 +73,15 @@ test('index routes persisted deck state installation through the shell runtime',
     fileContent,
     /<script src="\/shared\/studio-editor-persisted-deck-state-runtime-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorPersistedDeckStateShellRuntimeApi/);
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-persisted-deck-state-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorPersistedDeckStateShellComposition\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /studioEditorPersistedDeckStateRuntimeAccessorsApi\s*\.\s*createStudioEditorPersistedDeckStateRuntimeAccessors\(/
   );
