@@ -247,12 +247,22 @@ test('editor loads toolbar accessors after the theme runtime', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-toolbar-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /createStudioEditorToolbarAccessors\(/);
-  assert.match(fileContent, /bindStudioEditorLayoutControls\(\{ documentRef: document \}\)/);
-  assert.match(fileContent, /bindStudioEditorSelectionControls\(\{ documentRef: document \}\)/);
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-toolbar-shell-composition\.js"><\/script>/
+  );
+  assert.match(fileContent, /createStudioEditorToolbarShellComposition\(/);
+  assert.match(fileContent, /documentRef: document/);
   assert.match(fileContent, /studioEditorToolbarAccessors/);
-  assert.match(fileContent, /createStudioEditorToolbarGlobalApi\(/);
   assert.match(fileContent, /Object\.assign\(globalThis, studioEditorToolbarGlobalApi\)/);
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorToolbarAccessors\.createStudioEditorToolbarAccessors\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorToolbarAccessors\.createStudioEditorToolbarGlobalApi\(/
+  );
   assert.doesNotMatch(fileContent, /function updateGridSnapActionState\(\)/);
   assert.doesNotMatch(fileContent, /function toggleGridSnap\(\)/);
   assert.doesNotMatch(fileContent, /function toggleGlobalTheme\(\)/);

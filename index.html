@@ -1745,6 +1745,7 @@
   <script src="/shared/studio-editor-theme-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-theme-shell-composition.js"></script>
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
+  <script src="/shared/studio-editor-toolbar-shell-composition.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-bridge-controller.js"></script>
   <script src="/shared/studio-editor-session-accessors.js"></script>
@@ -7405,10 +7406,19 @@
     const studioEditorDeckReadyController = studioEditorDeckReadyRuntime
       ? studioEditorDeckReadyRuntime.deckReadyController
       : null;
-    const studioEditorToolbarAccessors = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
-      && SlideNextStudioEditorToolbarAccessors
-      && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors === 'function'
-      ? SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
+    const studioEditorToolbarShellCompositionApi =
+      typeof SlideNextStudioEditorToolbarShellComposition !== 'undefined'
+      ? SlideNextStudioEditorToolbarShellComposition
+      : null;
+    const studioEditorToolbarShellComposition =
+      studioEditorToolbarShellCompositionApi
+      && typeof studioEditorToolbarShellCompositionApi
+        .createStudioEditorToolbarShellComposition === 'function'
+      ? studioEditorToolbarShellCompositionApi
+        .createStudioEditorToolbarShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
+            ? SlideNextStudioEditorToolbarAccessors
+            : null,
           gridSnapController: studioEditorGridSnapController,
           themeController: studioEditorThemeController,
           alignmentController: studioEditorAlignmentController,
@@ -7418,36 +7428,12 @@
           toggleSelectedElementsLockState: (...args) => toggleSelectedElementsLockState(...args),
           toggleSelectedElementsVisibility: (...args) => toggleSelectedElementsVisibility(...args),
           removeSelectedElement: (...args) => removeSelectedElement(...args),
-          deselectElement: (...args) => deselectElement(...args)
+          deselectElement: (...args) => deselectElement(...args),
+          documentRef: document
         })
-      : null;
-    if (studioEditorToolbarAccessors
-      && typeof studioEditorToolbarAccessors.bindStudioEditorLayoutControls === 'function') {
-      studioEditorToolbarAccessors.bindStudioEditorLayoutControls({ documentRef: document });
-    }
-    if (studioEditorToolbarAccessors
-      && typeof studioEditorToolbarAccessors.bindStudioEditorSelectionControls === 'function') {
-      studioEditorToolbarAccessors.bindStudioEditorSelectionControls({ documentRef: document });
-    }
-    const studioEditorToolbarGlobalApi = typeof SlideNextStudioEditorToolbarAccessors !== 'undefined'
-      && SlideNextStudioEditorToolbarAccessors
-      && typeof SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarGlobalApi === 'function'
-      ? SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarGlobalApi({
-          accessors: studioEditorToolbarAccessors
-            || SlideNextStudioEditorToolbarAccessors.createStudioEditorToolbarAccessors({
-              gridSnapController: studioEditorGridSnapController,
-              themeController: studioEditorThemeController,
-              alignmentController: studioEditorAlignmentController,
-              groupController: studioEditorGroupController,
-              nudgeController: studioEditorNudgeController,
-              arrangeElementLayer: (...args) => arrangeElementLayer(...args),
-              toggleSelectedElementsLockState: (...args) => toggleSelectedElementsLockState(...args),
-              toggleSelectedElementsVisibility: (...args) => toggleSelectedElementsVisibility(...args),
-              removeSelectedElement: (...args) => removeSelectedElement(...args),
-              deselectElement: (...args) => deselectElement(...args)
-            })
-        })
-      : {};
+      : { accessors: null, globalApi: {} };
+    const studioEditorToolbarAccessors = studioEditorToolbarShellComposition.accessors;
+    const studioEditorToolbarGlobalApi = studioEditorToolbarShellComposition.globalApi;
     Object.assign(globalThis, studioEditorToolbarGlobalApi);
 
     const editorPresetsApi = typeof SlideNextStudioEditorPresets !== 'undefined'
