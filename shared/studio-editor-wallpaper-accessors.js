@@ -95,7 +95,7 @@
       const wallpaperController = getWallpaperController();
       if (!wallpaperController
         || typeof wallpaperController.applyStudioPresetWallpaper !== 'function') {
-        return undefined;
+        return false;
       }
       return wallpaperController.applyStudioPresetWallpaper({
         background,
@@ -115,7 +115,7 @@
       const wallpaperController = getWallpaperController();
       if (!wallpaperController
         || typeof wallpaperController.applyStudioWallpaperToAllSlides !== 'function') {
-        return undefined;
+        return false;
       }
       return wallpaperController.applyStudioWallpaperToAllSlides({
         resolveActionState,

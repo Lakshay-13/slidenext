@@ -295,11 +295,11 @@ test('wallpaper accessors delegate active-slide mutation orchestration to the sh
   assert.equal(calls[0].wallpaperView.id, 'wallpaper-view');
 });
 
-test('wallpaper accessors return undefined when the shared mutation controller is unavailable', () => {
+test('wallpaper accessors fail closed when the shared mutation controller is unavailable', () => {
   const accessors = wallpaperAccessors.createStudioEditorWallpaperAccessors();
 
-  assert.equal(accessors.applyPresetWallpaper('#fff'), undefined);
-  assert.equal(accessors.applyWallpaperToAllSlides(), undefined);
+  assert.equal(accessors.applyPresetWallpaper('#fff'), false);
+  assert.equal(accessors.applyWallpaperToAllSlides(), false);
 });
 
 test('resolveCurrentStudioWallpaperActionState reuses the shared deck-view wallpaper helper when available', () => {

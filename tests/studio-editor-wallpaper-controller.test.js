@@ -248,12 +248,15 @@ test('wallpaper controller rolls back rejected all-slide persistence before aler
   assert.deepEqual(calls, [[transaction, documentRef]]);
 });
 
-test('index routes normal preset wallpaper actions through the shared controller seam', () => {
+test('index routes wallpaper actions through the shared accessor seam without inline mutation fallbacks', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  assert.match(source, /src="\/shared\/studio-editor-wallpaper-accessors\.js"/);
   assert.match(source, /src="\/shared\/studio-editor-wallpaper-controller\.js"/);
   assert.match(source, /src="\/shared\/studio-editor-wallpaper-transaction-actions\.js"/);
-  assert.match(source, /wallpaperController\.applyStudioPresetWallpaper/);
-  assert.match(source, /wallpaperController\.applyStudioWallpaperToAllSlides/);
+  assert.match(source, /studioEditorWallpaperAccessors\.applyPresetWallpaper\(val, isCustomInput\)/);
+  assert.match(source, /studioEditorWallpaperAccessors\.applyWallpaperToAllSlides\(\)/);
+  assert.doesNotMatch(source, /wallpaperController\.applyStudioPresetWallpaper/);
+  assert.doesNotMatch(source, /wallpaperController\.applyStudioWallpaperToAllSlides/);
   assert.match(source, /Object\.assign\(globalThis, studioEditorWallpaperTransactionGlobalApi\);/);
   assert.match(source, /rollbackMutation: rollbackEditorWallpaperMutation/);
 });

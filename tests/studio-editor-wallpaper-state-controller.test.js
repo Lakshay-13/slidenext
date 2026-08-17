@@ -51,7 +51,7 @@ test('editor wiring routes wallpaper state through the shared controller', () =>
     /getStudioPendingCustomWallpaperVersion: \(\) => accessors\.getPendingCustomWallpaperVersion\(\)/
   );
   assert.match(fileContent, /getWallpaperTab: getStudioWallpaperTab/);
-  assert.match(fileContent, /setStudioPendingCustomWallpaperVersion\(!!isCustomInput\)/);
+  assert.match(fileContent, /setPendingCustomWallpaperVersion: setStudioPendingCustomWallpaperVersion/);
   assert.match(fileContent, /clearStudioPendingCustomWallpaperVersion\(\)/);
   assert.doesNotMatch(fileContent, /const studioEditorWallpaperStateController =/);
   assert.doesNotMatch(fileContent, /let wallpaperTab = 'solid'/);

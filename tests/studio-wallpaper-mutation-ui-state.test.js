@@ -13,6 +13,7 @@ const wallpaperTransactionActions = require('../shared/studio-editor-wallpaper-t
 const studioWallpaperMutation = require('../shared/studio-editor-wallpaper-mutation.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const deckView = require('../shared/studio-deck-view.js');
+const wallpaperAccessorSource = require('./helpers/studio-editor-wallpaper-accessor-source.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -24,7 +25,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     : endMarker;
   const end = fileContent.indexOf(effectiveEndMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${effectiveEndMarker}`);
-  return `
+  return wallpaperAccessorSource.withWallpaperAccessorsSource(`
 function getStudioPendingCustomWallpaperVersion() {
   return typeof hasPendingCustomWallpaperVersion !== 'undefined'
     ? !!hasPendingCustomWallpaperVersion
@@ -38,7 +39,7 @@ function clearStudioPendingCustomWallpaperVersion() {
   hasPendingCustomWallpaperVersion = false;
   return hasPendingCustomWallpaperVersion;
 }
-${fileContent.slice(start, end)}`;
+${fileContent.slice(start, end)}`);
 }
 
 function installWallpaperStateAccessors(context) {
