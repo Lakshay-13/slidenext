@@ -1518,6 +1518,7 @@
   <script src="/shared/studio-editor-asset-runtime.js"></script>
   <script src="/shared/studio-editor-asset-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-asset-shell-composition.js"></script>
   <script src="/shared/studio-editor-asset-insertion.js"></script>
   <script src="/shared/studio-editor-asset-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-asset-insertion-runtime-accessors.js"></script>
@@ -4797,28 +4798,17 @@
         closeRenameVersionModal
       });
     }
-    const studioEditorAssetRuntimeAccessorsApi = typeof SlideNextStudioEditorAssetRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorAssetRuntimeAccessors
+    const studioEditorAssetShellCompositionApi =
+      typeof SlideNextStudioEditorAssetShellComposition !== 'undefined'
+      ? SlideNextStudioEditorAssetShellComposition
       : null;
-    const studioEditorAssetRuntimeAccessors = studioEditorAssetRuntimeAccessorsApi
-      && typeof studioEditorAssetRuntimeAccessorsApi.createStudioEditorAssetRuntimeAccessors === 'function'
-      ? studioEditorAssetRuntimeAccessorsApi.createStudioEditorAssetRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorAssetShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorAssetShellRuntime
-            : null,
-          assetRuntimeApi: typeof SlideNextStudioEditorAssetRuntime !== 'undefined'
-            ? SlideNextStudioEditorAssetRuntime
-            : null,
+    const studioEditorAssetShellComposition =
+      studioEditorAssetShellCompositionApi
+      && typeof studioEditorAssetShellCompositionApi
+        .createStudioEditorAssetShellComposition === 'function'
+      ? studioEditorAssetShellCompositionApi
+        .createStudioEditorAssetShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorAssetController !== 'undefined'
-              ? SlideNextStudioEditorAssetController
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-              ? SlideNextStudioEditorCanonicalState
-              : null,
             getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
               ? resolveEditorUiCanonicalDeck(getIframeDoc())
               : buildEditorCanonicalDeck(getIframeDoc()),
@@ -4849,11 +4839,14 @@
           }
         })
       : null;
-    const studioEditorAssetRuntime = studioEditorAssetRuntimeAccessors
-      ? studioEditorAssetRuntimeAccessors.runtime
+    const studioEditorAssetRuntimeAccessors = studioEditorAssetShellComposition
+      ? studioEditorAssetShellComposition.accessors
       : null;
-    const studioEditorAssetController = studioEditorAssetRuntime
-      ? studioEditorAssetRuntime.assetController
+    const studioEditorAssetRuntime = studioEditorAssetShellComposition
+      ? studioEditorAssetShellComposition.runtime
+      : null;
+    const studioEditorAssetController = studioEditorAssetShellComposition
+      ? studioEditorAssetShellComposition.controller
       : null;
     const studioEditorAssetView = typeof SlideNextStudioEditorAssetView !== 'undefined'
       ? SlideNextStudioEditorAssetView

@@ -104,7 +104,11 @@ test('index wires asset persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorAssetRuntimeAccessorsApi\s*\.\s*createStudioEditorAssetRuntimeAccessors\(/
+    /studioEditorAssetShellCompositionApi\s*\.\s*createStudioEditorAssetShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-asset-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,
