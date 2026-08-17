@@ -87,7 +87,8 @@ test('editor composes live selection ID reading through the shared selection API
 
 test('editor resolves stored selection IDs against the current active-slide DOM', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  assert.match(fileContent, /createStudioEditorStateGlobalApi/);
+  assert.match(fileContent, /studioEditorShellStateGlobalComposition/);
+  assert.match(fileContent, /stateGlobalApi/);
 
   const staleElement = { id: 'stale-node' };
   const currentElement = { id: 'current-node', isConnected: true };

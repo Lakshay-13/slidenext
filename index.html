@@ -1785,6 +1785,7 @@
   <script src="/shared/studio-editor-shell-state-runtime.js"></script>
   <script src="/shared/studio-editor-shell-state-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-shell-state-composition.js"></script>
+  <script src="/shared/studio-editor-shell-state-global-composition.js"></script>
   <script src="/shared/studio-editor-history-stack-controller.js"></script>
   <script src="/shared/studio-editor-history-pending-controller.js"></script>
   <script src="/shared/studio-editor-history-timer-controller.js"></script>
@@ -2198,69 +2199,80 @@
     const studioEditorSessionStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.sessionStateAccessors
       : null;
-    const studioEditorSessionStateGlobalApi = typeof SlideNextStudioEditorSessionStateAccessors !== 'undefined'
-      && SlideNextStudioEditorSessionStateAccessors
-      && typeof SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateGlobalApi === 'function'
-      ? SlideNextStudioEditorSessionStateAccessors.createStudioEditorSessionStateGlobalApi({
-          accessors: studioEditorSessionStateAccessors
-        })
-      : {};
-    Object.assign(globalThis, studioEditorSessionStateGlobalApi);
     const studioEditorStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.stateBridge
       : null;
     const studioEditorStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.stateAccessors
       : null;
-    const studioEditorStateGlobalApi = typeof SlideNextStudioEditorStateAccessors !== 'undefined'
-      && SlideNextStudioEditorStateAccessors
-      && typeof SlideNextStudioEditorStateAccessors.createStudioEditorStateGlobalApi === 'function'
-      ? SlideNextStudioEditorStateAccessors.createStudioEditorStateGlobalApi({
-          accessors: studioEditorStateAccessors
-        })
-      : {};
-    Object.assign(globalThis, studioEditorStateGlobalApi);
     const studioEditorHistoryBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.historyBridge
       : null;
     const studioEditorHistoryAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.historyAccessors
       : null;
-    const studioEditorHistoryGlobalApi = typeof SlideNextStudioEditorHistoryAccessors !== 'undefined'
-      && SlideNextStudioEditorHistoryAccessors
-      && typeof SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryGlobalApi === 'function'
-      ? SlideNextStudioEditorHistoryAccessors.createStudioEditorHistoryGlobalApi({
-          accessors: studioEditorHistoryAccessors
-        })
-      : {};
-    Object.assign(globalThis, studioEditorHistoryGlobalApi);
     const studioEditorPersistedDeckBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.persistedDeckBridge
       : null;
     const studioEditorPersistedDeckAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.persistedDeckAccessors
       : null;
-    const studioEditorPersistedDeckGlobalApi = typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
-      && SlideNextStudioEditorPersistedDeckAccessors
-      && typeof SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckGlobalApi === 'function'
-      ? SlideNextStudioEditorPersistedDeckAccessors.createStudioEditorPersistedDeckGlobalApi({
-          accessors: studioEditorPersistedDeckAccessors
-        })
-      : {};
-    Object.assign(globalThis, studioEditorPersistedDeckGlobalApi);
     const studioEditorTimerStateBridge = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.timerStateBridge
       : null;
     const studioEditorTimerStateAccessors = studioEditorShellStateRuntime
       ? studioEditorShellStateRuntime.timerStateAccessors
       : null;
-    const studioEditorTimerStateGlobalApi = typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
-      && SlideNextStudioEditorTimerStateAccessors
-      && typeof SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateGlobalApi === 'function'
-      ? SlideNextStudioEditorTimerStateAccessors.createStudioEditorTimerStateGlobalApi({
-          accessors: studioEditorTimerStateAccessors
+    const studioEditorShellStateGlobalCompositionApi =
+      typeof SlideNextStudioEditorShellStateGlobalComposition !== 'undefined'
+      ? SlideNextStudioEditorShellStateGlobalComposition
+      : null;
+    const studioEditorShellStateGlobalComposition =
+      studioEditorShellStateGlobalCompositionApi
+      && typeof studioEditorShellStateGlobalCompositionApi
+        .createStudioEditorShellStateGlobalComposition === 'function'
+      ? studioEditorShellStateGlobalCompositionApi
+        .createStudioEditorShellStateGlobalComposition({
+          sessionStateAccessorsApi: typeof SlideNextStudioEditorSessionStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorSessionStateAccessors
+            : null,
+          sessionStateAccessors: studioEditorSessionStateAccessors,
+          stateAccessorsApi: typeof SlideNextStudioEditorStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorStateAccessors
+            : null,
+          stateAccessors: studioEditorStateAccessors,
+          historyAccessorsApi: typeof SlideNextStudioEditorHistoryAccessors !== 'undefined'
+            ? SlideNextStudioEditorHistoryAccessors
+            : null,
+          historyAccessors: studioEditorHistoryAccessors,
+          persistedDeckAccessorsApi: typeof SlideNextStudioEditorPersistedDeckAccessors !== 'undefined'
+            ? SlideNextStudioEditorPersistedDeckAccessors
+            : null,
+          persistedDeckAccessors: studioEditorPersistedDeckAccessors,
+          timerStateAccessorsApi: typeof SlideNextStudioEditorTimerStateAccessors !== 'undefined'
+            ? SlideNextStudioEditorTimerStateAccessors
+            : null,
+          timerStateAccessors: studioEditorTimerStateAccessors
         })
-      : {};
+      : {
+          sessionStateGlobalApi: {},
+          stateGlobalApi: {},
+          historyGlobalApi: {},
+          persistedDeckGlobalApi: {},
+          timerStateGlobalApi: {}
+        };
+    const studioEditorSessionStateGlobalApi =
+      studioEditorShellStateGlobalComposition.sessionStateGlobalApi;
+    const studioEditorStateGlobalApi = studioEditorShellStateGlobalComposition.stateGlobalApi;
+    const studioEditorHistoryGlobalApi = studioEditorShellStateGlobalComposition.historyGlobalApi;
+    const studioEditorPersistedDeckGlobalApi =
+      studioEditorShellStateGlobalComposition.persistedDeckGlobalApi;
+    const studioEditorTimerStateGlobalApi =
+      studioEditorShellStateGlobalComposition.timerStateGlobalApi;
+    Object.assign(globalThis, studioEditorSessionStateGlobalApi);
+    Object.assign(globalThis, studioEditorStateGlobalApi);
+    Object.assign(globalThis, studioEditorHistoryGlobalApi);
+    Object.assign(globalThis, studioEditorPersistedDeckGlobalApi);
     Object.assign(globalThis, studioEditorTimerStateGlobalApi);
     const studioEditorSaveRequestBodyAction =
       typeof SlideNextStudioEditorSaveRequestBodyAction !== 'undefined'
