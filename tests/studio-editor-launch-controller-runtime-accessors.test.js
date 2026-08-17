@@ -51,6 +51,14 @@ test('index routes launch controller construction through the accessor module', 
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-launch-controller-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorLaunchControllerShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorLaunchControllerRuntimeAccessorsApi\s*\.\s*createStudioEditorLaunchControllerRuntimeAccessors\(/
   );
   assert.doesNotMatch(

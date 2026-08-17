@@ -1747,6 +1747,7 @@
   <script src="/shared/studio-editor-launch-source.js"></script>
   <script src="/shared/studio-editor-launch-controller.js"></script>
   <script src="/shared/studio-editor-launch-controller-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-launch-controller-shell-composition.js"></script>
   <script src="/shared/studio-editor-launch-shell-controller.js"></script>
   <script src="/shared/studio-editor-launch-shell-controller-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-session-runtime-options.js"></script>
@@ -6972,21 +6973,22 @@
     const studioEditorShellController = studioEditorSessionRuntime
       ? studioEditorSessionRuntime.shellController
       : null;
-    const studioEditorLaunchControllerRuntimeApi =
-      typeof SlideNextStudioEditorLaunchController !== 'undefined'
-      ? SlideNextStudioEditorLaunchController
+    const studioEditorLaunchControllerShellCompositionApi =
+      typeof SlideNextStudioEditorLaunchControllerShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLaunchControllerShellComposition
       : null;
-    const studioEditorLaunchControllerRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorLaunchControllerRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorLaunchControllerRuntimeAccessors
-      : null;
-    const studioEditorLaunchControllerRuntimeAccessors =
-      studioEditorLaunchControllerRuntimeAccessorsApi
-      && typeof studioEditorLaunchControllerRuntimeAccessorsApi
-        .createStudioEditorLaunchControllerRuntimeAccessors === 'function'
-      ? studioEditorLaunchControllerRuntimeAccessorsApi
-        .createStudioEditorLaunchControllerRuntimeAccessors({
-          runtimeApi: studioEditorLaunchControllerRuntimeApi,
+    const studioEditorLaunchControllerShellComposition =
+      studioEditorLaunchControllerShellCompositionApi
+      && typeof studioEditorLaunchControllerShellCompositionApi
+        .createStudioEditorLaunchControllerShellComposition === 'function'
+      ? studioEditorLaunchControllerShellCompositionApi
+        .createStudioEditorLaunchControllerShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorLaunchControllerRuntimeAccessors !== 'undefined'
+            ? SlideNextStudioEditorLaunchControllerRuntimeAccessors
+            : null,
+          runtimeApi: typeof SlideNextStudioEditorLaunchController !== 'undefined'
+            ? SlideNextStudioEditorLaunchController
+            : null,
           runtimeOptions: {
           documentRef: document,
           localStorageRef: localStorage,
@@ -7003,9 +7005,11 @@
           setFrameSource: (...args) => setCurrentStudioEditorFrameSource(...args)
           }
         })
-      : { runtime: null };
+      : { accessors: null, runtime: null };
+    const studioEditorLaunchControllerRuntimeAccessors =
+      studioEditorLaunchControllerShellComposition.accessors;
     const studioEditorLaunchController =
-      studioEditorLaunchControllerRuntimeAccessors.runtime;
+      studioEditorLaunchControllerShellComposition.runtime;
     const studioEditorLaunchShellControllerRuntimeApi =
       typeof SlideNextStudioEditorLaunchShellController !== 'undefined'
       ? SlideNextStudioEditorLaunchShellController
