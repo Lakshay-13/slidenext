@@ -3294,6 +3294,7 @@ test('editor composes editable-target resolution through the shared adapter', ()
   assert.match(source, /SlideNextStudioEditorEditableTargetAdapter/);
   assert.match(source, /const studioEditorEditableTargetResolver =/);
   assert.match(source, /typeof editableTargetResolver === 'function'/);
+  assert.doesNotMatch(source, /studioEditorEditableTargetAdapter\.resolveStudioEditorEditableTarget\(/);
   assert.doesNotMatch(resolveEditableTargetSource, /SlideNextStudioEditorDom\.resolveStudioEditableTarget/);
 });
 
@@ -3315,6 +3316,7 @@ test('resolveEditableTarget delegates through the shared adapter', () => {
   const calls = [];
   const context = {
     SlideNextStudioEditorEditableTargetAdapter: require('../shared/studio-editor-editable-target-adapter.js'),
+    SlideNextStudioEditorEditableTargetAccessors: require('../shared/studio-editor-editable-target-accessors.js'),
     SlideNextStudioEditorDom: {
       resolveStudioEditableTarget(nodeValue, optionsValue) {
         calls.push([nodeValue, optionsValue]);

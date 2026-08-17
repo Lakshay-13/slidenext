@@ -5219,18 +5219,6 @@
       && studioEditorEditableTargetAccessors
       && typeof studioEditorEditableTargetAccessors.resolveEditableTarget === 'function'
       ? (node, options) => studioEditorEditableTargetAccessors.resolveEditableTarget(node, options)
-      : studioEditorEditableTargetAdapter
-      && typeof studioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.resolveStudioEditableTarget === 'function'
-      ? (node, options) => studioEditorEditableTargetAdapter.resolveStudioEditorEditableTarget(
-          node,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorBlankSlideAdapter = typeof SlideNextStudioEditorBlankSlideAdapter !== 'undefined'
