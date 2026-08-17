@@ -186,7 +186,11 @@ test('index wires deck view composition through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorDeckViewRuntimeAccessorsApi\s*\.\s*createStudioEditorDeckViewRuntimeAccessors\(/
+    /studioEditorDeckViewShellCompositionApi\s*\.\s*createStudioEditorDeckViewShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-deck-view-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,

@@ -1918,6 +1918,7 @@
   <script src="/shared/studio-editor-deck-view-runtime.js"></script>
   <script src="/shared/studio-editor-deck-view-shell-runtime.js"></script>
   <script src="/shared/studio-editor-deck-view-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-deck-view-shell-composition.js"></script>
   <script src="/shared/deck-persistence.js"></script>
   <script src="/shared/studio-version-actions.js"></script>
   <script src="/shared/studio-editor-version-restore-controller.js"></script>
@@ -3133,34 +3134,17 @@
           }
         })
       : null;
-    const studioEditorDeckViewRuntimeAccessorsApi = typeof SlideNextStudioEditorDeckViewRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorDeckViewRuntimeAccessors
+    const studioEditorDeckViewShellCompositionApi =
+      typeof SlideNextStudioEditorDeckViewShellComposition !== 'undefined'
+      ? SlideNextStudioEditorDeckViewShellComposition
       : null;
-    const studioEditorDeckViewRuntimeAccessors = studioEditorDeckViewRuntimeAccessorsApi
-      && typeof studioEditorDeckViewRuntimeAccessorsApi.createStudioEditorDeckViewRuntimeAccessors === 'function'
-      ? studioEditorDeckViewRuntimeAccessorsApi.createStudioEditorDeckViewRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorDeckViewShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorDeckViewShellRuntime
-            : null,
-          deckViewRuntimeApi: typeof SlideNextStudioEditorDeckViewRuntime !== 'undefined'
-            ? SlideNextStudioEditorDeckViewRuntime
-            : null,
+    const studioEditorDeckViewShellComposition =
+      studioEditorDeckViewShellCompositionApi
+      && typeof studioEditorDeckViewShellCompositionApi
+        .createStudioEditorDeckViewShellComposition === 'function'
+      ? studioEditorDeckViewShellCompositionApi
+        .createStudioEditorDeckViewShellComposition({
           runtimeOptions: {
-            exportApi: typeof SlideNextStudioEditorExportController !== 'undefined'
-              ? SlideNextStudioEditorExportController
-              : null,
-            snapshotControllerApi: typeof SlideNextStudioEditorDeckSnapshotController !== 'undefined'
-              ? SlideNextStudioEditorDeckSnapshotController
-              : null,
-            previewControllerApi: typeof SlideNextStudioEditorPreviewController !== 'undefined'
-              ? SlideNextStudioEditorPreviewController
-              : null,
-            sourceControllerApi: typeof SlideNextStudioEditorSourceController !== 'undefined'
-              ? SlideNextStudioEditorSourceController
-              : null,
-            exportActions: typeof SlideNextStudioEditorExportActions !== 'undefined'
-              ? SlideNextStudioEditorExportActions
-              : null,
             resolveReadyState: () => resolveCurrentStudioDeckReadyActionState(),
             buildPreviewHtml: (canonicalDeck) => buildEditorPreviewHtml(getIframeDoc(), { canonicalDeck }),
             buildCanonicalDeck: typeof resolveEditorUiCanonicalDeck === 'function'
@@ -3282,8 +3266,11 @@
           }
         })
       : null;
-    const studioEditorDeckViewRuntime = studioEditorDeckViewRuntimeAccessors
-      ? studioEditorDeckViewRuntimeAccessors.runtime
+    const studioEditorDeckViewRuntimeAccessors = studioEditorDeckViewShellComposition
+      ? studioEditorDeckViewShellComposition.accessors
+      : null;
+    const studioEditorDeckViewRuntime = studioEditorDeckViewShellComposition
+      ? studioEditorDeckViewShellComposition.runtime
       : null;
 
     const studioEditorExportController = studioEditorDeckViewRuntime

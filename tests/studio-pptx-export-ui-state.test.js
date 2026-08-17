@@ -45,7 +45,7 @@ function loadExportPptx(fileContent, context) {
 
 test('deck-view export wiring prefers the live canonical deck resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewRuntimeAccessorsApi =');
+  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewShellCompositionApi =');
   const runtimeEnd = fileContent.indexOf('const studioEditorExportController =', runtimeStart);
   assert.notEqual(runtimeStart, -1);
   assert.notEqual(runtimeEnd, -1);
@@ -77,7 +77,7 @@ test('deck-view export wiring prefers the live canonical deck resolver', () => {
 
 test('deck-view export wiring supplies pending mutation canonical rebuilds', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewRuntimeAccessorsApi =');
+  const runtimeStart = fileContent.indexOf('const studioEditorDeckViewShellCompositionApi =');
   const runtimeEnd = fileContent.indexOf('const studioEditorExportController =', runtimeStart);
   assert.notEqual(runtimeStart, -1);
   assert.notEqual(runtimeEnd, -1);

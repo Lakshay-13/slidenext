@@ -83,7 +83,7 @@ test('deck snapshot controller fails closed when the shared snapshot builder is 
 test('editor routes deck snapshot construction through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /SlideNextStudioEditorDeckSnapshotController/);
+  assert.match(source, /\/shared\/studio-editor-deck-snapshot-controller\.js/);
   assert.match(source, /SlideNextStudioEditorDeckSnapshotAccessors/);
   assert.match(source, /accessors\.build\(doc, options\)/);
   assert.match(source, /accessors\.buildFromDom\(doc, options\)/);
