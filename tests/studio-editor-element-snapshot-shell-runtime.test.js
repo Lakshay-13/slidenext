@@ -90,10 +90,15 @@ test('index routes element snapshot construction through the shell runtime', () 
     fileContent,
     /<script src="\/shared\/studio-editor-element-snapshot-runtime-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorElementSnapshotRuntimeAccessorsApi/);
-  assert.match(fileContent, /createStudioEditorElementSnapshotRuntimeAccessors/);
   assert.match(
     fileContent,
-    /studioEditorElementSnapshotController = studioEditorElementSnapshotShellRuntime/
+    /<script src="\/shared\/studio-editor-element-snapshot-shell-composition\.js"><\/script>/
+  );
+  assert.match(fileContent, /studioEditorElementSnapshotShellCompositionApi/);
+  assert.match(fileContent, /createStudioEditorElementSnapshotShellComposition/);
+  assert.doesNotMatch(fileContent, /createStudioEditorElementSnapshotRuntimeAccessors/);
+  assert.match(
+    fileContent,
+    /studioEditorElementSnapshotController =\s*\n\s*studioEditorElementSnapshotShellComposition/
   );
 });

@@ -1897,6 +1897,7 @@
   <script src="/shared/studio-editor-element-snapshot-shell-runtime.js"></script>
   <script src="/shared/studio-editor-element-snapshot-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-element-snapshot-accessors.js"></script>
+  <script src="/shared/studio-editor-element-snapshot-shell-composition.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
@@ -3053,80 +3054,40 @@
       ? presentationDashboardShellComposition.globalApi
       : {};
     Object.assign(globalThis, presentationDashboardGlobalApi);
-    const studioEditorElementSnapshotRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorElementSnapshotRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorElementSnapshotRuntimeAccessors
+    const studioEditorElementSnapshotShellCompositionApi =
+      typeof SlideNextStudioEditorElementSnapshotShellComposition !== 'undefined'
+      ? SlideNextStudioEditorElementSnapshotShellComposition
       : null;
-    const studioEditorElementSnapshotRuntimeAccessors = studioEditorElementSnapshotRuntimeAccessorsApi
-      && typeof studioEditorElementSnapshotRuntimeAccessorsApi
-        .createStudioEditorElementSnapshotRuntimeAccessors === 'function'
-      ? studioEditorElementSnapshotRuntimeAccessorsApi
-        .createStudioEditorElementSnapshotRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorElementSnapshotShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorElementSnapshotShellRuntime
-            : null,
-          snapshotControllerApi: typeof SlideNextStudioEditorElementSnapshotController !== 'undefined'
-            ? SlideNextStudioEditorElementSnapshotController
-            : null,
-          runtimeOptions: {
-            snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
-              ? SlideNextStudioElementSnapshot
-              : null,
-            getElementId: assignEditorElementId,
-            isElementLocked,
-            isElementHidden,
-            isSelectedElement: candidate => {
-              const isStudioLiveSelectedElement = (
-                typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-                && SlideNextStudioEditorLiveSelection
-                && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
-              )
-                ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
-                : null;
-              return isStudioLiveSelectedElement
-                ? isStudioLiveSelectedElement(
-                  getStudioSelectedElements(candidate && candidate.ownerDocument),
-                  candidate
-                )
-                : false;
-            }
-          }
-        })
-      : null;
-    const studioEditorElementSnapshotShellRuntime = studioEditorElementSnapshotRuntimeAccessors
-      ? studioEditorElementSnapshotRuntimeAccessors.runtime
-      : null;
-    const studioEditorElementSnapshotController = studioEditorElementSnapshotShellRuntime
-      && studioEditorElementSnapshotShellRuntime.isAvailable === true
-      ? studioEditorElementSnapshotShellRuntime.elementSnapshotController
-      : null;
-    const studioEditorElementSnapshotAccessors = typeof SlideNextStudioEditorElementSnapshotAccessors !== 'undefined'
-      && SlideNextStudioEditorElementSnapshotAccessors
-      && typeof SlideNextStudioEditorElementSnapshotAccessors.createStudioEditorElementSnapshotAccessors === 'function'
-      ? SlideNextStudioEditorElementSnapshotAccessors.createStudioEditorElementSnapshotAccessors({
-          controller: studioEditorElementSnapshotController,
-          snapshotApi: typeof SlideNextStudioElementSnapshot !== 'undefined'
-            ? SlideNextStudioElementSnapshot
-            : null,
+    const studioEditorElementSnapshotShellComposition =
+      studioEditorElementSnapshotShellCompositionApi
+      && typeof studioEditorElementSnapshotShellCompositionApi
+        .createStudioEditorElementSnapshotShellComposition === 'function'
+      ? studioEditorElementSnapshotShellCompositionApi
+        .createStudioEditorElementSnapshotShellComposition({
           getElementId: assignEditorElementId,
           isElementLocked,
           isElementHidden,
-          isSelectedElement: candidate => {
-            const isStudioLiveSelectedElement = (
-              typeof SlideNextStudioEditorLiveSelection !== 'undefined'
-              && SlideNextStudioEditorLiveSelection
-              && typeof SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement === 'function'
-            )
-              ? SlideNextStudioEditorLiveSelection.isStudioLiveSelectedElement
-              : null;
-            return isStudioLiveSelectedElement
-              ? isStudioLiveSelectedElement(
-                getStudioSelectedElements(candidate && candidate.ownerDocument),
-                candidate
-              )
-              : false;
-          }
+          liveSelectionApi: typeof SlideNextStudioEditorLiveSelection !== 'undefined'
+            ? SlideNextStudioEditorLiveSelection
+            : null,
+          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc)
         })
+      : null;
+    const studioEditorElementSnapshotRuntimeAccessors =
+      studioEditorElementSnapshotShellComposition
+      ? studioEditorElementSnapshotShellComposition.runtimeAccessors
+      : null;
+    const studioEditorElementSnapshotShellRuntime =
+      studioEditorElementSnapshotShellComposition
+      ? studioEditorElementSnapshotShellComposition.shellRuntime
+      : null;
+    const studioEditorElementSnapshotController =
+      studioEditorElementSnapshotShellComposition
+      ? studioEditorElementSnapshotShellComposition.controller
+      : null;
+    const studioEditorElementSnapshotAccessors =
+      studioEditorElementSnapshotShellComposition
+      ? studioEditorElementSnapshotShellComposition.accessors
       : null;
     const studioEditorDeckViewShellCompositionApi =
       typeof SlideNextStudioEditorDeckViewShellComposition !== 'undefined'

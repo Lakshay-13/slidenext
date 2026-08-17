@@ -98,7 +98,8 @@ test('element snapshot accessors preserve fallback builders and metadata', () =>
 test('editor routes element snapshot wrappers through shared accessors', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 
-  assert.match(source, /SlideNextStudioEditorElementSnapshotAccessors/);
+  assert.match(source, /studio-editor-element-snapshot-accessors\.js/);
+  assert.match(source, /studioEditorElementSnapshotShellComposition/);
   assert.match(source, /accessors\.getDisplayMetadata\(el\)/);
   assert.match(source, /accessors\.build\(el\)/);
   assert.match(source, /accessors\.buildLayer\(/);
