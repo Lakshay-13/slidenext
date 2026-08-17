@@ -1396,6 +1396,7 @@
   <script src="/shared/studio-editor-layer-order-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-layer-order-shell-composition.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layer-order-z-index-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-interaction-state-coordinator.js"></script>
@@ -4292,34 +4293,17 @@
     const studioEditorRemovalController = studioEditorRemovalShellComposition
       ? studioEditorRemovalShellComposition.controller
       : null;
-    const studioEditorLayerOrderRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorLayerOrderRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorLayerOrderRuntimeAccessors
+    const studioEditorLayerOrderShellCompositionApi =
+      typeof SlideNextStudioEditorLayerOrderShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLayerOrderShellComposition
       : null;
-    const studioEditorLayerOrderRuntimeAccessors = studioEditorLayerOrderRuntimeAccessorsApi
-      && typeof studioEditorLayerOrderRuntimeAccessorsApi
-        .createStudioEditorLayerOrderRuntimeAccessors === 'function'
-      ? studioEditorLayerOrderRuntimeAccessorsApi
-        .createStudioEditorLayerOrderRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorLayerOrderShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorLayerOrderShellRuntime
-            : null,
-          layerOrderRuntimeApi: typeof SlideNextStudioEditorLayerOrderRuntime !== 'undefined'
-            ? SlideNextStudioEditorLayerOrderRuntime
-            : null,
+    const studioEditorLayerOrderShellComposition =
+      studioEditorLayerOrderShellCompositionApi
+      && typeof studioEditorLayerOrderShellCompositionApi
+        .createStudioEditorLayerOrderShellComposition === 'function'
+      ? studioEditorLayerOrderShellCompositionApi
+        .createStudioEditorLayerOrderShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorLayerOrderController !== 'undefined'
-              ? SlideNextStudioEditorLayerOrderController
-              : null,
-            layerOrderApi: typeof SlideNextStudioEditorLayerOrder !== 'undefined'
-              ? SlideNextStudioEditorLayerOrder
-              : null,
-            canonicalLayoutApi: typeof SlideNextStudioEditorCanonicalLayout !== 'undefined'
-              ? SlideNextStudioEditorCanonicalLayout
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
             getActiveSlide: (...args) => getActiveSlide(...args),
             getIframeDoc: (...args) => getIframeDoc(...args),
             getNormalizedSlideLayerOrder: (...args) => getNormalizedSlideLayerOrder(...args),
@@ -4336,11 +4320,14 @@
           }
         })
       : null;
-    const studioEditorLayerOrderRuntime = studioEditorLayerOrderRuntimeAccessors
-      ? studioEditorLayerOrderRuntimeAccessors.runtime
+    const studioEditorLayerOrderRuntimeAccessors = studioEditorLayerOrderShellComposition
+      ? studioEditorLayerOrderShellComposition.accessors
       : null;
-    const studioEditorLayerOrderController = studioEditorLayerOrderRuntime
-      ? studioEditorLayerOrderRuntime.layerOrderController
+    const studioEditorLayerOrderRuntime = studioEditorLayerOrderShellComposition
+      ? studioEditorLayerOrderShellComposition.runtime
+      : null;
+    const studioEditorLayerOrderController = studioEditorLayerOrderShellComposition
+      ? studioEditorLayerOrderShellComposition.controller
       : null;
     const studioEditorStyleAccessorsApi =
       typeof SlideNextStudioEditorStyleAccessors !== 'undefined'

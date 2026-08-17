@@ -59,11 +59,15 @@ test('index wires layer order runtime through the accessor module', () => {
   );
   assert.match(
     fileContent,
-    /createStudioEditorLayerOrderRuntimeAccessors\(/
+    /<script src="\/shared\/studio-editor-layer-order-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorLayerOrderRuntime = studioEditorLayerOrderRuntimeAccessors/
+    /studioEditorLayerOrderShellCompositionApi\s*\.\s*createStudioEditorLayerOrderShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorLayerOrderRuntime = studioEditorLayerOrderShellComposition/
   );
   assert.doesNotMatch(
     fileContent,
