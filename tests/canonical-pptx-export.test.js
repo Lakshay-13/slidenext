@@ -290,6 +290,41 @@ test('legacy PPTX CLI accepts a direct HTML deck path', {
   }
 });
 
+test('legacy PPTX CLI preserves one slide per source slide for every bundled deck', {
+  skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
+}, async () => {
+  const presentationsDir = path.join(__dirname, '..', 'presentations');
+  const temporaryDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'slidenext-bundled-pptx-'));
+  const entries = await fs.promises.readdir(presentationsDir, { withFileTypes: true });
+  const deckPaths = entries
+    .filter(entry => entry.isDirectory() && !entry.name.startsWith('.'))
+    .map(entry => path.join(presentationsDir, entry.name, 'index.html'))
+    .filter(inputPath => {
+      try {
+        return fs.statSync(inputPath).isFile();
+      } catch (error) {
+        return false;
+      }
+    });
+
+  try {
+    assert.ok(deckPaths.length > 0);
+    for (const inputPath of deckPaths) {
+      const html = fs.readFileSync(inputPath, 'utf8');
+      const expectedSlideCount = pdfScript.countLegacyHtmlSlides(html);
+      const outputPath = path.join(temporaryDir, `${path.basename(path.dirname(inputPath))}.pptx`);
+
+      assert.ok(expectedSlideCount > 0, `${inputPath} has no legacy slides`);
+      assert.equal(await canonicalPptxCli.main([inputPath, outputPath]), 0);
+      const buffer = fs.readFileSync(outputPath);
+      assert.equal(buffer.subarray(0, 2).toString(), 'PK', inputPath);
+      assert.equal(pptxExport.countPptxSlides(buffer), expectedSlideCount, inputPath);
+    }
+  } finally {
+    await fs.promises.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
+
 test('createCanonicalPptxExport maps canonical slide nodes into PPTX calls', () => {
   const result = pptxExport.createCanonicalPptxExport({
     metadata: {
