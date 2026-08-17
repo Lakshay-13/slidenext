@@ -1431,6 +1431,7 @@
   <script src="/shared/studio-editor-clipboard-insertion-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-shell-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-insertion-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-clipboard-insertion-shell-composition.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-controller.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-runtime.js"></script>
   <script src="/shared/studio-editor-clipboard-selection-shell-runtime.js"></script>
@@ -4466,34 +4467,17 @@
     const studioEditorClipboardPayloadController = studioEditorClipboardPayloadRuntime
       ? studioEditorClipboardPayloadRuntime.payloadController
       : null;
-    const studioEditorClipboardInsertionRuntimeAccessorsApi = typeof SlideNextStudioEditorClipboardInsertionRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorClipboardInsertionRuntimeAccessors
+    const studioEditorClipboardInsertionShellCompositionApi =
+      typeof SlideNextStudioEditorClipboardInsertionShellComposition !== 'undefined'
+      ? SlideNextStudioEditorClipboardInsertionShellComposition
       : null;
-    const studioEditorClipboardInsertionRuntimeAccessors = studioEditorClipboardInsertionRuntimeAccessorsApi
-      && typeof studioEditorClipboardInsertionRuntimeAccessorsApi.createStudioEditorClipboardInsertionRuntimeAccessors === 'function'
-      ? studioEditorClipboardInsertionRuntimeAccessorsApi.createStudioEditorClipboardInsertionRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorClipboardInsertionShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardInsertionShellRuntime
-            : null,
-          insertionRuntimeApi: typeof SlideNextStudioEditorClipboardInsertionRuntime !== 'undefined'
-            ? SlideNextStudioEditorClipboardInsertionRuntime
-            : null,
+    const studioEditorClipboardInsertionShellComposition =
+      studioEditorClipboardInsertionShellCompositionApi
+      && typeof studioEditorClipboardInsertionShellCompositionApi
+        .createStudioEditorClipboardInsertionShellComposition === 'function'
+      ? studioEditorClipboardInsertionShellCompositionApi
+        .createStudioEditorClipboardInsertionShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorClipboardInsertionController !== 'undefined'
-              ? SlideNextStudioEditorClipboardInsertionController
-              : null,
-            clipboardApi: typeof SlideNextStudioEditorClipboard !== 'undefined'
-              ? SlideNextStudioEditorClipboard
-              : null,
-            mutationApi: typeof SlideNextStudioEditorClipboardMutation !== 'undefined'
-              ? SlideNextStudioEditorClipboardMutation
-              : null,
-            transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-              ? SlideNextStudioEditorTransaction
-              : null,
-            clipboardTransactionApi: typeof SlideNextStudioEditorClipboardTransaction !== 'undefined'
-              ? SlideNextStudioEditorClipboardTransaction
-              : null,
             getIframeDoc: () => getIframeDoc(),
             getActiveSlide: (doc) => getActiveSlide(doc),
             getEditorSlideId: (slide) => getEditorSlideId(slide),
@@ -4511,8 +4495,11 @@
           }
         })
       : null;
-    const studioEditorClipboardInsertionRuntime = studioEditorClipboardInsertionRuntimeAccessors
-      ? studioEditorClipboardInsertionRuntimeAccessors.runtime
+    const studioEditorClipboardInsertionRuntimeAccessors = studioEditorClipboardInsertionShellComposition
+      ? studioEditorClipboardInsertionShellComposition.accessors
+      : null;
+    const studioEditorClipboardInsertionRuntime = studioEditorClipboardInsertionShellComposition
+      ? studioEditorClipboardInsertionShellComposition.runtime
       : null;
     const studioEditorClipboardInsertionController = studioEditorClipboardInsertionRuntime
       ? studioEditorClipboardInsertionRuntime.insertionController

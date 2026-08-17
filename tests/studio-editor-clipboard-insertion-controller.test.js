@@ -76,7 +76,12 @@ test('clipboard insertion controller fails closed when insertion dependencies ar
 
 test('editor routes clipboard insertion through the shared controller', () => {
   const source = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
+  const compositionSource = fs.readFileSync(
+    path.join(__dirname, '..', 'shared/studio-editor-clipboard-insertion-shell-composition.js'),
+    'utf8'
+  );
 
-  assert.match(source, /SlideNextStudioEditorClipboardInsertionController/);
+  assert.match(source, /SlideNextStudioEditorClipboardInsertionShellComposition/);
+  assert.match(compositionSource, /SlideNextStudioEditorClipboardInsertionController/);
   assert.match(source, /studioEditorClipboardInsertionController\.insert\(items, offsetMultiplier, options\)/);
 });
