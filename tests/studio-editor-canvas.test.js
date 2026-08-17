@@ -113,4 +113,10 @@ test('index passes canonical canvas dimensions to the shared frame initializer',
   assert.match(indexHtml, /function syncStudioEditorCanvasDimensions\(\)/);
   assert.match(indexHtml, /syncCanvasDimensions:\s*syncStudioEditorCanvasDimensions/);
   assert.match(indexHtml, /setLoadingState:\s*setStudioFrameLoadingState/);
+  const syncStart = indexHtml.indexOf('function syncStudioEditorCanvasDimensions() {');
+  const syncEnd = indexHtml.indexOf('\n\n    function initStudioFrame() {', syncStart);
+  assert.ok(syncStart >= 0);
+  assert.ok(syncEnd > syncStart);
+  assert.match(indexHtml.slice(syncStart, syncEnd), /studioEditorCanvasShellRuntime\.sync\(\)/);
+  assert.doesNotMatch(indexHtml.slice(syncStart, syncEnd), /applyStudioCanvasDimensions/);
 });
