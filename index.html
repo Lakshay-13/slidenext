@@ -9505,18 +9505,8 @@
     }
 
     function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {
-      if (typeof studioEditorChromeNodePrunerRuntime === 'function') {
-        return studioEditorChromeNodePrunerRuntime(doc, activeSlide) !== null;
-      }
-      const chromeNodePruner = typeof studioEditorChromeNodePruner === 'function'
-        ? studioEditorChromeNodePruner
-        : null;
-      if (typeof chromeNodePruner !== 'function') return false;
-      chromeNodePruner(doc, {
-        activeSlide,
-        chromeNodeIds: EDITOR_CHROME_NODE_IDS
-      });
-      return true;
+      if (typeof studioEditorChromeNodePrunerRuntime !== 'function') return false;
+      return studioEditorChromeNodePrunerRuntime(doc, activeSlide) !== null;
     }
 
     function setActiveSlideById(slideId, doc = getIframeDoc(), options = {}) {

@@ -2178,14 +2178,16 @@ test('editor composes chrome-node pruning through the shared DOM module', () => 
 
   assert.match(source, /const studioEditorChromeNodePruner =/);
   assert.match(source, /const studioEditorChromeNodePrunerAdapter =/);
+  assert.match(source, /const studioEditorChromeNodePrunerRuntime =/);
   assert.match(source, /typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'/);
-  assert.match(source, /typeof studioEditorChromeNodePruner === 'function'/);
+  assert.match(source, /typeof studioEditorChromeNodePrunerRuntime !== 'function'/);
   const pruneEditorChromeNodesSource = extractFunctionSource(
     source,
     'function pruneEditorChromeNodes(doc = getIframeDoc(), activeSlide = getActiveSlide(doc)) {',
     '\n\n    function setActiveSlideById'
   );
   assert.doesNotMatch(pruneEditorChromeNodesSource, /SlideNextStudioEditorDom\.pruneStudioChromeNodes/);
+  assert.doesNotMatch(pruneEditorChromeNodesSource, /const chromeNodePruner =/);
 });
 
 test('pruneEditorChromeNodes delegates the document and chrome options to the shared DOM module', () => {
@@ -2194,6 +2196,11 @@ test('pruneEditorChromeNodes delegates the document and chrome options to the sh
     fileContent,
     'const studioEditorChromeNodePrunerAdapter =',
     'const studioEditorTransformRuntime ='
+  );
+  const chromeNodePrunerRuntimeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorChromeNodePrunerRuntime =',
+    '\n    const EDITOR_SELECTABLE_SELECTOR ='
   );
   const pruneEditorChromeNodesSource = extractFunctionSource(
     fileContent,
@@ -2220,7 +2227,10 @@ test('pruneEditorChromeNodes delegates the document and chrome options to the sh
   };
 
   vm.createContext(context);
-  vm.runInContext(`${chromeNodePrunerSource}\n${pruneEditorChromeNodesSource}`, context);
+  vm.runInContext(
+    `${chromeNodePrunerSource}\n${chromeNodePrunerRuntimeSource}\n${pruneEditorChromeNodesSource}`,
+    context
+  );
 
   assert.equal(context.pruneEditorChromeNodes(), true);
   assert.equal(calls.length, 1);
@@ -2235,6 +2245,11 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
     fileContent,
     'const studioEditorChromeNodePrunerAdapter =',
     'const studioEditorTransformRuntime ='
+  );
+  const chromeNodePrunerRuntimeSource = extractFunctionSource(
+    fileContent,
+    'const studioEditorChromeNodePrunerRuntime =',
+    '\n    const EDITOR_SELECTABLE_SELECTOR ='
   );
   const pruneEditorChromeNodesSource = extractFunctionSource(
     fileContent,
@@ -2254,7 +2269,10 @@ test('pruneEditorChromeNodes fails closed when the shared DOM module is unavaila
   };
 
   vm.createContext(context);
-  vm.runInContext(`${chromeNodePrunerSource}\n${pruneEditorChromeNodesSource}`, context);
+  vm.runInContext(
+    `${chromeNodePrunerSource}\n${chromeNodePrunerRuntimeSource}\n${pruneEditorChromeNodesSource}`,
+    context
+  );
 
   assert.equal(context.pruneEditorChromeNodes(), false);
 });
