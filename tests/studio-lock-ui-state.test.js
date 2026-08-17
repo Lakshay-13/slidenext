@@ -21,6 +21,7 @@ const lockVisibilityController = require('../shared/studio-editor-lock-visibilit
 const selectionUiMutationShellRuntime = require('../shared/studio-editor-selection-ui-mutation-shell-runtime.js');
 const selectionUiMutationRuntimeAccessors = require('../shared/studio-editor-selection-ui-mutation-runtime-accessors.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -31,7 +32,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(source);
 }
 
 function loadFinalizeEditorDeckMutation(fileContent, context) {

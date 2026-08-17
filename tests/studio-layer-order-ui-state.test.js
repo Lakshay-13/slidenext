@@ -21,6 +21,7 @@ const layerController = require('../shared/studio-editor-layer-controller.js');
 const layerAccessors = require('../shared/studio-editor-layer-accessors.js');
 const layerOrderZIndexShellRuntime = require('../shared/studio-editor-layer-order-z-index-shell-runtime.js');
 const layerOrderZIndexRuntimeAccessors = require('../shared/studio-editor-layer-order-z-index-runtime-accessors.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -32,7 +33,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(source);
 }
 
 function loadFinalizeLayerOrderMutation(fileContent, context) {

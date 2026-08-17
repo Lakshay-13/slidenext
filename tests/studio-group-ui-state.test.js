@@ -18,6 +18,7 @@ const groupToolbarState = require('../shared/studio-editor-group-toolbar-state.j
 const groupToolbarStateRuntimeAccessors = require('../shared/studio-editor-group-toolbar-state-runtime-accessors.js');
 const ungroupState = require('../shared/studio-editor-ungroup-state.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -28,7 +29,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(source);
 }
 
 function loadGroupMutationModules(_fileContent, context) {

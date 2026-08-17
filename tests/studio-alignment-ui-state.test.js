@@ -13,6 +13,7 @@ const alignmentController = require('../shared/studio-editor-alignment-controlle
 const alignmentState = require('../shared/studio-editor-alignment-state.js');
 const positionLayoutMutation = require('../shared/studio-editor-position-layout-mutation.js');
 const positionLayoutTransaction = require('../shared/studio-editor-position-layout-transaction.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -21,7 +22,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
   assert.notEqual(start, -1, `Missing start marker: ${startMarker}`);
   const end = fileContent.indexOf(endMarker, start);
   assert.notEqual(end, -1, `Missing end marker: ${endMarker}`);
-  return fileContent.slice(start, end);
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(fileContent.slice(start, end));
 }
 
 function loadPositionMutationModules(_fileContent, context) {

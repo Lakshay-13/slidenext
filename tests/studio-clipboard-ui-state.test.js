@@ -15,6 +15,7 @@ const clipboardController = require('../shared/studio-editor-clipboard-controlle
 const clipboardSelectionController = require('../shared/studio-editor-clipboard-selection-controller.js');
 const deckMutation = require('../shared/studio-editor-deck-mutation.js');
 const selectionFixture = require('./helpers/studio-selection-state-fixture.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
 
@@ -25,7 +26,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return `
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(`
 function getStudioEditorClipboard() {
   if (typeof studioEditorClipboardController !== 'undefined'
     && studioEditorClipboardController
@@ -34,7 +35,8 @@ function getStudioEditorClipboard() {
   }
   return typeof editorClipboard !== 'undefined' ? editorClipboard : null;
 }
-${source}`;
+${source}`
+  );
 }
 
 function extractClipboardMutationPlanBuilderSource(fileContent) {

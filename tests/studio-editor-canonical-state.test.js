@@ -9,6 +9,7 @@ const canonicalNodeAdapter = require('../shared/studio-editor-canonical-node-ada
 const canonicalState = require('../shared/studio-editor-canonical-state.js');
 const canonicalReaderAdapter = require('../shared/studio-editor-canonical-reader-adapter.js');
 const overlayApi = require('../shared/studio-editor-overlay.js');
+const canonicalReaderSource = require('./helpers/studio-editor-canonical-reader-source.js');
 
 test('shared editor canonical-deck shape predicate accepts decks and rejects malformed values', () => {
   assert.equal(canonicalState.isStudioEditorCanonicalDeckLike({ slides: [] }), true);
@@ -149,7 +150,7 @@ function extractFunctionSource(fileContent, startMarker, endMarker) {
     endMarker
   );
   assert.notEqual(source, null, `Missing function markers: ${startMarker}`);
-  return source;
+  return canonicalReaderSource.withCanonicalReaderCompositionSource(source);
 }
 
 function createDeck(id) {
