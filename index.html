@@ -1411,6 +1411,7 @@
   <script src="/shared/studio-editor-layout-ui-bridge.js"></script>
   <script src="/shared/studio-editor-layout-ui-shell-runtime.js"></script>
   <script src="/shared/studio-editor-layout-ui-accessors.js"></script>
+  <script src="/shared/studio-editor-layout-ui-shell-composition.js"></script>
   <script src="/shared/studio-editor-history-result.js"></script>
   <script src="/shared/studio-editor-insertion.js"></script>
   <script src="/shared/studio-editor-element-insertion-mutation.js"></script>
@@ -3951,15 +3952,18 @@
     const studioEditorLayoutModeController = studioEditorLayoutRuntime
       ? studioEditorLayoutRuntime.layoutModeController
       : null;
-    const studioEditorLayoutUiAccessorsApi =
-      typeof SlideNextStudioEditorLayoutUiAccessors !== 'undefined'
-      ? SlideNextStudioEditorLayoutUiAccessors
+    const studioEditorLayoutUiShellCompositionApi =
+      typeof SlideNextStudioEditorLayoutUiShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLayoutUiShellComposition
       : null;
-    const studioEditorLayoutUiAccessors = studioEditorLayoutUiAccessorsApi
-      && typeof studioEditorLayoutUiAccessorsApi
-        .createStudioEditorLayoutUiAccessors === 'function'
-      ? studioEditorLayoutUiAccessorsApi
-        .createStudioEditorLayoutUiAccessors({
+    const studioEditorLayoutUiShellComposition = studioEditorLayoutUiShellCompositionApi
+      && typeof studioEditorLayoutUiShellCompositionApi
+        .createStudioEditorLayoutUiShellComposition === 'function'
+      ? studioEditorLayoutUiShellCompositionApi
+        .createStudioEditorLayoutUiShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorLayoutUiAccessors !== 'undefined'
+            ? SlideNextStudioEditorLayoutUiAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorLayoutUiShellRuntime !== 'undefined'
             ? SlideNextStudioEditorLayoutUiShellRuntime
             : null,
@@ -3976,9 +3980,10 @@
           getDocument: () => getIframeDoc()
           }
         })
-      : null;
+      : { accessors: null, runtime: null };
+    const studioEditorLayoutUiAccessors = studioEditorLayoutUiShellComposition.accessors;
     const studioEditorLayoutUiShellRuntime = studioEditorLayoutUiAccessors
-      ? studioEditorLayoutUiAccessors.runtime
+      ? studioEditorLayoutUiShellComposition.runtime
       : null;
     const studioEditorLayoutUiBridge = studioEditorLayoutUiShellRuntime
       && studioEditorLayoutUiShellRuntime.isAvailable === true

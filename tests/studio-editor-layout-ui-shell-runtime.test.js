@@ -87,6 +87,14 @@ test('index routes layout UI bridge construction through the shell runtime', () 
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-layout-ui-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorLayoutUiShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorLayoutUiAccessorsApi\s*\.\s*createStudioEditorLayoutUiAccessors\(/
   );
   assert.match(
