@@ -191,6 +191,7 @@
     const setStatus = typeof options.setStatus === 'function'
       ? options.setStatus
       : () => {};
+    let isExportActive = false;
 
     const getErrorMessage = (error) => error && typeof error.message === 'string' && error.message.trim()
       ? error.message.trim()
@@ -201,6 +202,7 @@
     return function exportPdf() {
       const actionState = resolveStudioExportReadyState(resolveReadyState);
       if (!actionState || !actionState.canUseDeckActions) return false;
+      if (isExportActive) return false;
 
       const failPdfExport = (error) => {
         const message = getErrorMessage(error);
@@ -259,6 +261,7 @@
           !resolveStudioExportReadyState(resolveReadyState).canUseDeckActions
         );
       };
+      isExportActive = true;
 
       if (typeof pdfExport.exportStudioPdf === 'function') {
         return (async () => {
@@ -284,6 +287,7 @@
           } catch (error) {
             return failPdfExport(error);
           } finally {
+            isExportActive = false;
             restoreExportButton();
           }
         })();
@@ -298,6 +302,7 @@
       if (!html) return failPdfExport();
 
       let printFlowAccepted = false;
+      let printFlowFinished = false;
       setStudioExportButtonState(exportButton, true, true);
       setStatus('exporting-pdf');
       try {
@@ -329,6 +334,8 @@
             setStatus('pdf-printing');
           },
           onPrint: () => {
+            printFlowFinished = true;
+            isExportActive = false;
             if (pdfWarningCount > 0) {
               setStatus('pdf-exported-with-warnings', pdfWarningCount, pdfWarnings, false);
             } else {
@@ -337,17 +344,23 @@
             restoreExportButton();
           },
           onError: () => {
+            printFlowFinished = true;
+            isExportActive = false;
             setStatus('pdf-export-failed');
             restoreExportButton();
           }
         });
         if (!didOpenPrintFlow) return failPdfExport();
         printFlowAccepted = true;
+        if (printFlowFinished) isExportActive = false;
         return true;
       } catch (error) {
         return failPdfExport();
       } finally {
-        if (!printFlowAccepted) restoreExportButton();
+        if (!printFlowAccepted) {
+          isExportActive = false;
+          restoreExportButton();
+        }
       }
     };
   }

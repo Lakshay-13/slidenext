@@ -91,6 +91,54 @@ test('PDF export forwards server failure details to the status callback', async 
   ]);
 });
 
+test('PDF export rejects a duplicate request while the server export is pending', async () => {
+  let resolveExport;
+  let exportCalls = 0;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      exportStudioPdf() {
+        exportCalls += 1;
+        return new Promise((resolve) => {
+          resolveExport = () => resolve({ success: true });
+        });
+      }
+    }
+  });
+
+  const firstRequest = exportPdf();
+  assert.equal(exportPdf(), false);
+  assert.equal(exportCalls, 1);
+
+  resolveExport();
+  assert.equal(await firstRequest, true);
+  const secondRequest = exportPdf();
+  assert.equal(exportCalls, 2);
+  resolveExport();
+  assert.equal(await secondRequest, true);
+});
+
+test('PDF print export stays active until the print window completes', () => {
+  let printOptions = null;
+  const exportPdf = exportActions.createStudioPdfExportAction({
+    resolveReadyState: () => ({ canUseDeckActions: true }),
+    buildPreviewHtml: () => '<html><body><div class="slide">A</div></body></html>',
+    buildCanonicalDeck: () => ({ slides: [{ id: 'slide-1' }] }),
+    pdfExport: {
+      openStudioPdfPrintWindow(options) {
+        printOptions = options;
+        return true;
+      }
+    }
+  });
+
+  assert.equal(exportPdf(), true);
+  assert.equal(exportPdf(), false);
+  printOptions.onPrint();
+  assert.equal(exportPdf(), true);
+});
+
 test('PDF export preserves preflight warnings when the server response omits warning details', async () => {
   const statuses = [];
   const exportPdf = exportActions.createStudioPdfExportAction({
