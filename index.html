@@ -8427,16 +8427,7 @@
         && typeof studioEditorFrameLoadingController.setLoadingState === 'function') {
         return studioEditorFrameLoadingController.setLoadingState(state);
       }
-      const loadingView = typeof SlideNextStudioEditorFrameLoadingView !== 'undefined'
-        ? SlideNextStudioEditorFrameLoadingView
-        : null;
-      if (!loadingView || typeof loadingView.setStudioEditorFrameLoadingState !== 'function') {
-        return false;
-      }
-      return loadingView.setStudioEditorFrameLoadingState({
-        documentRef: document,
-        state
-      });
+      return false;
     }
 
     function reportStudioFrameInitializationError() {
@@ -8444,12 +8435,6 @@
         && studioEditorFrameLoadingController
         && typeof studioEditorFrameLoadingController.reportInitializationError === 'function') {
         return studioEditorFrameLoadingController.reportInitializationError();
-      }
-      if (typeof setStudioFrameLoadingState === 'function') {
-        setStudioFrameLoadingState('error');
-      }
-      if (typeof setStudioAutoSaveStatus === 'function') {
-        setStudioAutoSaveStatus('editor-load-failed');
       }
       return false;
     }
@@ -8460,27 +8445,12 @@
         && typeof studioEditorFrameLoadingController.retry === 'function') {
         return studioEditorFrameLoadingController.retry();
       }
-      const presentationUrl = getStudioCurrentPresentationUrl();
-      if (!presentationUrl) return false;
-      return launchStudioEditor(
-        presentationUrl,
-        getStudioPresentationTitle(),
-        getStudioPresentationCategory() || 'General'
-      );
+      return false;
     }
-    const studioEditorFrameLoadingViewApi = typeof SlideNextStudioEditorFrameLoadingView !== 'undefined'
-      ? SlideNextStudioEditorFrameLoadingView
-      : null;
     if (typeof studioEditorFrameLoadingController !== 'undefined'
       && studioEditorFrameLoadingController
       && typeof studioEditorFrameLoadingController.bind === 'function') {
       studioEditorFrameLoadingController.bind();
-    } else if (studioEditorFrameLoadingViewApi
-      && typeof studioEditorFrameLoadingViewApi.bindStudioEditorFrameLoadingControls === 'function') {
-      studioEditorFrameLoadingViewApi.bindStudioEditorFrameLoadingControls({
-        documentRef: document,
-        retryStudioEditorFrame
-      });
     }
 
     async function launchStudioEditor(url, title, category) {

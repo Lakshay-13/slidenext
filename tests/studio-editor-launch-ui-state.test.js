@@ -9,6 +9,7 @@ const editorSession = require('../shared/studio-editor-session.js');
 const editorStatusView = require('../shared/studio-editor-status-view.js');
 const studioPersistence = require('../shared/studio-editor-persistence.js');
 const launchController = require('../shared/studio-editor-launch-controller.js');
+const frameLoadingController = require('../shared/studio-editor-frame-loading-controller.js');
 const launchShellController = require('../shared/studio-editor-launch-shell-controller.js');
 const sessionLifecycleController = require('../shared/studio-editor-session-lifecycle-controller.js');
 const historyStackFixture = require('./helpers/studio-history-stack-fixture.js');
@@ -27,7 +28,12 @@ test('editor and preview iframes have accessible names', () => {
     fileContent,
     /id="studioFrameLoadingRetryBtn"[^>]*onclick="retryStudioEditorFrame\(\)"/
   );
-  assert.match(fileContent, /bindStudioEditorFrameLoadingControls\(\{\s*documentRef: document,/);
+  assert.match(
+    fileContent,
+    /createStudioEditorFrameLoadingController\(\{[\s\S]*?documentRef: document,[\s\S]*?loadingViewApi:[\s\S]*?setAutoSaveStatus:/
+  );
+  assert.match(fileContent, /studioEditorFrameLoadingController\.bind\(\);/);
+  assert.doesNotMatch(fileContent, /studioEditorFrameLoadingViewApi\.bindStudioEditorFrameLoadingControls/);
   assert.doesNotMatch(fileContent, /id="closeStudioEditorBtn"[^>]*onclick=/);
   assert.match(fileContent, /bindStudioEditorShellControls\(\{\s*documentRef: document,/);
 });
@@ -116,6 +122,13 @@ test('retryStudioEditorFrame reuses the current presentation session', async () 
   };
 
   vm.createContext(context);
+  context.studioEditorFrameLoadingController = frameLoadingController
+    .createStudioEditorFrameLoadingController({
+      getPresentationUrl: () => context.currentPresentationUrl,
+      getPresentationTitle: () => context.currentTitle,
+      getPresentationCategory: () => context.currentCategory,
+      launchStudioEditor: (...args) => context.launchStudioEditor(...args)
+    });
   vm.runInContext(retrySource, context);
 
   assert.equal(await context.retryStudioEditorFrame(), true);

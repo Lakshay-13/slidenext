@@ -11,6 +11,7 @@ const capturedStateAction = require('../shared/studio-editor-captured-persistabl
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const frameController = require('../shared/studio-editor-frame-controller.js');
 const frameInitializer = require('../shared/studio-editor-frame-initializer.js');
+const frameLoadingController = require('../shared/studio-editor-frame-loading-controller.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 const toolbarAccessorsApi = require('../shared/studio-editor-toolbar-accessors.js');
@@ -146,6 +147,18 @@ function loadStudioEditorFrameController(context) {
 }
 
 function runStudioFrameInitializationSource(source, context) {
+  context.studioEditorFrameLoadingController = frameLoadingController
+    .createStudioEditorFrameLoadingController({
+      documentRef: context.document || null,
+      loadingViewApi: {
+        setStudioEditorFrameLoadingState({ state }) {
+          return typeof context.setStudioFrameLoadingState === 'function'
+            ? context.setStudioFrameLoadingState(state)
+            : false;
+        }
+      },
+      setAutoSaveStatus: context.setStudioAutoSaveStatus
+    });
   context.studioEditorFrameInitializer = frameInitializer.createStudioEditorFrameInitializer({
     frameController: context.studioEditorFrameController || null,
     syncCanvasDimensions: context.syncStudioEditorCanvasDimensions,
