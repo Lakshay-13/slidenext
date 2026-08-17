@@ -1711,6 +1711,7 @@
   <script src="/shared/studio-editor-style-runtime.js"></script>
   <script src="/shared/studio-editor-style-shell-runtime.js"></script>
   <script src="/shared/studio-editor-style-accessors.js"></script>
+  <script src="/shared/studio-editor-style-shell-composition.js"></script>
   <script src="/shared/studio-editor-theme-controller.js"></script>
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-theme-shell-runtime.js"></script>
@@ -4329,71 +4330,44 @@
     const studioEditorLayerOrderController = studioEditorLayerOrderShellComposition
       ? studioEditorLayerOrderShellComposition.controller
       : null;
-    const studioEditorStyleAccessorsApi =
-      typeof SlideNextStudioEditorStyleAccessors !== 'undefined'
-      ? SlideNextStudioEditorStyleAccessors
+    const studioEditorStyleShellCompositionApi =
+      typeof SlideNextStudioEditorStyleShellComposition !== 'undefined'
+      ? SlideNextStudioEditorStyleShellComposition
       : null;
-    const studioEditorStyleAccessors = studioEditorStyleAccessorsApi
-      && typeof studioEditorStyleAccessorsApi.createStudioEditorStyleAccessors === 'function'
-      ? studioEditorStyleAccessorsApi.createStudioEditorStyleAccessors({
-          runtimeApi: typeof SlideNextStudioEditorStyleShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorStyleShellRuntime
-            : null,
-          styleRuntimeApi: typeof SlideNextStudioEditorStyleRuntime !== 'undefined'
-            ? SlideNextStudioEditorStyleRuntime
-            : null,
+    const studioEditorStyleShellComposition =
+      studioEditorStyleShellCompositionApi
+      && typeof studioEditorStyleShellCompositionApi
+        .createStudioEditorStyleShellComposition === 'function'
+      ? studioEditorStyleShellCompositionApi
+        .createStudioEditorStyleShellComposition({
           runtimeOptions: {
-          controllerApi: typeof SlideNextStudioEditorStyleController !== 'undefined'
-            ? SlideNextStudioEditorStyleController
-            : null,
-          styleApi: typeof SlideNextStudioEditorStyle !== 'undefined'
-            ? SlideNextStudioEditorStyle
-            : null,
-          canonicalStyleApi: typeof SlideNextStudioEditorCanonicalStyle !== 'undefined'
-            ? SlideNextStudioEditorCanonicalStyle
-            : null,
-          canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-            ? SlideNextCanonicalDeck
-            : null,
-          transactionApi: typeof SlideNextStudioEditorTransaction !== 'undefined'
-            ? SlideNextStudioEditorTransaction
-            : null,
-          styleTransactionApi: typeof SlideNextStudioEditorStyleTransaction !== 'undefined'
-            ? SlideNextStudioEditorStyleTransaction
-            : null,
-          styleMutationApi: typeof SlideNextStudioEditorStyleMutation !== 'undefined'
-            ? SlideNextStudioEditorStyleMutation
-            : null,
-          domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-            ? SlideNextStudioEditorDom
-            : null,
-          getSelectedElements: getStudioSelectedElements,
-          getIframeDoc: (...args) => getIframeDoc(...args),
-          getActiveSlide: (...args) => getActiveSlide(...args),
-          isElementLocked: (...args) => isElementLocked(...args),
-          syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
-          documentRef: typeof document !== 'undefined' ? document : null,
-          chartApi: typeof SlideNextStudioEditorChartMutation !== 'undefined'
-            ? SlideNextStudioEditorChartMutation
-            : null,
-          highlightAlignButton: (...args) => highlightAlignButton(...args),
-          assignElementId: (...args) => assignEditorElementId(...args),
-          buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
-          getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
-          getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
-            sourceDoc || getIframeDoc(),
-            getStudioEditorSessionToken()
-          ),
-          finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
+            getSelectedElements: getStudioSelectedElements,
+            getIframeDoc: (...args) => getIframeDoc(...args),
+            getActiveSlide: (...args) => getActiveSlide(...args),
+            isElementLocked: (...args) => isElementLocked(...args),
+            syncInspectorForSelection: (...args) => syncInspectorForSelection(...args),
+            documentRef: typeof document !== 'undefined' ? document : null,
+            highlightAlignButton: (...args) => highlightAlignButton(...args),
+            assignElementId: (...args) => assignEditorElementId(...args),
+            buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            buildCanonicalDeckBaseline: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
+            getPendingCanonicalDeck: getStudioPendingEditorCanonicalDeck,
+            getCanonicalDeckBaseline: (sourceDoc) => resolveEditorLiveCanonicalDeck(
+              sourceDoc || getIframeDoc(),
+              getStudioEditorSessionToken()
+            ),
+            finalizeDeckMutation: (...args) => finalizeEditorDeckMutation(...args)
           }
         })
       : null;
-    const studioEditorStyleRuntime = studioEditorStyleAccessors
-      ? studioEditorStyleAccessors.runtime
+    const studioEditorStyleAccessors = studioEditorStyleShellComposition
+      ? studioEditorStyleShellComposition.accessors
       : null;
-    const studioEditorStyleController = studioEditorStyleRuntime
-      ? studioEditorStyleRuntime.styleController
+    const studioEditorStyleRuntime = studioEditorStyleShellComposition
+      ? studioEditorStyleShellComposition.runtime
+      : null;
+    const studioEditorStyleController = studioEditorStyleShellComposition
+      ? studioEditorStyleShellComposition.controller
       : null;
     if (studioEditorStyleController
       && typeof studioEditorStyleController.bindStudioEditorStyleControls === 'function') {

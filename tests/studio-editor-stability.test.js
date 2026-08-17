@@ -436,7 +436,7 @@ test('style wiring prefers live canonical state and keeps a legacy baseline fall
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorStyleAccessorsApi =',
+    'const studioEditorStyleShellCompositionApi =',
     'const studioEditorStyleController ='
   );
 
