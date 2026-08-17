@@ -3136,8 +3136,11 @@ test('editor composes normalized slide layer order through the shared adapter', 
 
   assert.match(source, /const studioEditorSlideLayerOrderAdapter =/);
   assert.match(source, /SlideNextStudioEditorSlideLayerOrderAdapter/);
+  assert.match(source, /<script src="\/shared\/studio-editor-slide-layer-order-accessors\.js"><\/script>/);
+  assert.match(source, /const studioEditorSlideLayerOrderAccessors =/);
   assert.match(source, /const studioEditorNormalizedSlideLayerOrderReader =/);
   assert.match(source, /typeof normalizedSlideLayerOrderReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideLayerOrderAdapter\.getStudioEditorNormalizedSlideLayerOrder\(/);
   assert.doesNotMatch(getNormalizedSlideLayerOrderSource, /SlideNextStudioEditorDom\.getNormalizedStudioSlideLayerOrder/);
 });
 
@@ -3158,14 +3161,15 @@ test('getNormalizedSlideLayerOrder delegates through the shared adapter', () => 
   const calls = [];
   const context = {
     SlideNextStudioEditorSlideLayerOrderAdapter: require('../shared/studio-editor-slide-layer-order-adapter.js'),
+    SlideNextStudioEditorSlideLayerOrderAccessors: require('../shared/studio-editor-slide-layer-order-accessors.js'),
     SlideNextStudioEditorDom: {
       getNormalizedStudioSlideLayerOrder(slideValue, optionsValue) {
         calls.push([slideValue, optionsValue]);
         return ['element-1'];
       }
     },
-    getEditorDomOptions() {
-      return editorOptions;
+    getEditorDomOptions(overrides = {}) {
+      return { ...editorOptions, ...overrides };
     },
     getSlideEditableElements() {
       return ['element-1'];
@@ -3219,8 +3223,10 @@ test('editor composes slide layer-order writes through the shared adapter', () =
   );
 
   assert.match(source, /const studioEditorSlideLayerOrderAdapter =/);
+  assert.match(source, /const studioEditorSlideLayerOrderAccessors =/);
   assert.match(source, /const studioEditorSlideLayerOrderWriter =/);
   assert.match(source, /typeof slideLayerOrderWriter === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideLayerOrderAdapter\.applyStudioEditorSlideLayerOrder\(/);
   assert.doesNotMatch(applySlideLayerOrderSource, /SlideNextStudioEditorDom\.applyStudioSlideLayerOrder/);
 });
 
@@ -3241,6 +3247,7 @@ test('applySlideLayerOrder delegates through the shared adapter', () => {
   const calls = [];
   const context = {
     SlideNextStudioEditorSlideLayerOrderAdapter: require('../shared/studio-editor-slide-layer-order-adapter.js'),
+    SlideNextStudioEditorSlideLayerOrderAccessors: require('../shared/studio-editor-slide-layer-order-accessors.js'),
     SlideNextStudioEditorDom: {
       applyStudioSlideLayerOrder(slideValue, orderedElementsValue) {
         calls.push([slideValue, orderedElementsValue]);
