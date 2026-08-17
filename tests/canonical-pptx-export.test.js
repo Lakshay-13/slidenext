@@ -1068,6 +1068,44 @@ test('preflightCanonicalPptxExport does not warn for bound children inside flow 
   assert.deepEqual(report.diagnostics.warnings, []);
 });
 
+test('preflightCanonicalPptxExport ignores empty flow wrappers and flattened SVG internals', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'empty-wrapper',
+        type: 'container',
+        children: []
+      }, {
+        id: 'vector-1',
+        type: 'vector',
+        tagName: 'svg',
+        html: '<svg><path d="M0 0" /></svg>',
+        layout: { x: 10, y: 20, width: 100, height: 80 },
+        children: [{
+          id: 'path-1',
+          tagName: 'path'
+        }]
+      }]
+    }]
+  });
+
+  assert.deepEqual(report.diagnostics.warnings, []);
+});
+
+test('preflightCanonicalPptxExport keeps missing-bounds warnings for exportable nodes', () => {
+  const report = pptxExport.preflightCanonicalPptxExport({
+    slides: [{
+      nodes: [{
+        id: 'image-without-bounds',
+        type: 'image',
+        tagName: 'img'
+      }]
+    }]
+  });
+
+  assert.ok(report.diagnostics.warnings.includes('Node image-without-bounds has no exportable bounds'));
+});
+
 test('preflightCanonicalPptxExport ignores unpositioned inline descendants rendered by flow text parents', () => {
   const report = pptxExport.preflightCanonicalPptxExport({
     slides: [{

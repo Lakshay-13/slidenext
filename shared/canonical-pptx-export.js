@@ -19,6 +19,16 @@
   const DEFAULT_SOURCE_WIDTH = 1920;
   const DEFAULT_SOURCE_HEIGHT = 1080;
   const UNSUPPORTED_NODE_TYPES = new Set(['vector', 'video', 'audio', 'embed', 'chart', 'script']);
+  const BOUNDS_RELEVANT_NODE_TYPES = new Set([
+    'audio',
+    'chart',
+    'embed',
+    'image',
+    'shape',
+    'table',
+    'vector',
+    'video'
+  ]);
   const UNSUPPORTED_STYLE_PROPERTIES = new Set([
     'backdrop-filter',
     'box-shadow',
@@ -385,6 +395,14 @@
   function isStructuralInlineBreakNode(node) {
     const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
     return tagName === 'br' || tagName === 'wbr';
+  }
+
+  function isPptxBoundsRelevantNode(node, nestedText = '') {
+    const type = typeof node?.type === 'string' ? node.type.toLowerCase() : '';
+    const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
+    return !!nestedText
+      || BOUNDS_RELEVANT_NODE_TYPES.has(type)
+      || ['audio', 'canvas', 'iframe', 'img', 'svg', 'table', 'video'].includes(tagName);
   }
 
   function getCanonicalTableRows(node, themeTokens = {}) {
@@ -1327,7 +1345,8 @@
       if (!hasBounds
         && !hasExportableChildren
         && !isUnpositionedFlowTextDescendant
-        && !isStructuralInlineBreakNode(node)) {
+        && !isStructuralInlineBreakNode(node)
+        && isPptxBoundsRelevantNode(node, nestedText)) {
         diagnostics.warnings.push(`Node ${nodeId} has no exportable bounds`);
       } else if (hasBounds && (
         bounds.x < 0
