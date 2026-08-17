@@ -34,6 +34,13 @@
     'data-editor-locked',
     'data-editor-prev-display'
   ]);
+  const IMPORTED_TRANSIENT_ANIMATION_STYLE_PROPERTIES = new Set([
+    'translate',
+    'rotate',
+    'scale',
+    'transform',
+    'opacity'
+  ]);
   const STYLE_URL_PATTERN = /url\((?:'([^']*)'|"([^"]*)"|([^)]*))\)/gi;
   const BODY_SCAFFOLD_PLACEHOLDER = '{{SLIDENEXT_CANONICAL_SLIDES}}';
 
@@ -552,6 +559,39 @@
     });
   }
 
+  function isImportedTransientAnimationStyle(styleText = '') {
+    const values = new Map();
+    splitInlineStyleDeclarations(styleText).forEach((declaration) => {
+      const separatorIndex = declaration.indexOf(':');
+      if (separatorIndex === -1) {
+        return;
+      }
+      const propertyName = normalizeString(declaration.slice(0, separatorIndex)).trim().toLowerCase();
+      const propertyValue = normalizeString(declaration.slice(separatorIndex + 1)).trim().toLowerCase();
+      values.set(propertyName, propertyValue);
+    });
+
+    return values.get('translate') === 'none'
+      && values.get('rotate') === 'none'
+      && values.get('scale') === 'none'
+      && values.has('transform')
+      && values.has('opacity');
+  }
+
+  function stripImportedTransientAnimationStyle(styleText = '', options = {}) {
+    const normalizedStyleText = normalizeString(styleText).trim();
+    if (!normalizedStyleText
+      || options.stripTransientAnimationStyles === false
+      || !isImportedTransientAnimationStyle(normalizedStyleText)) {
+      return normalizedStyleText;
+    }
+
+    return filterInlineStyleDeclarations(
+      normalizedStyleText,
+      (propertyName) => !IMPORTED_TRANSIENT_ANIMATION_STYLE_PROPERTIES.has(propertyName)
+    );
+  }
+
   function isImportedSlideBackgroundStyleProperty(propertyName = '') {
     const normalizedPropertyName = normalizeString(propertyName).trim().toLowerCase();
     return normalizedPropertyName === 'background' || normalizedPropertyName.startsWith('background-');
@@ -754,6 +794,18 @@
       transientAttributeNames.forEach((attributeName) => {
         node.removeAttribute(attributeName);
       });
+    }
+
+    if (typeof node.getAttribute === 'function'
+      && typeof node.setAttribute === 'function'
+      && typeof node.removeAttribute === 'function') {
+      const styleText = node.getAttribute('style');
+      const sanitizedStyleText = stripImportedTransientAnimationStyle(styleText, options);
+      if (sanitizedStyleText) {
+        node.setAttribute('style', sanitizedStyleText);
+      } else if (styleText) {
+        node.removeAttribute('style');
+      }
     }
   }
 
@@ -1099,7 +1151,10 @@
     const importedLayout = buildImportedLayout(el, win, context.boundsRoot);
     const visibility = buildImportedVisibility(el, win);
     const attributes = stripCanonicalNodeAttributeDuplicates(sanitizeImportedAttributeMap(el, options), visibility);
-    const inlineStyleText = normalizeString(el.getAttribute('style'));
+    const inlineStyleText = stripImportedTransientAnimationStyle(
+      normalizeString(el.getAttribute('style')),
+      options
+    );
     const importedStyleText = stripImportedNodeHiddenStyle(
       stripImportedNodeLayoutStyle(inlineStyleText, importedLayout),
       visibility
@@ -1163,7 +1218,10 @@
     const childElements = Array.from(slide.children || []).filter(child => shouldImportElement(child, options));
     const title = inferSlideTitle(slide, index, options);
     const sourceAttributes = stripCanonicalSlideAttributeDuplicates(sanitizeImportedAttributeMap(slide, options));
-    const inlineStyleText = normalizeString(slide.getAttribute('style'));
+    const inlineStyleText = stripImportedTransientAnimationStyle(
+      normalizeString(slide.getAttribute('style')),
+      options
+    );
     const computedStyle = getImportedComputedStyle(slide, options);
     const computedBackgroundImage = normalizeImportedComputedCssValue(
       readImportedStyleValue(computedStyle, 'background-image'),
@@ -1801,6 +1859,7 @@
     inferImportedNodeType,
     stripImportedNodeHiddenStyle,
     stripImportedNodeLayoutStyle,
+    stripImportedTransientAnimationStyle,
     sanitizeImportedSlideBackgroundClassName,
     importElementToCanonicalNode,
     importSlideToCanonicalSlide,

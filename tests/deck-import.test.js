@@ -1495,6 +1495,42 @@ test('importElementToCanonicalNode merges configured transient classes with edit
   assert.equal(node.html.includes('revealed'), false);
 });
 
+test('stripImportedTransientAnimationStyle removes GSAP runtime state without removing authored styles', () => {
+  const runtimeStyle = 'color: red; translate: none; rotate: none; scale: none; transform: translate3d(0px, 30px, 0px) scale(0.96, 0.96); opacity: 0;';
+
+  assert.equal(
+    deckImport.stripImportedTransientAnimationStyle(runtimeStyle),
+    'color: red;'
+  );
+  assert.equal(
+    deckImport.stripImportedTransientAnimationStyle('transform: skewX(-15deg); opacity: 0.5;'),
+    'transform: skewX(-15deg); opacity: 0.5;'
+  );
+  assert.equal(
+    deckImport.stripImportedTransientAnimationStyle(runtimeStyle, { stripTransientAnimationStyles: false }),
+    runtimeStyle
+  );
+});
+
+test('importElementToCanonicalNode strips transient animation state from node styles and source clones', () => {
+  const runtimeStyle = 'color: red; translate: none; rotate: none; scale: none; transform: translate(0px, 30px); opacity: 0;';
+  const element = createSanitizableElement({
+    tagName: 'DIV',
+    attributes: {
+      class: 'hero-card',
+      style: runtimeStyle
+    },
+    textContent: 'Hero copy'
+  });
+
+  const node = deckImport.importElementToCanonicalNode(element);
+  const sanitizedClone = deckImport.sanitizeImportedElementClone(element);
+
+  assert.equal(node.style, 'color: red;');
+  assert.equal(node.html.includes('translate:'), false);
+  assert.equal(sanitizedClone.getAttribute('style'), 'color: red;');
+});
+
 test('importElementToCanonicalNode preserves persisted editor groups as canonical group nodes', () => {
   const element = createImportedElement({
     tagName: 'DIV',
