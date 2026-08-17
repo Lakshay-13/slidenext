@@ -7504,13 +7504,6 @@
       })
       : null;
 
-    function bindStudioGlobalKeydownHandler() {
-      return studioEditorGlobalShortcutsController
-        && typeof studioEditorGlobalShortcutsController.bind === 'function'
-        ? studioEditorGlobalShortcutsController.bind()
-        : false;
-    }
-
     const studioEditorBootstrap = typeof SlideNextStudioEditorBootstrap !== 'undefined'
       && SlideNextStudioEditorBootstrap
       && typeof SlideNextStudioEditorBootstrap.createStudioEditorBootstrap === 'function'
@@ -7529,7 +7522,10 @@
           updateTemplateActionState,
           updateMasterSlideActionState,
           updateAssetLibraryState,
-          bindStudioGlobalKeydownHandler,
+          bindStudioGlobalKeydownHandler: studioEditorGlobalShortcutsController
+            && typeof studioEditorGlobalShortcutsController.bind === 'function'
+            ? studioEditorGlobalShortcutsController.bind
+            : null,
           applyZoom,
           syncCanvasRulers
         })
