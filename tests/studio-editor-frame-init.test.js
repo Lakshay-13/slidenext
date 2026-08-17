@@ -10,6 +10,7 @@ const buildStateAction = require('../shared/studio-editor-persistable-deck-build
 const capturedStateAction = require('../shared/studio-editor-captured-persistable-deck-state-action.js');
 const persistableDeckStateAction = require('../shared/studio-editor-persistable-deck-state-action.js');
 const frameController = require('../shared/studio-editor-frame-controller.js');
+const frameInitializer = require('../shared/studio-editor-frame-initializer.js');
 const themeController = require('../shared/studio-editor-theme-controller.js');
 const themeView = require('../shared/studio-theme-view.js');
 const toolbarAccessorsApi = require('../shared/studio-editor-toolbar-accessors.js');
@@ -142,6 +143,16 @@ function loadStudioEditorFrameController(context) {
     syncInspectorForSelection: context.syncInspectorForSelection
   });
   return context;
+}
+
+function runStudioFrameInitializationSource(source, context) {
+  context.studioEditorFrameInitializer = frameInitializer.createStudioEditorFrameInitializer({
+    frameController: context.studioEditorFrameController || null,
+    syncCanvasDimensions: context.syncStudioEditorCanvasDimensions,
+    setLoadingState: context.setStudioFrameLoadingState,
+    setAutoSaveStatus: context.setStudioAutoSaveStatus
+  });
+  vm.runInContext(source, context);
 }
 
 test('captureEditorPersistableDeckState returns persisted html, canonical deck, and playback state from one capture', () => {
@@ -991,7 +1002,7 @@ test('initStudioFrame refreshes inspector state after bootstrapping the iframe',
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   context.initStudioFrame();
 
@@ -1033,7 +1044,7 @@ test('initStudioFrame fails closed when legacy bootstrap runtimes are unavailabl
   };
 
   vm.createContext(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.equal(context.initStudioFrame(), false);
   assert.deepEqual(frameLoadingStates, ['error']);
@@ -1063,7 +1074,7 @@ test('initStudioFrame exposes an error state when the frame controller throws', 
   };
 
   vm.createContext(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.equal(context.initStudioFrame(), false);
   assert.deepEqual(frameLoadingStates, ['error']);
@@ -1101,7 +1112,7 @@ test('initStudioFrame exposes an error state when the shared frame bootstrap thr
 
   vm.createContext(context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.equal(context.initStudioFrame(), false);
   assert.deepEqual(frameLoadingStates, ['error']);
@@ -1251,7 +1262,7 @@ test('initStudioFrame reuses the resolved canonical deck when capturing the init
   vm.createContext(context);
   loadCaptureEditorPersistableDeckState(fileContent, context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   context.initStudioFrame();
 
@@ -1361,7 +1372,7 @@ test('initStudioFrame keeps the shared frame controller alive when initial persi
 
   vm.createContext(context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
@@ -1432,7 +1443,7 @@ test('initStudioFrame keeps the shared frame controller alive when persistence r
 
   vm.createContext(context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
@@ -1491,7 +1502,7 @@ test('initStudioFrame keeps the shared frame controller alive when initial histo
 
   vm.createContext(context);
   loadStudioEditorFrameController(context);
-  vm.runInContext(initStudioFrameSource, context);
+  runStudioFrameInitializationSource(initStudioFrameSource, context);
 
   assert.doesNotThrow(() => context.initStudioFrame());
   assert.deepEqual(calls, ['history-failed']);

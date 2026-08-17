@@ -73,4 +73,15 @@ test('index loads and uses the shared frame initializer', () => {
     fileContent,
     /return studioEditorFrameInitializer\.initialize\(\);/
   );
+  const initStart = fileContent.indexOf('function initStudioFrame() {');
+  const initEnd = fileContent.indexOf(
+    '\n\n    // Apply hoverable tags to editable nodes',
+    initStart
+  );
+  assert.ok(initStart >= 0);
+  assert.ok(initEnd > initStart);
+  assert.doesNotMatch(
+    fileContent.slice(initStart, initEnd),
+    /studioEditorFrameController\.init\(\)/
+  );
 });

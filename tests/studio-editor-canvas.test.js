@@ -105,12 +105,12 @@ test('createStudioCanvasDimensionsSynchronizer resolves canonical size and zoom 
   assert.equal(nodes.canvasScrollContainer.style.height, '432px');
 });
 
-test('index applies canonical canvas dimensions after frame initialization', () => {
+test('index passes canonical canvas dimensions to the shared frame initializer', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 
   assert.match(indexHtml, /function syncStudioEditorCanvasDimensions\(\)/);
-  assert.match(indexHtml, /syncStudioEditorCanvasDimensions\(\);/);
-  assert.match(indexHtml, /setStudioFrameLoadingState\('ready'\)/);
+  assert.match(indexHtml, /syncCanvasDimensions:\s*syncStudioEditorCanvasDimensions/);
+  assert.match(indexHtml, /setLoadingState:\s*setStudioFrameLoadingState/);
 });

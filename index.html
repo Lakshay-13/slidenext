@@ -8585,25 +8585,6 @@
         && typeof studioEditorFrameInitializer.initialize === 'function') {
         return studioEditorFrameInitializer.initialize();
       }
-      if (typeof studioEditorFrameController !== 'undefined'
-        && studioEditorFrameController
-        && typeof studioEditorFrameController.init === 'function') {
-        let didInitialize = false;
-        try {
-          didInitialize = studioEditorFrameController.init();
-        } catch (error) {
-          didInitialize = false;
-        }
-        if (didInitialize && typeof setStudioFrameLoadingState === 'function') {
-          if (typeof syncStudioEditorCanvasDimensions === 'function') {
-            syncStudioEditorCanvasDimensions();
-          }
-          setStudioFrameLoadingState('ready');
-        } else if (!didInitialize) {
-          reportStudioFrameInitializationError();
-        }
-        return didInitialize;
-      }
       return reportStudioFrameInitializationError();
     }
 
