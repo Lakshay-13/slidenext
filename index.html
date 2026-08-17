@@ -4982,40 +4982,10 @@
 
     const studioEditorActiveSlideResolver = studioEditorActiveSlideAccessors
       ? (doc, options = {}) => studioEditorActiveSlideAccessors.getActiveSlide(doc, options)
-      : typeof studioEditorActiveSlideAdapter !== 'undefined'
-        && studioEditorActiveSlideAdapter
-        && typeof studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver === 'function'
-        ? studioEditorActiveSlideAdapter.createStudioEditorActiveSlideResolver({
-            domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-              ? SlideNextStudioEditorDom
-              : null
-          })
         : null;
 
     const studioEditorActiveSlideIdResolver = studioEditorActiveSlideAccessors
       ? (doc, options = {}) => studioEditorActiveSlideAccessors.getActiveSlideId(doc, options)
-      : studioEditorActiveSlideIdAdapter
-        && typeof studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId === 'function'
-        ? (doc, options = {}) => {
-            if (options.preferStateBridge
-              && typeof studioEditorStateBridge !== 'undefined'
-              && studioEditorStateBridge
-              && typeof studioEditorStateBridge.getSlideId === 'function') {
-              const storedSlideId = studioEditorStateBridge.getSlideId();
-              if (typeof storedSlideId === 'string' && storedSlideId.trim()) {
-                return storedSlideId.trim();
-              }
-            }
-            return studioEditorActiveSlideIdAdapter.getStudioEditorActiveSlideId(
-              doc,
-              {
-                domApi: typeof SlideNextStudioEditorDom !== 'undefined'
-                  ? SlideNextStudioEditorDom
-                  : null,
-                domOptions: getEditorDomOptions()
-              }
-            );
-          }
         : null;
 
     const studioEditorChromeNodePrunerAdapter = typeof SlideNextStudioEditorChromeNodePrunerAdapter !== 'undefined'
