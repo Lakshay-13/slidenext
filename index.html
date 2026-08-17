@@ -1516,6 +1516,7 @@
   <script src="/shared/studio-editor-motion-state.js"></script>
   <script src="/shared/studio-editor-motion-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-motion-state-accessors.js"></script>
+  <script src="/shared/studio-editor-motion-state-shell-composition.js"></script>
   <script src="/shared/studio-editor-nudge-controller.js"></script>
     <script src="/shared/studio-editor-alignment.js"></script>
     <script src="/shared/studio-editor-alignment-controller.js"></script>
@@ -4093,43 +4094,37 @@
     const studioEditorRemovalStateController = studioEditorRemovalStateShellComposition
       ? studioEditorRemovalStateShellComposition.controller
       : null;
-    const studioEditorMotionStateAccessorsApi =
-      typeof SlideNextStudioEditorMotionStateAccessors !== 'undefined'
-      ? SlideNextStudioEditorMotionStateAccessors
+    const studioEditorMotionStateShellCompositionApi =
+      typeof SlideNextStudioEditorMotionStateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorMotionStateShellComposition
       : null;
-    const studioEditorMotionStateAccessors = studioEditorMotionStateAccessorsApi
-      && typeof studioEditorMotionStateAccessorsApi
-        .createStudioEditorMotionStateAccessors === 'function'
-      ? studioEditorMotionStateAccessorsApi
-        .createStudioEditorMotionStateAccessors({
-          runtimeApi: typeof SlideNextStudioEditorMotionStateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorMotionStateShellRuntime
-            : null,
+    const studioEditorMotionStateShellComposition =
+      studioEditorMotionStateShellCompositionApi
+      && typeof studioEditorMotionStateShellCompositionApi
+        .createStudioEditorMotionStateShellComposition === 'function'
+      ? studioEditorMotionStateShellCompositionApi
+        .createStudioEditorMotionStateShellComposition({
           runtimeOptions: {
-          motionStateApi: typeof SlideNextStudioEditorMotionState !== 'undefined'
-            ? SlideNextStudioEditorMotionState
-            : null,
-          nudgeApi: typeof SlideNextStudioEditorNudge !== 'undefined'
-            ? SlideNextStudioEditorNudge
-            : null,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getNudgeSelectionState: (elements, sourceDoc) => getNudgeSelectionState(elements, sourceDoc),
-          getSlideMetrics,
-          buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
-          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
-          getRectOnSlide,
-          documentRef: document
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getNudgeSelectionState: (elements, sourceDoc) => getNudgeSelectionState(elements, sourceDoc),
+            getSlideMetrics,
+            buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
+            getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
+            getRectOnSlide,
+            documentRef: document
           }
         })
       : null;
-    const studioEditorMotionStateShellRuntime = studioEditorMotionStateAccessors
-      ? studioEditorMotionStateAccessors.runtime
+    const studioEditorMotionStateAccessors = studioEditorMotionStateShellComposition
+      ? studioEditorMotionStateShellComposition.accessors
       : null;
-    const studioEditorMotionStateController = studioEditorMotionStateShellRuntime
-      && studioEditorMotionStateShellRuntime.isAvailable === true
-      ? studioEditorMotionStateShellRuntime.motionStateController
+    const studioEditorMotionStateShellRuntime = studioEditorMotionStateShellComposition
+      ? studioEditorMotionStateShellComposition.runtime
+      : null;
+    const studioEditorMotionStateController = studioEditorMotionStateShellComposition
+      ? studioEditorMotionStateShellComposition.controller
       : null;
     const studioEditorAlignmentStateAccessorsApi =
       typeof SlideNextStudioEditorAlignmentStateAccessors !== 'undefined'

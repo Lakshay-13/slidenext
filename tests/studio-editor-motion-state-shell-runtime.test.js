@@ -103,10 +103,14 @@ test('index routes motion-state construction through the shell runtime', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorMotionStateAccessorsApi\s*\.\s*createStudioEditorMotionStateAccessors\(/
+    /<script src="\/shared\/studio-editor-motion-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorMotionStateController = studioEditorMotionStateShellRuntime/
+    /studioEditorMotionStateShellCompositionApi\s*\.\s*createStudioEditorMotionStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorMotionStateController = studioEditorMotionStateShellComposition/
   );
 });
