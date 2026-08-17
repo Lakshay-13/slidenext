@@ -7606,18 +7606,6 @@
           getActiveSlideId: (nextDoc) => getActiveSlideId(nextDoc)
         });
       }
-      const resolveStudioLiveActiveSlideId = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.resolveStudioLiveActiveSlideId === 'function'
-        ? SlideNextStudioDeckView.resolveStudioLiveActiveSlideId
-        : null;
-      if (resolveStudioLiveActiveSlideId) {
-        return resolveStudioLiveActiveSlideId(doc, {
-          getActiveSlideId: (nextDoc) => getActiveSlideId(nextDoc)
-        });
-      }
       return '';
     }
 
