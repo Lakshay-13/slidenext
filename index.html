@@ -1530,6 +1530,7 @@
   <script src="/shared/studio-editor-group-state.js"></script>
   <script src="/shared/studio-editor-group-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-group-state-accessors.js"></script>
+  <script src="/shared/studio-editor-group-state-shell-composition.js"></script>
   <script src="/shared/studio-editor-group-mutation.js"></script>
   <script src="/shared/studio-editor-group-transaction.js"></script>
   <script src="/shared/studio-editor-ungroup-state.js"></script>
@@ -4156,50 +4157,44 @@
     const studioEditorAlignmentStateController = studioEditorAlignmentStateShellComposition
       ? studioEditorAlignmentStateShellComposition.controller
       : null;
-    const studioEditorGroupStateAccessorsApi =
-      typeof SlideNextStudioEditorGroupStateAccessors !== 'undefined'
-      ? SlideNextStudioEditorGroupStateAccessors
+    const studioEditorGroupStateShellCompositionApi =
+      typeof SlideNextStudioEditorGroupStateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorGroupStateShellComposition
       : null;
-    const studioEditorGroupStateAccessors = studioEditorGroupStateAccessorsApi
-      && typeof studioEditorGroupStateAccessorsApi
-        .createStudioEditorGroupStateAccessors === 'function'
-      ? studioEditorGroupStateAccessorsApi
-        .createStudioEditorGroupStateAccessors({
-          runtimeApi: typeof SlideNextStudioEditorGroupStateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorGroupStateShellRuntime
-            : null,
+    const studioEditorGroupStateShellComposition =
+      studioEditorGroupStateShellCompositionApi
+      && typeof studioEditorGroupStateShellCompositionApi
+        .createStudioEditorGroupStateShellComposition === 'function'
+      ? studioEditorGroupStateShellCompositionApi
+        .createStudioEditorGroupStateShellComposition({
           runtimeOptions: {
-          groupStateApi: typeof SlideNextStudioEditorGroupState !== 'undefined'
-            ? SlideNextStudioEditorGroupState
-            : null,
-          groupApi: typeof SlideNextStudioEditorGroup !== 'undefined'
-            ? SlideNextStudioEditorGroup
-            : null,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getLiveSelectedElements,
-          getSlideMetrics,
-          buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
-          getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
-          getRectOnSlide,
-          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-            && typeof buildEditorCanonicalDeck === 'function'
-            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-            : isElementLocked,
-          getFreeformPositioned: (sourceDoc) => typeof getEditorCanonicalFreeformReader === 'function'
-            ? getEditorCanonicalFreeformReader(sourceDoc, isElementFreeformPositioned)
-            : isElementFreeformPositioned,
-          isFreeformPositioned: isElementFreeformPositioned
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getLiveSelectedElements,
+            getSlideMetrics,
+            buildPositionedLayoutItems: (selection, options) => buildEditorPositionedLayoutItems(selection, options),
+            getClosestPositionedAncestor: getEditorClosestPositionedAncestor,
+            getRectOnSlide,
+            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+              && typeof buildEditorCanonicalDeck === 'function'
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+              : isElementLocked,
+            getFreeformPositioned: (sourceDoc) => typeof getEditorCanonicalFreeformReader === 'function'
+              ? getEditorCanonicalFreeformReader(sourceDoc, isElementFreeformPositioned)
+              : isElementFreeformPositioned,
+            isFreeformPositioned: isElementFreeformPositioned
           }
         })
       : null;
-    const studioEditorGroupStateShellRuntime = studioEditorGroupStateAccessors
-      ? studioEditorGroupStateAccessors.runtime
+    const studioEditorGroupStateAccessors = studioEditorGroupStateShellComposition
+      ? studioEditorGroupStateShellComposition.accessors
       : null;
-    const studioEditorGroupStateController = studioEditorGroupStateShellRuntime
-      && studioEditorGroupStateShellRuntime.isAvailable === true
-      ? studioEditorGroupStateShellRuntime.groupStateController
+    const studioEditorGroupStateShellRuntime = studioEditorGroupStateShellComposition
+      ? studioEditorGroupStateShellComposition.runtime
+      : null;
+    const studioEditorGroupStateController = studioEditorGroupStateShellComposition
+      ? studioEditorGroupStateShellComposition.controller
       : null;
     const studioEditorUngroupStateAccessorsApi =
       typeof SlideNextStudioEditorUngroupStateAccessors !== 'undefined'

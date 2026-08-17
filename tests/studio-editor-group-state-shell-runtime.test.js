@@ -105,10 +105,14 @@ test('index routes group-state construction through the shell runtime', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorGroupStateAccessorsApi\s*\.\s*createStudioEditorGroupStateAccessors\(/
+    /<script src="\/shared\/studio-editor-group-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorGroupStateController = studioEditorGroupStateShellRuntime/
+    /studioEditorGroupStateShellCompositionApi\s*\.\s*createStudioEditorGroupStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorGroupStateController = studioEditorGroupStateShellComposition/
   );
 });
