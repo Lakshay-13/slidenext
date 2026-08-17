@@ -30,12 +30,26 @@ test('formatVerificationReport summarizes artifact counts and warnings', () => {
       pdfPages: 3,
       pptxSlides: 3,
       pdfWarnings: ['one'],
-      pptxWarnings: ['two']
+      pptxWarnings: ['two'],
+      canonicalSlideCount: 3,
+      canonicalPdfPages: 3,
+      canonicalPptxSlides: 3,
+      canonicalPdfWarnings: ['three'],
+      canonicalPptxWarnings: []
     }
   ]);
 
   assert.equal(
     report,
-    'Verified 1 real deck(s):\n- demo: 3 slide(s), 3 PDF page(s), 3 PPTX slide(s), 2 warning(s)'
+    'Verified 1 real deck(s):\n- demo: 3 slide(s), 3 PDF page(s), 3 PPTX slide(s), 2 legacy warning(s); canonical: 3 slide(s), 3 PDF page(s), 3 PPTX slide(s), 1 warning(s)'
   );
+});
+
+test('buildCanonicalImportHarnessHtml loads the importer and targets the requested deck', () => {
+  const source = verifyRealDecks.buildCanonicalImportHarnessHtml('/presentations/demo/index.html');
+
+  assert.match(source, /id="canonical-deck-output"/);
+  assert.match(source, /src="\/shared\/deck-import\.js"/);
+  assert.match(source, /src="\/presentations\/demo\/index\.html"/);
+  assert.match(source, /canonicalImportReady/);
 });
