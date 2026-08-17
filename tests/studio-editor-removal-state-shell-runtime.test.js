@@ -93,10 +93,14 @@ test('index routes removal state construction through the shell runtime', () => 
   );
   assert.match(
     fileContent,
-    /studioEditorRemovalStateAccessorsApi\s*\.\s*createStudioEditorRemovalStateAccessors\(/
+    /<script src="\/shared\/studio-editor-removal-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime/
+    /studioEditorRemovalStateShellCompositionApi\s*\.\s*createStudioEditorRemovalStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorRemovalStateController = studioEditorRemovalStateShellComposition/
   );
 });

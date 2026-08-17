@@ -79,8 +79,10 @@ test('index wires removal through the runtime module', () => {
     fileContent,
     /<script src="\/shared\/studio-editor-removal-state-shell-runtime\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorRemovalStateAccessorsApi/);
-  assert.match(fileContent, /createStudioEditorRemovalStateAccessors/);
+  assert.match(
+    fileContent,
+    /studioEditorRemovalStateShellCompositionApi\s*\.\s*createStudioEditorRemovalStateShellComposition\(/
+  );
   assert.match(
     fileContent,
     /getSelectedElements: \(doc\) => getStudioSelectedElements\(doc\),/

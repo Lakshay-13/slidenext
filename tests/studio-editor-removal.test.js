@@ -26,10 +26,13 @@ test('editor forwards the removal action document into the selection reader', ()
     source,
     /<script src="\/shared\/studio-editor-removal-state-accessors\.js"><\/script>/
   );
-  assert.match(source, /createStudioEditorRemovalStateAccessors/);
   assert.match(
     source,
-    /studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime/
+    /studioEditorRemovalStateShellCompositionApi\s*\.\s*createStudioEditorRemovalStateShellComposition\(/
+  );
+  assert.match(
+    source,
+    /studioEditorRemovalStateController = studioEditorRemovalStateShellComposition/
   );
   assert.match(removalStateSource, /getSelectedElements\(doc\)/);
   assert.match(removalStateSource, /getDocumentRef: \(\) => documentRef/);

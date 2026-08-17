@@ -1449,6 +1449,7 @@
   <script src="/shared/studio-editor-removal-state.js"></script>
   <script src="/shared/studio-editor-removal-state-shell-runtime.js"></script>
   <script src="/shared/studio-editor-removal-state-accessors.js"></script>
+  <script src="/shared/studio-editor-removal-state-shell-composition.js"></script>
   <script src="/shared/studio-editor-lock-state.js"></script>
   <script src="/shared/studio-editor-lock-toolbar-state.js"></script>
   <script src="/shared/studio-editor-lock-toolbar-state-runtime-accessors.js"></script>
@@ -4061,42 +4062,36 @@
     const studioEditorLockVisibilityController = studioEditorLockVisibilityShellComposition
       ? studioEditorLockVisibilityShellComposition.controller
       : null;
-    const studioEditorRemovalStateAccessorsApi =
-      typeof SlideNextStudioEditorRemovalStateAccessors !== 'undefined'
-      ? SlideNextStudioEditorRemovalStateAccessors
+    const studioEditorRemovalStateShellCompositionApi =
+      typeof SlideNextStudioEditorRemovalStateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorRemovalStateShellComposition
       : null;
-    const studioEditorRemovalStateAccessors = studioEditorRemovalStateAccessorsApi
-      && typeof studioEditorRemovalStateAccessorsApi
-        .createStudioEditorRemovalStateAccessors === 'function'
-      ? studioEditorRemovalStateAccessorsApi
-        .createStudioEditorRemovalStateAccessors({
-          runtimeApi: typeof SlideNextStudioEditorRemovalStateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorRemovalStateShellRuntime
-            : null,
+    const studioEditorRemovalStateShellComposition =
+      studioEditorRemovalStateShellCompositionApi
+      && typeof studioEditorRemovalStateShellCompositionApi
+        .createStudioEditorRemovalStateShellComposition === 'function'
+      ? studioEditorRemovalStateShellCompositionApi
+        .createStudioEditorRemovalStateShellComposition({
           runtimeOptions: {
-          removalStateApi: typeof SlideNextStudioEditorRemovalState !== 'undefined'
-            ? SlideNextStudioEditorRemovalState
-            : null,
-          removalView: typeof SlideNextStudioEditorRemoval !== 'undefined'
-            ? SlideNextStudioEditorRemoval
-            : null,
-          getDocument: () => getIframeDoc(),
-          getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
-          getActiveSlide,
-          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-            && typeof buildEditorCanonicalDeck === 'function'
-            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-            : isElementLocked,
-          documentRef: document
+            getDocument: () => getIframeDoc(),
+            getSelectedElements: (sourceDoc) => getStudioSelectedElements(sourceDoc),
+            getActiveSlide,
+            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+              && typeof buildEditorCanonicalDeck === 'function'
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+              : isElementLocked,
+            documentRef: document
           }
         })
       : null;
-    const studioEditorRemovalStateShellRuntime = studioEditorRemovalStateAccessors
-      ? studioEditorRemovalStateAccessors.runtime
+    const studioEditorRemovalStateAccessors = studioEditorRemovalStateShellComposition
+      ? studioEditorRemovalStateShellComposition.accessors
       : null;
-    const studioEditorRemovalStateController = studioEditorRemovalStateShellRuntime
-      && studioEditorRemovalStateShellRuntime.isAvailable === true
-      ? studioEditorRemovalStateShellRuntime.removalStateController
+    const studioEditorRemovalStateShellRuntime = studioEditorRemovalStateShellComposition
+      ? studioEditorRemovalStateShellComposition.runtime
+      : null;
+    const studioEditorRemovalStateController = studioEditorRemovalStateShellComposition
+      ? studioEditorRemovalStateShellComposition.controller
       : null;
     const studioEditorMotionStateAccessorsApi =
       typeof SlideNextStudioEditorMotionStateAccessors !== 'undefined'
