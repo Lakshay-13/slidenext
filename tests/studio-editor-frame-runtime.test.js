@@ -133,15 +133,23 @@ test('index wires frame editing composition through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /createStudioEditorFrameRuntimeAccessors\(/
+    /<script src="\/shared\/studio-editor-frame-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorFrameRuntime = studioEditorFrameRuntimeAccessors/
+    /studioEditorFrameShellCompositionApi\s*\.\s*createStudioEditorFrameShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorFrameRuntime = studioEditorFrameShellComposition/
   );
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorFrameShellRuntime\.createStudioEditorFrameShellRuntime\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorFrameRuntimeAccessorsApi\s*\.\s*createStudioEditorFrameRuntimeAccessors\(/
   );
   assert.match(
     fileContent,

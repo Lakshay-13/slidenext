@@ -1804,6 +1804,7 @@
   <script src="/shared/studio-editor-frame-runtime.js"></script>
   <script src="/shared/studio-editor-frame-shell-runtime.js"></script>
   <script src="/shared/studio-editor-frame-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-frame-shell-composition.js"></script>
   <script src="/shared/studio-editor-frame-initializer.js"></script>
   <script src="/shared/studio-editor-configuration.js"></script>
   <script src="/shared/studio-editor-selection.js"></script>
@@ -7372,26 +7373,24 @@
           syncInspectorForSelection
         })
       : null;
-    const studioEditorFrameRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorFrameRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorFrameRuntimeAccessors
+    const studioEditorFrameShellCompositionApi =
+      typeof SlideNextStudioEditorFrameShellComposition !== 'undefined'
+      ? SlideNextStudioEditorFrameShellComposition
       : null;
-    const studioEditorFrameRuntimeAccessors = studioEditorFrameRuntimeAccessorsApi
-      && typeof studioEditorFrameRuntimeAccessorsApi
-        .createStudioEditorFrameRuntimeAccessors === 'function'
-      ? studioEditorFrameRuntimeAccessorsApi
-        .createStudioEditorFrameRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorFrameShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorFrameShellRuntime
-            : null,
-          frameRuntimeApi: typeof SlideNextStudioEditorFrameRuntime !== 'undefined'
-            ? SlideNextStudioEditorFrameRuntime
-            : null,
+    const studioEditorFrameShellComposition =
+      studioEditorFrameShellCompositionApi
+      && typeof studioEditorFrameShellCompositionApi
+        .createStudioEditorFrameShellComposition === 'function'
+      ? studioEditorFrameShellCompositionApi
+        .createStudioEditorFrameShellComposition({
           runtimeOptions: studioEditorFrameRuntimeOptions
         })
       : null;
-    const studioEditorFrameRuntime = studioEditorFrameRuntimeAccessors
-      ? studioEditorFrameRuntimeAccessors.runtime
+    const studioEditorFrameRuntimeAccessors = studioEditorFrameShellComposition
+      ? studioEditorFrameShellComposition.accessors
+      : null;
+    const studioEditorFrameRuntime = studioEditorFrameShellComposition
+      ? studioEditorFrameShellComposition.runtime
       : null;
     const studioEditorFrameInteractionStateController = studioEditorFrameRuntime
       ? studioEditorFrameRuntime.frameInteractionStateController
