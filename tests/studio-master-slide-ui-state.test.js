@@ -37,7 +37,7 @@ function runSourceWithCanonicalUi(source, context) {
 
 test('master-slide runtime wiring prefers the live canonical deck resolver', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const runtimeStart = fileContent.indexOf('const studioEditorMasterSlideRuntimeAccessorsApi =');
+  const runtimeStart = fileContent.indexOf('const studioEditorMasterSlideShellCompositionApi =');
   const runtimeEnd = fileContent.indexOf('const studioEditorMasterSlideController =', runtimeStart);
   assert.notEqual(runtimeStart, -1);
   assert.notEqual(runtimeEnd, -1);

@@ -1509,6 +1509,7 @@
   <script src="/shared/studio-editor-master-slide-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-shell-runtime.js"></script>
   <script src="/shared/studio-editor-master-slide-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-master-slide-shell-composition.js"></script>
   <script src="/shared/studio-editor-asset-view.js"></script>
   <script src="/shared/studio-editor-asset-state.js"></script>
   <script src="/shared/studio-editor-asset-state-runtime-accessors.js"></script>
@@ -4716,31 +4717,17 @@
         saveActiveSlideAsTemplate
       });
     }
-    const studioEditorMasterSlideRuntimeAccessorsApi = typeof SlideNextStudioEditorMasterSlideRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorMasterSlideRuntimeAccessors
+    const studioEditorMasterSlideShellCompositionApi =
+      typeof SlideNextStudioEditorMasterSlideShellComposition !== 'undefined'
+      ? SlideNextStudioEditorMasterSlideShellComposition
       : null;
-    const studioEditorMasterSlideRuntimeAccessors = studioEditorMasterSlideRuntimeAccessorsApi
-      && typeof studioEditorMasterSlideRuntimeAccessorsApi.createStudioEditorMasterSlideRuntimeAccessors === 'function'
-      ? studioEditorMasterSlideRuntimeAccessorsApi.createStudioEditorMasterSlideRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorMasterSlideShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorMasterSlideShellRuntime
-            : null,
-          masterSlideRuntimeApi: typeof SlideNextStudioEditorMasterSlideRuntime !== 'undefined'
-            ? SlideNextStudioEditorMasterSlideRuntime
-            : null,
+    const studioEditorMasterSlideShellComposition =
+      studioEditorMasterSlideShellCompositionApi
+      && typeof studioEditorMasterSlideShellCompositionApi
+        .createStudioEditorMasterSlideShellComposition === 'function'
+      ? studioEditorMasterSlideShellCompositionApi
+        .createStudioEditorMasterSlideShellComposition({
           runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorMasterSlideController !== 'undefined'
-              ? SlideNextStudioEditorMasterSlideController
-              : null,
-            canonicalDeckApi: typeof SlideNextCanonicalDeck !== 'undefined'
-              ? SlideNextCanonicalDeck
-              : null,
-            canonicalStateApi: typeof SlideNextStudioEditorCanonicalState !== 'undefined'
-              ? SlideNextStudioEditorCanonicalState
-              : null,
-            renderApi: typeof SlideNextDeckRender !== 'undefined'
-              ? SlideNextDeckRender
-              : null,
             getCanonicalDeck: () => typeof resolveEditorUiCanonicalDeck === 'function'
               ? resolveEditorUiCanonicalDeck(getIframeDoc())
               : buildEditorCanonicalDeck(getIframeDoc()),
@@ -4763,11 +4750,14 @@
           }
         })
       : null;
-    const studioEditorMasterSlideRuntime = studioEditorMasterSlideRuntimeAccessors
-      ? studioEditorMasterSlideRuntimeAccessors.runtime
+    const studioEditorMasterSlideRuntimeAccessors = studioEditorMasterSlideShellComposition
+      ? studioEditorMasterSlideShellComposition.accessors
       : null;
-    const studioEditorMasterSlideController = studioEditorMasterSlideRuntime
-      ? studioEditorMasterSlideRuntime.masterSlideController
+    const studioEditorMasterSlideRuntime = studioEditorMasterSlideShellComposition
+      ? studioEditorMasterSlideShellComposition.runtime
+      : null;
+    const studioEditorMasterSlideController = studioEditorMasterSlideShellComposition
+      ? studioEditorMasterSlideShellComposition.controller
       : null;
     const studioEditorMasterSlideView = typeof SlideNextStudioEditorMasterSlideView !== 'undefined'
       ? SlideNextStudioEditorMasterSlideView

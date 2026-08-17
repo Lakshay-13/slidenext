@@ -103,7 +103,11 @@ test('index wires master-slide persistence through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /studioEditorMasterSlideRuntimeAccessorsApi\s*\.\s*createStudioEditorMasterSlideRuntimeAccessors\(/
+    /studioEditorMasterSlideShellCompositionApi\s*\.\s*createStudioEditorMasterSlideShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-master-slide-shell-composition\.js"><\/script>/
   );
   assert.doesNotMatch(
     fileContent,
