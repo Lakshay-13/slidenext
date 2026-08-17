@@ -1743,6 +1743,7 @@
   <script src="/shared/studio-editor-theme-runtime.js"></script>
   <script src="/shared/studio-editor-theme-shell-runtime.js"></script>
   <script src="/shared/studio-editor-theme-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-theme-shell-composition.js"></script>
   <script src="/shared/studio-editor-toolbar-accessors.js"></script>
   <script src="/shared/studio-editor-session.js"></script>
   <script src="/shared/studio-editor-session-bridge-controller.js"></script>
@@ -7330,45 +7331,40 @@
           setAutoSaveStatus: setStudioAutoSaveStatus
         })
       : null;
-    const studioEditorThemeRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorThemeRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorThemeRuntimeAccessors
+    const studioEditorThemeShellCompositionApi =
+      typeof SlideNextStudioEditorThemeShellComposition !== 'undefined'
+      ? SlideNextStudioEditorThemeShellComposition
       : null;
-    const studioEditorThemeRuntimeAccessors = studioEditorThemeRuntimeAccessorsApi
-      && typeof studioEditorThemeRuntimeAccessorsApi
-        .createStudioEditorThemeRuntimeAccessors === 'function'
-      ? studioEditorThemeRuntimeAccessorsApi
-        .createStudioEditorThemeRuntimeAccessors({
+    const studioEditorThemeShellComposition =
+      studioEditorThemeShellCompositionApi
+      && typeof studioEditorThemeShellCompositionApi
+        .createStudioEditorThemeShellComposition === 'function'
+      ? studioEditorThemeShellCompositionApi
+        .createStudioEditorThemeShellComposition({
+          runtimeAccessorsApi: typeof SlideNextStudioEditorThemeRuntimeAccessors !== 'undefined'
+            ? SlideNextStudioEditorThemeRuntimeAccessors
+            : null,
           runtimeApi: typeof SlideNextStudioEditorThemeShellRuntime !== 'undefined'
             ? SlideNextStudioEditorThemeShellRuntime
             : null,
           themeRuntimeApi: typeof SlideNextStudioEditorThemeRuntime !== 'undefined'
             ? SlideNextStudioEditorThemeRuntime
             : null,
-          runtimeOptions: {
-            controllerApi: typeof SlideNextStudioEditorThemeController !== 'undefined'
-              ? SlideNextStudioEditorThemeController
-              : null,
-            themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
-              ? SlideNextStudioThemeView
-              : null,
-            documentRef: document,
-            localStorageRef: localStorage,
-            getIframeDocument: getIframeDoc,
-            resolveDarkMode: () => document.documentElement.classList.contains('dark')
-          }
+          controllerApi: typeof SlideNextStudioEditorThemeController !== 'undefined'
+            ? SlideNextStudioEditorThemeController
+            : null,
+          themeViewApi: typeof SlideNextStudioThemeView !== 'undefined'
+            ? SlideNextStudioThemeView
+            : null,
+          documentRef: document,
+          localStorageRef: localStorage,
+          getIframeDocument: getIframeDoc,
+          resolveDarkMode: () => document.documentElement.classList.contains('dark')
         })
-      : null;
-    const studioEditorThemeRuntime = studioEditorThemeRuntimeAccessors
-      ? studioEditorThemeRuntimeAccessors.runtime
-      : null;
-    const studioEditorThemeController = studioEditorThemeRuntime
-      ? studioEditorThemeRuntime.themeController
-      : null;
-    if (studioEditorThemeController
-      && typeof studioEditorThemeController.bindStudioEditorThemeButtons === 'function') {
-      studioEditorThemeController.bindStudioEditorThemeButtons({ documentRef: document });
-    }
+      : { runtimeAccessors: null, runtime: null, themeController: null };
+    const studioEditorThemeRuntimeAccessors = studioEditorThemeShellComposition.runtimeAccessors;
+    const studioEditorThemeRuntime = studioEditorThemeShellComposition.runtime;
+    const studioEditorThemeController = studioEditorThemeShellComposition.themeController;
     const studioEditorDeckReadyRuntimeAccessorsApi =
       typeof SlideNextStudioEditorDeckReadyRuntimeAccessors !== 'undefined'
       ? SlideNextStudioEditorDeckReadyRuntimeAccessors

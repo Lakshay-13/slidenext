@@ -53,11 +53,15 @@ test('index wires theme behavior through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /createStudioEditorThemeRuntimeAccessors\(/
+    /<script src="\/shared\/studio-editor-theme-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorThemeRuntime = studioEditorThemeRuntimeAccessors/
+    /createStudioEditorThemeShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorThemeRuntime = studioEditorThemeShellComposition\.runtime/
   );
   assert.doesNotMatch(
     fileContent,
@@ -66,5 +70,9 @@ test('index wires theme behavior through the runtime module', () => {
   assert.doesNotMatch(
     fileContent,
     /SlideNextStudioEditorThemeController\.createStudioEditorThemeController\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
+    /studioEditorThemeRuntimeAccessorsApi\s*\.\s*createStudioEditorThemeRuntimeAccessors\(/
   );
 });
