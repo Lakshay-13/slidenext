@@ -233,27 +233,24 @@ test('layer accessors prefer the live z-index synchronizer', () => {
   assert.deepEqual(calls, [target]);
 });
 
-test('index loads and installs the layer accessor module before editor orchestration', () => {
+test('index routes layer accessor assembly through the shell composition', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
-  const scriptIndex = fileContent.indexOf(
+  const accessorScriptIndex = fileContent.indexOf(
     '<script src="/shared/studio-editor-layer-accessors.js"></script>'
   );
-  const installIndex = fileContent.indexOf(
-    'Object.assign(globalThis, studioEditorLayerGlobalApi);'
+  const compositionScriptIndex = fileContent.indexOf(
+    '<script src="/shared/studio-editor-layer-shell-composition.js"></script>'
   );
-  assert.ok(scriptIndex >= 0);
-  assert.ok(installIndex > scriptIndex);
-  assert.match(fileContent, /createStudioEditorLayerAccessors\(/);
-  assert.match(fileContent, /createStudioEditorLayerGlobalApi\(/);
-  const accessorBlock = fileContent.slice(
-    fileContent.indexOf('const studioEditorLayerAccessors ='),
-    fileContent.indexOf('const studioEditorLayerGlobalApi')
+  assert.ok(accessorScriptIndex >= 0);
+  assert.ok(compositionScriptIndex > accessorScriptIndex);
+  assert.match(fileContent, /studioEditorLayerShellCompositionApi/);
+  assert.match(fileContent, /createStudioEditorLayerShellComposition/);
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorLayerAccessors\.createStudioEditorLayerAccessors\(/
   );
-  assert.match(
-    accessorBlock,
-    /rollbackLayerOrderMutation: \(\.\.\.args\) => rollbackEditorLayerOrderMutation\(\.\.\.args\)/
+  assert.doesNotMatch(
+    fileContent,
+    /SlideNextStudioEditorLayerAccessors\.createStudioEditorLayerGlobalApi\(/
   );
-  assert.match(accessorBlock, /getLiveSelectedElements:/);
-  assert.match(accessorBlock, /updateLayerOrderActionState:/);
-  assert.match(accessorBlock, /getLayerOrderZIndexSynchronizer:/);
 });

@@ -1898,6 +1898,7 @@
   <script src="/shared/studio-editor-element-snapshot-runtime-accessors.js"></script>
   <script src="/shared/studio-editor-element-snapshot-accessors.js"></script>
   <script src="/shared/studio-editor-element-snapshot-shell-composition.js"></script>
+  <script src="/shared/studio-editor-layer-shell-composition.js"></script>
   <script src="/shared/studio-deck-snapshot.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-controller.js"></script>
   <script src="/shared/studio-editor-deck-snapshot-accessors.js"></script>
@@ -1975,12 +1976,19 @@
         })
       : {};
     Object.assign(globalThis, earlyStudioEditorFrameGlobalApi);
-    const studioEditorLayerAccessorsApi = typeof SlideNextStudioEditorLayerAccessors !== 'undefined'
-      ? SlideNextStudioEditorLayerAccessors
+    const studioEditorLayerShellCompositionApi =
+      typeof SlideNextStudioEditorLayerShellComposition !== 'undefined'
+      ? SlideNextStudioEditorLayerShellComposition
       : null;
-    const studioEditorLayerAccessors = studioEditorLayerAccessorsApi
-      && typeof studioEditorLayerAccessorsApi.createStudioEditorLayerAccessors === 'function'
-      ? studioEditorLayerAccessorsApi.createStudioEditorLayerAccessors({
+    const studioEditorLayerShellComposition =
+      studioEditorLayerShellCompositionApi
+      && typeof studioEditorLayerShellCompositionApi
+        .createStudioEditorLayerShellComposition === 'function'
+      ? studioEditorLayerShellCompositionApi
+        .createStudioEditorLayerShellComposition({
+          accessorsApi: typeof SlideNextStudioEditorLayerAccessors !== 'undefined'
+            ? SlideNextStudioEditorLayerAccessors
+            : null,
           controller: typeof SlideNextStudioEditorLayerController !== 'undefined'
             ? SlideNextStudioEditorLayerController
             : null,
@@ -2051,13 +2059,9 @@
           finalizeLayerOrderMutation,
           rollbackLayerOrderMutation: (...args) => rollbackEditorLayerOrderMutation(...args)
         })
-      : null;
-    const studioEditorLayerGlobalApi = studioEditorLayerAccessorsApi
-      && typeof studioEditorLayerAccessorsApi.createStudioEditorLayerGlobalApi === 'function'
-      ? studioEditorLayerAccessorsApi.createStudioEditorLayerGlobalApi({
-          accessors: studioEditorLayerAccessors
-        })
-      : {};
+      : { accessors: null, globalApi: {} };
+    const studioEditorLayerAccessors = studioEditorLayerShellComposition.accessors;
+    const studioEditorLayerGlobalApi = studioEditorLayerShellComposition.globalApi;
     Object.assign(globalThis, studioEditorLayerGlobalApi);
     const studioEditorShellStateCompositionApi =
       typeof SlideNextStudioEditorShellStateComposition !== 'undefined'
