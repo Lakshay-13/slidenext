@@ -1643,6 +1643,7 @@
   <script src="/shared/studio-editor-transform-runtime.js"></script>
   <script src="/shared/studio-editor-transform-shell-runtime.js"></script>
   <script src="/shared/studio-editor-transform-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-transform-shell-composition.js"></script>
   <script src="/shared/studio-editor-persistence.js"></script>
   <script src="/shared/studio-editor-persistence-state.js"></script>
   <script src="/shared/studio-editor-persistence-controller.js"></script>
@@ -5461,22 +5462,17 @@
         )
       : null;
 
-    const studioEditorTransformRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorTransformRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorTransformRuntimeAccessors
+    const studioEditorTransformShellCompositionApi =
+      typeof SlideNextStudioEditorTransformShellComposition !== 'undefined'
+      ? SlideNextStudioEditorTransformShellComposition
       : null;
-    const studioEditorTransformRuntimeAccessors = studioEditorTransformRuntimeAccessorsApi
-      && typeof studioEditorTransformRuntimeAccessorsApi
-        .createStudioEditorTransformRuntimeAccessors === 'function'
-      ? studioEditorTransformRuntimeAccessorsApi
-        .createStudioEditorTransformRuntimeAccessors({
-          runtimeApi: typeof SlideNextStudioEditorTransformShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorTransformShellRuntime
-            : null,
+    const studioEditorTransformShellComposition =
+      studioEditorTransformShellCompositionApi
+      && typeof studioEditorTransformShellCompositionApi
+        .createStudioEditorTransformShellComposition === 'function'
+      ? studioEditorTransformShellCompositionApi
+        .createStudioEditorTransformShellComposition({
           runtimeOptions: {
-          transformRuntimeApi: typeof SlideNextStudioEditorTransformRuntime !== 'undefined'
-            ? SlideNextStudioEditorTransformRuntime
-            : null,
           getActiveSlide: (...args) => getActiveSlide(...args),
           getTransformSelectionState: (...args) => getTransformSelectionState(...args),
           selectElement: (...args) => selectElement(...args),
@@ -5545,11 +5541,14 @@
           }
         })
       : null;
-    const studioEditorTransformRuntime = studioEditorTransformRuntimeAccessors
-      ? studioEditorTransformRuntimeAccessors.runtime
+    const studioEditorTransformRuntimeAccessors = studioEditorTransformShellComposition
+      ? studioEditorTransformShellComposition.accessors
       : null;
-    const studioEditorTransformController = studioEditorTransformRuntime
-      ? studioEditorTransformRuntime.transformController
+    const studioEditorTransformRuntime = studioEditorTransformShellComposition
+      ? studioEditorTransformShellComposition.runtime
+      : null;
+    const studioEditorTransformController = studioEditorTransformShellComposition
+      ? studioEditorTransformShellComposition.controller
       : null;
     const studioEditorCanonicalRuntimeOptionsApi = typeof SlideNextStudioEditorCanonicalRuntimeOptions !== 'undefined'
       ? SlideNextStudioEditorCanonicalRuntimeOptions

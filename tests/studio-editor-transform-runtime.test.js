@@ -106,11 +106,15 @@ test('index wires transform behavior through the runtime module', () => {
   );
   assert.match(
     fileContent,
-    /createStudioEditorTransformRuntimeAccessors\(/
+    /studioEditorTransformShellCompositionApi\s*\.\s*createStudioEditorTransformShellComposition\(/
   );
   assert.match(
     fileContent,
-    /studioEditorTransformRuntime = studioEditorTransformRuntimeAccessors/
+    /<script src="\/shared\/studio-editor-transform-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorTransformRuntime = studioEditorTransformShellComposition/
   );
   assert.doesNotMatch(
     fileContent,

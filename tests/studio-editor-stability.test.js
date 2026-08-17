@@ -514,7 +514,7 @@ test('transform wiring prefers live canonical state and keeps a legacy baseline 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const controllerSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformRuntimeAccessorsApi =',
+    'const studioEditorTransformShellCompositionApi =',
     'const studioEditorTransformRuntime ='
   );
 
@@ -2107,7 +2107,7 @@ test('editor runtime wiring uses the composed positioned-ancestor resolver', () 
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
   const runtimeSource = extractFunctionSource(
     fileContent,
-    'const studioEditorTransformRuntimeAccessorsApi =',
+    'const studioEditorTransformShellCompositionApi =',
     'const studioEditorTransformRuntime ='
   );
 
