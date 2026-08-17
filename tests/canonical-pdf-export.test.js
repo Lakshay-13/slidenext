@@ -88,6 +88,27 @@ test('legacy PDF helpers count slide classes and enforce workspace boundaries', 
   assert.equal(pdfScript.resolveLegacyHtmlSourcePath('../outside.html'), '');
 });
 
+test('legacy PDF preflight reports unavailable local asset references without blocking export', async () => {
+  const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-legacy-pdf-preflight-'));
+  const existingAsset = path.join(temporaryDir, 'hero.png');
+  await fs.writeFile(existingAsset, 'asset', 'utf8');
+
+  try {
+    const report = pdfScript.preflightLegacyPdfExport(
+      '<section class="slide"><img src="hero.png?v=2"><video><source src="missing.mp4"></video><img src="https://example.com/remote.png"></section>',
+      { assetBaseDir: temporaryDir, assetRootDir: temporaryDir }
+    );
+
+    assert.equal(report.canExport, true);
+    assert.deepEqual(report.missingAssets, [{ source: 'missing.mp4' }]);
+    assert.deepEqual(report.warnings, [
+      'PDF legacy HTML references unavailable asset "missing.mp4"'
+    ]);
+  } finally {
+    await fs.rm(temporaryDir, { recursive: true, force: true });
+  }
+});
+
 test('legacy PDF CLI resolves the HTML sibling of a metadata-only sidecar', () => {
   assert.equal(
     pdfScript.resolveLegacyHtmlSiblingPath(

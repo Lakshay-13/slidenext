@@ -157,6 +157,68 @@ function countLegacyHtmlSlides(html, slideSelector = '.slide') {
   return count;
 }
 
+function extractLegacyPdfAssetReferences(html) {
+  if (typeof html !== 'string' || !html.trim()) return [];
+
+  const references = new Set();
+  const addReference = (value) => {
+    const source = typeof value === 'string' ? value.trim() : '';
+    if (!source
+      || /^(?:data:|https?:\/\/|\/\/|#|blob:|mailto:|javascript:)/i.test(source)) {
+      return;
+    }
+    references.add(source);
+  };
+  const assetAttributePattern = /<(?:img|video|audio|source|iframe|script)\b[^>]*?\b(?:src|poster)\s*=\s*(['"])(.*?)\1/gi;
+  const linkAttributePattern = /<link\b[^>]*?\bhref\s*=\s*(['"])(.*?)\1/gi;
+  const cssUrlPattern = /url\(\s*(['"]?)(.*?)\1\s*\)/gi;
+
+  let match = assetAttributePattern.exec(html);
+  while (match) {
+    addReference(match[2]);
+    match = assetAttributePattern.exec(html);
+  }
+  match = linkAttributePattern.exec(html);
+  while (match) {
+    addReference(match[2]);
+    match = linkAttributePattern.exec(html);
+  }
+  match = cssUrlPattern.exec(html);
+  while (match) {
+    addReference(match[2]);
+    match = cssUrlPattern.exec(html);
+  }
+
+  return Array.from(references);
+}
+
+function preflightLegacyPdfExport(html, options = {}) {
+  const slideSelector = typeof options.slideSelector === 'string' && options.slideSelector.trim()
+    ? options.slideSelector
+    : '.slide';
+  const assetExists = typeof options.assetExists === 'function'
+    ? options.assetExists
+    : createPdfAssetExists(options.assetBaseDir, options.assetRootDir);
+  const missingAssets = extractLegacyPdfAssetReferences(html)
+    .filter((source) => {
+      try {
+        return !assetExists(source);
+      } catch (error) {
+        return true;
+      }
+    })
+    .map((source) => ({ source }));
+
+  return {
+    canExport: countLegacyHtmlSlides(html, slideSelector) > 0,
+    slideCount: countLegacyHtmlSlides(html, slideSelector),
+    warnings: missingAssets.map((asset) => (
+      `PDF legacy HTML references unavailable asset "${asset.source}"`
+    )),
+    missingAssets
+  };
+}
+
 function resolveLegacyHtmlSourcePath(sourcePath, workspaceRoot = WORKSPACE_ROOT) {
   if (typeof sourcePath !== 'string' || !sourcePath.trim()) return '';
   const normalizedSourcePath = sourcePath.trim().replace(/^[/\\]+/, '');
@@ -496,6 +558,13 @@ async function main(argv = process.argv.slice(2), options = {}) {
   const directLegacyHtmlPath = resolveLegacyHtmlInputPath(resolvedInputPath);
   if (directLegacyHtmlPath) {
     const legacyHtml = await fs.readFile(directLegacyHtmlPath, 'utf8');
+    const preflight = preflightLegacyPdfExport(legacyHtml, {
+      assetBaseDir: path.dirname(directLegacyHtmlPath)
+    });
+    if (preflight.warnings.length > 0) {
+      console.error(`PDF export completed with ${preflight.warnings.length} warning(s):`);
+      preflight.warnings.forEach((warning) => console.error(`- ${warning}`));
+    }
     const pdfBuffer = await exportLegacyPdfBuffer(legacyHtml, {
       ...options,
       assetBaseDir: path.dirname(directLegacyHtmlPath)
@@ -517,6 +586,13 @@ async function main(argv = process.argv.slice(2), options = {}) {
     const legacySourcePath = resolveLegacyHtmlSiblingPath(resolvedInputPath);
     if (legacySourcePath) {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
+      const preflight = preflightLegacyPdfExport(legacyHtml, {
+        assetBaseDir: path.dirname(legacySourcePath)
+      });
+      if (preflight.warnings.length > 0) {
+        console.error(`PDF export completed with ${preflight.warnings.length} warning(s):`);
+        preflight.warnings.forEach((warning) => console.error(`- ${warning}`));
+      }
       const pdfBuffer = await exportLegacyPdfBuffer(legacyHtml, {
         ...options,
         assetBaseDir: path.dirname(legacySourcePath)
@@ -565,6 +641,8 @@ module.exports = {
   countPdfPages,
   validatePdfArtifact,
   countLegacyHtmlSlides,
+  extractLegacyPdfAssetReferences,
+  preflightLegacyPdfExport,
   resolveLegacyHtmlSourcePath,
   resolveLegacyHtmlSiblingPath,
   resolveLegacyHtmlInputPath,

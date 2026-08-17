@@ -50,6 +50,13 @@ const SHIPPED_LEGACY_DECKS = [
   'pinns-presentation'
 ];
 
+const SHIPPED_LEGACY_PDF_WARNING_COUNTS = {
+  'ai-tools-presentation': 0,
+  'computer-vision-presentation': 1,
+  'onboarding-presentation': 0,
+  'pinns-presentation': 0
+};
+
 test('PPTX export route returns a real generalized PPTX response', async (t) => {
   const server = http.createServer(app);
   const port = await listenOnEphemeralPort(server);
@@ -204,7 +211,11 @@ test('PDF export route preserves one page per slide for every shipped legacy dec
 
     assert.equal(response.status, 200, deckSlug);
     assert.match(response.headers.get('content-type') || '', /application\/pdf/, deckSlug);
-    assert.equal(response.headers.get('x-slidenext-pdf-warning-count'), '0', deckSlug);
+    assert.equal(
+      response.headers.get('x-slidenext-pdf-warning-count'),
+      String(SHIPPED_LEGACY_PDF_WARNING_COUNTS[deckSlug]),
+      deckSlug
+    );
     const buffer = Buffer.from(await response.arrayBuffer());
     assert.equal(buffer.subarray(0, 5).toString(), '%PDF-', deckSlug);
     assert.equal(

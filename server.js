@@ -294,16 +294,20 @@ app.post('/api/export/pdf', async (req, res) => {
 
     try {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
+      const preflight = canonicalPdfExport.preflightLegacyPdfExport(legacyHtml, {
+        assetBaseDir: path.dirname(legacySourcePath),
+        assetRootDir: workspaceDir
+      });
       const buffer = await canonicalPdfExport.exportLegacyPdfBuffer(legacyHtml, {
         assetBaseDir: path.dirname(legacySourcePath)
       });
       const downloadFilename = normalizePdfDownloadFilename(filename);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
-      res.setHeader('X-SlideNext-Pdf-Warning-Count', '0');
+      res.setHeader('X-SlideNext-Pdf-Warning-Count', String(preflight.warnings.length));
       res.setHeader(
         'X-SlideNext-Pdf-Warning-Details',
-        canonicalPdfExport.createStudioPdfWarningDetailsHeader([])
+        canonicalPdfExport.createStudioPdfWarningDetailsHeader(preflight.warnings)
       );
       return res.send(buffer);
     } catch (err) {
