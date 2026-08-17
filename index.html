@@ -7896,19 +7896,7 @@
           getDocument: () => getIframeDoc()
         });
       }
-      const deckViewApi = typeof SlideNextStudioDeckView !== 'undefined'
-        ? SlideNextStudioDeckView
-        : null;
-      if (!deckViewApi || typeof deckViewApi.createStudioDeckViewBuildViewOptionsResolver !== 'function') {
-        return null;
-      }
-      return deckViewApi.createStudioDeckViewBuildViewOptionsResolver({
-        ...options,
-        createBuildOptions: typeof createEditorDeckViewBuildOptions === 'function'
-          ? createEditorDeckViewBuildOptions
-          : null,
-        getDocument: () => getIframeDoc()
-      });
+      return null;
     }
 
     function createEditorDeckViewCanonicalHtmlResolver(options = {}) {

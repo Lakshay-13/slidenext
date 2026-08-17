@@ -621,6 +621,7 @@ test('createEditorDeckViewBuildViewOptionsResolver decorates resolved deck view 
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: deckView,
     createEditorDeckViewBuildOptions(sourceDoc) {
       calls.push(['createEditorDeckViewBuildOptions', sourceDoc]);
