@@ -2458,6 +2458,7 @@ test('editor composes slide collection reads through the shared DOM module', () 
   assert.match(source, /const studioEditorSlideCollectionAdapter =/);
   assert.match(source, /typeof SlideNextStudioEditorSlideCollectionAdapter !== 'undefined'/);
   assert.match(source, /typeof slidesReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideCollectionAdapter\.getStudioEditorSlides\(/);
   const getSlidesSource = extractFunctionSource(
     source,
     'function getSlides(doc = getIframeDoc()) {',
@@ -2482,6 +2483,7 @@ test('getSlides delegates the document and DOM options to the shared DOM module'
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlides(docValue, optionsValue) {
@@ -2519,6 +2521,7 @@ test('getSlides fails closed when the shared DOM module is unavailable', () => {
     '\n\n    function getSlideById'
   );
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
@@ -2541,6 +2544,7 @@ test('editor composes slide-by-ID lookup through the shared DOM module', () => {
   assert.match(source, /const studioEditorSlideByIdReader =/);
   assert.match(source, /const studioEditorSlideCollectionAdapter =/);
   assert.match(source, /typeof slideByIdReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideCollectionAdapter\.getStudioEditorSlideById\(/);
   const getSlideByIdSource = extractFunctionSource(
     source,
     'function getSlideById(slideId, doc = getIframeDoc()) {',
@@ -2566,6 +2570,7 @@ test('getSlideById delegates the slide ID, document, and DOM options to the shar
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideById(slideId, docValue, optionsValue) {
@@ -2604,6 +2609,7 @@ test('getSlideById fails closed when the shared DOM module is unavailable', () =
     '\n\n    function getSlideIndexById'
   );
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {
@@ -2626,6 +2632,7 @@ test('editor composes slide-index lookup through the shared DOM module', () => {
   assert.match(source, /const studioEditorSlideIndexByIdReader =/);
   assert.match(source, /const studioEditorSlideCollectionAdapter =/);
   assert.match(source, /typeof slideIndexByIdReader === 'function'/);
+  assert.doesNotMatch(source, /studioEditorSlideCollectionAdapter\.getStudioEditorSlideIndexById\(/);
   const getSlideIndexByIdSource = extractFunctionSource(
     source,
     'function getSlideIndexById(slideId, doc = getIframeDoc()) {',
@@ -2650,6 +2657,7 @@ test('getSlideIndexById delegates the slide ID, document, and DOM options to the
   const options = { editorSlideIdAttr: 'data-slide-id' };
   const calls = [];
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: {
       getStudioSlideIndexById(slideId, docValue, optionsValue) {
@@ -2688,6 +2696,7 @@ test('getSlideIndexById fails closed when the shared DOM module is unavailable',
     '\n\n    function buildEditorDeckSnapshotFromDom'
   );
   const context = {
+    SlideNextStudioEditorSlideAccessors: slideAccessors,
     SlideNextStudioEditorSlideCollectionAdapter: require('../shared/studio-editor-slide-collection-adapter.js'),
     SlideNextStudioEditorDom: null,
     getIframeDoc() {

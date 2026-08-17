@@ -5054,54 +5054,16 @@
     const studioEditorSlidesReader = studioEditorSlideAccessors
       && typeof studioEditorSlideAccessors.getSlides === 'function'
       ? (doc) => studioEditorSlideAccessors.getSlides(doc)
-      : studioEditorSlideCollectionAdapter
-      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlides === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioSlides === 'function'
-      ? (doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlides(
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlideByIdReader = studioEditorSlideAccessors
       && typeof studioEditorSlideAccessors.getSlideById === 'function'
       ? (slideId, doc) => studioEditorSlideAccessors.getSlideById(slideId, doc)
-      : studioEditorSlideCollectionAdapter
-      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideById === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioSlideById === 'function'
-      ? (slideId, doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlideById(
-          slideId,
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorSlideIndexByIdReader = studioEditorSlideAccessors
       && typeof studioEditorSlideAccessors.getSlideIndexById === 'function'
       ? (slideId, doc) => studioEditorSlideAccessors.getSlideIndexById(slideId, doc)
-      : studioEditorSlideCollectionAdapter
-      && typeof studioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById === 'function'
-      && typeof SlideNextStudioEditorDom !== 'undefined'
-      && SlideNextStudioEditorDom
-      && typeof SlideNextStudioEditorDom.getStudioSlideIndexById === 'function'
-      ? (slideId, doc, options) => studioEditorSlideCollectionAdapter.getStudioEditorSlideIndexById(
-          slideId,
-          doc,
-          {
-            domApi: SlideNextStudioEditorDom,
-            domOptions: options
-          }
-        )
       : null;
 
     const studioEditorHoverableElementsAdapter = typeof SlideNextStudioEditorHoverableElementsAdapter !== 'undefined'
