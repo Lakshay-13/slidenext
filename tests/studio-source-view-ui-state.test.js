@@ -6,6 +6,7 @@ const vm = require('node:vm');
 
 const preview = require('../shared/studio-preview.js');
 const deckView = require('../shared/studio-deck-view.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const sourceController = require('../shared/studio-editor-source-controller.js');
 const sourceAccessorsApi = require('../shared/studio-editor-source-accessors.js');
 
@@ -37,6 +38,7 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
 }
 
 function attachDeckViewHtmlOptions(context) {
+  context.SlideNextStudioEditorCanonicalViewState ??= canonicalViewState;
   if (context && context.SlideNextStudioDeckView) {
     context.SlideNextStudioDeckView = {
       ...context.SlideNextStudioDeckView,

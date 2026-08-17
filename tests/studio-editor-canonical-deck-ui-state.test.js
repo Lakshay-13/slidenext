@@ -2629,6 +2629,7 @@ test('buildEditorDeckRenderOptions delegates render-option composition to the sh
   };
   let delegatedArgs = null;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckRenderOptions(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };
@@ -2713,6 +2714,7 @@ test('buildEditorDeckRenderOptions reuses the local deck view shared options hel
     }
   };
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckRenderOptions(doc, nextCanonicalDeck, options) {
         delegatedArgs = { doc, nextCanonicalDeck, options };

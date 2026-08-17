@@ -7621,20 +7621,6 @@
           getDeckViewSharedOptions: (nextDoc) => createEditorDeckViewSharedOptions(nextDoc)
         });
       }
-      const createStudioDeckRenderOptions = (
-        typeof SlideNextStudioDeckView !== 'undefined'
-        && SlideNextStudioDeckView
-      )
-        && typeof SlideNextStudioDeckView.createStudioDeckRenderOptions === 'function'
-        ? SlideNextStudioDeckView.createStudioDeckRenderOptions
-        : null;
-      if (createStudioDeckRenderOptions) {
-        const deckViewSharedOptions = createEditorDeckViewSharedOptions(doc);
-        return createStudioDeckRenderOptions(doc, canonicalDeck, {
-          activeSlideId: options.activeSlideId,
-          ...deckViewSharedOptions
-        });
-      }
       return null;
     }
 

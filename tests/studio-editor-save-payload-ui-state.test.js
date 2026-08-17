@@ -29,6 +29,7 @@ const persistenceActionCurrentAction = require('../shared/studio-editor-persiste
 const persistenceStaleAction = require('../shared/studio-editor-persistence-stale-action.js');
 const persistenceCaptureAction = require('../shared/studio-editor-persistence-capture-action.js');
 const deckView = require('../shared/studio-deck-view.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const persistedStateFixture = require('./helpers/studio-persisted-state-fixture.js');
 
 const INDEX_HTML_PATH = path.join(__dirname, '..', 'index.html');
@@ -237,6 +238,7 @@ function loadGetCurrentEditorPersistedDeckState(fileContent, context) {
 }
 
 function loadBuildPersistableDeckHtml(fileContent, context, helperSource) {
+  context.SlideNextStudioEditorCanonicalViewState ??= canonicalViewState;
   context.SlideNextStudioEditorPersistence ??= editorPersistence;
   installCanonicalPersistenceAdapter(context);
   if (typeof context.resolveEditorMetadataPersistenceOptions !== 'function') {
@@ -6679,6 +6681,9 @@ test('buildPersistableDeckHtml reuses the local deck view build options helper w
       return canonicalDeck;
     },
     currentSlideIndex: 0,
+    getStudioCurrentSlideIndex() {
+      return context.currentSlideIndex;
+    },
     getPersistedActiveSlideId() {
       return 'slide-2';
     },
@@ -6793,6 +6798,9 @@ test('buildPersistableDeckHtml reuses buildEditorSourceDeckHtml when rendering c
       return canonicalDeck;
     },
     currentSlideIndex: 0,
+    getStudioCurrentSlideIndex() {
+      return context.currentSlideIndex;
+    },
     getPersistedActiveSlideId() {
       return 'slide-2';
     },
@@ -6886,6 +6894,9 @@ test('buildPersistableDeckHtml reuses the local persistable source deck html ren
       return canonicalDeck;
     },
     currentSlideIndex: 0,
+    getStudioCurrentSlideIndex() {
+      return context.currentSlideIndex;
+    },
     getPersistedActiveSlideId() {
       return 'slide-2';
     },

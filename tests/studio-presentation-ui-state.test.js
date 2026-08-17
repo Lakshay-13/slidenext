@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const preview = require('../shared/studio-preview.js');
 const editorPreviewController = require('../shared/studio-editor-preview-controller.js');
 const deckView = require('../shared/studio-deck-view.js');
+const canonicalViewState = require('../shared/studio-editor-canonical-view-state.js');
 const sourceAccessorsApi = require('../shared/studio-editor-source-accessors.js');
 const presentationUrlFixture = require('./helpers/studio-presentation-url-fixture.js');
 
@@ -38,6 +39,7 @@ function createEditorDeckViewSharedOptionsForTest(context, doc) {
 }
 
 function attachEditorPreviewController(context) {
+  context.SlideNextStudioEditorCanonicalViewState ??= canonicalViewState;
   context.studioEditorPreviewController = editorPreviewController.createStudioEditorPreviewController({
     previewApi: context.SlideNextStudioPreview || null,
     documentRef: context.document || null,
@@ -471,6 +473,7 @@ test('buildEditorPreviewHtml falls back to the persisted html baseline when the 
   const calls = [];
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
@@ -1064,6 +1067,7 @@ test('buildEditorPreviewHtml prefers the live active slide when the editor frame
   };
   const calls = [];
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
@@ -1224,6 +1228,7 @@ test('buildEditorPreviewHtml falls back to the current session slide when live a
   };
   let buildEditorCanonicalDeckCalls = 0;
   const context = {
+    SlideNextStudioEditorCanonicalViewState: canonicalViewState,
     SlideNextStudioDeckView: {
       createStudioDeckViewHtmlOptions: deckView.createStudioDeckViewHtmlOptions,
       createStudioCanonicalDeckResolver: deckView.createStudioCanonicalDeckResolver,
