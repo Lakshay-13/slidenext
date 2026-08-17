@@ -61,8 +61,15 @@ test('index routes canonical persistence construction through the shell runtime'
     fileContent,
     /<script src="\/shared\/studio-editor-canonical-persistence-runtime-accessors\.js"><\/script>/
   );
-  assert.match(fileContent, /studioEditorCanonicalPersistenceShellRuntimeApi/);
   assert.match(
+    fileContent,
+    /<script src="\/shared\/studio-editor-canonical-persistence-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorCanonicalPersistenceShellComposition\(/
+  );
+  assert.doesNotMatch(
     fileContent,
     /studioEditorCanonicalPersistenceRuntimeAccessorsApi\s*\.\s*createStudioEditorCanonicalPersistenceRuntimeAccessors\(/
   );

@@ -1362,6 +1362,7 @@
   <script src="/shared/studio-editor-canonical-persistence-adapter.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-shell-runtime.js"></script>
   <script src="/shared/studio-editor-canonical-persistence-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-canonical-persistence-shell-composition.js"></script>
   <script src="/shared/studio-editor-canonical-mutation.js"></script>
   <script src="/shared/studio-editor-canonical-bridge.js"></script>
   <script src="/shared/studio-editor-canonical-ui.js"></script>
@@ -6341,21 +6342,16 @@
     const studioEditorPersistenceController = studioEditorPersistenceRuntime
       ? studioEditorPersistenceRuntime.persistenceController
       : null;
-    const studioEditorCanonicalPersistenceShellRuntimeApi =
-      typeof SlideNextStudioEditorCanonicalPersistenceShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorCanonicalPersistenceShellRuntime
+    const studioEditorCanonicalPersistenceShellCompositionApi =
+      typeof SlideNextStudioEditorCanonicalPersistenceShellComposition !== 'undefined'
+      ? SlideNextStudioEditorCanonicalPersistenceShellComposition
       : null;
-    const studioEditorCanonicalPersistenceRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorCanonicalPersistenceRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorCanonicalPersistenceRuntimeAccessors
-      : null;
-    const studioEditorCanonicalPersistenceRuntimeAccessors =
-      studioEditorCanonicalPersistenceRuntimeAccessorsApi
-      && typeof studioEditorCanonicalPersistenceRuntimeAccessorsApi
-        .createStudioEditorCanonicalPersistenceRuntimeAccessors === 'function'
-      ? studioEditorCanonicalPersistenceRuntimeAccessorsApi
-        .createStudioEditorCanonicalPersistenceRuntimeAccessors({
-          runtimeApi: studioEditorCanonicalPersistenceShellRuntimeApi,
+    const studioEditorCanonicalPersistenceShellComposition =
+      studioEditorCanonicalPersistenceShellCompositionApi
+      && typeof studioEditorCanonicalPersistenceShellCompositionApi
+        .createStudioEditorCanonicalPersistenceShellComposition === 'function'
+      ? studioEditorCanonicalPersistenceShellCompositionApi
+        .createStudioEditorCanonicalPersistenceShellComposition({
           runtimeOptions: {
             canonicalPersistenceApi: typeof SlideNextStudioEditorCanonicalPersistenceAdapter !== 'undefined'
               ? SlideNextStudioEditorCanonicalPersistenceAdapter
@@ -6373,9 +6369,13 @@
           }
         })
       : null;
+    const studioEditorCanonicalPersistenceRuntimeAccessors =
+      studioEditorCanonicalPersistenceShellComposition
+        ? studioEditorCanonicalPersistenceShellComposition.accessors
+        : null;
     const studioEditorCanonicalPersistenceShellRuntime =
-      studioEditorCanonicalPersistenceRuntimeAccessors
-        ? studioEditorCanonicalPersistenceRuntimeAccessors.runtime
+      studioEditorCanonicalPersistenceShellComposition
+        ? studioEditorCanonicalPersistenceShellComposition.runtime
         : null;
     const studioEditorCanonicalPersistenceAdapter = studioEditorCanonicalPersistenceShellRuntime
       && studioEditorCanonicalPersistenceShellRuntime.isAvailable === true

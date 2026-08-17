@@ -151,6 +151,14 @@ test('index delegates canonical persistence fallback resolution to the shared ad
   );
   assert.match(
     fileContent,
+    /<script src="\/shared\/studio-editor-canonical-persistence-shell-composition\.js"><\/script>/
+  );
+  assert.match(
+    fileContent,
+    /createStudioEditorCanonicalPersistenceShellComposition\(/
+  );
+  assert.doesNotMatch(
+    fileContent,
     /studioEditorCanonicalPersistenceRuntimeAccessorsApi\s*\.\s*createStudioEditorCanonicalPersistenceRuntimeAccessors\(/
   );
   assert.match(
