@@ -93,10 +93,14 @@ test('index routes alignment-state construction through the shell runtime', () =
   );
   assert.match(
     fileContent,
-    /studioEditorAlignmentStateAccessorsApi\s*\.\s*createStudioEditorAlignmentStateAccessors\(/
+    /<script src="\/shared\/studio-editor-alignment-state-shell-composition\.js"><\/script>/
   );
   assert.match(
     fileContent,
-    /studioEditorAlignmentStateController = studioEditorAlignmentStateShellRuntime/
+    /studioEditorAlignmentStateShellCompositionApi\s*\.\s*createStudioEditorAlignmentStateShellComposition\(/
+  );
+  assert.match(
+    fileContent,
+    /studioEditorAlignmentStateController = studioEditorAlignmentStateShellComposition/
   );
 });

@@ -1523,6 +1523,7 @@
     <script src="/shared/studio-editor-alignment-state.js"></script>
     <script src="/shared/studio-editor-alignment-state-shell-runtime.js"></script>
     <script src="/shared/studio-editor-alignment-state-accessors.js"></script>
+    <script src="/shared/studio-editor-alignment-state-shell-composition.js"></script>
   <script src="/shared/studio-editor-group.js"></script>
   <script src="/shared/studio-editor-group-toolbar-state.js"></script>
   <script src="/shared/studio-editor-group-toolbar-state-runtime-accessors.js"></script>
@@ -4126,40 +4127,34 @@
     const studioEditorMotionStateController = studioEditorMotionStateShellComposition
       ? studioEditorMotionStateShellComposition.controller
       : null;
-    const studioEditorAlignmentStateAccessorsApi =
-      typeof SlideNextStudioEditorAlignmentStateAccessors !== 'undefined'
-      ? SlideNextStudioEditorAlignmentStateAccessors
+    const studioEditorAlignmentStateShellCompositionApi =
+      typeof SlideNextStudioEditorAlignmentStateShellComposition !== 'undefined'
+      ? SlideNextStudioEditorAlignmentStateShellComposition
       : null;
-    const studioEditorAlignmentStateAccessors = studioEditorAlignmentStateAccessorsApi
-      && typeof studioEditorAlignmentStateAccessorsApi
-        .createStudioEditorAlignmentStateAccessors === 'function'
-      ? studioEditorAlignmentStateAccessorsApi
-        .createStudioEditorAlignmentStateAccessors({
-          runtimeApi: typeof SlideNextStudioEditorAlignmentStateShellRuntime !== 'undefined'
-            ? SlideNextStudioEditorAlignmentStateShellRuntime
-            : null,
+    const studioEditorAlignmentStateShellComposition =
+      studioEditorAlignmentStateShellCompositionApi
+      && typeof studioEditorAlignmentStateShellCompositionApi
+        .createStudioEditorAlignmentStateShellComposition === 'function'
+      ? studioEditorAlignmentStateShellCompositionApi
+        .createStudioEditorAlignmentStateShellComposition({
           runtimeOptions: {
-          alignmentStateApi: typeof SlideNextStudioEditorAlignmentState !== 'undefined'
-            ? SlideNextStudioEditorAlignmentState
-            : null,
-          alignmentApi: typeof SlideNextStudioEditorAlignment !== 'undefined'
-            ? SlideNextStudioEditorAlignment
-            : null,
-          getDocument: () => getIframeDoc(),
-          buildMotionActionState: (sourceDoc) => buildMotionSelectionActionState(sourceDoc),
-          getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
-            ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
-            : isElementLocked,
-          documentRef: document
+            getDocument: () => getIframeDoc(),
+            buildMotionActionState: (sourceDoc) => buildMotionSelectionActionState(sourceDoc),
+            getLockedState: (sourceDoc) => typeof getEditorCanonicalVisibilityReader === 'function'
+              ? getEditorCanonicalVisibilityReader('locked', sourceDoc, isElementLocked)
+              : isElementLocked,
+            documentRef: document
           }
         })
       : null;
-    const studioEditorAlignmentStateShellRuntime = studioEditorAlignmentStateAccessors
-      ? studioEditorAlignmentStateAccessors.runtime
+    const studioEditorAlignmentStateAccessors = studioEditorAlignmentStateShellComposition
+      ? studioEditorAlignmentStateShellComposition.accessors
       : null;
-    const studioEditorAlignmentStateController = studioEditorAlignmentStateShellRuntime
-      && studioEditorAlignmentStateShellRuntime.isAvailable === true
-      ? studioEditorAlignmentStateShellRuntime.alignmentStateController
+    const studioEditorAlignmentStateShellRuntime = studioEditorAlignmentStateShellComposition
+      ? studioEditorAlignmentStateShellComposition.runtime
+      : null;
+    const studioEditorAlignmentStateController = studioEditorAlignmentStateShellComposition
+      ? studioEditorAlignmentStateShellComposition.controller
       : null;
     const studioEditorGroupStateAccessorsApi =
       typeof SlideNextStudioEditorGroupStateAccessors !== 'undefined'
