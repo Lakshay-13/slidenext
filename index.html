@@ -1682,6 +1682,7 @@
   <script src="/shared/studio-editor-persistable-deck-html-action.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-shell-runtime.js"></script>
   <script src="/shared/studio-editor-persistable-deck-html-runtime-accessors.js"></script>
+  <script src="/shared/studio-editor-persistable-deck-html-shell-composition.js"></script>
   <script src="/shared/studio-editor-save-request-body-action.js"></script>
   <script src="/shared/studio-editor-persisted-html-checker-action.js"></script>
   <script src="/shared/studio-editor-persisted-save-request-checker-action.js"></script>
@@ -5688,21 +5689,16 @@
           fallbackResolveLiveActiveSlideId: (sourceDoc) => resolveEditorLiveActiveSlideId(sourceDoc)
         })
       : null;
-    const studioEditorPersistableDeckHtmlShellRuntimeApi =
-      typeof SlideNextStudioEditorPersistableDeckHtmlShellRuntime !== 'undefined'
-      ? SlideNextStudioEditorPersistableDeckHtmlShellRuntime
+    const studioEditorPersistableDeckHtmlShellCompositionApi =
+      typeof SlideNextStudioEditorPersistableDeckHtmlShellComposition !== 'undefined'
+      ? SlideNextStudioEditorPersistableDeckHtmlShellComposition
       : null;
-    const studioEditorPersistableDeckHtmlRuntimeAccessorsApi =
-      typeof SlideNextStudioEditorPersistableDeckHtmlRuntimeAccessors !== 'undefined'
-      ? SlideNextStudioEditorPersistableDeckHtmlRuntimeAccessors
-      : null;
-    const studioEditorPersistableDeckHtmlRuntimeAccessors =
-      studioEditorPersistableDeckHtmlRuntimeAccessorsApi
-      && typeof studioEditorPersistableDeckHtmlRuntimeAccessorsApi
-        .createStudioEditorPersistableDeckHtmlRuntimeAccessors === 'function'
-      ? studioEditorPersistableDeckHtmlRuntimeAccessorsApi
-        .createStudioEditorPersistableDeckHtmlRuntimeAccessors({
-          runtimeApi: studioEditorPersistableDeckHtmlShellRuntimeApi,
+    const studioEditorPersistableDeckHtmlShellComposition =
+      studioEditorPersistableDeckHtmlShellCompositionApi
+      && typeof studioEditorPersistableDeckHtmlShellCompositionApi
+        .createStudioEditorPersistableDeckHtmlShellComposition === 'function'
+      ? studioEditorPersistableDeckHtmlShellCompositionApi
+        .createStudioEditorPersistableDeckHtmlShellComposition({
           runtimeOptions: {
             actionApi: typeof SlideNextStudioEditorPersistableDeckHtmlAction !== 'undefined'
               ? SlideNextStudioEditorPersistableDeckHtmlAction
@@ -5755,9 +5751,13 @@
           }
         })
       : null;
+    const studioEditorPersistableDeckHtmlRuntimeAccessors =
+      studioEditorPersistableDeckHtmlShellComposition
+        ? studioEditorPersistableDeckHtmlShellComposition.accessors
+        : null;
     const studioEditorPersistableDeckHtmlShellRuntime =
-      studioEditorPersistableDeckHtmlRuntimeAccessors
-        ? studioEditorPersistableDeckHtmlRuntimeAccessors.runtime
+      studioEditorPersistableDeckHtmlShellComposition
+        ? studioEditorPersistableDeckHtmlShellComposition.runtime
         : null;
     const studioEditorPersistableDeckHtmlAction = studioEditorPersistableDeckHtmlShellRuntime
       && studioEditorPersistableDeckHtmlShellRuntime.isAvailable === true
