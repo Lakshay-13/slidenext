@@ -34,7 +34,7 @@ Each fix was followed by a targeted regression test and a live retest. The final
 | F-008 Tailwind CDN warning | Remaining warning | Browser console still reports the production CDN warning. |
 | F-009 build/dependency warnings | Partially resolved | Compose `version` warning removed; `npm install` still reports 5 vulnerabilities (3 moderate, 2 high). |
 
-The final automated run completed with **4,709 passed, 0 failed** tests. The suite includes the new regressions for ready-state initialization, thumbnail refresh, canonical layout preservation, responsive compatibility, and export behavior.
+The final automated run completed with **4,710 passed, 0 failed** tests. The suite includes the new regressions for ready-state initialization, thumbnail refresh, canonical layout preservation, responsive compatibility, export behavior, and local stylesheet asset resolution.
 
 ## Final live verification
 
@@ -219,7 +219,7 @@ Resolution:
 - Single-slide wallpaper application changed the active slide background as expected.
 - Canonical PPTX export returned HTTP 200, a ZIP-valid artifact, and the expected warning header.
 - API boundary checks rejected missing parameters, traversal paths, invalid canonical decks, and outside-workspace saves/restores with 400/403 responses.
-- Node test suite: 4,709 passed, 0 failed after the fixes.
+- Node test suite: 4,710 passed, 0 failed after the fixes.
 
 ## Test artifacts and cleanup
 
