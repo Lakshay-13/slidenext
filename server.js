@@ -228,7 +228,9 @@ app.post('/api/export/pptx', async (req, res) => {
 
     try {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
-      const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
+      const result = await legacyPptxExport.exportLegacyHtmlToEditablePptx(legacyHtml, {
+        htmlPath: legacySourcePath,
+        workspaceRoot: workspaceDir,
         assetBaseDir: path.dirname(legacySourcePath),
         assetRootDir: workspaceDir
       });

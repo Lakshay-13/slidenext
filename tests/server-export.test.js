@@ -51,15 +51,15 @@ const SHIPPED_LEGACY_DECKS = [
 ];
 
 const SHIPPED_LEGACY_PPTX_WARNING_COUNTS = {
-  'ai-tools-presentation': 1,
-  'computer-vision-presentation': 2,
-  'onboarding-presentation': 1,
-  'pinns-presentation': 1
+  'ai-tools-presentation': 0,
+  'computer-vision-presentation': 0,
+  'onboarding-presentation': 0,
+  'pinns-presentation': 0
 };
 
 const SHIPPED_LEGACY_PDF_WARNING_COUNTS = {
   'ai-tools-presentation': 0,
-  'computer-vision-presentation': 1,
+  'computer-vision-presentation': 0,
   'onboarding-presentation': 0,
   'pinns-presentation': 0
 };
@@ -86,7 +86,7 @@ test('PPTX export route returns a real generalized PPTX response', async (t) => 
   assert.equal(buffer.subarray(0, 2).toString(), 'PK');
 });
 
-test('PPTX export route flattens an existing legacy HTML deck with an explicit warning', {
+test('PPTX export route imports an existing legacy HTML deck into editable slides', {
   skip: !pdfScript.resolveChromeExecutable() || !legacyPptxExport.resolvePdftoppmExecutable()
 }, async (t) => {
   const server = http.createServer(app);
@@ -104,11 +104,11 @@ test('PPTX export route flattens an existing legacy HTML deck with an explicit w
 
   assert.equal(response.status, 200);
   assert.match(response.headers.get('content-type') || '', /application\/vnd\.openxmlformats/);
-  assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '1');
+  assert.equal(response.headers.get('x-slidenext-pptx-warning-count'), '0');
   const warningDetails = JSON.parse(decodeURIComponent(
     response.headers.get('x-slidenext-pptx-warning-details') || ''
   ));
-  assert.deepEqual(warningDetails.warnings, [legacyPptxExport.LEGACY_PPTX_WARNING]);
+  assert.deepEqual(warningDetails.warnings, []);
   assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0, 2).toString(), 'PK');
 });
 
@@ -142,15 +142,6 @@ test('PPTX export route preserves one slide per page for every shipped legacy de
       String(SHIPPED_LEGACY_PPTX_WARNING_COUNTS[deckSlug]),
       deckSlug
     );
-    if (deckSlug === 'computer-vision-presentation') {
-      const warningDetails = JSON.parse(decodeURIComponent(
-        response.headers.get('x-slidenext-pptx-warning-details') || ''
-      ));
-      assert.deepEqual(warningDetails.warnings, [
-        legacyPptxExport.LEGACY_PPTX_WARNING,
-        'PPTX legacy HTML references unavailable asset "sample.mp4"'
-      ], deckSlug);
-    }
     const buffer = Buffer.from(await response.arrayBuffer());
     assert.equal(buffer.subarray(0, 2).toString(), 'PK', deckSlug);
     assert.equal(

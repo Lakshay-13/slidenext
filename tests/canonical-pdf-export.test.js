@@ -118,6 +118,16 @@ test('legacy PDF preflight reports unavailable local asset references without bl
   }
 });
 
+test('legacy PDF preflight ignores explicitly optional media references', () => {
+  const report = pdfScript.preflightLegacyPdfExport(
+    '<section class="slide"><video><source src="optional.mp4" data-slidenext-optional="true"></video></section>',
+    { assetBaseDir: '/tmp', assetRootDir: '/tmp' }
+  );
+
+  assert.deepEqual(report.missingAssets, []);
+  assert.deepEqual(report.warnings, []);
+});
+
 test('legacy PDF CLI resolves the HTML sibling of a metadata-only sidecar', () => {
   assert.equal(
     pdfScript.resolveLegacyHtmlSiblingPath(

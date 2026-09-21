@@ -7,10 +7,31 @@ const path = require('node:path');
 const { execFile } = require('node:child_process');
 
 const pdfExport = require('./export-canonical-pdf.js');
+const htmlDeckImport = require('./import-html-deck.js');
+const canonicalPptxExport = require('../shared/canonical-pptx-export.js');
 
 const PPTX_WIDTH = 13.333;
 const PPTX_HEIGHT = 7.5;
 const LEGACY_PPTX_WARNING = 'Legacy HTML deck exported as flattened slide images; editable mapping is unavailable';
+
+function createPptxAssetExists(assetBaseDir = '', assetRootDir = '') {
+  const baseDir = path.resolve(assetBaseDir || assetRootDir || process.cwd());
+  const rootDir = path.resolve(assetRootDir || process.cwd());
+  return (assetSource) => {
+    if (typeof assetSource !== 'string' || !assetSource.trim()) return false;
+    if (/^(?:data:|https?:\/\/)/i.test(assetSource)) return true;
+    const resolvedPath = path.isAbsolute(assetSource)
+      ? path.resolve(assetSource)
+      : path.resolve(baseDir, assetSource);
+    const relativePath = path.relative(rootDir, resolvedPath);
+    if (relativePath.startsWith('..' + path.sep) || path.isAbsolute(relativePath)) return false;
+    try {
+      return fsSync.statSync(resolvedPath).isFile();
+    } catch (error) {
+      return false;
+    }
+  };
+}
 
 function resolvePdftoppmExecutable(options = {}) {
   const candidates = [
@@ -72,6 +93,36 @@ async function createFlattenedLegacyPptx(pagePaths, options = {}) {
   return pptx;
 }
 
+async function exportLegacyHtmlToEditablePptx(html, options = {}) {
+  if (typeof options.htmlPath !== 'string' || !options.htmlPath.trim()) {
+    throw new Error('An HTML deck path is required for editable PPTX export');
+  }
+  const importedDeck = await htmlDeckImport.importHtmlDeckToCanonicalDeck(options.htmlPath, {
+    workspaceRoot: options.workspaceRoot,
+    chromePath: options.chromePath,
+    timeoutMs: options.timeoutMs,
+    virtualTimeBudgetMs: options.virtualTimeBudgetMs
+  });
+  const assetExists = typeof options.assetExists === 'function'
+    ? options.assetExists
+    : createPptxAssetExists(options.assetBaseDir, options.assetRootDir);
+  const result = canonicalPptxExport.createCanonicalPptxExport(importedDeck, {
+    assetBaseDir: options.assetBaseDir,
+    assetRootDir: options.assetRootDir,
+    assetExists
+  });
+  if (!result.pptx || typeof result.pptx.write !== 'function') {
+    throw new Error(result.diagnostics.warnings.join('; ') || 'Editable PPTX exporter is unavailable');
+  }
+  const buffer = await result.pptx.write({ outputType: 'nodebuffer' });
+  return {
+    buffer,
+    slideCount: result.slideCount,
+    editable: true,
+    warnings: Array.isArray(result.diagnostics.warnings) ? result.diagnostics.warnings : []
+  };
+}
+
 async function exportLegacyHtmlToPptx(html, options = {}) {
   const pdfExportApi = options.pdfExportApi || pdfExport;
   const preflight = typeof pdfExportApi.preflightLegacyPdfExport === 'function'
@@ -116,8 +167,10 @@ module.exports = {
   PPTX_WIDTH,
   PPTX_HEIGHT,
   LEGACY_PPTX_WARNING,
+  createPptxAssetExists,
   resolvePdftoppmExecutable,
   runPdftoppm,
   createFlattenedLegacyPptx,
+  exportLegacyHtmlToEditablePptx,
   exportLegacyHtmlToPptx
 };

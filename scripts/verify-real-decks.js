@@ -41,10 +41,17 @@ async function verifyLegacyDeck(descriptor, options = {}) {
 
   const pdfBuffer = await pdfApi.exportLegacyPdfBuffer(html, { assetBaseDir });
   const pdfArtifact = pdfApi.validatePdfArtifact(pdfBuffer, preflight.slideCount);
-  const pptxResult = await pptxApi.exportLegacyHtmlToPptx(html, {
-    assetBaseDir,
-    assetRootDir: options.workspaceRoot || WORKSPACE_ROOT
-  });
+  const pptxResult = options.pptxApi
+    ? await pptxApi.exportLegacyHtmlToPptx(html, {
+        assetBaseDir,
+        assetRootDir: options.workspaceRoot || WORKSPACE_ROOT
+      })
+    : await pptxApi.exportLegacyHtmlToEditablePptx(html, {
+        htmlPath: descriptor.htmlPath,
+        workspaceRoot: options.workspaceRoot || WORKSPACE_ROOT,
+        assetBaseDir,
+        assetRootDir: options.workspaceRoot || WORKSPACE_ROOT
+      });
   const pptxArtifact = pptxArtifactApi.validatePptxArtifact(
     pptxResult.buffer,
     preflight.slideCount

@@ -172,14 +172,17 @@ function extractLegacyPdfAssetReferences(html) {
     }
     references.add(source);
   };
-  const assetAttributePattern = /<(?:img|video|audio|source|iframe|script)\b[^>]*?\b(?:src|poster)\s*=\s*(['"])(.*?)\1/gi;
+  const assetTagPattern = /<(?:img|video|audio|source|iframe|script)\b[^>]*>/gi;
   const linkAttributePattern = /<link\b[^>]*?\bhref\s*=\s*(['"])(.*?)\1/gi;
   const cssUrlPattern = /url\(\s*(['"]?)(.*?)\1\s*\)/gi;
 
-  let match = assetAttributePattern.exec(html);
+  let match = assetTagPattern.exec(html);
   while (match) {
-    addReference(match[2]);
-    match = assetAttributePattern.exec(html);
+    const tag = match[0];
+    const isOptional = /\bdata-slidenext-optional(?:\s*=\s*(?:"(?:true|1)"|'(?:true|1)'|true|1))?/i.test(tag);
+    const sourceMatch = tag.match(/\b(?:src|poster)\s*=\s*(['"])(.*?)\1/i);
+    if (!isOptional && sourceMatch) addReference(sourceMatch[2]);
+    match = assetTagPattern.exec(html);
   }
   match = linkAttributePattern.exec(html);
   while (match) {
@@ -308,15 +311,31 @@ async function serveFile(response, filePath) {
   }
 }
 
-async function startExportServer(html, assetBaseDir) {
+async function startExportServer(html, assetBaseDir, options = {}) {
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-'));
   const exportHtmlPath = path.join(temporaryDir, 'index.html');
   await fs.writeFile(exportHtmlPath, html, 'utf8');
+  let deckHtmlPath = '';
+  if (typeof options.deckHtmlPath === 'string' && options.deckHtmlPath.trim()) {
+    const sourceHtml = await fs.readFile(options.deckHtmlPath, 'utf8');
+    const htmlWithAssetBase = /<base\b/i.test(sourceHtml)
+      ? sourceHtml
+      : sourceHtml.replace(/<head\b[^>]*>/i, match => (
+        `${match}<base href="/__slidenext_assets__/">`
+      ));
+    deckHtmlPath = path.join(temporaryDir, 'deck.html');
+    await fs.writeFile(deckHtmlPath, htmlWithAssetBase, 'utf8');
+  }
 
   const server = http.createServer((request, response) => {
     const requestPath = normalizeRequestPath(request.url);
     if (requestPath === '/__slidenext_export__.html') {
       serveFile(response, exportHtmlPath);
+      return;
+    }
+
+    if (requestPath === '/__slidenext_deck__.html' && deckHtmlPath) {
+      serveFile(response, deckHtmlPath);
       return;
     }
 

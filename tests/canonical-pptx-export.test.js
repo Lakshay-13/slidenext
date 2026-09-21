@@ -1352,7 +1352,7 @@ test('createCanonicalPptxExport preserves solid legacy slide backgrounds from st
   assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
 });
 
-test('createCanonicalPptxExport flattens CSS gradients to deterministic first-stop fallbacks', () => {
+test('createCanonicalPptxExport preserves CSS gradients as inline SVG images', () => {
   const result = pptxExport.createCanonicalPptxExport({
     slides: [{
       id: 'gradient-slide',
@@ -1371,9 +1371,10 @@ test('createCanonicalPptxExport flattens CSS gradients to deterministic first-st
   }, { PptxGenJS: FakePptx });
 
   assert.deepEqual(result.pptx.slides[0].background, { color: '123456' });
-  assert.equal(result.pptx.slides[0].calls[0].options.fill.color, '112233');
-  assert.match(result.diagnostics.warnings.join('\n'), /gradient-slide uses unsupported CSS background gradients/);
-  assert.match(result.diagnostics.warnings.join('\n'), /gradient-shape uses unsupported background gradients/);
+  assert.deepEqual(result.diagnostics.warnings, []);
+  assert.deepEqual(result.pptx.slides[0].calls.map(call => call.type), ['image', 'image', 'shape']);
+  assert.match(result.pptx.slides[0].calls[0].options.data, /^data:image\/svg\+xml;base64,/);
+  assert.match(result.pptx.slides[0].calls[1].options.data, /^data:image\/svg\+xml;base64,/);
 });
 
 test('createCanonicalPptxExport renders canonical slide background images before nodes', () => {

@@ -6,7 +6,7 @@ Scope: dashboard, deck launch, legacy presentation controls, Studio editor, vers
 
 ## Executive summary
 
-The container started successfully and the backend/API contract is healthy. The original QA pass reproduced the following defects; the P1/P2 operational defects and production maintenance warnings were fixed and retested below. One non-blocking export-fidelity limitation remains documented.
+The container started successfully and the backend/API contract is healthy. The original QA pass reproduced the following defects; the P1/P2 operational defects and production maintenance warnings were fixed and retested below. The shipped decks now export without document-fidelity warnings.
 
 1. Existing dashboard cards do not launch Preview or Studio Editor.
 2. The three legacy interactive decks load but their JavaScript navigation and presentation actions do nothing.
@@ -26,27 +26,27 @@ Each fix was followed by a targeted regression test and a live retest. The final
 | --- | --- | --- |
 | F-001 dashboard card actions | Resolved | Fresh dashboard loaded all four catalog cards; `Launch Keynote` opened the preview modal and `Studio Editor` opened the selected deck. |
 | F-002 legacy presentation initialization | Resolved | Onboarding advanced `01 / 12` → `02 / 12`; AI Tools advanced `01 / 07` → `02 / 07` and its entry action advanced; Computer Vision advanced `01 / 20` → `02 / 20`. |
-| F-003 PDF/PPTX export unavailable in Docker | Resolved | Container now has Chromium and Poppler. Legacy PDF and PPTX API calls returned HTTP 200; PDF was valid and PPTX passed `unzip -t`. Canonical PDF/PPTX also returned valid artifacts. Legacy PPTX remains intentionally flattened and reports its warning. |
+| F-003 PDF/PPTX export unavailable in Docker | Resolved | Container now has Chromium and Poppler. Legacy PDF and editable PPTX API calls returned HTTP 200; all four shipped decks produced valid one-artifact-per-slide outputs and `unzip -t` passed. Legacy HTML is imported into canonical editable slides instead of being flattened. |
 | F-004 slide organizer refresh | Resolved | Live Studio mutation kept counter and thumbnails aligned: `12 / 12` → `13 / 13` after Add, then `14 / 14` after Duplicate. |
 | F-005 CSS-only layout state | Resolved | Blank canonical deck showed `Freeform canvas` before and after CSS-only Apply, with `data-layout-mode=absolute`. |
 | F-006 narrow Studio layout | Resolved | Real Chrome at 640×720 stacked organizer, canvas, and inspector; toolbar wrapped; document horizontal scroll width stayed within the viewport. |
-| F-007 canonical PPTX fidelity warnings | Remaining limitation | Export succeeds and ZIP integrity passes, but the tested complex deck still reports fidelity warnings for unsupported gradients, missing exportable bounds, and non-exportable background URLs. |
+| F-007 canonical PPTX fidelity warnings | Resolved | CSS gradients are preserved as self-contained SVG images, structural flow wrappers no longer produce false missing-bounds warnings, optional video is exported as an editable placeholder, and font warnings are emitted only when an explicit font inventory is supplied. All four shipped decks now report zero canonical PPTX warnings. |
 | F-008 Tailwind CDN warning | Resolved | Local generated stylesheet is served on all production pages; fresh browser tabs report no warning. |
 | F-009 build/dependency warnings | Resolved | Compose `version` warning removed; both `npm audit` modes report 0 vulnerabilities. |
 
-The final automated run completed with **4,710 passed, 0 failed** tests. The suite includes the new regressions for ready-state initialization, thumbnail refresh, canonical layout preservation, responsive compatibility, export behavior, and local stylesheet asset resolution.
+The final automated run completed with **4,711 passed, 0 failed** tests. The suite includes the new regressions for ready-state initialization, thumbnail refresh, canonical layout preservation, responsive compatibility, export behavior, local stylesheet asset resolution, editable legacy PPTX import, gradient preservation, and optional media preflight.
 
 ## Final live verification
 
 - Docker Compose: `presentation_hub_editor` remained running on `0.0.0.0:11004`.
 - Catalog: `/api/presentations` returned exactly the four shipped decks; the temporary QA deck was absent.
 - Legacy PDF: `/api/export/pdf` for onboarding returned HTTP 200, `application/pdf`, warning count `0`, and a valid 8-page PDF.
-- Legacy PPTX: `/api/export/pptx` for onboarding returned HTTP 200, the OpenXML content type, warning count `1` for intentional flattening, and passed `unzip -t`.
+- Legacy PPTX: `/api/export/pptx` returned HTTP 200 for all four shipped decks, the OpenXML content type, warning count `0`, one slide per source slide, and passed `unzip -t`; the slide XML contains editable text and image elements rather than only flattened page images.
 - Dashboard: onboarding Preview opened `presentations/onboarding-presentation/index.html`; Studio opened the same deck and showed `Structured layout`.
 - Legacy browser controls: onboarding advanced `01 / 12` → `02 / 12`; AI Tools advanced `01 / 07` → `02 / 07`; Computer Vision advanced `01 / 20` → `02 / 20`.
 - Browser console: no runtime errors or Tailwind production warnings were observed in fresh dashboard and legacy-deck tabs.
 
-The automated suite passed all 4,710 tests. API validation, version create/rename/restore/delete, security boundary checks, theme/category controls, new-deck validation, preview keyboard navigation, and canonical PPTX ZIP integrity also passed.
+The automated suite passed all 4,711 tests. API validation, version create/rename/restore/delete, security boundary checks, theme/category controls, new-deck validation, preview keyboard navigation, and canonical PPTX ZIP integrity also passed.
 
 ## Reproduced findings
 
@@ -169,7 +169,7 @@ Observed:
 
 The dashboard itself collapses to a usable one-column card layout at this width, so the issue is specific to the editor's responsive behavior.
 
-### F-007 — Canonical PPTX export completes with 11 fidelity warnings [P3]
+### F-007 — Canonical PPTX export completes with 11 fidelity warnings [P3] — Resolved
 
 The canonical deck export API returned HTTP 200 and produced a valid ZIP/PPTX artifact. `unzip -t` reported no errors.
 
@@ -179,6 +179,17 @@ The response included `X-SlideNext-Pptx-Warning-Count: 11`. The Studio status sh
 - nodes without exportable bounds.
 
 This is not an export failure, but the generated deck may differ materially from the HTML editor view. The warning count and warning details should be surfaced clearly to users and ideally tied to the affected slides/elements.
+
+Resolution:
+
+- CSS linear and radial gradients are rendered as self-contained inline SVG images in the PPTX rather than reduced to the first stop color.
+- Empty flow-only HTML wrappers are excluded from bounds diagnostics; actual positioned exportable nodes remain checked.
+- Video embeds receive an editable placeholder when the source media is unavailable.
+- Font-substitution diagnostics are opt-in through an explicit `availableFonts` inventory, so the exporter does not claim a substitution risk when no host font inventory was supplied.
+- Legacy HTML export now imports the source deck into the canonical model and uses the editable PPTX renderer. Direct HTML inputs outside the workspace use the same temporary import server rather than the flattened fallback.
+- The optional Computer Vision demo video is marked `data-slidenext-optional="true"`; missing optional media no longer creates a PDF preflight warning.
+
+Retest: all four shipped decks produced valid PPTX artifacts with one slide per source slide and zero canonical and legacy PPTX warning headers.
 
 ### F-008 — Tailwind CDN production warning [P3] — Resolved
 
@@ -217,9 +228,9 @@ Resolution:
 - Studio preview opened, and preview `ArrowRight` keyboard navigation changed the active slide.
 - Named version create, rename, restore, and delete succeeded; restore returned the HTML byte-for-byte to the saved state.
 - Single-slide wallpaper application changed the active slide background as expected.
-- Canonical PPTX export returned HTTP 200, a ZIP-valid artifact, and the expected warning header.
+- Canonical and legacy PPTX exports returned HTTP 200, ZIP-valid artifacts, one slide per source slide, and warning count `0` for all four shipped decks.
 - API boundary checks rejected missing parameters, traversal paths, invalid canonical decks, and outside-workspace saves/restores with 400/403 responses.
-- Node test suite: 4,710 passed, 0 failed after the fixes.
+- Node test suite: 4,711 passed, 0 failed after the fixes.
 
 ## Test artifacts and cleanup
 

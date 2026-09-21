@@ -125,6 +125,7 @@
       assetBaseDir: typeof source.assetBaseDir === 'string' ? source.assetBaseDir : '',
       assetRootDir: typeof source.assetRootDir === 'string' ? source.assetRootDir : '',
       assetExists: typeof source.assetExists === 'function' ? source.assetExists : null,
+      availableFontsSpecified: Array.isArray(source.availableFonts),
       availableFonts: Array.isArray(source.availableFonts)
         ? source.availableFonts.filter(font => typeof font === 'string' && font.trim())
         : []
@@ -156,6 +157,141 @@
       if (color) return color;
     }
     return '';
+  }
+
+  function splitCssGradientArguments(value) {
+    const parts = [];
+    let current = '';
+    let depth = 0;
+    let quote = '';
+    for (const char of `${value || ''}`) {
+      if (quote) {
+        current += char;
+        if (char === quote) quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") {
+        quote = char;
+        current += char;
+      } else if (char === '(') {
+        depth += 1;
+        current += char;
+      } else if (char === ')') {
+        depth = Math.max(0, depth - 1);
+        current += char;
+      } else if (char === ',' && depth === 0) {
+        parts.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) parts.push(current.trim());
+    return parts;
+  }
+
+  function resolveCssGradientColor(value) {
+    const input = typeof value === 'string' ? value.trim() : '';
+    const colorMatch = input.match(/(rgba?\([^)]*\)|#[0-9a-f]{3,8}\b|transparent|black|white)/i);
+    if (!colorMatch) return null;
+    const token = colorMatch[1];
+    if (token.toLowerCase() === 'transparent') return { color: '000000', opacity: 0 };
+    if (token.toLowerCase() === 'black') return { color: '000000', opacity: 1 };
+    if (token.toLowerCase() === 'white') return { color: 'FFFFFF', opacity: 1 };
+    const rgba = token.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i);
+    if (rgba) {
+      const color = normalizeHexColor(`rgb(${rgba[1]}, ${rgba[2]}, ${rgba[3]})`);
+      if (!color) return null;
+      return {
+        color,
+        opacity: rgba[4] === undefined ? 1 : Math.max(0, Math.min(1, Number(rgba[4])))
+      };
+    }
+    const hex = token.match(/^#([0-9a-f]+)$/i);
+    if (!hex) return null;
+    const raw = hex[1];
+    const expanded = raw.length === 3
+      ? raw.split('').map(part => part + part).join('')
+      : raw.length === 4
+        ? raw.slice(0, 3).split('').map(part => part + part).join('')
+        : raw.slice(0, 6);
+    if (![3, 4, 6, 8].includes(raw.length)) return null;
+    const alpha = raw.length === 4 || raw.length === 8
+      ? Number.parseInt(raw.length === 4 ? raw[3] + raw[3] : raw.slice(6, 8), 16) / 255
+      : 1;
+    return { color: expanded.toUpperCase(), opacity: alpha };
+  }
+
+  function resolveCssGradientData(value, width = 100, height = 100) {
+    if (typeof value !== 'string' || !/gradient\(/i.test(value)) return '';
+    const match = value.match(/((?:repeating-)?(?:linear|radial)-gradient)\(/i);
+    if (!match) return '';
+    const openParenIndex = match.index + match[0].length - 1;
+    let closeParenIndex = -1;
+    let depth = 0;
+    for (let index = openParenIndex; index < value.length; index += 1) {
+      if (value[index] === '(') depth += 1;
+      if (value[index] === ')') {
+        depth -= 1;
+        if (depth === 0) {
+          closeParenIndex = index;
+          break;
+        }
+      }
+    }
+    if (closeParenIndex < 0) return '';
+    const gradientType = match[1].toLowerCase();
+    const argumentsList = splitCssGradientArguments(value.slice(openParenIndex + 1, closeParenIndex));
+    if (argumentsList.length < 2) return '';
+    const stopArguments = argumentsList
+      .map((argument, index) => ({ argument, index, color: resolveCssGradientColor(argument) }))
+      .filter(entry => entry.color);
+    if (stopArguments.length < 2) return '';
+    const stops = stopArguments.map((entry, index) => {
+      const positionMatch = entry.argument.match(/(?:^|\s)(-?(?:\d+(?:\.\d+)?|\.\d+)%?)(?:\s|$)/);
+      const explicitPosition = positionMatch ? Number.parseFloat(positionMatch[1]) : null;
+      const offset = Number.isFinite(explicitPosition)
+        ? Math.max(0, Math.min(100, positionMatch[1].endsWith('%') ? explicitPosition : explicitPosition))
+        : (index / Math.max(1, stopArguments.length - 1)) * 100;
+      return {
+        ...entry.color,
+        offset
+      };
+    });
+    const sourceWidth = Math.max(1, Number(width) || 100);
+    const sourceHeight = Math.max(1, Number(height) || 100);
+    const id = 'slidenext-gradient';
+    const stopMarkup = stops.map(stop => (
+      `<stop offset="${stop.offset}%" stop-color="#${stop.color}" stop-opacity="${stop.opacity}"/>`
+    )).join('');
+    let gradientMarkup = '';
+    if (gradientType.includes('radial')) {
+      gradientMarkup = `<radialGradient id="${id}" cx="50%" cy="50%" r="75%">${stopMarkup}</radialGradient>`;
+    } else {
+      const direction = argumentsList[0].toLowerCase();
+      const angleMatch = direction.match(/(-?(?:\d+(?:\.\d+)?|\.\d+))deg/);
+      let x1 = '0%';
+      let y1 = '0%';
+      let x2 = '100%';
+      let y2 = '0%';
+      if (angleMatch) {
+        const radians = Number(angleMatch[1]) * Math.PI / 180;
+        x1 = `${50 - Math.sin(radians) * 50}%`;
+        y1 = `${50 + Math.cos(radians) * 50}%`;
+        x2 = `${50 + Math.sin(radians) * 50}%`;
+        y2 = `${50 - Math.cos(radians) * 50}%`;
+      } else if (/to\s+bottom/i.test(direction)) {
+        x1 = '0%'; y1 = '0%'; x2 = '0%'; y2 = '100%';
+      } else if (/to\s+top/i.test(direction)) {
+        x1 = '0%'; y1 = '100%'; x2 = '0%'; y2 = '0%';
+      } else if (/to\s+left/i.test(direction)) {
+        x1 = '100%'; y1 = '0%'; x2 = '0%'; y2 = '0%';
+      }
+      gradientMarkup = `<linearGradient id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stopMarkup}</linearGradient>`;
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${sourceWidth}" height="${sourceHeight}" viewBox="0 0 ${sourceWidth} ${sourceHeight}"><defs>${gradientMarkup}</defs><rect width="100%" height="100%" fill="url(#${id})"/></svg>`;
+    const encoded = encodePptxBase64(svg);
+    return encoded ? `data:image/svg+xml;base64,${encoded}` : '';
   }
 
   function resolvePptxFillColor(value) {
@@ -400,7 +536,9 @@
   function isPptxBoundsRelevantNode(node, nestedText = '') {
     const type = typeof node?.type === 'string' ? node.type.toLowerCase() : '';
     const tagName = typeof node?.tagName === 'string' ? node.tagName.toLowerCase() : '';
-    return !!nestedText
+    const isUnpositionedFlowWrapper = type === 'container'
+      && !(typeof node?.text === 'string' && node.text.trim());
+    return (!!nestedText && !isUnpositionedFlowWrapper)
       || BOUNDS_RELEVANT_NODE_TYPES.has(type)
       || ['audio', 'canvas', 'iframe', 'img', 'svg', 'table', 'video'].includes(tagName);
   }
@@ -1187,11 +1325,17 @@
     }, nodeTransparency(node, themeTokens));
   }
 
-  function shapeOptions(node, bounds, themeTokens = {}) {
+  function shapeOptions(node, bounds, themeTokens = {}, options = {}) {
     const style = nodeStyle(node, themeTokens);
-    const fill = resolvePptxFillColor(
+    const fill = options.fillOverride
+      || (options.transparentFill
+      ? { color: 'FFFFFF', transparency: 100 }
+      : resolvePptxFillColor(
       style['background-color'] || style.background || style['background-image']
-    ) || { color: 'FFFFFF' };
+      ) || { color: 'FFFFFF' });
+    const hasExplicitBorder = normalizeHexColor(style['border-color'])
+      || parseCssPx(style['border-width']) !== null
+      || ['none', 'hidden'].includes((style['border-style'] || '').trim().toLowerCase());
     const lineColor = normalizeHexColor(style['border-color']) || fill.color;
     const lineWidth = parseCssPx(style['border-width']);
     const borderStyle = typeof style['border-style'] === 'string'
@@ -1210,7 +1354,10 @@
       fill: mergePptxTransparency(fill, transparency),
       line: mergePptxTransparency({
         color: lineColor,
-        width: lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75),
+        width: options.transparentFill && !hasExplicitBorder
+          ? 0
+          : lineWidth === null ? 0.5 : Math.max(0, lineWidth * 0.75),
+        ...(options.transparentFill && !hasExplicitBorder ? { transparency: 100 } : {}),
         ...lineStyle
       }, transparency)
     };
@@ -1335,6 +1482,7 @@
         && bounds.width > 0
         && bounds.height > 0;
       const type = typeof node.type === 'string' ? node.type.toLowerCase() : '';
+      const tagName = typeof node.tagName === 'string' ? node.tagName.toLowerCase() : '';
       const childNodes = type === 'table' || node.tagName === 'table' ? [] : node.children;
       const childOrigin = getNodeChildOrigin(node, origin);
       const hasExportableChildren = hasExportableChildBounds(childNodes, childOrigin);
@@ -1398,10 +1546,12 @@
       const nodeBackgroundValue = style['background-image'] || style.background || '';
       const hasGradientBackground = /gradient\(/i.test(nodeBackgroundValue);
       const gradientFallbackColor = resolveCssGradientFallbackColor(nodeBackgroundValue);
+      const gradientData = hasGradientBackground ? resolveCssGradientData(nodeBackgroundValue) : '';
       const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, deck, normalizedOptions);
       const nodeBackgroundSource = nodeBackgroundAsset.source;
       const chartData = type === 'chart' ? getCanonicalChartData(node, themeTokens) : null;
-      const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
+      const embedPlaceholderNode = type === 'embed'
+        && (isCanonicalEmbedPlaceholder(node) || tagName === 'video');
       const svgData = getCanonicalInlineSvgData(node);
       if (UNSUPPORTED_NODE_TYPES.has(type)
         && !(type === 'chart' && chartData)
@@ -1425,11 +1575,13 @@
           });
           diagnostics.warnings.push(`Node ${nodeId} is not fully supported: table has no exportable rows`);
         }
-        getCanonicalTableFontSubstitutionRisks(node, normalizedOptions.availableFonts, themeTokens)
-          .forEach((risk) => {
-            diagnostics.fontSubstitutionRisks.push(risk);
-            diagnostics.warnings.push(`Node ${risk.id} may substitute font ${risk.fontFamily}`);
-          });
+        if (normalizedOptions.availableFontsSpecified) {
+          getCanonicalTableFontSubstitutionRisks(node, normalizedOptions.availableFonts, themeTokens)
+            .forEach((risk) => {
+              diagnostics.fontSubstitutionRisks.push(risk);
+              diagnostics.warnings.push(`Node ${risk.id} may substitute font ${risk.fontFamily}`);
+            });
+        }
         getCanonicalTableBorderStyleRisks(node, themeTokens).forEach((risk) => {
           diagnostics.unsupportedStyles.push({ id: risk.id, properties: ['border-style'] });
           diagnostics.warnings.push(
@@ -1470,17 +1622,19 @@
 
       if (nodeBackgroundValue && /(?:url\(|gradient\()/i.test(nodeBackgroundValue)) {
         if (!nodeBackgroundSource) {
-          diagnostics.unsupportedStyles.push({
-            id: nodeId,
-            properties: [hasGradientBackground ? 'background' : 'background-image']
-          });
-          diagnostics.warnings.push(
-            hasGradientBackground
-              ? gradientFallbackColor
-                ? `Node ${nodeId} uses unsupported background gradients; using the first stop color fallback`
-                : `Node ${nodeId} uses unsupported background gradients; no solid fallback is available`
-              : `Node ${nodeId} background image is not an exportable image URL`
-          );
+          if (!hasGradientBackground || !gradientData) {
+            diagnostics.unsupportedStyles.push({
+              id: nodeId,
+              properties: [hasGradientBackground ? 'background' : 'background-image']
+            });
+            diagnostics.warnings.push(
+              hasGradientBackground
+                ? gradientFallbackColor
+                  ? `Node ${nodeId} uses unsupported background gradients; using the first stop color fallback`
+                  : `Node ${nodeId} uses unsupported background gradients; no solid fallback is available`
+                : `Node ${nodeId} background image is not an exportable image URL`
+            );
+          }
         } else {
           const unsupportedBackgroundEffects = getUnsupportedPptxBackgroundImageEffects(nodeBackgroundValue);
           if (unsupportedBackgroundEffects.length > 0) {
@@ -1524,7 +1678,7 @@
       }
 
       const fontFamily = style['font-family'];
-      if (fontFamily) {
+      if (fontFamily && normalizedOptions.availableFontsSpecified) {
         const primaryFont = fontFamily.split(',')[0].trim().replace(/^['"]|['"]$/g, '');
         if (!normalizedOptions.availableFonts.includes(primaryFont)) {
           diagnostics.fontSubstitutionRisks.push({ id: nodeId, fontFamily: primaryFont });
@@ -1618,7 +1772,8 @@
         });
         diagnostics.warnings.push(`Slide ${slide.id || 'unknown'} uses unsupported CSS background styling`);
       }
-      if (background.style && /gradient\(/i.test(background.style)) {
+      if (background.style && /gradient\(/i.test(background.style)
+        && !resolveCssGradientData(background.style)) {
         diagnostics.unsupportedStyles.push({
           id: slide.id || 'unknown',
           properties: ['background']
@@ -1681,15 +1836,22 @@
     const tableNode = type === 'table' || tagName === 'table';
     const chartNode = type === 'chart';
     const chartData = chartNode ? getCanonicalChartData(node, themeTokens) : null;
-    const embedPlaceholderNode = type === 'embed' && isCanonicalEmbedPlaceholder(node);
+    const embedPlaceholderNode = type === 'embed'
+      && (isCanonicalEmbedPlaceholder(node) || tagName === 'video');
     const svgData = getCanonicalInlineSvgData(node);
     const childOrigin = getNodeChildOrigin(node, origin);
     const hasExportableChildren = hasExportableChildBounds(children, childOrigin);
     const text = getNestedNodeText(node);
     const style = nodeStyle(node, themeTokens);
     const transparency = nodeTransparency(node, themeTokens);
+    const nodeBackgroundValue = style['background-image'] || style.background || '';
+    const nodeBackgroundGradient = /gradient\(/i.test(nodeBackgroundValue)
+      ? resolveCssGradientData(nodeBackgroundValue, bounds?.w || 100, bounds?.h || 100)
+      : '';
     const nodeBackgroundFill = mergePptxTransparency(
-      resolvePptxFillColor(style['background-color'] || style.background || style['background-image']),
+      nodeBackgroundGradient
+        ? null
+        : resolvePptxFillColor(style['background-color'] || style.background || style['background-image']),
       transparency
     );
     const nodeBackgroundAsset = resolveNodeBackgroundImageAsset(node, context.deck, context.options);
@@ -1697,6 +1859,10 @@
     const missingNodeBackground = context.diagnostics
       && Array.isArray(context.diagnostics.missingNodeBackgroundAssets)
       && context.diagnostics.missingNodeBackgroundAssets.includes(getNodeBackgroundAssetDiagnosticId(node));
+
+    if (nodeBackgroundGradient && bounds && typeof context.slide.addImage === 'function') {
+      context.slide.addImage(mergePptxTransparency({ data: nodeBackgroundGradient, ...bounds }, transparency));
+    }
 
     if (nodeBackgroundFill && nodeBackgroundFill.transparency !== 100 && bounds
       && !shapeNode && !tableNode && !embedPlaceholderNode
@@ -1747,11 +1913,21 @@
       if (typeof context.slide.addShape === 'function') {
         context.slide.addShape(
           resolvePptxNodeShapeType(node, bounds, context.pptx, themeTokens),
-          shapeOptions(node, bounds, themeTokens)
+          shapeOptions(node, bounds, themeTokens, {
+            transparentFill: Boolean(nodeBackgroundGradient),
+            ...(tagName === 'video' ? { fillOverride: { color: '111827' } } : {})
+          })
         );
       }
-      if (text && typeof context.slide.addText === 'function') {
-        context.slide.addText(text, textOptions(node, bounds, themeTokens));
+      const embedText = text || (tagName === 'video' ? 'Embedded video' : '');
+      if (embedText && typeof context.slide.addText === 'function') {
+        context.slide.addText(embedText, {
+          ...textOptions(node, bounds, themeTokens),
+          color: tagName === 'video' ? 'FFFFFF' : textOptions(node, bounds, themeTokens).color,
+          bold: tagName === 'video' ? true : textOptions(node, bounds, themeTokens).bold,
+          align: 'center',
+          valign: 'mid'
+        });
       }
     } else if (svgData && bounds && typeof context.slide.addImage === 'function') {
       context.slide.addImage({ data: svgData, ...bounds });
@@ -1826,7 +2002,9 @@
       if (bounds) {
         context.slide.addShape(
           resolvePptxNodeShapeType(node, bounds, context.pptx, themeTokens),
-          shapeOptions(node, bounds, themeTokens)
+          shapeOptions(node, bounds, themeTokens, {
+            transparentFill: Boolean(nodeBackgroundGradient)
+          })
         );
       }
     } else if (!UNSUPPORTED_NODE_TYPES.has(type)
@@ -1844,6 +2022,26 @@
     const background = asObject(slide.layout).background || {};
     const color = resolveSlideBackgroundColor(background, themeTokens);
     if (color) context.slide.background = { color };
+    const backgroundStyle = parseStyle(resolveCssVariables(
+      typeof background.style === 'string' ? background.style : '',
+      themeTokens
+    ));
+    const backgroundGradientValue = backgroundStyle['background-image']
+      || backgroundStyle.background
+      || background.style
+      || '';
+    const backgroundGradient = /gradient\(/i.test(backgroundGradientValue)
+      ? resolveCssGradientData(backgroundGradientValue, context.options.pageWidth, context.options.pageHeight)
+      : '';
+    if (backgroundGradient && typeof context.slide.addImage === 'function') {
+      context.slide.addImage({
+        data: backgroundGradient,
+        x: 0,
+        y: 0,
+        w: context.options.pageWidth,
+        h: context.options.pageHeight
+      });
+    }
     const backgroundAsset = resolveSlideBackgroundImageAsset(background, context.deck, context.options);
     const backgroundSource = backgroundAsset.source;
     const backgroundId = getBackgroundAssetDiagnosticId(slide);
@@ -1991,6 +2189,7 @@
     normalizePptxExportOptions,
     resolvePptxExportOptions,
     normalizeHexColor,
+    resolveCssGradientData,
     preflightCanonicalPptxExport,
     createCanonicalPptxExport
   };

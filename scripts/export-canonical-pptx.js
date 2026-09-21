@@ -12,6 +12,21 @@ const presentationMetadata = require('../shared/presentation-metadata.js');
 const pdfScript = require('./export-canonical-pdf.js');
 const legacyPptxExport = require('./export-legacy-html-pptx.js');
 
+async function exportLegacyPptx(htmlPath, html, workspaceRoot) {
+  if (typeof legacyPptxExport.exportLegacyHtmlToEditablePptx === 'function') {
+    return legacyPptxExport.exportLegacyHtmlToEditablePptx(html, {
+      htmlPath,
+      workspaceRoot,
+      assetBaseDir: path.dirname(htmlPath),
+      assetRootDir: workspaceRoot
+    });
+  }
+  return legacyPptxExport.exportLegacyHtmlToPptx(html, {
+    assetBaseDir: path.dirname(htmlPath),
+    assetRootDir: workspaceRoot
+  });
+}
+
 function printUsage() {
   console.error('Usage: node scripts/export-canonical-pptx.js <canonical-deck.json|deck.html> <output.pptx>');
 }
@@ -44,10 +59,7 @@ async function main(argv = process.argv.slice(2)) {
   const directLegacyHtmlPath = pdfScript.resolveLegacyHtmlInputPath(resolvedInputPath);
   if (directLegacyHtmlPath) {
     const legacyHtml = await fs.readFile(directLegacyHtmlPath, 'utf8');
-    const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
-      assetBaseDir: path.dirname(directLegacyHtmlPath),
-      assetRootDir: process.cwd()
-    });
+    const result = await exportLegacyPptx(directLegacyHtmlPath, legacyHtml, process.cwd());
     await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
     await fs.writeFile(resolvedOutputPath, result.buffer);
     validatePptxArtifact(await fs.readFile(resolvedOutputPath), result.slideCount);
@@ -68,10 +80,7 @@ async function main(argv = process.argv.slice(2)) {
     const legacySourcePath = pdfScript.resolveLegacyHtmlSiblingPath(resolvedInputPath);
     if (legacySourcePath) {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
-      const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
-        assetBaseDir: path.dirname(legacySourcePath),
-        assetRootDir: process.cwd()
-      });
+      const result = await exportLegacyPptx(legacySourcePath, legacyHtml, process.cwd());
       await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
       await fs.writeFile(resolvedOutputPath, result.buffer);
       validatePptxArtifact(await fs.readFile(resolvedOutputPath), result.slideCount);
