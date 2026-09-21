@@ -10,10 +10,19 @@
   "scripts": {
     "start": "node server.js",
     "export:pdf": "node scripts/export-canonical-pdf.js",
-    "export:pptx": "node scripts/export-canonical-pptx.js"
+    "export:pptx": "node scripts/export-canonical-pptx.js",
+    "export:computer-vision:pptx": "node scripts/export-computer-vision-pptx.js",
+    "build:css": "BROWSERSLIST_IGNORE_OLD_DATA=1 tailwindcss -i ./styles/tailwind.css -o ./shared/tailwind.generated.css --minify"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "pptxgenjs": "^4.0.1"
+  },
+  "overrides": {
+    "image-size": "2.0.4"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
   }
 }
