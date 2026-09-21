@@ -7,7 +7,15 @@ WORKDIR /app
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
 
-RUN npm install --omit=dev
+RUN apk add --no-cache \
+      ca-certificates \
+      chromium \
+      freetype \
+      harfbuzz \
+      nss \
+      poppler-utils \
+      ttf-freefont \
+  && npm install --omit=dev
 
 # Copy the rest of the application source code
 COPY . .
