@@ -15,21 +15,7 @@
   <!-- Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
   
-  <!-- Tailwind for grid/layout styling -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Geist', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
+  <link rel="stylesheet" href="/shared/tailwind.generated.css">
 
   <style>
     /* SlideNext Brand Tokens */
@@ -458,6 +444,55 @@
       background-color: rgba(112, 40, 208, 0.05) !important;
       border-color: #7028d0 !important;
       color: #7028d0 !important;
+    }
+
+    @media (max-width: 900px) {
+      #studioEditor {
+        overflow: auto;
+      }
+
+      #studioEditor > header {
+        height: auto;
+        min-height: 4rem;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        overflow-x: auto;
+      }
+
+      #studioEditor > header > div {
+        flex-wrap: wrap;
+      }
+
+      #studioEditor > .flex-1 {
+        min-height: 0;
+        overflow: auto;
+        flex-direction: column;
+      }
+
+      #studioEditor > .flex-1 > aside {
+        width: 100%;
+        max-height: 30vh;
+        flex-shrink: 0;
+      }
+
+      #studioEditor > .flex-1 > main {
+        width: 100%;
+        min-width: 0;
+        min-height: 60vh;
+        flex: none;
+      }
+
+      #studioEditor > .flex-1 > main + aside {
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+
+      #canvasStage {
+        min-height: 60vh;
+        padding: 1rem;
+      }
     }
   </style>
 </head>
@@ -3238,7 +3273,9 @@
             sourceGetCanonicalDeckBaseline: () => resolveEditorLiveCanonicalDeck(
               getIframeDoc(),
               getStudioEditorSessionToken()
-            ),
+            )
+              || resolveEditorStoredCanonicalBaseline()
+              || buildEditorCanonicalDeck(getIframeDoc(), { preferLiveCanonicalDeck: false }),
             captureHistoryEntry: () => createHistoryEntry(getIframeDoc()),
             getCurrentDocument: () => getIframeDoc(),
             resolveActiveSlideId: (sourceDoc, canonicalDeck) => resolveEditorFallbackActiveSlideId(
@@ -3471,7 +3508,10 @@
           updateLayersList: (...args) => updateLayersList(...args),
           buildEditorDeckSnapshot: (sourceDoc) => buildEditorDeckSnapshot(sourceDoc),
           buildEditorCanonicalDeck: (sourceDoc) => buildEditorCanonicalDeck(sourceDoc),
-          resolveCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc),
+          resolveCanonicalDeck: (sourceDoc) => resolveEditorUiCanonicalDeck(sourceDoc)
+            || resolveEditorLiveCanonicalDeck(sourceDoc, getStudioEditorSessionToken())
+            || resolveEditorStoredCanonicalBaseline()
+            || buildEditorCanonicalDeck(sourceDoc, { preferLiveCanonicalDeck: false }),
           saveHistoryState: (...args) => saveHistoryState(...args),
           getActiveSlide: (...args) => getActiveSlide(...args),
           getSlideId: (...args) => getEditorSlideId(...args),
@@ -7156,7 +7196,9 @@
           setLiveCanonicalDeck: typeof setEditorLiveCanonicalDeck === 'function'
             ? setEditorLiveCanonicalDeck
             : null,
-          getInitialCanonicalDeck: () => resolveEditorStoredCanonicalBaseline(),
+          getInitialCanonicalDeck: () => resolveEditorStoredCanonicalBaseline()
+            || buildEditorCanonicalDeck(getIframeDoc(), { preferLiveCanonicalDeck: false }),
+          buildCanonicalDeck: (sourceDoc, buildOptions) => buildEditorCanonicalDeck(sourceDoc, buildOptions),
           updateDeckReadyToolbarActionState,
           setStudioAutoSaveStatus,
           syncInspectorForSelection

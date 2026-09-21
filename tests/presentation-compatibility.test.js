@@ -39,5 +39,41 @@ test('sample presentation manifest and metadata sidecars resolve to real decks',
     .filter((entry) => fs.existsSync(path.join(presentationsDir, entry.name, 'index.html')))
     .forEach((entry) => {
       assert.equal(manifestFolders.has(entry.name), true, `Deck is missing from manifest: ${entry.name}`);
-    });
+  });
+});
+
+test('legacy presentations initialize after a ready-state race and keep motion optional', () => {
+  ['onboarding-presentation', 'ai-tools-presentation', 'computer-vision-presentation'].forEach((folder) => {
+    const appPath = path.join(presentationsDir, folder, 'app.js');
+    const htmlPath = path.join(presentationsDir, folder, 'index.html');
+    const app = fs.readFileSync(appPath, 'utf8');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    assert.match(app, /function initializePresentation\(\)/, folder);
+    assert.match(app, /document\.readyState === 'loading'/, folder);
+    assert.match(app, /initializePresentation\(\);/, folder);
+    if (folder !== 'onboarding-presentation') {
+      assert.match(app, /const gsap = window\.gsap \|\|/, folder);
+    }
+  });
+});
+
+test('production pages use the checked-in Tailwind build instead of the CDN runtime', () => {
+  const pagePaths = [
+    path.join(__dirname, '..', 'index.html'),
+    ...['onboarding-presentation', 'ai-tools-presentation', 'computer-vision-presentation']
+      .map((folder) => path.join(presentationsDir, folder, 'index.html'))
+  ];
+
+  pagePaths.forEach((pagePath) => {
+    const html = fs.readFileSync(pagePath, 'utf8');
+    assert.doesNotMatch(html, /cdn\.tailwindcss\.com/, pagePath);
+    assert.match(html, /tailwind\.generated\.css/, pagePath);
+  });
+
+  assert.equal(
+    fs.existsSync(path.join(__dirname, '..', 'shared', 'tailwind.generated.css')),
+    true,
+    'The generated Tailwind stylesheet must be present'
+  );
 });
