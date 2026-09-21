@@ -6,7 +6,7 @@ Scope: dashboard, deck launch, legacy presentation controls, Studio editor, vers
 
 ## Executive summary
 
-The container started successfully and the backend/API contract is healthy. The original QA pass reproduced the following defects; the P1/P2 operational defects were fixed and retested below. The remaining items are non-blocking production warnings or export-fidelity limitations.
+The container started successfully and the backend/API contract is healthy. The original QA pass reproduced the following defects; the P1/P2 operational defects and production maintenance warnings were fixed and retested below. One non-blocking export-fidelity limitation remains documented.
 
 1. Existing dashboard cards do not launch Preview or Studio Editor.
 2. The three legacy interactive decks load but their JavaScript navigation and presentation actions do nothing.
@@ -31,8 +31,8 @@ Each fix was followed by a targeted regression test and a live retest. The final
 | F-005 CSS-only layout state | Resolved | Blank canonical deck showed `Freeform canvas` before and after CSS-only Apply, with `data-layout-mode=absolute`. |
 | F-006 narrow Studio layout | Resolved | Real Chrome at 640×720 stacked organizer, canvas, and inspector; toolbar wrapped; document horizontal scroll width stayed within the viewport. |
 | F-007 canonical PPTX fidelity warnings | Remaining limitation | Export succeeds and ZIP integrity passes, but the tested complex deck still reports fidelity warnings for unsupported gradients, missing exportable bounds, and non-exportable background URLs. |
-| F-008 Tailwind CDN warning | Remaining warning | Browser console still reports the production CDN warning. |
-| F-009 build/dependency warnings | Partially resolved | Compose `version` warning removed; `npm install` still reports 5 vulnerabilities (3 moderate, 2 high). |
+| F-008 Tailwind CDN warning | Resolved | Local generated stylesheet is served on all production pages; fresh browser tabs report no warning. |
+| F-009 build/dependency warnings | Resolved | Compose `version` warning removed; both `npm audit` modes report 0 vulnerabilities. |
 
 The final automated run completed with **4,710 passed, 0 failed** tests. The suite includes the new regressions for ready-state initialization, thumbnail refresh, canonical layout preservation, responsive compatibility, export behavior, and local stylesheet asset resolution.
 
@@ -44,9 +44,9 @@ The final automated run completed with **4,710 passed, 0 failed** tests. The sui
 - Legacy PPTX: `/api/export/pptx` for onboarding returned HTTP 200, the OpenXML content type, warning count `1` for intentional flattening, and passed `unzip -t`.
 - Dashboard: onboarding Preview opened `presentations/onboarding-presentation/index.html`; Studio opened the same deck and showed `Structured layout`.
 - Legacy browser controls: onboarding advanced `01 / 12` → `02 / 12`; AI Tools advanced `01 / 07` → `02 / 07`; Computer Vision advanced `01 / 20` → `02 / 20`.
-- Browser console: no runtime errors were observed. The remaining warning was the documented Tailwind CDN production warning.
+- Browser console: no runtime errors or Tailwind production warnings were observed in fresh dashboard and legacy-deck tabs.
 
-The automated suite passed all 4,704 tests. API validation, version create/rename/restore/delete, security boundary checks, theme/category controls, new-deck validation, preview keyboard navigation, and canonical PPTX ZIP integrity also passed.
+The automated suite passed all 4,710 tests. API validation, version create/rename/restore/delete, security boundary checks, theme/category controls, new-deck validation, preview keyboard navigation, and canonical PPTX ZIP integrity also passed.
 
 ## Reproduced findings
 
