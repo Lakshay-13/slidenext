@@ -132,7 +132,10 @@ function createPdfAssetExists(assetBaseDir = WORKSPACE_ROOT, assetRootDir = WORK
     const localSource = normalizeLocalAssetSource(source);
     const sourcePath = localSource.startsWith('/')
       ? resolveContainedPath(resolvedAssetRootDir, localSource.replace(/^[/\\]+/, ''))
-      : resolveContainedPath(resolvedAssetBaseDir, localSource);
+      : resolveContainedPath(resolvedAssetRootDir, path.relative(
+        resolvedAssetRootDir,
+        path.resolve(resolvedAssetBaseDir, localSource)
+      ));
     if (!sourcePath) return false;
     try {
       return fsSync.statSync(sourcePath).isFile();
@@ -384,11 +387,15 @@ async function runChromePdfExport(url, outputPath, options = {}) {
   const virtualTimeBudgetMs = Number.isFinite(options.virtualTimeBudgetMs)
     ? Math.max(0, options.virtualTimeBudgetMs)
     : DEFAULT_VIRTUAL_TIME_BUDGET_MS;
+  const rootProcessArgs = typeof process.getuid === 'function' && process.getuid() === 0
+    ? ['--no-sandbox', '--disable-setuid-sandbox']
+    : [];
   const args = [
     '--headless=new',
     '--disable-gpu',
     '--disable-dev-shm-usage',
     '--no-pdf-header-footer',
+    ...rootProcessArgs,
     `--user-data-dir=${profileDir}`,
     `--virtual-time-budget=${virtualTimeBudgetMs}`,
     `--print-to-pdf=${outputPath}`,
@@ -436,7 +443,7 @@ async function runChromePdfExport(url, outputPath, options = {}) {
         reject(error);
       };
 
-      const inspectArtifact = async () => {
+      const inspectArtifact = async ({ allowUnstable = false } = {}) => {
         if (settled) return;
         try {
           const fileStat = await fs.stat(outputPath);
@@ -447,7 +454,7 @@ async function runChromePdfExport(url, outputPath, options = {}) {
             lastSize = fileStat.size;
             stablePolls = 0;
           }
-          if (stablePolls < 2) return;
+          if (!allowUnstable && stablePolls < 2) return;
           const nextPdfBuffer = await fs.readFile(outputPath);
           if (nextPdfBuffer.subarray(0, 5).toString() !== '%PDF-') {
             fail(new Error('Chrome did not produce a valid PDF artifact'));
@@ -466,7 +473,7 @@ async function runChromePdfExport(url, outputPath, options = {}) {
       });
       chromeProcess.once('error', fail);
       chromeProcess.once('exit', (code, signal) => {
-        inspectArtifact().then(() => {
+        inspectArtifact({ allowUnstable: true }).then(() => {
           if (!settled) {
             const detail = stderr.trim() ? `: ${stderr.trim()}` : '';
             fail(new Error(`Chrome PDF export exited before producing a valid artifact${detail}`));
@@ -559,7 +566,8 @@ async function main(argv = process.argv.slice(2), options = {}) {
   if (directLegacyHtmlPath) {
     const legacyHtml = await fs.readFile(directLegacyHtmlPath, 'utf8');
     const preflight = preflightLegacyPdfExport(legacyHtml, {
-      assetBaseDir: path.dirname(directLegacyHtmlPath)
+      assetBaseDir: path.dirname(directLegacyHtmlPath),
+      assetRootDir: WORKSPACE_ROOT
     });
     if (preflight.warnings.length > 0) {
       console.error(`PDF export completed with ${preflight.warnings.length} warning(s):`);
@@ -587,7 +595,8 @@ async function main(argv = process.argv.slice(2), options = {}) {
     if (legacySourcePath) {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
       const preflight = preflightLegacyPdfExport(legacyHtml, {
-        assetBaseDir: path.dirname(legacySourcePath)
+        assetBaseDir: path.dirname(legacySourcePath),
+        assetRootDir: WORKSPACE_ROOT
       });
       if (preflight.warnings.length > 0) {
         console.error(`PDF export completed with ${preflight.warnings.length} warning(s):`);

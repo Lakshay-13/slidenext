@@ -60,15 +60,24 @@ test('createPdfAssetExists resolves local asset paths within the export roots', 
   const temporaryDir = await fs.mkdtemp(path.join(os.tmpdir(), 'slidenext-pdf-assets-'));
   const assetDir = path.join(temporaryDir, 'assets');
   const assetPath = path.join(assetDir, 'hero.png');
+  const workspaceDir = path.join(temporaryDir, 'workspace');
+  const deckDir = path.join(workspaceDir, 'presentations', 'demo');
+  const sharedStylesheetPath = path.join(workspaceDir, 'shared', 'tailwind.generated.css');
   try {
     await fs.mkdir(assetDir, { recursive: true });
     await fs.writeFile(assetPath, 'asset', 'utf8');
+    await fs.mkdir(path.dirname(sharedStylesheetPath), { recursive: true });
+    await fs.mkdir(deckDir, { recursive: true });
+    await fs.writeFile(sharedStylesheetPath, 'css', 'utf8');
     const assetExists = pdfScript.createPdfAssetExists(temporaryDir, temporaryDir);
+    const nestedAssetExists = pdfScript.createPdfAssetExists(deckDir, workspaceDir);
 
     assert.equal(assetExists('assets/hero.png'), true);
     assert.equal(assetExists('assets/hero.png?v=2#hero'), true);
     assert.equal(assetExists('assets/missing.png'), false);
     assert.equal(assetExists('../outside.png'), false);
+    assert.equal(nestedAssetExists('../../shared/tailwind.generated.css'), true);
+    assert.equal(nestedAssetExists('../../../outside.css'), false);
     assert.equal(assetExists('data:image/png;base64,AAAA'), true);
   } finally {
     await fs.rm(temporaryDir, { recursive: true, force: true });

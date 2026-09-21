@@ -45,7 +45,8 @@ async function main(argv = process.argv.slice(2)) {
   if (directLegacyHtmlPath) {
     const legacyHtml = await fs.readFile(directLegacyHtmlPath, 'utf8');
     const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
-      assetBaseDir: path.dirname(directLegacyHtmlPath)
+      assetBaseDir: path.dirname(directLegacyHtmlPath),
+      assetRootDir: process.cwd()
     });
     await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
     await fs.writeFile(resolvedOutputPath, result.buffer);
@@ -68,7 +69,8 @@ async function main(argv = process.argv.slice(2)) {
     if (legacySourcePath) {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
       const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
-        assetBaseDir: path.dirname(legacySourcePath)
+        assetBaseDir: path.dirname(legacySourcePath),
+        assetRootDir: process.cwd()
       });
       await fs.mkdir(path.dirname(resolvedOutputPath), { recursive: true });
       await fs.writeFile(resolvedOutputPath, result.buffer);

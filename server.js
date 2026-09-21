@@ -229,7 +229,8 @@ app.post('/api/export/pptx', async (req, res) => {
     try {
       const legacyHtml = await fs.readFile(legacySourcePath, 'utf8');
       const result = await legacyPptxExport.exportLegacyHtmlToPptx(legacyHtml, {
-        assetBaseDir: path.dirname(legacySourcePath)
+        assetBaseDir: path.dirname(legacySourcePath),
+        assetRootDir: workspaceDir
       });
       const buffer = result.buffer;
       canonicalPptxExport.validatePptxArtifact(buffer, result.slideCount);
