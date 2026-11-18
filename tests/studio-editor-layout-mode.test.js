@@ -90,6 +90,23 @@ test('resolveStudioCanonicalLayoutMode supports an explicit fallback for unavail
   );
 });
 
+test('resolveStudioCanonicalLayoutMode preserves a deck-level mode while the active slide id is unavailable', () => {
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutMode({
+      layout: { mode: 'absolute' },
+      slides: [{ id: 'slide-1', layout: { mode: 'absolute' }, nodes: [] }]
+    }, '', { fallbackMode: '' }),
+    'absolute'
+  );
+  assert.equal(
+    layoutMode.resolveStudioCanonicalLayoutMode({
+      layout: { mode: 'flow' },
+      slides: [{ id: 'slide-1', layout: { mode: 'flow' }, nodes: [] }]
+    }, '', { fallbackMode: '' }),
+    'flow'
+  );
+});
+
 test('resolveStudioCanonicalLayoutMode delegates slide lookup to the canonical deck API', () => {
   const calls = [];
   const resolvedSlide = { id: 'slide-1', layout: { mode: 'flow' }, nodes: [] };

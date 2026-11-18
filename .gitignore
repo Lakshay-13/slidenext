@@ -1,0 +1,4 @@
+node_modules/
+.DS_Store
+**/.versions/
+presentations/computer-vision-presentation/computer-vision-presentation.pptx

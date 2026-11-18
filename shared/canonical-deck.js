@@ -598,6 +598,7 @@
     const nextDeck = {
       ...deck,
       assets: nextAssets,
+      layout: baseline.layout,
       notes: baseline.notes,
       export: baseline.export
     };

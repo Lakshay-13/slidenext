@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initializePresentation() {
   // Navigation State
   let currentSlide = 0;
   const totalSlides = document.querySelectorAll('.slide').length;
@@ -377,4 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Fire everything
   init();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializePresentation, { once: true });
+} else {
+  initializePresentation();
+}

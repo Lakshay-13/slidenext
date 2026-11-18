@@ -1,4 +1,46 @@
-document.addEventListener('DOMContentLoaded', () => {
+const gsap = window.gsap || (() => {
+  const toArray = (targets) => {
+    if (!targets) return [];
+    if (Array.isArray(targets)) return targets.filter(Boolean);
+    if (typeof targets.length === 'number' && typeof targets !== 'string') {
+      return Array.from(targets).filter(Boolean);
+    }
+    return [targets];
+  };
+  const applyVars = (targets, vars) => {
+    toArray(targets).forEach((target) => {
+      if (!target || !target.style || !vars) return;
+      Object.entries(vars).forEach(([key, value]) => {
+        if (['delay', 'duration', 'ease', 'stagger', 'onComplete', 'onStart'].includes(key)) return;
+        if (key === 'x' || key === 'y') {
+          const x = key === 'x' ? value : 0;
+          const y = key === 'y' ? value : 0;
+          target.style.transform = `translate(${x}px, ${y}px)`;
+          return;
+        }
+        if (key === 'scale') {
+          target.style.transform = `scale(${value})`;
+          return;
+        }
+        target.style[key] = value;
+      });
+    });
+  };
+  return {
+    killTweensOf() {},
+    fromTo(targets, fromVars, toVars) {
+      applyVars(targets, fromVars);
+      applyVars(targets, toVars);
+      if (toVars && typeof toVars.onComplete === 'function') toVars.onComplete();
+    },
+    to(targets, vars) {
+      applyVars(targets, vars);
+      if (vars && typeof vars.onComplete === 'function') vars.onComplete();
+    }
+  };
+})();
+
+function initializePresentation() {
   // Navigation State
   let currentSlide = 0;
   const totalSlides = document.querySelectorAll('.slide').length;
@@ -584,4 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   init();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializePresentation, { once: true });
+} else {
+  initializePresentation();
+}

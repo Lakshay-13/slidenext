@@ -118,6 +118,39 @@ test('editor bootstrap initializes only once when the DOM-ready callback repeats
   assert.equal(calls.filter((call) => call === 'syncCanvasRulers').length, 1);
 });
 
+test('editor bootstrap initializes immediately when the document is already ready', () => {
+  const fixture = createBootstrapFixture();
+  const { calls, listeners, elements } = fixture;
+
+  const documentRef = {
+    readyState: 'complete',
+    addEventListener(type, handler) {
+      listeners.document[type] = handler;
+    },
+    getElementById(id) {
+      return elements[id] || null;
+    }
+  };
+  const immediate = bootstrapApi.createStudioEditorBootstrap({
+    documentRef,
+    windowRef: {
+      addEventListener(type, handler) {
+        listeners.window[type] = handler;
+      }
+    },
+    loadPresentations: () => calls.push('loadPresentations'),
+    renderWallpaperPresets: () => calls.push('renderWallpaperPresets'),
+    renderThemeTokenPresets: () => calls.push('renderThemeTokenPresets'),
+    bindStudioGlobalKeydownHandler: () => calls.push('bindStudioGlobalKeydownHandler'),
+    syncCanvasRulers: () => calls.push('syncCanvasRulers')
+  });
+
+  assert.equal(immediate.bindDomReady(), true);
+  assert.equal(typeof listeners.document.DOMContentLoaded, 'undefined');
+  assert.equal(calls.filter((call) => call === 'loadPresentations').length, 1);
+  assert.equal(calls.filter((call) => call === 'syncCanvasRulers').length, 1);
+});
+
 test('index installs the shared editor bootstrap instead of owning the DOM-ready orchestration', () => {
   const fileContent = fs.readFileSync(INDEX_HTML_PATH, 'utf8');
 

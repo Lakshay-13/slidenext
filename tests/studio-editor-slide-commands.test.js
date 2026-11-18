@@ -191,7 +191,8 @@ test('duplicateStudioSlideNode preserves canonical duplication and mutation life
     'applyInsertion',
     'generateThumbnails',
     'setActiveSlide',
-    'finalizeMutation'
+    'finalizeMutation',
+    'generateThumbnails'
   ]);
 });
 
@@ -480,7 +481,8 @@ test('addStudioSlideNode preserves canonical insertion and mutation lifecycle or
     'applyInsertion',
     'generateThumbnails',
     'setActiveSlide',
-    'finalizeMutation'
+    'finalizeMutation',
+    'generateThumbnails'
   ]);
 });
 

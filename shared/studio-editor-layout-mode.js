@@ -75,9 +75,12 @@
       ? normalizeStudioLayoutMode(options.fallbackMode)
       : 'absolute';
     const slide = resolveStudioCanonicalSlide(canonicalDeck, slideId, options);
-    if (!slide) return fallbackMode;
-    if (normalizeStudioLayoutMode(canonicalDeck.layout && canonicalDeck.layout.mode) === 'absolute') {
-      return 'absolute';
+    const deckMode = normalizeStudioLayoutMode(canonicalDeck && canonicalDeck.layout && canonicalDeck.layout.mode);
+    if (!slide) {
+      return deckMode || fallbackMode;
+    }
+    if (deckMode === 'absolute') {
+      return deckMode;
     }
     if (normalizeStudioLayoutMode(slide.layout && slide.layout.mode) === 'absolute') {
       return 'absolute';

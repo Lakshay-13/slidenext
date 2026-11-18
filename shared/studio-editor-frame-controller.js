@@ -85,6 +85,9 @@
     const getInitialCanonicalDeck = typeof options.getInitialCanonicalDeck === 'function'
       ? options.getInitialCanonicalDeck
       : null;
+    const buildCanonicalDeck = typeof options.buildCanonicalDeck === 'function'
+      ? options.buildCanonicalDeck
+      : null;
     const updateDeckReadyToolbarActionState = typeof options.updateDeckReadyToolbarActionState === 'function'
       ? options.updateDeckReadyToolbarActionState
       : () => {};
@@ -95,6 +98,7 @@
       ? options.syncInspectorForSelection
       : () => {};
     let initialHistoryCaptureFailed = false;
+    let initialCanonicalDeck = null;
 
     function captureInitialHistoryState(iframeDoc) {
       if (captureInitialHistoryStateOverride) {
@@ -106,7 +110,10 @@
 
       let initialPersistedDeckState = null;
       try {
-        initialPersistedDeckState = capturePersistableDeckState(iframeDoc);
+        initialPersistedDeckState = capturePersistableDeckState(
+          iframeDoc,
+          initialCanonicalDeck ? { canonicalDeck: initialCanonicalDeck } : {}
+        );
       } catch (error) {
         initialPersistedDeckState = null;
       }
@@ -142,7 +149,8 @@
       }
       if (setLiveCanonicalDeck) {
         setLiveCanonicalDeck(
-          initialPersistedDeckState && initialPersistedDeckState.canonicalDeck,
+          (initialPersistedDeckState && initialPersistedDeckState.canonicalDeck)
+            || initialCanonicalDeck,
           iframeDoc,
           getSessionToken()
         );
@@ -152,16 +160,24 @@
 
     function init() {
       initialHistoryCaptureFailed = false;
+      initialCanonicalDeck = null;
       resetLiveCanonicalDeck();
       const iframeDoc = getIframeDocument();
       if (!iframeDoc) return false;
 
       if (getInitialCanonicalDeck && setLiveCanonicalDeck) {
-        let initialCanonicalDeck = null;
+        initialCanonicalDeck = null;
         try {
           initialCanonicalDeck = getInitialCanonicalDeck();
         } catch (error) {
           initialCanonicalDeck = null;
+        }
+        if (!initialCanonicalDeck && buildCanonicalDeck) {
+          try {
+            initialCanonicalDeck = buildCanonicalDeck(iframeDoc, { preferLiveCanonicalDeck: false });
+          } catch (error) {
+            initialCanonicalDeck = null;
+          }
         }
         if (initialCanonicalDeck) {
           setLiveCanonicalDeck(initialCanonicalDeck, iframeDoc, getSessionToken());

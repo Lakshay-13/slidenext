@@ -264,6 +264,7 @@
       setStudioActiveSlideSafely(options, sourceIndex);
       return false;
     }
+    refreshStudioSlideThumbnails(options);
     return true;
   }
 
@@ -409,6 +410,7 @@
       );
       return false;
     }
+    refreshStudioSlideThumbnails(options);
     return true;
   }
 

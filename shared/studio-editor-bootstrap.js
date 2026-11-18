@@ -85,7 +85,11 @@
       if (!documentRef || typeof documentRef.addEventListener !== 'function') return false;
       if (didBindDomReady) return true;
       didBindDomReady = true;
-      documentRef.addEventListener('DOMContentLoaded', initialize);
+      if (documentRef.readyState && documentRef.readyState !== 'loading') {
+        initialize();
+        return true;
+      }
+      documentRef.addEventListener('DOMContentLoaded', initialize, { once: true });
       return true;
     }
 

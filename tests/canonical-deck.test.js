@@ -546,6 +546,7 @@ test('mergeCanonicalDeckRebuildBaseline preserves deck-owned metadata while keep
     masterSlides: [{ id: 'master-1', name: 'Reusable master', slide: { nodes: [] } }],
     notes: { deck: 'Speaker notes' },
     export: { pdf: { pageSize: 'wide' } },
+    layout: { mode: 'absolute', size: { width: 1920, height: 1080, unit: 'px' } },
     slides: [{ id: 'slide-before', nodes: [] }]
   });
 
@@ -558,6 +559,7 @@ test('mergeCanonicalDeckRebuildBaseline preserves deck-owned metadata while keep
   assert.deepEqual(merged.masterSlides.map((master) => master.id), ['master-1']);
   assert.deepEqual(merged.notes, baseline.notes);
   assert.deepEqual(merged.export, baseline.export);
+  assert.deepEqual(merged.layout, baseline.layout);
   assert.equal(rebuilt.slides[0].id, 'slide-current');
   assert.equal(Object.prototype.hasOwnProperty.call(rebuilt, 'blocks'), false);
 });

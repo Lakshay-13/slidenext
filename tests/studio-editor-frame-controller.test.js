@@ -181,6 +181,61 @@ test('frame controller seeds the stored canonical model for the current iframe b
   ]);
 });
 
+test('frame controller keeps the stored canonical model when initial persistence capture omits it', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    getInitialCanonicalDeck: () => canonicalDeck,
+    capturePersistableDeckState(doc, options) {
+      calls.push(['capture', doc, options]);
+      return { cleanHtml: '<html></html>' };
+    },
+    setLiveCanonicalDeck(...args) {
+      calls.push(['setLiveCanonicalDeck', ...args]);
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap(doc, options) {
+        options.captureInitialHistoryState(doc);
+      }
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, [
+    ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, null],
+    ['capture', iframeDoc, { canonicalDeck }],
+    ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, null]
+  ]);
+});
+
+test('frame controller builds a canonical model when no stored baseline is available', () => {
+  const iframeDoc = { id: 'iframe-doc' };
+  const canonicalDeck = { kind: 'slidenext.deck', slides: [{ id: 'slide-1' }] };
+  const calls = [];
+  const controller = frameController.createStudioEditorFrameController({
+    getIframeDocument: () => iframeDoc,
+    getInitialCanonicalDeck: () => null,
+    buildCanonicalDeck(doc, options) {
+      calls.push(['buildCanonicalDeck', doc, options]);
+      return canonicalDeck;
+    },
+    setLiveCanonicalDeck(...args) {
+      calls.push(['setLiveCanonicalDeck', ...args]);
+    },
+    frameBootstrapApi: {
+      runStudioFrameBootstrap() {}
+    }
+  });
+
+  assert.equal(controller.init(), true);
+  assert.deepEqual(calls, [
+    ['buildCanonicalDeck', iframeDoc, { preferLiveCanonicalDeck: false }],
+    ['setLiveCanonicalDeck', canonicalDeck, iframeDoc, null]
+  ]);
+});
+
 test('frame controller keeps bootstrap alive when initial persistence capture fails', () => {
   const iframeDoc = { id: 'iframe-doc' };
   const calls = [];

@@ -107,6 +107,7 @@
       getSessionToken: options.getSessionToken,
       setLiveCanonicalDeck: options.setLiveCanonicalDeck,
       getInitialCanonicalDeck: options.getInitialCanonicalDeck,
+      buildCanonicalDeck: options.buildCanonicalDeck,
       updateDeckReadyToolbarActionState: options.updateDeckReadyToolbarActionState,
       setStudioAutoSaveStatus: options.setStudioAutoSaveStatus,
       syncInspectorForSelection: options.syncInspectorForSelection

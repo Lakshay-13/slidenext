@@ -933,7 +933,8 @@ test('addSlideNode uses the shared iframe accessor and appends a new blank slide
     'setActiveSlide',
     'saveHistoryState',
     'triggerAutoSave',
-    'triggerAutoVersion'
+    'triggerAutoVersion',
+    'generateThumbnails'
   ]);
   assert.equal(calls[1][1], iframeDoc);
   assert.equal(calls[3][1], iframeDoc);
@@ -1302,7 +1303,8 @@ test('duplicateSlideNode clones the active slide, inserts it next to the source,
     'setActiveSlide',
     'saveHistoryState',
     'triggerAutoSave',
-    'triggerAutoVersion'
+    'triggerAutoVersion',
+    'generateThumbnails'
   ]);
   assert.equal(calls[6][0], 'generateThumbnails');
   assert.equal(calls[7][1], 1);
